@@ -64,7 +64,7 @@ class TestGitHubScraper:
         issues_page2 = [make_issue(i) for i in range(4, 6)]
         comments_resp = make_response([])
 
-        page1_url = "https://api.github.com/repos/o/r/issues?state=all&sort=created&direction=asc&per_page=100"
+        page1_url = "https://api.github.com/repos/o/r/issues?state=all&sort=created&direction=asc&per_page=100&page=1"
         page2_url = "https://api.github.com/repos/o/r/issues?page=2"
         rate_url = "https://api.github.com/rate_limit"
 

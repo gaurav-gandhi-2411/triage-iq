@@ -37,7 +37,7 @@ class GitHubScraper:
 
         url = (
             f"{self.BASE_URL}/repos/{owner}/{repo}/issues"
-            f"?state=all&sort=created&direction=asc&per_page=100"
+            f"?state=all&sort=created&direction=asc&per_page=100&page=1"
         )
 
         saved = 0

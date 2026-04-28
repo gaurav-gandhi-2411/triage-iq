@@ -1,0 +1,395 @@
+{
+  "microsoft_vscode": {
+    "repo": "microsoft_vscode",
+    "train_size": 1488,
+    "val_size": 187,
+    "test_size": 187,
+    "n_classes": 28,
+    "accuracy": 0.7540106951871658,
+    "macro_f1": 0.5967594754346115,
+    "weighted_f1": 0.7437960143764853,
+    "train_time_s": 99.7,
+    "eval_time_s": 1.13,
+    "latency_single_cpu": {
+      "p50_ms": 97.71189999810304,
+      "p95_ms": 410.8376900028815,
+      "p99_ms": 509.57842500523844,
+      "mean_ms": 153.60236999957124,
+      "predict_per_sec": 6.510316214540123
+    },
+    "latency_batch_cpu": {
+      "batch_size": 100,
+      "batch_p50_ms": 11702.012699999614,
+      "batch_p95_ms": 15078.721565001977,
+      "per_sample_ms": 121.92232030000741,
+      "samples_per_sec": 8.201943643619611
+    },
+    "calibration": {
+      "ece": 0.4032106139761879,
+      "mean_confidence": 0.3508000373840332,
+      "mean_accuracy": 0.7540106951871658,
+      "overconfident": false,
+      "bin_accuracies": [
+        0.25,
+        0.5370370370370371,
+        0.8529411764705882,
+        0.84,
+        1.0,
+        0.7222222222222222,
+        0.9166666666666666,
+        1.0,
+        1.0
+      ],
+      "bin_confidences": [
+        "0.090393245",
+        "0.15567334",
+        "0.24945517",
+        "0.3516953",
+        "0.4379607",
+        "0.54803866",
+        "0.6619712",
+        "0.7810192",
+        "0.8285629"
+      ],
+      "bin_sizes": [
+        8,
+        54,
+        34,
+        25,
+        21,
+        18,
+        12,
+        5,
+        10
+      ]
+    },
+    "top_confusions": [
+      [
+        "api",
+        "file-explorer",
+        2
+      ],
+      [
+        "debug",
+        "accessibility",
+        2
+      ],
+      [
+        "debug",
+        "tasks",
+        2
+      ],
+      [
+        "install-update",
+        "file-explorer",
+        2
+      ],
+      [
+        "accessibility",
+        "debug",
+        1
+      ],
+      [
+        "accessibility",
+        "ux",
+        1
+      ],
+      [
+        "api",
+        "debug",
+        1
+      ],
+      [
+        "api",
+        "javascript",
+        1
+      ],
+      [
+        "api",
+        "ux",
+        1
+      ],
+      [
+        "debug",
+        "api",
+        1
+      ]
+    ],
+    "best_classes": [
+      [
+        "html",
+        1.0
+      ],
+      [
+        "keybindings",
+        1.0
+      ],
+      [
+        "php",
+        1.0
+      ],
+      [
+        "error-telemetry",
+        0.971
+      ],
+      [
+        "themes",
+        0.909
+      ]
+    ],
+    "worst_classes": [
+      [
+        "editor-core",
+        0.0
+      ],
+      [
+        "editor-find",
+        0.0
+      ],
+      [
+        "electron",
+        0.0
+      ],
+      [
+        "search",
+        0.0
+      ],
+      [
+        "suggest",
+        0.0
+      ]
+    ],
+    "per_class_f1": {
+      "accessibility": 0.714,
+      "api": 0.621,
+      "css-less-scss": 0.833,
+      "debug": 0.865,
+      "editor-core": 0.0,
+      "editor-find": 0.0,
+      "editor-folding": 0.833,
+      "electron": 0.0,
+      "error-telemetry": 0.971,
+      "extensions": 0.667,
+      "file-explorer": 0.6,
+      "git": 0.667,
+      "html": 1.0,
+      "install-update": 0.286,
+      "javascript": 0.8,
+      "json": 0.889,
+      "keybindings": 1.0,
+      "l10n-platform": 0.571,
+      "languages-basic": 0.667,
+      "markdown": 0.857,
+      "php": 1.0,
+      "search": 0.0,
+      "suggest": 0.0,
+      "tasks": 0.778,
+      "themes": 0.909,
+      "typescript": 0.737,
+      "ux": 0.444,
+      "workbench-editors": 0.0
+    },
+    "vs_tfidf": {
+      "delta_accuracy": 0.064,
+      "delta_macro_f1": 0.0118,
+      "latency_ratio": 19.9
+    }
+  },
+  "kubernetes_kubernetes": {
+    "repo": "kubernetes_kubernetes",
+    "train_size": 2284,
+    "val_size": 286,
+    "test_size": 286,
+    "n_classes": 35,
+    "accuracy": 0.46503496503496505,
+    "macro_f1": 0.4148014830444962,
+    "weighted_f1": 0.427719926711946,
+    "train_time_s": 131.4,
+    "eval_time_s": 1.43,
+    "latency_single_cpu": {
+      "p50_ms": 197.17490000039106,
+      "p95_ms": 429.3886750023375,
+      "p99_ms": 552.3661950049432,
+      "mean_ms": 226.24714499994298,
+      "predict_per_sec": 4.4199452771006325
+    },
+    "latency_batch_cpu": {
+      "batch_size": 100,
+      "batch_p50_ms": 12638.697200000024,
+      "batch_p95_ms": 15719.38439000441,
+      "per_sample_ms": 128.26467970001977,
+      "samples_per_sec": 7.79637856921141
+    },
+    "calibration": {
+      "ece": 0.23670088947861345,
+      "mean_confidence": 0.23702090978622437,
+      "mean_accuracy": 0.46503496503496505,
+      "overconfident": false,
+      "bin_accuracies": [
+        0.21951219512195122,
+        0.4444444444444444,
+        0.5507246376811594,
+        0.5135135135135135,
+        0.3333333333333333,
+        0.5714285714285714,
+        1.0
+      ],
+      "bin_confidences": [
+        "0.08273913",
+        "0.13410032",
+        "0.25195518",
+        "0.33808154",
+        "0.4713576",
+        "0.52974737",
+        "0.6360322"
+      ],
+      "bin_sizes": [
+        41,
+        81,
+        69,
+        74,
+        9,
+        7,
+        5
+      ]
+    },
+    "top_confusions": [
+      [
+        "test",
+        "test-infra",
+        19
+      ],
+      [
+        "usability",
+        "kubectl",
+        14
+      ],
+      [
+        "test-infra",
+        "test",
+        9
+      ],
+      [
+        "introspection",
+        "kubectl",
+        4
+      ],
+      [
+        "api",
+        "kubectl",
+        3
+      ],
+      [
+        "api",
+        "nodecontroller",
+        3
+      ],
+      [
+        "api",
+        "swagger",
+        3
+      ],
+      [
+        "reliability",
+        "test",
+        3
+      ],
+      [
+        "security",
+        "kube-proxy",
+        3
+      ],
+      [
+        "api",
+        "apiserver",
+        2
+      ]
+    ],
+    "best_classes": [
+      [
+        "platform/vagrant",
+        1.0
+      ],
+      [
+        "provider/gcp",
+        1.0
+      ],
+      [
+        "rkt",
+        1.0
+      ],
+      [
+        "build-release",
+        0.75
+      ],
+      [
+        "logging",
+        0.667
+      ]
+    ],
+    "worst_classes": [
+      [
+        "cloudprovider",
+        0.0
+      ],
+      [
+        "controller-manager",
+        0.0
+      ],
+      [
+        "downward-api",
+        0.0
+      ],
+      [
+        "etcd",
+        0.0
+      ],
+      [
+        "introspection",
+        0.0
+      ]
+    ],
+    "per_class_f1": {
+      "api": 0.484,
+      "apiserver": 0.429,
+      "app-lifecycle": 0.308,
+      "build-release": 0.75,
+      "client-libraries": 0.462,
+      "cloudprovider": 0.0,
+      "controller-manager": 0.0,
+      "docker": 0.167,
+      "downward-api": 0.0,
+      "etcd": 0.0,
+      "example": 0.545,
+      "extensibility": 0.5,
+      "introspection": 0.0,
+      "isolation": 0.0,
+      "kube-proxy": 0.6,
+      "kubectl": 0.535,
+      "kubelet": 0.6,
+      "logging": 0.667,
+      "monitoring": 0.667,
+      "nodecontroller": 0.5,
+      "os/coreos": 0.6,
+      "os/ubuntu": 0.0,
+      "platform/gce": 0.5,
+      "platform/mesos": 0.6,
+      "platform/vagrant": 1.0,
+      "provider/gcp": 1.0,
+      "reliability": 0.154,
+      "rkt": 1.0,
+      "security": 0.333,
+      "swagger": 0.0,
+      "test": 0.471,
+      "test-infra": 0.548,
+      "ui": 0.5,
+      "upgrade": 0.6,
+      "usability": 0.0
+    },
+    "vs_tfidf": {
+      "delta_accuracy": -0.049,
+      "delta_macro_f1": -0.0512,
+      "latency_ratio": 35.4
+    }
+  }
+}

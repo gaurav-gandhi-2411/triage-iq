@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from triage_iq.data.github_scraper import GitHubScraper
 from triage_iq.data.preprocess import clean_text, normalize_labels, load_raw_issues
+from triage_iq.data.splits import time_based_split, stratified_classifier_split
 
 
 # ---------------------------------------------------------------------------
@@ -235,3 +236,85 @@ class TestLoadRawIssues:
 
         df = load_raw_issues("bad_repo", cache_dir=str(tmp_path))
         assert len(df) == 1
+
+
+# ---------------------------------------------------------------------------
+# Split tests
+# ---------------------------------------------------------------------------
+
+def _make_split_df(n: int, labels=None) -> "pd.DataFrame":
+    import pandas as pd
+    import numpy as np
+    from datetime import timezone
+
+    base = pd.Timestamp("2024-01-01", tz=timezone.utc)
+    rows = []
+    for i in range(n):
+        rows.append({
+            "number": i + 1,
+            "closed_at": base + pd.Timedelta(hours=i),
+            "component": labels[i % len(labels)] if labels else f"comp_{i % 3}",
+        })
+    return pd.DataFrame(rows)
+
+
+class TestTimeBasedSplit:
+
+    def test_sizes_sum_to_total(self):
+        df = _make_split_df(100)
+        train, val, test = time_based_split(df, 0.8, 0.1, 0.1)
+        assert len(train) + len(val) + len(test) == 100
+
+    def test_train_before_val_before_test(self):
+        df = _make_split_df(100)
+        train, val, test = time_based_split(df, 0.8, 0.1, 0.1)
+        assert train["closed_at"].max() <= val["closed_at"].min()
+        assert val["closed_at"].max() <= test["closed_at"].min()
+
+    def test_open_issues_excluded(self):
+        import pandas as pd
+        df = _make_split_df(90)
+        open_row = pd.DataFrame([{"number": 999, "closed_at": None, "component": "x"}])
+        df = pd.concat([df, open_row], ignore_index=True)
+        train, val, test = time_based_split(df, 0.8, 0.1, 0.1)
+        assert len(train) + len(val) + len(test) == 90
+
+    def test_approximate_fractions(self):
+        df = _make_split_df(1000)
+        train, val, test = time_based_split(df, 0.8, 0.1, 0.1)
+        assert len(train) == 800
+        assert len(val) == 100
+        assert len(test) == 100
+
+
+class TestStratifiedClassifierSplit:
+
+    def test_sizes_sum_to_labeled_total(self):
+        import pandas as pd
+        df = _make_split_df(300, labels=["A", "B", "C"])
+        train, val, test = stratified_classifier_split(df, "component")
+        assert len(train) + len(val) + len(test) == 300
+
+    def test_label_distribution_preserved(self):
+        df = _make_split_df(300, labels=["A", "A", "B", "B", "B", "C"])
+        train, val, test = stratified_classifier_split(df, "component")
+        for split in (train, val, test):
+            classes = set(split["component"].unique())
+            assert classes == {"A", "B", "C"}
+
+    def test_small_classes_dropped(self):
+        import pandas as pd
+        labels = ["A"] * 100 + ["B"] * 100 + ["rare"] * 3
+        df = _make_split_df(203, labels=labels)
+        train, val, test = stratified_classifier_split(
+            df, "component", min_class_samples=10
+        )
+        all_data = pd.concat([train, val, test])
+        assert "rare" not in all_data["component"].values
+
+    def test_null_labels_excluded(self):
+        import pandas as pd
+        df = _make_split_df(200, labels=["A", "B"])
+        df.loc[0, "component"] = None
+        train, val, test = stratified_classifier_split(df, "component")
+        assert len(train) + len(val) + len(test) == 199

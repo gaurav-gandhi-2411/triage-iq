@@ -30,14 +30,39 @@ class GitHubScraper:
     # Public API
     # ------------------------------------------------------------------
 
-    def scrape_repo(self, owner: str, repo: str, max_issues: int = 10000) -> int:
-        """Scrape issues (+ comments) for owner/repo. Returns count of newly saved issues."""
+    def scrape_repo(
+        self,
+        owner: str,
+        repo: str,
+        max_issues: int = 10000,
+        sort: str = "created",
+        direction: str = "asc",
+        since: Optional[str] = None,
+    ) -> int:
+        """Scrape issues (+ comments) for owner/repo. Returns count of newly saved issues.
+
+        Args:
+            sort: GitHub sort field — "created", "updated", or "comments".
+            direction: "asc" or "desc".
+            since: ISO 8601 date string (e.g. "2025-01-01"); filters by updated_at >= since.
+        """
         out_dir = self.cache_dir / f"{owner}_{repo}"
         out_dir.mkdir(parents=True, exist_ok=True)
 
+        since_param = ""
+        if since:
+            # Accept YYYY-MM-DD or full ISO timestamp
+            ts = since if "T" in since else f"{since}T00:00:00Z"
+            since_param = f"&since={ts}"
+
+        # &page=1 forces offset-based pagination and is required for sort=created to be
+        # resumable across runs. For sort=updated GitHub returns 0 on page 2 when page=1
+        # is combined with cursor URLs — use cursor-based pagination instead.
+        page_param = "&page=1" if sort == "created" else ""
+
         url = (
             f"{self.BASE_URL}/repos/{owner}/{repo}/issues"
-            f"?state=all&sort=created&direction=asc&per_page=100&page=1"
+            f"?state=all&sort={sort}&direction={direction}&per_page=100{page_param}{since_param}"
         )
 
         saved = 0

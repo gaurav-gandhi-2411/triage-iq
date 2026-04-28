@@ -4,39 +4,70 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-# Max chars to keep per issue body (covers 99%+ of issues)
 MAX_BODY_CHARS = 10_000
 
-# Per-repo label prefix mappings to standardized facets
-LABEL_FACET_PATTERNS: Dict[str, Dict[str, str]] = {
-    "kubernetes_kubernetes": {
-        r"^area/": "component",
-        r"^kind/": "type",
-        r"^priority/": "priority",
-        r"^sig/": "sig",
+# Per-repo label normalization rules.
+# Keys: owner/repo format.
+# Values: {facet: pattern} where pattern is either:
+#   - a regex string with one capture group (extracts group 1 as value)
+#   - a list of known label strings (label matched case-insensitively; raw label used as value)
+LABEL_FACET_PATTERNS: Dict[str, Dict[str, Union[str, List[str]]]] = {
+    "kubernetes/kubernetes": {
+        "component": r"^area/(.+)$",
+        "type": r"^kind/(.+)$",
+        "priority": r"^priority/(.+)$",
     },
-    "microsoft_vscode": {
-        r"^feature-request$": "type:feature",
-        r"^bug$": "type:bug",
+    "tensorflow/tensorflow": {
+        "component": r"^comp:(.+)$",
+        "type": r"^type:(.+)$",
+        "priority": r"^stat:(.+)$",
     },
-    "tensorflow_tensorflow": {
-        r"^comp:": "component",
-        r"^type:": "type",
-        r"^stat:": "status",
+    "pytorch/pytorch": {
+        "component": r"^module:\s*(.+)$",
+        "type": r"^(bug|feature|enhancement)$",
     },
-    "pytorch_pytorch": {
-        r"^module:": "component",
-        r"^triaged$": "status:triaged",
+    "microsoft/vscode": {
+        # vscode uses flat labels; enumerate known component labels (case-insensitive match)
+        "component": [
+            # Core editor
+            "editor", "editor-core", "editor-folding", "editor-find", "editor-rendering",
+            "editor-input", "editor-commands", "suggest",
+            # Workbench
+            "workbench", "workbench-editors", "workbench-tabs", "workbench-os-integration",
+            "file-explorer", "search", "settings", "keybindings", "themes",
+            # Languages
+            "javascript", "typescript", "html", "css", "css-less-scss", "json",
+            "markdown", "snippets", "languages", "languages-basic", "php",
+            # Platform / runtime
+            "terminal", "tasks", "debug", "extensions", "api", "ipc", "build",
+            "install-update", "electron", "performance",
+            # Version control
+            "git", "scm",
+            # Other capabilities
+            "accessibility", "telemetry", "error-telemetry", "config",
+            "release-notes", "settings-sync", "ux", "l10n-platform",
+            "file-watcher", "VIM",
+            # Additional editor sub-components
+            "editor-bracket-matching", "editor-autoclosing", "editor-multicursor",
+            "editor-wrapping", "keyboard-layout", "suggest", "emmet",
+            # Additional workbench sub-components
+            "workbench-electron", "workbench-multiroot", "workbench-editor-grid",
+            "workbench-diagnostics", "workbench-run-as-admin", "output",
+            "error-list", "menus", "layout",
+            # Other
+            "file-io", "vscode-build", "nodejs", "perf", "php", "electron",
+        ],
+        "type": ["bug", "feature-request", "enhancement", "documentation", "question"],
     },
-    "apache_airflow": {
-        r"^area:": "component",
-        r"^kind:": "type",
+    "apache/airflow": {
+        "component": r"^area:(.+)$",
+        "type": r"^kind:(.+)$",
     },
 }
 
@@ -96,46 +127,47 @@ def _extract_fields(issue: Dict) -> Dict:
 
 def clean_text(text: str) -> tuple[str, str]:
     """Clean issue body text. Returns (clean_body, extracted_code_blocks)."""
-    # Remove HTML comments
     text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
 
-    # Extract code blocks before stripping them
     code_blocks = "\n\n".join(re.findall(r"```[\s\S]*?```", text))
-    code_blocks = code_blocks[:5000]  # cap code blocks separately
+    code_blocks = code_blocks[:5000]
 
-    # Remove fenced code blocks from main text
     text = re.sub(r"```[\s\S]*?```", "[CODE_BLOCK]", text)
     text = re.sub(r"`[^`\n]+`", "[INLINE_CODE]", text)
-
-    # Collapse whitespace
     text = re.sub(r"\n{3,}", "\n\n", text)
     text = re.sub(r" {2,}", " ", text)
     text = text.strip()
-
-    # Truncate to max chars
     text = text[:MAX_BODY_CHARS]
 
     return text, code_blocks
 
 
+def _repo_key(repo: str) -> str:
+    """Convert filesystem repo name (owner_repo) to owner/repo for pattern lookup."""
+    return repo.replace("_", "/", 1)
+
+
 def normalize_labels(repo: str, labels: List[str]) -> Dict[str, Optional[str]]:
     """Map repo-specific labels to standardized facets: component, type, priority."""
     facets: Dict[str, Optional[str]] = {"component": None, "type": None, "priority": None}
-    patterns = LABEL_FACET_PATTERNS.get(repo, {})
+    patterns = LABEL_FACET_PATTERNS.get(_repo_key(repo), {})
 
-    for label in labels:
-        for pattern, facet in patterns.items():
-            if re.search(pattern, label, re.IGNORECASE):
-                if ":" in facet:
-                    key, val = facet.split(":", 1)
-                    if facets.get(key) is None:
-                        facets[key] = val
-                else:
-                    if facets.get(facet) is None:
-                        # Use label value (strip prefix)
-                        prefix_match = re.match(pattern, label, re.IGNORECASE)
-                        value = label[prefix_match.end():] if prefix_match else label
-                        facets[facet] = value
+    for facet, pattern in patterns.items():
+        if facet not in facets:
+            continue
+        if isinstance(pattern, list):
+            known = {p.lower() for p in pattern}
+            for label in labels:
+                if label.lower() in known:
+                    facets[facet] = label
+                    break
+        else:
+            for label in labels:
+                m = re.match(pattern, label, re.IGNORECASE)
+                if m:
+                    facets[facet] = m.group(1) if m.lastindex else m.group(0)
+                    break
+
     return facets
 
 

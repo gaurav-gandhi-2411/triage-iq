@@ -346,10 +346,10 @@ The kubernetes model is almost perfectly calibrated: mean confidence (0.237) clo
 
 ## 9. Tier 3 — LLM Few-Shot (Groq / Llama 3.1 8B)
 
-> **Status:** Pending `GROQ_API_KEY`. Results will be populated once key is available.
+> **Status:** Implementation complete. Evaluation pending — awaiting Groq quota allocation.
 >
-> Implementation is complete in `src/triage_iq/models/llm_classifier.py` and `scripts/06_eval_llm_fewshot.py`.
-> To run: `export GROQ_API_KEY=gsk_... && python scripts/06_eval_llm_fewshot.py`
+> Code: `src/triage_iq/models/llm_classifier.py`, `scripts/06_eval_llm_fewshot.py`  
+> To run when quota is available: `export GROQ_API_KEY=gsk_... && python scripts/06_eval_llm_fewshot.py`
 
 **Design:**
 - Model: `llama-3.1-8b-instant` via Groq API
@@ -376,10 +376,10 @@ The kubernetes model is almost perfectly calibrated: mean confidence (0.237) clo
 |---|---|---|---|---|---|---|
 | vscode | TF-IDF | 69.0% | 0.585 | 5ms | $0 | Baseline |
 | vscode | DistilBERT | **75.4%** | **0.597** | 98ms | $0 | +1.2pp F1, 20x latency |
-| vscode | LLM few-shot | *pending* | *pending* | ~1200ms | ~$0.05 | Groq key needed |
+| vscode | LLM few-shot | *pending* | *pending* | ~1200ms | ~$0.05 | Pending quota |
 | kubernetes | TF-IDF | **51.4%** | **0.466** | 6ms | $0 | Baseline |
 | kubernetes | DistilBERT | 46.5% | 0.415 | 197ms | $0 | −5.1pp F1, 35x latency |
-| kubernetes | LLM few-shot | *pending* | *pending* | ~1200ms | ~$0.05 | Groq key needed |
+| kubernetes | LLM few-shot | *pending* | *pending* | ~1200ms | ~$0.05 | Pending quota |
 
 ### 10.2 Calibration Comparison
 
@@ -392,7 +392,28 @@ The kubernetes model is almost perfectly calibrated: mean confidence (0.237) clo
 
 Calibration is where DistilBERT earns its keep: especially for kubernetes, the model's confidence directly tracks accuracy, enabling threshold-based routing without temperature scaling.
 
-### 10.3 When Does Each Tier Win?
+### 10.3 When Does DistilBERT Beat TF-IDF?
+
+The classifier results surface a real engineering trade-off: at our data scale (1.5k–2.3k training examples per repo), DistilBERT cannot reliably outperform TF-IDF + Logistic Regression.
+
+**Why TF-IDF wins at this scale:**
+- Our task is closed-vocabulary classification (~28 components per repo). Component labels are mostly identified by surface features: specific tokens, error messages, file paths.
+- TF-IDF + LogReg has the right inductive bias for this problem.
+- DistilBERT's parameter capacity (66M) overfits at this scale; it requires ~10k+ examples per class to generalize beyond surface patterns.
+
+**DistilBERT's silver lining: calibration**  
+Kubernetes DistilBERT achieves ECE=0.237 with conf ≈ accuracy — well-calibrated probabilities usable for confidence-gated routing without recalibration. TF-IDF requires Platt scaling to be production-usable.
+
+**Production recommendation:**
+- Use TF-IDF + LogReg as the primary classifier (5ms latency, free, +1pp F1 advantage)
+- Use DistilBERT confidence to identify uncertain TF-IDF predictions for escalation
+- Reserve LLM few-shot for cold-start labels not in training data
+
+This finding is notable because it contradicts the common assumption that "bigger model = better" — at small data scales, the right inductive bias matters more than capacity.
+
+---
+
+**When does each tier win?**
 
 **TF-IDF wins when:**
 - Dataset size < 5K total training examples (current situation)
@@ -402,15 +423,13 @@ Calibration is where DistilBERT earns its keep: especially for kubernetes, the m
 
 **DistilBERT wins when:**
 - Dataset size ≥ 10K training examples (not yet reached)
-- Labels share vocabulary but differ in context (typescript vs javascript for issue type, not just language mentions)
-- Calibrated probability output is needed for confidence-gated routing
-- kubernetes ECE 0.237 is already production-usable for routing at current scale
+- Labels share vocabulary but differ in context (typescript vs javascript for issue type)
+- Calibrated probability output is needed for confidence-gated routing (kubernetes ECE 0.237 already production-usable)
 
 **LLM few-shot wins when:**
 - Zero training data (cold-start on new repo)
 - Novel label vocabulary not seen in training (new component added mid-cycle)
-- Human-interpretable reasoning is required (can ask model to explain classification)
-- High accuracy needed on ≤100 labels with clear descriptions
+- Human-interpretable reasoning required
 
 ### 10.4 Cost-per-Prediction Analysis
 

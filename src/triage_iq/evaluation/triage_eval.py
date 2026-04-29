@@ -224,31 +224,59 @@ class TriageJudge:
         sample_size: int = 10,
         delay: float = 1.5,
     ) -> dict:
-        """Double-run judge on a sample; report score consistency."""
+        """Double-run judge on a sample; report score consistency with Cohen's kappa."""
         sample = records[:sample_size]
         run1 = [r for (_, r, _) in self.score_batch(sample, delay=delay) if r is not None]
-        time.sleep(2.0)
+        time.sleep(3.0)
         run2 = [r for (_, r, _) in self.score_batch(sample, delay=delay) if r is not None]
 
         if not run1 or not run2:
             return {"error": "No scores returned"}
 
+        n = min(len(run1), len(run2))
+        run1, run2 = run1[:n], run2[:n]
+
         dims = list(DIMENSION_MAX.keys())
         diffs = {d: [] for d in dims}
-        for s1, s2 in zip(run1, run2):
-            for d in dims:
-                diffs[d].append(abs(getattr(s1, d) - getattr(s2, d)))
+        pct_agree = {}
+        kappa = {}
+
+        for d in dims:
+            v1 = [getattr(s, d) for s in run1]
+            v2 = [getattr(s, d) for s in run2]
+            diffs[d] = [abs(a - b) for a, b in zip(v1, v2)]
+            pct_agree[d] = float(np.mean([a == b for a, b in zip(v1, v2)]))
+            kappa[d] = float(_cohens_kappa(v1, v2, max_val=DIMENSION_MAX[d]))
 
         return {
-            "sample_size": len(run1),
+            "sample_size": n,
             "mean_abs_diff_per_dim": {d: float(np.mean(v)) for d, v in diffs.items()},
+            "pct_agreement_per_dim": pct_agree,
+            "cohens_kappa_per_dim": kappa,
             "exact_agreement_rate": float(
                 np.mean([
                     int(all(getattr(s1, d) == getattr(s2, d) for d in dims))
                     for s1, s2 in zip(run1, run2)
                 ])
             ),
+            "low_reliability_dims": [d for d, k in kappa.items() if k < 0.4],
         }
+
+
+def _cohens_kappa(y1: list[int], y2: list[int], max_val: int) -> float:
+    """Cohen's kappa for two ordinal rating sequences."""
+    n = len(y1)
+    if n == 0:
+        return 0.0
+    po = sum(a == b for a, b in zip(y1, y2)) / n
+    # Expected agreement under independence
+    cats = list(range(max_val + 1))
+    p1 = [y1.count(c) / n for c in cats]
+    p2 = [y2.count(c) / n for c in cats]
+    pe = sum(p1[i] * p2[i] for i in range(len(cats)))
+    if pe >= 1.0:
+        return 1.0
+    return (po - pe) / (1.0 - pe)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -281,17 +309,35 @@ Score this triage plan using the rubric. Return ONLY valid JSON.
     def _groq_completion(self, messages: list[dict]) -> str:
         try:
             from groq import Groq
+            from groq import RateLimitError, APIStatusError
         except ImportError as e:
             raise ImportError("pip install groq") from e
 
         client = Groq(api_key=self._groq_key)
-        resp = client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            temperature=self.temperature,
-            max_tokens=512,
-        )
-        return resp.choices[0].message.content.strip()
+        backoff = 6.0
+        for attempt in range(6):
+            try:
+                resp = client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    temperature=self.temperature,
+                    max_tokens=512,
+                )
+                return resp.choices[0].message.content.strip()
+            except RateLimitError:
+                if attempt == 5:
+                    raise
+                jitter = backoff * (0.5 + 0.5 * (attempt / 5))
+                logger.warning("Judge rate limit — sleeping %.1fs (attempt %d/6)", jitter, attempt + 1)
+                time.sleep(jitter)
+                backoff = min(backoff * 2, 90.0)
+            except APIStatusError as e:
+                if e.status_code >= 500 and attempt < 5:
+                    time.sleep(backoff)
+                    backoff = min(backoff * 2, 90.0)
+                else:
+                    raise
+        raise RuntimeError("Judge completion failed after 6 attempts")
 
     @staticmethod
     def _parse_score(raw: str) -> JudgeScore:

@@ -147,6 +147,7 @@ class TriageAssistant:
         text = f"{title}. {body}"
 
         # System 1: TF-IDF top-3
+        t1 = time.perf_counter()
         try:
             proba = self.classifier.predict_proba(pd.Series([text]))
             classes = self.classifier.classes_()
@@ -157,16 +158,20 @@ class TriageAssistant:
         except Exception as e:
             logger.warning("Classifier failed: %s", e)
             classifier_top3 = [{"label": "unknown", "confidence": 0.0}]
+        t_classify = time.perf_counter() - t1
 
         # System 2: BGE top-5 similar
+        t2 = time.perf_counter()
         try:
             num = int(issue.get("number", -1))
             similar_raw = self.detector.retrieve(text, k=5, exclude_number=num if num > 0 else None)
         except Exception as e:
             logger.warning("Retrieval failed: %s", e)
             similar_raw = []
+        t_retrieve = time.perf_counter() - t2
 
         # System 3: resolution prediction
+        t3 = time.perf_counter()
         try:
             from triage_iq.models.resolution import engineer_features
 
@@ -189,6 +194,7 @@ class TriageAssistant:
         except Exception as e:
             logger.warning("Resolution predictor failed: %s", e)
             pred_days, lo_days, hi_days = 7.0, 1.0, 30.0
+        t_predict = time.perf_counter() - t3
 
         prompt = build_triage_prompt(
             issue_title=title,
@@ -207,6 +213,9 @@ class TriageAssistant:
             "pred_days": pred_days,
             "lo_days": lo_days,
             "hi_days": hi_days,
+            "_t_classify": t_classify,
+            "_t_retrieve": t_retrieve,
+            "_t_predict": t_predict,
         }
 
     # ------------------------------------------------------------------
@@ -227,17 +236,35 @@ class TriageAssistant:
     def _groq_completion(self, messages: list[dict]) -> str:
         try:
             from groq import Groq
+            from groq import RateLimitError, APIStatusError
         except ImportError as e:
             raise ImportError("pip install groq") from e
 
         client = Groq(api_key=self._groq_key)
-        resp = client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            temperature=self.temperature,
-            max_tokens=self.max_tokens,
-        )
-        return resp.choices[0].message.content.strip()
+        backoff = 5.0
+        for attempt in range(6):
+            try:
+                resp = client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    temperature=self.temperature,
+                    max_tokens=self.max_tokens,
+                )
+                return resp.choices[0].message.content.strip()
+            except RateLimitError:
+                if attempt == 5:
+                    raise
+                jitter = backoff * (0.5 + 0.5 * (attempt / 5))
+                logger.warning("Rate limit hit — sleeping %.1fs (attempt %d/6)", jitter, attempt + 1)
+                time.sleep(jitter)
+                backoff = min(backoff * 2, 60.0)
+            except APIStatusError as e:
+                if e.status_code >= 500 and attempt < 5:
+                    time.sleep(backoff)
+                    backoff = min(backoff * 2, 60.0)
+                else:
+                    raise
+        raise RuntimeError("Groq completion failed after 6 attempts")
 
     @staticmethod
     def _parse_plan(raw: str) -> TriagePlan:

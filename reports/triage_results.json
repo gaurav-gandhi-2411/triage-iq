@@ -1,0 +1,45 @@
+{
+  "n_issues_evaluated": 60,
+  "n_triage_failures": 0,
+  "n_judge_failures": 178,
+  "runtime_seconds": 650.4001614999725,
+  "llm_component_accuracy": 0.5833333333333334,
+  "tfidf_component_accuracy": 0.6166666666666667,
+  "majority_component_accuracy": 0.11666666666666667,
+  "by_repo": {
+    "microsoft_vscode": {
+      "n_gold": 30,
+      "llm_component_accuracy": 0.5333333333333333,
+      "tfidf_component_accuracy": 0.5,
+      "majority_component_accuracy": 0.13333333333333333
+    },
+    "kubernetes_kubernetes": {
+      "n_gold": 30,
+      "llm_component_accuracy": 0.6333333333333333,
+      "tfidf_component_accuracy": 0.7333333333333333,
+      "majority_component_accuracy": 0.1
+    }
+  },
+  "comparison": {
+    "System 1 (TF-IDF)": {
+      "total_mean": 7.5,
+      "total_pct": 0.5,
+      "component_match": 2.0,
+      "similar_issues_relevance": 0.0,
+      "resolution_estimate_reasonableness": 1.5,
+      "priority_alignment": 1.0,
+      "next_steps_actionability": 1.5,
+      "overall_quality": 1.5
+    }
+  },
+  "judge_reliability": {},
+  "latency": {},
+  "estimated_groq_tokens": 150000,
+  "estimated_groq_usd": 0.0405,
+  "findings": [
+    "Component accuracy \u2014 LLM: 58.3%, TF-IDF: 61.7%, Majority: 11.7%"
+  ],
+  "hand_validation": {},
+  "judge_model": "llama-3.3-70b-versatile",
+  "triage_model": "llama-3.1-8b-instant"
+}

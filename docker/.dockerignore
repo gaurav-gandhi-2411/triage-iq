@@ -1,0 +1,30 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache
+.coverage
+*.egg-info
+dist/
+build/
+
+# Data (mounted as volume at runtime)
+data/
+
+# Dev / CI
+.github/
+notebooks/
+reports/
+tests/
+*.log
+.env
+.env.*
+
+# Docker
+docker/

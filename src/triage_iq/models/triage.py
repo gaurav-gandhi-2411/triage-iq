@@ -1,0 +1,254 @@
+"""System 4 — LLM Triage Assistant.
+
+Integrates Systems 1–3 to produce a structured TriagePlan for each incoming
+GitHub issue. Uses Groq (llama-3.1-8b-instant) with 2-shot examples and
+Pydantic-validated JSON output.
+"""
+
+import json
+import logging
+import os
+import re
+import time
+from typing import Literal, Optional
+
+import numpy as np
+import pandas as pd
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Pydantic output schema
+# ---------------------------------------------------------------------------
+
+
+class SimilarIssue(BaseModel):
+    number: int
+    similarity: float = Field(ge=0.0, le=1.0)
+    relevance_note: str
+
+
+class TriagePlan(BaseModel):
+    """Structured triage plan produced by the LLM assistant."""
+
+    predicted_component: str
+    component_confidence: float = Field(ge=0.0, le=1.0)
+    similar_issues: list[SimilarIssue] = Field(default_factory=list)
+    expected_resolution_summary: str
+    expected_resolution_lower_days: float = Field(ge=0.0)
+    expected_resolution_upper_days: float = Field(ge=0.0)
+    priority_guess: Literal["low", "medium", "high"]
+    priority_rationale: str
+    suggested_assignee_class: str
+    suggested_next_steps: list[str] = Field(min_length=1)
+    triage_summary: str
+
+    @field_validator("component_confidence", mode="before")
+    @classmethod
+    def clamp_confidence(cls, v):
+        return max(0.0, min(1.0, float(v)))
+
+    @model_validator(mode="after")
+    def upper_ge_lower(self):
+        if self.expected_resolution_upper_days < self.expected_resolution_lower_days:
+            self.expected_resolution_upper_days = self.expected_resolution_lower_days
+        return self
+
+
+# ---------------------------------------------------------------------------
+# Main assistant class
+# ---------------------------------------------------------------------------
+
+
+class TriageAssistant:
+    """Orchestrates Systems 1–3 and calls an LLM to produce a TriagePlan.
+
+    Usage:
+        assistant = TriageAssistant(
+            repo="microsoft/vscode",
+            classifier=tfidf_clf,
+            detector=dup_detector,
+            predictor=resolution_predictor,
+            train_df=train_df,
+        )
+        plan = assistant.triage(issue_row)
+    """
+
+    def __init__(
+        self,
+        repo: str,
+        classifier,
+        detector,
+        predictor,
+        train_df: pd.DataFrame,
+        groq_api_key: Optional[str] = None,
+        model: str = "llama-3.1-8b-instant",
+        temperature: float = 0.0,
+        max_tokens: int = 1024,
+    ) -> None:
+        self.repo = repo
+        self.classifier = classifier
+        self.detector = detector
+        self.predictor = predictor
+        self.train_df = train_df
+        self.model = model
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+
+        key = groq_api_key or os.environ.get("GROQ_API_KEY", "")
+        if not key:
+            raise EnvironmentError(
+                "GROQ_API_KEY not set. Export it or pass groq_api_key= to TriageAssistant."
+            )
+        self._groq_key = key
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def triage(self, issue: pd.Series) -> TriagePlan:
+        """Produce a TriagePlan for a single issue row."""
+        t0 = time.perf_counter()
+        signals = self._collect_signals(issue)
+        plan, raw = self._call_llm(signals)
+        elapsed = time.perf_counter() - t0
+        logger.info("[%s] Triaged #%s in %.2fs", self.repo, issue.get("number", "?"), elapsed)
+        return plan
+
+    def triage_batch(
+        self, df: pd.DataFrame, delay: float = 0.5
+    ) -> list[tuple[int, Optional[TriagePlan], Optional[str]]]:
+        """Triage a batch of issues.
+
+        Returns list of (issue_number, plan_or_None, error_or_None).
+        """
+        results = []
+        for i, (_, row) in enumerate(df.iterrows()):
+            if i > 0:
+                time.sleep(delay)
+            try:
+                plan = self.triage(row)
+                results.append((int(row["number"]), plan, None))
+            except Exception as exc:
+                logger.warning("Failed to triage #%s: %s", row.get("number", "?"), exc)
+                results.append((int(row.get("number", -1)), None, str(exc)))
+        return results
+
+    # ------------------------------------------------------------------
+    # Signal collection
+    # ------------------------------------------------------------------
+
+    def _collect_signals(self, issue: pd.Series) -> dict:
+        from triage_iq.prompts.triage_prompt import build_triage_prompt
+
+        title = str(issue.get("title", ""))
+        body = str(issue.get("body_clean", issue.get("body", "")))
+        text = f"{title}. {body}"
+
+        # System 1: TF-IDF top-3
+        try:
+            proba = self.classifier.predict_proba(pd.Series([text]))
+            classes = self.classifier.classes_()
+            top_idx = np.argsort(proba[0])[::-1][:3]
+            classifier_top3 = [
+                {"label": classes[i], "confidence": float(proba[0][i])} for i in top_idx
+            ]
+        except Exception as e:
+            logger.warning("Classifier failed: %s", e)
+            classifier_top3 = [{"label": "unknown", "confidence": 0.0}]
+
+        # System 2: BGE top-5 similar
+        try:
+            num = int(issue.get("number", -1))
+            similar_raw = self.detector.retrieve(text, k=5, exclude_number=num if num > 0 else None)
+        except Exception as e:
+            logger.warning("Retrieval failed: %s", e)
+            similar_raw = []
+
+        # System 3: resolution prediction
+        try:
+            from triage_iq.models.resolution import engineer_features
+
+            issue_df = pd.DataFrame([issue])
+            # Gold parquet uses "gold_component" — remap for engineer_features
+            if "gold_component" in issue_df.columns and "component" not in issue_df.columns:
+                issue_df = issue_df.rename(columns={"gold_component": "component", "gold_priority": "priority"})
+            feats, _ = engineer_features(issue_df, train_df=self.train_df)
+            # Align columns to what the model expects
+            for col in self.predictor.feature_names:
+                if col not in feats.columns:
+                    feats[col] = 0.0
+            feats = feats[self.predictor.feature_names]
+
+            pred_hrs = self.predictor.predict(feats)[0]
+            lo_hrs, hi_hrs = self.predictor.predict_intervals(feats)
+            pred_days = pred_hrs / 24.0
+            lo_days = float(lo_hrs[0]) / 24.0
+            hi_days = float(hi_hrs[0]) / 24.0
+        except Exception as e:
+            logger.warning("Resolution predictor failed: %s", e)
+            pred_days, lo_days, hi_days = 7.0, 1.0, 30.0
+
+        prompt = build_triage_prompt(
+            issue_title=title,
+            issue_body=body,
+            classifier_top3=classifier_top3,
+            similar_issues=similar_raw,
+            resolution_point_days=pred_days,
+            resolution_lower_days=lo_days,
+            resolution_upper_days=hi_days,
+            repo=self.repo,
+        )
+        return {
+            "prompt": prompt,
+            "classifier_top3": classifier_top3,
+            "similar_raw": similar_raw,
+            "pred_days": pred_days,
+            "lo_days": lo_days,
+            "hi_days": hi_days,
+        }
+
+    # ------------------------------------------------------------------
+    # LLM call + parsing
+    # ------------------------------------------------------------------
+
+    def _call_llm(self, signals: dict) -> tuple[TriagePlan, str]:
+        from triage_iq.prompts.triage_prompt import SYSTEM_PROMPT, build_few_shot_examples
+
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+        messages.extend(build_few_shot_examples())
+        messages.append({"role": "user", "content": signals["prompt"]})
+
+        raw = self._groq_completion(messages)
+        plan = self._parse_plan(raw)
+        return plan, raw
+
+    def _groq_completion(self, messages: list[dict]) -> str:
+        try:
+            from groq import Groq
+        except ImportError as e:
+            raise ImportError("pip install groq") from e
+
+        client = Groq(api_key=self._groq_key)
+        resp = client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
+        )
+        return resp.choices[0].message.content.strip()
+
+    @staticmethod
+    def _parse_plan(raw: str) -> TriagePlan:
+        """Extract JSON from raw LLM output and validate as TriagePlan."""
+        # Strip markdown code fences if present
+        text = re.sub(r"^```(?:json)?\s*", "", raw.strip(), flags=re.MULTILINE)
+        text = re.sub(r"\s*```$", "", text.strip(), flags=re.MULTILINE)
+
+        # Find first { ... } block
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        if not match:
+            raise ValueError(f"No JSON object found in LLM response: {raw[:200]}")
+        data = json.loads(match.group(0))
+        return TriagePlan.model_validate(data)

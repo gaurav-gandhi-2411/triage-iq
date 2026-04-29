@@ -6,6 +6,15 @@
 
 ---
 
+> **CRITICAL FINDING — Temporal Distribution Shift:**
+> The kubernetes test split (late-2015 issues) was resolved in 2016–2018, giving a test median of **676.8 days** against a training median of **1.0 day**. The model achieves only +3.3% improvement over naive on kubernetes — this is not a model failure. The task is unsolvable with this split: no model can predict 700-day resolutions from 1-day training examples without retraining on same-era data.
+>
+> The vscode split has the inverse shift: training on 2015–2023 slow-close issues, evaluating on 2025–2026 fast-close issues (test median **0.1 days** vs training median **3.8 days**). The model achieves +19.1% improvement despite this headwind, which is within the 20–35% SotA range.
+>
+> **Production implication:** Any deployment must retrain periodically on recent same-era data and apply conformal prediction on a matched calibration set before reporting confidence intervals.
+
+---
+
 ## 1. Problem Framing
 
 Resolution time prediction is one of the hardest structured-prediction tasks in software engineering intelligence. Even SotA models on well-curated datasets typically achieve only 20–35% MAE improvement over a median baseline.

@@ -53,6 +53,7 @@ REPO_MAP = {
 TRIAGE_DELAY = 1.5
 JUDGE_DELAY = 2.0
 CHECKPOINT_PATH = ROOT / "data" / "triage_eval_checkpoint.jsonl"
+JUDGE_CHECKPOINT_PATH = ROOT / "data" / "judge_scores_checkpoint.jsonl"
 
 
 # ---------------------------------------------------------------------------
@@ -114,6 +115,29 @@ def load_checkpoint() -> dict[int, dict]:
 def save_checkpoint(rec: dict) -> None:
     with open(CHECKPOINT_PATH, "a", encoding="utf-8") as f:
         f.write(json.dumps(rec, default=str) + "\n")
+
+
+def load_judge_checkpoint() -> dict[tuple[int, str], dict]:
+    """Load previously completed judge scores keyed by (issue_number, sys_label)."""
+    done = {}
+    if JUDGE_CHECKPOINT_PATH.exists():
+        with open(JUDGE_CHECKPOINT_PATH, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                    done[(rec["issue_number"], rec["sys_label"])] = rec["score"]
+                except Exception:
+                    pass
+        logger.info("Judge checkpoint: %d scores already completed", len(done))
+    return done
+
+
+def save_judge_score(issue_number: int, sys_label: str, score: dict) -> None:
+    with open(JUDGE_CHECKPOINT_PATH, "a", encoding="utf-8") as f:
+        f.write(json.dumps({"issue_number": issue_number, "sys_label": sys_label, "score": score}) + "\n")
 
 
 # ---------------------------------------------------------------------------
@@ -349,7 +373,7 @@ def generate_report(results: dict, sample_plans: list[dict], out_path: Path) -> 
         "```",
         "",
         "**LLM:** Groq `llama-3.1-8b-instant`, temperature=0.0, max_tokens=1024",
-        "**Judge:** Groq `llama-3.1-70b-versatile`, 6-dim rubric, double-run reliability",
+        "**Judge:** Groq `llama-3.3-70b-versatile`, 6-dim rubric, double-run reliability",
         "",
         "### Latency Breakdown",
         "",
@@ -578,6 +602,7 @@ def main():
     parser.add_argument("--n-samples", type=int, default=5,
                         help="Sample plans per repo for reports/sample_triage_plans.json")
     parser.add_argument("--clear-checkpoint", action="store_true")
+    parser.add_argument("--clear-judge-checkpoint", action="store_true")
     args = parser.parse_args()
 
     load_dotenv(ROOT / ".env")
@@ -594,6 +619,9 @@ def main():
     if args.clear_checkpoint and CHECKPOINT_PATH.exists():
         CHECKPOINT_PATH.unlink()
         logger.info("Checkpoint cleared.")
+    if args.clear_judge_checkpoint and JUDGE_CHECKPOINT_PATH.exists():
+        JUDGE_CHECKPOINT_PATH.unlink()
+        logger.info("Judge checkpoint cleared.")
 
     checkpoint = load_checkpoint()
     gold_all = pd.read_parquet(gold_path)
@@ -791,6 +819,7 @@ def main():
     if not args.skip_judge:
         logger.info("Running LLM-as-judge on %d plans (3 plans × issue)...", n_total)
         judge = TriageJudge(groq_api_key=groq_key)
+        judge_checkpoint = load_judge_checkpoint()
 
         for rec in eval_records:
             num = rec["issue_number"]
@@ -808,6 +837,19 @@ def main():
                 plan_dict = rec.get(plan_key)
                 if plan_dict is None:
                     continue
+
+                # Skip if already scored in a previous run
+                if (num, sys_label) in judge_checkpoint:
+                    score_dict = judge_checkpoint[(num, sys_label)]
+                    try:
+                        score = JudgeScore.model_validate(score_dict)
+                        sys_scores[sys_label].append(score)
+                        rec["judge_scores"][sys_label] = score_dict
+                        logger.info("[judge] #%s %s → %d/%d (checkpoint)", num, sys_label, score.total(), MAX_TOTAL)
+                    except Exception:
+                        pass
+                    continue
+
                 time.sleep(args.judge_delay)
                 try:
                     score = judge.score(
@@ -818,6 +860,7 @@ def main():
                     )
                     sys_scores[sys_label].append(score)
                     rec["judge_scores"][sys_label] = score.model_dump()
+                    save_judge_score(num, sys_label, score.model_dump())
                     logger.info("[judge] #%s %s → %d/%d", num, sys_label, score.total(), MAX_TOTAL)
                 except Exception as exc:
                     logger.warning("[judge] #%s %s FAILED: %s", num, sys_label, exc)
@@ -964,7 +1007,7 @@ def main():
         "estimated_groq_usd": est_usd,
         "findings": findings,
         "hand_validation": hand_val,
-        "judge_model": "llama-3.1-70b-versatile",
+        "judge_model": "llama-3.3-70b-versatile",
         "triage_model": "llama-3.1-8b-instant",
     }
 

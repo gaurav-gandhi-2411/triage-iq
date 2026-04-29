@@ -157,7 +157,7 @@ class TriageJudge:
     def __init__(
         self,
         groq_api_key: Optional[str] = None,
-        model: str = "llama-3.1-70b-versatile",
+        model: str = "llama-3.3-70b-versatile",
         temperature: float = 0.0,
     ) -> None:
         self.model = model
@@ -263,21 +263,6 @@ class TriageJudge:
         }
 
 
-def _cohens_kappa(y1: list[int], y2: list[int], max_val: int) -> float:
-    """Cohen's kappa for two ordinal rating sequences."""
-    n = len(y1)
-    if n == 0:
-        return 0.0
-    po = sum(a == b for a, b in zip(y1, y2)) / n
-    # Expected agreement under independence
-    cats = list(range(max_val + 1))
-    p1 = [y1.count(c) / n for c in cats]
-    p2 = [y2.count(c) / n for c in cats]
-    pe = sum(p1[i] * p2[i] for i in range(len(cats)))
-    if pe >= 1.0:
-        return 1.0
-    return (po - pe) / (1.0 - pe)
-
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
@@ -324,7 +309,11 @@ Score this triage plan using the rubric. Return ONLY valid JSON.
                     max_tokens=512,
                 )
                 return resp.choices[0].message.content.strip()
-            except RateLimitError:
+            except RateLimitError as e:
+                # Fail fast on daily token quota (TPD) — retrying won't help within hours.
+                err_str = str(e)
+                if "tokens per day" in err_str or '"type": "tokens"' in err_str or "TPD" in err_str:
+                    raise
                 if attempt == 5:
                     raise
                 jitter = backoff * (0.5 + 0.5 * (attempt / 5))
@@ -348,6 +337,21 @@ Score this triage plan using the rubric. Return ONLY valid JSON.
             raise ValueError(f"No JSON in judge response: {raw[:200]}")
         data = json.loads(match.group(0))
         return JudgeScore.model_validate(data)
+
+
+def _cohens_kappa(y1: list[int], y2: list[int], max_val: int) -> float:
+    """Cohen's kappa for two ordinal rating sequences."""
+    n = len(y1)
+    if n == 0:
+        return 0.0
+    po = sum(a == b for a, b in zip(y1, y2)) / n
+    cats = list(range(max_val + 1))
+    p1 = [y1.count(c) / n for c in cats]
+    p2 = [y2.count(c) / n for c in cats]
+    pe = sum(p1[i] * p2[i] for i in range(len(cats)))
+    if pe >= 1.0:
+        return 1.0
+    return (po - pe) / (1.0 - pe)
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,120 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  GCP_REGION: us-central1
+  GCP_PROJECT: triageiq-portfolio
+  AR_REPO: triageiq
+  SERVICE_NAME: triageiq-api
+  IMAGE: us-central1-docker.pkg.dev/triageiq-portfolio/triageiq/api
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # for Workload Identity Federation (preferred over SA key)
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Download production models from GCS
+        run: |
+          mkdir -p data/models data/processed
+          gsutil -m cp \
+            "gs://triageiq-portfolio-models/models/component_classifier_microsoft_vscode.pkl" \
+            "gs://triageiq-portfolio-models/models/component_classifier_kubernetes_kubernetes.pkl" \
+            "gs://triageiq-portfolio-models/models/resolution_predictor_microsoft_vscode.pkl" \
+            "gs://triageiq-portfolio-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
+            data/models/
+          gsutil -m cp -r \
+            "gs://triageiq-portfolio-models/models/dup_index_microsoft_vscode_bge" \
+            "gs://triageiq-portfolio-models/models/dup_index_kubernetes_kubernetes_bge" \
+            data/models/
+          gsutil -m cp \
+            "gs://triageiq-portfolio-models/processed/microsoft_vscode_temporal_train.parquet" \
+            "gs://triageiq-portfolio-models/processed/kubernetes_kubernetes_temporal_train.parquet" \
+            data/processed/
+
+      - name: Build and push image
+        run: |
+          docker build \
+            -f docker/Dockerfile.prod \
+            -t ${{ env.IMAGE }}:${{ github.sha }} \
+            -t ${{ env.IMAGE }}:latest \
+            .
+          docker push ${{ env.IMAGE }}:${{ github.sha }}
+          docker push ${{ env.IMAGE }}:latest
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.IMAGE }}:${{ github.sha }} \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 4Gi \
+            --cpu 2 \
+            --min-instances 0 \
+            --max-instances 5 \
+            --timeout 300 \
+            --update-secrets GROQ_API_KEY=groq-api-key:latest \
+            --quiet
+          echo "url=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region ${{ env.GCP_REGION }} \
+            --format 'value(status.url)')" >> $GITHUB_OUTPUT
+
+      - name: Smoke test
+        id: smoke
+        run: |
+          URL="${{ steps.deploy.outputs.url }}"
+          echo "Testing $URL/health"
+          for i in 1 2 3 4 5; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/health")
+            if [ "$STATUS" = "200" ]; then
+              echo "Health check passed (attempt $i)"
+              break
+            fi
+            echo "Attempt $i: status $STATUS — retrying in 10s"
+            sleep 10
+          done
+          if [ "$STATUS" != "200" ]; then
+            echo "Smoke test FAILED with status $STATUS"
+            exit 1
+          fi
+          BODY=$(curl -sf "$URL/health")
+          echo "Health: $BODY"
+
+      - name: Rollback on smoke test failure
+        if: failure() && steps.smoke.conclusion == 'failure'
+        run: |
+          PREV=$(gcloud run revisions list \
+            --service ${{ env.SERVICE_NAME }} \
+            --region ${{ env.GCP_REGION }} \
+            --format "value(REVISION)" \
+            --sort-by "~LAST_DEPLOYED_TIME" \
+            --limit 2 | tail -1)
+          echo "Rolling back to $PREV"
+          gcloud run services update-traffic ${{ env.SERVICE_NAME }} \
+            --region ${{ env.GCP_REGION }} \
+            --to-revisions "$PREV=100"
+
+      - name: Print deployment URL
+        if: success()
+        run: echo "Deployed to ${{ steps.deploy.outputs.url }}"

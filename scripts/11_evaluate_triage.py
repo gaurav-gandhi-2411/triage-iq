@@ -52,8 +52,10 @@ REPO_MAP = {
 
 TRIAGE_DELAY = 1.5
 JUDGE_DELAY = 2.0
+JUDGE_FLUSH_EVERY = 5  # write progress log every N judge calls
 CHECKPOINT_PATH = ROOT / "data" / "triage_eval_checkpoint.jsonl"
 JUDGE_CHECKPOINT_PATH = ROOT / "data" / "judge_scores_checkpoint.jsonl"
+PROGRESS_PATH = ROOT / "reports" / "judge_eval_progress.md"
 
 
 # ---------------------------------------------------------------------------
@@ -138,6 +140,30 @@ def load_judge_checkpoint() -> dict[tuple[int, str], dict]:
 def save_judge_score(issue_number: int, sys_label: str, score: dict) -> None:
     with open(JUDGE_CHECKPOINT_PATH, "a", encoding="utf-8") as f:
         f.write(json.dumps({"issue_number": issue_number, "sys_label": sys_label, "score": score}) + "\n")
+
+
+def _is_tpd_error(exc: Exception) -> bool:
+    """Return True if the exception is a Groq tokens-per-day rate limit (429)."""
+    msg = str(exc).lower()
+    return any(kw in msg for kw in ("429", "rate_limit", "tokens per day", "daily limit", "tpd"))
+
+
+def _write_progress(calls_done: int, calls_total: int, tpd_hit: bool = False) -> None:
+    """Append a progress row to reports/judge_eval_progress.md."""
+    import datetime
+    PROGRESS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    today = datetime.date.today().isoformat()
+    note = "TPD hit — resuming tomorrow" if tpd_hit else "in progress"
+    if calls_done >= calls_total:
+        note = "complete"
+
+    header_needed = not PROGRESS_PATH.exists()
+    with open(PROGRESS_PATH, "a", encoding="utf-8") as f:
+        if header_needed:
+            f.write("# Judge Eval Progress\n\n")
+            f.write("| Date | Calls scored | Cumulative | Notes |\n")
+            f.write("|---|---|---|---|\n")
+        f.write(f"| {today} | {calls_done} | {calls_done}/{calls_total} | {note} |\n")
 
 
 # ---------------------------------------------------------------------------
@@ -817,9 +843,12 @@ def main():
     judge_reliability = {}
 
     if not args.skip_judge:
+        judge_calls_total = n_total * 3
         logger.info("Running LLM-as-judge on %d plans (3 plans × issue)...", n_total)
         judge = TriageJudge(groq_api_key=groq_key)
         judge_checkpoint = load_judge_checkpoint()
+        judge_calls_done = len(judge_checkpoint)
+        logger.info("Judge checkpoint: %d/%d already scored", judge_calls_done, judge_calls_total)
 
         for rec in eval_records:
             num = rec["issue_number"]
@@ -861,8 +890,22 @@ def main():
                     sys_scores[sys_label].append(score)
                     rec["judge_scores"][sys_label] = score.model_dump()
                     save_judge_score(num, sys_label, score.model_dump())
-                    logger.info("[judge] #%s %s → %d/%d", num, sys_label, score.total(), MAX_TOTAL)
+                    judge_calls_done += 1
+                    logger.info("[judge] #%s %s → %d/%d [%d/%d total]",
+                                num, sys_label, score.total(), MAX_TOTAL,
+                                judge_calls_done, judge_calls_total)
+                    if judge_calls_done % JUDGE_FLUSH_EVERY == 0:
+                        _write_progress(judge_calls_done, judge_calls_total)
+                        logger.info("[judge] progress flushed: %d/%d", judge_calls_done, judge_calls_total)
                 except Exception as exc:
+                    if _is_tpd_error(exc):
+                        logger.warning(
+                            "[judge] Groq TPD rate limit hit after %d/%d calls. "
+                            "Checkpoint is current. Exiting cleanly (exit 0).",
+                            judge_calls_done, judge_calls_total,
+                        )
+                        _write_progress(judge_calls_done, judge_calls_total, tpd_hit=True)
+                        sys.exit(0)
                     logger.warning("[judge] #%s %s FAILED: %s", num, sys_label, exc)
                     n_judge_failures += 1
 
@@ -1021,6 +1064,9 @@ def main():
     logger.info("Sample plans saved to %s (%d plans)", samples_path, len(all_samples))
 
     generate_report(results, all_samples, ROOT / "reports" / "06_triage_assistant.md")
+
+    if not args.skip_judge:
+        _write_progress(judge_calls_done, judge_calls_total)
 
     print("\n=== EVAL COMPLETE ===")
     print(f"Issues:        {n_total} evaluated, {n_triage_failures} triage failures, {n_judge_failures} judge failures")

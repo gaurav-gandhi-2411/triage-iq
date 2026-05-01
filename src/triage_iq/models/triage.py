@@ -116,6 +116,45 @@ class TriageAssistant:
         logger.info("[%s] Triaged #%s in %.2fs", self.repo, issue.get("number", "?"), elapsed)
         return plan
 
+    def triage_with_metadata(self, issue: pd.Series) -> tuple[TriagePlan, dict]:
+        """Like triage() but also returns per-system timing and token usage."""
+        t0 = time.perf_counter()
+        signals = self._collect_signals(issue)
+        plan, raw, usage = self._call_llm_verbose(signals)
+        elapsed = time.perf_counter() - t0
+
+        t_llm = max(
+            0.0,
+            elapsed - signals["_t_classify"] - signals["_t_retrieve"] - signals["_t_predict"],
+        )
+        mid = (plan.expected_resolution_lower_days + plan.expected_resolution_upper_days) / 2.0
+
+        metadata = {
+            "system1_latency_ms": round(signals["_t_classify"] * 1000, 1),
+            "system2_latency_ms": round(signals["_t_retrieve"] * 1000, 1),
+            "system3_latency_ms": round(signals["_t_predict"] * 1000, 1),
+            "system4_latency_ms": round(t_llm * 1000, 1),
+            "total_latency_ms": round(elapsed * 1000, 1),
+            "groq_tokens_prompt": usage.get("prompt_tokens", 0),
+            "groq_tokens_completion": usage.get("completion_tokens", 0),
+            "estimated_cost_usd": round(
+                (usage.get("prompt_tokens", 0) * 0.27 + usage.get("completion_tokens", 0) * 0.27)
+                / 1_000_000,
+                8,
+            ),
+            "duplicate_count": len(plan.similar_issues),
+            "predicted_resolution_days_p50": round(mid, 1),
+        }
+        logger.info(
+            "[%s] Triaged #%s in %.2fs (groq %d+%d tok)",
+            self.repo,
+            issue.get("number", "?"),
+            elapsed,
+            metadata["groq_tokens_prompt"],
+            metadata["groq_tokens_completion"],
+        )
+        return plan, metadata
+
     def triage_batch(
         self, df: pd.DataFrame, delay: float = 0.5
     ) -> list[tuple[int, Optional[TriagePlan], Optional[str]]]:
@@ -229,11 +268,22 @@ class TriageAssistant:
         messages.extend(build_few_shot_examples())
         messages.append({"role": "user", "content": signals["prompt"]})
 
-        raw = self._groq_completion(messages)
+        raw, _ = self._groq_completion(messages)
         plan = self._parse_plan(raw)
         return plan, raw
 
-    def _groq_completion(self, messages: list[dict]) -> str:
+    def _call_llm_verbose(self, signals: dict) -> tuple[TriagePlan, str, dict]:
+        from triage_iq.prompts.triage_prompt import SYSTEM_PROMPT, build_few_shot_examples
+
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+        messages.extend(build_few_shot_examples())
+        messages.append({"role": "user", "content": signals["prompt"]})
+
+        raw, usage = self._groq_completion(messages)
+        plan = self._parse_plan(raw)
+        return plan, raw, usage
+
+    def _groq_completion(self, messages: list[dict]) -> tuple[str, dict]:
         try:
             from groq import Groq
             from groq import RateLimitError, APIStatusError
@@ -250,7 +300,14 @@ class TriageAssistant:
                     temperature=self.temperature,
                     max_tokens=self.max_tokens,
                 )
-                return resp.choices[0].message.content.strip()
+                content = resp.choices[0].message.content.strip()
+                usage = {}
+                if resp.usage:
+                    usage = {
+                        "prompt_tokens": resp.usage.prompt_tokens,
+                        "completion_tokens": resp.usage.completion_tokens,
+                    }
+                return content, usage
             except RateLimitError:
                 if attempt == 5:
                     raise

@@ -1,0 +1,66 @@
+# Cloud Monitoring alert policies for TriageIQ.
+# Apply via: bash deploy/monitoring/apply_alerts.sh
+# Or import in Cloud Console → Monitoring → Alerting → Create Policy.
+
+- displayName: "TriageIQ — High error rate"
+  documentation:
+    content: "5xx error rate on /triage exceeded 5% over 5 minutes."
+  conditions:
+    - displayName: "Error rate > 5%"
+      conditionThreshold:
+        filter: >
+          resource.type="cloud_run_revision"
+          AND resource.labels.service_name="triageiq-api"
+          AND metric.type="run.googleapis.com/request_count"
+          AND metric.labels.response_code_class="5xx"
+        comparison: COMPARISON_GT
+        thresholdValue: 0.05
+        duration: 300s
+        aggregations:
+          - alignmentPeriod: 60s
+            perSeriesAligner: ALIGN_RATE
+  alertStrategy:
+    notificationRateLimit:
+      period: 3600s
+
+- displayName: "TriageIQ — High p95 latency"
+  documentation:
+    content: "p95 request latency exceeded 10 seconds over 5 minutes."
+  conditions:
+    - displayName: "p95 latency > 10s"
+      conditionThreshold:
+        filter: >
+          resource.type="cloud_run_revision"
+          AND resource.labels.service_name="triageiq-api"
+          AND metric.type="run.googleapis.com/request_latencies"
+        comparison: COMPARISON_GT
+        thresholdValue: 10000  # milliseconds
+        duration: 300s
+        aggregations:
+          - alignmentPeriod: 60s
+            perSeriesAligner: ALIGN_PERCENTILE_95
+  alertStrategy:
+    notificationRateLimit:
+      period: 3600s
+
+- displayName: "TriageIQ — Groq daily spend approaching limit"
+  documentation:
+    content: >
+      Estimated daily Groq spend (computed from logged token counts) is
+      approaching $5. Check logs for high-volume requestors.
+  conditions:
+    - displayName: "Estimated daily cost > $4"
+      conditionThreshold:
+        filter: >
+          resource.type="cloud_run_revision"
+          AND resource.labels.service_name="triageiq-api"
+          AND metric.type="logging.googleapis.com/user/groq_cost_usd"
+        comparison: COMPARISON_GT
+        thresholdValue: 4.0
+        duration: 86400s
+        aggregations:
+          - alignmentPeriod: 86400s
+            perSeriesAligner: ALIGN_SUM
+  alertStrategy:
+    notificationRateLimit:
+      period: 86400s

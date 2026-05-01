@@ -1,0 +1,78 @@
+# Production Dockerfile for TriageIQ API
+# Bakes models into the image so Cloud Run cold starts don't need GCS downloads.
+# Build context: repo root. Models populated by deploy workflow from GCS.
+#
+# Two-stage build:
+#   deps  — install Python packages + pre-download HuggingFace BGE model
+#   final — runtime image without build tooling
+
+# ── Stage 1: dependency installation ────────────────────────────────────────
+FROM python:3.11-slim AS deps
+
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential curl libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# CPU-only PyTorch (~700 MB installed vs ~3 GB for CUDA build)
+RUN pip install --no-cache-dir \
+    torch --index-url https://download.pytorch.org/whl/cpu
+
+# Remaining requirements (excludes torch since already installed)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Pre-download BGE model so cold starts don't hit HuggingFace Hub
+ENV HF_HOME=/build/hf_cache
+RUN python -c "\
+from sentence_transformers import SentenceTransformer; \
+SentenceTransformer('BAAI/bge-base-en-v1.5'); \
+print('BGE model cached')"
+
+
+# ── Stage 2: production runtime ─────────────────────────────────────────────
+FROM python:3.11-slim AS final
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Python packages from deps stage
+COPY --from=deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=deps /usr/local/bin /usr/local/bin
+
+# Copy pre-downloaded HuggingFace model
+ENV HF_HOME=/app/hf_cache
+COPY --from=deps /build/hf_cache /app/hf_cache
+
+# App source
+COPY src/ src/
+COPY pyproject.toml .
+RUN pip install --no-cache-dir --no-deps -e .
+
+# Production model artifacts (populated by CI/CD workflow from GCS)
+# Excludes DistilBERT (12 GB each — not used in production)
+COPY data/models/component_classifier_*.pkl   data/models/
+COPY data/models/dup_index_microsoft_vscode_bge   data/models/dup_index_microsoft_vscode_bge
+COPY data/models/dup_index_kubernetes_kubernetes_bge   data/models/dup_index_kubernetes_kubernetes_bge
+COPY data/models/resolution_predictor_*.pkl   data/models/
+COPY data/processed/microsoft_vscode_temporal_train.parquet   data/processed/
+COPY data/processed/kubernetes_kubernetes_temporal_train.parquet   data/processed/
+
+ENV DATA_DIR=/app/data
+# Cloud Run injects $PORT; default to 8080
+ENV PORT=8080
+
+RUN useradd -m -u 1000 appuser && chown -R appuser /app
+USER appuser
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+    CMD curl -f "http://localhost:${PORT}/health" || exit 1
+
+# Shell form so $PORT is expanded at runtime
+CMD uvicorn triage_iq.api.app:app --host 0.0.0.0 --port "${PORT}" --workers 1

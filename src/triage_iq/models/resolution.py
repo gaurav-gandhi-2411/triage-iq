@@ -56,7 +56,13 @@ def engineer_features(
     )
 
     # ── Temporal features ─────────────────────────────────────────
-    created = pd.to_datetime(df["created_at"], utc=True)
+    if "created_at" in df.columns:
+        created = pd.to_datetime(df["created_at"], utc=True)
+    else:
+        from datetime import datetime, timezone as _tz
+        created = pd.Series(
+            [pd.Timestamp(datetime.now(_tz.utc))] * len(df), index=df.index
+        )
     feats["day_of_week"] = created.dt.dayofweek
     feats["hour_of_day"] = created.dt.hour
     feats["week_of_year"] = created.dt.isocalendar().week.astype(int)
@@ -64,7 +70,8 @@ def engineer_features(
     feats["days_since_repo_start"] = (created - repo_start).dt.days
 
     # ── Label features ────────────────────────────────────────────
-    feats["has_component"] = df["component"].notna().astype(int)
+    _component = df["component"] if "component" in df.columns else pd.Series(pd.NA, index=df.index)
+    feats["has_component"] = _component.notna().astype(int)
     feats["has_type"] = df["type"].notna().astype(int) if "type" in df.columns else 0
     feats["has_priority"] = df["priority"].notna().astype(int) if "priority" in df.columns else 0
     feats["num_assignees"] = df.get("num_assignees", pd.Series(0, index=df.index)).fillna(0)
@@ -75,7 +82,7 @@ def engineer_features(
     else:
         top_components = []
     for comp in top_components:
-        feats[f"comp_{comp.replace('/', '_').replace('-', '_')}"] = (df["component"] == comp).astype(int)
+        feats[f"comp_{comp.replace('/', '_').replace('-', '_')}"] = (_component == comp).astype(int)
 
     # ── Author features (leak-proof: only past info) ──────────────
     if train_df is not None:

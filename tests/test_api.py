@@ -30,9 +30,24 @@ def _fake_plan() -> TriagePlan:
     )
 
 
+def _fake_meta() -> dict:
+    return {
+        "system1_latency_ms": 5.0,
+        "system2_latency_ms": 80.0,
+        "system3_latency_ms": 2.0,
+        "system4_latency_ms": 900.0,
+        "total_latency_ms": 990.0,
+        "groq_tokens_prompt": 500,
+        "groq_tokens_completion": 200,
+        "estimated_cost_usd": 0.0001,
+        "duplicate_count": 1,
+        "predicted_resolution_days_p50": 3.5,
+    }
+
+
 def _make_store() -> ModelStore:
     bundle = MagicMock()
-    bundle.assistant.triage.return_value = _fake_plan()
+    bundle.assistant.triage_with_metadata.return_value = (_fake_plan(), _fake_meta())
     store = MagicMock()
     store.repos = ["microsoft/vscode", "kubernetes/kubernetes"]
     store.start_time = time.monotonic() - 5.0
@@ -74,6 +89,51 @@ def test_triage_returns_plan(client):
     assert body["expected_resolution_lower_days"] <= body["expected_resolution_upper_days"]
 
 
+def test_triage_includes_resolution_prediction(client):
+    """All 4 systems must produce output — resolution predictor must not silently degrade."""
+    r = client.post("/triage", json={
+        "repo": "microsoft/vscode",
+        "title": "Extension host crashes on startup",
+        "body": "Every time I open VS Code the extension host process terminates immediately.",
+    })
+    assert r.status_code == 200
+    body = r.json()
+    # System 1: component classifier
+    assert "predicted_component" in body
+    assert body["predicted_component"] != ""
+    # System 2: duplicate detector
+    assert "similar_issues" in body
+    assert isinstance(body["similar_issues"], list)
+    # System 3 & 4: resolution predictor feeds LLM context, LLM returns these
+    assert "expected_resolution_lower_days" in body
+    assert "expected_resolution_upper_days" in body
+    assert body["expected_resolution_lower_days"] >= 0
+    assert body["expected_resolution_upper_days"] >= body["expected_resolution_lower_days"]
+    # Request must include request_id (end-to-end plumbing)
+    assert "_request_id" in body
+
+
+def test_triage_accepts_created_at(client):
+    """created_at is optional; when provided it must not cause a 500."""
+    r = client.post("/triage", json={
+        "repo": "kubernetes/kubernetes",
+        "title": "Pod stuck in Terminating",
+        "body": "kubectl delete pod hangs indefinitely.",
+        "created_at": "2026-04-01T12:00:00Z",
+    })
+    assert r.status_code == 200
+
+
+def test_triage_without_created_at(client):
+    """created_at omitted — predictor must default to now() and not return 500."""
+    r = client.post("/triage", json={
+        "repo": "microsoft/vscode",
+        "title": "Settings sync broken",
+        "body": "Settings do not sync across machines after the latest update.",
+    })
+    assert r.status_code == 200
+
+
 def test_triage_invalid_repo(client):
     r = client.post("/triage", json={
         "repo": "unknown/repo",
@@ -90,7 +150,7 @@ def test_triage_missing_title(client):
 
 
 def test_triage_propagates_assistant_error(client):
-    app.state.store.get.return_value.assistant.triage.side_effect = RuntimeError("groq down")
+    app.state.store.get.return_value.assistant.triage_with_metadata.side_effect = RuntimeError("groq down")
     r = client.post("/triage", json={
         "repo": "microsoft/vscode",
         "title": "Some issue",

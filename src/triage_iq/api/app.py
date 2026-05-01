@@ -11,6 +11,7 @@ import os
 import time
 import uuid
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -59,6 +60,7 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         "number": body.issue_number,
         "title": body.title,
         "body_clean": body.body,
+        "created_at": body.created_at or datetime.now(timezone.utc),
     })
 
     try:

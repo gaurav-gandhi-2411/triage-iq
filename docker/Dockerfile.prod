@@ -65,6 +65,9 @@ COPY data/processed/kubernetes_kubernetes_temporal_train.parquet   data/processe
 ENV DATA_DIR=/app/data
 # Cloud Run injects $PORT; default to 8080
 ENV PORT=8080
+# Model is baked into image — never phone home to HuggingFace Hub at runtime
+ENV HF_HUB_OFFLINE=1
+ENV TRANSFORMERS_OFFLINE=1
 
 RUN useradd -m -u 1000 appuser && chown -R appuser /app
 USER appuser

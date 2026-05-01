@@ -88,7 +88,7 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         total_latency_ms=total_ms,
         status="success",
         predicted_component=plan.predicted_component,
-        **meta,
+        **{k: v for k, v in meta.items() if k != "total_latency_ms"},
     )
 
     result = plan.model_dump()

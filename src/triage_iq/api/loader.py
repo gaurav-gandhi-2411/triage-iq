@@ -8,6 +8,7 @@ import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
@@ -21,11 +22,11 @@ _REPO_SLUGS = {
 
 @dataclass
 class RepoBundle:
-    classifier: object
-    detector: object
-    predictor: object
+    classifier: Any
+    detector: Any
+    predictor: Any
     train_df: pd.DataFrame
-    assistant: object
+    assistant: Any
 
 
 class ModelStore:

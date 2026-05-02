@@ -162,7 +162,7 @@ class TriageAssistant:
 
         Returns list of (issue_number, plan_or_None, error_or_None).
         """
-        results = []
+        results: list[tuple[int, TriagePlan | None, str | None]] = []
         for i, (_, row) in enumerate(df.iterrows()):
             if i > 0:
                 time.sleep(delay)
@@ -295,11 +295,11 @@ class TriageAssistant:
             try:
                 resp = client.chat.completions.create(
                     model=self.model,
-                    messages=messages,
+                    messages=messages,  # type: ignore[arg-type]
                     temperature=self.temperature,
                     max_tokens=self.max_tokens,
                 )
-                content = resp.choices[0].message.content.strip()
+                content = (resp.choices[0].message.content or "").strip()
                 usage = {}
                 if resp.usage:
                     usage = {

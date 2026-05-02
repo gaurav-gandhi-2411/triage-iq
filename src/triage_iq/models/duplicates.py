@@ -74,6 +74,8 @@ class DuplicateDetector:
     def retrieve(self, query_text: str, k: int = 20, exclude_number: int | None = None) -> list[dict]:
         """Return top-k most similar issues (excluding query issue itself)."""
         assert self.index is not None, "Call build_index first"
+        assert self.issue_numbers is not None
+        assert self.texts is not None
         emb = self.model.encode(
             [query_text], normalize_embeddings=True, convert_to_numpy=True
         ).astype(np.float32)
@@ -95,6 +97,7 @@ class DuplicateDetector:
     def retrieve_batch(self, query_texts: list[str], k: int = 20) -> list[list[dict]]:
         """Batch retrieval without self-exclusion."""
         assert self.index is not None
+        assert self.issue_numbers is not None
         embs = self.model.encode(
             query_texts, batch_size=64, normalize_embeddings=True, convert_to_numpy=True
         ).astype(np.float32)

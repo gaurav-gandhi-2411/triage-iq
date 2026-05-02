@@ -89,8 +89,8 @@ def engineer_features(
         all_df = pd.concat([train_df, df], sort=False).drop_duplicates(subset=["number"])
         all_df = all_df.sort_values("created_at")
 
-        author_prior_count = {}
-        author_prior_resolutions = {}
+        author_prior_count: dict[str, int] = {}
+        author_prior_resolutions: dict[str, list[float]] = {}
         author_count_at = {}
         author_median_at = {}
 
@@ -198,7 +198,7 @@ class ResolutionTimePredictor:
             dtrain,
             num_boost_round=2000,
             valid_sets=[dval],
-            callbacks=callbacks,
+            callbacks=callbacks,  # type: ignore[arg-type]
         )
         logger.info("[%s] Point model: %d rounds, val MAE=%.4f",
                     self.repo, self.model_point.best_iteration,
@@ -228,14 +228,17 @@ class ResolutionTimePredictor:
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         """Point prediction in original hours (not log)."""
+        assert self.model_point is not None, "Call fit() first"
         log_pred = self.model_point.predict(X)
         return np.expm1(log_pred).clip(min=0)
 
     def predict_log(self, X: pd.DataFrame) -> np.ndarray:
-        return self.model_point.predict(X)
+        assert self.model_point is not None, "Call fit() first"
+        return self.model_point.predict(X)  # type: ignore[return-value]
 
     def predict_intervals(self, X: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
         """Return (lower_hours, upper_hours) 80% prediction interval."""
+        assert self.model_q10 is not None and self.model_q90 is not None, "Call fit() first"
         lower = np.expm1(self.model_q10.predict(X)).clip(min=0)
         upper = np.expm1(self.model_q90.predict(X)).clip(min=0)
         return lower, upper
@@ -245,6 +248,7 @@ class ResolutionTimePredictor:
     # ------------------------------------------------------------------
 
     def feature_importance(self, importance_type: str = "gain") -> pd.Series:
+        assert self.model_point is not None, "Call fit() first"
         imp = self.model_point.feature_importance(importance_type=importance_type)
         return pd.Series(imp, index=self.feature_names).sort_values(ascending=False)
 

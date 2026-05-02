@@ -93,6 +93,7 @@ class TFIDFComponentClassifier:
 
     def predict(self, X: pd.Series) -> np.ndarray:
         assert self.pipeline is not None, "Model not fitted"
+        assert self.label_encoder is not None
         encoded = self.pipeline.predict(X)
         return self.label_encoder.inverse_transform(encoded)
 

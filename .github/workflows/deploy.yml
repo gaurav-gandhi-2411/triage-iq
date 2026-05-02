@@ -7,10 +7,10 @@ on:
 
 env:
   GCP_REGION: us-central1
-  GCP_PROJECT: triageiq-portfolio
+  GCP_PROJECT: triageiq-portfolio-495022
   AR_REPO: triageiq
   SERVICE_NAME: triageiq-api
-  IMAGE: us-central1-docker.pkg.dev/triageiq-portfolio/triageiq/api
+  IMAGE: us-central1-docker.pkg.dev/triageiq-portfolio-495022/triageiq/api
 
 jobs:
   deploy:
@@ -37,18 +37,18 @@ jobs:
         run: |
           mkdir -p data/models data/processed
           gsutil -m cp \
-            "gs://triageiq-portfolio-models/models/component_classifier_microsoft_vscode.pkl" \
-            "gs://triageiq-portfolio-models/models/component_classifier_kubernetes_kubernetes.pkl" \
-            "gs://triageiq-portfolio-models/models/resolution_predictor_microsoft_vscode.pkl" \
-            "gs://triageiq-portfolio-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
+            "gs://triageiq-portfolio-495022-models/models/component_classifier_microsoft_vscode.pkl" \
+            "gs://triageiq-portfolio-495022-models/models/component_classifier_kubernetes_kubernetes.pkl" \
+            "gs://triageiq-portfolio-495022-models/models/resolution_predictor_microsoft_vscode.pkl" \
+            "gs://triageiq-portfolio-495022-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
             data/models/
           gsutil -m cp -r \
-            "gs://triageiq-portfolio-models/models/dup_index_microsoft_vscode_bge" \
-            "gs://triageiq-portfolio-models/models/dup_index_kubernetes_kubernetes_bge" \
+            "gs://triageiq-portfolio-495022-models/models/dup_index_microsoft_vscode_bge" \
+            "gs://triageiq-portfolio-495022-models/models/dup_index_kubernetes_kubernetes_bge" \
             data/models/
           gsutil -m cp \
-            "gs://triageiq-portfolio-models/processed/microsoft_vscode_temporal_train.parquet" \
-            "gs://triageiq-portfolio-models/processed/kubernetes_kubernetes_temporal_train.parquet" \
+            "gs://triageiq-portfolio-495022-models/processed/microsoft_vscode_temporal_train.parquet" \
+            "gs://triageiq-portfolio-495022-models/processed/kubernetes_kubernetes_temporal_train.parquet" \
             data/processed/
 
       - name: Build and push image

@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-BUCKET="gs://triageiq-portfolio-models"
+BUCKET="gs://triageiq-portfolio-495022-models"
 
 echo "=== Uploading production models to $BUCKET ==="
 

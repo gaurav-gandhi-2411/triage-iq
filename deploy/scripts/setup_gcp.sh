@@ -5,11 +5,11 @@
 
 set -euo pipefail
 
-PROJECT_ID="triageiq-portfolio"
+PROJECT_ID="triageiq-portfolio-495022"
 REGION="us-central1"
 SA_NAME="triageiq-deployer"
 AR_REPO="triageiq"
-GCS_BUCKET="triageiq-portfolio-models"
+GCS_BUCKET="triageiq-portfolio-495022-models"
 
 echo "=== Creating GCP project ==="
 gcloud projects create "$PROJECT_ID" --name="TriageIQ Portfolio" 2>/dev/null || \

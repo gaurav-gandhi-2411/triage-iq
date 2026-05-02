@@ -6,7 +6,6 @@ Index built over all issues; retrieval excludes the query issue itself.
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 import faiss
 import joblib
@@ -37,9 +36,9 @@ class DuplicateDetector:
         model_name = SUPPORTED_MODELS.get(model_key, model_key)
         logger.info("Loading embedding model: %s", model_name)
         self.model = SentenceTransformer(model_name)
-        self.index: Optional[faiss.IndexFlatIP] = None
-        self.issue_numbers: Optional[np.ndarray] = None
-        self.texts: Optional[list[str]] = None
+        self.index: faiss.IndexFlatIP | None = None
+        self.issue_numbers: np.ndarray | None = None
+        self.texts: list[str] | None = None
 
     # ------------------------------------------------------------------
     # Index construction
@@ -72,7 +71,7 @@ class DuplicateDetector:
     # Retrieval
     # ------------------------------------------------------------------
 
-    def retrieve(self, query_text: str, k: int = 20, exclude_number: Optional[int] = None) -> list[dict]:
+    def retrieve(self, query_text: str, k: int = 20, exclude_number: int | None = None) -> list[dict]:
         """Return top-k most similar issues (excluding query issue itself)."""
         assert self.index is not None, "Call build_index first"
         emb = self.model.encode(
@@ -82,7 +81,7 @@ class DuplicateDetector:
         # Retrieve k+1 to account for possible self-exclusion
         scores, indices = self.index.search(emb, k + 1)
         results = []
-        for score, idx in zip(scores[0], indices[0]):
+        for score, idx in zip(scores[0], indices[0], strict=False):
             if idx < 0:
                 continue
             num = int(self.issue_numbers[idx])
@@ -101,9 +100,9 @@ class DuplicateDetector:
         ).astype(np.float32)
         scores_all, indices_all = self.index.search(embs, k)
         results = []
-        for scores, indices in zip(scores_all, indices_all):
+        for scores, indices in zip(scores_all, indices_all, strict=False):
             hits = []
-            for score, idx in zip(scores, indices):
+            for score, idx in zip(scores, indices, strict=False):
                 if idx >= 0:
                     hits.append({"number": int(self.issue_numbers[idx]), "score": float(score)})
             results.append(hits)

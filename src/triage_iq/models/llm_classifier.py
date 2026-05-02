@@ -8,7 +8,10 @@ import logging
 import os
 import random
 import time
-from typing import Optional
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +24,7 @@ def _get_groq_client():
 
     key = os.environ.get("GROQ_API_KEY", "")
     if not key:
-        raise EnvironmentError(
+        raise OSError(
             "GROQ_API_KEY not set. Add it to your .env file or export it:\n"
             "  export GROQ_API_KEY=gsk_..."
         )
@@ -36,7 +39,7 @@ def _format_few_shot_examples(examples: list[tuple[str, str]]) -> str:
     return "\n\n".join(lines)
 
 
-def _parse_label_from_response(raw: str, candidate_labels: list[str]) -> Optional[str]:
+def _parse_label_from_response(raw: str, candidate_labels: list[str]) -> str | None:
     """Extract a valid label from the model response."""
     raw = raw.strip().lower()
 
@@ -58,7 +61,7 @@ def classify_with_llm_fewshot(
     candidate_labels: list[str],
     examples: list[tuple[str, str]],
     client=None,
-) -> Optional[str]:
+) -> str | None:
     """Use Llama 3.1 8B via Groq for few-shot component classification.
 
     Args:
@@ -113,7 +116,6 @@ def run_llm_fewshot_eval(
     Returns a dict with accuracy, macro_f1, per_class_f1, n_parsed, n_failed,
     and raw predictions for the sampled examples.
     """
-    import numpy as np
     import pandas as pd
     from sklearn.metrics import accuracy_score, f1_score
 
@@ -129,18 +131,18 @@ def run_llm_fewshot_eval(
 
     # Build label → training examples lookup
     label_to_examples: dict[str, list[str]] = {}
-    for text, label in zip(X_train, y_train):
+    for text, label in zip(X_train, y_train, strict=False):
         label_to_examples.setdefault(label, []).append(text)
 
     y_pred = []
     failed = 0
-    for i, (text, true_label) in enumerate(zip(X_sample, y_sample)):
+    for i, (text, true_label) in enumerate(zip(X_sample, y_sample, strict=False)):
         # Sample few-shot examples: prefer same label, fill with random others
         same_label = label_to_examples.get(true_label, [])
         rng.shuffle(same_label)
         pos_examples = [(t, true_label) for t in same_label[:2]]
 
-        other_labels = [l for l in candidate_labels if l != true_label]
+        other_labels = [lbl for lbl in candidate_labels if lbl != true_label]
         neg_examples = []
         for lbl in rng.sample(other_labels, min(n_few_shot - len(pos_examples), len(other_labels))):
             pool = label_to_examples.get(lbl, [])

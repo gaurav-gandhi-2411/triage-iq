@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from triage_iq.api.app import app
-from triage_iq.api.loader import ModelStore, RepoBundle
+from triage_iq.api.loader import ModelStore
 from triage_iq.models.triage import SimilarIssue, TriagePlan
 
 
@@ -58,9 +58,8 @@ def _make_store() -> ModelStore:
 @pytest.fixture
 def client():
     store = _make_store()
-    with patch("triage_iq.api.app.ModelStore.load_all", return_value=store):
-        with TestClient(app) as c:
-            yield c
+    with patch("triage_iq.api.app.ModelStore.load_all", return_value=store), TestClient(app) as c:
+        yield c
 
 
 def test_health(client):

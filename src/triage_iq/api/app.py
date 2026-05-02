@@ -54,7 +54,7 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     try:
         bundle = store.get(body.repo)
     except KeyError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     issue = pd.Series({
         "number": body.issue_number,
@@ -78,7 +78,7 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
             error=str(exc),
         )
         logger.exception("Triage failed for repo=%s", body.repo)
-        raise HTTPException(status_code=500, detail=f"Triage failed: {exc}")
+        raise HTTPException(status_code=500, detail=f"Triage failed: {exc}") from exc
 
     total_ms = round((time.perf_counter() - t_start) * 1000, 1)
     _log_request(

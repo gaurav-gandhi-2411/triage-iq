@@ -1,6 +1,7 @@
 """Tests for GitHubScraper and preprocessing pipeline."""
 
 import json
+import sys
 import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -8,13 +9,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from triage_iq.data.github_scraper import GitHubScraper
-from triage_iq.data.preprocess import clean_text, normalize_labels, load_raw_issues
-from triage_iq.data.splits import time_based_split, stratified_classifier_split
-
+from triage_iq.data.preprocess import clean_text, load_raw_issues, normalize_labels
+from triage_iq.data.splits import stratified_classifier_split, time_based_split
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -99,7 +98,6 @@ class TestGitHubScraper:
 
         issues_page = [issue]
         rate_resp = make_response({"resources": {"core": {"remaining": 4999, "reset": int(time.time()) + 3600}}})
-        page_resp = make_response(issues_page)
         comments_resp = make_response([])
 
         call_count = {"n": 0}
@@ -137,12 +135,11 @@ class TestGitHubScraper:
 
         scraper = GitHubScraper(token=FAKE_TOKEN, cache_dir=str(tmp_path))
 
-        with patch.object(scraper.session, "get", side_effect=[rate_resp, page_resp]):
-            with patch("time.sleep") as mock_sleep:
-                scraper._check_rate_limit()
-                mock_sleep.assert_called_once()
-                wait_arg = mock_sleep.call_args[0][0]
-                assert wait_arg >= 0
+        with patch.object(scraper.session, "get", side_effect=[rate_resp, page_resp]), patch("time.sleep") as mock_sleep:
+            scraper._check_rate_limit()
+            mock_sleep.assert_called_once()
+            wait_arg = mock_sleep.call_args[0][0]
+            assert wait_arg >= 0
 
     def test_parse_next_link_returns_url(self):
         header = '<https://api.github.com/repos/o/r/issues?page=2>; rel="next", <https://api.github.com/repos/o/r/issues?page=10>; rel="last"'
@@ -242,10 +239,10 @@ class TestLoadRawIssues:
 # Split tests
 # ---------------------------------------------------------------------------
 
-def _make_split_df(n: int, labels=None) -> "pd.DataFrame":
-    import pandas as pd
-    import numpy as np
+def _make_split_df(n: int, labels=None):
     from datetime import timezone
+
+    import pandas as pd
 
     base = pd.Timestamp("2024-01-01", tz=timezone.utc)
     rows = []
@@ -290,7 +287,6 @@ class TestTimeBasedSplit:
 class TestStratifiedClassifierSplit:
 
     def test_sizes_sum_to_labeled_total(self):
-        import pandas as pd
         df = _make_split_df(300, labels=["A", "B", "C"])
         train, val, test = stratified_classifier_split(df, "component")
         assert len(train) + len(val) + len(test) == 300
@@ -313,7 +309,6 @@ class TestStratifiedClassifierSplit:
         assert "rare" not in all_data["component"].values
 
     def test_null_labels_excluded(self):
-        import pandas as pd
         df = _make_split_df(200, labels=["A", "B"])
         df.loc[0, "component"] = None
         train, val, test = stratified_classifier_split(df, "component")

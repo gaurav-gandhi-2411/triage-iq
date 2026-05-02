@@ -5,9 +5,7 @@ Training uses GPU if available; latency benchmarks run on CPU.
 """
 
 import logging
-import os
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -42,7 +40,7 @@ class _IssueDataset(torch.utils.data.Dataset):
 
 
 def _make_compute_metrics(label_encoder):
-    from sklearn.metrics import f1_score, accuracy_score
+    from sklearn.metrics import accuracy_score, f1_score
 
     def compute_metrics(eval_pred):
         logits, labels = eval_pred
@@ -77,9 +75,9 @@ class DistilBERTComponentClassifier:
         self.repo = repo
         self.num_labels = num_labels
         self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-        self.model: Optional[AutoModelForSequenceClassification] = None
-        self.label_encoder: Optional[LabelEncoder] = None
-        self._save_dir: Optional[str] = None
+        self.model: AutoModelForSequenceClassification | None = None
+        self.label_encoder: LabelEncoder | None = None
+        self._save_dir: str | None = None
 
     # ------------------------------------------------------------------
     # Public API

@@ -4,7 +4,6 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 import pandas as pd
 
@@ -17,7 +16,7 @@ MAX_BODY_CHARS = 10_000
 # Values: {facet: pattern} where pattern is either:
 #   - a regex string with one capture group (extracts group 1 as value)
 #   - a list of known label strings (label matched case-insensitively; raw label used as value)
-LABEL_FACET_PATTERNS: Dict[str, Dict[str, Union[str, List[str]]]] = {
+LABEL_FACET_PATTERNS: dict[str, dict[str, str | list[str]]] = {
     "kubernetes/kubernetes": {
         "component": r"^area/(.+)$",
         "type": r"^kind/(.+)$",
@@ -102,7 +101,7 @@ def load_raw_issues(repo: str, cache_dir: str = "data/raw") -> pd.DataFrame:
     return df
 
 
-def _extract_fields(issue: Dict) -> Dict:
+def _extract_fields(issue: dict) -> dict:
     labels_raw = [lbl["name"] for lbl in issue.get("labels", []) if isinstance(lbl, dict)]
     comments_data = issue.get("comments_data", [])
     body = issue.get("body") or ""
@@ -147,9 +146,9 @@ def _repo_key(repo: str) -> str:
     return repo.replace("_", "/", 1)
 
 
-def normalize_labels(repo: str, labels: List[str]) -> Dict[str, Optional[str]]:
+def normalize_labels(repo: str, labels: list[str]) -> dict[str, str | None]:
     """Map repo-specific labels to standardized facets: component, type, priority."""
-    facets: Dict[str, Optional[str]] = {"component": None, "type": None, "priority": None}
+    facets: dict[str, str | None] = {"component": None, "type": None, "priority": None}
     patterns = LABEL_FACET_PATTERNS.get(_repo_key(repo), {})
 
     for facet, pattern in patterns.items():

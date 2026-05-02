@@ -51,9 +51,7 @@ class ModelStore:
         groq_api_key: str | None = None,
     ) -> "ModelStore":
         import time
-        from triage_iq.models.component_classifier import TFIDFComponentClassifier
-        from triage_iq.models.duplicates import DuplicateDetector
-        from triage_iq.models.resolution import ResolutionTimePredictor
+
         from triage_iq.models.triage import TriageAssistant
 
         if data_dir is None:

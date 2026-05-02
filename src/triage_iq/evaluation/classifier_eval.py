@@ -2,8 +2,6 @@
 
 import logging
 import time
-from pathlib import Path
-from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -11,10 +9,13 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def evaluate_classifier(model, X_test: pd.Series, y_test: pd.Series) -> Dict:
+def evaluate_classifier(model, X_test: pd.Series, y_test: pd.Series) -> dict:
     """Comprehensive classifier evaluation."""
     from sklearn.metrics import (
-        accuracy_score, f1_score, classification_report, confusion_matrix,
+        accuracy_score,
+        classification_report,
+        confusion_matrix,
+        f1_score,
     )
 
     y_pred = model.predict(X_test)
@@ -32,7 +33,7 @@ def evaluate_classifier(model, X_test: pd.Series, y_test: pd.Series) -> Dict:
     rows, cols = np.where(cm > 0)
     confusions = [
         (classes[r], classes[c], int(cm[r, c]))
-        for r, c in zip(rows, cols)
+        for r, c in zip(rows, cols, strict=False)
         if r != c
     ]
     confusions.sort(key=lambda x: -x[2])
@@ -52,7 +53,7 @@ def evaluate_classifier(model, X_test: pd.Series, y_test: pd.Series) -> Dict:
     }
 
 
-def latency_benchmark(model, X_sample: pd.Series, n_iters: int = 200) -> Dict:
+def latency_benchmark(model, X_sample: pd.Series, n_iters: int = 200) -> dict:
     """Measure single-sample prediction latency (p50, p95, p99, throughput)."""
     # Warm-up
     for _ in range(10):
@@ -75,11 +76,11 @@ def latency_benchmark(model, X_sample: pd.Series, n_iters: int = 200) -> Dict:
     }
 
 
-def batch_latency_benchmark(model, X_sample: pd.Series, batch_size: int = 100) -> Dict:
+def batch_latency_benchmark(model, X_sample: pd.Series, batch_size: int = 100) -> dict:
     """Throughput benchmark for batch prediction."""
     n_batches = max(10, 200 // batch_size)
     times = []
-    for i in range(n_batches):
+    for _ in range(n_batches):
         batch = X_sample.iloc[:batch_size]
         t0 = time.perf_counter()
         model.predict(batch)
@@ -95,9 +96,8 @@ def batch_latency_benchmark(model, X_sample: pd.Series, batch_size: int = 100) -
 
 
 def calibration_analysis(y_test: pd.Series, y_proba: np.ndarray, classes: np.ndarray,
-                          label_encoder, n_bins: int = 10) -> Dict:
+                          label_encoder, n_bins: int = 10) -> dict:
     """Reliability analysis: predicted confidence vs actual accuracy."""
-    from sklearn.calibration import calibration_curve
 
     y_test_enc = label_encoder.transform(y_test)
 
@@ -109,7 +109,7 @@ def calibration_analysis(y_test: pd.Series, y_proba: np.ndarray, classes: np.nda
     # Bin into confidence buckets
     bin_edges = np.linspace(0, 1, n_bins + 1)
     bin_accs, bin_confs, bin_sizes = [], [], []
-    for lo, hi in zip(bin_edges[:-1], bin_edges[1:]):
+    for lo, hi in zip(bin_edges[:-1], bin_edges[1:], strict=False):
         mask = (max_proba >= lo) & (max_proba < hi)
         if mask.sum() == 0:
             continue
@@ -119,7 +119,7 @@ def calibration_analysis(y_test: pd.Series, y_proba: np.ndarray, classes: np.nda
 
     ece = float(sum(
         s * abs(a - c)
-        for a, c, s in zip(bin_accs, bin_confs, bin_sizes)
+        for a, c, s in zip(bin_accs, bin_confs, bin_sizes, strict=False)
     ) / max(sum(bin_sizes), 1))
 
     mean_conf = float(max_proba.mean())
@@ -194,10 +194,10 @@ def plot_per_class_f1(
     supports = [supports[i] for i in order]
 
     fig, ax = plt.subplots(figsize=(8, max(5, len(classes) * 0.3)))
-    bars = ax.barh(range(len(classes)), f1s, color="steelblue")
+    ax.barh(range(len(classes)), f1s, color="steelblue")
     ax.set(
         yticks=range(len(classes)),
-        yticklabels=[f"{c} (n={s})" for c, s in zip(classes, supports)],
+        yticklabels=[f"{c} (n={s})" for c, s in zip(classes, supports, strict=False)],
         xlabel="F1 score",
         title=f"Per-class F1 — {repo.replace('_', '/')}",
         xlim=(0, 1),

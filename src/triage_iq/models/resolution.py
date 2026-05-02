@@ -7,7 +7,6 @@ All features computed from information available at issue creation time only.
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 import joblib
 import lightgbm as lgb
@@ -22,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 def engineer_features(
     df: pd.DataFrame,
-    train_df: Optional[pd.DataFrame] = None,
-    embeddings: Optional[np.ndarray] = None,
+    train_df: pd.DataFrame | None = None,
+    embeddings: np.ndarray | None = None,
     pca=None,
 ) -> pd.DataFrame:
     """Build feature matrix from issues DataFrame.
@@ -59,7 +58,8 @@ def engineer_features(
     if "created_at" in df.columns:
         created = pd.to_datetime(df["created_at"], utc=True)
     else:
-        from datetime import datetime, timezone as _tz
+        from datetime import datetime
+        from datetime import timezone as _tz
         created = pd.Series(
             [pd.Timestamp(datetime.now(_tz.utc))] * len(df), index=df.index
         )
@@ -97,8 +97,6 @@ def engineer_features(
         for _, row in all_df.iterrows():
             num = row["number"]
             author = row.get("author", "")
-            t = row["created_at"]
-
             count = author_prior_count.get(author, 0)
             medians = author_prior_resolutions.get(author, [])
             author_count_at[num] = count
@@ -150,9 +148,9 @@ class ResolutionTimePredictor:
 
     def __init__(self, repo: str) -> None:
         self.repo = repo
-        self.model_point: Optional[lgb.Booster] = None
-        self.model_q10: Optional[lgb.Booster] = None
-        self.model_q90: Optional[lgb.Booster] = None
+        self.model_point: lgb.Booster | None = None
+        self.model_q10: lgb.Booster | None = None
+        self.model_q90: lgb.Booster | None = None
         self.pca = None
         self.top_components: list[str] = []
         self.feature_names: list[str] = []
@@ -167,7 +165,7 @@ class ResolutionTimePredictor:
         y_train: pd.Series,
         X_val: pd.DataFrame,
         y_val: pd.Series,
-        lgbm_params: Optional[dict] = None,
+        lgbm_params: dict | None = None,
     ) -> "ResolutionTimePredictor":
         self.feature_names = list(X_train.columns)
         log_y_train = np.log1p(y_train.values)

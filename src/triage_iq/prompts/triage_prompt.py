@@ -5,7 +5,6 @@ TriagePlan response. The schema is embedded in the prompt so the model
 can be instructed to follow it without function-calling support.
 """
 
-from typing import Optional
 
 
 SYSTEM_PROMPT = """\

@@ -9,7 +9,6 @@ import logging
 import os
 import re
 import time
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -120,7 +119,6 @@ def tfidf_only_baseline(issue: pd.Series, classifier) -> dict:
     text = f"{title}. {body}"
     pred = classifier.predict(pd.Series([text]))[0]
     proba = classifier.predict_proba(pd.Series([text]))[0]
-    classes = classifier.classes_()
     conf = float(max(proba))
     return {
         "predicted_component": pred,
@@ -156,7 +154,7 @@ class TriageJudge:
 
     def __init__(
         self,
-        groq_api_key: Optional[str] = None,
+        groq_api_key: str | None = None,
         model: str = "llama-3.3-70b-versatile",
         temperature: float = 0.0,
     ) -> None:
@@ -164,7 +162,7 @@ class TriageJudge:
         self.temperature = temperature
         key = groq_api_key or os.environ.get("GROQ_API_KEY", "")
         if not key:
-            raise EnvironmentError("GROQ_API_KEY not set.")
+            raise OSError("GROQ_API_KEY not set.")
         self._groq_key = key
 
     def score(
@@ -195,7 +193,7 @@ class TriageJudge:
         self,
         records: list[dict],
         delay: float = 1.0,
-    ) -> list[tuple[int, Optional[JudgeScore], Optional[str]]]:
+    ) -> list[tuple[int, JudgeScore | None, str | None]]:
         """Score a batch of triage plans.
 
         Each record dict: issue_number, issue_title, issue_body,
@@ -244,8 +242,8 @@ class TriageJudge:
         for d in dims:
             v1 = [getattr(s, d) for s in run1]
             v2 = [getattr(s, d) for s in run2]
-            diffs[d] = [abs(a - b) for a, b in zip(v1, v2)]
-            pct_agree[d] = float(np.mean([a == b for a, b in zip(v1, v2)]))
+            diffs[d] = [abs(a - b) for a, b in zip(v1, v2, strict=False)]
+            pct_agree[d] = float(np.mean([a == b for a, b in zip(v1, v2, strict=False)]))
             kappa[d] = float(_cohens_kappa(v1, v2, max_val=DIMENSION_MAX[d]))
 
         return {
@@ -256,7 +254,7 @@ class TriageJudge:
             "exact_agreement_rate": float(
                 np.mean([
                     int(all(getattr(s1, d) == getattr(s2, d) for d in dims))
-                    for s1, s2 in zip(run1, run2)
+                    for s1, s2 in zip(run1, run2, strict=False)
                 ])
             ),
             "low_reliability_dims": [d for d, k in kappa.items() if k < 0.4],
@@ -293,8 +291,7 @@ Score this triage plan using the rubric. Return ONLY valid JSON.
 
     def _groq_completion(self, messages: list[dict]) -> str:
         try:
-            from groq import Groq
-            from groq import RateLimitError, APIStatusError
+            from groq import APIStatusError, Groq, RateLimitError
         except ImportError as e:
             raise ImportError("pip install groq") from e
 
@@ -344,7 +341,7 @@ def _cohens_kappa(y1: list[int], y2: list[int], max_val: int) -> float:
     n = len(y1)
     if n == 0:
         return 0.0
-    po = sum(a == b for a, b in zip(y1, y2)) / n
+    po = sum(a == b for a, b in zip(y1, y2, strict=False)) / n
     cats = list(range(max_val + 1))
     p1 = [y1.count(c) / n for c in cats]
     p2 = [y2.count(c) / n for c in cats]

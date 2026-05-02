@@ -3,8 +3,8 @@
 import json
 import logging
 import time
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Dict, Iterator, Optional
 
 import requests
 from tqdm import tqdm
@@ -37,7 +37,7 @@ class GitHubScraper:
         max_issues: int = 10000,
         sort: str = "created",
         direction: str = "asc",
-        since: Optional[str] = None,
+        since: str | None = None,
     ) -> int:
         """Scrape issues (+ comments) for owner/repo. Returns count of newly saved issues.
 
@@ -97,8 +97,8 @@ class GitHubScraper:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _paginated_get(self, url: str) -> Iterator[Dict]:
-        next_url: Optional[str] = url
+    def _paginated_get(self, url: str) -> Iterator[dict]:
+        next_url: str | None = url
         while next_url:
             response = self._get_with_backoff(next_url)
             # Track rate limit from response headers (avoids extra API call)
@@ -123,17 +123,16 @@ class GitHubScraper:
             resp = self.session.get(url, timeout=30)
             if resp.status_code == 200:
                 return resp
-            if resp.status_code in (500, 502, 503, 504):
-                if attempt < max_retries:
-                    logger.warning(
-                        "HTTP %d on attempt %d — retrying in %ds",
-                        resp.status_code,
-                        attempt + 1,
-                        delay,
-                    )
-                    time.sleep(delay)
-                    delay = min(delay * 2, 32)
-                    continue
+            if resp.status_code in (500, 502, 503, 504) and attempt < max_retries:
+                logger.warning(
+                    "HTTP %d on attempt %d — retrying in %ds",
+                    resp.status_code,
+                    attempt + 1,
+                    delay,
+                )
+                time.sleep(delay)
+                delay = min(delay * 2, 32)
+                continue
             # Non-retryable or exhausted retries
             resp.raise_for_status()
         # unreachable, but satisfies type checker
@@ -170,11 +169,11 @@ class GitHubScraper:
             time.sleep(wait)
 
     @staticmethod
-    def _save_issue(dest: Path, issue: Dict) -> None:
+    def _save_issue(dest: Path, issue: dict) -> None:
         dest.write_text(json.dumps(issue, ensure_ascii=False, indent=2), encoding="utf-8")
 
     @staticmethod
-    def _parse_next_link(link_header: str) -> Optional[str]:
+    def _parse_next_link(link_header: str) -> str | None:
         """Parse RFC 5988 Link header and return the 'next' URL if present."""
         if not link_header:
             return None

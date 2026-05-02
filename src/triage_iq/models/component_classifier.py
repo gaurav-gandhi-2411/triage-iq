@@ -6,15 +6,14 @@ Trained per-repo since label vocabularies differ across projects.
 import logging
 import time
 from pathlib import Path
-from typing import Optional
 
 import joblib
 import numpy as np
 import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder
-from sklearn.feature_extraction.text import TfidfVectorizer
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +35,8 @@ class TFIDFComponentClassifier:
         self.repo = repo
         self.max_features = max_features
         self.ngram_range = ngram_range
-        self.pipeline: Optional[Pipeline] = None
-        self.label_encoder: Optional[LabelEncoder] = None
+        self.pipeline: Pipeline | None = None
+        self.label_encoder: LabelEncoder | None = None
 
     # ------------------------------------------------------------------
     # Public API
@@ -47,8 +46,8 @@ class TFIDFComponentClassifier:
         self,
         X_train: pd.Series,
         y_train: pd.Series,
-        X_val: Optional[pd.Series] = None,
-        y_val: Optional[pd.Series] = None,
+        X_val: pd.Series | None = None,
+        y_val: pd.Series | None = None,
     ) -> "TFIDFComponentClassifier":
         self.label_encoder = LabelEncoder()
         y_enc = self.label_encoder.fit_transform(y_train)

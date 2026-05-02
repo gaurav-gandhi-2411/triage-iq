@@ -8,7 +8,6 @@ Two split strategies:
 """
 
 import logging
-from typing import Optional, Tuple
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -22,7 +21,7 @@ def time_based_split(
     val_pct: float = 0.1,
     test_pct: float = 0.1,
     timestamp_col: str = "closed_at",
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Split by timestamp to avoid leakage.
 
     Issues are sorted by `timestamp_col` ascending. The earliest 80% become
@@ -72,7 +71,7 @@ def stratified_classifier_split(
     test_pct: float = 0.1,
     min_class_samples: int = 10,
     random_state: int = 42,
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Split preserving label distribution for the component classifier.
 
     Rows where `label_col` is null are excluded. Classes with fewer than

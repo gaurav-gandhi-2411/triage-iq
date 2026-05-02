@@ -10,7 +10,7 @@ import logging
 import os
 import re
 import time
-from typing import Literal, Optional
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -82,7 +82,7 @@ class TriageAssistant:
         detector,
         predictor,
         train_df: pd.DataFrame,
-        groq_api_key: Optional[str] = None,
+        groq_api_key: str | None = None,
         model: str = "llama-3.1-8b-instant",
         temperature: float = 0.0,
         max_tokens: int = 1024,
@@ -98,7 +98,7 @@ class TriageAssistant:
 
         key = groq_api_key or os.environ.get("GROQ_API_KEY", "")
         if not key:
-            raise EnvironmentError(
+            raise OSError(
                 "GROQ_API_KEY not set. Export it or pass groq_api_key= to TriageAssistant."
             )
         self._groq_key = key
@@ -157,7 +157,7 @@ class TriageAssistant:
 
     def triage_batch(
         self, df: pd.DataFrame, delay: float = 0.5
-    ) -> list[tuple[int, Optional[TriagePlan], Optional[str]]]:
+    ) -> list[tuple[int, TriagePlan | None, str | None]]:
         """Triage a batch of issues.
 
         Returns list of (issue_number, plan_or_None, error_or_None).
@@ -285,8 +285,7 @@ class TriageAssistant:
 
     def _groq_completion(self, messages: list[dict]) -> tuple[str, dict]:
         try:
-            from groq import Groq
-            from groq import RateLimitError, APIStatusError
+            from groq import APIStatusError, Groq, RateLimitError
         except ImportError as e:
             raise ImportError("pip install groq") from e
 

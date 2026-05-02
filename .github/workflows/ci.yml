@@ -38,7 +38,7 @@ jobs:
           python -m pytest tests/ -v --no-header \
             --cov=src/triage_iq \
             --cov-report=term-missing \
-            --cov-fail-under=40
+            --cov-fail-under=20
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4

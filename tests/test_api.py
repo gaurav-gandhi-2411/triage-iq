@@ -3,6 +3,7 @@
 Uses TestClient with a mocked ModelStore so no real models or Groq calls needed.
 """
 
+import json as _json
 import time
 from unittest.mock import MagicMock, patch
 
@@ -11,7 +12,7 @@ from fastapi.testclient import TestClient
 
 from triage_iq.api.app import app
 from triage_iq.api.loader import ModelStore
-from triage_iq.models.triage import SimilarIssue, TriagePlan
+from triage_iq.models.triage import SimilarIssue, TriageAssistant, TriagePlan
 
 
 def _fake_plan() -> TriagePlan:
@@ -42,6 +43,7 @@ def _fake_meta() -> dict:
         "estimated_cost_usd": 0.0001,
         "duplicate_count": 1,
         "predicted_resolution_days_p50": 3.5,
+        "llm_status": "ok",
     }
 
 
@@ -108,8 +110,10 @@ def test_triage_includes_resolution_prediction(client):
     assert "expected_resolution_upper_days" in body
     assert body["expected_resolution_lower_days"] >= 0
     assert body["expected_resolution_upper_days"] >= body["expected_resolution_lower_days"]
-    # Request must include request_id (end-to-end plumbing)
+    # Request must include request_id and llm_status (end-to-end plumbing)
     assert "_request_id" in body
+    assert "_llm_status" in body
+    assert body["_llm_status"] in ("ok", "parse_retry_succeeded", "parse_failure")
 
 
 def test_triage_accepts_created_at(client):
@@ -155,3 +159,69 @@ def test_triage_propagates_assistant_error(client):
         "title": "Some issue",
     })
     assert r.status_code == 500
+
+
+# ---------------------------------------------------------------------------
+# TriageAssistant unit tests — LLM parse robustness
+# ---------------------------------------------------------------------------
+
+_VALID_PLAN_JSON = _json.dumps({
+    "predicted_component": "editor",
+    "component_confidence": 0.85,
+    "similar_issues": [],
+    "expected_resolution_summary": "3 days typical",
+    "expected_resolution_lower_days": 1.0,
+    "expected_resolution_upper_days": 5.0,
+    "priority_guess": "medium",
+    "priority_rationale": "Standard bug",
+    "suggested_assignee_class": "editor team",
+    "suggested_next_steps": ["Reproduce locally"],
+    "triage_summary": "Editor bug",
+})
+
+_MINIMAL_SIGNALS = {
+    "prompt": "test",
+    "classifier_top3": [{"label": "editor", "confidence": 0.85}],
+    "similar_raw": [],
+    "pred_days": 3.0,
+    "lo_days": 1.0,
+    "hi_days": 5.0,
+    "_t_classify": 0.0,
+    "_t_retrieve": 0.0,
+    "_t_predict": 0.0,
+}
+
+
+def _make_assistant() -> TriageAssistant:
+    asst = TriageAssistant.__new__(TriageAssistant)
+    asst.repo = "microsoft/vscode"
+    asst.model = "test"
+    asst.temperature = 0.0
+    asst.max_tokens = 1024
+    asst._groq_key = "test-key"
+    asst.classifier = MagicMock()
+    asst.detector = MagicMock()
+    asst.predictor = MagicMock()
+    asst.train_df = MagicMock()
+    return asst
+
+
+def test_triage_handles_groq_preamble():
+    """Groq response with prose before JSON: parsed on first attempt (llm_status=ok)."""
+    asst = _make_assistant()
+    raw = f"Here you go:\n{_VALID_PLAN_JSON}"
+    with patch.object(asst, "_groq_completion", return_value=(raw, {})):
+        plan, _, _, status = asst._call_llm_verbose(_MINIMAL_SIGNALS)
+    assert plan.predicted_component == "editor"
+    assert status == "ok"
+
+
+def test_triage_handles_groq_garbage():
+    """Groq returns no JSON at all: retry also fails, fallback plan returned (llm_status=parse_failure)."""
+    asst = _make_assistant()
+    with patch.object(asst, "_groq_completion", return_value=("I cannot help with that.", {})):
+        plan, _, _, status = asst._call_llm_verbose(_MINIMAL_SIGNALS)
+    assert status == "parse_failure"
+    assert plan.predicted_component == "editor"   # from classifier_top3 fallback
+    assert plan.priority_guess == "medium"
+    assert len(plan.suggested_next_steps) >= 1

@@ -95,6 +95,7 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
 
     result = plan.model_dump()
     result["_request_id"] = request_id
+    result["_llm_status"] = meta.get("llm_status", "ok")
     return JSONResponse(content=result)
 
 

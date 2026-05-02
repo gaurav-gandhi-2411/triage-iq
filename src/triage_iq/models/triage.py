@@ -120,7 +120,7 @@ class TriageAssistant:
         """Like triage() but also returns per-system timing and token usage."""
         t0 = time.perf_counter()
         signals = self._collect_signals(issue)
-        plan, raw, usage = self._call_llm_verbose(signals)
+        plan, raw, usage, llm_status = self._call_llm_verbose(signals)
         elapsed = time.perf_counter() - t0
 
         t_llm = max(
@@ -144,6 +144,7 @@ class TriageAssistant:
             ),
             "duplicate_count": len(plan.similar_issues),
             "predicted_resolution_days_p50": round(mid, 1),
+            "llm_status": llm_status,
         }
         logger.info(
             "[%s] Triaged #%s in %.2fs (groq %d+%d tok)",
@@ -262,17 +263,10 @@ class TriageAssistant:
     # ------------------------------------------------------------------
 
     def _call_llm(self, signals: dict) -> tuple[TriagePlan, str]:
-        from triage_iq.prompts.triage_prompt import SYSTEM_PROMPT, build_few_shot_examples
-
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-        messages.extend(build_few_shot_examples())
-        messages.append({"role": "user", "content": signals["prompt"]})
-
-        raw, _ = self._groq_completion(messages)
-        plan = self._parse_plan(raw)
+        plan, raw, _, _ = self._call_llm_verbose(signals)
         return plan, raw
 
-    def _call_llm_verbose(self, signals: dict) -> tuple[TriagePlan, str, dict]:
+    def _call_llm_verbose(self, signals: dict) -> tuple[TriagePlan, str, dict, str]:
         from triage_iq.prompts.triage_prompt import SYSTEM_PROMPT, build_few_shot_examples
 
         messages = [{"role": "system", "content": SYSTEM_PROMPT}]
@@ -280,8 +274,62 @@ class TriageAssistant:
         messages.append({"role": "user", "content": signals["prompt"]})
 
         raw, usage = self._groq_completion(messages)
-        plan = self._parse_plan(raw)
-        return plan, raw, usage
+        llm_status = "ok"
+
+        try:
+            plan = self._parse_plan(raw)
+        except (json.JSONDecodeError, ValueError) as exc:
+            logger.warning(
+                "LLM JSON parse failed (attempt 1): %s — retrying with strict prompt. Raw: %.300s",
+                exc, raw,
+            )
+            retry_messages = [
+                *messages,
+                {"role": "assistant", "content": raw},
+                {
+                    "role": "user",
+                    "content": (
+                        "Your previous response was not valid JSON. "
+                        "Respond with ONLY valid JSON. No preamble, no markdown fences, no trailing commas."
+                    ),
+                },
+            ]
+            raw2, usage2 = self._groq_completion(retry_messages)
+            usage = usage2
+            try:
+                plan = self._parse_plan(raw2)
+                llm_status = "parse_retry_succeeded"
+                raw = raw2
+                logger.info("LLM JSON parse retry succeeded.")
+            except (json.JSONDecodeError, ValueError) as exc2:
+                logger.error(
+                    "LLM JSON parse failed after retry: %s — using fallback plan. Raw: %.300s",
+                    exc2, raw2,
+                )
+                plan = self._make_fallback_plan(signals)
+                llm_status = "parse_failure"
+
+        return plan, raw, usage, llm_status
+
+    def _make_fallback_plan(self, signals: dict) -> TriagePlan:
+        """Structured fallback when LLM JSON cannot be parsed after retry."""
+        top = (signals.get("classifier_top3") or [{}])[0]
+        return TriagePlan(
+            predicted_component=str(top.get("label", "unknown")),
+            component_confidence=float(top.get("confidence", 0.0)),
+            similar_issues=[],
+            expected_resolution_summary="LLM response unparseable; estimate from predictor only.",
+            expected_resolution_lower_days=float(signals.get("lo_days", 1.0)),
+            expected_resolution_upper_days=float(signals.get("hi_days", 30.0)),
+            priority_guess="medium",
+            priority_rationale="LLM parse failure — priority defaulting to medium.",
+            suggested_assignee_class="unknown",
+            suggested_next_steps=["Manual triage required — LLM response parsing failed."],
+            triage_summary=(
+                "Automated triage degraded: LLM JSON parse failed after retry. "
+                "Component from TF-IDF only; manual review recommended."
+            ),
+        )
 
     def _groq_completion(self, messages: list[dict]) -> tuple[str, dict]:
         try:

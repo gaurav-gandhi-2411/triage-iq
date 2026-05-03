@@ -72,8 +72,13 @@ jobs:
             --memory 4Gi \
             --cpu 2 \
             --min-instances 0 \
-            --max-instances 5 \
+            --max-instances 3 \
+            --concurrency 8 \
+            --cpu-throttling \
             --timeout 300 \
+            --startup-probe-failure-threshold 3 \
+            --startup-probe-period-seconds 60 \
+            --startup-probe-timeout-seconds 30 \
             --update-secrets GROQ_API_KEY=groq-api-key:latest \
             --quiet
           echo "url=$(gcloud run services describe ${{ env.SERVICE_NAME }} \

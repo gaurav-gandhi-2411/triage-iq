@@ -26,7 +26,9 @@ curl -X POST https://triageiq-api-779563952988.us-central1.run.app/triage \
 
 **Supported repos:** `microsoft/vscode`, `kubernetes/kubernetes`
 
-Infrastructure: FastAPI on Google Cloud Run (0–5 instances, free tier) · Groq llama-3.1-8b-instant · Cloud Logging · GitHub Actions CI/CD  
+**Rate limits:** `10 requests/hour` and `30 requests/day` per IP. `/health` is not rate-limited.
+
+Infrastructure: FastAPI on Google Cloud Run (0–3 instances, free tier) · Groq llama-3.1-8b-instant · Cloud Logging · GitHub Actions CI/CD  
 Latency: ~23s cold start, ~3.5s warm p50
 
 ---

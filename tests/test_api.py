@@ -5,12 +5,13 @@ Uses TestClient with a mocked ModelStore so no real models or Groq calls needed.
 
 import json as _json
 import time
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
-from triage_iq.api.app import app
+from triage_iq.api.app import app, limiter
 from triage_iq.api.loader import ModelStore
 from triage_iq.models.triage import SimilarIssue, TriageAssistant, TriagePlan
 
@@ -55,6 +56,14 @@ def _make_store() -> ModelStore:
     store.start_time = time.monotonic() - 5.0
     store.get.return_value = bundle
     return store
+
+
+@pytest.fixture(autouse=True)
+def _limiter_disabled():
+    """Disable rate limiting for all tests except test_rate_limiting."""
+    limiter.enabled = False
+    yield
+    limiter.enabled = False
 
 
 @pytest.fixture
@@ -225,3 +234,37 @@ def test_triage_handles_groq_garbage():
     assert plan.predicted_component == "editor"   # from classifier_top3 fallback
     assert plan.priority_guess == "medium"
     assert len(plan.suggested_next_steps) >= 1
+
+
+# ---------------------------------------------------------------------------
+# PR 1 hardening tests
+# ---------------------------------------------------------------------------
+
+def test_rate_limiting():
+    """11th request from the same IP within one hour must return 429."""
+    store = _make_store()
+    payload = {
+        "repo": "microsoft/vscode",
+        "title": "Editor crashes on paste",
+        "body": "Reproduces every time.",
+        "issue_number": 1,
+    }
+    with patch("triage_iq.api.app.ModelStore.load_all", return_value=store):
+        limiter.enabled = True
+        limiter._storage.reset()
+        try:
+            with TestClient(app) as c:
+                for i in range(10):
+                    r = c.post("/triage", json=payload)
+                    assert r.status_code == 200, f"Request {i + 1} returned {r.status_code}"
+                r = c.post("/triage", json=payload)
+                assert r.status_code == 429
+                assert r.json() == {"detail": "Too many requests"}
+        finally:
+            limiter.enabled = False
+
+
+def test_missing_groq_key_raises_at_startup():
+    """ModelStore.load_all must raise RuntimeError when GROQ_API_KEY is absent."""
+    with patch.dict("os.environ", {"GROQ_API_KEY": ""}), pytest.raises(RuntimeError, match="GROQ_API_KEY"):
+        ModelStore.load_all(groq_api_key="", data_dir=Path("/tmp/nonexistent"))

@@ -17,6 +17,9 @@ from pathlib import Path
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from .loader import ModelStore
 from .schemas import HealthResponse, TriageRequest
@@ -25,6 +28,23 @@ logger = logging.getLogger(__name__)
 
 # llama-3.1-8b-instant pricing (per million tokens, as of 2025)
 _GROQ_PRICE_PER_MTOK = 0.27
+
+
+def _client_ip(request: Request) -> str:
+    """Return real client IP; Cloud Run proxies via X-Forwarded-For."""
+    xff = request.headers.get("X-Forwarded-For")
+    if xff:
+        return xff.split(",")[0].strip()
+    if request.client:
+        return request.client.host
+    return "unknown"
+
+
+limiter = Limiter(key_func=_client_ip)
+
+
+def _rate_limit_handler(request: Request, exc: Exception) -> JSONResponse:
+    return JSONResponse({"detail": "Too many requests"}, status_code=429)
 
 
 @asynccontextmanager
@@ -43,8 +63,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
+app.add_middleware(SlowAPIMiddleware)
+
 
 @app.post("/triage")
+@limiter.limit("10/hour")
+@limiter.limit("30/day")
 def triage(body: TriageRequest, request: Request) -> JSONResponse:
     """Triage a GitHub issue and return a structured TriagePlan."""
     request_id = str(uuid.uuid4())
@@ -78,7 +104,7 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
             error=str(exc),
         )
         logger.exception("Triage failed for repo=%s", body.repo)
-        raise HTTPException(status_code=500, detail=f"Triage failed: {exc}") from exc
+        raise HTTPException(status_code=500, detail="Internal server error") from exc
 
     total_ms = round((time.perf_counter() - t_start) * 1000, 1)
     _log_request(

@@ -76,9 +76,7 @@ jobs:
             --concurrency 8 \
             --cpu-throttling \
             --timeout 300 \
-            --startup-probe-failure-threshold 3 \
-            --startup-probe-period-seconds 60 \
-            --startup-probe-timeout-seconds 30 \
+            --startup-probe="httpGet.path=/health,httpGet.port=8080,timeoutSeconds=30,periodSeconds=60,failureThreshold=3" \
             --update-secrets GROQ_API_KEY=groq-api-key:latest \
             --quiet
           echo "url=$(gcloud run services describe ${{ env.SERVICE_NAME }} \

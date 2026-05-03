@@ -97,10 +97,9 @@ vscode combined median resolution: 1.8 days. Mean: 104.9 days. p95: 666 days (hi
 ### 4.6 Comment fetch completeness
 Comments are fetched with `per_page=100`. Issues with >100 comments have only the first 100 captured. In the 2015-2016 vscode dataset, the maximum is 588 comments (issue #519) — these are truncated.
 
-### 4.7 Image-only and link-only issue bodies silently emptied
-Some issues (e.g., microsoft/vscode #2093) have bodies consisting entirely of image URLs (e.g., `https://cloud.githubusercontent.com/...`) or other bare links. The preprocessing pipeline strips these to an empty string, and `build_triage_prompt` renders them as `(no body)`. The LLM triage assistant then has only the issue title to assess priority, which can inflate or deflate the prediction.
+### 4.7 Known Preprocessing Limitations
 
-**Mitigation needed:** Replace image/link-only bodies with a placeholder such as `[image content — body not available for triage]` so the model receives an explicit signal rather than an empty field. Until fixed, issues with empty bodies should be expected to have lower priority prediction quality.
+**Image-only and link-only bodies stripped to empty.** Issue bodies consisting solely of image URLs or external links are stripped to empty during preprocessing (e.g., vscode #2093 — body is a single `https://cloud.githubusercontent.com/...` URL). This produces information-impoverished inputs to downstream models: `build_triage_prompt` renders empty bodies as `(no body)`, leaving the LLM with only the issue title. Future work: replace stripped media with placeholder tokens like `[image content]` to preserve the signal that visual context exists.
 
 ---
 

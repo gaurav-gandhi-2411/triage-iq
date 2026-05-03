@@ -543,7 +543,7 @@ def generate_report(results: dict, sample_plans: list[dict], out_path: Path) -> 
 
     quality_tiers = {"great": None, "mediocre": None, "failure": None}
     for p in sample_plans:
-        score = p.get("judge_score_total", 0)
+        score = p.get("judge_score_total") or 0
         if score >= 11 and quality_tiers["great"] is None:
             quality_tiers["great"] = p
         elif 6 <= score < 11 and quality_tiers["mediocre"] is None:

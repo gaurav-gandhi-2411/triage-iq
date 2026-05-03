@@ -77,7 +77,7 @@
       "suggested_next_steps": [
         "Verify the authentication flow with the Microsoft Account API and check for any recent changes that might have introduced this regression.",
         "Test the issue with different authentication methods (e.g., GitHub, Azure DevOps) to see if the problem is specific to Microsoft Account.",
-        "Review the API endpoint configuration and auth state management in the VS Code tunnel implementation to identify potential issues."
+        "Review the API endpoint configuration and ensure that the correct scopes are being requested and handled."
       ],
       "triage_summary": "Reproducible authentication failure in Remote Tunnels, affecting multiple platforms and users. Similar issues exist, suggesting a shared root cause. Assign to api team; high priority due to the critical nature of the feature and widespread impact."
     },
@@ -223,9 +223,9 @@
       "suggested_next_steps": [
         "Reproduce the issue with a minimal VS Code setup to isolate the problem.",
         "Check the native Git command executor logs for any clues about the error.",
-        "Verify the Electron/Git API interaction for any potential issues."
+        "Verify the Electron/Git API interaction and see if there are any known issues or regressions."
       ],
-      "triage_summary": "Reproducible Git integration regression in Electron. Similar issues exist, but error type and interaction suggest a different root cause. Assign to electron team; low priority given the lack of clear connection to GitHub Copilot or other similar issues."
+      "triage_summary": "Reproducible Git integration regression in Electron, but unclear connection to GitHub Copilot or other similar issues. Assign to electron team; low priority given the lack of clear impact on user workflow."
     },
     "judge_score_total": null
   },
@@ -256,18 +256,18 @@
           "relevance_note": "Job Controller proposal, which is directly related to the Job object improvements listed in the issue."
         }
       ],
-      "expected_resolution_summary": "Long-term API refactoring and design improvements: 1\u20136 months, depending on team velocity and priority changes.",
+      "expected_resolution_summary": "Long-term API refactoring effort: 20\u2013200 days, depending on team velocity and priority changes.",
       "expected_resolution_lower_days": 20.1,
       "expected_resolution_upper_days": 199.1,
       "priority_guess": "low",
-      "priority_rationale": "While the proposed improvements are valuable, they are primarily design and API-related, and do not block immediate functionality. The long resolution estimate and low priority reflect this.",
+      "priority_rationale": "While the proposed improvements are valuable, they are not urgent and can be addressed in a longer-term API refactoring effort.",
       "suggested_assignee_class": "api team",
       "suggested_next_steps": [
-        "Discuss the proposed improvements with the api team and gather feedback from other stakeholders.",
-        "Create a design document outlining the proposed changes and their benefits.",
-        "Prioritize and break down the design improvements into smaller, actionable tasks."
+        "Discuss the proposed improvements with the api team and prioritize them based on current team velocity and priority changes.",
+        "Create a separate issue for each proposed improvement to track progress and assign tasks to team members.",
+        "Research existing solutions and best practices for similar use cases to inform the design of the Job object improvements."
       ],
-      "triage_summary": "Long-term design and API improvements for the Job object. While valuable, these changes are not blocking and have a low priority. Assign to api team; focus on gathering feedback and creating a design document."
+      "triage_summary": "Long-term API refactoring effort to improve the Job object. Proposed improvements include deadlines, throttling, and distinction between application and cluster failures. Assign to api team; low priority given the non-urgent nature of the changes."
     },
     "judge_score_total": null
   },
@@ -393,7 +393,7 @@
         "Collaborate with the apiserver team to ensure a clear understanding of the etcd-apiserver interactions.",
         "Develop a plan to improve error messages and handling when etcd fails, as seen in #4036."
       ],
-      "triage_summary": "Critical issue related to etcd-apiserver interactions. apiserver not listening when etcd is down can lead to cluster instability and data loss. High priority due to the severity of the issue. Assign to etcd team for resolution."
+      "triage_summary": "Critical issue affecting etcd-apiserver interactions. apiserver not listening when etcd is down can lead to cluster instability and data loss. High priority due to the severity of the issue. Assign to etcd team for resolution."
     },
     "judge_score_total": null
   },
@@ -443,9 +443,9 @@
       "suggested_next_steps": [
         "Discuss and refine the proposed [INLINE_CODE] field with the API team and relevant stakeholders.",
         "Develop a comprehensive test plan to ensure the new protection mechanism works correctly and doesn't introduce regressions.",
-        "Collaborate with the Openshift and Kubernetes teams to integrate the configurable protection mechanism into their respective infrastructures."
+        "Collaborate with the Openshift and Kubernetes teams to gather requirements and ensure the solution meets their needs."
       ],
-      "triage_summary": "High-priority API change to generalize protection against accidental deletion and mutation. Similar issues highlight the need for configurable mechanisms. Assign to the API team; expect a complex, multi-month effort."
+      "triage_summary": "High-priority API change to generalize protection against accidental deletion and mutation. Similar issues highlight the need for configurable and robust namespace protection mechanisms. Assign to the API team; expect a complex and time-consuming resolution process."
     },
     "judge_score_total": null
   }

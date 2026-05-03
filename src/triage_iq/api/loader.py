@@ -62,10 +62,6 @@ class ModelStore:
         processed_dir = data_dir / "processed"
 
         key = groq_api_key or os.environ.get("GROQ_API_KEY", "")
-        if not key:
-            raise RuntimeError(
-                "GROQ_API_KEY is not set. Set the environment variable before starting the service."
-            )
 
         bundles: dict[str, RepoBundle] = {}
         for repo, slug in _REPO_SLUGS.items():

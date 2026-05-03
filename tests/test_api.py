@@ -5,7 +5,6 @@ Uses TestClient with a mocked ModelStore so no real models or Groq calls needed.
 
 import json as _json
 import time
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -60,22 +59,27 @@ def _make_store() -> ModelStore:
 
 @pytest.fixture(autouse=True)
 def _limiter_disabled():
-    """Disable rate limiting for all tests except test_rate_limiting."""
-    limiter.enabled = False
-    yield
-    limiter.enabled = False
+    """Reset settings cache and disable rate limiting for all tests via env var."""
+    from triage_iq.config import get_settings
+    get_settings.cache_clear()
+    with patch.dict("os.environ", {"RATE_LIMIT_ENABLED": "false"}):
+        yield
+    get_settings.cache_clear()
 
 
 @pytest.fixture
 def client():
     store = _make_store()
-    with patch("triage_iq.api.app.ModelStore.load_all", return_value=store), TestClient(app) as c:
+    with (
+        patch.dict("os.environ", {"GROQ_API_KEY": "test-key-for-tests"}),
+        patch("triage_iq.api.app.ModelStore.load_all", return_value=store),
+        TestClient(app) as c,
+    ):
         yield c
 
 
 def test_health(client):
-    with patch.dict("os.environ", {"GROQ_API_KEY": "test-key"}):
-        r = client.get("/health")
+    r = client.get("/health")
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "ok"
@@ -242,6 +246,7 @@ def test_triage_handles_groq_garbage():
 
 def test_rate_limiting():
     """11th request from the same IP within one hour must return 429."""
+    from triage_iq.config import get_settings
     store = _make_store()
     payload = {
         "repo": "microsoft/vscode",
@@ -249,22 +254,94 @@ def test_rate_limiting():
         "body": "Reproduces every time.",
         "issue_number": 1,
     }
-    with patch("triage_iq.api.app.ModelStore.load_all", return_value=store):
-        limiter.enabled = True
-        limiter._storage.reset()
-        try:
-            with TestClient(app) as c:
-                for i in range(10):
-                    r = c.post("/triage", json=payload)
-                    assert r.status_code == 200, f"Request {i + 1} returned {r.status_code}"
-                r = c.post("/triage", json=payload)
-                assert r.status_code == 429
-                assert r.json() == {"detail": "Too many requests"}
-        finally:
-            limiter.enabled = False
+    get_settings.cache_clear()
+    limiter._storage.reset()
+    with (
+        patch.dict("os.environ", {"GROQ_API_KEY": "test-key-for-tests", "RATE_LIMIT_ENABLED": "true"}),
+        patch("triage_iq.api.app.ModelStore.load_all", return_value=store),
+        TestClient(app) as c,
+    ):
+        for i in range(10):
+            r = c.post("/triage", json=payload)
+            assert r.status_code == 200, f"Request {i + 1} returned {r.status_code}"
+        r = c.post("/triage", json=payload)
+        assert r.status_code == 429
+        assert r.json() == {"detail": "Too many requests"}
 
 
 def test_missing_groq_key_raises_at_startup():
-    """ModelStore.load_all must raise RuntimeError when GROQ_API_KEY is absent."""
-    with patch.dict("os.environ", {"GROQ_API_KEY": ""}), pytest.raises(RuntimeError, match="GROQ_API_KEY"):
-        ModelStore.load_all(groq_api_key="", data_dir=Path("/tmp/nonexistent"))
+    """Settings must raise ValidationError when GROQ_API_KEY is absent or empty."""
+    from pydantic import ValidationError
+
+    from triage_iq.config import Settings, get_settings
+    get_settings.cache_clear()
+    with patch.dict("os.environ", {"GROQ_API_KEY": ""}), pytest.raises(ValidationError):
+        Settings()
+
+
+# ---------------------------------------------------------------------------
+# PR 2 — Settings, JSON logging, prompt calibration
+# ---------------------------------------------------------------------------
+
+def test_settings_loads_from_env():
+    """Settings correctly reads all fields from environment variables."""
+    from triage_iq.config import Settings, get_settings
+    get_settings.cache_clear()
+    env = {
+        "GROQ_API_KEY": "sk-test-key-123",
+        "RATE_LIMIT_ENABLED": "false",
+        "LOG_LEVEL": "DEBUG",
+        "ENVIRONMENT": "dev",
+        "PORT": "9090",
+    }
+    with patch.dict("os.environ", env):
+        s = Settings()
+    assert s.groq_api_key.get_secret_value() == "sk-test-key-123"
+    assert s.rate_limit_enabled is False
+    assert s.log_level == "DEBUG"
+    assert s.environment == "dev"
+    assert s.port == 9090
+
+
+def test_settings_fails_without_groq_key():
+    """Settings raises ValidationError when GROQ_API_KEY is empty."""
+    from pydantic import ValidationError
+
+    from triage_iq.config import Settings, get_settings
+    get_settings.cache_clear()
+    # Empty string overrides any .env file value (env vars take priority)
+    with patch.dict("os.environ", {"GROQ_API_KEY": ""}), pytest.raises(ValidationError):
+        Settings()
+
+
+def test_log_request_emits_valid_json(capsys):
+    """_log_request must emit a single parseable JSON line to stdout."""
+    import json
+
+    from triage_iq.api.app import _log_request
+    _log_request(
+        endpoint="/triage",
+        status="success",
+        repo="microsoft/vscode",
+        total_latency_ms=123.4,
+    )
+    captured = capsys.readouterr()
+    line = captured.out.strip()
+    assert line, "Expected JSON output on stdout"
+    data = json.loads(line)
+    assert data["severity"] == "INFO"
+    assert data["log_type"] == "access"
+    assert data["endpoint"] == "/triage"
+    assert data["status"] == "success"
+    assert data["repo"] == "microsoft/vscode"
+    assert "timestamp" in data
+    assert "message" in data
+
+
+def test_priority_calibration_in_prompt():
+    """Prompt schema description must contain the calibration bullets for all three priority levels."""
+    from triage_iq.prompts.triage_prompt import SYSTEM_PROMPT
+    assert "low: cosmetic or non-blocking" in SYSTEM_PROMPT
+    assert "medium: reproducible regression with workaround" in SYSTEM_PROMPT
+    assert "high: crash, data loss, auth failure" in SYSTEM_PROMPT
+    assert "IMPORTANT: default to medium" in SYSTEM_PROMPT

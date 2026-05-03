@@ -7,12 +7,10 @@ GET  /health: returns loaded repos and uptime.
 
 import json
 import logging
-import os
 import time
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from pathlib import Path
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Request
@@ -21,6 +19,7 @@ from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
+from ..config import get_settings
 from .loader import ModelStore
 from .schemas import HealthResponse, TriageRequest
 
@@ -29,6 +28,53 @@ logger = logging.getLogger(__name__)
 # llama-3.1-8b-instant pricing (per million tokens, as of 2025)
 _GROQ_PRICE_PER_MTOK = 0.27
 
+
+# ---------------------------------------------------------------------------
+# JSON access logging — one JSON object per stdout line so Cloud Run's
+# logging agent reliably routes entries to jsonPayload, not textPayload.
+# Filter with: jsonPayload.log_type="access"
+# ---------------------------------------------------------------------------
+
+_LOG_RECORD_BUILTIN_KEYS: frozenset[str] = frozenset(vars(logging.makeLogRecord({})))
+
+
+class _JsonFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        d: dict[str, object] = {
+            "severity": record.levelname,
+            "message": record.getMessage(),
+            "timestamp": self.formatTime(record, "%Y-%m-%dT%H:%M:%SZ"),
+        }
+        for key, val in vars(record).items():
+            if key not in _LOG_RECORD_BUILTIN_KEYS and not key.startswith("_"):
+                d[key] = val
+        if record.exc_info:
+            d["exc_info"] = self.formatException(record.exc_info)
+        return json.dumps(d, default=str)
+
+
+class _StdoutHandler(logging.Handler):
+    """Writes to sys.stdout at emit time so pytest capsys captures output."""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            import sys
+            print(self.format(record), file=sys.stdout, flush=True)
+        except Exception:
+            self.handleError(record)
+
+
+_access_handler = _StdoutHandler()
+_access_handler.setFormatter(_JsonFormatter())
+_access_logger = logging.getLogger("triage_iq.access")
+_access_logger.setLevel(logging.INFO)
+_access_logger.addHandler(_access_handler)
+_access_logger.propagate = False
+
+
+# ---------------------------------------------------------------------------
+# Rate limiter
+# ---------------------------------------------------------------------------
 
 def _client_ip(request: Request) -> str:
     """Return real client IP; Cloud Run proxies via X-Forwarded-For."""
@@ -47,11 +93,19 @@ def _rate_limit_handler(request: Request, exc: Exception) -> JSONResponse:
     return JSONResponse({"detail": "Too many requests"}, status_code=429)
 
 
+# ---------------------------------------------------------------------------
+# App
+# ---------------------------------------------------------------------------
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    data_dir = Path(os.environ.get("DATA_DIR", Path(__file__).parent.parent.parent.parent / "data"))
-    logger.info("Loading models from %s …", data_dir)
-    app.state.store = ModelStore.load_all(data_dir=data_dir)
+    cfg = get_settings()
+    limiter.enabled = cfg.rate_limit_enabled
+    logger.info("Loading models from %s …", cfg.data_dir)
+    app.state.store = ModelStore.load_all(
+        data_dir=cfg.data_dir,
+        groq_api_key=cfg.groq_api_key.get_secret_value(),
+    )
     logger.info("Models ready: %s", app.state.store.repos)
     yield
 
@@ -127,22 +181,19 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
 
 @app.get("/health", response_model=HealthResponse)
 def health(request: Request) -> HealthResponse:
+    cfg = get_settings()
     store: ModelStore = request.app.state.store
     return HealthResponse(
         status="ok",
         repos_loaded=store.repos,
-        groq_key_present=bool(os.environ.get("GROQ_API_KEY")),
+        groq_key_present=bool(cfg.groq_api_key.get_secret_value()),
         uptime_s=round(time.monotonic() - store.start_time, 1),
     )
 
 
 # ---------------------------------------------------------------------------
-# Structured logging helper
+# Structured access log helper
 # ---------------------------------------------------------------------------
 
 def _log_request(**fields) -> None:
-    record = {
-        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        **fields,
-    }
-    logger.info("ACCESS %s", json.dumps(record, default=str))
+    _access_logger.info("access", extra={"log_type": "access", **fields})

@@ -28,7 +28,11 @@ Schema:
   "expected_resolution_summary": "string — human-readable estimate (e.g., '2–7 days typical for this component')",
   "expected_resolution_lower_days": "number — optimistic estimate in days",
   "expected_resolution_upper_days": "number — conservative estimate in days",
-  "priority_guess": "one of: low | medium | high",
+  "priority_guess": "one of: low | medium | high
+    - low: cosmetic or non-blocking, affects edge case / niche workflow, trivial workaround exists, or long-standing minor annoyance
+    - medium: reproducible regression with workaround available, or feature gap affecting an active workflow, or visual inconsistency in a feature
+    - high: crash, data loss, auth failure, no workaround, or breaks core workflow for all users
+    IMPORTANT: default to medium for regressions that have workarounds. Reserve high for blocking issues with no workaround.",
   "priority_rationale": "string — 1–2 sentences explaining priority assignment",
   "suggested_assignee_class": "string — team or role best suited (e.g., 'core-runtime team', 'documentation team', 'first-time-contributor friendly')",
   "suggested_next_steps": ["string — ordered list of 2–4 actionable next steps"],
@@ -156,6 +160,58 @@ Produce a triage plan as valid JSON matching the schema in the system prompt.
     "Add a regression test that switches tabs 5× and asserts cursor blink state."
   ],
   "triage_summary": "Reproducible terminal cursor blink regression triggered by tab switching. Two closely related prior issues exist (#12345, #11902), suggesting a known weak point in terminal focus handling. Assign to terminal team; medium priority given the available workaround."
+}""",
+        },
+        {
+            "role": "user",
+            "content": """\
+Repository: microsoft/vscode
+
+--- ISSUE ---
+Title: Extension deactivate() not called when closing VS Code window on macOS
+Body:
+When closing the VS Code window on macOS (Cmd+W or red dot), extension deactivate() is never called. This is a problem for extensions that need to clean up resources or persist state. The issue does not reproduce on Linux or Windows — only macOS window close. Workaround: quit VS Code completely (Cmd+Q) instead of closing the window; deactivate() is called on full quit.
+
+--- SYSTEM 1: COMPONENT CLASSIFIER (TF-IDF) ---
+Top-3 predictions:
+  1. api (confidence: 0.152)
+  2. extension-host (confidence: 0.098)
+  3. workbench (confidence: 0.071)
+
+--- SYSTEM 2: SIMILAR ISSUES (BGE retrieval) ---
+  #441 (similarity: 0.812): Extension cleanup not triggered on window close macOS...
+  #389 (similarity: 0.741): deactivate hook missing on OS window close events...
+
+--- SYSTEM 3: RESOLUTION TIME PREDICTOR (LightGBM) ---
+Point estimate: 21.4 days
+80% prediction interval: [3.2d, 89.6d]
+
+--- TASK ---
+Produce a triage plan as valid JSON matching the schema in the system prompt.
+""",
+        },
+        {
+            "role": "assistant",
+            "content": """\
+{
+  "predicted_component": "extension-host",
+  "component_confidence": 0.55,
+  "similar_issues": [
+    {"number": 441, "similarity": 0.812, "relevance_note": "Same missing deactivate() on macOS window close — likely the same root cause."},
+    {"number": 389, "similarity": 0.741, "relevance_note": "Broader report of deactivate hook not firing on OS-level window close events."}
+  ],
+  "expected_resolution_summary": "macOS-specific lifecycle edge case. Likely requires an OS-level window close event hook; 3–12 weeks depending on platform team bandwidth.",
+  "expected_resolution_lower_days": 3.2,
+  "expected_resolution_upper_days": 89.6,
+  "priority_guess": "low",
+  "priority_rationale": "Affects extension authors only, not end users. A clear workaround exists (Cmd+Q triggers deactivate correctly). The scenario — closing a window without quitting — is a niche workflow for most extension developers.",
+  "suggested_assignee_class": "extension-host / platform team",
+  "suggested_next_steps": [
+    "Confirm whether #441 and #389 are duplicates; close if so.",
+    "Investigate macOS NSWindowWillCloseNotification handling in the Electron layer.",
+    "Add a lifecycle test that simulates window close (not app quit) on macOS."
+  ],
+  "triage_summary": "Extension deactivate() is silently skipped on macOS window close due to a missing OS-level event hook in the extension host. Affects extension authors only; end users are not impacted. Low priority given the clear workaround and niche audience."
 }""",
         },
     ]

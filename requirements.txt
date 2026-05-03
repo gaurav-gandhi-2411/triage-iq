@@ -24,6 +24,7 @@ fastapi>=0.100
 uvicorn[standard]>=0.23
 pydantic>=2.0
 slowapi>=0.1.9
+pydantic-settings>=2.0
 
 # LLM clients
 groq>=0.11

@@ -64,6 +64,9 @@ jobs:
       - name: Deploy to Cloud Run
         id: deploy
         run: |
+          # Note: both secrets must exist in Secret Manager before first deploy:
+          #   gcloud secrets create groq-api-key --replication-policy=automatic
+          #   gcloud secrets create metrics-token --replication-policy=automatic
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image ${{ env.IMAGE }}:${{ github.sha }} \
             --region ${{ env.GCP_REGION }} \
@@ -77,7 +80,8 @@ jobs:
             --cpu-throttling \
             --timeout 300 \
             --startup-probe="httpGet.path=/health,httpGet.port=8080,timeoutSeconds=30,periodSeconds=60,failureThreshold=3" \
-            --update-secrets GROQ_API_KEY=groq-api-key:latest \
+            --update-secrets GROQ_API_KEY=groq-api-key:latest,METRICS_TOKEN=metrics-token:latest \
+            --update-env-vars ENVIRONMENT=prod \
             --quiet
           echo "url=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
             --region ${{ env.GCP_REGION }} \

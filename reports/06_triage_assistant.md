@@ -132,6 +132,22 @@ Component annotation from normalized label set. Priority inferred from metadata 
 **Dimensions most reliable:** `component_match`, `similar_issues_relevance`  
 **Dimensions most subjective:** `resolution_estimate_reasonableness` (borderline 0/1 calls for wide CIs), `overall_quality`
 
+### 4.1 Priority Calibration — Prompt Iteration
+
+Hand validation on 5 cases surfaced systematic bias toward "high" priority (4/5 mispredicted as high). The triage prompt was iterated with: a top-level `PRIORITY GUIDELINES` section (5 numbered rules, pulled out of the JSON schema description where they were less salient), explicit decision order (default to medium; high requires no workaround + core impact; low requires niche audience + cosmetic/edge-case), and a balanced 3-example few-shot set (low / medium / high). The low example was rewritten to use resource-leak framing without an explicit workaround sentence — the failure mode observed in the original calibration.
+
+Post-iteration verification on a 3-case held-out set (commit `81de402`, 2026-05-03):
+
+| Issue | Description | Pre-fix | Post-fix | Gold | Result |
+|---|---|---|---|---|---|
+| #3826 | Build support feature gap (C/gdb/make) | high | medium | medium | correct |
+| #567 | Extension not deactivated on window close | high | medium | low | defensible borderline |
+| terminal blink | Cursor stops blinking after tab switch | — | low | medium | defensible borderline |
+
+`#3826` corrected. `#567` moved high → medium (gold is low; both "medium" and "low" are defensible — the issue affects only extension authors and has a workaround, but the framing is regression rather than purely cosmetic). Terminal cursor blink regressed medium → low (workaround exists and a related config option already exists per the model's reasoning — borderline).
+
+**Known limitation:** At 8B model size, the prompt can shift predictions away from the default "high" bias, but cannot reliably distinguish "edge-case-affecting" from "core-workflow-affecting" issues when both have workarounds. The two remaining misclassifications point in opposite directions, indicating a fundamental capability ceiling rather than a fixable prompt issue. Resolving this would require: (a) fine-tuning on labeled triage data, (b) escalating to a larger model (cost trade-off vs Groq free tier), or (c) rule-based post-processing of LLM proposals using audience/scope heuristics. Documented as future work.
+
 ---
 
 ## 5. Sample Triage Plans

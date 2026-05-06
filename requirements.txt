@@ -1,4 +1,13 @@
-# Core
+# Runtime dependencies — installed in Docker and CI.
+# torch is intentionally absent: it is installed separately via the PyTorch
+# CPU-only index (https://download.pytorch.org/whl/cpu) in Dockerfile.prod
+# and ci.yml before this file is read.
+#
+# To regenerate the pinned lock file:
+#   pip-compile requirements.txt --output-file=requirements.lock
+# Run on Linux (matching Dockerfile base image) to get correct wheel hashes.
+
+# Core data
 python-dotenv>=1.0
 requests>=2.31
 pandas>=2.0
@@ -12,7 +21,6 @@ scikit-learn>=1.6,<1.7
 lightgbm>=4.0
 transformers>=4.40
 sentence-transformers>=2.2,<3.0
-torch>=2.0
 datasets>=2.14
 
 # Retrieval
@@ -28,16 +36,5 @@ pydantic-settings>=2.0
 prometheus-fastapi-instrumentator>=6.1
 prometheus-client>=0.19
 
-# LLM clients
+# LLM
 groq>=0.11
-
-# Eval + reporting
-matplotlib>=3.7
-seaborn>=0.12
-scikit-plot>=0.3
-
-# Dev
-pytest>=7.4
-pytest-cov>=4.1
-ruff>=0.1
-mypy>=1.5

@@ -25,7 +25,8 @@ jobs:
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: triageiq-deployer@triageiq-portfolio-495022.iam.gserviceaccount.com
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -89,9 +90,13 @@ jobs:
 
       - name: Smoke test
         id: smoke
+        env:
+          SMOKE_METRICS_TOKEN: ${{ secrets.SMOKE_TEST_METRICS_TOKEN }}
         run: |
           URL="${{ steps.deploy.outputs.url }}"
-          echo "Testing $URL/health"
+
+          # 1. Health check — retry up to 5 times
+          echo "=== /health ==="
           for i in 1 2 3 4 5; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/health")
             if [ "$STATUS" = "200" ]; then
@@ -102,11 +107,40 @@ jobs:
             sleep 10
           done
           if [ "$STATUS" != "200" ]; then
-            echo "Smoke test FAILED with status $STATUS"
+            echo "FAILED: /health returned $STATUS"
             exit 1
           fi
-          BODY=$(curl -sf "$URL/health")
-          echo "Health: $BODY"
+          echo "Health: $(curl -sf "$URL/health")"
+
+          # 2. Metrics endpoint — requires bearer token
+          echo "=== /metrics ==="
+          if [ -n "$SMOKE_METRICS_TOKEN" ]; then
+            MSTATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              -H "Authorization: Bearer $SMOKE_METRICS_TOKEN" "$URL/metrics")
+            if [ "$MSTATUS" != "200" ]; then
+              echo "FAILED: /metrics returned $MSTATUS"
+              exit 1
+            fi
+            echo "Metrics check passed"
+          else
+            echo "SMOKE_TEST_METRICS_TOKEN not set — skipping /metrics check"
+          fi
+
+          # 3. Triage endpoint — synthetic issue
+          echo "=== /triage ==="
+          TBODY=$(curl -sf -X POST "$URL/triage" \
+            -H "Content-Type: application/json" \
+            -d '{"repo":"microsoft/vscode","title":"Extension host crashes on startup","body":"Every time I open VS Code the extension host process terminates immediately."}')
+          if [ $? -ne 0 ]; then
+            echo "FAILED: /triage returned non-200"
+            exit 1
+          fi
+          COMPONENT=$(echo "$TBODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['predicted_component'])")
+          if [ -z "$COMPONENT" ]; then
+            echo "FAILED: predicted_component is empty"
+            exit 1
+          fi
+          echo "Triage check passed — predicted_component=$COMPONENT"
 
       - name: Rollback on smoke test failure
         if: failure() && steps.smoke.conclusion == 'failure'

@@ -32,4 +32,14 @@ warn_return_any = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=src/triage_iq --cov-report=term-missing -v"
+addopts = "--cov=src/triage_iq --cov-report=term-missing -v --cov-fail-under=60"
+
+[tool.coverage.run]
+omit = [
+    "src/triage_iq/data/*",
+    "src/triage_iq/evaluation/*",
+    # These require trained artifacts (sklearn/FAISS/LightGBM pickles) unavailable in CI
+    "src/triage_iq/models/component_classifier.py",
+    "src/triage_iq/models/duplicates.py",
+    "src/triage_iq/models/resolution.py",
+]

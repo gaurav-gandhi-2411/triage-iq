@@ -1,0 +1,53 @@
+{
+  "timestamp": "2026-05-03T12:20:08.309744+00:00",
+  "commit_sha": "81de402",
+  "endpoint": "https://triageiq-api-779563952988.us-central1.run.app",
+  "passes": 1,
+  "total": 3,
+  "total_tokens_estimated": 9000,
+  "note_skipped_2093": "image-only body stripped to empty \u2014 data issue, not prompt issue",
+  "cases": [
+    {
+      "case_type": "gold",
+      "issue_number": 567,
+      "title": "Extension is not deactivated on closing the editor window",
+      "gold_priority": "low",
+      "gold_component": "api",
+      "pre_fix_predicted": "high",
+      "expected_post_fix": "low",
+      "actual_predicted": "medium",
+      "predicted_component": "extension-host",
+      "priority_rationale": "Reproducible regression affecting extension authors on closing the editor window, preventing proper deactivation and process cleanup. Workaround exists (stop debugger), but this affects extension reliability.",
+      "tokens_prompt": 0,
+      "tokens_completion": 0,
+      "pass": false
+    },
+    {
+      "case_type": "gold",
+      "issue_number": 3826,
+      "title": "Build support",
+      "gold_priority": "medium",
+      "gold_component": "debug",
+      "pre_fix_predicted": "high",
+      "expected_post_fix": "medium",
+      "actual_predicted": "medium",
+      "predicted_component": "tasks",
+      "priority_rationale": "Feature gap affecting C code development with make and gdb debugger extension. Users want to see make output window remain visible and stop launch on compile errors.",
+      "tokens_prompt": 0,
+      "tokens_completion": 0,
+      "pass": true
+    },
+    {
+      "case_type": "sanity",
+      "issue_number": null,
+      "title": "Terminal: cursor blink stops after switching tabs",
+      "expected_post_fix": "medium",
+      "actual_predicted": "low",
+      "predicted_component": "terminal",
+      "priority_rationale": "Reproducible regression affecting a specific UX feature (cursor blink), but with a known workaround (reopen terminal panel) and a related config option already implemented (#500).",
+      "tokens_prompt": 0,
+      "tokens_completion": 0,
+      "pass": false
+    }
+  ]
+}

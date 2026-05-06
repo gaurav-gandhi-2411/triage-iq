@@ -461,3 +461,49 @@ def test_metrics_disabled_in_prod_without_token():
     ):
         r = c.get("/metrics")
         assert r.status_code == 503
+
+
+# ---------------------------------------------------------------------------
+# PR 4 — parse retry + prompt unit tests
+# ---------------------------------------------------------------------------
+
+def test_triage_parse_retry_succeeded():
+    """First Groq response is garbage; second is valid JSON: llm_status=parse_retry_succeeded."""
+    asst = _make_assistant()
+    responses = [
+        ("not json at all %%", {}),
+        (_VALID_PLAN_JSON, {"prompt_tokens": 100, "completion_tokens": 50}),
+    ]
+    with patch.object(asst, "_groq_completion", side_effect=responses):
+        plan, _, _, status = asst._call_llm_verbose(_MINIMAL_SIGNALS)
+    assert status == "parse_retry_succeeded"
+    assert plan.predicted_component == "editor"
+    assert plan.priority_guess == "medium"
+
+
+def test_build_triage_prompt_contains_signals():
+    """build_triage_prompt must embed all system signals in the returned string."""
+    from triage_iq.prompts.triage_prompt import build_triage_prompt
+
+    prompt = build_triage_prompt(
+        issue_title="Editor crashes on paste",
+        issue_body="Reproducible every time.",
+        classifier_top3=[
+            {"label": "editor", "confidence": 0.85},
+            {"label": "workbench", "confidence": 0.10},
+        ],
+        similar_issues=[
+            {"number": 1234, "score": 0.92, "text": "Same crash on paste with large text blocks."},
+        ],
+        resolution_point_days=3.0,
+        resolution_lower_days=1.0,
+        resolution_upper_days=7.0,
+        repo="microsoft/vscode",
+    )
+    assert "microsoft/vscode" in prompt
+    assert "Editor crashes on paste" in prompt
+    assert "editor" in prompt
+    assert "0.850" in prompt
+    assert "#1234" in prompt
+    assert "3.0 days" in prompt
+    assert "[1.0d, 7.0d]" in prompt

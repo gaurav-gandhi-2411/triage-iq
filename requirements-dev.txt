@@ -1,0 +1,25 @@
+# Development + CI dependencies.
+# Includes all runtime deps plus tooling for testing, linting, eval, and reporting.
+# Install with: pip install -r requirements-dev.txt
+# (torch must be pre-installed separately — see requirements.txt header)
+
+-r requirements.txt
+
+# Eval + reporting (local only — not shipped in Docker)
+matplotlib>=3.7
+seaborn>=0.12
+scikit-plot>=0.3
+
+# Testing
+pytest>=7.4
+pytest-cov>=4.1
+
+# Linting / type checking
+ruff>=0.1
+mypy>=1.5
+
+# Dependency management
+pip-tools>=7.0
+
+# Security auditing
+pip-audit>=2.7

@@ -20,8 +20,9 @@ RUN pip install --no-cache-dir \
     torch --index-url https://download.pytorch.org/whl/cpu
 
 # Remaining requirements (excludes torch since already installed)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Use pinned lock file for reproducible builds
+COPY requirements.lock .
+RUN pip install --no-cache-dir -r requirements.lock
 
 # Pre-download BGE model so cold starts don't hit HuggingFace Hub
 ENV HF_HOME=/build/hf_cache

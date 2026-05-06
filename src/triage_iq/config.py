@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     rate_limit_per_day: str = "30/day"
     groq_model_triage: str = "llama-3.1-8b-instant"
     environment: Literal["dev", "test", "prod"] = "prod"
+    metrics_token: SecretStr | None = None
 
     @field_validator("groq_api_key", mode="after")
     @classmethod

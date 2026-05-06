@@ -339,9 +339,108 @@ def test_log_request_emits_valid_json(capsys):
 
 
 def test_priority_calibration_in_prompt():
-    """Prompt schema description must contain the calibration bullets for all three priority levels."""
+    """Prompt must contain the PRIORITY GUIDELINES block with all three calibration rules."""
     from triage_iq.prompts.triage_prompt import SYSTEM_PROMPT
-    assert "low: cosmetic or non-blocking" in SYSTEM_PROMPT
-    assert "medium: reproducible regression with workaround" in SYSTEM_PROMPT
-    assert "high: crash, data loss, auth failure" in SYSTEM_PROMPT
-    assert "IMPORTANT: default to medium" in SYSTEM_PROMPT
+    assert "PRIORITY GUIDELINES" in SYSTEM_PROMPT
+    assert "low — cosmetic or non-blocking" in SYSTEM_PROMPT
+    assert "medium — reproducible regression with a workaround" in SYSTEM_PROMPT
+    assert "high — crash, data loss, auth failure" in SYSTEM_PROMPT
+    assert "default to medium" in SYSTEM_PROMPT
+
+
+# ---------------------------------------------------------------------------
+# PR 3 — Prometheus metrics
+# ---------------------------------------------------------------------------
+
+def test_metrics_endpoint_requires_token():
+    """GET /metrics must return 401 without the correct Bearer token."""
+    from triage_iq.config import get_settings
+    store = _make_store()
+    get_settings.cache_clear()
+    with (
+        patch.dict("os.environ", {
+            "GROQ_API_KEY": "test-key-for-tests",
+            "METRICS_TOKEN": "secret-scrape-token",
+        }),
+        patch("triage_iq.api.app.ModelStore.load_all", return_value=store),
+        TestClient(app) as c,
+    ):
+        assert c.get("/metrics").status_code == 401
+        assert c.get("/metrics", headers={"Authorization": "Bearer wrong"}).status_code == 401
+
+
+def test_metrics_endpoint_with_token():
+    """GET /metrics with the correct Bearer token must return 200 and Prometheus text format."""
+    from triage_iq.config import get_settings
+    store = _make_store()
+    get_settings.cache_clear()
+    with (
+        patch.dict("os.environ", {
+            "GROQ_API_KEY": "test-key-for-tests",
+            "METRICS_TOKEN": "secret-scrape-token",
+        }),
+        patch("triage_iq.api.app.ModelStore.load_all", return_value=store),
+        TestClient(app) as c,
+    ):
+        r = c.get("/metrics", headers={"Authorization": "Bearer secret-scrape-token"})
+        assert r.status_code == 200
+        assert "text/plain" in r.headers["content-type"]
+        assert b"# HELP" in r.content
+
+
+def test_triage_increments_counters(client):
+    """Successful /triage call must increment triage_requests_total and triage_latency_seconds."""
+    from prometheus_client import REGISTRY
+    before = REGISTRY.get_sample_value(
+        "triage_requests_total",
+        {"repo": "microsoft/vscode", "status": "success"},
+    ) or 0.0
+    r = client.post("/triage", json={
+        "repo": "microsoft/vscode",
+        "title": "Editor crashes on paste",
+        "body": "Reproducible every time.",
+    })
+    assert r.status_code == 200
+    after = REGISTRY.get_sample_value(
+        "triage_requests_total",
+        {"repo": "microsoft/vscode", "status": "success"},
+    ) or 0.0
+    assert after == before + 1.0
+
+
+def test_metrics_not_rate_limited():
+    """GET /metrics must never return 429, even when rate limiting is enabled."""
+    from triage_iq.config import get_settings
+    store = _make_store()
+    get_settings.cache_clear()
+    limiter._storage.reset()
+    with (
+        patch.dict("os.environ", {
+            "GROQ_API_KEY": "test-key-for-tests",
+            "ENVIRONMENT": "dev",
+            "RATE_LIMIT_ENABLED": "true",
+        }),
+        patch("triage_iq.api.app.ModelStore.load_all", return_value=store),
+        TestClient(app) as c,
+    ):
+        for i in range(20):
+            r = c.get("/metrics")
+            assert r.status_code != 429, f"Request {i + 1} was unexpectedly rate-limited"
+
+
+def test_metrics_disabled_in_prod_without_token():
+    """GET /metrics in prod with no METRICS_TOKEN must return 503 (fail-closed)."""
+    from triage_iq.config import get_settings
+    store = _make_store()
+    get_settings.cache_clear()
+    with (
+        patch.dict("os.environ", {
+            "GROQ_API_KEY": "test-key-for-tests",
+            "ENVIRONMENT": "prod",
+            "METRICS_TOKEN": "",  # explicitly absent
+        }),
+        patch("triage_iq.api.app.ModelStore.load_all", return_value=store),
+        TestClient(app) as c,
+    ):
+        r = c.get("/metrics")
+        assert r.status_code == 503

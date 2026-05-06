@@ -26,9 +26,9 @@ curl -X POST https://triageiq-api-779563952988.us-central1.run.app/triage \
 
 **Supported repos:** `microsoft/vscode`, `kubernetes/kubernetes`
 
-**Rate limits:** `10 requests/hour` and `30 requests/day` per IP. `/health` is not rate-limited.
+**Rate limits:** `10 requests/hour` and `30 requests/day` per IP. `/health` and `/metrics` are not rate-limited.
 
-Infrastructure: FastAPI on Google Cloud Run (0–3 instances, free tier) · Groq llama-3.1-8b-instant · Cloud Logging · GitHub Actions CI/CD  
+Infrastructure: FastAPI on Google Cloud Run (0–3 instances, free tier) · Groq llama-3.1-8b-instant · Cloud Logging · Cloud Monitoring · GitHub Actions CI/CD  
 Latency: ~23s cold start, ~3.5s warm p50
 
 ---
@@ -83,3 +83,50 @@ Hosted on Google Cloud Run via GitHub Actions:
 - Smoke tests `/health` and rolls back if failed
 
 Required GitHub secrets: `GCP_SA_KEY`, `GCP_PROJECT_ID`, `GROQ_API_KEY`
+
+---
+
+## Observability
+
+### Prometheus metrics (`/metrics`)
+
+The service exposes a Prometheus-compatible `/metrics` endpoint.
+
+**Auth behavior (fail-closed in prod):**
+- `METRICS_TOKEN` set (any environment) → requires `Authorization: Bearer <token>`; returns 401 otherwise
+- `METRICS_TOKEN` unset, `ENVIRONMENT=prod` → returns 503 (prevents silent exposure if the secret reference breaks)
+- `METRICS_TOKEN` unset, `ENVIRONMENT=dev` → open endpoint (local development only)
+
+The operational state is logged at startup: `metrics endpoint: protected with token | open (dev only) | disabled (prod, no token)`.
+
+```bash
+# Scrape metrics (token required on the live service)
+curl https://triageiq-api-779563952988.us-central1.run.app/metrics \
+  -H "Authorization: Bearer $METRICS_TOKEN"
+```
+
+Custom metrics exposed:
+
+| Metric | Type | Labels | Description |
+|---|---|---|---|
+| `triage_requests_total` | Counter | `repo`, `status` | Total /triage calls; status: `success`, `error`, `fallback` |
+| `triage_llm_fallback_total` | Counter | — | Calls where LLM parse failed and fallback plan was used |
+| `triage_groq_tokens_total` | Counter | — | Cumulative Groq tokens consumed (prompt + completion) |
+| `triage_latency_seconds` | Histogram | — | End-to-end request latency with buckets at 0.5, 1, 2, 5, 10, 30s |
+
+Standard HTTP metrics (request count, latency per route) are automatically collected via `prometheus-fastapi-instrumentator`.
+
+### Cloud Monitoring alerts
+
+Three alert policies (email only, free tier), configured via `scripts/setup_monitoring.sh` (run once):
+
+| Alert | Condition | Window |
+|---|---|---|
+| High error rate | >5% of requests return 5xx | 10 min |
+| High p95 latency | p95 > 5s | 10 min |
+| Groq quota warning | Daily token usage >70K (70% of 100K TPD limit) | 24h |
+
+To set up alerts after first deploy:
+```bash
+GCP_PROJECT=triageiq-portfolio-495022 ALERT_EMAIL=you@example.com bash scripts/setup_monitoring.sh
+```

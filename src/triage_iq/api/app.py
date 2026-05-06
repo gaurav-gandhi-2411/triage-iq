@@ -13,8 +13,10 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 import pandas as pd
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.responses import JSONResponse, Response
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -27,6 +29,29 @@ logger = logging.getLogger(__name__)
 
 # llama-3.1-8b-instant pricing (per million tokens, as of 2025)
 _GROQ_PRICE_PER_MTOK = 0.27
+
+# ---------------------------------------------------------------------------
+# Prometheus custom metrics
+# ---------------------------------------------------------------------------
+
+_triage_requests_total = Counter(
+    "triage_requests_total",
+    "Total /triage requests by repo and outcome",
+    ["repo", "status"],  # status: success | error | fallback
+)
+_triage_llm_fallback_total = Counter(
+    "triage_llm_fallback_total",
+    "Number of triage calls that used the fallback plan (LLM parse failure)",
+)
+_triage_groq_tokens_total = Counter(
+    "triage_groq_tokens_total",
+    "Cumulative Groq tokens consumed (prompt + completion)",
+)
+_triage_latency_seconds = Histogram(
+    "triage_latency_seconds",
+    "End-to-end /triage request latency in seconds",
+    buckets=[0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 10.0, 30.0],
+)
 
 
 # ---------------------------------------------------------------------------
@@ -73,6 +98,27 @@ _access_logger.propagate = False
 
 
 # ---------------------------------------------------------------------------
+# /metrics auth dependency
+# ---------------------------------------------------------------------------
+
+def _verify_metrics_token(authorization: str | None = Header(default=None)) -> None:
+    """Fail-closed /metrics auth.
+
+    - Token set (any env): require Authorization: Bearer <token>; 401 otherwise.
+    - No token, env=prod: 503 — prevents silent exposure if the secret reference breaks.
+    - No token, env=dev/test: open endpoint (local development convenience).
+    """
+    cfg = get_settings()
+    token = cfg.metrics_token.get_secret_value() if cfg.metrics_token else ""
+    if token:
+        if authorization != f"Bearer {token}":
+            raise HTTPException(status_code=401, detail="Unauthorized")
+        return
+    if cfg.environment == "prod":
+        raise HTTPException(status_code=503, detail="Metrics endpoint not available")
+
+
+# ---------------------------------------------------------------------------
 # Rate limiter
 # ---------------------------------------------------------------------------
 
@@ -107,6 +153,13 @@ async def lifespan(app: FastAPI):
         groq_api_key=cfg.groq_api_key.get_secret_value(),
     )
     logger.info("Models ready: %s", app.state.store.repos)
+    _token_set = bool(cfg.metrics_token and cfg.metrics_token.get_secret_value())
+    _metrics_state = (
+        "protected with token" if _token_set
+        else "open (dev only)" if cfg.environment != "prod"
+        else "disabled (prod, no token)"
+    )
+    logger.info("metrics endpoint: %s", _metrics_state)
     yield
 
 
@@ -120,6 +173,16 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
 app.add_middleware(SlowAPIMiddleware)
+
+# Instrument all routes for automatic HTTP metrics (request count, latency).
+# We do NOT call .expose() — we add /metrics manually below with token auth.
+Instrumentator().instrument(app)
+
+
+@app.get("/metrics", include_in_schema=False)
+def metrics(_: None = Depends(_verify_metrics_token)) -> Response:
+    """Prometheus metrics endpoint. Requires Authorization: Bearer <METRICS_TOKEN> when configured."""
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.post("/triage")
@@ -147,6 +210,8 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         plan, meta = bundle.assistant.triage_with_metadata(issue)
     except Exception as exc:
         total_ms = round((time.perf_counter() - t_start) * 1000, 1)
+        _triage_requests_total.labels(repo=body.repo, status="error").inc()
+        _triage_latency_seconds.observe(total_ms / 1000.0)
         _log_request(
             request_id=request_id,
             endpoint="/triage",
@@ -161,6 +226,17 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         raise HTTPException(status_code=500, detail="Internal server error") from exc
 
     total_ms = round((time.perf_counter() - t_start) * 1000, 1)
+    llm_status = meta.get("llm_status", "ok")
+    req_status = "fallback" if llm_status == "parse_failure" else "success"
+
+    _triage_requests_total.labels(repo=body.repo, status=req_status).inc()
+    _triage_latency_seconds.observe(total_ms / 1000.0)
+    if llm_status != "ok":
+        _triage_llm_fallback_total.inc()
+    tokens = (meta.get("groq_tokens_prompt") or 0) + (meta.get("groq_tokens_completion") or 0)
+    if tokens:
+        _triage_groq_tokens_total.inc(tokens)
+
     _log_request(
         request_id=request_id,
         endpoint="/triage",
@@ -170,12 +246,13 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         total_latency_ms=total_ms,
         status="success",
         predicted_component=plan.predicted_component,
+        groq_tokens_total=tokens,
         **{k: v for k, v in meta.items() if k != "total_latency_ms"},
     )
 
     result = plan.model_dump()
     result["_request_id"] = request_id
-    result["_llm_status"] = meta.get("llm_status", "ok")
+    result["_llm_status"] = llm_status
     return JSONResponse(content=result)
 
 

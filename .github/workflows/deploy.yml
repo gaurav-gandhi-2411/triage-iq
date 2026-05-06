@@ -20,7 +20,7 @@ jobs:
       id-token: write  # for Workload Identity Federation (preferred over SA key)
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2

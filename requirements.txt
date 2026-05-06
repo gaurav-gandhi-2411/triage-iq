@@ -37,4 +37,4 @@ prometheus-fastapi-instrumentator>=7.1.0
 prometheus-client>=0.19
 
 # LLM
-groq>=0.11
+groq>=1.2.0

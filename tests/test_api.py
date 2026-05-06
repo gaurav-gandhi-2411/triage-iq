@@ -428,6 +428,23 @@ def test_metrics_not_rate_limited():
             assert r.status_code != 429, f"Request {i + 1} was unexpectedly rate-limited"
 
 
+def test_metrics_token_strips_whitespace():
+    """METRICS_TOKEN with trailing \\r\\n must still accept a clean bearer token."""
+    from triage_iq.config import get_settings
+    store = _make_store()
+    get_settings.cache_clear()
+    with (
+        patch.dict("os.environ", {
+            "GROQ_API_KEY": "test-key-for-tests",
+            "METRICS_TOKEN": "abc123\r\n",
+        }),
+        patch("triage_iq.api.app.ModelStore.load_all", return_value=store),
+        TestClient(app) as c,
+    ):
+        r = c.get("/metrics", headers={"Authorization": "Bearer abc123"})
+        assert r.status_code == 200
+
+
 def test_metrics_disabled_in_prod_without_token():
     """GET /metrics in prod with no METRICS_TOKEN must return 503 (fail-closed)."""
     from triage_iq.config import get_settings

@@ -61,7 +61,7 @@ class ModelStore:
         models_dir = data_dir / "models"
         processed_dir = data_dir / "processed"
 
-        key = groq_api_key or os.environ.get("GROQ_API_KEY", "")
+        key = (groq_api_key if groq_api_key else os.environ.get("GROQ_API_KEY", "")).strip()
 
         bundles: dict[str, RepoBundle] = {}
         for repo, slug in _REPO_SLUGS.items():

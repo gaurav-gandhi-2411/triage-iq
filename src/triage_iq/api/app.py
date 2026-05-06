@@ -110,6 +110,33 @@ def _verify_metrics_token(authorization: str | None = Header(default=None)) -> N
     """
     cfg = get_settings()
     token = cfg.metrics_token.get_secret_value() if cfg.metrics_token else ""
+
+    # --- TEMPORARY DIAGNOSTIC: remove after bug is identified ---
+    _auth_len = len(authorization) if authorization is not None else -1
+    _tok_len = len(token)
+    _auth_fp = (
+        f"{authorization[:4]!r}...{authorization[-4:]!r}"
+        if authorization is not None and len(authorization) >= 8
+        else repr(authorization)
+    )
+    _tok_fp = (
+        f"{token[:4]!r}...{token[-4:]!r}" if len(token) >= 8 else repr(token)
+    )
+    _access_logger.warning(
+        "metrics_auth_debug",
+        extra={
+            "log_type": "metrics_auth_debug",
+            "auth_len": _auth_len,
+            "tok_len": _tok_len,
+            "match": authorization == f"Bearer {token}",
+            "auth_fingerprint": _auth_fp,
+            "tok_fingerprint": _tok_fp,
+            "tok_pytype": type(token).__name__,
+            "settings_field_pytype": type(cfg.metrics_token).__name__,
+        },
+    )
+    # --- END DIAGNOSTIC ---
+
     if token:
         if authorization != f"Bearer {token}":
             raise HTTPException(status_code=401, detail="Unauthorized")

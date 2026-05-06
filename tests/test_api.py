@@ -78,6 +78,19 @@ def client():
         yield c
 
 
+def test_service_info(client):
+    r = client.get("/")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["service"] == "TriageIQ"
+    assert body["version"] == "0.1.0"
+    assert body["docs"] == "/docs"
+    assert body["health"] == "/health"
+    assert "gaurav-gandhi-2411/triage-iq" in body["repository"]
+    assert "microsoft/vscode" in body["supported_repos"]
+    assert "kubernetes/kubernetes" in body["supported_repos"]
+
+
 def test_health(client):
     r = client.get("/health")
     assert r.status_code == 200

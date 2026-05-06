@@ -24,7 +24,7 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from ..config import get_settings
 from .loader import ModelStore
-from .schemas import HealthResponse, TriageRequest
+from .schemas import HealthResponse, ServiceInfoResponse, TriageRequest
 
 logger = logging.getLogger(__name__)
 
@@ -183,6 +183,20 @@ app.add_middleware(SlowAPIMiddleware)
 # Instrument all routes for automatic HTTP metrics (request count, latency).
 # We do NOT call .expose() — we add /metrics manually below with token auth.
 Instrumentator().instrument(app)
+
+
+@app.get("/", response_model=ServiceInfoResponse, include_in_schema=False)
+def service_info() -> ServiceInfoResponse:
+    """Service discovery endpoint — returns name, version, and links."""
+    return ServiceInfoResponse(
+        service=app.title,
+        version=app.version,
+        description=app.description or "",
+        docs="/docs",
+        health="/health",
+        repository="https://github.com/gaurav-gandhi-2411/triage-iq",
+        supported_repos=list(app.state.store.repos) if hasattr(app.state, "store") else [],
+    )
 
 
 @app.get("/metrics", include_in_schema=False)

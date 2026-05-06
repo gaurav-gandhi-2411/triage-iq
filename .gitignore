@@ -3,6 +3,7 @@ __pycache__/
 .ipynb_checkpoints/
 data/raw/
 data/processed/*.parquet
+data/models/
 /models/
 *.pkl
 *.bin
@@ -17,3 +18,5 @@ outputs/
 .vscode/
 logs/
 wandb/
+.coverage
+htmlcov/

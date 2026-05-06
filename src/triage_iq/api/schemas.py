@@ -24,3 +24,13 @@ class HealthResponse(BaseModel):
     repos_loaded: list[str]
     groq_key_present: bool
     uptime_s: float
+
+
+class ServiceInfoResponse(BaseModel):
+    service: str
+    version: str
+    description: str
+    docs: str
+    health: str
+    repository: str
+    supported_repos: list[str]

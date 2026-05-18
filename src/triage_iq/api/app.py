@@ -25,6 +25,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from ..config import get_settings
 from .loader import ModelStore
 from .schemas import HealthResponse, ServiceInfoResponse, TriageRequest
+from ..models.triage import TriagePlan
 
 logger = logging.getLogger(__name__)
 
@@ -205,7 +206,7 @@ def metrics(_: None = Depends(_verify_metrics_token)) -> Response:
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
-@app.post("/triage")
+@app.post("/triage", response_model=TriagePlan)
 @limiter.limit("10/hour")
 @limiter.limit("30/day")
 def triage(body: TriageRequest, request: Request) -> JSONResponse:

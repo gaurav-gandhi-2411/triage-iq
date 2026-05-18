@@ -187,6 +187,23 @@ def test_triage_propagates_assistant_error(client):
     assert r.status_code == 500
 
 
+def test_triage_response_validates_against_schema(client):
+    """/triage response must be valid against TriagePlan — locks the OpenAPI contract."""
+    r = client.post("/triage", json={
+        "repo": "microsoft/vscode",
+        "title": "Editor crashes on paste",
+        "body": "Reproducible every time I paste a 1 MB block of text.",
+        "issue_number": 9999,
+    })
+    assert r.status_code == 200
+    # model_validate must not raise — this is the contract assertion
+    plan = TriagePlan.model_validate(r.json())
+    assert plan.predicted_component == "editor"
+    assert 0.0 <= plan.component_confidence <= 1.0
+    assert plan.priority_guess in ("low", "medium", "high")
+    assert len(plan.suggested_next_steps) >= 1
+
+
 # ---------------------------------------------------------------------------
 # TriageAssistant unit tests — LLM parse robustness
 # ---------------------------------------------------------------------------

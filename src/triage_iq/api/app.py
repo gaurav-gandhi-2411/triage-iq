@@ -23,9 +23,9 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from ..config import get_settings
+from ..models.triage import TriagePlan
 from .loader import ModelStore
 from .schemas import HealthResponse, ServiceInfoResponse, TriageRequest
-from ..models.triage import TriagePlan
 
 logger = logging.getLogger(__name__)
 

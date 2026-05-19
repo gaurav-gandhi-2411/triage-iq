@@ -1,0 +1,73 @@
+{
+  "n_issues_evaluated": 60,
+  "n_triage_failures": 0,
+  "n_judge_failures": 78,
+  "runtime_seconds": 3488.8212137999944,
+  "llm_component_accuracy": 0.5833333333333334,
+  "tfidf_component_accuracy": 0.6166666666666667,
+  "majority_component_accuracy": 0.11666666666666667,
+  "by_repo": {
+    "microsoft_vscode": {
+      "n_gold": 30,
+      "llm_component_accuracy": 0.5333333333333333,
+      "tfidf_component_accuracy": 0.5,
+      "majority_component_accuracy": 0.13333333333333333
+    },
+    "kubernetes_kubernetes": {
+      "n_gold": 30,
+      "llm_component_accuracy": 0.6333333333333333,
+      "tfidf_component_accuracy": 0.7333333333333333,
+      "majority_component_accuracy": 0.1
+    }
+  },
+  "comparison": {
+    "System 1 (TF-IDF)": {
+      "total_mean": 4.051282051282051,
+      "total_pct": 0.27008547008547007,
+      "component_match": 1.2820512820512822,
+      "similar_issues_relevance": 0.0,
+      "resolution_estimate_reasonableness": 0.6923076923076923,
+      "priority_alignment": 0.1282051282051282,
+      "next_steps_actionability": 1.0,
+      "overall_quality": 0.9487179487179487
+    },
+    "Systems 1+2 (TF-IDF+BGE)": {
+      "total_mean": 6.972222222222222,
+      "total_pct": 0.46481481481481485,
+      "component_match": 1.6111111111111112,
+      "similar_issues_relevance": 1.9444444444444444,
+      "resolution_estimate_reasonableness": 0.8611111111111112,
+      "priority_alignment": 0.05555555555555555,
+      "next_steps_actionability": 1.1944444444444444,
+      "overall_quality": 1.3055555555555556
+    },
+    "Full System (LLM)": {
+      "total_mean": 9.62962962962963,
+      "total_pct": 0.6419753086419753,
+      "component_match": 1.4444444444444444,
+      "similar_issues_relevance": 2.2222222222222223,
+      "resolution_estimate_reasonableness": 1.037037037037037,
+      "priority_alignment": 0.5555555555555556,
+      "next_steps_actionability": 2.4074074074074074,
+      "overall_quality": 1.962962962962963
+    }
+  },
+  "judge_reliability": {},
+  "latency": {},
+  "estimated_groq_tokens": 150000,
+  "estimated_groq_usd": 0.0405,
+  "findings": [
+    "Component accuracy \u2014 LLM: 58.3%, TF-IDF: 61.7%, Majority: 11.7%",
+    "Full system judge score: 9.63/15 (64%)",
+    "Best dimension: next_steps_actionability (2.41/3); Worst: resolution_estimate_reasonableness (1.04/3)"
+  ],
+  "hand_validation": {
+    "verdict": "Judge appears calibrated",
+    "leniency": "Mean score 9.6/15 (64%). Scores below 50% suggest strict rubric or model limitations.",
+    "failure_modes": "Check issues where full_plan is None \u2014 these are parse failures.",
+    "rubric_issues": "Low-kappa dims: []"
+  },
+  "judge_model": "qwen/qwen3-32b",
+  "judge_provider": "groq",
+  "triage_model": "llama-3.1-8b-instant"
+}

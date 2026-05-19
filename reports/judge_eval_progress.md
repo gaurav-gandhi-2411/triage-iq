@@ -5,3 +5,72 @@
 | 1 | 2026-05-02 | ~138K | 92 | 92/180 | TPD hit |
 | 2 | 2026-05-02 | ~3K | 2 | 94/180 | TPD hit again — same 24h window |
 | 3 | 2026-05-03 | ~86K | 86 | 180/180 | Complete. Reliability double-check blocked by TPD (100K/day limit). Report generated. |
+| 2026-05-18 | 0 | 0/180 | in progress |
+| 2026-05-18 | 5 | 5/180 | in progress |
+| 2026-05-18 | 5 | 5/180 | TPD hit — resuming tomorrow |
+| 2026-05-18 | 5 | 5/180 | in progress |
+| 2026-05-18 | 10 | 10/180 | in progress |
+| 2026-05-18 | 15 | 15/180 | in progress |
+| 2026-05-18 | 20 | 20/180 | in progress |
+| 2026-05-18 | 25 | 25/180 | in progress |
+| 2026-05-18 | 30 | 30/180 | in progress |
+| 2026-05-18 | 35 | 35/180 | in progress |
+| 2026-05-18 | 40 | 40/180 | in progress |
+| 2026-05-18 | 45 | 45/180 | in progress |
+| 2026-05-18 | 50 | 50/180 | in progress |
+| 2026-05-18 | 55 | 55/180 | in progress |
+| 2026-05-18 | 60 | 60/180 | in progress |
+| 2026-05-18 | 65 | 65/180 | in progress |
+| 2026-05-18 | 70 | 70/180 | in progress |
+| 2026-05-18 | 75 | 75/180 | in progress |
+| 2026-05-18 | 80 | 80/180 | in progress |
+| 2026-05-18 | 85 | 85/180 | in progress |
+| 2026-05-18 | 90 | 90/180 | in progress |
+| 2026-05-18 | 95 | 95/180 | in progress |
+| 2026-05-18 | 100 | 100/180 | in progress |
+| 2026-05-18 | 102 | 102/180 | in progress |
+| 2026-05-18 | 105 | 105/180 | in progress |
+| 2026-05-18 | 110 | 110/180 | in progress |
+| 2026-05-18 | 115 | 115/180 | in progress |
+| 2026-05-18 | 120 | 120/180 | in progress |
+| 2026-05-18 | 125 | 125/180 | in progress |
+| 2026-05-18 | 130 | 130/180 | in progress |
+| 2026-05-18 | 131 | 131/180 | TPD hit — resuming tomorrow |
+| 2026-05-19 | 132 | 132/180 | TPD hit — resuming tomorrow |
+| 2026-05-19 | 5 | 5/180 | in progress |
+| 2026-05-19 | 10 | 10/180 | in progress |
+| 2026-05-19 | 15 | 15/180 | in progress |
+| 2026-05-19 | 20 | 20/180 | in progress |
+| 2026-05-19 | 25 | 25/180 | in progress |
+| 2026-05-19 | 30 | 30/180 | in progress |
+| 2026-05-19 | 35 | 35/180 | in progress |
+| 2026-05-19 | 40 | 40/180 | in progress |
+| 2026-05-19 | 45 | 45/180 | in progress |
+| 2026-05-19 | 50 | 50/180 | in progress |
+| 2026-05-19 | 55 | 55/180 | in progress |
+| 2026-05-19 | 60 | 60/180 | in progress |
+| 2026-05-19 | 65 | 65/180 | in progress |
+| 2026-05-19 | 70 | 70/180 | in progress |
+| 2026-05-19 | 75 | 75/180 | in progress |
+| 2026-05-19 | 80 | 80/180 | in progress |
+| 2026-05-19 | 85 | 85/180 | in progress |
+| 2026-05-19 | 90 | 90/180 | in progress |
+| 2026-05-19 | 95 | 95/180 | in progress |
+| 2026-05-19 | 100 | 100/180 | in progress |
+| 2026-05-19 | 105 | 105/180 | in progress |
+| 2026-05-19 | 110 | 110/180 | in progress |
+| 2026-05-19 | 115 | 115/180 | in progress |
+| 2026-05-19 | 120 | 120/180 | in progress |
+| 2026-05-19 | 125 | 125/180 | in progress |
+| 2026-05-19 | 130 | 130/180 | in progress |
+| 2026-05-19 | 135 | 135/180 | in progress |
+| 2026-05-19 | 140 | 140/180 | in progress |
+| 2026-05-19 | 145 | 145/180 | in progress |
+| 2026-05-19 | 150 | 150/180 | in progress |
+| 2026-05-19 | 155 | 155/180 | in progress |
+| 2026-05-19 | 160 | 160/180 | in progress |
+| 2026-05-19 | 165 | 165/180 | in progress |
+| 2026-05-19 | 170 | 170/180 | in progress |
+| 2026-05-19 | 175 | 175/180 | in progress |
+| 2026-05-19 | 180 | 180/180 | complete |
+| 2026-05-19 | 180 | 180/180 | complete |

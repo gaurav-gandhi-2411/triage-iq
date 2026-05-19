@@ -18,6 +18,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -54,7 +55,8 @@ TRIAGE_DELAY = 1.5
 JUDGE_DELAY = 2.0
 JUDGE_FLUSH_EVERY = 5  # write progress log every N judge calls
 CHECKPOINT_PATH = ROOT / "data" / "triage_eval_checkpoint.jsonl"
-JUDGE_CHECKPOINT_PATH = ROOT / "data" / "judge_scores_checkpoint.jsonl"
+# Judge checkpoint path is set in main() after args are parsed; model-name-scoped
+# so runs with different judge models don't collide.
 PROGRESS_PATH = ROOT / "reports" / "judge_eval_progress.md"
 
 
@@ -119,11 +121,11 @@ def save_checkpoint(rec: dict) -> None:
         f.write(json.dumps(rec, default=str) + "\n")
 
 
-def load_judge_checkpoint() -> dict[tuple[int, str], dict]:
+def load_judge_checkpoint(path: Path) -> dict[tuple[int, str], dict]:
     """Load previously completed judge scores keyed by (issue_number, sys_label)."""
     done = {}
-    if JUDGE_CHECKPOINT_PATH.exists():
-        with open(JUDGE_CHECKPOINT_PATH, encoding="utf-8") as f:
+    if path.exists():
+        with open(path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
@@ -133,19 +135,23 @@ def load_judge_checkpoint() -> dict[tuple[int, str], dict]:
                     done[(rec["issue_number"], rec["sys_label"])] = rec["score"]
                 except Exception:
                     pass
-        logger.info("Judge checkpoint: %d scores already completed", len(done))
+        logger.info("Judge checkpoint (%s): %d scores already completed", path.name, len(done))
     return done
 
 
-def save_judge_score(issue_number: int, sys_label: str, score: dict) -> None:
-    with open(JUDGE_CHECKPOINT_PATH, "a", encoding="utf-8") as f:
+def save_judge_score(path: Path, issue_number: int, sys_label: str, score: dict) -> None:
+    with open(path, "a", encoding="utf-8") as f:
         f.write(json.dumps({"issue_number": issue_number, "sys_label": sys_label, "score": score}) + "\n")
 
 
 def _is_tpd_error(exc: Exception) -> bool:
-    """Return True if the exception is a Groq tokens-per-day rate limit (429)."""
+    """Return True if the exception is a Groq tokens-per-day (daily quota) rate limit.
+
+    Deliberately excludes bare "429" / "rate_limit" so Gemini per-minute 429s are
+    not mistaken for an unrecoverable daily-quota exhaust.
+    """
     msg = str(exc).lower()
-    return any(kw in msg for kw in ("429", "rate_limit", "tokens per day", "daily limit", "tpd"))
+    return any(kw in msg for kw in ("tokens per day", "daily limit", "tpd"))
 
 
 def _write_progress(calls_done: int, calls_total: int, tpd_hit: bool = False) -> None:
@@ -629,12 +635,55 @@ def main():
                         help="Sample plans per repo for reports/sample_triage_plans.json")
     parser.add_argument("--clear-checkpoint", action="store_true")
     parser.add_argument("--clear-judge-checkpoint", action="store_true")
+    parser.add_argument(
+        "--judge-model",
+        default=os.environ.get("TRIAGE_JUDGE_MODEL", "llama-3.3-70b-versatile"),
+        help="Judge model ID (e.g. llama-3.3-70b-versatile, gemma2-9b-it). "
+             "Override with env var TRIAGE_JUDGE_MODEL.",
+    )
+    parser.add_argument(
+        "--judge-provider",
+        default=os.environ.get("TRIAGE_JUDGE_PROVIDER", "groq"),
+        help="Judge provider: 'groq' (default), 'google' (Google AI Studio), or 'cohere'. "
+             "Override with env var TRIAGE_JUDGE_PROVIDER.",
+    )
+    parser.add_argument(
+        "--output-file",
+        default="triage_results.json",
+        help="Results filename relative to reports/ (e.g. triage_results_judge_gemma2.json).",
+    )
     args = parser.parse_args()
 
+    # Judge checkpoint is scoped to the judge model so different-model runs don't collide.
+    judge_model_slug = re.sub(r"[^a-zA-Z0-9]", "_", args.judge_model)
+    judge_checkpoint_path = ROOT / "data" / f"judge_scores_checkpoint_{judge_model_slug}.jsonl"
+
     load_dotenv(ROOT / ".env")
+
+    # Default judge delay by provider (honored only if user didn't pass --judge-delay).
+    _GOOGLE_PROVIDERS = {"google", "gemini"}
+    if args.judge_delay == JUDGE_DELAY:
+        if args.judge_provider in _GOOGLE_PROVIDERS:
+            args.judge_delay = 7.0   # 10 RPM cap on Gemini free tier
+        elif args.judge_provider == "cohere":
+            args.judge_delay = 6.0   # 20 RPM cap on Cohere trial
+
     groq_key = os.environ.get("GROQ_API_KEY", "")
-    if not groq_key:
+    non_groq_providers = _GOOGLE_PROVIDERS | {"cohere"}
+    if not groq_key and args.judge_provider not in non_groq_providers:
         logger.error("GROQ_API_KEY not set. Add it to .env or export it.")
+        sys.exit(1)
+    elif not groq_key:
+        groq_key = "not-used"  # triage LLM still uses Groq; judge uses other provider
+
+    google_key = os.environ.get("GOOGLE_API_KEY", "") or os.environ.get("GEMINI_API_KEY", "")
+    if not google_key and args.judge_provider in _GOOGLE_PROVIDERS:
+        logger.error("GOOGLE_API_KEY (or GEMINI_API_KEY) not set. Add it to .env or export it.")
+        sys.exit(1)
+
+    cohere_key = os.environ.get("COHERE_API_KEY", "")
+    if not cohere_key and args.judge_provider == "cohere":
+        logger.error("COHERE_API_KEY not set. Add it to .env or export it.")
         sys.exit(1)
 
     gold_path = ROOT / "data" / "gold_triage_plans.parquet"
@@ -645,9 +694,9 @@ def main():
     if args.clear_checkpoint and CHECKPOINT_PATH.exists():
         CHECKPOINT_PATH.unlink()
         logger.info("Checkpoint cleared.")
-    if args.clear_judge_checkpoint and JUDGE_CHECKPOINT_PATH.exists():
-        JUDGE_CHECKPOINT_PATH.unlink()
-        logger.info("Judge checkpoint cleared.")
+    if args.clear_judge_checkpoint and judge_checkpoint_path.exists():
+        judge_checkpoint_path.unlink()
+        logger.info("Judge checkpoint cleared: %s", judge_checkpoint_path.name)
 
     checkpoint = load_checkpoint()
     gold_all = pd.read_parquet(gold_path)
@@ -845,8 +894,16 @@ def main():
     if not args.skip_judge:
         judge_calls_total = n_total * 3
         logger.info("Running LLM-as-judge on %d plans (3 plans × issue)...", n_total)
-        judge = TriageJudge(groq_api_key=groq_key)
-        judge_checkpoint = load_judge_checkpoint()
+        judge = TriageJudge(
+            groq_api_key=groq_key,
+            model=args.judge_model,
+            provider=args.judge_provider,
+            gemini_api_key=google_key or None,
+            cohere_api_key=cohere_key or None,
+        )
+        logger.info("Judge: model=%s provider=%s checkpoint=%s",
+                    args.judge_model, args.judge_provider, judge_checkpoint_path.name)
+        judge_checkpoint = load_judge_checkpoint(judge_checkpoint_path)
         judge_calls_done = len(judge_checkpoint)
         logger.info("Judge checkpoint: %d/%d already scored", judge_calls_done, judge_calls_total)
 
@@ -889,7 +946,7 @@ def main():
                     )
                     sys_scores[sys_label].append(score)
                     rec["judge_scores"][sys_label] = score.model_dump()
-                    save_judge_score(num, sys_label, score.model_dump())
+                    save_judge_score(judge_checkpoint_path, num, sys_label, score.model_dump())
                     judge_calls_done += 1
                     logger.info("[judge] #%s %s → %d/%d [%d/%d total]",
                                 num, sys_label, score.total(), MAX_TOTAL,
@@ -1050,12 +1107,13 @@ def main():
         "estimated_groq_usd": est_usd,
         "findings": findings,
         "hand_validation": hand_val,
-        "judge_model": "llama-3.3-70b-versatile",
+        "judge_model": args.judge_model,
+        "judge_provider": args.judge_provider,
         "triage_model": "llama-3.1-8b-instant",
     }
 
     (ROOT / "reports").mkdir(exist_ok=True)
-    json_path = ROOT / "reports" / "triage_results.json"
+    json_path = ROOT / "reports" / args.output_file
     json_path.write_text(json.dumps(results, indent=2, default=str), encoding="utf-8")
     logger.info("Results JSON saved to %s", json_path)
 

@@ -14,6 +14,12 @@ This file documents *what matters and why*, not every commit.
 
 ### Changed
 
+- Eval: cross-family judge validation completed on Cohere Command A (Trial key, `command-a-03-2025`).
+  Full 180/180 scores (n=60 issues × 3 systems). Verdict: r=0.73 vs llama-3.3-70b-versatile,
+  gap −3.6pp on Full System — default judge retained (ADR-0003). Groq TPD non-viable at n=60
+  and Gemini 2.5 Flash free tier confirmed at 20 RPD (not 1,500) — both documented in ADR-0002
+  amendments. Cohere Trial is the established cross-family sanity-check path going forward.
+
 - API: `/triage` endpoint declares `response_model=TriagePlan`; OpenAPI spec now includes
   `TriagePlan` and `SimilarIssue` in `components/schemas` and a typed 200 response ref.
   No runtime change — endpoint still returns `JSONResponse` directly. Unblocks UI OpenAPI

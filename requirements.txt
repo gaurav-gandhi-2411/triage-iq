@@ -38,3 +38,5 @@ prometheus-client>=0.19
 
 # LLM
 groq>=1.2.0
+google-genai>=1.0
+cohere>=5.0

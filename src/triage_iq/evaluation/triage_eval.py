@@ -148,22 +148,55 @@ def retrieval_only_baseline(issue: pd.Series, detector, k: int = 5) -> dict:
 class TriageJudge:
     """LLM-as-judge evaluator.
 
-    Uses a stronger model (llama-3.1-70b-versatile or similar) to score
+    Uses a stronger model (llama-3.3-70b-versatile or similar) to score
     each triage plan against the gold standard rubric.
+
+    provider="groq"   uses GROQ_API_KEY.
+    provider="google" uses GOOGLE_API_KEY (fallback: GEMINI_API_KEY).
+    provider="gemini" is a legacy alias for "google".
+    provider="cohere" uses COHERE_API_KEY (Cohere ClientV2, structured output).
     """
+
+    _GOOGLE_PROVIDERS = frozenset({"google", "gemini"})
 
     def __init__(
         self,
         groq_api_key: str | None = None,
         model: str = "llama-3.3-70b-versatile",
         temperature: float = 0.0,
+        provider: str = "groq",
+        gemini_api_key: str | None = None,
+        cohere_api_key: str | None = None,
     ) -> None:
         self.model = model
         self.temperature = temperature
-        key = groq_api_key or os.environ.get("GROQ_API_KEY", "")
-        if not key:
-            raise OSError("GROQ_API_KEY not set.")
-        self._groq_key = key
+        self.provider = provider
+
+        if provider in self._GOOGLE_PROVIDERS:
+            key = (
+                gemini_api_key
+                or os.environ.get("GOOGLE_API_KEY", "")
+                or os.environ.get("GEMINI_API_KEY", "")
+            )
+            if not key:
+                raise OSError("GOOGLE_API_KEY (or GEMINI_API_KEY) not set.")
+            self._gemini_key = key
+            self._groq_key = ""
+            self._cohere_key = ""
+        elif provider == "cohere":
+            key = cohere_api_key or os.environ.get("COHERE_API_KEY", "")
+            if not key:
+                raise OSError("COHERE_API_KEY not set.")
+            self._cohere_key = key
+            self._groq_key = ""
+            self._gemini_key = ""
+        else:
+            key = groq_api_key or os.environ.get("GROQ_API_KEY", "")
+            if not key:
+                raise OSError("GROQ_API_KEY not set.")
+            self._groq_key = key
+            self._gemini_key = ""
+            self._cohere_key = ""
 
     def score(
         self,
@@ -186,7 +219,12 @@ class TriageJudge:
             {"role": "system", "content": RUBRIC_DESCRIPTION},
             {"role": "user", "content": prompt},
         ]
-        raw = self._groq_completion(messages)
+        if self.provider in self._GOOGLE_PROVIDERS:
+            raw = self._gemini_completion(messages)
+        elif self.provider == "cohere":
+            raw = self._cohere_completion(messages)
+        else:
+            raw = self._groq_completion(messages)
         return self._parse_score(raw)
 
     def score_batch(
@@ -296,6 +334,14 @@ Score this triage plan using the rubric. Return ONLY valid JSON.
             raise ImportError("pip install groq") from e
 
         client = Groq(api_key=self._groq_key)
+        # Qwen3 uses extended thinking by default. Append /no_think to the last
+        # user message to disable it — thinking tokens eat into max_tokens and can
+        # crowd out the JSON output before it is produced.
+        if "qwen" in self.model.lower():
+            messages = [
+                *messages[:-1],
+                {**messages[-1], "content": messages[-1]["content"] + "\n/no_think"},
+            ]
         backoff = 6.0
         for attempt in range(6):
             try:
@@ -303,7 +349,7 @@ Score this triage plan using the rubric. Return ONLY valid JSON.
                     model=self.model,
                     messages=messages,
                     temperature=self.temperature,
-                    max_tokens=512,
+                    max_tokens=1024,
                 )
                 return resp.choices[0].message.content.strip()
             except RateLimitError as e:
@@ -326,8 +372,109 @@ Score this triage plan using the rubric. Return ONLY valid JSON.
         raise RuntimeError("Judge completion failed after 6 attempts")
 
     @staticmethod
+    def _cohere_sanitize_schema(schema: dict) -> dict:
+        """Strip integer range constraints Cohere's json_schema validator rejects.
+
+        Cohere's response_format json_schema does not support 'minimum'/'maximum'
+        on integer fields (returns 400). Strip them recursively; type safety is
+        still enforced by JudgeScore.model_validate() after parsing.
+        """
+        _unsupported = {"minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"}
+        result = {}
+        for k, v in schema.items():
+            if k in _unsupported:
+                continue
+            if isinstance(v, dict):
+                result[k] = TriageJudge._cohere_sanitize_schema(v)
+            elif isinstance(v, list):
+                result[k] = [
+                    TriageJudge._cohere_sanitize_schema(i) if isinstance(i, dict) else i
+                    for i in v
+                ]
+            else:
+                result[k] = v
+        return result
+
+    def _cohere_completion(self, messages: list[dict]) -> str:
+        try:
+            import cohere as _cohere
+        except ImportError as e:
+            raise ImportError("pip install cohere>=5") from e
+
+        client = _cohere.ClientV2(api_key=self._cohere_key)
+        # Strip min/max integer constraints — Cohere's validator rejects them.
+        schema = self._cohere_sanitize_schema(JudgeScore.model_json_schema())
+        response_format = {"type": "json_object", "json_schema": schema}
+
+        backoff = 6.0
+        for attempt in range(6):
+            try:
+                resp = client.chat(
+                    model=self.model,
+                    messages=messages,
+                    response_format=response_format,
+                    temperature=self.temperature,
+                )
+                return resp.message.content[0].text.strip()
+            except Exception as e:
+                err_str = str(e).lower()
+                is_rate_limit = any(kw in err_str for kw in ("429", "rate limit", "too many requests"))
+                if is_rate_limit and attempt < 5:
+                    jitter = backoff * (0.5 + 0.5 * (attempt / 5))
+                    logger.warning("Cohere rate limit — sleeping %.1fs (attempt %d/6)", jitter, attempt + 1)
+                    time.sleep(jitter)
+                    backoff = min(backoff * 2, 90.0)
+                else:
+                    raise
+        raise RuntimeError("Cohere judge completion failed after 6 attempts")
+
+    def _gemini_completion(self, messages: list[dict]) -> str:
+        try:
+            from google import genai
+            from google.genai import types
+        except ImportError as e:
+            raise ImportError("pip install google-genai") from e
+
+        # messages[0] is system prompt; messages[1] is user turn.
+        system_prompt = messages[0]["content"]
+        user_content = messages[1]["content"]
+
+        client = genai.Client(api_key=self._gemini_key)
+        # response_schema forces structured JSON output — more reliable than
+        # prompt-only JSON coaxing (no markdown wrapper, no truncation mid-JSON).
+        config = types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            temperature=self.temperature,
+            max_output_tokens=1024,
+            response_mime_type="application/json",
+            response_schema=JudgeScore,
+        )
+        backoff = 6.0
+        for attempt in range(6):
+            try:
+                resp = client.models.generate_content(
+                    model=self.model,
+                    contents=user_content,
+                    config=config,
+                )
+                return resp.text.strip()
+            except Exception as e:
+                err_str = str(e).lower()
+                is_rate_limit = any(kw in err_str for kw in ("429", "quota", "rate", "resource_exhausted"))
+                if is_rate_limit and attempt < 5:
+                    jitter = backoff * (0.5 + 0.5 * (attempt / 5))
+                    logger.warning("Gemini rate limit — sleeping %.1fs (attempt %d/6)", jitter, attempt + 1)
+                    time.sleep(jitter)
+                    backoff = min(backoff * 2, 90.0)
+                else:
+                    raise
+        raise RuntimeError("Gemini judge completion failed after 6 attempts")
+
+    @staticmethod
     def _parse_score(raw: str) -> JudgeScore:
-        text = re.sub(r"^```(?:json)?\s*", "", raw.strip(), flags=re.MULTILINE)
+        # Strip <think>...</think> blocks emitted by reasoning models (e.g. Qwen3).
+        text = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
+        text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.MULTILINE)
         text = re.sub(r"\s*```$", "", text.strip(), flags=re.MULTILINE)
         match = re.search(r"\{.*\}", text, re.DOTALL)
         if not match:

@@ -1,0 +1,347 @@
+2026-05-19 17:00:59,939 INFO Checkpoint: 60 already completed
+2026-05-19 17:01:00,026 INFO === microsoft/vscode: 30 gold issues ===
+2026-05-19 17:01:00,261 INFO Loading embedding model: BAAI/bge-base-en-v1.5
+2026-05-19 17:01:00,261 INFO Load pretrained SentenceTransformer: BAAI/bge-base-en-v1.5
+2026-05-19 17:01:04,621 INFO Use pytorch device_name: cuda
+C:\Users\gaura\anaconda3\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator PCA from version 1.6.1 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-05-19 17:01:05,734 INFO [microsoft_vscode] #2093 skipped (checkpoint)
+2026-05-19 17:01:05,735 INFO [microsoft_vscode] #4223 skipped (checkpoint)
+2026-05-19 17:01:05,736 INFO [microsoft_vscode] #311565 skipped (checkpoint)
+2026-05-19 17:01:05,736 INFO [microsoft_vscode] #4760 skipped (checkpoint)
+2026-05-19 17:01:05,736 INFO [microsoft_vscode] #4741 skipped (checkpoint)
+2026-05-19 17:01:05,737 INFO [microsoft_vscode] #3826 skipped (checkpoint)
+2026-05-19 17:01:05,737 INFO [microsoft_vscode] #3486 skipped (checkpoint)
+2026-05-19 17:01:05,737 INFO [microsoft_vscode] #311543 skipped (checkpoint)
+2026-05-19 17:01:05,738 INFO [microsoft_vscode] #311414 skipped (checkpoint)
+2026-05-19 17:01:05,740 INFO [microsoft_vscode] #3299 skipped (checkpoint)
+2026-05-19 17:01:05,740 INFO [microsoft_vscode] #1508 skipped (checkpoint)
+2026-05-19 17:01:05,741 INFO [microsoft_vscode] #161 skipped (checkpoint)
+2026-05-19 17:01:05,741 INFO [microsoft_vscode] #2636 skipped (checkpoint)
+2026-05-19 17:01:05,742 INFO [microsoft_vscode] #3047 skipped (checkpoint)
+2026-05-19 17:01:05,742 INFO [microsoft_vscode] #1502 skipped (checkpoint)
+2026-05-19 17:01:05,742 INFO [microsoft_vscode] #4759 skipped (checkpoint)
+2026-05-19 17:01:05,742 INFO [microsoft_vscode] #4601 skipped (checkpoint)
+2026-05-19 17:01:05,742 INFO [microsoft_vscode] #567 skipped (checkpoint)
+2026-05-19 17:01:05,742 INFO [microsoft_vscode] #3655 skipped (checkpoint)
+2026-05-19 17:01:05,743 INFO [microsoft_vscode] #1045 skipped (checkpoint)
+2026-05-19 17:01:05,743 INFO [microsoft_vscode] #2496 skipped (checkpoint)
+2026-05-19 17:01:05,743 INFO [microsoft_vscode] #2115 skipped (checkpoint)
+2026-05-19 17:01:05,743 INFO [microsoft_vscode] #2468 skipped (checkpoint)
+2026-05-19 17:01:05,743 INFO [microsoft_vscode] #814 skipped (checkpoint)
+2026-05-19 17:01:05,744 INFO [microsoft_vscode] #1057 skipped (checkpoint)
+2026-05-19 17:01:05,744 INFO [microsoft_vscode] #4338 skipped (checkpoint)
+2026-05-19 17:01:05,744 INFO [microsoft_vscode] #3360 skipped (checkpoint)
+2026-05-19 17:01:05,744 INFO [microsoft_vscode] #3077 skipped (checkpoint)
+2026-05-19 17:01:05,745 INFO [microsoft_vscode] #2067 skipped (checkpoint)
+2026-05-19 17:01:05,745 INFO [microsoft_vscode] #3671 skipped (checkpoint)
+2026-05-19 17:01:05,745 INFO [microsoft_vscode] component acc � LLM: 56.7%, TF-IDF: 50.0%, Majority: 13.3%
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  1.27it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  1.27it/s]
+2026-05-19 17:01:12,049 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 17:01:12,135 INFO [microsoft/vscode] Triaged #311035 in 4.82s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 13.48it/s]
+2026-05-19 17:01:16,481 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 17:01:16,482 INFO Retrying request to /openai/v1/chat/completions in 20.000000 seconds
+2026-05-19 17:01:38,574 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 17:01:38,576 INFO [microsoft/vscode] Triaged #312309 in 24.94s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 14.20it/s]
+2026-05-19 17:01:41,864 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 17:01:41,865 INFO Retrying request to /openai/v1/chat/completions in 28.000000 seconds
+2026-05-19 17:02:11,426 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 17:02:11,428 INFO [microsoft/vscode] Triaged #310861 in 31.35s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  7.04it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  7.02it/s]
+2026-05-19 17:02:14,618 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 17:02:14,619 INFO Retrying request to /openai/v1/chat/completions in 31.000000 seconds
+2026-05-19 17:02:46,732 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 17:02:46,734 INFO [microsoft/vscode] Triaged #312400 in 33.80s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  7.62it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  7.60it/s]
+2026-05-19 17:02:49,891 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 17:02:49,892 INFO Retrying request to /openai/v1/chat/completions in 11.000000 seconds
+2026-05-19 17:03:02,118 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 17:03:02,120 INFO [microsoft/vscode] Triaged #312155 in 13.89s
+2026-05-19 17:03:02,121 INFO === kubernetes/kubernetes: 30 gold issues ===
+2026-05-19 17:03:02,354 INFO Loading embedding model: BAAI/bge-base-en-v1.5
+2026-05-19 17:03:02,354 INFO Load pretrained SentenceTransformer: BAAI/bge-base-en-v1.5
+2026-05-19 17:03:05,124 INFO Use pytorch device_name: cuda
+C:\Users\gaura\anaconda3\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator PCA from version 1.6.1 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-05-19 17:03:05,901 INFO [kubernetes_kubernetes] #11079 skipped (checkpoint)
+2026-05-19 17:03:05,901 INFO [kubernetes_kubernetes] #13257 skipped (checkpoint)
+2026-05-19 17:03:05,901 INFO [kubernetes_kubernetes] #13890 skipped (checkpoint)
+2026-05-19 17:03:05,901 INFO [kubernetes_kubernetes] #10497 skipped (checkpoint)
+2026-05-19 17:03:05,902 INFO [kubernetes_kubernetes] #14669 skipped (checkpoint)
+2026-05-19 17:03:05,902 INFO [kubernetes_kubernetes] #14921 skipped (checkpoint)
+2026-05-19 17:03:05,902 INFO [kubernetes_kubernetes] #5963 skipped (checkpoint)
+2026-05-19 17:03:05,902 INFO [kubernetes_kubernetes] #13878 skipped (checkpoint)
+2026-05-19 17:03:05,903 INFO [kubernetes_kubernetes] #14228 skipped (checkpoint)
+2026-05-19 17:03:05,903 INFO [kubernetes_kubernetes] #1678 skipped (checkpoint)
+2026-05-19 17:03:05,903 INFO [kubernetes_kubernetes] #4746 skipped (checkpoint)
+2026-05-19 17:03:05,903 INFO [kubernetes_kubernetes] #14054 skipped (checkpoint)
+2026-05-19 17:03:05,904 INFO [kubernetes_kubernetes] #14743 skipped (checkpoint)
+2026-05-19 17:03:05,904 INFO [kubernetes_kubernetes] #13096 skipped (checkpoint)
+2026-05-19 17:03:05,904 INFO [kubernetes_kubernetes] #11243 skipped (checkpoint)
+2026-05-19 17:03:05,904 INFO [kubernetes_kubernetes] #14284 skipped (checkpoint)
+2026-05-19 17:03:05,904 INFO [kubernetes_kubernetes] #14598 skipped (checkpoint)
+2026-05-19 17:03:05,904 INFO [kubernetes_kubernetes] #14781 skipped (checkpoint)
+2026-05-19 17:03:05,905 INFO [kubernetes_kubernetes] #1548 skipped (checkpoint)
+2026-05-19 17:03:05,905 INFO [kubernetes_kubernetes] #12224 skipped (checkpoint)
+2026-05-19 17:03:05,905 INFO [kubernetes_kubernetes] #3481 skipped (checkpoint)
+2026-05-19 17:03:05,906 INFO [kubernetes_kubernetes] #13435 skipped (checkpoint)
+2026-05-19 17:03:05,906 INFO [kubernetes_kubernetes] #3121 skipped (checkpoint)
+2026-05-19 17:03:05,906 INFO [kubernetes_kubernetes] #13190 skipped (checkpoint)
+2026-05-19 17:03:05,906 INFO [kubernetes_kubernetes] #4947 skipped (checkpoint)
+2026-05-19 17:03:05,907 INFO [kubernetes_kubernetes] #13995 skipped (checkpoint)
+2026-05-19 17:03:05,907 INFO [kubernetes_kubernetes] #3606 skipped (checkpoint)
+2026-05-19 17:03:05,907 INFO [kubernetes_kubernetes] #140 skipped (checkpoint)
+2026-05-19 17:03:05,908 INFO [kubernetes_kubernetes] #5634 skipped (checkpoint)
+2026-05-19 17:03:05,908 INFO [kubernetes_kubernetes] #8362 skipped (checkpoint)
+2026-05-19 17:03:05,908 INFO [kubernetes_kubernetes] component acc � LLM: 80.0%, TF-IDF: 73.3%, Majority: 10.0%
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 10.17it/s]
+2026-05-19 17:03:10,568 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 17:03:10,568 INFO Retrying request to /openai/v1/chat/completions in 27.000000 seconds
+2026-05-19 17:03:37,629 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 17:03:37,629 INFO Retrying request to /openai/v1/chat/completions in 5.000000 seconds
+2026-05-19 17:03:43,735 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 17:03:43,736 INFO [kubernetes/kubernetes] Triaged #14186 in 36.25s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 15.99it/s]
+2026-05-19 17:03:48,263 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 17:03:48,264 INFO Retrying request to /openai/v1/chat/completions in 28.000000 seconds
+2026-05-19 17:04:17,597 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 17:04:17,599 INFO [kubernetes/kubernetes] Triaged #8702 in 32.36s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 23.36it/s]
+2026-05-19 17:04:22,180 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 17:04:22,181 INFO Retrying request to /openai/v1/chat/completions in 21.000000 seconds
+2026-05-19 17:04:44,612 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 17:04:44,613 INFO [kubernetes/kubernetes] Triaged #7890 in 25.51s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 30.43it/s]
+2026-05-19 17:04:49,291 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 17:04:49,291 INFO Retrying request to /openai/v1/chat/completions in 27.000000 seconds
+2026-05-19 17:05:16,384 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 17:05:16,384 INFO Retrying request to /openai/v1/chat/completions in 5.000000 seconds
+2026-05-19 17:05:22,987 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 17:05:22,989 INFO [kubernetes/kubernetes] Triaged #12089 in 36.88s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 15.35it/s]
+2026-05-19 17:05:27,661 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 17:05:27,662 INFO Retrying request to /openai/v1/chat/completions in 28.000000 seconds
+2026-05-19 17:05:57,173 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 17:05:57,175 INFO [kubernetes/kubernetes] Triaged #10179 in 32.69s
+2026-05-19 17:05:57,175 INFO Running LLM-as-judge on 60 plans (3 plans � issue)...
+2026-05-19 17:05:57,176 INFO Judge: model=command-a-03-2025 provider=cohere checkpoint=judge_scores_checkpoint_command_a_03_2025.jsonl
+2026-05-19 17:05:57,179 INFO Judge checkpoint (judge_scores_checkpoint_command_a_03_2025.jsonl): 180 scores already completed
+2026-05-19 17:05:57,179 INFO Judge checkpoint: 180/180 already scored
+2026-05-19 17:05:57,179 INFO [judge] #2093 System 1 (TF-IDF) \u2192 6/15 (checkpoint)
+2026-05-19 17:05:57,180 INFO [judge] #2093 Systems 1+2 (TF-IDF+BGE) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,180 INFO [judge] #2093 Full System (LLM) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,180 INFO [judge] #4223 System 1 (TF-IDF) \u2192 3/15 (checkpoint)
+2026-05-19 17:05:57,180 INFO [judge] #4223 Systems 1+2 (TF-IDF+BGE) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,180 INFO [judge] #4223 Full System (LLM) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,180 INFO [judge] #311565 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,180 INFO [judge] #311565 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,180 INFO [judge] #311565 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,180 INFO [judge] #4760 System 1 (TF-IDF) \u2192 6/15 (checkpoint)
+2026-05-19 17:05:57,180 INFO [judge] #4760 Systems 1+2 (TF-IDF+BGE) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,181 INFO [judge] #4760 Full System (LLM) \u2192 11/15 (checkpoint)
+2026-05-19 17:05:57,181 INFO [judge] #4741 System 1 (TF-IDF) \u2192 3/15 (checkpoint)
+2026-05-19 17:05:57,181 INFO [judge] #4741 Systems 1+2 (TF-IDF+BGE) \u2192 4/15 (checkpoint)
+2026-05-19 17:05:57,181 INFO [judge] #4741 Full System (LLM) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,181 INFO [judge] #3826 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,181 INFO [judge] #3826 Systems 1+2 (TF-IDF+BGE) \u2192 8/15 (checkpoint)
+2026-05-19 17:05:57,181 INFO [judge] #3826 Full System (LLM) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,181 INFO [judge] #3486 System 1 (TF-IDF) \u2192 3/15 (checkpoint)
+2026-05-19 17:05:57,181 INFO [judge] #3486 Systems 1+2 (TF-IDF+BGE) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,182 INFO [judge] #3486 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,182 INFO [judge] #311543 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,182 INFO [judge] #311543 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,182 INFO [judge] #311543 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,182 INFO [judge] #311414 System 1 (TF-IDF) \u2192 6/15 (checkpoint)
+2026-05-19 17:05:57,182 INFO [judge] #311414 Systems 1+2 (TF-IDF+BGE) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,182 INFO [judge] #311414 Full System (LLM) \u2192 12/15 (checkpoint)
+2026-05-19 17:05:57,182 INFO [judge] #3299 System 1 (TF-IDF) \u2192 4/15 (checkpoint)
+2026-05-19 17:05:57,182 INFO [judge] #3299 Systems 1+2 (TF-IDF+BGE) \u2192 6/15 (checkpoint)
+2026-05-19 17:05:57,183 INFO [judge] #3299 Full System (LLM) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,183 INFO [judge] #1508 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,183 INFO [judge] #1508 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,183 INFO [judge] #1508 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,183 INFO [judge] #161 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,183 INFO [judge] #161 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,183 INFO [judge] #161 Full System (LLM) \u2192 11/15 (checkpoint)
+2026-05-19 17:05:57,183 INFO [judge] #2636 System 1 (TF-IDF) \u2192 4/15 (checkpoint)
+2026-05-19 17:05:57,183 INFO [judge] #2636 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,184 INFO [judge] #2636 Full System (LLM) \u2192 12/15 (checkpoint)
+2026-05-19 17:05:57,184 INFO [judge] #3047 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,184 INFO [judge] #3047 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,184 INFO [judge] #3047 Full System (LLM) \u2192 13/15 (checkpoint)
+2026-05-19 17:05:57,184 INFO [judge] #1502 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,184 INFO [judge] #1502 Systems 1+2 (TF-IDF+BGE) \u2192 7/15 (checkpoint)
+2026-05-19 17:05:57,185 INFO [judge] #1502 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,185 INFO [judge] #4759 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,185 INFO [judge] #4759 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,185 INFO [judge] #4759 Full System (LLM) \u2192 14/15 (checkpoint)
+2026-05-19 17:05:57,185 INFO [judge] #4601 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,185 INFO [judge] #4601 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,185 INFO [judge] #4601 Full System (LLM) \u2192 12/15 (checkpoint)
+2026-05-19 17:05:57,185 INFO [judge] #567 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,186 INFO [judge] #567 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,186 INFO [judge] #567 Full System (LLM) \u2192 11/15 (checkpoint)
+2026-05-19 17:05:57,186 INFO [judge] #3655 System 1 (TF-IDF) \u2192 3/15 (checkpoint)
+2026-05-19 17:05:57,186 INFO [judge] #3655 Systems 1+2 (TF-IDF+BGE) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,186 INFO [judge] #3655 Full System (LLM) \u2192 11/15 (checkpoint)
+2026-05-19 17:05:57,186 INFO [judge] #1045 System 1 (TF-IDF) \u2192 3/15 (checkpoint)
+2026-05-19 17:05:57,187 INFO [judge] #1045 Systems 1+2 (TF-IDF+BGE) \u2192 6/15 (checkpoint)
+2026-05-19 17:05:57,187 INFO [judge] #1045 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,187 INFO [judge] #2496 System 1 (TF-IDF) \u2192 4/15 (checkpoint)
+2026-05-19 17:05:57,187 INFO [judge] #2496 Systems 1+2 (TF-IDF+BGE) \u2192 6/15 (checkpoint)
+2026-05-19 17:05:57,187 INFO [judge] #2496 Full System (LLM) \u2192 12/15 (checkpoint)
+2026-05-19 17:05:57,187 INFO [judge] #2115 System 1 (TF-IDF) \u2192 3/15 (checkpoint)
+2026-05-19 17:05:57,188 INFO [judge] #2115 Systems 1+2 (TF-IDF+BGE) \u2192 4/15 (checkpoint)
+2026-05-19 17:05:57,188 INFO [judge] #2115 Full System (LLM) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,188 INFO [judge] #2468 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,188 INFO [judge] #2468 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,188 INFO [judge] #2468 Full System (LLM) \u2192 14/15 (checkpoint)
+2026-05-19 17:05:57,188 INFO [judge] #814 System 1 (TF-IDF) \u2192 3/15 (checkpoint)
+2026-05-19 17:05:57,188 INFO [judge] #814 Systems 1+2 (TF-IDF+BGE) \u2192 4/15 (checkpoint)
+2026-05-19 17:05:57,188 INFO [judge] #814 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,188 INFO [judge] #1057 System 1 (TF-IDF) \u2192 1/15 (checkpoint)
+2026-05-19 17:05:57,189 INFO [judge] #1057 Systems 1+2 (TF-IDF+BGE) \u2192 6/15 (checkpoint)
+2026-05-19 17:05:57,189 INFO [judge] #1057 Full System (LLM) \u2192 11/15 (checkpoint)
+2026-05-19 17:05:57,189 INFO [judge] #4338 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,189 INFO [judge] #4338 Systems 1+2 (TF-IDF+BGE) \u2192 8/15 (checkpoint)
+2026-05-19 17:05:57,189 INFO [judge] #4338 Full System (LLM) \u2192 11/15 (checkpoint)
+2026-05-19 17:05:57,189 INFO [judge] #3360 System 1 (TF-IDF) \u2192 4/15 (checkpoint)
+2026-05-19 17:05:57,189 INFO [judge] #3360 Systems 1+2 (TF-IDF+BGE) \u2192 6/15 (checkpoint)
+2026-05-19 17:05:57,189 INFO [judge] #3360 Full System (LLM) \u2192 12/15 (checkpoint)
+2026-05-19 17:05:57,189 INFO [judge] #3077 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,189 INFO [judge] #3077 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,190 INFO [judge] #3077 Full System (LLM) \u2192 12/15 (checkpoint)
+2026-05-19 17:05:57,190 INFO [judge] #2067 System 1 (TF-IDF) \u2192 3/15 (checkpoint)
+2026-05-19 17:05:57,190 INFO [judge] #2067 Systems 1+2 (TF-IDF+BGE) \u2192 6/15 (checkpoint)
+2026-05-19 17:05:57,190 INFO [judge] #2067 Full System (LLM) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,190 INFO [judge] #3671 System 1 (TF-IDF) \u2192 4/15 (checkpoint)
+2026-05-19 17:05:57,190 INFO [judge] #3671 Systems 1+2 (TF-IDF+BGE) \u2192 8/15 (checkpoint)
+2026-05-19 17:05:57,190 INFO [judge] #3671 Full System (LLM) \u2192 11/15 (checkpoint)
+2026-05-19 17:05:57,191 INFO [judge] #11079 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,191 INFO [judge] #11079 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,191 INFO [judge] #11079 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,191 INFO [judge] #13257 System 1 (TF-IDF) \u2192 4/15 (checkpoint)
+2026-05-19 17:05:57,191 INFO [judge] #13257 Systems 1+2 (TF-IDF+BGE) \u2192 8/15 (checkpoint)
+2026-05-19 17:05:57,191 INFO [judge] #13257 Full System (LLM) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,191 INFO [judge] #13890 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,191 INFO [judge] #13890 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,192 INFO [judge] #13890 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,192 INFO [judge] #10497 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,192 INFO [judge] #10497 Systems 1+2 (TF-IDF+BGE) \u2192 7/15 (checkpoint)
+2026-05-19 17:05:57,192 INFO [judge] #10497 Full System (LLM) \u2192 13/15 (checkpoint)
+2026-05-19 17:05:57,192 INFO [judge] #14669 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,192 INFO [judge] #14669 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,192 INFO [judge] #14669 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,193 INFO [judge] #14921 System 1 (TF-IDF) \u2192 6/15 (checkpoint)
+2026-05-19 17:05:57,193 INFO [judge] #14921 Systems 1+2 (TF-IDF+BGE) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,193 INFO [judge] #14921 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,193 INFO [judge] #5963 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,193 INFO [judge] #5963 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,193 INFO [judge] #5963 Full System (LLM) \u2192 14/15 (checkpoint)
+2026-05-19 17:05:57,193 INFO [judge] #13878 System 1 (TF-IDF) \u2192 4/15 (checkpoint)
+2026-05-19 17:05:57,193 INFO [judge] #13878 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,194 INFO [judge] #13878 Full System (LLM) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,194 INFO [judge] #14228 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,194 INFO [judge] #14228 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,194 INFO [judge] #14228 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,194 INFO [judge] #1678 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,194 INFO [judge] #1678 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,194 INFO [judge] #1678 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,195 INFO [judge] #4746 System 1 (TF-IDF) \u2192 4/15 (checkpoint)
+2026-05-19 17:05:57,195 INFO [judge] #4746 Systems 1+2 (TF-IDF+BGE) \u2192 8/15 (checkpoint)
+2026-05-19 17:05:57,195 INFO [judge] #4746 Full System (LLM) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,195 INFO [judge] #14054 System 1 (TF-IDF) \u2192 4/15 (checkpoint)
+2026-05-19 17:05:57,195 INFO [judge] #14054 Systems 1+2 (TF-IDF+BGE) \u2192 8/15 (checkpoint)
+2026-05-19 17:05:57,195 INFO [judge] #14054 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,195 INFO [judge] #14743 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,195 INFO [judge] #14743 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,195 INFO [judge] #14743 Full System (LLM) \u2192 14/15 (checkpoint)
+2026-05-19 17:05:57,195 INFO [judge] #13096 System 1 (TF-IDF) \u2192 3/15 (checkpoint)
+2026-05-19 17:05:57,195 INFO [judge] #13096 Systems 1+2 (TF-IDF+BGE) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,196 INFO [judge] #13096 Full System (LLM) \u2192 12/15 (checkpoint)
+2026-05-19 17:05:57,196 INFO [judge] #11243 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,196 INFO [judge] #11243 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,196 INFO [judge] #11243 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,196 INFO [judge] #14284 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,196 INFO [judge] #14284 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,196 INFO [judge] #14284 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,197 INFO [judge] #14598 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,197 INFO [judge] #14598 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,197 INFO [judge] #14598 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,197 INFO [judge] #14781 System 1 (TF-IDF) \u2192 4/15 (checkpoint)
+2026-05-19 17:05:57,197 INFO [judge] #14781 Systems 1+2 (TF-IDF+BGE) \u2192 8/15 (checkpoint)
+2026-05-19 17:05:57,197 INFO [judge] #14781 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,197 INFO [judge] #1548 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,197 INFO [judge] #1548 Systems 1+2 (TF-IDF+BGE) \u2192 11/15 (checkpoint)
+2026-05-19 17:05:57,197 INFO [judge] #1548 Full System (LLM) \u2192 11/15 (checkpoint)
+2026-05-19 17:05:57,198 INFO [judge] #12224 System 1 (TF-IDF) \u2192 3/15 (checkpoint)
+2026-05-19 17:05:57,198 INFO [judge] #12224 Systems 1+2 (TF-IDF+BGE) \u2192 4/15 (checkpoint)
+2026-05-19 17:05:57,198 INFO [judge] #12224 Full System (LLM) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,198 INFO [judge] #3481 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,198 INFO [judge] #3481 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,198 INFO [judge] #3481 Full System (LLM) \u2192 14/15 (checkpoint)
+2026-05-19 17:05:57,198 INFO [judge] #13435 System 1 (TF-IDF) \u2192 3/15 (checkpoint)
+2026-05-19 17:05:57,198 INFO [judge] #13435 Systems 1+2 (TF-IDF+BGE) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,198 INFO [judge] #13435 Full System (LLM) \u2192 7/15 (checkpoint)
+2026-05-19 17:05:57,198 INFO [judge] #3121 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,199 INFO [judge] #3121 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,199 INFO [judge] #3121 Full System (LLM) \u2192 11/15 (checkpoint)
+2026-05-19 17:05:57,199 INFO [judge] #13190 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,199 INFO [judge] #13190 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,199 INFO [judge] #13190 Full System (LLM) \u2192 11/15 (checkpoint)
+2026-05-19 17:05:57,199 INFO [judge] #4947 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,200 INFO [judge] #4947 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,200 INFO [judge] #4947 Full System (LLM) \u2192 10/15 (checkpoint)
+2026-05-19 17:05:57,200 INFO [judge] #13995 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,200 INFO [judge] #13995 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,200 INFO [judge] #13995 Full System (LLM) \u2192 14/15 (checkpoint)
+2026-05-19 17:05:57,200 INFO [judge] #3606 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,201 INFO [judge] #3606 Systems 1+2 (TF-IDF+BGE) \u2192 7/15 (checkpoint)
+2026-05-19 17:05:57,201 INFO [judge] #3606 Full System (LLM) \u2192 14/15 (checkpoint)
+2026-05-19 17:05:57,201 INFO [judge] #140 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,201 INFO [judge] #140 Systems 1+2 (TF-IDF+BGE) \u2192 7/15 (checkpoint)
+2026-05-19 17:05:57,201 INFO [judge] #140 Full System (LLM) \u2192 11/15 (checkpoint)
+2026-05-19 17:05:57,202 INFO [judge] #5634 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,202 INFO [judge] #5634 Systems 1+2 (TF-IDF+BGE) \u2192 11/15 (checkpoint)
+2026-05-19 17:05:57,202 INFO [judge] #5634 Full System (LLM) \u2192 14/15 (checkpoint)
+2026-05-19 17:05:57,202 INFO [judge] #8362 System 1 (TF-IDF) \u2192 5/15 (checkpoint)
+2026-05-19 17:05:57,202 INFO [judge] #8362 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 (checkpoint)
+2026-05-19 17:05:57,202 INFO [judge] #8362 Full System (LLM) \u2192 14/15 (checkpoint)
+2026-05-19 17:05:57,235 INFO Per-issue results saved to C:\Users\gaura\ml-projects\triage-iq\data\triage_eval_results.parquet
+2026-05-19 17:05:57,776 INFO Saved chart to C:\Users\gaura\ml-projects\triage-iq\reports\charts\triage_score_breakdown.png
+2026-05-19 17:05:57,779 INFO Results JSON saved to C:\Users\gaura\ml-projects\triage-iq\reports\triage_results_w12_cohere.json
+2026-05-19 17:05:57,780 INFO Sample plans saved to C:\Users\gaura\ml-projects\triage-iq\reports\sample_triage_plans.json (10 plans)
+2026-05-19 17:05:57,781 INFO Report written to C:\Users\gaura\ml-projects\triage-iq\reports\06_triage_assistant.md
+
+=== EVAL COMPLETE ===
+Issues:        60 evaluated, 0 triage failures, 0 judge failures
+Component acc: LLM 68.3%, TF-IDF 61.7%, Majority 11.7%
+Judge score:   10.82/15 (72%)
+Runtime:       298s (~0.041 USD)

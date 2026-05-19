@@ -1,0 +1,741 @@
+2026-05-19 12:50:31,651 INFO === microsoft/vscode: 30 gold issues ===
+2026-05-19 12:50:31,761 INFO Loading embedding model: BAAI/bge-base-en-v1.5
+2026-05-19 12:50:31,762 INFO Load pretrained SentenceTransformer: BAAI/bge-base-en-v1.5
+2026-05-19 12:50:35,368 INFO Use pytorch device_name: cuda
+C:\Users\gaura\anaconda3\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator PCA from version 1.6.1 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  3.90it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  3.90it/s]
+2026-05-19 12:50:38,684 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:50:38,719 INFO [microsoft_vscode] #2093 → debug (2.9s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 46.71it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 62.50it/s]
+2026-05-19 12:50:41,256 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:50:41,257 INFO Retrying request to /openai/v1/chat/completions in 21.000000 seconds
+2026-05-19 12:51:03,740 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:51:03,741 INFO [microsoft_vscode] #4223 → suggest (23.5s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 11.17it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.57it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.55it/s]
+2026-05-19 12:51:06,458 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:51:06,459 INFO Retrying request to /openai/v1/chat/completions in 33.000000 seconds
+2026-05-19 12:51:39,537 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:51:39,537 INFO Retrying request to /openai/v1/chat/completions in 6.000000 seconds
+2026-05-19 12:51:46,633 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:51:46,634 INFO [microsoft_vscode] #311565 → error-telemetry (41.3s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.38it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.37it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 15.93it/s]
+2026-05-19 12:51:49,325 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:51:49,326 INFO Retrying request to /openai/v1/chat/completions in 33.000000 seconds
+2026-05-19 12:52:23,746 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:52:23,747 INFO [microsoft_vscode] #4760 → tasks (35.5s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 14.11it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 26.34it/s]
+2026-05-19 12:52:26,314 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:52:26,315 INFO Retrying request to /openai/v1/chat/completions in 28.000000 seconds
+2026-05-19 12:52:55,351 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:52:55,352 INFO [microsoft_vscode] #4741 → javascript (30.0s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 26.51it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 14.64it/s]
+2026-05-19 12:52:57,929 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:52:57,930 INFO Retrying request to /openai/v1/chat/completions in 31.000000 seconds
+2026-05-19 12:53:30,823 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:53:30,824 WARNING LLM JSON parse failed (attempt 1): 1 validation error for TriagePlan
+similar_issues.1.number
+  Input should be a valid integer [type=int_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.10/v/int_type — retrying with strict prompt. Raw: {
+  "predicted_component": "tasks",
+  "component_confidence": 0.50,
+  "similar_issues": [
+    {"number": 3895, "similarity": 0.782, "relevance_note": "Launch occurs even if preLaunchTask fails, similar to the described behavior of make running on compile errors."},
+    {"number": null, "similarity":
+2026-05-19 12:53:31,207 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:53:31,208 INFO Retrying request to /openai/v1/chat/completions in 35.000000 seconds
+2026-05-19 12:54:07,182 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:54:07,183 ERROR LLM JSON parse failed after retry: 1 validation error for TriagePlan
+similar_issues.1.number
+  Input should be a valid integer [type=int_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.10/v/int_type — using fallback plan. Raw: {
+  "predicted_component": "tasks",
+  "component_confidence": 0.5,
+  "similar_issues": [
+    {"number": 3895, "similarity": 0.782, "relevance_note": "Launch occurs even if preLaunchTask fails, similar to the described behavior of make running on compile errors."},
+    {"number": null, "similarity": 
+2026-05-19 12:54:07,183 INFO [microsoft_vscode] #3826 → tasks (70.3s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 14.80it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 25.57it/s]
+2026-05-19 12:54:09,747 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:54:09,747 INFO Retrying request to /openai/v1/chat/completions in 29.000000 seconds
+2026-05-19 12:54:38,817 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:54:38,818 INFO Retrying request to /openai/v1/chat/completions in 1.000000 seconds
+2026-05-19 12:54:40,936 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:54:40,937 INFO [microsoft_vscode] #3486 → editor-folding (32.2s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 26.42it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.43it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.41it/s]
+2026-05-19 12:54:43,532 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:54:43,533 INFO Retrying request to /openai/v1/chat/completions in 30.000000 seconds
+2026-05-19 12:55:13,592 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:55:13,592 INFO Retrying request to /openai/v1/chat/completions in 1.000000 seconds
+2026-05-19 12:55:16,114 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:55:16,115 INFO [microsoft_vscode] #311543 → error-telemetry (33.6s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.35it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.33it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 14.37it/s]
+2026-05-19 12:55:18,818 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:55:18,818 INFO Retrying request to /openai/v1/chat/completions in 30.000000 seconds
+2026-05-19 12:55:49,850 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:55:49,851 INFO [microsoft_vscode] #311414 → ux (32.1s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 14.42it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 16.27it/s]
+2026-05-19 12:55:52,473 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:55:52,473 INFO Retrying request to /openai/v1/chat/completions in 29.000000 seconds
+2026-05-19 12:56:22,662 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:56:22,664 INFO [microsoft_vscode] #3299 → editor-folding (31.2s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 16.45it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 15.68it/s]
+2026-05-19 12:56:25,271 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:56:25,271 INFO Retrying request to /openai/v1/chat/completions in 30.000000 seconds
+2026-05-19 12:56:55,339 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:56:55,340 INFO Retrying request to /openai/v1/chat/completions in 1.000000 seconds
+2026-05-19 12:56:57,530 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:56:57,532 INFO [microsoft_vscode] #1508 → git (33.3s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 15.69it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 24.38it/s]
+2026-05-19 12:57:00,123 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:57:00,123 INFO Retrying request to /openai/v1/chat/completions in 18.000000 seconds
+2026-05-19 12:57:19,052 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:57:19,053 INFO [microsoft_vscode] #161 → php (19.9s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 24.64it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 26.20it/s]
+2026-05-19 12:57:21,718 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:57:21,719 INFO Retrying request to /openai/v1/chat/completions in 29.000000 seconds
+2026-05-19 12:57:50,829 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:57:50,830 INFO Retrying request to /openai/v1/chat/completions in 1.000000 seconds
+2026-05-19 12:57:53,286 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:57:53,287 INFO [microsoft_vscode] #2636 → themes (32.7s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 26.16it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.59it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.58it/s]
+2026-05-19 12:57:55,971 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:57:55,971 INFO Retrying request to /openai/v1/chat/completions in 31.000000 seconds
+2026-05-19 12:58:28,148 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:58:28,149 INFO [microsoft_vscode] #3047 → error-telemetry (33.3s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.57it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.55it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 19.60it/s]
+2026-05-19 12:58:30,876 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:58:30,876 INFO Retrying request to /openai/v1/chat/completions in 30.000000 seconds
+2026-05-19 12:59:03,015 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:59:03,016 INFO [microsoft_vscode] #1502 → css-less-scss (33.2s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 16.53it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 16.00it/s]
+2026-05-19 12:59:05,630 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:59:05,630 INFO Retrying request to /openai/v1/chat/completions in 30.000000 seconds
+2026-05-19 12:59:36,986 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 12:59:36,987 INFO [microsoft_vscode] #4759 → tasks (32.4s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 16.23it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 10.79it/s]
+2026-05-19 12:59:39,681 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 12:59:39,681 INFO Retrying request to /openai/v1/chat/completions in 31.000000 seconds
+2026-05-19 13:00:11,881 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:00:11,882 INFO [microsoft_vscode] #4601 → typescript (33.3s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 10.77it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 16.26it/s]
+2026-05-19 13:00:14,571 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:00:14,572 INFO Retrying request to /openai/v1/chat/completions in 29.000000 seconds
+2026-05-19 13:00:44,938 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:00:44,939 INFO [microsoft_vscode] #567 → api (31.4s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 16.39it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 16.26it/s]
+2026-05-19 13:00:47,622 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:00:47,622 INFO Retrying request to /openai/v1/chat/completions in 29.000000 seconds
+2026-05-19 13:01:18,197 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:01:18,198 INFO [microsoft_vscode] #3655 → debug (31.7s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 16.12it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 23.90it/s]
+2026-05-19 13:01:20,847 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:01:20,847 INFO Retrying request to /openai/v1/chat/completions in 30.000000 seconds
+2026-05-19 13:01:52,683 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:01:52,685 INFO [microsoft_vscode] #1045 → accessibility (32.9s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 23.01it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 22.95it/s]
+2026-05-19 13:01:55,971 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:01:55,972 INFO Retrying request to /openai/v1/chat/completions in 28.000000 seconds
+2026-05-19 13:02:25,075 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:02:25,076 INFO [microsoft_vscode] #2496 → suggest (30.8s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 23.94it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 29.45it/s]
+2026-05-19 13:02:28,402 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:02:28,403 INFO Retrying request to /openai/v1/chat/completions in 28.000000 seconds
+2026-05-19 13:02:57,395 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:02:57,397 INFO [microsoft_vscode] #2115 → file-explorer (30.8s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 29.16it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 11.18it/s]
+2026-05-19 13:03:00,756 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:03:00,757 INFO Retrying request to /openai/v1/chat/completions in 24.000000 seconds
+2026-05-19 13:03:26,760 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:03:26,761 INFO [microsoft_vscode] #2468 → json (27.8s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 11.14it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 16.71it/s]
+2026-05-19 13:03:30,112 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:03:30,113 INFO Retrying request to /openai/v1/chat/completions in 29.000000 seconds
+2026-05-19 13:04:01,023 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:04:01,024 INFO [microsoft_vscode] #814 → file-explorer (32.6s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 16.35it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 14.94it/s]
+2026-05-19 13:04:04,346 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:04:04,346 INFO Retrying request to /openai/v1/chat/completions in 30.000000 seconds
+2026-05-19 13:04:35,485 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:04:35,486 INFO [microsoft_vscode] #1057 → suggest (32.9s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 15.07it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 22.60it/s]
+2026-05-19 13:04:38,955 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:04:38,955 INFO Retrying request to /openai/v1/chat/completions in 28.000000 seconds
+2026-05-19 13:05:08,158 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:05:08,160 INFO [microsoft_vscode] #4338 → debug (31.1s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 23.29it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 23.23it/s]
+2026-05-19 13:05:11,514 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:05:11,515 INFO Retrying request to /openai/v1/chat/completions in 29.000000 seconds
+2026-05-19 13:05:41,891 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:05:41,892 INFO [microsoft_vscode] #3360 → file-explorer (32.2s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 23.77it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 24.41it/s]
+2026-05-19 13:05:44,588 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:05:44,589 INFO Retrying request to /openai/v1/chat/completions in 28.000000 seconds
+2026-05-19 13:06:14,291 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:06:14,292 INFO [microsoft_vscode] #3077 → css-less-scss (30.8s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 23.22it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 15.77it/s]
+2026-05-19 13:06:17,455 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:06:17,456 INFO Retrying request to /openai/v1/chat/completions in 30.000000 seconds
+2026-05-19 13:06:48,624 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:06:48,625 INFO [microsoft_vscode] #2067 → file-explorer (32.8s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 15.99it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 14.32it/s]
+2026-05-19 13:06:51,867 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:06:51,867 INFO Retrying request to /openai/v1/chat/completions in 30.000000 seconds
+2026-05-19 13:07:23,162 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:07:23,165 INFO [microsoft_vscode] #3671 → keybindings (33.0s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 14.52it/s]
+2026-05-19 13:07:23,257 INFO [microsoft_vscode] component acc — LLM: 56.7%, TF-IDF: 50.0%, Majority: 13.3%
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 10.03it/s]
+2026-05-19 13:07:26,446 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:07:26,447 INFO Retrying request to /openai/v1/chat/completions in 31.000000 seconds
+2026-05-19 13:07:58,468 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:07:58,470 INFO [microsoft/vscode] Triaged #311035 in 33.66s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 12.37it/s]
+2026-05-19 13:08:01,600 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:08:01,600 INFO Retrying request to /openai/v1/chat/completions in 20.000000 seconds
+2026-05-19 13:08:23,130 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:08:23,132 INFO [microsoft/vscode] Triaged #312309 in 23.16s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 14.63it/s]
+2026-05-19 13:08:26,311 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:08:26,311 INFO Retrying request to /openai/v1/chat/completions in 29.000000 seconds
+2026-05-19 13:08:57,495 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:08:57,497 INFO [microsoft/vscode] Triaged #310861 in 32.86s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.08it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.06it/s]
+2026-05-19 13:09:00,822 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:09:00,823 INFO Retrying request to /openai/v1/chat/completions in 30.000000 seconds
+2026-05-19 13:09:33,336 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:09:33,338 INFO [microsoft/vscode] Triaged #312400 in 34.34s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.66it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.63it/s]
+2026-05-19 13:09:36,670 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:09:36,671 INFO Retrying request to /openai/v1/chat/completions in 35.000000 seconds
+2026-05-19 13:10:13,299 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:10:13,301 INFO [microsoft/vscode] Triaged #312155 in 38.46s
+2026-05-19 13:10:13,303 INFO === kubernetes/kubernetes: 30 gold issues ===
+2026-05-19 13:10:13,521 INFO Loading embedding model: BAAI/bge-base-en-v1.5
+2026-05-19 13:10:13,521 INFO Load pretrained SentenceTransformer: BAAI/bge-base-en-v1.5
+2026-05-19 13:10:16,243 INFO Use pytorch device_name: cuda
+C:\Users\gaura\anaconda3\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator PCA from version 1.6.1 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 30.20it/s]
+2026-05-19 13:10:20,020 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:10:20,020 INFO Retrying request to /openai/v1/chat/completions in 22.000000 seconds
+2026-05-19 13:10:43,460 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:10:43,462 INFO [kubernetes_kubernetes] #11079 → test-infra (26.5s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 14.71it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 16.10it/s]
+2026-05-19 13:10:48,239 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:10:48,240 INFO Retrying request to /openai/v1/chat/completions in 27.000000 seconds
+2026-05-19 13:11:15,328 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:11:15,329 INFO Retrying request to /openai/v1/chat/completions in 5.000000 seconds
+2026-05-19 13:11:22,262 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:11:22,265 INFO [kubernetes_kubernetes] #13257 → test-infra (37.2s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 16.08it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 23.45it/s]
+2026-05-19 13:11:26,986 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:11:26,986 INFO Retrying request to /openai/v1/chat/completions in 22.000000 seconds
+2026-05-19 13:11:49,085 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:11:49,085 INFO Retrying request to /openai/v1/chat/completions in 6.000000 seconds
+2026-05-19 13:11:56,775 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:11:56,777 INFO [kubernetes_kubernetes] #13890 → test-infra (32.9s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 25.06it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 15.24it/s]
+2026-05-19 13:12:01,561 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:12:01,562 INFO Retrying request to /openai/v1/chat/completions in 30.000000 seconds
+2026-05-19 13:12:32,941 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:12:32,943 INFO [kubernetes_kubernetes] #10497 → monitoring (34.6s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 15.49it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 15.67it/s]
+2026-05-19 13:12:38,018 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:12:38,018 INFO Retrying request to /openai/v1/chat/completions in 28.000000 seconds
+2026-05-19 13:13:07,105 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:13:07,106 INFO [kubernetes_kubernetes] #14669 → app-lifecycle (32.6s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 15.70it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 15.31it/s]
+2026-05-19 13:13:11,676 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:13:11,676 INFO Retrying request to /openai/v1/chat/completions in 28.000000 seconds
+2026-05-19 13:13:41,077 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:13:41,079 INFO [kubernetes_kubernetes] #14921 → test-infra (32.4s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 15.58it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 31.44it/s]
+2026-05-19 13:13:45,668 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:13:45,668 INFO Retrying request to /openai/v1/chat/completions in 28.000000 seconds
+2026-05-19 13:14:14,793 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:14:14,794 INFO [kubernetes_kubernetes] #5963 → security (32.1s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 31.53it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 26.44it/s]
+2026-05-19 13:14:18,276 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:14:18,277 INFO Retrying request to /openai/v1/chat/completions in 28.000000 seconds
+2026-05-19 13:14:47,677 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:14:47,678 INFO [kubernetes_kubernetes] #13878 → provider/gcp (31.3s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 26.32it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 23.77it/s]
+2026-05-19 13:14:51,272 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:14:51,272 INFO Retrying request to /openai/v1/chat/completions in 28.000000 seconds
+2026-05-19 13:15:20,447 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:15:20,448 INFO [kubernetes_kubernetes] #14228 → test (31.2s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 33.80it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 26.84it/s]
+2026-05-19 13:15:23,956 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:15:23,956 INFO Retrying request to /openai/v1/chat/completions in 27.000000 seconds
+2026-05-19 13:15:52,526 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:15:52,529 INFO [kubernetes_kubernetes] #1678 → test (30.5s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 26.00it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 25.90it/s]
+2026-05-19 13:15:57,465 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:15:57,466 INFO Retrying request to /openai/v1/chat/completions in 27.000000 seconds
+2026-05-19 13:16:25,653 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:16:25,654 INFO [kubernetes_kubernetes] #4746 → logging (31.6s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 24.92it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 30.74it/s]
+2026-05-19 13:16:30,890 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:16:30,890 INFO Retrying request to /openai/v1/chat/completions in 27.000000 seconds
+2026-05-19 13:16:59,315 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:16:59,317 INFO [kubernetes_kubernetes] #14054 → kubelet (32.1s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 31.06it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 27.97it/s]
+2026-05-19 13:17:04,660 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:17:04,661 INFO Retrying request to /openai/v1/chat/completions in 27.000000 seconds
+2026-05-19 13:17:32,716 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:17:32,718 INFO [kubernetes_kubernetes] #14743 → platform/vagrant (31.8s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 28.40it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 22.86it/s]
+2026-05-19 13:17:38,211 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:17:38,211 INFO Retrying request to /openai/v1/chat/completions in 26.000000 seconds
+2026-05-19 13:18:05,281 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:18:05,282 INFO [kubernetes_kubernetes] #13096 → api (30.9s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 23.29it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 24.90it/s]
+2026-05-19 13:18:10,703 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:18:10,703 INFO Retrying request to /openai/v1/chat/completions in 26.000000 seconds
+2026-05-19 13:18:38,002 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:18:38,003 INFO [kubernetes_kubernetes] #11243 → build-release (31.1s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 25.81it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 25.47it/s]
+2026-05-19 13:18:43,462 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:18:43,463 INFO Retrying request to /openai/v1/chat/completions in 27.000000 seconds
+2026-05-19 13:19:11,939 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:19:11,941 INFO [kubernetes_kubernetes] #14284 → test-infra (32.4s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 25.86it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 24.00it/s]
+2026-05-19 13:19:17,519 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:19:17,520 INFO Retrying request to /openai/v1/chat/completions in 26.000000 seconds
+2026-05-19 13:19:45,356 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:19:45,357 INFO [kubernetes_kubernetes] #14598 → kubectl (31.8s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 23.66it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 13.57it/s]
+2026-05-19 13:19:51,029 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:19:51,030 INFO Retrying request to /openai/v1/chat/completions in 27.000000 seconds
+2026-05-19 13:20:19,815 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:20:19,816 INFO [kubernetes_kubernetes] #14781 → test-infra (32.9s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 13.75it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 30.45it/s]
+2026-05-19 13:20:25,861 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:20:25,862 INFO Retrying request to /openai/v1/chat/completions in 26.000000 seconds
+2026-05-19 13:20:53,335 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:20:53,337 INFO [kubernetes_kubernetes] #1548 → platform/gce (31.9s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 30.99it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 15.00it/s]
+2026-05-19 13:20:58,844 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:20:58,845 INFO Retrying request to /openai/v1/chat/completions in 6.000000 seconds
+2026-05-19 13:21:08,700 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:21:08,702 INFO [kubernetes_kubernetes] #12224 → example (13.8s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 14.74it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 23.71it/s]
+2026-05-19 13:21:14,251 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:21:14,252 INFO Retrying request to /openai/v1/chat/completions in 10.000000 seconds
+2026-05-19 13:21:25,649 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:21:25,651 INFO [kubernetes_kubernetes] #3481 → apiserver (15.3s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 24.29it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.58it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.56it/s]
+2026-05-19 13:21:31,422 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:21:31,422 INFO Retrying request to /openai/v1/chat/completions in 8.000000 seconds
+2026-05-19 13:21:41,286 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:21:41,288 INFO [kubernetes_kubernetes] #13435 → example (14.1s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.54it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.53it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 26.38it/s]
+2026-05-19 13:21:46,875 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:21:46,876 INFO Retrying request to /openai/v1/chat/completions in 26.000000 seconds
+2026-05-19 13:22:14,031 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:22:14,033 INFO [kubernetes_kubernetes] #3121 → test-infra (31.1s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 25.04it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 10.35it/s]
+2026-05-19 13:22:19,595 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:22:19,596 INFO Retrying request to /openai/v1/chat/completions in 7.000000 seconds
+2026-05-19 13:22:28,203 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:22:28,205 INFO [kubernetes_kubernetes] #13190 → os/coreos (12.6s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 10.13it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 24.99it/s]
+2026-05-19 13:22:33,463 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:22:33,463 INFO Retrying request to /openai/v1/chat/completions in 18.000000 seconds
+2026-05-19 13:22:52,910 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:22:52,912 INFO [kubernetes_kubernetes] #4947 → security (23.1s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 23.03it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 30.38it/s]
+2026-05-19 13:22:58,179 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:22:58,180 INFO Retrying request to /openai/v1/chat/completions in 26.000000 seconds
+2026-05-19 13:23:26,420 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:23:26,421 INFO [kubernetes_kubernetes] #13995 → test-infra (31.9s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 30.06it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 13.72it/s]
+2026-05-19 13:23:31,838 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:23:31,838 INFO Retrying request to /openai/v1/chat/completions in 26.000000 seconds
+2026-05-19 13:23:59,169 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:23:59,171 INFO [kubernetes_kubernetes] #3606 → api (31.2s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 14.11it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.53it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.51it/s]
+2026-05-19 13:24:04,893 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:24:04,894 INFO Retrying request to /openai/v1/chat/completions in 29.000000 seconds
+2026-05-19 13:24:36,921 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:24:36,922 INFO [kubernetes_kubernetes] #140 → docker (36.1s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.39it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  7.37it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 27.24it/s]
+2026-05-19 13:24:42,371 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:24:42,372 INFO Retrying request to /openai/v1/chat/completions in 24.000000 seconds
+2026-05-19 13:25:07,968 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:25:08,028 INFO [kubernetes_kubernetes] #5634 → kubelet (29.4s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 25.22it/s]
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 16.14it/s]
+2026-05-19 13:25:13,238 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:25:13,239 INFO Retrying request to /openai/v1/chat/completions in 27.000000 seconds
+2026-05-19 13:25:41,460 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:25:41,461 INFO [kubernetes_kubernetes] #8362 → kubectl (31.8s)
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 16.20it/s]
+2026-05-19 13:25:41,556 INFO [kubernetes_kubernetes] component acc — LLM: 80.0%, TF-IDF: 73.3%, Majority: 10.0%
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  9.97it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00,  9.93it/s]
+2026-05-19 13:25:47,287 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:25:47,288 INFO Retrying request to /openai/v1/chat/completions in 27.000000 seconds
+2026-05-19 13:26:15,813 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:26:15,814 INFO [kubernetes/kubernetes] Triaged #14186 in 32.68s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 15.91it/s]
+2026-05-19 13:26:21,158 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:26:21,158 INFO Retrying request to /openai/v1/chat/completions in 16.000000 seconds
+2026-05-19 13:26:39,022 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:26:39,024 INFO [kubernetes/kubernetes] Triaged #8702 in 21.71s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 23.39it/s]
+2026-05-19 13:26:44,357 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:26:44,358 INFO Retrying request to /openai/v1/chat/completions in 25.000000 seconds
+2026-05-19 13:27:10,799 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:27:10,803 INFO [kubernetes/kubernetes] Triaged #7890 in 30.28s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 29.89it/s]
+2026-05-19 13:27:16,449 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:27:16,450 INFO Retrying request to /openai/v1/chat/completions in 26.000000 seconds
+2026-05-19 13:27:43,999 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:27:44,001 INFO [kubernetes/kubernetes] Triaged #12089 in 31.70s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|██████████| 1/1 [00:00<00:00, 15.37it/s]
+2026-05-19 13:27:49,812 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:27:49,813 INFO Retrying request to /openai/v1/chat/completions in 27.000000 seconds
+2026-05-19 13:28:18,009 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:28:18,012 INFO [kubernetes/kubernetes] Triaged #10179 in 32.51s
+2026-05-19 13:28:18,012 INFO Running LLM-as-judge on 60 plans (3 plans × issue)...
+2026-05-19 13:28:18,012 INFO Judge: model=llama-3.3-70b-versatile provider=groq checkpoint=judge_scores_checkpoint_llama_3_3_70b_versatile.jsonl
+2026-05-19 13:28:18,013 INFO Judge checkpoint: 0/180 already scored
+2026-05-19 13:28:21,207 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:28:21,210 INFO [judge] #2093 System 1 (TF-IDF) → 6/15 [1/180 total]
+2026-05-19 13:28:23,961 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:28:23,962 WARNING [judge] Groq TPD rate limit hit after 1/180 calls. Checkpoint is current. Exiting cleanly (exit 0).
+

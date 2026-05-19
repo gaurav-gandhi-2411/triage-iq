@@ -254,7 +254,7 @@ def test_triage_handles_groq_preamble():
     asst = _make_assistant()
     raw = f"Here you go:\n{_VALID_PLAN_JSON}"
     with patch.object(asst, "_groq_completion", return_value=(raw, {})):
-        plan, _, _, status = asst._call_llm_verbose(_MINIMAL_SIGNALS)
+        plan, _, _, status, _ = asst._call_llm_verbose(_MINIMAL_SIGNALS)
     assert plan.predicted_component == "editor"
     assert status == "ok"
 
@@ -263,7 +263,7 @@ def test_triage_handles_groq_garbage():
     """Groq returns no JSON at all: retry also fails, fallback plan returned (llm_status=parse_failure)."""
     asst = _make_assistant()
     with patch.object(asst, "_groq_completion", return_value=("I cannot help with that.", {})):
-        plan, _, _, status = asst._call_llm_verbose(_MINIMAL_SIGNALS)
+        plan, _, _, status, _ = asst._call_llm_verbose(_MINIMAL_SIGNALS)
     assert status == "parse_failure"
     assert plan.predicted_component == "editor"   # from classifier_top3 fallback
     assert plan.priority_guess == "medium"
@@ -505,7 +505,7 @@ def test_triage_parse_retry_succeeded():
         (_VALID_PLAN_JSON, {"prompt_tokens": 100, "completion_tokens": 50}),
     ]
     with patch.object(asst, "_groq_completion", side_effect=responses):
-        plan, _, _, status = asst._call_llm_verbose(_MINIMAL_SIGNALS)
+        plan, _, _, status, _ = asst._call_llm_verbose(_MINIMAL_SIGNALS)
     assert status == "parse_retry_succeeded"
     assert plan.predicted_component == "editor"
     assert plan.priority_guess == "medium"

@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 import pandas as pd
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse, Response
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
@@ -53,6 +53,24 @@ _triage_latency_seconds = Histogram(
     "triage_latency_seconds",
     "End-to-end /triage request latency in seconds",
     buckets=[0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 10.0, 30.0],
+)
+_cache_hits_total = Counter(
+    "triage_llm_cache_hits_total",
+    "LLM response cache hits",
+    ["provider", "model"],
+)
+_cache_misses_total = Counter(
+    "triage_llm_cache_misses_total",
+    "LLM response cache misses",
+    ["provider", "model"],
+)
+_cache_size_bytes = Gauge(
+    "triage_llm_cache_size_bytes",
+    "LLM response cache SQLite file size in bytes",
+)
+_cache_entries = Gauge(
+    "triage_llm_cache_entries",
+    "Total number of entries in the LLM response cache",
 )
 
 
@@ -152,12 +170,23 @@ def _rate_limit_handler(request: Request, exc: Exception) -> JSONResponse:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from ..cache import LLMCache
+
     cfg = get_settings()
     limiter.enabled = cfg.rate_limit_enabled
+
+    app.state.cache = None
+    if cfg.llm_cache_enabled:
+        app.state.cache = LLMCache(path=cfg.llm_cache_path)
+        logger.info("LLM response cache enabled: %s", cfg.llm_cache_path)
+    else:
+        logger.info("LLM response cache disabled (TRIAGE_LLM_CACHE_ENABLED not set)")
+
     logger.info("Loading models from %s …", cfg.data_dir)
     app.state.store = ModelStore.load_all(
         data_dir=cfg.data_dir,
         groq_api_key=cfg.groq_api_key.get_secret_value(),
+        cache=app.state.cache,
     )
     logger.info("Models ready: %s", app.state.store.repos)
     _token_set = bool(cfg.metrics_token and cfg.metrics_token.get_secret_value())
@@ -201,8 +230,16 @@ def service_info() -> ServiceInfoResponse:
 
 
 @app.get("/metrics", include_in_schema=False)
-def metrics(_: None = Depends(_verify_metrics_token)) -> Response:
+def metrics(request: Request, _: None = Depends(_verify_metrics_token)) -> Response:
     """Prometheus metrics endpoint. Requires Authorization: Bearer <METRICS_TOKEN> when configured."""
+    cache = getattr(request.app.state, "cache", None)
+    if cache is not None:
+        try:
+            st = cache.stats()
+            _cache_size_bytes.set(st["size_bytes"])
+            _cache_entries.set(st["entries"])
+        except Exception:
+            pass
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
@@ -257,6 +294,10 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     tokens = (meta.get("groq_tokens_prompt") or 0) + (meta.get("groq_tokens_completion") or 0)
     if tokens:
         _triage_groq_tokens_total.inc(tokens)
+    if meta.get("llm_cache_hit"):
+        _cache_hits_total.labels(provider="groq", model=bundle.assistant.model).inc()
+    elif getattr(request.app.state, "cache", None) is not None:
+        _cache_misses_total.labels(provider="groq", model=bundle.assistant.model).inc()
 
     _log_request(
         request_id=request_id,

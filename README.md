@@ -228,6 +228,24 @@ All values from environment variables or `.env` file. Managed by `src/triage_iq/
 | `LOG_LEVEL` | No | `INFO` | Python logging level. |
 | `RATE_LIMIT_ENABLED` | No | `true` | Set `false` to disable rate limiting (tests use this). |
 | `GROQ_MODEL_TRIAGE` | No | `llama-3.1-8b-instant` | Groq model used for triage synthesis. |
+| `LLM_CACHE_ENABLED` | No | `false` | Set `true` to enable the SQLite LLM response cache. |
+| `LLM_CACHE_PATH` | No | `<repo-root>/data/llm_cache.sqlite` | Path to the SQLite cache DB. |
+
+### Response cache
+
+An opt-in SQLite-backed cache (`LLM_CACHE_ENABLED=true`) stores LLM responses
+keyed on SHA-256 of the canonical request (provider + model + messages + temperature +
+max\_tokens). Cache hits are returned in <5 ms without a Groq call.
+
+Useful for:
+- Eval re-runs: a 60-issue re-run against a warm cache costs 0 Groq tokens for triage
+  and near-0 for judge calls.
+- Development loops: identical `/triage` requests during testing skip the LLM.
+
+Admin: `python scripts/13_cache_admin.py stats|clear|clear-provider|clear-model`.
+
+On Cloud Run the cache is per-instance (ephemeral disk); each cold start begins empty.
+This is acceptable for Stage A — warmup is fast and correctness never depends on the cache.
 
 ---
 

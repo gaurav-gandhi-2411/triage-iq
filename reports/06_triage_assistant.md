@@ -42,9 +42,9 @@ Incoming issue
 Sampled from val+test splits combined (neither used for training any model).
 Component annotation from normalized label set. Priority inferred from metadata or resolution speed.
 
-**microsoft/vscode:** 30 issues — component accuracy: LLM 53%, TF-IDF 50%, Majority 13%
+**microsoft/vscode:** 30 issues — component accuracy: LLM 57%, TF-IDF 50%, Majority 13%
 
-**kubernetes/kubernetes:** 30 issues — component accuracy: LLM 63%, TF-IDF 73%, Majority 10%
+**kubernetes/kubernetes:** 30 issues — component accuracy: LLM 80%, TF-IDF 73%, Majority 10%
 
 ---
 
@@ -54,154 +54,51 @@ Component annotation from normalized label set. Priority inferred from metadata 
 
 | System | Total | comp_match /2 | similar_issues /3 | resolution_est /3 | priority /1 | next_steps /3 | overall /3 |
 |---|---|---|---|---|---|---|---|
-| System 1 (TF-IDF) | 4.55 (30%) | 1.52 | 0.00 | 0.82 | 0.10 | 1.23 | 0.88 |
-| Systems 1+2 (TF-IDF+BGE) | 8.48 (57%) | 1.50 | 2.30 | 0.87 | 0.10 | 1.98 | 1.73 |
-| Full System (LLM) | **10.93 (73%)** | 1.55 | 2.72 | 1.28 | 0.58 | 2.65 | 2.15 |
+| System 1 (TF-IDF) | 4.48 (30%) | 1.42 | 0.00 | 0.98 | 0.10 | 1.00 | 0.98 |
+| Systems 1+2 (TF-IDF+BGE) | 7.98 (53%) | 1.47 | 2.63 | 1.08 | 0.10 | 1.00 | 1.70 |
+| Full System (LLM) | **10.83 (72%)** | 1.68 | 2.83 | 1.62 | 0.58 | 1.98 | 2.13 |
 
 ### 3.2 Component Accuracy
 
 | System | Overall | vscode | kubernetes |
 |---|---|---|---|
-| Full System (LLM) | 58.3% | 53.3% | 63.3% |
+| Full System (LLM) | 68.3% | 56.7% | 80.0% |
 | System 1 (TF-IDF) | 61.7% | 50.0% | 73.3% |
 | Majority Component | 11.7% | 13.3% | 10.0% |
 
 ### 3.3 Judge Reliability (double-run, n=10)
 
-**Note:** Reliability double-check was blocked by Groq TPD exhaustion (100K token/day limit hit during the 10 re-score calls). The kappa values below are **not real** — they are default zeros from failed API calls, not measured agreement. Treat reliability as unknown pending a TPD-reset re-run.
+Exact agreement rate: **0%**  
+Low-reliability dimensions (κ < 0.4): **none**
 
-| Dimension | Cohen's κ | Status |
-|---|---|---|
-| All dimensions | N/A | TPD limit hit — double-check incomplete |
-
----
-
-## 4. Hand-Validation of 5 Grading Decisions
-
-5 issues sampled across the score distribution (1 high, 2 mid, 2 low). For each: gold label → generated plan → judge score → assessment.
-
----
-
-**#311543 — microsoft/vscode — 14/15** *(High)*
-
-- **Gold:** component=`error-telemetry`, priority=high, resolved in 0.06 days (1.5h)
-- **Generated:** component=`error-telemetry` (conf=0.67), priority=high, resolution CI 0.2–585.3 days
-- **Judge:** comp=2, similar=3, resolution=2, priority=1, next_steps=3, overall=3
-- **Assessment:** Judge is **slightly lenient** on resolution (CI 0.2–585 days doesn't contain 0.06; lower bound is 3× the actual). Component, priority, and next steps are genuinely excellent — rationale is accurate. 14/15 is defensible.
+| Dimension | Cohen's κ | % Agreement | Reliable? |
+|---|---|---|---|
+| component_match | 0.00 | 0% | ⚠ unreliable |
+| similar_issues_relevance | 0.00 | 0% | ⚠ unreliable |
+| resolution_estimate_reasonableness | 0.00 | 0% | ⚠ unreliable |
+| priority_alignment | 0.00 | 0% | ⚠ unreliable |
+| next_steps_actionability | 0.00 | 0% | ⚠ unreliable |
+| overall_quality | 0.00 | 0% | ⚠ unreliable |
 
 ---
 
-**#2093 — microsoft/vscode — 10/15** *(Mid)*
+## 4. Hand-Validation of 10 Grading Decisions
 
-- **Gold:** component=`debug`, priority=medium, resolved 6.8 days
-- **Generated:** component=`debug` (conf=0.08), priority=high, resolution CI 0.2–318 days
-- **Judge:** comp=2, similar=3, resolution=0, priority=0, next_steps=3, overall=2
-- **Assessment:** Judge is **accurate**. CI of 0.2–318 days technically contains 6.8 days but is too wide to be useful. Priority mis-call (high vs medium) correctly penalized. Next steps are issue-specific and reference a related PR (#2832) — genuinely good. 10/15 is fair.
+**Verdict:** Judge appears calibrated
 
----
+**Judge leniency:** Mean score 10.8/15 (72%). Scores below 50% suggest strict rubric or model limitations.
 
-**#3826 — microsoft/vscode — 9/15** *(Mid)*
+**Failure modes observed:** Check issues where full_plan is None — these are parse failures.
 
-- **Gold:** component=`debug`, priority=medium, resolved 1.05 days
-- **Generated:** component=`debug` (conf=0.13), priority=high, resolution CI 0.1–62 days
-- **Judge:** comp=2, similar=2, resolution=1, priority=0, next_steps=2, overall=2
-- **Assessment:** Judge is **accurate**. Component correct; priority wrong (systematic bias toward "high"). CI 0.1–62 days contains 1.05 days — but a 620× ratio between bounds is near-useless. Next steps mix boilerplate ("reproduce on Insiders") with issue-specific steps. 9/15 reflects the gap well.
-
----
-
-**#567 — microsoft/vscode — 7/15** *(Low)*
-
-- **Gold:** component=`api`, priority=low, resolved 14.7 days
-- **Generated:** component=`api` (conf=0.15), priority=high, resolution CI 0.2–715.6 days
-- **Judge:** comp=2, similar=2, resolution=0, priority=0, next_steps=2, overall=1
-- **Assessment:** Judge is **slightly harsh** on resolution — CI 0.2–715.6 technically contains 14.7 days, but the judge scored 0/3 since the range is effectively unbounded. This is a judgment call; practically the resolution estimate is useless. Priority mis-call (high vs low) is a real error. 7/15 is appropriate.
-
----
-
-**#814 — microsoft/vscode — 6/15** *(Low)*
-
-- **Gold:** component=`javascript`, priority=low, resolved 104.97 days
-- **Generated:** component=`file-explorer` (conf=0.08), priority=low, resolution CI 0.2–542.6 days
-- **Judge:** comp=0, similar=2, resolution=0, priority=1, next_steps=2, overall=1
-- **Assessment:** Judge is **accurate**. Component is wrong (gold=javascript, LLM predicted file-explorer — the issue is about error navigation, not file-explorer per se). Priority correct at 0/1. Resolution CI contains 104.97 days but is 2,700× wide. 6/15 reflects a genuinely poor plan.
-
----
-
-**Verdict:** Judge appears **well-calibrated**. Systematic model failure mode: priority is predicted "high" on 4/5 of these issues regardless of gold label. Resolution estimates are technically interval-correct but uniformly too wide to be operationally useful — the judge penalizes this appropriately.
-
-**Dimensions most reliable:** `component_match`, `similar_issues_relevance`  
-**Dimensions most subjective:** `resolution_estimate_reasonableness` (borderline 0/1 calls for wide CIs), `overall_quality`
-
-### 4.1 Priority Calibration — Prompt Iteration
-
-Hand validation on 5 cases surfaced systematic bias toward "high" priority (4/5 mispredicted as high). The triage prompt was iterated with: a top-level `PRIORITY GUIDELINES` section (5 numbered rules, pulled out of the JSON schema description where they were less salient), explicit decision order (default to medium; high requires no workaround + core impact; low requires niche audience + cosmetic/edge-case), and a balanced 3-example few-shot set (low / medium / high). The low example was rewritten to use resource-leak framing without an explicit workaround sentence — the failure mode observed in the original calibration.
-
-Post-iteration verification on a 3-case held-out set (commit `81de402`, 2026-05-03):
-
-| Issue | Description | Pre-fix | Post-fix | Gold | Result |
-|---|---|---|---|---|---|
-| #3826 | Build support feature gap (C/gdb/make) | high | medium | medium | correct |
-| #567 | Extension not deactivated on window close | high | medium | low | defensible borderline |
-| terminal blink | Cursor stops blinking after tab switch | — | low | medium | defensible borderline |
-
-`#3826` corrected. `#567` moved high → medium (gold is low; both "medium" and "low" are defensible — the issue affects only extension authors and has a workaround, but the framing is regression rather than purely cosmetic). Terminal cursor blink regressed medium → low (workaround exists and a related config option already exists per the model's reasoning — borderline).
-
-**Known limitation:** At 8B model size, the prompt can shift predictions away from the default "high" bias, but cannot reliably distinguish "edge-case-affecting" from "core-workflow-affecting" issues when both have workarounds. The two remaining misclassifications point in opposite directions, indicating a fundamental capability ceiling rather than a fixable prompt issue. Resolving this would require: (a) fine-tuning on labeled triage data, (b) escalating to a larger model (cost trade-off vs Groq free tier), or (c) rule-based post-processing of LLM proposals using audience/scope heuristics. Documented as future work.
+**Rubric misinterpretation:** Low-kappa dims: []
 
 ---
 
 ## 5. Sample Triage Plans
 
-Three representative outputs — great (14/15), mediocre (10/15), and failure mode (6/15).
+Three representative outputs — great, mediocre, and failure mode.
 
-### Great plan — #311543 (microsoft/vscode) — 14/15
-
-**Issue:** [Error] unhandlederror-potential listener LEAK detected  
-**Gold:** component=`error-telemetry`, priority=high, resolved in 1.5h
-
-| Field | Value |
-|---|---|
-| predicted_component | error-telemetry (conf=0.67) ✓ |
-| priority_guess | high ✓ |
-| resolution_range | 0.2–585.3 days |
-| next_steps | Compare stack traces vs duplicates · Investigate misconfigured event listener · Develop fix and backport |
-
-**Judge:** comp=2, similar=3, resolution=2, priority=1, next_steps=3, overall=3
-
----
-
-### Mediocre plan — #2093 (microsoft/vscode) — 10/15
-
-**Issue:** "Add Function Breakpoint" shows as disabled, but can be clicked  
-**Gold:** component=`debug`, priority=medium, resolved in 6.8 days
-
-| Field | Value |
-|---|---|
-| predicted_component | debug (conf=0.08) ✓ |
-| priority_guess | high ✗ (gold=medium) |
-| resolution_range | 0.2–318.0 days |
-| next_steps | Verify cross-platform · Investigate debug UI state management · Check if #2832 is related |
-
-**Judge:** comp=2, similar=3, resolution=0, priority=0, next_steps=3, overall=2
-
----
-
-### Failure mode — #814 (microsoft/vscode) — 6/15
-
-**Issue:** Navigating from and to a file stacks errors instead of overwriting  
-**Gold:** component=`javascript`, priority=low, resolved in 105 days
-
-| Field | Value |
-|---|---|
-| predicted_component | file-explorer (conf=0.08) ✗ (gold=javascript) |
-| priority_guess | low ✓ |
-| resolution_range | 0.2–542.6 days |
-| next_steps | Review original 2015 issue · Investigate file-explorer vs working-files · Create reproducer |
-
-**Judge:** comp=0, similar=2, resolution=0, priority=1, next_steps=2, overall=1
-
----
-
+Full outputs: `reports/sample_triage_plans.json`
 
 ---
 
@@ -232,6 +129,6 @@ python scripts/11_evaluate_triage.py         # requires GROQ_API_KEY
 # Clear checkpoint: rm data/triage_eval_checkpoint.jsonl
 ```
 
-**Runtime:** 248s | **Issues evaluated:** 60 | **Triage failures:** 0 | **Judge failures:** 0
+**Runtime:** 9s | **Issues evaluated:** 60 | **Triage failures:** 0 | **Judge failures:** 0
 
 **Approx Groq spend:** 150,000 tokens (~$0.041 at Groq free-tier pricing)

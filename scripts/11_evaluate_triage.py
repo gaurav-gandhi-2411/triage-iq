@@ -33,6 +33,7 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
+from triage_iq.cache import LLMCache
 from triage_iq.models.component_classifier import TFIDFComponentClassifier
 from triage_iq.models.duplicates import DuplicateDetector
 from triage_iq.models.resolution import ResolutionTimePredictor
@@ -660,6 +661,15 @@ def main():
 
     load_dotenv(ROOT / ".env")
 
+    # Initialize LLM response cache (opt-in via LLM_CACHE_ENABLED=true).
+    # Env var name matches what pydantic-settings reads for config.llm_cache_enabled.
+    _cache_enabled = os.environ.get("LLM_CACHE_ENABLED", "false").lower() in ("1", "true", "yes")
+    llm_cache: LLMCache | None = None
+    if _cache_enabled:
+        cache_path = Path(os.environ.get("LLM_CACHE_PATH", str(ROOT / "data" / "llm_cache.sqlite")))
+        llm_cache = LLMCache(path=cache_path)
+        logger.info("LLM response cache enabled: %s", cache_path)
+
     # Default judge delay by provider (honored only if user didn't pass --judge-delay).
     _GOOGLE_PROVIDERS = {"google", "gemini"}
     if args.judge_delay == JUDGE_DELAY:
@@ -745,6 +755,7 @@ def main():
             predictor=predictor,
             train_df=train_df,
             groq_api_key=groq_key,
+            cache=llm_cache,
         )
 
         # ---------- triage + baseline stub plans per issue ----------
@@ -868,7 +879,7 @@ def main():
 
         # Open-issue demo sample
         try:
-            open_issues = sample_open_issues(repo_slug, n=5)
+            open_issues = sample_open_issues(repo_slug, n=args.n_samples)
             for _, orow in open_issues.iterrows():
                 try:
                     time.sleep(args.triage_delay)
@@ -900,6 +911,7 @@ def main():
             provider=args.judge_provider,
             gemini_api_key=google_key or None,
             cohere_api_key=cohere_key or None,
+            cache=llm_cache,
         )
         logger.info("Judge: model=%s provider=%s checkpoint=%s",
                     args.judge_model, args.judge_provider, judge_checkpoint_path.name)
@@ -1137,6 +1149,11 @@ def main():
         print(f"Reliability:   exact={judge_reliability.get('exact_agreement_rate',0)*100:.0f}%, "
               f"kappa={{{', '.join(f'{d}: {v:.2f}' for d, v in kappas.items())}}}")
     print(f"Runtime:       {runtime:.0f}s (~{est_usd:.3f} USD)")
+    if llm_cache is not None:
+        st = llm_cache.stats()
+        print(f"Cache:         {st['session_hits']} hits / {st['session_misses']} misses "
+              f"({st['session_hit_rate']*100:.0f}% hit rate), {st['entries']} entries, "
+              f"{st['size_bytes']//1024}KB")
 
 
 if __name__ == "__main__":

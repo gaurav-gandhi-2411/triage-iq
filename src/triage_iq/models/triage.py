@@ -86,6 +86,7 @@ class TriageAssistant:
         model: str = "llama-3.1-8b-instant",
         temperature: float = 0.0,
         max_tokens: int = 1024,
+        cache=None,
     ) -> None:
         self.repo = repo
         self.classifier = classifier
@@ -95,6 +96,7 @@ class TriageAssistant:
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
+        self._cache = cache  # LLMCache | None
 
         key = groq_api_key or os.environ.get("GROQ_API_KEY", "")
         if not key:
@@ -120,7 +122,7 @@ class TriageAssistant:
         """Like triage() but also returns per-system timing and token usage."""
         t0 = time.perf_counter()
         signals = self._collect_signals(issue)
-        plan, raw, usage, llm_status = self._call_llm_verbose(signals)
+        plan, raw, usage, llm_status, cache_hit = self._call_llm_verbose(signals)
         elapsed = time.perf_counter() - t0
 
         t_llm = max(
@@ -145,6 +147,7 @@ class TriageAssistant:
             "duplicate_count": len(plan.similar_issues),
             "predicted_resolution_days_p50": round(mid, 1),
             "llm_status": llm_status,
+            "llm_cache_hit": cache_hit,
         }
         logger.info(
             "[%s] Triaged #%s in %.2fs (groq %d+%d tok)",
@@ -263,17 +266,35 @@ class TriageAssistant:
     # ------------------------------------------------------------------
 
     def _call_llm(self, signals: dict) -> tuple[TriagePlan, str]:
-        plan, raw, _, _ = self._call_llm_verbose(signals)
+        plan, raw, _, _, _ = self._call_llm_verbose(signals)
         return plan, raw
 
-    def _call_llm_verbose(self, signals: dict) -> tuple[TriagePlan, str, dict, str]:
+    def _call_llm_verbose(self, signals: dict) -> tuple[TriagePlan, str, dict, str, bool]:
+        """Return (plan, raw, usage, llm_status, cache_hit)."""
         from triage_iq.prompts.triage_prompt import SYSTEM_PROMPT, build_few_shot_examples
 
         messages = [{"role": "system", "content": SYSTEM_PROMPT}]
         messages.extend(build_few_shot_examples())
         messages.append({"role": "user", "content": signals["prompt"]})
 
+        cache = getattr(self, "_cache", None)
+        cache_key: str | None = None
+        if cache is not None:
+            cache_key = cache.compute_key(
+                "groq", self.model, messages, self.temperature, self.max_tokens
+            )
+            cached = cache.get(cache_key)
+            if cached is not None:
+                raw = cached["content"]
+                usage = cached.get("usage", {})
+                try:
+                    return self._parse_plan(raw), raw, usage, "ok", True
+                except (json.JSONDecodeError, ValueError):
+                    pass  # corrupted entry — fall through to live call
+
         raw, usage = self._groq_completion(messages)
+        if cache is not None and cache_key is not None:
+            cache.set(cache_key, "groq", self.model, messages, {"content": raw, "usage": usage})
         llm_status = "ok"
 
         try:
@@ -294,8 +315,21 @@ class TriageAssistant:
                     ),
                 },
             ]
-            raw2, usage2 = self._groq_completion(retry_messages)
-            usage = usage2
+            # Check cache for retry call too
+            retry_key: str | None = None
+            if cache is not None:
+                retry_key = cache.compute_key(
+                    "groq", self.model, retry_messages, self.temperature, self.max_tokens
+                )
+                cached2 = cache.get(retry_key)
+                if cached2 is not None:
+                    raw2 = cached2["content"]
+                    usage = cached2.get("usage", {})
+                else:
+                    raw2, usage = self._groq_completion(retry_messages)
+                    cache.set(retry_key, "groq", self.model, retry_messages, {"content": raw2, "usage": usage})
+            else:
+                raw2, usage = self._groq_completion(retry_messages)
             try:
                 plan = self._parse_plan(raw2)
                 llm_status = "parse_retry_succeeded"
@@ -309,7 +343,7 @@ class TriageAssistant:
                 plan = self._make_fallback_plan(signals)
                 llm_status = "parse_failure"
 
-        return plan, raw, usage, llm_status
+        return plan, raw, usage, llm_status, False
 
     def _make_fallback_plan(self, signals: dict) -> TriagePlan:
         """Structured fallback when LLM JSON cannot be parsed after retry."""

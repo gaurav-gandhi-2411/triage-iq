@@ -1,0 +1,595 @@
+2026-05-19 13:49:40,188 INFO Checkpoint: 60 already completed
+2026-05-19 13:49:40,242 INFO === microsoft/vscode: 30 gold issues ===
+2026-05-19 13:49:40,336 INFO Loading embedding model: BAAI/bge-base-en-v1.5
+2026-05-19 13:49:40,336 INFO Load pretrained SentenceTransformer: BAAI/bge-base-en-v1.5
+2026-05-19 13:49:43,788 INFO Use pytorch device_name: cuda
+C:\Users\gaura\anaconda3\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator PCA from version 1.6.1 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-05-19 13:49:44,591 INFO [microsoft_vscode] #2093 skipped (checkpoint)
+2026-05-19 13:49:44,591 INFO [microsoft_vscode] #4223 skipped (checkpoint)
+2026-05-19 13:49:44,591 INFO [microsoft_vscode] #311565 skipped (checkpoint)
+2026-05-19 13:49:44,592 INFO [microsoft_vscode] #4760 skipped (checkpoint)
+2026-05-19 13:49:44,592 INFO [microsoft_vscode] #4741 skipped (checkpoint)
+2026-05-19 13:49:44,592 INFO [microsoft_vscode] #3826 skipped (checkpoint)
+2026-05-19 13:49:44,592 INFO [microsoft_vscode] #3486 skipped (checkpoint)
+2026-05-19 13:49:44,592 INFO [microsoft_vscode] #311543 skipped (checkpoint)
+2026-05-19 13:49:44,593 INFO [microsoft_vscode] #311414 skipped (checkpoint)
+2026-05-19 13:49:44,593 INFO [microsoft_vscode] #3299 skipped (checkpoint)
+2026-05-19 13:49:44,593 INFO [microsoft_vscode] #1508 skipped (checkpoint)
+2026-05-19 13:49:44,593 INFO [microsoft_vscode] #161 skipped (checkpoint)
+2026-05-19 13:49:44,593 INFO [microsoft_vscode] #2636 skipped (checkpoint)
+2026-05-19 13:49:44,594 INFO [microsoft_vscode] #3047 skipped (checkpoint)
+2026-05-19 13:49:44,594 INFO [microsoft_vscode] #1502 skipped (checkpoint)
+2026-05-19 13:49:44,594 INFO [microsoft_vscode] #4759 skipped (checkpoint)
+2026-05-19 13:49:44,594 INFO [microsoft_vscode] #4601 skipped (checkpoint)
+2026-05-19 13:49:44,594 INFO [microsoft_vscode] #567 skipped (checkpoint)
+2026-05-19 13:49:44,595 INFO [microsoft_vscode] #3655 skipped (checkpoint)
+2026-05-19 13:49:44,595 INFO [microsoft_vscode] #1045 skipped (checkpoint)
+2026-05-19 13:49:44,595 INFO [microsoft_vscode] #2496 skipped (checkpoint)
+2026-05-19 13:49:44,595 INFO [microsoft_vscode] #2115 skipped (checkpoint)
+2026-05-19 13:49:44,595 INFO [microsoft_vscode] #2468 skipped (checkpoint)
+2026-05-19 13:49:44,596 INFO [microsoft_vscode] #814 skipped (checkpoint)
+2026-05-19 13:49:44,596 INFO [microsoft_vscode] #1057 skipped (checkpoint)
+2026-05-19 13:49:44,596 INFO [microsoft_vscode] #4338 skipped (checkpoint)
+2026-05-19 13:49:44,596 INFO [microsoft_vscode] #3360 skipped (checkpoint)
+2026-05-19 13:49:44,596 INFO [microsoft_vscode] #3077 skipped (checkpoint)
+2026-05-19 13:49:44,597 INFO [microsoft_vscode] #2067 skipped (checkpoint)
+2026-05-19 13:49:44,597 INFO [microsoft_vscode] #3671 skipped (checkpoint)
+2026-05-19 13:49:44,597 INFO [microsoft_vscode] component acc � LLM: 56.7%, TF-IDF: 50.0%, Majority: 13.3%
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  2.01it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  2.01it/s]
+2026-05-19 13:49:49,540 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:49:49,611 INFO [microsoft/vscode] Triaged #311035 in 3.47s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 15.04it/s]
+2026-05-19 13:49:53,171 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:49:53,172 INFO Retrying request to /openai/v1/chat/completions in 21.000000 seconds
+2026-05-19 13:50:15,226 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:50:15,228 INFO [microsoft/vscode] Triaged #312309 in 24.12s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 14.75it/s]
+2026-05-19 13:50:17,738 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:50:17,739 INFO Retrying request to /openai/v1/chat/completions in 30.000000 seconds
+2026-05-19 13:50:49,350 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:50:49,353 INFO [microsoft/vscode] Triaged #310861 in 32.62s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  6.73it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  6.72it/s]
+2026-05-19 13:50:52,705 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:50:52,706 INFO Retrying request to /openai/v1/chat/completions in 32.000000 seconds
+2026-05-19 13:51:26,322 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:51:26,323 INFO [microsoft/vscode] Triaged #312400 in 35.47s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  7.72it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  7.71it/s]
+2026-05-19 13:51:29,001 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:51:29,002 INFO Retrying request to /openai/v1/chat/completions in 37.000000 seconds
+2026-05-19 13:52:06,057 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:52:06,057 INFO Retrying request to /openai/v1/chat/completions in 28.000000 seconds
+2026-05-19 13:52:34,135 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:52:34,136 WARNING Rate limit hit � sleeping 2.5s (attempt 1/6)
+2026-05-19 13:52:37,796 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:52:37,797 INFO [microsoft/vscode] Triaged #312155 in 69.97s
+2026-05-19 13:52:37,798 INFO === kubernetes/kubernetes: 30 gold issues ===
+2026-05-19 13:52:37,936 INFO Loading embedding model: BAAI/bge-base-en-v1.5
+2026-05-19 13:52:37,936 INFO Load pretrained SentenceTransformer: BAAI/bge-base-en-v1.5
+2026-05-19 13:52:40,573 INFO Use pytorch device_name: cuda
+C:\Users\gaura\anaconda3\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator PCA from version 1.6.1 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-05-19 13:52:41,043 INFO [kubernetes_kubernetes] #11079 skipped (checkpoint)
+2026-05-19 13:52:41,044 INFO [kubernetes_kubernetes] #13257 skipped (checkpoint)
+2026-05-19 13:52:41,044 INFO [kubernetes_kubernetes] #13890 skipped (checkpoint)
+2026-05-19 13:52:41,044 INFO [kubernetes_kubernetes] #10497 skipped (checkpoint)
+2026-05-19 13:52:41,044 INFO [kubernetes_kubernetes] #14669 skipped (checkpoint)
+2026-05-19 13:52:41,044 INFO [kubernetes_kubernetes] #14921 skipped (checkpoint)
+2026-05-19 13:52:41,045 INFO [kubernetes_kubernetes] #5963 skipped (checkpoint)
+2026-05-19 13:52:41,045 INFO [kubernetes_kubernetes] #13878 skipped (checkpoint)
+2026-05-19 13:52:41,045 INFO [kubernetes_kubernetes] #14228 skipped (checkpoint)
+2026-05-19 13:52:41,045 INFO [kubernetes_kubernetes] #1678 skipped (checkpoint)
+2026-05-19 13:52:41,046 INFO [kubernetes_kubernetes] #4746 skipped (checkpoint)
+2026-05-19 13:52:41,046 INFO [kubernetes_kubernetes] #14054 skipped (checkpoint)
+2026-05-19 13:52:41,046 INFO [kubernetes_kubernetes] #14743 skipped (checkpoint)
+2026-05-19 13:52:41,046 INFO [kubernetes_kubernetes] #13096 skipped (checkpoint)
+2026-05-19 13:52:41,046 INFO [kubernetes_kubernetes] #11243 skipped (checkpoint)
+2026-05-19 13:52:41,047 INFO [kubernetes_kubernetes] #14284 skipped (checkpoint)
+2026-05-19 13:52:41,047 INFO [kubernetes_kubernetes] #14598 skipped (checkpoint)
+2026-05-19 13:52:41,047 INFO [kubernetes_kubernetes] #14781 skipped (checkpoint)
+2026-05-19 13:52:41,047 INFO [kubernetes_kubernetes] #1548 skipped (checkpoint)
+2026-05-19 13:52:41,048 INFO [kubernetes_kubernetes] #12224 skipped (checkpoint)
+2026-05-19 13:52:41,048 INFO [kubernetes_kubernetes] #3481 skipped (checkpoint)
+2026-05-19 13:52:41,048 INFO [kubernetes_kubernetes] #13435 skipped (checkpoint)
+2026-05-19 13:52:41,048 INFO [kubernetes_kubernetes] #3121 skipped (checkpoint)
+2026-05-19 13:52:41,048 INFO [kubernetes_kubernetes] #13190 skipped (checkpoint)
+2026-05-19 13:52:41,048 INFO [kubernetes_kubernetes] #4947 skipped (checkpoint)
+2026-05-19 13:52:41,048 INFO [kubernetes_kubernetes] #13995 skipped (checkpoint)
+2026-05-19 13:52:41,049 INFO [kubernetes_kubernetes] #3606 skipped (checkpoint)
+2026-05-19 13:52:41,049 INFO [kubernetes_kubernetes] #140 skipped (checkpoint)
+2026-05-19 13:52:41,049 INFO [kubernetes_kubernetes] #5634 skipped (checkpoint)
+2026-05-19 13:52:41,049 INFO [kubernetes_kubernetes] #8362 skipped (checkpoint)
+2026-05-19 13:52:41,049 INFO [kubernetes_kubernetes] component acc � LLM: 80.0%, TF-IDF: 73.3%, Majority: 10.0%
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 67.94it/s]
+2026-05-19 13:52:44,394 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:52:44,394 INFO Retrying request to /openai/v1/chat/completions in 5.000000 seconds
+2026-05-19 13:52:51,160 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:52:51,161 INFO [kubernetes/kubernetes] Triaged #14186 in 8.56s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 15.96it/s]
+2026-05-19 13:52:54,556 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:52:54,557 INFO Retrying request to /openai/v1/chat/completions in 28.000000 seconds
+2026-05-19 13:53:24,061 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:53:24,062 INFO [kubernetes/kubernetes] Triaged #8702 in 31.40s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 24.15it/s]
+2026-05-19 13:53:27,368 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:53:27,368 INFO Retrying request to /openai/v1/chat/completions in 33.000000 seconds
+2026-05-19 13:54:00,432 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:54:00,433 INFO Retrying request to /openai/v1/chat/completions in 29.000000 seconds
+2026-05-19 13:54:30,564 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:54:30,566 INFO [kubernetes/kubernetes] Triaged #7890 in 65.00s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 30.03it/s]
+2026-05-19 13:54:35,298 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:54:35,298 INFO Retrying request to /openai/v1/chat/completions in 26.000000 seconds
+2026-05-19 13:55:02,478 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:55:02,480 INFO [kubernetes/kubernetes] Triaged #12089 in 30.41s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 15.66it/s]
+2026-05-19 13:55:05,880 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:55:05,880 INFO Retrying request to /openai/v1/chat/completions in 30.000000 seconds
+2026-05-19 13:55:37,301 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:55:37,303 INFO [kubernetes/kubernetes] Triaged #10179 in 33.32s
+2026-05-19 13:55:37,303 INFO Running LLM-as-judge on 60 plans (3 plans � issue)...
+2026-05-19 13:55:37,304 INFO Judge: model=command-a-03-2025 provider=cohere checkpoint=judge_scores_checkpoint_command_a_03_2025.jsonl
+2026-05-19 13:55:37,304 INFO Judge checkpoint: 0/180 already scored
+2026-05-19 13:55:46,315 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:55:46,318 INFO [judge] #2093 System 1 (TF-IDF) \u2192 6/15 [1/180 total]
+2026-05-19 13:55:55,683 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:55:55,687 INFO [judge] #2093 Systems 1+2 (TF-IDF+BGE) \u2192 10/15 [2/180 total]
+2026-05-19 13:56:04,572 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:56:04,578 INFO [judge] #2093 Full System (LLM) \u2192 9/15 [3/180 total]
+2026-05-19 13:56:13,371 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:56:13,374 INFO [judge] #4223 System 1 (TF-IDF) \u2192 3/15 [4/180 total]
+2026-05-19 13:56:21,862 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:56:21,864 INFO [judge] #4223 Systems 1+2 (TF-IDF+BGE) \u2192 5/15 [5/180 total]
+2026-05-19 13:56:21,875 INFO [judge] progress flushed: 5/180
+2026-05-19 13:56:31,449 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:56:31,452 INFO [judge] #4223 Full System (LLM) \u2192 9/15 [6/180 total]
+2026-05-19 13:56:40,831 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:56:40,834 INFO [judge] #311565 System 1 (TF-IDF) \u2192 5/15 [7/180 total]
+2026-05-19 13:56:50,151 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:56:50,153 INFO [judge] #311565 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [8/180 total]
+2026-05-19 13:56:59,009 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:56:59,011 INFO [judge] #311565 Full System (LLM) \u2192 10/15 [9/180 total]
+2026-05-19 13:57:08,078 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:57:08,083 INFO [judge] #4760 System 1 (TF-IDF) \u2192 6/15 [10/180 total]
+2026-05-19 13:57:08,085 INFO [judge] progress flushed: 10/180
+2026-05-19 13:57:16,753 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:57:16,757 INFO [judge] #4760 Systems 1+2 (TF-IDF+BGE) \u2192 10/15 [11/180 total]
+2026-05-19 13:57:26,739 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:57:26,741 INFO [judge] #4760 Full System (LLM) \u2192 11/15 [12/180 total]
+2026-05-19 13:57:35,336 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:57:35,340 INFO [judge] #4741 System 1 (TF-IDF) \u2192 3/15 [13/180 total]
+2026-05-19 13:57:44,075 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:57:44,079 INFO [judge] #4741 Systems 1+2 (TF-IDF+BGE) \u2192 4/15 [14/180 total]
+2026-05-19 13:57:53,384 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:57:53,386 INFO [judge] #4741 Full System (LLM) \u2192 9/15 [15/180 total]
+2026-05-19 13:57:53,387 INFO [judge] progress flushed: 15/180
+2026-05-19 13:58:02,462 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:58:02,464 INFO [judge] #3826 System 1 (TF-IDF) \u2192 5/15 [16/180 total]
+2026-05-19 13:58:10,732 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:58:10,734 INFO [judge] #3826 Systems 1+2 (TF-IDF+BGE) \u2192 8/15 [17/180 total]
+2026-05-19 13:58:19,601 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:58:19,604 INFO [judge] #3826 Full System (LLM) \u2192 5/15 [18/180 total]
+2026-05-19 13:58:28,921 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:58:28,923 INFO [judge] #3486 System 1 (TF-IDF) \u2192 3/15 [19/180 total]
+2026-05-19 13:58:37,211 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:58:37,213 INFO [judge] #3486 Systems 1+2 (TF-IDF+BGE) \u2192 5/15 [20/180 total]
+2026-05-19 13:58:37,213 INFO [judge] progress flushed: 20/180
+2026-05-19 13:58:46,044 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:58:46,048 INFO [judge] #3486 Full System (LLM) \u2192 10/15 [21/180 total]
+2026-05-19 13:58:56,647 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:58:56,651 INFO [judge] #311543 System 1 (TF-IDF) \u2192 5/15 [22/180 total]
+2026-05-19 13:59:05,441 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:59:05,445 INFO [judge] #311543 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [23/180 total]
+2026-05-19 13:59:14,899 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:59:14,903 INFO [judge] #311543 Full System (LLM) \u2192 10/15 [24/180 total]
+2026-05-19 13:59:23,701 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:59:23,705 INFO [judge] #311414 System 1 (TF-IDF) \u2192 6/15 [25/180 total]
+2026-05-19 13:59:23,705 INFO [judge] progress flushed: 25/180
+2026-05-19 13:59:34,034 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:59:34,036 INFO [judge] #311414 Systems 1+2 (TF-IDF+BGE) \u2192 10/15 [26/180 total]
+2026-05-19 13:59:43,140 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:59:43,144 INFO [judge] #311414 Full System (LLM) \u2192 12/15 [27/180 total]
+2026-05-19 13:59:51,719 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 13:59:51,721 INFO [judge] #3299 System 1 (TF-IDF) \u2192 4/15 [28/180 total]
+2026-05-19 14:00:00,978 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:00:00,983 INFO [judge] #3299 Systems 1+2 (TF-IDF+BGE) \u2192 6/15 [29/180 total]
+2026-05-19 14:00:09,491 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:00:09,495 INFO [judge] #3299 Full System (LLM) \u2192 9/15 [30/180 total]
+2026-05-19 14:00:09,495 INFO [judge] progress flushed: 30/180
+2026-05-19 14:00:18,026 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:00:18,028 INFO [judge] #1508 System 1 (TF-IDF) \u2192 5/15 [31/180 total]
+2026-05-19 14:00:27,442 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:00:27,444 INFO [judge] #1508 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [32/180 total]
+2026-05-19 14:00:35,835 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:00:35,837 INFO [judge] #1508 Full System (LLM) \u2192 10/15 [33/180 total]
+2026-05-19 14:00:44,807 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:00:44,810 INFO [judge] #161 System 1 (TF-IDF) \u2192 5/15 [34/180 total]
+2026-05-19 14:00:53,183 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:00:53,186 INFO [judge] #161 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [35/180 total]
+2026-05-19 14:00:53,186 INFO [judge] progress flushed: 35/180
+2026-05-19 14:01:03,679 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:01:03,681 INFO [judge] #161 Full System (LLM) \u2192 11/15 [36/180 total]
+2026-05-19 14:01:11,914 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:01:11,916 INFO [judge] #2636 System 1 (TF-IDF) \u2192 4/15 [37/180 total]
+2026-05-19 14:01:21,009 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:01:21,011 INFO [judge] #2636 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [38/180 total]
+2026-05-19 14:01:29,347 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:01:29,349 INFO [judge] #2636 Full System (LLM) \u2192 12/15 [39/180 total]
+2026-05-19 14:01:37,799 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:01:37,802 INFO [judge] #3047 System 1 (TF-IDF) \u2192 5/15 [40/180 total]
+2026-05-19 14:01:37,803 INFO [judge] progress flushed: 40/180
+2026-05-19 14:01:46,737 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:01:46,739 INFO [judge] #3047 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [41/180 total]
+2026-05-19 14:01:55,212 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:01:55,232 INFO [judge] #3047 Full System (LLM) \u2192 13/15 [42/180 total]
+2026-05-19 14:02:03,425 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:02:03,428 INFO [judge] #1502 System 1 (TF-IDF) \u2192 5/15 [43/180 total]
+2026-05-19 14:02:12,003 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:02:12,005 INFO [judge] #1502 Systems 1+2 (TF-IDF+BGE) \u2192 7/15 [44/180 total]
+2026-05-19 14:02:20,460 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:02:20,462 INFO [judge] #1502 Full System (LLM) \u2192 10/15 [45/180 total]
+2026-05-19 14:02:20,463 INFO [judge] progress flushed: 45/180
+2026-05-19 14:02:28,581 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:02:28,583 INFO [judge] #4759 System 1 (TF-IDF) \u2192 5/15 [46/180 total]
+2026-05-19 14:02:36,974 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:02:36,977 INFO [judge] #4759 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [47/180 total]
+2026-05-19 14:02:45,424 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:02:45,427 INFO [judge] #4759 Full System (LLM) \u2192 14/15 [48/180 total]
+2026-05-19 14:02:53,728 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:02:53,730 INFO [judge] #4601 System 1 (TF-IDF) \u2192 5/15 [49/180 total]
+2026-05-19 14:03:03,496 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:03:03,499 INFO [judge] #4601 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [50/180 total]
+2026-05-19 14:03:03,500 INFO [judge] progress flushed: 50/180
+2026-05-19 14:03:13,020 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:03:13,023 INFO [judge] #4601 Full System (LLM) \u2192 12/15 [51/180 total]
+2026-05-19 14:03:21,394 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:03:21,407 INFO [judge] #567 System 1 (TF-IDF) \u2192 5/15 [52/180 total]
+2026-05-19 14:03:30,323 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:03:30,328 INFO [judge] #567 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [53/180 total]
+2026-05-19 14:03:39,255 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:03:39,260 INFO [judge] #567 Full System (LLM) \u2192 11/15 [54/180 total]
+2026-05-19 14:03:47,893 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:03:47,896 INFO [judge] #3655 System 1 (TF-IDF) \u2192 3/15 [55/180 total]
+2026-05-19 14:03:47,898 INFO [judge] progress flushed: 55/180
+2026-05-19 14:03:56,455 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:03:56,459 INFO [judge] #3655 Systems 1+2 (TF-IDF+BGE) \u2192 5/15 [56/180 total]
+2026-05-19 14:04:09,291 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:04:09,296 INFO [judge] #3655 Full System (LLM) \u2192 11/15 [57/180 total]
+2026-05-19 14:04:18,402 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:04:18,406 INFO [judge] #1045 System 1 (TF-IDF) \u2192 3/15 [58/180 total]
+2026-05-19 14:04:27,293 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:04:27,297 INFO [judge] #1045 Systems 1+2 (TF-IDF+BGE) \u2192 6/15 [59/180 total]
+2026-05-19 14:04:35,894 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:04:35,898 INFO [judge] #1045 Full System (LLM) \u2192 10/15 [60/180 total]
+2026-05-19 14:04:35,899 INFO [judge] progress flushed: 60/180
+2026-05-19 14:04:44,852 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:04:44,856 INFO [judge] #2496 System 1 (TF-IDF) \u2192 4/15 [61/180 total]
+2026-05-19 14:04:54,682 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:04:54,703 INFO [judge] #2496 Systems 1+2 (TF-IDF+BGE) \u2192 6/15 [62/180 total]
+2026-05-19 14:05:03,256 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:05:03,261 INFO [judge] #2496 Full System (LLM) \u2192 12/15 [63/180 total]
+2026-05-19 14:05:12,549 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:05:12,552 INFO [judge] #2115 System 1 (TF-IDF) \u2192 3/15 [64/180 total]
+2026-05-19 14:05:23,868 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:05:23,871 INFO [judge] #2115 Systems 1+2 (TF-IDF+BGE) \u2192 4/15 [65/180 total]
+2026-05-19 14:05:23,873 INFO [judge] progress flushed: 65/180
+2026-05-19 14:05:33,441 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:05:33,445 INFO [judge] #2115 Full System (LLM) \u2192 9/15 [66/180 total]
+2026-05-19 14:05:49,621 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:05:49,627 INFO [judge] #2468 System 1 (TF-IDF) \u2192 5/15 [67/180 total]
+2026-05-19 14:05:58,338 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:05:58,342 INFO [judge] #2468 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [68/180 total]
+2026-05-19 14:06:17,313 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:06:17,318 INFO [judge] #2468 Full System (LLM) \u2192 14/15 [69/180 total]
+2026-05-19 14:06:26,180 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:06:26,186 INFO [judge] #814 System 1 (TF-IDF) \u2192 3/15 [70/180 total]
+2026-05-19 14:06:26,187 INFO [judge] progress flushed: 70/180
+2026-05-19 14:06:35,294 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:06:35,299 INFO [judge] #814 Systems 1+2 (TF-IDF+BGE) \u2192 4/15 [71/180 total]
+2026-05-19 14:06:44,291 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:06:44,320 INFO [judge] #814 Full System (LLM) \u2192 10/15 [72/180 total]
+2026-05-19 14:06:53,892 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:06:53,894 INFO [judge] #1057 System 1 (TF-IDF) \u2192 1/15 [73/180 total]
+2026-05-19 14:07:02,752 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:07:02,758 INFO [judge] #1057 Systems 1+2 (TF-IDF+BGE) \u2192 6/15 [74/180 total]
+2026-05-19 14:07:15,549 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:07:15,554 INFO [judge] #1057 Full System (LLM) \u2192 11/15 [75/180 total]
+2026-05-19 14:07:15,555 INFO [judge] progress flushed: 75/180
+2026-05-19 14:07:24,569 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:07:24,573 INFO [judge] #4338 System 1 (TF-IDF) \u2192 5/15 [76/180 total]
+2026-05-19 14:07:33,215 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:07:33,219 INFO [judge] #4338 Systems 1+2 (TF-IDF+BGE) \u2192 8/15 [77/180 total]
+2026-05-19 14:07:44,463 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:07:44,467 INFO [judge] #4338 Full System (LLM) \u2192 11/15 [78/180 total]
+2026-05-19 14:07:53,168 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:07:53,173 INFO [judge] #3360 System 1 (TF-IDF) \u2192 4/15 [79/180 total]
+2026-05-19 14:08:01,846 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:08:01,850 INFO [judge] #3360 Systems 1+2 (TF-IDF+BGE) \u2192 6/15 [80/180 total]
+2026-05-19 14:08:01,851 INFO [judge] progress flushed: 80/180
+2026-05-19 14:08:11,025 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:08:11,029 INFO [judge] #3360 Full System (LLM) \u2192 12/15 [81/180 total]
+2026-05-19 14:08:19,917 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:08:19,943 INFO [judge] #3077 System 1 (TF-IDF) \u2192 5/15 [82/180 total]
+2026-05-19 14:08:28,680 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:08:28,687 INFO [judge] #3077 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [83/180 total]
+2026-05-19 14:08:37,729 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:08:37,734 INFO [judge] #3077 Full System (LLM) \u2192 12/15 [84/180 total]
+2026-05-19 14:08:46,671 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:08:46,677 INFO [judge] #2067 System 1 (TF-IDF) \u2192 3/15 [85/180 total]
+2026-05-19 14:08:46,678 INFO [judge] progress flushed: 85/180
+2026-05-19 14:08:55,182 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:08:55,186 INFO [judge] #2067 Systems 1+2 (TF-IDF+BGE) \u2192 6/15 [86/180 total]
+2026-05-19 14:09:04,058 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:09:04,062 INFO [judge] #2067 Full System (LLM) \u2192 9/15 [87/180 total]
+2026-05-19 14:09:13,287 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:09:13,290 INFO [judge] #3671 System 1 (TF-IDF) \u2192 4/15 [88/180 total]
+2026-05-19 14:09:22,172 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:09:22,177 INFO [judge] #3671 Systems 1+2 (TF-IDF+BGE) \u2192 8/15 [89/180 total]
+2026-05-19 14:09:31,518 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:09:31,522 INFO [judge] #3671 Full System (LLM) \u2192 11/15 [90/180 total]
+2026-05-19 14:09:31,523 INFO [judge] progress flushed: 90/180
+2026-05-19 14:09:41,201 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:09:41,205 INFO [judge] #11079 System 1 (TF-IDF) \u2192 5/15 [91/180 total]
+2026-05-19 14:09:50,259 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:09:50,284 INFO [judge] #11079 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [92/180 total]
+2026-05-19 14:09:59,770 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:09:59,774 INFO [judge] #11079 Full System (LLM) \u2192 10/15 [93/180 total]
+2026-05-19 14:10:08,395 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:10:08,399 INFO [judge] #13257 System 1 (TF-IDF) \u2192 4/15 [94/180 total]
+2026-05-19 14:10:17,028 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:10:17,032 INFO [judge] #13257 Systems 1+2 (TF-IDF+BGE) \u2192 8/15 [95/180 total]
+2026-05-19 14:10:17,033 INFO [judge] progress flushed: 95/180
+2026-05-19 14:10:26,505 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:10:26,508 INFO [judge] #13257 Full System (LLM) \u2192 9/15 [96/180 total]
+2026-05-19 14:10:44,100 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:10:44,103 INFO [judge] #13890 System 1 (TF-IDF) \u2192 5/15 [97/180 total]
+2026-05-19 14:10:53,593 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:10:53,598 INFO [judge] #13890 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [98/180 total]
+2026-05-19 14:11:04,272 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:11:04,276 INFO [judge] #13890 Full System (LLM) \u2192 10/15 [99/180 total]
+2026-05-19 14:11:15,519 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:11:15,523 INFO [judge] #10497 System 1 (TF-IDF) \u2192 5/15 [100/180 total]
+2026-05-19 14:11:15,524 INFO [judge] progress flushed: 100/180
+2026-05-19 14:11:24,384 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:11:24,387 INFO [judge] #10497 Systems 1+2 (TF-IDF+BGE) \u2192 7/15 [101/180 total]
+2026-05-19 14:11:33,475 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:11:33,501 INFO [judge] #10497 Full System (LLM) \u2192 13/15 [102/180 total]
+2026-05-19 14:11:42,382 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:11:42,386 INFO [judge] #14669 System 1 (TF-IDF) \u2192 5/15 [103/180 total]
+2026-05-19 14:11:50,614 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:11:50,617 INFO [judge] #14669 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [104/180 total]
+2026-05-19 14:12:00,745 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:12:00,748 INFO [judge] #14669 Full System (LLM) \u2192 10/15 [105/180 total]
+2026-05-19 14:12:00,749 INFO [judge] progress flushed: 105/180
+2026-05-19 14:12:13,339 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:12:13,343 INFO [judge] #14921 System 1 (TF-IDF) \u2192 6/15 [106/180 total]
+2026-05-19 14:12:21,938 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:12:21,940 INFO [judge] #14921 Systems 1+2 (TF-IDF+BGE) \u2192 10/15 [107/180 total]
+2026-05-19 14:12:30,531 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:12:30,534 INFO [judge] #14921 Full System (LLM) \u2192 10/15 [108/180 total]
+2026-05-19 14:12:41,456 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:12:41,460 INFO [judge] #5963 System 1 (TF-IDF) \u2192 5/15 [109/180 total]
+2026-05-19 14:12:50,222 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:12:50,226 INFO [judge] #5963 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [110/180 total]
+2026-05-19 14:12:50,227 INFO [judge] progress flushed: 110/180
+2026-05-19 14:12:58,707 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:12:58,712 INFO [judge] #5963 Full System (LLM) \u2192 14/15 [111/180 total]
+2026-05-19 14:13:13,428 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:13:13,441 INFO [judge] #13878 System 1 (TF-IDF) \u2192 4/15 [112/180 total]
+2026-05-19 14:13:23,262 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:13:23,264 INFO [judge] #13878 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [113/180 total]
+2026-05-19 14:13:31,468 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:13:31,470 INFO [judge] #13878 Full System (LLM) \u2192 9/15 [114/180 total]
+2026-05-19 14:13:40,786 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:13:40,788 INFO [judge] #14228 System 1 (TF-IDF) \u2192 5/15 [115/180 total]
+2026-05-19 14:13:40,789 INFO [judge] progress flushed: 115/180
+2026-05-19 14:13:49,214 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:13:49,217 INFO [judge] #14228 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [116/180 total]
+2026-05-19 14:13:57,821 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:13:57,824 INFO [judge] #14228 Full System (LLM) \u2192 10/15 [117/180 total]
+2026-05-19 14:14:06,905 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:14:06,907 INFO [judge] #1678 System 1 (TF-IDF) \u2192 5/15 [118/180 total]
+2026-05-19 14:14:16,787 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:14:16,791 INFO [judge] #1678 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [119/180 total]
+2026-05-19 14:14:28,172 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:14:28,177 INFO [judge] #1678 Full System (LLM) \u2192 10/15 [120/180 total]
+2026-05-19 14:14:28,178 INFO [judge] progress flushed: 120/180
+2026-05-19 14:14:36,764 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:14:36,769 INFO [judge] #4746 System 1 (TF-IDF) \u2192 4/15 [121/180 total]
+2026-05-19 14:14:45,269 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:14:45,297 INFO [judge] #4746 Systems 1+2 (TF-IDF+BGE) \u2192 8/15 [122/180 total]
+2026-05-19 14:14:53,768 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:14:53,771 INFO [judge] #4746 Full System (LLM) \u2192 9/15 [123/180 total]
+2026-05-19 14:15:02,151 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:15:02,154 INFO [judge] #14054 System 1 (TF-IDF) \u2192 4/15 [124/180 total]
+2026-05-19 14:15:10,705 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:15:10,708 INFO [judge] #14054 Systems 1+2 (TF-IDF+BGE) \u2192 8/15 [125/180 total]
+2026-05-19 14:15:10,708 INFO [judge] progress flushed: 125/180
+2026-05-19 14:15:19,276 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:15:19,278 INFO [judge] #14054 Full System (LLM) \u2192 10/15 [126/180 total]
+2026-05-19 14:15:28,542 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:15:28,544 INFO [judge] #14743 System 1 (TF-IDF) \u2192 5/15 [127/180 total]
+2026-05-19 14:15:40,144 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:15:40,147 INFO [judge] #14743 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [128/180 total]
+2026-05-19 14:15:49,475 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:15:49,477 INFO [judge] #14743 Full System (LLM) \u2192 14/15 [129/180 total]
+2026-05-19 14:15:57,831 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:15:57,834 INFO [judge] #13096 System 1 (TF-IDF) \u2192 3/15 [130/180 total]
+2026-05-19 14:15:57,835 INFO [judge] progress flushed: 130/180
+2026-05-19 14:16:07,565 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:16:07,568 INFO [judge] #13096 Systems 1+2 (TF-IDF+BGE) \u2192 5/15 [131/180 total]
+2026-05-19 14:16:16,838 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:16:16,852 INFO [judge] #13096 Full System (LLM) \u2192 12/15 [132/180 total]
+2026-05-19 14:16:25,594 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:16:25,597 INFO [judge] #11243 System 1 (TF-IDF) \u2192 5/15 [133/180 total]
+2026-05-19 14:16:34,793 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:16:34,796 INFO [judge] #11243 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [134/180 total]
+2026-05-19 14:16:44,209 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:16:44,213 INFO [judge] #11243 Full System (LLM) \u2192 10/15 [135/180 total]
+2026-05-19 14:16:44,215 INFO [judge] progress flushed: 135/180
+2026-05-19 14:16:52,983 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:16:52,985 INFO [judge] #14284 System 1 (TF-IDF) \u2192 5/15 [136/180 total]
+2026-05-19 14:17:02,015 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:17:02,018 INFO [judge] #14284 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [137/180 total]
+2026-05-19 14:17:11,384 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:17:11,386 INFO [judge] #14284 Full System (LLM) \u2192 10/15 [138/180 total]
+2026-05-19 14:17:19,713 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:17:19,718 INFO [judge] #14598 System 1 (TF-IDF) \u2192 5/15 [139/180 total]
+2026-05-19 14:17:28,850 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:17:28,852 INFO [judge] #14598 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [140/180 total]
+2026-05-19 14:17:28,853 INFO [judge] progress flushed: 140/180
+2026-05-19 14:17:37,679 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:17:37,682 INFO [judge] #14598 Full System (LLM) \u2192 10/15 [141/180 total]
+2026-05-19 14:17:46,616 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:17:46,628 INFO [judge] #14781 System 1 (TF-IDF) \u2192 4/15 [142/180 total]
+2026-05-19 14:17:55,745 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:17:55,748 INFO [judge] #14781 Systems 1+2 (TF-IDF+BGE) \u2192 8/15 [143/180 total]
+2026-05-19 14:18:05,610 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:18:05,613 INFO [judge] #14781 Full System (LLM) \u2192 10/15 [144/180 total]
+2026-05-19 14:18:13,935 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:18:13,937 INFO [judge] #1548 System 1 (TF-IDF) \u2192 5/15 [145/180 total]
+2026-05-19 14:18:13,938 INFO [judge] progress flushed: 145/180
+2026-05-19 14:18:28,489 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:18:28,494 INFO [judge] #1548 Systems 1+2 (TF-IDF+BGE) \u2192 11/15 [146/180 total]
+2026-05-19 14:18:37,132 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:18:37,136 INFO [judge] #1548 Full System (LLM) \u2192 11/15 [147/180 total]
+2026-05-19 14:18:46,974 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:18:46,977 INFO [judge] #12224 System 1 (TF-IDF) \u2192 3/15 [148/180 total]
+2026-05-19 14:18:57,652 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:18:57,656 INFO [judge] #12224 Systems 1+2 (TF-IDF+BGE) \u2192 4/15 [149/180 total]
+2026-05-19 14:19:36,115 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:19:36,120 INFO [judge] #12224 Full System (LLM) \u2192 9/15 [150/180 total]
+2026-05-19 14:19:36,121 INFO [judge] progress flushed: 150/180
+2026-05-19 14:19:45,770 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:19:45,773 INFO [judge] #3481 System 1 (TF-IDF) \u2192 5/15 [151/180 total]
+2026-05-19 14:19:57,404 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:19:57,417 INFO [judge] #3481 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [152/180 total]
+2026-05-19 14:20:11,976 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:20:11,978 INFO [judge] #3481 Full System (LLM) \u2192 14/15 [153/180 total]
+2026-05-19 14:20:20,466 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:20:20,469 INFO [judge] #13435 System 1 (TF-IDF) \u2192 3/15 [154/180 total]
+2026-05-19 14:20:31,290 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:20:31,292 INFO [judge] #13435 Systems 1+2 (TF-IDF+BGE) \u2192 5/15 [155/180 total]
+2026-05-19 14:20:31,293 INFO [judge] progress flushed: 155/180
+2026-05-19 14:20:40,283 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:20:40,285 INFO [judge] #13435 Full System (LLM) \u2192 7/15 [156/180 total]
+2026-05-19 14:20:52,549 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:20:52,551 INFO [judge] #3121 System 1 (TF-IDF) \u2192 5/15 [157/180 total]
+2026-05-19 14:21:01,746 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:21:01,749 INFO [judge] #3121 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [158/180 total]
+2026-05-19 14:21:10,195 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:21:10,198 INFO [judge] #3121 Full System (LLM) \u2192 11/15 [159/180 total]
+2026-05-19 14:21:19,214 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:21:19,217 INFO [judge] #13190 System 1 (TF-IDF) \u2192 5/15 [160/180 total]
+2026-05-19 14:21:19,218 INFO [judge] progress flushed: 160/180
+2026-05-19 14:21:29,567 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:21:29,570 INFO [judge] #13190 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [161/180 total]
+2026-05-19 14:21:38,746 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:21:38,775 INFO [judge] #13190 Full System (LLM) \u2192 11/15 [162/180 total]
+2026-05-19 14:21:47,509 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:21:47,512 INFO [judge] #4947 System 1 (TF-IDF) \u2192 5/15 [163/180 total]
+2026-05-19 14:22:00,764 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:22:01,061 INFO [judge] #4947 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [164/180 total]
+2026-05-19 14:22:10,945 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:22:10,948 INFO [judge] #4947 Full System (LLM) \u2192 10/15 [165/180 total]
+2026-05-19 14:22:10,948 INFO [judge] progress flushed: 165/180
+2026-05-19 14:22:20,143 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:22:20,145 INFO [judge] #13995 System 1 (TF-IDF) \u2192 5/15 [166/180 total]
+2026-05-19 14:22:30,564 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:22:30,567 INFO [judge] #13995 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [167/180 total]
+2026-05-19 14:22:41,882 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:22:41,884 INFO [judge] #13995 Full System (LLM) \u2192 14/15 [168/180 total]
+2026-05-19 14:22:50,282 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:22:50,285 INFO [judge] #3606 System 1 (TF-IDF) \u2192 5/15 [169/180 total]
+2026-05-19 14:22:58,586 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:22:58,588 INFO [judge] #3606 Systems 1+2 (TF-IDF+BGE) \u2192 7/15 [170/180 total]
+2026-05-19 14:22:58,589 INFO [judge] progress flushed: 170/180
+2026-05-19 14:23:07,469 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:23:07,471 INFO [judge] #3606 Full System (LLM) \u2192 14/15 [171/180 total]
+2026-05-19 14:23:28,676 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:23:28,678 INFO [judge] #140 System 1 (TF-IDF) \u2192 5/15 [172/180 total]
+2026-05-19 14:23:37,345 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:23:37,348 INFO [judge] #140 Systems 1+2 (TF-IDF+BGE) \u2192 7/15 [173/180 total]
+2026-05-19 14:23:46,241 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:23:46,244 INFO [judge] #140 Full System (LLM) \u2192 11/15 [174/180 total]
+2026-05-19 14:23:55,442 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:23:55,444 INFO [judge] #5634 System 1 (TF-IDF) \u2192 5/15 [175/180 total]
+2026-05-19 14:23:55,445 INFO [judge] progress flushed: 175/180
+2026-05-19 14:24:04,811 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:24:04,814 INFO [judge] #5634 Systems 1+2 (TF-IDF+BGE) \u2192 11/15 [176/180 total]
+2026-05-19 14:24:13,378 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:24:13,381 INFO [judge] #5634 Full System (LLM) \u2192 14/15 [177/180 total]
+2026-05-19 14:24:26,382 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:24:26,384 INFO [judge] #8362 System 1 (TF-IDF) \u2192 5/15 [178/180 total]
+2026-05-19 14:24:35,198 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:24:35,201 INFO [judge] #8362 Systems 1+2 (TF-IDF+BGE) \u2192 9/15 [179/180 total]
+2026-05-19 14:24:43,953 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:24:43,956 INFO [judge] #8362 Full System (LLM) \u2192 14/15 [180/180 total]
+2026-05-19 14:24:43,956 INFO [judge] progress flushed: 180/180
+2026-05-19 14:24:43,958 INFO Running reliability double-check on 10 samples...
+2026-05-19 14:24:47,015 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:24:52,166 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:24:56,989 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:25:02,514 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:25:06,565 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:25:10,896 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:25:15,007 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:25:21,389 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:25:26,072 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:25:30,585 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:25:36,540 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:25:41,470 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:25:47,264 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:25:54,940 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:26:00,068 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:26:04,596 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:26:11,840 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:26:18,371 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:26:23,369 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:26:28,415 INFO HTTP Request: POST https://api.cohere.com/v2/chat "HTTP/1.1 200 OK"
+2026-05-19 14:26:28,417 INFO Reliability: kappa={'component_match': 1.0, 'similar_issues_relevance': 1.0, 'resolution_estimate_reasonableness': 1.0, 'priority_alignment': 0.6153846153846153, 'next_steps_actionability': 1.0, 'overall_quality': 1.0}
+2026-05-19 14:26:28,461 INFO Per-issue results saved to C:\Users\gaura\ml-projects\triage-iq\data\triage_eval_results.parquet
+2026-05-19 14:26:28,808 INFO Saved chart to C:\Users\gaura\ml-projects\triage-iq\reports\charts\triage_score_breakdown.png
+2026-05-19 14:26:29,172 INFO Saved reliability chart to C:\Users\gaura\ml-projects\triage-iq\reports\charts\triage_reliability.png
+Traceback (most recent call last):
+  File "C:\Users\gaura\ml-projects\triage-iq\scripts\11_evaluate_triage.py", line 1143, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\gaura\ml-projects\triage-iq\scripts\11_evaluate_triage.py", line 1117, in main
+    json_path.write_text(json.dumps(results, indent=2, default=str), encoding="utf-8")
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\gaura\anaconda3\Lib\pathlib\_local.py", line 555, in write_text
+    return PathBase.write_text(self, data, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\gaura\anaconda3\Lib\pathlib\_abc.py", line 651, in write_text
+    with self.open(mode='w', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\gaura\anaconda3\Lib\pathlib\_local.py", line 537, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\gaura\\ml-projects\\triage-iq\\reports\\reports\\triage_results_w12_cohere.json'

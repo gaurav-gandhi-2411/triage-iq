@@ -20,3 +20,12 @@ logs/
 wandb/
 .coverage
 htmlcov/
+
+# LLM response cache (ephemeral, regeneratable)
+data/llm_cache.sqlite
+data/llm_cache.sqlite-wal
+data/llm_cache.sqlite-shm
+
+# Temp comparison artifacts
+tmp_*.json
+

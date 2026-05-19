@@ -50,6 +50,7 @@ class ModelStore:
         cls,
         data_dir: Path | None = None,
         groq_api_key: str | None = None,
+        cache=None,
     ) -> "ModelStore":
         import time
 
@@ -78,6 +79,7 @@ class ModelStore:
                     predictor=pred,
                     train_df=train_df,
                     groq_api_key=key,
+                    cache=cache,
                 )
                 bundles[repo] = RepoBundle(clf, det, pred, train_df, asst)
                 logger.info("Loaded %s — OK", repo)

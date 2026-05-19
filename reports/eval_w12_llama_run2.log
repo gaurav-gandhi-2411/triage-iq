@@ -1,0 +1,185 @@
+2026-05-19 13:50:16,875 INFO Checkpoint: 60 already completed
+2026-05-19 13:50:16,891 INFO === microsoft/vscode: 30 gold issues ===
+2026-05-19 13:50:17,013 INFO Loading embedding model: BAAI/bge-base-en-v1.5
+2026-05-19 13:50:17,013 INFO Load pretrained SentenceTransformer: BAAI/bge-base-en-v1.5
+2026-05-19 13:50:20,267 INFO Use pytorch device_name: cuda
+C:\Users\gaura\anaconda3\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator PCA from version 1.6.1 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-05-19 13:50:20,689 INFO [microsoft_vscode] #2093 skipped (checkpoint)
+2026-05-19 13:50:20,689 INFO [microsoft_vscode] #4223 skipped (checkpoint)
+2026-05-19 13:50:20,689 INFO [microsoft_vscode] #311565 skipped (checkpoint)
+2026-05-19 13:50:20,690 INFO [microsoft_vscode] #4760 skipped (checkpoint)
+2026-05-19 13:50:20,690 INFO [microsoft_vscode] #4741 skipped (checkpoint)
+2026-05-19 13:50:20,690 INFO [microsoft_vscode] #3826 skipped (checkpoint)
+2026-05-19 13:50:20,690 INFO [microsoft_vscode] #3486 skipped (checkpoint)
+2026-05-19 13:50:20,690 INFO [microsoft_vscode] #311543 skipped (checkpoint)
+2026-05-19 13:50:20,691 INFO [microsoft_vscode] #311414 skipped (checkpoint)
+2026-05-19 13:50:20,691 INFO [microsoft_vscode] #3299 skipped (checkpoint)
+2026-05-19 13:50:20,691 INFO [microsoft_vscode] #1508 skipped (checkpoint)
+2026-05-19 13:50:20,691 INFO [microsoft_vscode] #161 skipped (checkpoint)
+2026-05-19 13:50:20,691 INFO [microsoft_vscode] #2636 skipped (checkpoint)
+2026-05-19 13:50:20,691 INFO [microsoft_vscode] #3047 skipped (checkpoint)
+2026-05-19 13:50:20,692 INFO [microsoft_vscode] #1502 skipped (checkpoint)
+2026-05-19 13:50:20,692 INFO [microsoft_vscode] #4759 skipped (checkpoint)
+2026-05-19 13:50:20,692 INFO [microsoft_vscode] #4601 skipped (checkpoint)
+2026-05-19 13:50:20,692 INFO [microsoft_vscode] #567 skipped (checkpoint)
+2026-05-19 13:50:20,692 INFO [microsoft_vscode] #3655 skipped (checkpoint)
+2026-05-19 13:50:20,692 INFO [microsoft_vscode] #1045 skipped (checkpoint)
+2026-05-19 13:50:20,693 INFO [microsoft_vscode] #2496 skipped (checkpoint)
+2026-05-19 13:50:20,693 INFO [microsoft_vscode] #2115 skipped (checkpoint)
+2026-05-19 13:50:20,693 INFO [microsoft_vscode] #2468 skipped (checkpoint)
+2026-05-19 13:50:20,693 INFO [microsoft_vscode] #814 skipped (checkpoint)
+2026-05-19 13:50:20,693 INFO [microsoft_vscode] #1057 skipped (checkpoint)
+2026-05-19 13:50:20,693 INFO [microsoft_vscode] #4338 skipped (checkpoint)
+2026-05-19 13:50:20,694 INFO [microsoft_vscode] #3360 skipped (checkpoint)
+2026-05-19 13:50:20,694 INFO [microsoft_vscode] #3077 skipped (checkpoint)
+2026-05-19 13:50:20,694 INFO [microsoft_vscode] #2067 skipped (checkpoint)
+2026-05-19 13:50:20,694 INFO [microsoft_vscode] #3671 skipped (checkpoint)
+2026-05-19 13:50:20,694 INFO [microsoft_vscode] component acc � LLM: 56.7%, TF-IDF: 50.0%, Majority: 13.3%
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  4.57it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  4.57it/s]
+2026-05-19 13:50:23,718 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:50:23,718 INFO Retrying request to /openai/v1/chat/completions in 25.000000 seconds
+2026-05-19 13:50:48,785 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:50:48,786 INFO Retrying request to /openai/v1/chat/completions in 34.000000 seconds
+2026-05-19 13:51:22,840 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:51:22,841 WARNING Rate limit hit � sleeping 2.5s (attempt 1/6)
+2026-05-19 13:51:25,389 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:51:25,389 INFO Retrying request to /openai/v1/chat/completions in 34.000000 seconds
+2026-05-19 13:52:00,530 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:52:00,561 INFO [microsoft/vscode] Triaged #311035 in 98.31s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 13.83it/s]
+2026-05-19 13:52:03,048 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:52:03,048 INFO Retrying request to /openai/v1/chat/completions in 31.000000 seconds
+2026-05-19 13:52:34,121 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:52:34,122 INFO Retrying request to /openai/v1/chat/completions in 5.000000 seconds
+2026-05-19 13:52:39,206 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:52:39,207 WARNING Rate limit hit � sleeping 2.5s (attempt 1/6)
+2026-05-19 13:52:41,758 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:52:41,758 INFO Retrying request to /openai/v1/chat/completions in 8.000000 seconds
+2026-05-19 13:52:49,819 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:52:49,819 INFO Retrying request to /openai/v1/chat/completions in 40.000000 seconds
+2026-05-19 13:53:29,873 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:53:29,874 WARNING Rate limit hit � sleeping 6.0s (attempt 2/6)
+2026-05-19 13:53:35,934 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:53:35,935 INFO Retrying request to /openai/v1/chat/completions in 21.000000 seconds
+2026-05-19 13:53:58,110 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:53:58,112 INFO [microsoft/vscode] Triaged #312309 in 116.05s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 14.71it/s]
+2026-05-19 13:54:01,442 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:54:01,443 INFO Retrying request to /openai/v1/chat/completions in 29.000000 seconds
+2026-05-19 13:54:30,522 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:54:30,522 INFO Retrying request to /openai/v1/chat/completions in 33.000000 seconds
+2026-05-19 13:55:03,601 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:55:03,601 WARNING Rate limit hit � sleeping 2.5s (attempt 1/6)
+2026-05-19 13:55:06,143 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:55:06,143 INFO Retrying request to /openai/v1/chat/completions in 30.000000 seconds
+2026-05-19 13:55:36,236 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:55:36,236 INFO Retrying request to /openai/v1/chat/completions in 34.000000 seconds
+2026-05-19 13:56:10,333 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:56:10,333 WARNING Rate limit hit � sleeping 6.0s (attempt 2/6)
+2026-05-19 13:56:17,442 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:56:17,443 INFO [microsoft/vscode] Triaged #310861 in 137.83s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  7.26it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  7.24it/s]
+2026-05-19 13:56:19,987 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:56:19,988 INFO Retrying request to /openai/v1/chat/completions in 27.000000 seconds
+2026-05-19 13:56:48,644 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:56:48,645 INFO [microsoft/vscode] Triaged #312400 in 29.70s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  7.70it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00,  7.69it/s]
+2026-05-19 13:56:51,175 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:56:51,175 INFO Retrying request to /openai/v1/chat/completions in 31.000000 seconds
+2026-05-19 13:57:23,659 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:57:23,660 INFO [microsoft/vscode] Triaged #312155 in 33.51s
+2026-05-19 13:57:23,662 INFO === kubernetes/kubernetes: 30 gold issues ===
+2026-05-19 13:57:23,806 INFO Loading embedding model: BAAI/bge-base-en-v1.5
+2026-05-19 13:57:23,806 INFO Load pretrained SentenceTransformer: BAAI/bge-base-en-v1.5
+2026-05-19 13:57:26,529 INFO Use pytorch device_name: cuda
+C:\Users\gaura\anaconda3\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator PCA from version 1.6.1 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-05-19 13:57:27,337 INFO [kubernetes_kubernetes] #11079 skipped (checkpoint)
+2026-05-19 13:57:27,337 INFO [kubernetes_kubernetes] #13257 skipped (checkpoint)
+2026-05-19 13:57:27,337 INFO [kubernetes_kubernetes] #13890 skipped (checkpoint)
+2026-05-19 13:57:27,337 INFO [kubernetes_kubernetes] #10497 skipped (checkpoint)
+2026-05-19 13:57:27,338 INFO [kubernetes_kubernetes] #14669 skipped (checkpoint)
+2026-05-19 13:57:27,338 INFO [kubernetes_kubernetes] #14921 skipped (checkpoint)
+2026-05-19 13:57:27,338 INFO [kubernetes_kubernetes] #5963 skipped (checkpoint)
+2026-05-19 13:57:27,338 INFO [kubernetes_kubernetes] #13878 skipped (checkpoint)
+2026-05-19 13:57:27,338 INFO [kubernetes_kubernetes] #14228 skipped (checkpoint)
+2026-05-19 13:57:27,339 INFO [kubernetes_kubernetes] #1678 skipped (checkpoint)
+2026-05-19 13:57:27,339 INFO [kubernetes_kubernetes] #4746 skipped (checkpoint)
+2026-05-19 13:57:27,339 INFO [kubernetes_kubernetes] #14054 skipped (checkpoint)
+2026-05-19 13:57:27,339 INFO [kubernetes_kubernetes] #14743 skipped (checkpoint)
+2026-05-19 13:57:27,339 INFO [kubernetes_kubernetes] #13096 skipped (checkpoint)
+2026-05-19 13:57:27,340 INFO [kubernetes_kubernetes] #11243 skipped (checkpoint)
+2026-05-19 13:57:27,340 INFO [kubernetes_kubernetes] #14284 skipped (checkpoint)
+2026-05-19 13:57:27,340 INFO [kubernetes_kubernetes] #14598 skipped (checkpoint)
+2026-05-19 13:57:27,340 INFO [kubernetes_kubernetes] #14781 skipped (checkpoint)
+2026-05-19 13:57:27,340 INFO [kubernetes_kubernetes] #1548 skipped (checkpoint)
+2026-05-19 13:57:27,341 INFO [kubernetes_kubernetes] #12224 skipped (checkpoint)
+2026-05-19 13:57:27,341 INFO [kubernetes_kubernetes] #3481 skipped (checkpoint)
+2026-05-19 13:57:27,341 INFO [kubernetes_kubernetes] #13435 skipped (checkpoint)
+2026-05-19 13:57:27,341 INFO [kubernetes_kubernetes] #3121 skipped (checkpoint)
+2026-05-19 13:57:27,341 INFO [kubernetes_kubernetes] #13190 skipped (checkpoint)
+2026-05-19 13:57:27,342 INFO [kubernetes_kubernetes] #4947 skipped (checkpoint)
+2026-05-19 13:57:27,342 INFO [kubernetes_kubernetes] #13995 skipped (checkpoint)
+2026-05-19 13:57:27,342 INFO [kubernetes_kubernetes] #3606 skipped (checkpoint)
+2026-05-19 13:57:27,342 INFO [kubernetes_kubernetes] #140 skipped (checkpoint)
+2026-05-19 13:57:27,343 INFO [kubernetes_kubernetes] #5634 skipped (checkpoint)
+2026-05-19 13:57:27,343 INFO [kubernetes_kubernetes] #8362 skipped (checkpoint)
+2026-05-19 13:57:27,343 INFO [kubernetes_kubernetes] component acc � LLM: 80.0%, TF-IDF: 73.3%, Majority: 10.0%
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 11.11it/s]
+2026-05-19 13:57:30,832 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:57:30,833 INFO Retrying request to /openai/v1/chat/completions in 26.000000 seconds
+2026-05-19 13:57:57,952 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:57:57,953 INFO [kubernetes/kubernetes] Triaged #14186 in 29.06s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 16.17it/s]
+2026-05-19 13:58:01,314 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:58:01,315 INFO Retrying request to /openai/v1/chat/completions in 34.000000 seconds
+2026-05-19 13:58:36,829 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:58:36,830 INFO [kubernetes/kubernetes] Triaged #8702 in 37.38s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 23.63it/s]
+2026-05-19 13:58:40,104 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:58:40,104 INFO Retrying request to /openai/v1/chat/completions in 28.000000 seconds
+2026-05-19 13:59:09,374 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:59:09,376 INFO [kubernetes/kubernetes] Triaged #7890 in 31.05s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 30.89it/s]
+2026-05-19 13:59:14,420 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:59:14,421 INFO Retrying request to /openai/v1/chat/completions in 26.000000 seconds
+2026-05-19 13:59:41,505 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 13:59:41,506 INFO [kubernetes/kubernetes] Triaged #12089 in 30.63s
+
+Batches:   0%|          | 0/1 [00:00<?, ?it/s]
+Batches: 100%|##########| 1/1 [00:00<00:00, 15.89it/s]
+2026-05-19 13:59:44,883 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 13:59:44,884 INFO Retrying request to /openai/v1/chat/completions in 37.000000 seconds
+2026-05-19 14:00:23,584 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 14:00:23,585 INFO [kubernetes/kubernetes] Triaged #10179 in 40.58s
+2026-05-19 14:00:23,585 INFO Running LLM-as-judge on 60 plans (3 plans � issue)...
+2026-05-19 14:00:23,585 INFO Judge: model=llama-3.3-70b-versatile provider=groq checkpoint=judge_scores_checkpoint_llama_3_3_70b_versatile.jsonl
+2026-05-19 14:00:23,585 INFO Judge checkpoint: 0/180 already scored
+2026-05-19 14:00:26,451 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 14:00:26,453 INFO [judge] #2093 System 1 (TF-IDF) \u2192 6/15 [1/180 total]
+2026-05-19 14:00:28,838 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 14:00:28,838 WARNING [judge] Groq TPD rate limit hit after 1/180 calls. Checkpoint is current. Exiting cleanly (exit 0).

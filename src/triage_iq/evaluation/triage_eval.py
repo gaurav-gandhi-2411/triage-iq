@@ -167,10 +167,12 @@ class TriageJudge:
         provider: str = "groq",
         gemini_api_key: str | None = None,
         cohere_api_key: str | None = None,
+        cache=None,
     ) -> None:
         self.model = model
         self.temperature = temperature
         self.provider = provider
+        self._cache = cache  # LLMCache | None
 
         if provider in self._GOOGLE_PROVIDERS:
             key = (
@@ -214,17 +216,41 @@ class TriageJudge:
             gold: Gold standard dict with keys:
                 component, priority, actual_resolution_days.
         """
+        from triage_iq.cache import LLMCache
+
         prompt = self._build_judge_prompt(issue_title, issue_body, triage_plan_json, gold)
         messages = [
             {"role": "system", "content": RUBRIC_DESCRIPTION},
             {"role": "user", "content": prompt},
         ]
+
+        cache: LLMCache | None = getattr(self, "_cache", None)
+        cache_key: str | None = None
+        extra: dict = {}
+        if self.provider == "cohere":
+            # Hash the full response_format dict exactly as it goes over the wire in
+            # _cohere_completion — type + json_schema — so any change to either field
+            # correctly invalidates the cache entry.
+            extra["response_format"] = {
+                "type": "json_object",
+                "json_schema": self._cohere_sanitize_schema(JudgeScore.model_json_schema()),
+            }
+        if cache is not None:
+            cache_key = cache.compute_key(self.provider, self.model, messages, self.temperature, **extra)
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return self._parse_score(cached["content"])
+
         if self.provider in self._GOOGLE_PROVIDERS:
             raw = self._gemini_completion(messages)
         elif self.provider == "cohere":
             raw = self._cohere_completion(messages)
         else:
             raw = self._groq_completion(messages)
+
+        if cache is not None and cache_key is not None:
+            cache.set(cache_key, self.provider, self.model, messages, {"content": raw})
+
         return self._parse_score(raw)
 
     def score_batch(

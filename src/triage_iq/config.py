@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     groq_model_triage: str = "llama-3.1-8b-instant"
     environment: Literal["dev", "test", "prod"] = "prod"
     metrics_token: SecretStr | None = None
+    llm_cache_enabled: bool = False
+    llm_cache_path: Path = _PROJECT_ROOT / "data" / "llm_cache.sqlite"
 
     @field_validator("groq_api_key", mode="after")
     @classmethod

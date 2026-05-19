@@ -1,0 +1,88 @@
+2026-05-19 17:09:57,742 INFO Checkpoint: 60 already completed
+2026-05-19 17:09:57,758 INFO === microsoft/vscode: 30 gold issues ===
+2026-05-19 17:09:57,862 INFO Loading embedding model: BAAI/bge-base-en-v1.5
+2026-05-19 17:09:57,862 INFO Load pretrained SentenceTransformer: BAAI/bge-base-en-v1.5
+2026-05-19 17:10:01,199 INFO Use pytorch device_name: cuda
+C:\Users\gaura\anaconda3\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator PCA from version 1.6.1 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-05-19 17:10:01,622 INFO [microsoft_vscode] #2093 skipped (checkpoint)
+2026-05-19 17:10:01,623 INFO [microsoft_vscode] #4223 skipped (checkpoint)
+2026-05-19 17:10:01,623 INFO [microsoft_vscode] #311565 skipped (checkpoint)
+2026-05-19 17:10:01,623 INFO [microsoft_vscode] #4760 skipped (checkpoint)
+2026-05-19 17:10:01,623 INFO [microsoft_vscode] #4741 skipped (checkpoint)
+2026-05-19 17:10:01,624 INFO [microsoft_vscode] #3826 skipped (checkpoint)
+2026-05-19 17:10:01,624 INFO [microsoft_vscode] #3486 skipped (checkpoint)
+2026-05-19 17:10:01,624 INFO [microsoft_vscode] #311543 skipped (checkpoint)
+2026-05-19 17:10:01,624 INFO [microsoft_vscode] #311414 skipped (checkpoint)
+2026-05-19 17:10:01,624 INFO [microsoft_vscode] #3299 skipped (checkpoint)
+2026-05-19 17:10:01,625 INFO [microsoft_vscode] #1508 skipped (checkpoint)
+2026-05-19 17:10:01,625 INFO [microsoft_vscode] #161 skipped (checkpoint)
+2026-05-19 17:10:01,625 INFO [microsoft_vscode] #2636 skipped (checkpoint)
+2026-05-19 17:10:01,625 INFO [microsoft_vscode] #3047 skipped (checkpoint)
+2026-05-19 17:10:01,626 INFO [microsoft_vscode] #1502 skipped (checkpoint)
+2026-05-19 17:10:01,626 INFO [microsoft_vscode] #4759 skipped (checkpoint)
+2026-05-19 17:10:01,626 INFO [microsoft_vscode] #4601 skipped (checkpoint)
+2026-05-19 17:10:01,626 INFO [microsoft_vscode] #567 skipped (checkpoint)
+2026-05-19 17:10:01,627 INFO [microsoft_vscode] #3655 skipped (checkpoint)
+2026-05-19 17:10:01,627 INFO [microsoft_vscode] #1045 skipped (checkpoint)
+2026-05-19 17:10:01,627 INFO [microsoft_vscode] #2496 skipped (checkpoint)
+2026-05-19 17:10:01,627 INFO [microsoft_vscode] #2115 skipped (checkpoint)
+2026-05-19 17:10:01,628 INFO [microsoft_vscode] #2468 skipped (checkpoint)
+2026-05-19 17:10:01,628 INFO [microsoft_vscode] #814 skipped (checkpoint)
+2026-05-19 17:10:01,628 INFO [microsoft_vscode] #1057 skipped (checkpoint)
+2026-05-19 17:10:01,628 INFO [microsoft_vscode] #4338 skipped (checkpoint)
+2026-05-19 17:10:01,628 INFO [microsoft_vscode] #3360 skipped (checkpoint)
+2026-05-19 17:10:01,629 INFO [microsoft_vscode] #3077 skipped (checkpoint)
+2026-05-19 17:10:01,629 INFO [microsoft_vscode] #2067 skipped (checkpoint)
+2026-05-19 17:10:01,629 INFO [microsoft_vscode] #3671 skipped (checkpoint)
+2026-05-19 17:10:01,629 INFO [microsoft_vscode] component acc � LLM: 56.7%, TF-IDF: 50.0%, Majority: 13.3%
+2026-05-19 17:10:01,674 INFO === kubernetes/kubernetes: 30 gold issues ===
+2026-05-19 17:10:01,802 INFO Loading embedding model: BAAI/bge-base-en-v1.5
+2026-05-19 17:10:01,802 INFO Load pretrained SentenceTransformer: BAAI/bge-base-en-v1.5
+2026-05-19 17:10:04,550 INFO Use pytorch device_name: cuda
+C:\Users\gaura\anaconda3\Lib\site-packages\sklearn\base.py:442: InconsistentVersionWarning: Trying to unpickle estimator PCA from version 1.6.1 when using version 1.7.2. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-05-19 17:10:05,085 INFO [kubernetes_kubernetes] #11079 skipped (checkpoint)
+2026-05-19 17:10:05,086 INFO [kubernetes_kubernetes] #13257 skipped (checkpoint)
+2026-05-19 17:10:05,086 INFO [kubernetes_kubernetes] #13890 skipped (checkpoint)
+2026-05-19 17:10:05,086 INFO [kubernetes_kubernetes] #10497 skipped (checkpoint)
+2026-05-19 17:10:05,087 INFO [kubernetes_kubernetes] #14669 skipped (checkpoint)
+2026-05-19 17:10:05,087 INFO [kubernetes_kubernetes] #14921 skipped (checkpoint)
+2026-05-19 17:10:05,087 INFO [kubernetes_kubernetes] #5963 skipped (checkpoint)
+2026-05-19 17:10:05,088 INFO [kubernetes_kubernetes] #13878 skipped (checkpoint)
+2026-05-19 17:10:05,088 INFO [kubernetes_kubernetes] #14228 skipped (checkpoint)
+2026-05-19 17:10:05,088 INFO [kubernetes_kubernetes] #1678 skipped (checkpoint)
+2026-05-19 17:10:05,089 INFO [kubernetes_kubernetes] #4746 skipped (checkpoint)
+2026-05-19 17:10:05,089 INFO [kubernetes_kubernetes] #14054 skipped (checkpoint)
+2026-05-19 17:10:05,089 INFO [kubernetes_kubernetes] #14743 skipped (checkpoint)
+2026-05-19 17:10:05,089 INFO [kubernetes_kubernetes] #13096 skipped (checkpoint)
+2026-05-19 17:10:05,090 INFO [kubernetes_kubernetes] #11243 skipped (checkpoint)
+2026-05-19 17:10:05,090 INFO [kubernetes_kubernetes] #14284 skipped (checkpoint)
+2026-05-19 17:10:05,090 INFO [kubernetes_kubernetes] #14598 skipped (checkpoint)
+2026-05-19 17:10:05,090 INFO [kubernetes_kubernetes] #14781 skipped (checkpoint)
+2026-05-19 17:10:05,090 INFO [kubernetes_kubernetes] #1548 skipped (checkpoint)
+2026-05-19 17:10:05,091 INFO [kubernetes_kubernetes] #12224 skipped (checkpoint)
+2026-05-19 17:10:05,091 INFO [kubernetes_kubernetes] #3481 skipped (checkpoint)
+2026-05-19 17:10:05,091 INFO [kubernetes_kubernetes] #13435 skipped (checkpoint)
+2026-05-19 17:10:05,091 INFO [kubernetes_kubernetes] #3121 skipped (checkpoint)
+2026-05-19 17:10:05,091 INFO [kubernetes_kubernetes] #13190 skipped (checkpoint)
+2026-05-19 17:10:05,092 INFO [kubernetes_kubernetes] #4947 skipped (checkpoint)
+2026-05-19 17:10:05,092 INFO [kubernetes_kubernetes] #13995 skipped (checkpoint)
+2026-05-19 17:10:05,092 INFO [kubernetes_kubernetes] #3606 skipped (checkpoint)
+2026-05-19 17:10:05,092 INFO [kubernetes_kubernetes] #140 skipped (checkpoint)
+2026-05-19 17:10:05,092 INFO [kubernetes_kubernetes] #5634 skipped (checkpoint)
+2026-05-19 17:10:05,093 INFO [kubernetes_kubernetes] #8362 skipped (checkpoint)
+2026-05-19 17:10:05,093 INFO [kubernetes_kubernetes] component acc � LLM: 80.0%, TF-IDF: 73.3%, Majority: 10.0%
+2026-05-19 17:10:05,157 INFO Running LLM-as-judge on 60 plans (3 plans � issue)...
+2026-05-19 17:10:05,157 INFO Judge: model=llama-3.3-70b-versatile provider=groq checkpoint=judge_scores_checkpoint_llama_3_3_70b_versatile.jsonl
+2026-05-19 17:10:05,183 INFO Judge checkpoint (judge_scores_checkpoint_llama_3_3_70b_versatile.jsonl): 1 scores already completed
+2026-05-19 17:10:05,183 INFO Judge checkpoint: 1/180 already scored
+2026-05-19 17:10:05,183 INFO [judge] #2093 System 1 (TF-IDF) \u2192 6/15 (checkpoint)
+2026-05-19 17:10:09,368 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 17:10:09,433 INFO [judge] #2093 Systems 1+2 (TF-IDF+BGE) \u2192 11/15 [2/180 total]
+2026-05-19 17:10:12,945 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-19 17:10:12,946 INFO [judge] #2093 Full System (LLM) \u2192 9/15 [3/180 total]
+2026-05-19 17:10:15,582 INFO HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-05-19 17:10:15,583 WARNING [judge] Groq TPD rate limit hit after 3/180 calls. Checkpoint is current. Exiting cleanly (exit 0).

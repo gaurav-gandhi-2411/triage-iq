@@ -2,10 +2,16 @@
 
 One DuplicateDetector per repo. Supports BGE and MiniLM embeddings.
 Index built over all issues; retrieval excludes the query issue itself.
+
+Optional two-stage retrieval: if a Reranker is attached, retrieve
+FAISS_RERANK_K candidates from FAISS, then rerank to the requested top-k.
 """
+
+from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import faiss
 import joblib
@@ -13,12 +19,19 @@ import numpy as np
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 
+if TYPE_CHECKING:
+    from triage_iq.models.reranker import Reranker
+
 logger = logging.getLogger(__name__)
 
 SUPPORTED_MODELS = {
     "bge": "BAAI/bge-base-en-v1.5",
     "minilm": "sentence-transformers/all-MiniLM-L6-v2",
 }
+
+# Number of FAISS candidates to retrieve before reranking.
+# Must be >= the final k passed to retrieve().
+FAISS_RERANK_K = 50
 
 
 def _build_text(title: pd.Series, body: pd.Series, max_body: int = 512) -> list[str]:
@@ -30,9 +43,15 @@ def _build_text(title: pd.Series, body: pd.Series, max_body: int = 512) -> list[
 class DuplicateDetector:
     """Sentence embedding + FAISS IndexFlatIP retrieval for duplicate detection."""
 
-    def __init__(self, repo: str, model_key: str = "bge") -> None:
+    def __init__(
+        self,
+        repo: str,
+        model_key: str = "bge",
+        reranker: "Reranker | None" = None,
+    ) -> None:
         self.repo = repo
         self.model_key = model_key
+        self.reranker = reranker
         model_name = SUPPORTED_MODELS.get(model_key, model_key)
         logger.info("Loading embedding model: %s", model_name)
         self.model = SentenceTransformer(model_name)
@@ -71,8 +90,24 @@ class DuplicateDetector:
     # Retrieval
     # ------------------------------------------------------------------
 
-    def retrieve(self, query_text: str, k: int = 20, exclude_number: int | None = None) -> list[dict]:
-        """Return top-k most similar issues (excluding query issue itself)."""
+    def retrieve(self, query_text: str, k: int = 5, exclude_number: int | None = None) -> list[dict]:
+        """Return top-k most similar issues (excluding query issue itself).
+
+        When a reranker is attached: retrieves FAISS_RERANK_K candidates from
+        FAISS first, then reranks to top-k via cross-encoder. When no reranker
+        is set: returns top-k directly from FAISS (original behaviour).
+        """
+        if self.reranker is not None:
+            # Two-stage: FAISS → cross-encoder rerank
+            faiss_k = max(k, FAISS_RERANK_K)
+            raw_hits = self._faiss_retrieve(query_text, faiss_k, exclude_number)
+            return self.reranker.rerank(query_text, raw_hits, top_k=k)
+        return self._faiss_retrieve(query_text, k, exclude_number)
+
+    def _faiss_retrieve(
+        self, query_text: str, k: int, exclude_number: int | None = None
+    ) -> list[dict]:
+        """Raw FAISS retrieval — no reranking."""
         assert self.index is not None, "Call build_index first"
         assert self.issue_numbers is not None
         assert self.texts is not None

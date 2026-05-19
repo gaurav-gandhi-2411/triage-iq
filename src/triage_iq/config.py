@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     metrics_token: SecretStr | None = None
     llm_cache_enabled: bool = False
     llm_cache_path: Path = _PROJECT_ROOT / "data" / "llm_cache.sqlite"
+    reranker_enabled: bool = False
+    reranker_model: str = "mixedbread-ai/mxbai-rerank-base-v1"
 
     @field_validator("groq_api_key", mode="after")
     @classmethod

@@ -64,12 +64,14 @@ class ModelStore:
 
         key = (groq_api_key if groq_api_key else os.environ.get("GROQ_API_KEY", "")).strip()
 
+        reranker = _load_reranker_if_enabled()
+
         bundles: dict[str, RepoBundle] = {}
         for repo, slug in _REPO_SLUGS.items():
             try:
                 logger.info("Loading models for %s …", repo)
                 clf = _load_classifier(models_dir, slug)
-                det = _load_detector(models_dir, slug)
+                det = _load_detector(models_dir, slug, reranker=reranker)
                 pred = _load_predictor(models_dir, slug)
                 train_df = _load_train(processed_dir, slug)
                 asst = TriageAssistant(
@@ -105,12 +107,33 @@ def _load_classifier(models_dir: Path, slug: str):
     raise FileNotFoundError(f"No classifier for {slug} in {models_dir}")
 
 
-def _load_detector(models_dir: Path, slug: str):
+def _load_detector(models_dir: Path, slug: str, reranker=None):
     from triage_iq.models.duplicates import DuplicateDetector
     p = models_dir / f"dup_index_{slug}_bge"
     if p.exists():
-        return DuplicateDetector.load(str(p))
+        det = DuplicateDetector.load(str(p))
+        det.reranker = reranker
+        return det
     raise FileNotFoundError(f"Detector not found: {p}")
+
+
+def _load_reranker_if_enabled():
+    """Load the cross-encoder reranker if RERANKER_ENABLED=true.
+
+    Kept separate so a model-load failure here is non-fatal (detector
+    falls back to FAISS-only retrieval gracefully).
+    """
+    enabled = os.environ.get("RERANKER_ENABLED", "false").lower() in ("1", "true", "yes")
+    if not enabled:
+        return None
+    try:
+        from triage_iq.models.reranker import DEFAULT_RERANKER_MODEL, Reranker
+        model_id = os.environ.get("RERANKER_MODEL", DEFAULT_RERANKER_MODEL)
+        logger.info("Loading reranker: %s", model_id)
+        return Reranker(model_id=model_id)
+    except Exception as exc:
+        logger.error("Reranker load failed (%s) — falling back to FAISS-only", exc)
+        return None
 
 
 def _load_predictor(models_dir: Path, slug: str):

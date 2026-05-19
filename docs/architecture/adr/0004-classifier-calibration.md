@@ -40,7 +40,11 @@ confidence signals.
 
 T < 1 on both repos: the classifier is underconfident, and temperature scaling sharpens
 the distribution toward its actual accuracy. Argmax is preserved by construction (scaling
-logits by a constant before softmax does not change the argmax).
+logits by a constant before softmax does not change the argmax). T < 1 (rather than the
+more common T > 1 overconfidence pattern) is consistent with `class_weight="balanced"`
+under extreme label imbalance: the balanced weighting suppresses logit magnitude on
+majority classes, squashing the output distribution and producing the observed mean
+confidence of 0.19 against mean accuracy of 0.69 (baseline audit §E).
 
 **T3 — Isotonic calibration robustness:**
 

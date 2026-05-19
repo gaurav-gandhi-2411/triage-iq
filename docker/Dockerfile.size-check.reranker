@@ -1,0 +1,61 @@
+# Throwaway Dockerfile for W1.3 image-size measurement only.
+# Adds mxbai-rerank-base-v1 pre-bake on top of the base variant.
+# DO NOT use for production deployment.
+
+FROM python:3.13-slim AS deps
+
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential curl libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir \
+    torch --index-url https://download.pytorch.org/whl/cpu
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+ENV HF_HOME=/build/hf_cache
+RUN python -c "\
+from sentence_transformers import SentenceTransformer; \
+SentenceTransformer('BAAI/bge-base-en-v1.5'); \
+print('BGE model cached')"
+
+RUN python -c "\
+from sentence_transformers import CrossEncoder; \
+CrossEncoder('mixedbread-ai/mxbai-rerank-base-v1', max_length=512); \
+print('mxbai reranker cached')"
+
+
+FROM python:3.13-slim AS final
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=deps /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=deps /usr/local/bin /usr/local/bin
+
+ENV HF_HOME=/app/hf_cache
+COPY --from=deps /build/hf_cache /app/hf_cache
+
+COPY src/ src/
+COPY pyproject.toml .
+RUN pip install --no-cache-dir --no-deps -e .
+
+COPY data/models/component_classifier_*.pkl   data/models/
+COPY data/models/dup_index_microsoft_vscode_bge   data/models/dup_index_microsoft_vscode_bge
+COPY data/models/dup_index_kubernetes_kubernetes_bge   data/models/dup_index_kubernetes_kubernetes_bge
+COPY data/models/resolution_predictor_*.pkl   data/models/
+COPY data/processed/microsoft_vscode_temporal_train.parquet   data/processed/
+COPY data/processed/kubernetes_kubernetes_temporal_train.parquet   data/processed/
+
+ENV DATA_DIR=/app/data PORT=8080 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
+
+RUN useradd -m -u 1000 appuser && chown -R appuser /app
+USER appuser
+EXPOSE 8080
+CMD uvicorn triage_iq.api.app:app --host 0.0.0.0 --port "${PORT}" --workers 1

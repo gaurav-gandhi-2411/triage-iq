@@ -1,0 +1,34 @@
+# Exclude large model files not used in production image
+data/models/distilbert_component_*
+data/models/dup_index_*_minilm
+# Exclude dev/eval data not needed in image
+data/llm_cache.sqlite
+data/triage_eval_checkpoint.jsonl
+data/judge_scores_checkpoint_*.jsonl
+data/gold_duplicates.parquet
+data/*.parquet
+data/*.csv
+# Exclude dev artifacts
+notebooks/
+reports/
+evals/
+scripts/
+tests/
+docs/
+.git/
+.claude/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.env
+*.env
+# Dockerfile variants (not needed in build)
+docker/Dockerfile.prod.reranker

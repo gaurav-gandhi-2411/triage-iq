@@ -123,6 +123,27 @@ free-tier keys for `gemini-2.5-flash` have **20 RPD**. Upgrading to a paid Googl
 AI Studio project is required to reach 1,500 RPD. Historical archive:
 `reports/_archive/2026-05-19-gemini-20rpd-confirmed.md`.
 
+## 2026-05-19 Update #3 — W1.2 Cohere eval complete; cache eliminates re-cost concern
+
+Full 180/180 judge calls (60 issues × 3 systems) with `command-a-03-2025` completed
+for the W1.2 calibration eval.
+
+| Run | Wall time | Cohere calls | Result |
+|---|---|---|---|
+| Warm-up (cold cache) | 1974.5s | 180 (live) | 10.83/15 |
+| Verify (warm cache, W2.A) | 9.2s | 0 (cache hits) | 10.83/15 |
+
+W1.2 vs W1.1 delta: +0.43 (+2.89pp). See ADR-0004 verdict section for per-dimension detail.
+
+The W2.A LLM response cache (ADR-0005) retroactively eliminates the re-cost concern: future
+Cohere re-runs against a warm cache cost 0 Cohere tokens. The 18% of monthly trial budget
+consumed by the W1.2 warm-up is non-recurring for identical prompts.
+
+**Llama-70b retrofit:** Pending Groq TPD reset. Will use warm triage cache so only judge
+calls consume tokens (~180K, no triage tokens). Result will be appended to ADR-0004 verdict.
+
+---
+
 ## 2026-05-19 Update #2 — Cohere Command A (Trial) is the working free-tier judge path
 
 After both Groq and Gemini free tiers proved insufficient, **Cohere Command A

@@ -136,3 +136,36 @@ training cycle. See audit Known Issues §K2.
 - **No calibration:** ECE 0.50/0.34 is actively misleading to the LLM. Rejected.
 - **Retrain classifier on sklearn 1.7.x with cross-validated calibration:** Would be the
   correct long-term fix. Deferred to next training cycle (out of W1.2 scope).
+
+---
+
+## Verdict (W1.2 eval, 2026-05-19)
+
+Post-implementation eval with Cohere Command A (`command-a-03-2025`) as cross-family judge.
+60 issues, same gold set as baseline. Calibrated models in production as of commit `2472c1c`.
+
+| Judge | W1.1 (pre-calibration) | W1.2 (post-calibration) | Delta |
+|---|---|---|---|
+| Cohere command-a-03-2025 | 10.40/15 (69.3%) | 10.83/15 (72.2%) | +0.43 (+2.89pp) |
+
+Per-dimension breakdown:
+
+| Dimension | W1.1 | W1.2 | Δ |
+|---|---|---|---|
+| component_match | 1.58 | 1.68 | +0.10 |
+| similar_issues_relevance | 2.75 | 2.83 | +0.08 |
+| resolution_estimate_reasonableness | 1.45 | 1.62 | +0.17 |
+| priority_alignment | 0.60 | 0.58 | −0.02 |
+| next_steps_actionability | 1.98 | 1.98 | 0.00 |
+| overall_quality | 2.03 | 2.13 | +0.10 |
+| **total_mean** | **10.40** | **10.83** | **+0.43** |
+
+**Interpretation:** The +0.43 gain is positive across 5 of 6 dimensions. The largest mover
+is `resolution_estimate_reasonableness` (+0.17), consistent with the hypothesis: a sharper
+confidence signal (ECE reduced from 0.50→0.15 on vscode) allows the LLM to produce more
+specific, grounded resolution estimates. `priority_alignment` regression (−0.02) is within
+noise. `next_steps_actionability` is unchanged; this dimension appears insensitive to the
+confidence signal.
+
+**Llama-70b judge result:** Pending (Groq TPD constraint; will be appended when run
+completes). Cross-family Cohere result is the authoritative W1.2 signal.

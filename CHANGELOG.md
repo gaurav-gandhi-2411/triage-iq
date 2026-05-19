@@ -12,19 +12,27 @@ This file documents *what matters and why*, not every commit.
 
 ## [Unreleased]
 
-### Changed
+---
 
-- Eval: cross-family judge validation completed on Cohere Command A (Trial key, `command-a-03-2025`).
-  Full 180/180 scores (n=60 issues × 3 systems). Verdict: r=0.73 vs llama-3.3-70b-versatile,
-  gap −3.6pp on Full System — default judge retained (ADR-0003). Groq TPD non-viable at n=60
-  and Gemini 2.5 Flash free tier confirmed at 20 RPD (not 1,500) — both documented in ADR-0002
-  amendments. Cohere Trial is the established cross-family sanity-check path going forward.
+## W2.A — LLM Response Cache (2026-05-19)
 
-- API: `/triage` endpoint declares `response_model=TriagePlan`; OpenAPI spec now includes
-  `TriagePlan` and `SimilarIssue` in `components/schemas` and a typed 200 response ref.
-  No runtime change — endpoint still returns `JSONResponse` directly. Unblocks UI OpenAPI
-  codegen (ADR-0001). Note: `_request_id` and `_llm_status` are injected post-serialization
-  and are not part of the schema; UI types them as an intersection.
+### Added
+
+- LLM response cache (`src/triage_iq/cache/`): opt-in SQLite-backed cache keyed on
+  SHA-256 of canonical request JSON (`schema_version + provider + model + messages +
+  temperature + max_tokens`, plus `response_format` for Cohere structured output).
+  Enabled via `LLM_CACHE_ENABLED=true`. Default: disabled. Thread-safe
+  (`threading.Lock` + WAL mode). Cache hits return in <5 ms; misses fall through to live API.
+  Integrated in `TriageAssistant`, `TriageJudge` (all three providers), `/triage` endpoint,
+  and `scripts/11_evaluate_triage.py`. Four Prometheus metrics: `triage_llm_cache_hits_total`,
+  `triage_llm_cache_misses_total`, `triage_llm_cache_size_bytes`, `triage_llm_cache_entries`.
+  Admin CLI: `scripts/13_cache_admin.py` (stats / clear / clear-provider / clear-model).
+  Validated: cold→warm on 180 Cohere judge calls, 1974.5s→9.2s (214×), 100% hit rate,
+  0.000 score drift. ADR-0005.
+
+---
+
+## W1.2 — Classifier Confidence Calibration + Cross-Family Judge Verdict (2026-05-19)
 
 ### Added
 
@@ -41,13 +49,30 @@ This file documents *what matters and why*, not every commit.
 - Cross-family judge support: `TriageJudge` accepts `provider` param; `provider="gemini"`
   routes to `google-genai`; `provider="groq"` (default) is unchanged. ADR-0002 documents
   three failed candidates (gemma2-9b-it decommissioned; gemini-2.5-flash 20 RPD free tier;
-  gemini-1.5-flash deprecated) before settling on `qwen/qwen3-32b` via Groq.
+  gemini-1.5-flash deprecated) before settling on `qwen/qwen3-32b` via Groq, then pivoting
+  to Cohere Command A as the working free-tier cross-family judge path.
 - `scripts/11_evaluate_triage.py` now accepts `--judge-model`, `--judge-provider`,
   and `--output-file` CLI args (also via `TRIAGE_JUDGE_MODEL` / `TRIAGE_JUDGE_PROVIDER`
   env vars). Judge checkpoint is scoped per model (`judge_scores_checkpoint_{slug}.jsonl`).
   `_is_tpd_error` narrowed to Groq-specific keywords so Gemini 429s don't trigger TPD exit.
 - Baseline llama-70b judge results archived at `reports/triage_results_judge_llama70b.json`
   for before/after comparison.
+
+### Changed
+
+- Eval: cross-family judge validation completed on Cohere Command A (Trial key, `command-a-03-2025`).
+  Full 180/180 scores (n=60 issues × 3 systems). Cross-family verdict: W1.2 scores 10.83/15
+  (72.2%) vs W1.1 10.40/15 (69.3%), +0.43 (+2.89pp). Calibration improvement concentrated in
+  `resolution_estimate_reasonableness` (+0.17) and `component_match`/`overall_quality` (+0.10
+  each). Default Llama judge retained (ADR-0003). Groq TPD non-viable at n=60 and Gemini 2.5
+  Flash free tier confirmed at 20 RPD (not 1,500) — documented in ADR-0002 amendments.
+  Cohere Trial is the established cross-family sanity-check path going forward.
+
+- API: `/triage` endpoint declares `response_model=TriagePlan`; OpenAPI spec now includes
+  `TriagePlan` and `SimilarIssue` in `components/schemas` and a typed 200 response ref.
+  No runtime change — endpoint still returns `JSONResponse` directly. Unblocks UI OpenAPI
+  codegen (ADR-0001). Note: `_request_id` and `_llm_status` are injected post-serialization
+  and are not part of the schema; UI types them as an intersection.
 
 ### Documentation
 
@@ -56,7 +81,8 @@ This file documents *what matters and why*, not every commit.
   as of commit `dbde81679207fb521fe5c65eb91bdf30261f2246`.
 - ADR infrastructure (`docs/architecture/adr/`): MADR-lite template, README, and first
   real ADR (ADR-0001: keep repos split, resolve type drift via openapi-typescript).
-- ADR-0002: cross-family judge selection — Gemini 2.5 Flash via Google AI Studio.
+- ADR-0002: cross-family judge selection (three iterations + Cohere pivot documented).
+- ADR-0004: temperature scaling decision, diagnostics, and verdict (W1.1→W1.2 delta).
 - Contributing discipline (`docs/CONTRIBUTING.md`): change-documentation requirements
   for every substantive PR.
 

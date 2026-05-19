@@ -1,0 +1,20 @@
+{
+  "microsoft_vscode": {
+    "repo": "microsoft_vscode",
+    "T_opt": 0.2981,
+    "ece_before_val": 0.4995,
+    "ece_after_val": 0.1458,
+    "acc_test_before": 0.6898,
+    "acc_test_after": 0.6898,
+    "acc_test_delta_pp": 0.0
+  },
+  "kubernetes_kubernetes": {
+    "repo": "kubernetes_kubernetes",
+    "T_opt": 0.3234,
+    "ece_before_val": 0.3427,
+    "ece_after_val": 0.1309,
+    "acc_test_before": 0.514,
+    "acc_test_after": 0.514,
+    "acc_test_delta_pp": 0.0
+  }
+}

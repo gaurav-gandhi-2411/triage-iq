@@ -28,6 +28,16 @@ This file documents *what matters and why*, not every commit.
 
 ### Added
 
+- Calibration: temperature scaling for component classifier probability estimates.
+  `TemperatureScaler` class in `component_classifier.py` scales LR logits by `1/T` before
+  softmax (T=0.2981 vscode, T=0.3234 kubernetes), fitted by minimising NLL on val split.
+  ECE: vscode 0.50→0.15 (val), kubernetes 0.34→0.13 (val). argmax preserved; test accuracy
+  unchanged (+0.0pp on both repos). Calibrator saved inside classifier pkl; loader has
+  graceful fallback (`calibrator=None` → raw proba). `triage.py` uses calibrated
+  probabilities. ADR-0004. Diagnostic script `scripts/12b_calibration_diagnostic.py`
+  documents T1 leakage audit, T2 temperature scaling vs T3 isotonic robustness
+  (isotonic accuracy gain was noise: bootstrap CI crosses zero on both repos).
+
 - Cross-family judge support: `TriageJudge` accepts `provider` param; `provider="gemini"`
   routes to `google-genai`; `provider="groq"` (default) is unchanged. ADR-0002 documents
   three failed candidates (gemma2-9b-it decommissioned; gemini-2.5-flash 20 RPD free tier;

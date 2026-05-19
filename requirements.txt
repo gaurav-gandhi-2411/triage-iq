@@ -17,7 +17,7 @@ tqdm>=4.67.3
 pyarrow>=14.0
 
 # ML
-scikit-learn>=1.6,<1.7
+scikit-learn>=1.6,<1.8
 lightgbm>=4.0
 transformers>=4.40
 sentence-transformers>=2.2,<3.0

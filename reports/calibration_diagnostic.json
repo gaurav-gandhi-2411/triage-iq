@@ -1,0 +1,286 @@
+{
+  "microsoft_vscode": {
+    "repo": "microsoft_vscode",
+    "hard_stop": null,
+    "chosen_method": "temperature_scaling",
+    "ece_before_val": 0.4995,
+    "t1": {
+      "train_rows": 1488,
+      "val_rows": 187,
+      "test_rows": 187,
+      "total_rows": 1862,
+      "overlap_train_val": 0,
+      "overlap_train_test": 0,
+      "overlap_val_test": 0,
+      "leakage_detected": false,
+      "split_random_state": 42,
+      "split_fn": "stratified_classifier_split(random_state=42)",
+      "calibrator_on_load": "None"
+    },
+    "t2": {
+      "T_opt": 0.2981,
+      "ece_val": 0.1458,
+      "ece_test": 0.1381,
+      "acc_test_before": 0.6898,
+      "acc_test_after": 0.6898,
+      "acc_test_delta_pp": 0.0
+    },
+    "t3": {
+      "ece_val": 0.1527,
+      "ece_test": 0.0718,
+      "acc_test_before": 0.6898,
+      "acc_test_after": 0.738,
+      "acc_test_delta_pp": 4.81,
+      "n_classes_improved": 7,
+      "n_classes_degraded": 8,
+      "top3_movers_contribution_pp": 320.83,
+      "top_movers": [
+        {
+          "class": "suggest",
+          "n": 1,
+          "acc_before": 1.0,
+          "acc_after": 0.0,
+          "delta_pp": -100.0
+        },
+        {
+          "class": "php",
+          "n": 2,
+          "acc_before": 0.5,
+          "acc_after": 1.0,
+          "delta_pp": 50.0
+        },
+        {
+          "class": "typescript",
+          "n": 9,
+          "acc_before": 0.2222,
+          "acc_after": 0.6667,
+          "delta_pp": 44.44
+        },
+        {
+          "class": "javascript",
+          "n": 14,
+          "acc_before": 0.5714,
+          "acc_after": 0.9286,
+          "delta_pp": 35.71
+        },
+        {
+          "class": "l10n-platform",
+          "n": 3,
+          "acc_before": 0.3333,
+          "acc_after": 0.6667,
+          "delta_pp": 33.33
+        },
+        {
+          "class": "json",
+          "n": 4,
+          "acc_before": 1.0,
+          "acc_after": 0.75,
+          "delta_pp": -25.0
+        },
+        {
+          "class": "tasks",
+          "n": 9,
+          "acc_before": 0.8889,
+          "acc_after": 0.6667,
+          "delta_pp": -22.22
+        },
+        {
+          "class": "css-less-scss",
+          "n": 5,
+          "acc_before": 1.0,
+          "acc_after": 0.8,
+          "delta_pp": -20.0
+        },
+        {
+          "class": "git",
+          "n": 5,
+          "acc_before": 0.8,
+          "acc_after": 0.6,
+          "delta_pp": -20.0
+        },
+        {
+          "class": "install-update",
+          "n": 5,
+          "acc_before": 0.4,
+          "acc_after": 0.2,
+          "delta_pp": -20.0
+        }
+      ],
+      "confidence_buckets": [
+        {
+          "margin_bucket": "<0.05",
+          "n": 86,
+          "acc_raw": 0.5581,
+          "acc_iso": 0.6163,
+          "delta_pp": 5.81
+        },
+        {
+          "margin_bucket": "0.05-0.15",
+          "n": 57,
+          "acc_raw": 0.7368,
+          "acc_iso": 0.7719,
+          "delta_pp": 3.51
+        },
+        {
+          "margin_bucket": "0.15-0.30",
+          "n": 23,
+          "acc_raw": 0.7826,
+          "acc_iso": 0.8696,
+          "delta_pp": 8.7
+        },
+        {
+          "margin_bucket": ">0.30",
+          "n": 21,
+          "acc_raw": 1.0,
+          "acc_iso": 1.0,
+          "delta_pp": 0.0
+        }
+      ],
+      "bootstrap_ci_low_pp": -0.53,
+      "bootstrap_ci_high_pp": 10.16,
+      "ci_lower_bound_positive": false
+    }
+  },
+  "kubernetes_kubernetes": {
+    "repo": "kubernetes_kubernetes",
+    "hard_stop": null,
+    "chosen_method": "temperature_scaling",
+    "ece_before_val": 0.3427,
+    "t1": {
+      "train_rows": 2284,
+      "val_rows": 286,
+      "test_rows": 286,
+      "total_rows": 2856,
+      "overlap_train_val": 0,
+      "overlap_train_test": 0,
+      "overlap_val_test": 0,
+      "leakage_detected": false,
+      "split_random_state": 42,
+      "split_fn": "stratified_classifier_split(random_state=42)",
+      "calibrator_on_load": "None"
+    },
+    "t2": {
+      "T_opt": 0.3234,
+      "ece_val": 0.1309,
+      "ece_test": 0.1558,
+      "acc_test_before": 0.514,
+      "acc_test_after": 0.514,
+      "acc_test_delta_pp": 0.0
+    },
+    "t3": {
+      "ece_val": 0.1263,
+      "ece_test": 0.0262,
+      "acc_test_before": 0.514,
+      "acc_test_after": 0.5245,
+      "acc_test_delta_pp": 1.05,
+      "n_classes_improved": 8,
+      "n_classes_degraded": 12,
+      "top3_movers_contribution_pp": 699.3,
+      "top_movers": [
+        {
+          "class": "provider/gcp",
+          "n": 1,
+          "acc_before": 1.0,
+          "acc_after": 0.0,
+          "delta_pp": -100.0
+        },
+        {
+          "class": "rkt",
+          "n": 1,
+          "acc_before": 1.0,
+          "acc_after": 0.0,
+          "delta_pp": -100.0
+        },
+        {
+          "class": "test-infra",
+          "n": 32,
+          "acc_before": 0.6562,
+          "acc_after": 0.0938,
+          "delta_pp": -56.25
+        },
+        {
+          "class": "controller-manager",
+          "n": 2,
+          "acc_before": 0.5,
+          "acc_after": 0.0,
+          "delta_pp": -50.0
+        },
+        {
+          "class": "monitoring",
+          "n": 2,
+          "acc_before": 0.5,
+          "acc_after": 1.0,
+          "delta_pp": 50.0
+        },
+        {
+          "class": "platform/vagrant",
+          "n": 4,
+          "acc_before": 1.0,
+          "acc_after": 0.5,
+          "delta_pp": -50.0
+        },
+        {
+          "class": "test",
+          "n": 39,
+          "acc_before": 0.4615,
+          "acc_after": 0.8205,
+          "delta_pp": 35.9
+        },
+        {
+          "class": "client-libraries",
+          "n": 3,
+          "acc_before": 0.6667,
+          "acc_after": 0.3333,
+          "delta_pp": -33.33
+        },
+        {
+          "class": "upgrade",
+          "n": 3,
+          "acc_before": 1.0,
+          "acc_after": 0.6667,
+          "delta_pp": -33.33
+        },
+        {
+          "class": "api",
+          "n": 40,
+          "acc_before": 0.45,
+          "acc_after": 0.775,
+          "delta_pp": 32.5
+        }
+      ],
+      "confidence_buckets": [
+        {
+          "margin_bucket": "<0.05",
+          "n": 224,
+          "acc_raw": 0.4732,
+          "acc_iso": 0.4732,
+          "delta_pp": 0.0
+        },
+        {
+          "margin_bucket": "0.05-0.15",
+          "n": 40,
+          "acc_raw": 0.575,
+          "acc_iso": 0.65,
+          "delta_pp": 7.5
+        },
+        {
+          "margin_bucket": "0.15-0.30",
+          "n": 13,
+          "acc_raw": 0.6923,
+          "acc_iso": 0.7692,
+          "delta_pp": 7.69
+        },
+        {
+          "margin_bucket": ">0.30",
+          "n": 9,
+          "acc_raw": 1.0,
+          "acc_iso": 0.8889,
+          "delta_pp": -11.11
+        }
+      ],
+      "bootstrap_ci_low_pp": -4.9,
+      "bootstrap_ci_high_pp": 7.69,
+      "ci_lower_bound_positive": false
+    }
+  }
+}

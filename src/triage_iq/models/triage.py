@@ -186,10 +186,10 @@ class TriageAssistant:
         body = str(issue.get("body_clean", issue.get("body", "")))
         text = f"{title}. {body}"
 
-        # System 1: TF-IDF top-3
+        # System 1: TF-IDF top-3 (calibrated probabilities when calibrator is present)
         t1 = time.perf_counter()
         try:
-            proba = self.classifier.predict_proba(pd.Series([text]))
+            proba = self.classifier.predict_proba_calibrated(pd.Series([text]))
             classes = self.classifier.classes_()
             top_idx = np.argsort(proba[0])[::-1][:3]
             classifier_top3 = [

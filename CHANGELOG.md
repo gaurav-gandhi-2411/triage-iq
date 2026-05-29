@@ -14,6 +14,28 @@ This file documents *what matters and why*, not every commit.
 
 ---
 
+## W1.3 — Cross-Encoder Reranker Experiment (2026-05-30)
+
+### Not merged
+
+W1.3 investigated two-stage retrieval (FAISS top-50 → cross-encoder rerank → top-5) for duplicate
+issue detection. Two screening slates, seven candidates. No candidate improved both corpora.
+ADR-0006 (Rejected) documents the full arc.
+
+**Slate 1 — search-relevance CEs:** mxbai-rerank-base-v1 (−16pp vscode, ±0 k8s),
+bge-reranker-v2-m3 (−8pp vscode, +6pp k8s), jina (CC-BY-NC-4.0 + BFloat16 failure).
+Root cause: search-relevance training signal ≠ duplicate-detection signal.
+
+**Slate 2 — duplicate/STS-trained CEs:** quora-distilroberta (−4pp vscode, −14pp k8s),
+quora-roberta (−9pp vscode, −10pp k8s), stsb-distilroberta (−6pp vscode, −17pp k8s),
+bge-reranker-base (−5pp vscode, −5pp k8s). Root cause: informal NLP training data does not
+generalise to technical GitHub issues (k8s infra vocabulary, vscode feature diversity).
+
+Canonical baseline preserved: vscode R@5=0.367, k8s R@5=0.410.
+79/79 tests pass. `Reranker` infrastructure stays in codebase for future domain-specific fine-tuning.
+
+---
+
 ## W2.A — LLM Response Cache (2026-05-19)
 
 ### Added

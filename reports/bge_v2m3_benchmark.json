@@ -1,0 +1,54 @@
+[
+  {
+    "repo": "microsoft_vscode",
+    "model": "baseline_bge_k20",
+    "n_eval": 100,
+    "mrr": 0.3849209391399793,
+    "recall_at_1": 0.3,
+    "recall_at_5": 0.47,
+    "recall_at_10": 0.55,
+    "latency_p50_ms": 39.33410000172444,
+    "latency_p95_ms": 52.57043498713756
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "model": "baseline_bge_k20",
+    "n_eval": 100,
+    "mrr": 0.2863060776942356,
+    "recall_at_1": 0.18,
+    "recall_at_5": 0.43,
+    "recall_at_10": 0.52,
+    "latency_p50_ms": 38.98374999698717,
+    "latency_p95_ms": 48.97820998885436
+  },
+  {
+    "repo": "microsoft_vscode",
+    "model": "bge-reranker-v2-m3",
+    "model_id": "BAAI/bge-reranker-v2-m3",
+    "size_mb_approx": 568,
+    "license": "Apache-2.0",
+    "n_eval": 100,
+    "retrieval_k": 50,
+    "mrr": 0.35083384113474303,
+    "recall_at_1": 0.26,
+    "recall_at_5": 0.39,
+    "recall_at_10": 0.53,
+    "latency_p50_ms": 3307.763499993598,
+    "latency_p95_ms": 7121.540979975543
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "model": "bge-reranker-v2-m3",
+    "model_id": "BAAI/bge-reranker-v2-m3",
+    "size_mb_approx": 568,
+    "license": "Apache-2.0",
+    "n_eval": 100,
+    "retrieval_k": 50,
+    "mrr": 0.36667584379222307,
+    "recall_at_1": 0.27,
+    "recall_at_5": 0.49,
+    "recall_at_10": 0.54,
+    "latency_p50_ms": 889.8283500020625,
+    "latency_p95_ms": 1472.4663699817029
+  }
+]

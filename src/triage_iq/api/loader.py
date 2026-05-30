@@ -107,7 +107,7 @@ def _load_classifier(models_dir: Path, slug: str):
 
 def _load_detector(models_dir: Path, slug: str):
     from triage_iq.models.similar_issues import SimilarIssueRetriever
-    p = models_dir / f"dup_index_{slug}_bge"  # GCS artifact name kept until GCS rename (see ADR-0008)
+    p = models_dir / f"dup_index_{slug}_bge"  # TODO(#3): GCS artifact rename pending. See https://github.com/gaurav-gandhi-2411/triage-iq/issues/3
     if p.exists():
         return SimilarIssueRetriever.load(str(p))
     raise FileNotFoundError(f"Detector not found: {p}")

@@ -144,9 +144,3 @@ class SimilarIssueRetriever:
         obj.issue_numbers = meta["issue_numbers"]
         obj.texts = meta["texts"]
         return obj
-
-
-# ---------------------------------------------------------------------------
-# Backward-compat alias — remove after all callers are updated
-# ---------------------------------------------------------------------------
-DuplicateDetector = SimilarIssueRetriever

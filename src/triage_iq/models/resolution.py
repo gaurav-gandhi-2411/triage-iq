@@ -1,17 +1,43 @@
-"""LightGBM regression for issue resolution time prediction.
+"""LightGBM resolution-time predictor.
 
-Target: log1p(resolution_hours). Heavy-tailed distribution requires log transform.
-Quantile regression (Q10/Q90) provides 80% confidence intervals.
-All features computed from information available at issue creation time only.
+Primary output: ordinal bucket classifier (hours/days/weeks/months/long).
+Secondary output: point regression + Q10/Q90 intervals (kept for comparison).
+All features use only information available at issue creation time. See ADR-0009.
+
+Bucket boundaries (days): [1, 7, 30, 180]
+  hours   < 1 day
+  days    1–7 days
+  weeks   7–30 days
+  months  30–180 days
+  long    > 180 days
 """
 
 import logging
 from pathlib import Path
+from typing import Literal
 
 import joblib
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
+
+# Bucket boundaries and labels — data-driven from k8s/vscode training distributions.
+# Boundaries chosen at natural human-time units that straddle quartile breakpoints.
+# k8s train Q50=1.5d, Q75=14d, Q90=157d. See ADR-0009 T2.4.
+BUCKET_BREAKS_DAYS: list[float] = [1.0, 7.0, 30.0, 180.0]
+BUCKET_LABELS: list[str] = ["hours", "days", "weeks", "months", "long"]
+ResolutionBucket = Literal["hours", "days", "weeks", "months", "long"]
+
+
+def hours_to_bucket(hours: np.ndarray | float) -> np.ndarray:
+    """Map resolution_hours to integer bucket index 0–4."""
+    days = np.asarray(hours, dtype=float) / 24.0
+    out  = np.full(days.shape if days.ndim > 0 else (1,), len(BUCKET_BREAKS_DAYS), dtype=int)
+    for i, b in enumerate(BUCKET_BREAKS_DAYS):
+        mask = days < b
+        out  = np.where(mask & (out == len(BUCKET_BREAKS_DAYS)), i, out)
+        days = np.where(mask, np.inf, days)
+    return out
 
 logger = logging.getLogger(__name__)
 
@@ -69,20 +95,12 @@ def engineer_features(
     repo_start = created.min()
     feats["days_since_repo_start"] = (created - repo_start).dt.days
 
-    # ── Label features ────────────────────────────────────────────
-    _component = df["component"] if "component" in df.columns else pd.Series(pd.NA, index=df.index)
-    feats["has_component"] = _component.notna().astype(int)
-    feats["has_type"] = df["type"].notna().astype(int) if "type" in df.columns else 0
-    feats["has_priority"] = df["priority"].notna().astype(int) if "priority" in df.columns else 0
-    feats["num_assignees"] = df.get("num_assignees", pd.Series(0, index=df.index)).fillna(0)
-
-    # Component one-hot (top-10 per training set)
-    if train_df is not None and "component" in train_df.columns:
-        top_components = train_df["component"].value_counts().head(10).index.tolist()
-    else:
-        top_components = []
-    for comp in top_components:
-        feats[f"comp_{comp.replace('/', '_').replace('-', '_')}"] = (_component == comp).astype(int)
+    # ── Label features excluded (triage-assigned, not creation-time) ──
+    # has_priority, has_component, has_type, num_assignees, and comp_* one-hots
+    # are omitted: they are assigned during triage AFTER issue creation and are
+    # not available at the time a new issue arrives. Including them in training
+    # creates a spurious correlation with resolution time (e.g., has_priority
+    # fill: fast issues 6.9% vs slow issues 93.1%). See ADR-0009 T1.4.
 
     # ── Author features (leak-proof: only past info) ──────────────
     if train_df is not None:
@@ -138,12 +156,13 @@ def engineer_features(
 # ------------------------------------------------------------------
 
 class ResolutionTimePredictor:
-    """LightGBM regression for days-to-close prediction.
+    """LightGBM resolution-time predictor.
 
-    Trains three models per repo:
-    - Point predictor (MAE, log-scale target)
-    - Lower quantile (Q10)
-    - Upper quantile (Q90)
+    Primary output: ordinal bucket (hours/days/weeks/months/long) via predict_bucket().
+    Secondary output: point estimate + Q10/Q90 interval via predict() / predict_intervals().
+
+    The bucket classifier is the recommended production output. The point regression
+    is retained for ablation comparisons and as a fallback. See ADR-0009.
     """
 
     def __init__(self, repo: str) -> None:
@@ -151,6 +170,10 @@ class ResolutionTimePredictor:
         self.model_point: lgb.Booster | None = None
         self.model_q10: lgb.Booster | None = None
         self.model_q90: lgb.Booster | None = None
+        self.model_bucket: lgb.Booster | None = None
+        # Per-repo training-distribution bucket prior (used as fallback when
+        # bucket model has low confidence — e.g., vscode where obo=55%).
+        self.bucket_train_distribution: dict[str, float] = {}
         self.pca = None
         self.top_components: list[str] = []
         self.feature_names: list[str] = []
@@ -220,6 +243,29 @@ class ResolutionTimePredictor:
             logger.info("[%s] Q%.0f model: %d rounds", self.repo, alpha * 100,
                         model_q.best_iteration)
 
+        # Bucket classifier (primary production output)
+        y_train_b = hours_to_bucket(y_train.values)
+        y_val_b   = hours_to_bucket(y_val.values)
+        bucket_params = {
+            "objective": "multiclass", "num_class": len(BUCKET_LABELS),
+            "metric": "multi_logloss", "learning_rate": 0.05, "num_leaves": 31,
+            "min_data_in_leaf": 30, "feature_fraction": 0.8,
+            "bagging_fraction": 0.8, "bagging_freq": 5, "lambda_l2": 0.1,
+            "feature_pre_filter": False, "verbose": -1, "n_jobs": -1,
+            "is_unbalance": True,
+        }
+        dt_b = lgb.Dataset(X_train, label=y_train_b)
+        dv_b = lgb.Dataset(X_val,   label=y_val_b,   reference=dt_b)
+        self.model_bucket = lgb.train(
+            bucket_params, dt_b, num_boost_round=500, valid_sets=[dv_b],
+            callbacks=[lgb.early_stopping(40, verbose=False), lgb.log_evaluation(200)],
+        )
+        train_bucket_counts = {BUCKET_LABELS[i]: int((y_train_b == i).sum()) for i in range(5)}
+        total = sum(train_bucket_counts.values())
+        self.bucket_train_distribution = {k: v / total for k, v in train_bucket_counts.items()}
+        logger.info("[%s] Bucket model: %d rounds  train dist=%s",
+                    self.repo, self.model_bucket.best_iteration, train_bucket_counts)
+
         return self
 
     # ------------------------------------------------------------------
@@ -243,6 +289,30 @@ class ResolutionTimePredictor:
         upper = np.expm1(self.model_q90.predict(X)).clip(min=0)
         return lower, upper
 
+    def predict_bucket(self, X: pd.DataFrame) -> tuple[list[str], np.ndarray]:
+        """Return (bucket_labels, confidences) for each row.
+
+        bucket_labels: list of strings from BUCKET_LABELS (hours/days/weeks/months/long).
+        confidences: float array in [0, 1], the model's probability for the predicted bucket.
+
+        If model_bucket is not trained, falls back to the training-distribution prior.
+        """
+        if self.model_bucket is not None:
+            proba  = self.model_bucket.predict(X)  # shape (n, 5)
+            idx    = proba.argmax(axis=1)
+            labels = [BUCKET_LABELS[i] for i in idx]
+            confs  = proba[np.arange(len(idx)), idx]
+        else:
+            # Naive prior fallback: most frequent bucket from training distribution
+            if self.bucket_train_distribution:
+                top = max(self.bucket_train_distribution, key=self.bucket_train_distribution.get)  # type: ignore[arg-type]
+                top_prob = self.bucket_train_distribution[top]
+            else:
+                top, top_prob = "days", 0.33
+            labels = [top] * len(X)
+            confs  = np.full(len(X), top_prob)
+        return labels, confs
+
     # ------------------------------------------------------------------
     # Feature importance
     # ------------------------------------------------------------------
@@ -263,6 +333,8 @@ class ResolutionTimePredictor:
             "model_point": self.model_point,
             "model_q10": self.model_q10,
             "model_q90": self.model_q90,
+            "model_bucket": self.model_bucket,
+            "bucket_train_distribution": self.bucket_train_distribution,
             "pca": self.pca,
             "top_components": self.top_components,
             "feature_names": self.feature_names,
@@ -276,4 +348,9 @@ class ResolutionTimePredictor:
         for k, v in data.items():
             if k != "repo":
                 setattr(obj, k, v)
+        # Backward-compat: old pkl files lack bucket model fields
+        if not hasattr(obj, "model_bucket"):
+            obj.model_bucket = None
+        if not hasattr(obj, "bucket_train_distribution"):
+            obj.bucket_train_distribution = {}
         return obj

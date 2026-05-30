@@ -1,8 +1,10 @@
 # ADR-0009 — Resolution-Time Predictor Diagnosis (W4 Phase 1)
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-05-30  
 **Decider:** Gaurav Gandhi
+
+> **This diagnosis invalidates all previously reported resolution-predictor metrics (k8s +3.3%, vscode +19.1%); both were produced by distribution-shifted `closed_at` splits and must not be cited.**
 
 ---
 

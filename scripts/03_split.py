@@ -53,7 +53,11 @@ def main() -> None:
         logging.info("Loaded %s: %d rows", repo, len(df))
 
         # ── Time-based split for resolution time predictor ──
-        train, val, test = time_based_split(df)
+        # Filter to closed issues first (resolution_hours requires closed_at),
+        # then sort by created_at. See ADR-0009: sorting by closed_at causes
+        # systematic train/test target distribution shift.
+        closed_df = df[df["resolution_hours"].notna() & (df["resolution_hours"] > 0)].copy()
+        train, val, test = time_based_split(closed_df, timestamp_col="created_at")
         save_splits(train, val, test, prefix=f"{repo}_temporal", out_dir=args.processed_dir)
 
         # ── Stratified split for component classifier ──

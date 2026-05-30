@@ -30,14 +30,29 @@ class SimilarIssue(BaseModel):
 
 
 class TriagePlan(BaseModel):
-    """Structured triage plan produced by the LLM assistant."""
+    """Structured triage plan produced by the LLM assistant.
+
+    SCHEMA CHANGE (W4 Phase 2 — ADR-0009): expected_resolution_lower_days and
+    expected_resolution_upper_days have been replaced with resolution_bucket.
+    The previous float fields were produced by a broken closed_at-split model
+    with 0% CI coverage. Callers that used the float fields must be updated.
+    UI types require a coordinated update — see PR flag in W4 commit.
+    """
 
     predicted_component: str
     component_confidence: float = Field(ge=0.0, le=1.0)
     similar_issues: list[SimilarIssue] = Field(default_factory=list)
     expected_resolution_summary: str
-    expected_resolution_lower_days: float = Field(ge=0.0)
-    expected_resolution_upper_days: float = Field(ge=0.0)
+    resolution_bucket: str = Field(
+        default="days",
+        description="Coarse resolution-time bucket: hours/days/weeks/months/long. "
+                    "Based on ordinal bucket classifier; see ADR-0009.",
+    )
+    resolution_confidence_pct: float = Field(
+        default=33.0, ge=0.0, le=100.0,
+        description="Model confidence in resolution_bucket (0–100%). "
+                    "Values below 40% indicate low signal — treat as prior only.",
+    )
     priority_guess: Literal["low", "medium", "high"]
     priority_rationale: str
     suggested_assignee_class: str
@@ -49,11 +64,13 @@ class TriagePlan(BaseModel):
     def clamp_confidence(cls, v):
         return max(0.0, min(1.0, float(v)))
 
-    @model_validator(mode="after")
-    def upper_ge_lower(self):
-        if self.expected_resolution_upper_days < self.expected_resolution_lower_days:
-            self.expected_resolution_upper_days = self.expected_resolution_lower_days
-        return self
+    @field_validator("resolution_bucket", mode="before")
+    @classmethod
+    def validate_bucket(cls, v):
+        from triage_iq.models.resolution import BUCKET_LABELS
+        if str(v) not in BUCKET_LABELS:
+            return "days"  # safe default if LLM generates invalid value
+        return str(v)
 
 
 # ---------------------------------------------------------------------------
@@ -129,7 +146,6 @@ class TriageAssistant:
             0.0,
             elapsed - signals["_t_classify"] - signals["_t_retrieve"] - signals["_t_predict"],
         )
-        mid = (plan.expected_resolution_lower_days + plan.expected_resolution_upper_days) / 2.0
 
         metadata = {
             "system1_latency_ms": round(signals["_t_classify"] * 1000, 1),
@@ -145,7 +161,8 @@ class TriageAssistant:
                 8,
             ),
             "duplicate_count": len(plan.similar_issues),
-            "predicted_resolution_days_p50": round(mid, 1),
+            "resolution_bucket": plan.resolution_bucket,
+            "resolution_confidence_pct": plan.resolution_confidence_pct,
             "llm_status": llm_status,
             "llm_cache_hit": cache_hit,
         }
@@ -213,7 +230,7 @@ class TriageAssistant:
             similar_raw = []
         t_retrieve = time.perf_counter() - t2
 
-        # System 3: resolution prediction
+        # System 3: resolution bucket prediction
         t3 = time.perf_counter()
         try:
             from triage_iq.models.resolution import engineer_features
@@ -229,14 +246,12 @@ class TriageAssistant:
                     feats[col] = 0.0
             feats = feats[self.predictor.feature_names]
 
-            pred_hrs = self.predictor.predict(feats)[0]
-            lo_hrs, hi_hrs = self.predictor.predict_intervals(feats)
-            pred_days = pred_hrs / 24.0
-            lo_days = float(lo_hrs[0]) / 24.0
-            hi_days = float(hi_hrs[0]) / 24.0
+            buckets, confs = self.predictor.predict_bucket(feats)
+            resolution_bucket    = buckets[0]
+            resolution_conf_pct  = round(float(confs[0]) * 100, 1)
         except Exception as e:
             logger.warning("Resolution predictor failed: %s", e)
-            pred_days, lo_days, hi_days = 7.0, 1.0, 30.0
+            resolution_bucket, resolution_conf_pct = "days", 33.0
         t_predict = time.perf_counter() - t3
 
         prompt = build_triage_prompt(
@@ -244,18 +259,16 @@ class TriageAssistant:
             issue_body=body,
             classifier_top3=classifier_top3,
             similar_issues=similar_raw,
-            resolution_point_days=pred_days,
-            resolution_lower_days=lo_days,
-            resolution_upper_days=hi_days,
+            resolution_bucket=resolution_bucket,
+            resolution_confidence_pct=resolution_conf_pct,
             repo=self.repo,
         )
         return {
             "prompt": prompt,
             "classifier_top3": classifier_top3,
             "similar_raw": similar_raw,
-            "pred_days": pred_days,
-            "lo_days": lo_days,
-            "hi_days": hi_days,
+            "resolution_bucket": resolution_bucket,
+            "resolution_conf_pct": resolution_conf_pct,
             "_t_classify": t_classify,
             "_t_retrieve": t_retrieve,
             "_t_predict": t_predict,
@@ -353,8 +366,8 @@ class TriageAssistant:
             component_confidence=float(top.get("confidence", 0.0)),
             similar_issues=[],
             expected_resolution_summary="LLM response unparseable; estimate from predictor only.",
-            expected_resolution_lower_days=float(signals.get("lo_days", 1.0)),
-            expected_resolution_upper_days=float(signals.get("hi_days", 30.0)),
+            resolution_bucket=signals.get("resolution_bucket", "days"),
+            resolution_confidence_pct=float(signals.get("resolution_conf_pct", 33.0)),
             priority_guess="medium",
             priority_rationale="LLM parse failure — priority defaulting to medium.",
             suggested_assignee_class="unknown",

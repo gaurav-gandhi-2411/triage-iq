@@ -20,9 +20,9 @@ def _fake_plan() -> TriagePlan:
         predicted_component="editor",
         component_confidence=0.87,
         similar_issues=[SimilarIssue(number=1234, similarity=0.91, relevance_note="same crash")],
-        expected_resolution_summary="Likely fixable in 2–5 days",
-        expected_resolution_lower_days=2.0,
-        expected_resolution_upper_days=5.0,
+        expected_resolution_summary="Likely fixable within days",
+        resolution_bucket="days",
+        resolution_confidence_pct=61.0,
         priority_guess="medium",
         priority_rationale="No data loss; reproducible workaround exists",
         suggested_assignee_class="editor-core team",
@@ -42,7 +42,8 @@ def _fake_meta() -> dict:
         "groq_tokens_completion": 200,
         "estimated_cost_usd": 0.0001,
         "duplicate_count": 1,
-        "predicted_resolution_days_p50": 3.5,
+        "resolution_bucket": "days",
+        "resolution_confidence_pct": 61.0,
         "llm_status": "ok",
     }
 
@@ -113,7 +114,7 @@ def test_triage_returns_plan(client):
     assert body["predicted_component"] == "editor"
     assert 0.0 <= body["component_confidence"] <= 1.0
     assert isinstance(body["suggested_next_steps"], list)
-    assert body["expected_resolution_lower_days"] <= body["expected_resolution_upper_days"]
+    assert body["resolution_bucket"] in ("hours", "days", "weeks", "months", "long")
 
 
 def test_triage_includes_resolution_prediction(client):
@@ -131,11 +132,11 @@ def test_triage_includes_resolution_prediction(client):
     # System 2: similar issue retriever
     assert "similar_issues" in body
     assert isinstance(body["similar_issues"], list)
-    # System 3 & 4: resolution predictor feeds LLM context, LLM returns these
-    assert "expected_resolution_lower_days" in body
-    assert "expected_resolution_upper_days" in body
-    assert body["expected_resolution_lower_days"] >= 0
-    assert body["expected_resolution_upper_days"] >= body["expected_resolution_lower_days"]
+    # System 3 & 4: resolution predictor feeds LLM context, LLM returns bucket
+    assert "resolution_bucket" in body
+    assert body["resolution_bucket"] in ("hours", "days", "weeks", "months", "long")
+    assert "resolution_confidence_pct" in body
+    assert 0.0 <= body["resolution_confidence_pct"] <= 100.0
     # Request must include request_id and llm_status (end-to-end plumbing)
     assert "_request_id" in body
     assert "_llm_status" in body
@@ -213,8 +214,8 @@ _VALID_PLAN_JSON = _json.dumps({
     "component_confidence": 0.85,
     "similar_issues": [],
     "expected_resolution_summary": "3 days typical",
-    "expected_resolution_lower_days": 1.0,
-    "expected_resolution_upper_days": 5.0,
+    "resolution_bucket": "days",
+    "resolution_confidence_pct": 61.0,
     "priority_guess": "medium",
     "priority_rationale": "Standard bug",
     "suggested_assignee_class": "editor team",
@@ -226,9 +227,8 @@ _MINIMAL_SIGNALS = {
     "prompt": "test",
     "classifier_top3": [{"label": "editor", "confidence": 0.85}],
     "similar_raw": [],
-    "pred_days": 3.0,
-    "lo_days": 1.0,
-    "hi_days": 5.0,
+    "resolution_bucket": "days",
+    "resolution_conf_pct": 61.0,
     "_t_classify": 0.0,
     "_t_retrieve": 0.0,
     "_t_predict": 0.0,
@@ -525,9 +525,8 @@ def test_build_triage_prompt_contains_signals():
         similar_issues=[
             {"number": 1234, "score": 0.92, "text": "Same crash on paste with large text blocks."},
         ],
-        resolution_point_days=3.0,
-        resolution_lower_days=1.0,
-        resolution_upper_days=7.0,
+        resolution_bucket="days",
+        resolution_confidence_pct=61.0,
         repo="microsoft/vscode",
     )
     assert "microsoft/vscode" in prompt
@@ -535,5 +534,4 @@ def test_build_triage_prompt_contains_signals():
     assert "editor" in prompt
     assert "0.850" in prompt
     assert "#1234" in prompt
-    assert "3.0 days" in prompt
-    assert "[1.0d, 7.0d]" in prompt
+    assert "days" in prompt

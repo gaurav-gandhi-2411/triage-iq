@@ -1,0 +1,62 @@
+{
+  "kubernetes_kubernetes": {
+    "repo": "kubernetes_kubernetes",
+    "split": "created_at",
+    "features": "full_93_with_leaky",
+    "train_n": 11974,
+    "val_n": 1497,
+    "test_n": 1497,
+    "train_res_median_days": 1.58,
+    "train_created_at_span": [
+      "2014-06-06",
+      "2015-07-29"
+    ],
+    "test_created_at_span": [
+      "2015-09-02",
+      "2015-10-02"
+    ],
+    "test_res_min_days": 0.0,
+    "test_res_median_days": 3.91,
+    "test_bucket_distribution": {
+      "hours": 448,
+      "days": 448,
+      "weeks": 247,
+      "months": 153,
+      "long": 201
+    },
+    "naive_mae_days": 106.36,
+    "lgbm_mae_days": 100.24,
+    "improvement_pct": 5.75,
+    "ci_coverage_pct": 77.1
+  },
+  "microsoft_vscode": {
+    "repo": "microsoft_vscode",
+    "split": "created_at",
+    "features": "full_93_with_leaky",
+    "train_n": 3968,
+    "val_n": 496,
+    "test_n": 497,
+    "train_res_median_days": 4.39,
+    "train_created_at_span": [
+      "2015-10-13",
+      "2016-03-11"
+    ],
+    "test_created_at_span": [
+      "2016-03-21",
+      "2016-04-06"
+    ],
+    "test_res_min_days": 0.0,
+    "test_res_median_days": 4.36,
+    "test_bucket_distribution": {
+      "hours": 167,
+      "days": 107,
+      "weeks": 68,
+      "months": 69,
+      "long": 86
+    },
+    "naive_mae_days": 116.08,
+    "lgbm_mae_days": 101.67,
+    "improvement_pct": 12.42,
+    "ci_coverage_pct": 76.5
+  }
+}

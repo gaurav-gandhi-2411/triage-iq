@@ -23,6 +23,8 @@ def _fake_plan() -> TriagePlan:
         expected_resolution_summary="Likely fixable in 2–5 days",
         expected_resolution_lower_days=2.0,
         expected_resolution_upper_days=5.0,
+        resolution_bucket="days",
+        resolution_confidence_pct=61.0,
         priority_guess="medium",
         priority_rationale="No data loss; reproducible workaround exists",
         suggested_assignee_class="editor-core team",
@@ -43,6 +45,8 @@ def _fake_meta() -> dict:
         "estimated_cost_usd": 0.0001,
         "duplicate_count": 1,
         "predicted_resolution_days_p50": 3.5,
+        "resolution_bucket": "days",
+        "resolution_confidence_pct": 61.0,
         "llm_status": "ok",
     }
 
@@ -114,6 +118,7 @@ def test_triage_returns_plan(client):
     assert 0.0 <= body["component_confidence"] <= 1.0
     assert isinstance(body["suggested_next_steps"], list)
     assert body["expected_resolution_lower_days"] <= body["expected_resolution_upper_days"]
+    assert body["resolution_bucket"] in ("hours", "days", "weeks", "months", "long")
 
 
 def test_triage_includes_resolution_prediction(client):
@@ -136,6 +141,9 @@ def test_triage_includes_resolution_prediction(client):
     assert "expected_resolution_upper_days" in body
     assert body["expected_resolution_lower_days"] >= 0
     assert body["expected_resolution_upper_days"] >= body["expected_resolution_lower_days"]
+    # Supplemental bucket field (does not replace float fields; see ADR-0009 T2.7)
+    assert body["resolution_bucket"] in ("hours", "days", "weeks", "months", "long")
+    assert 0.0 <= body["resolution_confidence_pct"] <= 100.0
     # Request must include request_id and llm_status (end-to-end plumbing)
     assert "_request_id" in body
     assert "_llm_status" in body
@@ -215,6 +223,8 @@ _VALID_PLAN_JSON = _json.dumps({
     "expected_resolution_summary": "3 days typical",
     "expected_resolution_lower_days": 1.0,
     "expected_resolution_upper_days": 5.0,
+    "resolution_bucket": "days",
+    "resolution_confidence_pct": 61.0,
     "priority_guess": "medium",
     "priority_rationale": "Standard bug",
     "suggested_assignee_class": "editor team",
@@ -229,6 +239,8 @@ _MINIMAL_SIGNALS = {
     "pred_days": 3.0,
     "lo_days": 1.0,
     "hi_days": 5.0,
+    "resolution_bucket": "days",
+    "resolution_conf_pct": 61.0,
     "_t_classify": 0.0,
     "_t_retrieve": 0.0,
     "_t_predict": 0.0,

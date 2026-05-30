@@ -1,0 +1,24 @@
+{
+  "audit_results": [
+    {
+      "model": "TFIDFComponentClassifier",
+      "uses_priority_or_component_as_input_feature": false,
+      "reason": "Predicts component from raw text (title+body_clean). has_priority/has_type/has_component are the TARGETS not features. No leakage."
+    },
+    {
+      "model": "TriageAssistant / LLM prompt",
+      "uses_priority_or_component_as_input_feature": false,
+      "reason": "LLM receives resolution_point_days, lo_days, hi_days (predictor output). The predictor reads has_priority from the submitted issue row. For a NEW issue without a priority label, has_priority=0. INFERENCE: not leaky. TRAINING: leaky (priority added during triage of historical issues). Fix: remove has_priority from engineer_features() \u2014 then inference behavior is also correct."
+    },
+    {
+      "model": "engineer_features() callers",
+      "callers_outside_resolution": [
+        "src\\triage_iq\\models\\triage.py",
+        "scripts\\w4_diagnostics\\01_diagnose.py",
+        "scripts\\w4_diagnostics\\02_ablation.py"
+      ],
+      "reason": "If any caller outside resolution.py uses engineer_features(), they'd inherit the leakage."
+    }
+  ],
+  "verdict": "No leakage in component classifier or LLM prompt. Leakage is confined to resolution predictor training. Fix engineer_features() to drop has_priority/has_component/comp_* at train + inference time."
+}

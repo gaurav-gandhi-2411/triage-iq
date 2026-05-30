@@ -20,20 +20,26 @@ def time_based_split(
     train_pct: float = 0.8,
     val_pct: float = 0.1,
     test_pct: float = 0.1,
-    timestamp_col: str = "closed_at",
+    timestamp_col: str = "created_at",
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Split by timestamp to avoid leakage.
+    """Split by creation timestamp to avoid distribution shift.
 
     Issues are sorted by `timestamp_col` ascending. The earliest 80% become
-    training, the next 10% validation, the last 10% test. Open issues (null
-    closed_at) are excluded since they have no resolution time target.
+    training, the next 10% validation, the last 10% test. Rows where
+    `timestamp_col` is null are excluded.
+
+    Ordering by created_at (not closed_at) prevents the systematic train/test
+    distribution shift that occurs when closed_at is used: a closed_at split
+    guarantees train=fast-resolvers, test=slow-resolvers, because issues still
+    open at the training cutoff date are by definition slow-resolvers. See
+    ADR-0009 for the full diagnosis.
 
     Args:
         df: Input DataFrame. Must contain `timestamp_col`.
         train_pct: Fraction for training set.
         val_pct: Fraction for validation set.
         test_pct: Fraction for test set.
-        timestamp_col: Column to sort by (default: "closed_at").
+        timestamp_col: Column to sort by (default: "created_at").
 
     Returns:
         (train_df, val_df, test_df)
@@ -52,8 +58,8 @@ def time_based_split(
     test_df = closed.iloc[val_end:].copy()
 
     logger.info(
-        "Time-based split on %d closed issues: train=%d  val=%d  test=%d",
-        n, len(train_df), len(val_df), len(test_df),
+        "Time-based split on %d rows (sorted by %s): train=%d  val=%d  test=%d",
+        n, timestamp_col, len(train_df), len(val_df), len(test_df),
     )
     logger.info(
         "Cutoffs — train ends: %s  val ends: %s",

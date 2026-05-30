@@ -1,0 +1,74 @@
+{
+  "kubernetes_kubernetes": {
+    "repo": "kubernetes_kubernetes",
+    "split": "created_at",
+    "features": "creation_time_only",
+    "n_features_dropped": 14,
+    "dropped_cols": [
+      "comp_api",
+      "comp_build_release",
+      "comp_introspection",
+      "comp_kubectl",
+      "comp_kubelet",
+      "comp_reliability",
+      "comp_security",
+      "comp_test",
+      "comp_test_infra",
+      "comp_usability",
+      "has_component",
+      "has_priority",
+      "has_type",
+      "num_assignees"
+    ],
+    "train_n": 11974,
+    "val_n": 1497,
+    "test_n": 1497,
+    "naive_mae_days": 106.36,
+    "lgbm_mae_days": 104.83,
+    "improvement_pct": 1.44,
+    "ci_coverage_pct": 77.5,
+    "top5_features": {
+      "body_len_chars": 9181.2,
+      "body_len_words": 7328.2,
+      "author_prior_median_hrs": 4432.9,
+      "days_since_repo_start": 3163.5,
+      "author_prior_count": 2614.5
+    }
+  },
+  "microsoft_vscode": {
+    "repo": "microsoft_vscode",
+    "split": "created_at",
+    "features": "creation_time_only",
+    "n_features_dropped": 14,
+    "dropped_cols": [
+      "comp_accessibility",
+      "comp_api",
+      "comp_debug",
+      "comp_error_telemetry",
+      "comp_file_explorer",
+      "comp_javascript",
+      "comp_languages_basic",
+      "comp_tasks",
+      "comp_typescript",
+      "comp_ux",
+      "has_component",
+      "has_priority",
+      "has_type",
+      "num_assignees"
+    ],
+    "train_n": 3968,
+    "val_n": 496,
+    "test_n": 497,
+    "naive_mae_days": 116.08,
+    "lgbm_mae_days": 116.08,
+    "improvement_pct": 0.0,
+    "ci_coverage_pct": 76.5,
+    "top5_features": {
+      "body_len_words": 98.1,
+      "author_prior_median_hrs": 41.9,
+      "author_prior_count": 38.0,
+      "days_since_repo_start": 37.9,
+      "body_x_title": 34.9
+    }
+  }
+}

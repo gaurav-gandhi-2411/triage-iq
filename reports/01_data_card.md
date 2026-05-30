@@ -120,10 +120,11 @@ Comments are fetched with `per_page=100`. Issues with >100 comments have only th
 Two split strategies implemented in `src/triage_iq/data/splits.py`:
 
 ### Time-based split (System 3 — Resolution Time Predictor)
-- Split by `closed_at` timestamp ascending
+- Split by `created_at` timestamp ascending (changed from `closed_at` in W4 Phase 2 — see ADR-0009)
 - 80% train / 10% val / 10% test
-- Open issues (null `closed_at`) excluded
-- **Rationale:** Prevents leakage where a test issue was opened while training issues were being closed. A model that sees future issue metadata would be unrealistically optimistic.
+- Closed issues only (must have `resolution_hours > 0`)
+- **Rationale:** Sorting by `closed_at` creates a systematic train/test distribution shift: fast-resolving issues land in train, slow-resolving (multi-year) issues land in test. This made evaluation metrics meaningless (k8s CI coverage 0% due to completely non-overlapping target distributions). Sorting by `created_at` places issues from the same era in both splits, giving an honest evaluation. See ADR-0009 for full diagnosis.
+- **Previously reported metrics are invalid:** k8s +3.3% and vscode +19.1% improvements over naive were both artifacts of the broken `closed_at` split. Correct metrics (W4 Phase 2): k8s +2.1%, CI coverage 77%. vscode: 0% improvement (creation-time features insufficient in this corpus).
 
 ### Stratified split (System 1 — Component Classifier)
 - Split by stratified random sampling preserving label distribution

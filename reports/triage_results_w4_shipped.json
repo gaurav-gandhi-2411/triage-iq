@@ -1,0 +1,73 @@
+{
+  "n_issues_evaluated": 60,
+  "n_triage_failures": 0,
+  "n_judge_failures": 42,
+  "runtime_seconds": 9827.82986150001,
+  "llm_component_accuracy": 0.26666666666666666,
+  "tfidf_component_accuracy": 0.6166666666666667,
+  "majority_component_accuracy": 0.13333333333333333,
+  "by_repo": {
+    "microsoft_vscode": {
+      "n_gold": 30,
+      "llm_component_accuracy": 0.43333333333333335,
+      "tfidf_component_accuracy": 0.5,
+      "majority_component_accuracy": 0.13333333333333333
+    },
+    "kubernetes_kubernetes": {
+      "n_gold": 30,
+      "llm_component_accuracy": 0.1,
+      "tfidf_component_accuracy": 0.7333333333333333,
+      "majority_component_accuracy": 0.13333333333333333
+    }
+  },
+  "comparison": {
+    "System 1 (TF-IDF)": {
+      "total_mean": 4.512195121951219,
+      "total_pct": 0.30081300813008127,
+      "component_match": 1.3658536585365855,
+      "similar_issues_relevance": 0.0,
+      "resolution_estimate_reasonableness": 1.0,
+      "priority_alignment": 0.14634146341463414,
+      "next_steps_actionability": 1.0,
+      "overall_quality": 1.0
+    },
+    "Systems 1+2 (TF-IDF+BGE)": {
+      "total_mean": 8.024390243902438,
+      "total_pct": 0.5349593495934959,
+      "component_match": 1.3902439024390243,
+      "similar_issues_relevance": 2.5853658536585367,
+      "resolution_estimate_reasonableness": 1.1951219512195121,
+      "priority_alignment": 0.14634146341463414,
+      "next_steps_actionability": 1.0,
+      "overall_quality": 1.7073170731707317
+    },
+    "Full System (LLM)": {
+      "total_mean": 10.75,
+      "total_pct": 0.7166666666666667,
+      "component_match": 1.65,
+      "similar_issues_relevance": 2.8,
+      "resolution_estimate_reasonableness": 1.95,
+      "priority_alignment": 0.4,
+      "next_steps_actionability": 1.95,
+      "overall_quality": 2.0
+    }
+  },
+  "judge_reliability": {},
+  "latency": {},
+  "estimated_groq_tokens": 150000,
+  "estimated_groq_usd": 0.0405,
+  "findings": [
+    "Component accuracy \u2014 LLM: 26.7%, TF-IDF: 61.7%, Majority: 13.3%",
+    "Full system judge score: 10.75/15 (72%)",
+    "Best dimension: similar_issues_relevance (2.80/3); Worst: priority_alignment (0.40/1)"
+  ],
+  "hand_validation": {
+    "verdict": "Judge appears calibrated",
+    "leniency": "Mean score 10.8/15 (72%). Scores below 50% suggest strict rubric or model limitations.",
+    "failure_modes": "Check issues where full_plan is None \u2014 these are parse failures.",
+    "rubric_issues": "Low-kappa dims: []"
+  },
+  "judge_model": "command-a-03-2025",
+  "judge_provider": "cohere",
+  "triage_model": "llama-3.1-8b-instant"
+}

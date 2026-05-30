@@ -1,0 +1,282 @@
+{
+  "kubernetes_kubernetes": {
+    "repo": "kubernetes_kubernetes",
+    "split": "created_at",
+    "features": "creation_time_only",
+    "model": "lgbm_multiclass_5_buckets",
+    "bucket_breaks_days": [
+      1.0,
+      7.0,
+      30.0,
+      180.0
+    ],
+    "bucket_labels": [
+      "hours",
+      "days",
+      "weeks",
+      "months",
+      "long"
+    ],
+    "train_n": 11974,
+    "val_n": 1497,
+    "test_n": 1497,
+    "train_bucket_distribution": {
+      "hours": 5413,
+      "days": 2720,
+      "weeks": 1464,
+      "months": 1230,
+      "long": 1147
+    },
+    "test_bucket_distribution": {
+      "hours": 448,
+      "days": 448,
+      "weeks": 247,
+      "months": 153,
+      "long": 201
+    },
+    "accuracy_pct": 34.3,
+    "off_by_one_pct": 65.9,
+    "macro_f1": 0.212,
+    "f1_per_class": {
+      "hours": 0.4991,
+      "days": 0.1028,
+      "weeks": 0.0,
+      "months": 0.1526,
+      "long": 0.3056
+    },
+    "confusion_matrix": [
+      [
+        422,
+        6,
+        0,
+        14,
+        6
+      ],
+      [
+        393,
+        26,
+        0,
+        15,
+        14
+      ],
+      [
+        198,
+        14,
+        0,
+        14,
+        21
+      ],
+      [
+        115,
+        6,
+        0,
+        19,
+        13
+      ],
+      [
+        115,
+        6,
+        0,
+        34,
+        46
+      ]
+    ],
+    "bucket_breakdown": {
+      "hours": {
+        "n_test": 448,
+        "accuracy": 0.942,
+        "predicted_distribution": {
+          "hours": 422,
+          "days": 6,
+          "weeks": 0,
+          "months": 14,
+          "long": 6
+        }
+      },
+      "days": {
+        "n_test": 448,
+        "accuracy": 0.058,
+        "predicted_distribution": {
+          "hours": 393,
+          "days": 26,
+          "weeks": 0,
+          "months": 15,
+          "long": 14
+        }
+      },
+      "weeks": {
+        "n_test": 247,
+        "accuracy": 0.0,
+        "predicted_distribution": {
+          "hours": 198,
+          "days": 14,
+          "weeks": 0,
+          "months": 14,
+          "long": 21
+        }
+      },
+      "months": {
+        "n_test": 153,
+        "accuracy": 0.124,
+        "predicted_distribution": {
+          "hours": 115,
+          "days": 6,
+          "weeks": 0,
+          "months": 19,
+          "long": 13
+        }
+      },
+      "long": {
+        "n_test": 201,
+        "accuracy": 0.229,
+        "predicted_distribution": {
+          "hours": 115,
+          "days": 6,
+          "weeks": 0,
+          "months": 34,
+          "long": 46
+        }
+      }
+    }
+  },
+  "microsoft_vscode": {
+    "repo": "microsoft_vscode",
+    "split": "created_at",
+    "features": "creation_time_only",
+    "model": "lgbm_multiclass_5_buckets",
+    "bucket_breaks_days": [
+      1.0,
+      7.0,
+      30.0,
+      180.0
+    ],
+    "bucket_labels": [
+      "hours",
+      "days",
+      "weeks",
+      "months",
+      "long"
+    ],
+    "train_n": 3968,
+    "val_n": 496,
+    "test_n": 497,
+    "train_bucket_distribution": {
+      "hours": 1319,
+      "days": 875,
+      "weeks": 559,
+      "months": 487,
+      "long": 728
+    },
+    "test_bucket_distribution": {
+      "hours": 167,
+      "days": 107,
+      "weeks": 68,
+      "months": 69,
+      "long": 86
+    },
+    "accuracy_pct": 33.6,
+    "off_by_one_pct": 55.1,
+    "macro_f1": 0.1006,
+    "f1_per_class": {
+      "hours": 0.503,
+      "days": 0.0,
+      "weeks": 0.0,
+      "months": 0.0,
+      "long": 0.0
+    },
+    "confusion_matrix": [
+      [
+        167,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        107,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        68,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        69,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        86,
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "bucket_breakdown": {
+      "hours": {
+        "n_test": 167,
+        "accuracy": 1.0,
+        "predicted_distribution": {
+          "hours": 167,
+          "days": 0,
+          "weeks": 0,
+          "months": 0,
+          "long": 0
+        }
+      },
+      "days": {
+        "n_test": 107,
+        "accuracy": 0.0,
+        "predicted_distribution": {
+          "hours": 107,
+          "days": 0,
+          "weeks": 0,
+          "months": 0,
+          "long": 0
+        }
+      },
+      "weeks": {
+        "n_test": 68,
+        "accuracy": 0.0,
+        "predicted_distribution": {
+          "hours": 68,
+          "days": 0,
+          "weeks": 0,
+          "months": 0,
+          "long": 0
+        }
+      },
+      "months": {
+        "n_test": 69,
+        "accuracy": 0.0,
+        "predicted_distribution": {
+          "hours": 69,
+          "days": 0,
+          "weeks": 0,
+          "months": 0,
+          "long": 0
+        }
+      },
+      "long": {
+        "n_test": 86,
+        "accuracy": 0.0,
+        "predicted_distribution": {
+          "hours": 86,
+          "days": 0,
+          "weeks": 0,
+          "months": 0,
+          "long": 0
+        }
+      }
+    }
+  }
+}

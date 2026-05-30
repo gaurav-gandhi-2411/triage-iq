@@ -1,128 +1,114 @@
 {
-  "microsoft_vscode": {
-    "repo": "microsoft_vscode",
-    "train_size": 4923,
-    "val_size": 615,
-    "test_size": 616,
-    "n_features": 93,
-    "train_median_hrs": 90.1,
-    "naive_metrics": {
-      "mae_log": 3.0218,
-      "mae_hrs": 101.4,
-      "mae_days": 4.23,
-      "rmse_hrs": 296.6,
-      "r2_log": -2.8744
-    },
-    "lgbm_metrics": {
-      "mae_log": 2.366,
-      "mae_hrs": 82.0,
-      "mae_days": 3.42,
-      "rmse_hrs": 307.6,
-      "r2_log": -1.4112
-    },
-    "improvement_pct": 19.1,
-    "best_lgbm_params": {
-      "learning_rate": 0.06549475719531805,
-      "num_leaves": 109,
-      "lambda_l2": 3.0710200546668176,
-      "feature_fraction": 0.7618296981933694,
-      "min_data_in_leaf": 196
-    },
-    "ci_coverage": 0.4253,
-    "comp_coverage_sample": {
-      "error-telemetry": 0.75
-    },
-    "latency_p50_ms": 3.983,
-    "latency_p95_ms": 4.545,
-    "top5_features": {
-      "has_type": 2824.86,
-      "has_component": 2183.78,
-      "num_assignees": 2144.63,
-      "author_prior_count": 1292.04,
-      "author_prior_median_hrs": 602.36
-    },
-    "worst5_components_by_mae": {
-      "error-telemetry": 14.619126616470027
-    }
-  },
   "kubernetes_kubernetes": {
     "repo": "kubernetes_kubernetes",
     "train_size": 11974,
     "val_size": 1496,
     "test_size": 1498,
-    "n_features": 93,
-    "train_median_hrs": 24.1,
+    "n_features": 79,
+    "train_median_hrs": 38.0,
     "naive_metrics": {
-      "mae_log": 6.2782,
-      "mae_hrs": 16939.9,
-      "mae_days": 705.83,
-      "rmse_hrs": 20897.4,
-      "r2_log": -73.8397
+      "mae_log": 2.3272,
+      "mae_hrs": 2551.0,
+      "mae_days": 106.29,
+      "rmse_hrs": 7270.6,
+      "r2_log": -0.1607
     },
     "lgbm_metrics": {
-      "mae_log": 3.8551,
-      "mae_hrs": 16373.8,
-      "mae_days": 682.24,
-      "rmse_hrs": 20320.7,
-      "r2_log": -29.1504
+      "mae_log": 2.0287,
+      "mae_hrs": 2503.6,
+      "mae_days": 104.32,
+      "rmse_hrs": 7162.1,
+      "r2_log": 0.1496
     },
-    "improvement_pct": 3.3,
+    "improvement_pct": 1.9,
     "best_lgbm_params": {
-      "learning_rate": 0.058029175880976586,
-      "num_leaves": 48,
-      "lambda_l2": 0.0001404250671139927,
-      "feature_fraction": 0.8291167423140511,
-      "min_data_in_leaf": 142
+      "learning_rate": 0.013035818154448561,
+      "num_leaves": 66,
+      "lambda_l2": 0.16318198528582908,
+      "feature_fraction": 0.5769702926483755,
+      "min_data_in_leaf": 134
     },
-    "ci_coverage": 0.0,
+    "ci_coverage": 0.751,
     "comp_coverage_sample": {
-      "api": 0.0,
-      "app-lifecycle": 0.0,
-      "test-infra": 0.0,
-      "test": 0.0,
-      "reliability": 0.0,
-      "example": 0.0,
-      "introspection": 0.0,
-      "kubectl": 0.0,
-      "kubelet": 0.0,
-      "usability": 0.0,
-      "security": 0.0,
-      "isolation": 0.0,
-      "build-release": 0.0,
-      "docker": 0.0,
-      "downward-api": 0.0,
-      "extensibility": 0.0,
-      "cloudprovider": 0.0,
-      "ui": 0.0,
-      "monitoring": 0.0,
-      "kube-proxy": 0.0,
-      "platform/gce": 0.0,
-      "swagger": 0.0,
-      "apiserver": 0.0,
-      "etcd": 0.0,
-      "rkt": 0.0,
-      "logging": 0.0,
-      "os/coreos": 0.0,
-      "platform/vagrant": 0.0,
-      "dns": 0.0,
-      "client-libraries": 0.0,
-      "upgrade": 0.0
+      "test": 0.75,
+      "kube-proxy": 0.7,
+      "kubectl": 0.581,
+      "os/coreos": 0.5,
+      "reliability": 0.4,
+      "test-infra": 0.758,
+      "app-lifecycle": 0.8,
+      "swagger": 0.286,
+      "api": 0.692,
+      "platform/vagrant": 0.7,
+      "platform/mesos": 1.0,
+      "kubelet": 0.625,
+      "example": 0.6,
+      "build-release": 0.889,
+      "cloudprovider": 0.429,
+      "security": 0.6,
+      "controller-manager": 0.8
     },
-    "latency_p50_ms": 3.943,
-    "latency_p95_ms": 4.484,
+    "latency_p50_ms": 1.53,
+    "latency_p95_ms": 1.962,
     "top5_features": {
-      "has_priority": 9897.61,
-      "emb_1": 3998.53,
-      "days_since_repo_start": 3779.7,
-      "num_assignees": 3533.03,
-      "emb_2": 3144.01
+      "body_len_chars": 31180.48,
+      "body_len_words": 21651.83,
+      "author_prior_median_hrs": 14680.19,
+      "emb_1": 14103.64,
+      "emb_0": 13487.84
     },
     "worst5_components_by_mae": {
-      "client-libraries": 1113.6661708411891,
-      "upgrade": 955.3372121467213,
-      "rkt": 929.1250833749003,
-      "api": 918.623845273858,
-      "usability": 873.0406891980914
+      "reliability": 493.3589543693004,
+      "cloudprovider": 472.60009270067326,
+      "example": 377.5881231436735,
+      "os/coreos": 367.3525039827983,
+      "swagger": 342.2456770087331
+    }
+  },
+  "microsoft_vscode": {
+    "repo": "microsoft_vscode",
+    "train_size": 4923,
+    "val_size": 615,
+    "test_size": 616,
+    "n_features": 79,
+    "train_median_hrs": 92.1,
+    "naive_metrics": {
+      "mae_log": 3.3378,
+      "mae_hrs": 84.8,
+      "mae_days": 3.53,
+      "rmse_hrs": 86.2,
+      "r2_log": -7.861
+    },
+    "lgbm_metrics": {
+      "mae_log": 3.5124,
+      "mae_hrs": 141.9,
+      "mae_days": 5.91,
+      "rmse_hrs": 184.9,
+      "r2_log": -8.7242
+    },
+    "improvement_pct": -67.4,
+    "best_lgbm_params": {
+      "learning_rate": 0.0468646300866248,
+      "num_leaves": 27,
+      "lambda_l2": 0.0063649212858555276,
+      "feature_fraction": 0.8563383837434722,
+      "min_data_in_leaf": 91
+    },
+    "ci_coverage": 0.4091,
+    "comp_coverage_sample": {
+      "error-telemetry": 0.714
+    },
+    "latency_p50_ms": 1.382,
+    "latency_p95_ms": 1.69,
+    "top5_features": {
+      "body_len_words": 768.2,
+      "emb_0": 572.71,
+      "emb_2": 565.47,
+      "emb_38": 551.89,
+      "days_since_repo_start": 523.15
+    },
+    "worst5_components_by_mae": {
+      "error-telemetry": 5.273254414524164
     }
   }
 }

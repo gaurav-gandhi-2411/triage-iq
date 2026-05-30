@@ -1,0 +1,296 @@
+{
+  "t1_1": {
+    "lgbm_mae_days": 693.8668028601428,
+    "naive_mae_days": 705.8284791141274,
+    "lgbm_improvement_pct": 1.69,
+    "ci_coverage": 0.0,
+    "train_median_hrs": 24.057916666666664,
+    "train_res_hrs_median": 24.057916666666664,
+    "train_res_hrs_p95": 1610.7794305555558,
+    "train_res_hrs_max": 10273.328611111112,
+    "test_res_hrs_min": 1569.1663888888888,
+    "test_res_hrs_median": 16243.465,
+    "test_res_hrs_p95": 32449.71547222222,
+    "test_res_hrs_max": 92305.21,
+    "train_closed_at_max": "2015-09-08 20:50:30+00:00",
+    "test_closed_at_min": "2015-12-01 00:06:52+00:00",
+    "test_closed_at_max": "2025-05-18 22:09:20+00:00",
+    "ci_sample_20": [
+      {
+        "actual_days": 850.4,
+        "pred_days": 15.7,
+        "q10_days": 10.6,
+        "q90_days": 37.8,
+        "covered": false
+      },
+      {
+        "actual_days": 958.0,
+        "pred_days": 9.1,
+        "q10_days": 5.1,
+        "q90_days": 52.8,
+        "covered": false
+      },
+      {
+        "actual_days": 267.1,
+        "pred_days": 10.7,
+        "q10_days": 4.5,
+        "q90_days": 40.8,
+        "covered": false
+      },
+      {
+        "actual_days": 2212.8,
+        "pred_days": 13.8,
+        "q10_days": 4.0,
+        "q90_days": 61.9,
+        "covered": false
+      },
+      {
+        "actual_days": 1169.3,
+        "pred_days": 25.7,
+        "q10_days": 14.9,
+        "q90_days": 129.8,
+        "covered": false
+      },
+      {
+        "actual_days": 984.1,
+        "pred_days": 9.0,
+        "q10_days": 4.7,
+        "q90_days": 52.0,
+        "covered": false
+      },
+      {
+        "actual_days": 182.3,
+        "pred_days": 10.7,
+        "q10_days": 10.4,
+        "q90_days": 33.9,
+        "covered": false
+      },
+      {
+        "actual_days": 198.5,
+        "pred_days": 7.9,
+        "q10_days": 10.2,
+        "q90_days": 33.6,
+        "covered": false
+      },
+      {
+        "actual_days": 707.4,
+        "pred_days": 5.0,
+        "q10_days": 2.6,
+        "q90_days": 35.9,
+        "covered": false
+      },
+      {
+        "actual_days": 895.3,
+        "pred_days": 29.1,
+        "q10_days": 2.1,
+        "q90_days": 118.3,
+        "covered": false
+      },
+      {
+        "actual_days": 520.1,
+        "pred_days": 2.7,
+        "q10_days": 2.2,
+        "q90_days": 32.3,
+        "covered": false
+      },
+      {
+        "actual_days": 137.7,
+        "pred_days": 3.9,
+        "q10_days": 3.3,
+        "q90_days": 18.1,
+        "covered": false
+      },
+      {
+        "actual_days": 934.9,
+        "pred_days": 30.3,
+        "q10_days": 13.8,
+        "q90_days": 168.0,
+        "covered": false
+      },
+      {
+        "actual_days": 1032.9,
+        "pred_days": 6.3,
+        "q10_days": 0.2,
+        "q90_days": 57.3,
+        "covered": false
+      },
+      {
+        "actual_days": 207.9,
+        "pred_days": 5.4,
+        "q10_days": 6.4,
+        "q90_days": 35.1,
+        "covered": false
+      },
+      {
+        "actual_days": 958.7,
+        "pred_days": 7.4,
+        "q10_days": 3.3,
+        "q90_days": 45.7,
+        "covered": false
+      },
+      {
+        "actual_days": 965.1,
+        "pred_days": 4.6,
+        "q10_days": 8.0,
+        "q90_days": 36.3,
+        "covered": false
+      },
+      {
+        "actual_days": 634.1,
+        "pred_days": 8.3,
+        "q10_days": 7.5,
+        "q90_days": 60.1,
+        "covered": false
+      },
+      {
+        "actual_days": 781.9,
+        "pred_days": 6.2,
+        "q10_days": 2.4,
+        "q90_days": 30.5,
+        "covered": false
+      },
+      {
+        "actual_days": 888.4,
+        "pred_days": 17.7,
+        "q10_days": 5.5,
+        "q90_days": 127.8,
+        "covered": false
+      }
+    ],
+    "ci_q10_range_days": [
+      0.1,
+      59.7
+    ],
+    "ci_q90_range_days": [
+      4.5,
+      202.4
+    ],
+    "replication_matches_reported": false
+  },
+  "t1_2": {
+    "created_at_range": [
+      "2014-06",
+      "2015-10"
+    ],
+    "closed_at_range": [
+      "2014-06",
+      "2025-05"
+    ],
+    "n_closed_issues_total": 14968,
+    "pct_with_closed_at_after_scrape_era": 0.0948690539818279,
+    "within_window_split": {
+      "cutoff_date": "2015-06-29",
+      "train_n": 10477,
+      "test_n": 4491,
+      "train_res_median_days": 1.5,
+      "test_res_median_days": 3.1,
+      "test_res_p95_days": 705.0,
+      "lgbm_mae_days": 86.5,
+      "naive_mae_days": 90.9,
+      "improvement_pct": 4.8
+    }
+  },
+  "t1_3": {
+    "within_window_test_n": 4491,
+    "test_res_median_days": 3.1,
+    "test_res_p95_days": 705.0,
+    "naive_mae_days": 90.9,
+    "text_temporal_mae_days": 90.3,
+    "text_temporal_impr_pct": 0.7,
+    "noleak_full_mae_days": 89.5,
+    "noleak_impr_pct": 1.5,
+    "full93_mae_days": 86.7,
+    "full93_impr_pct": 4.7
+  },
+  "t1_4": {
+    "leakage_findings": [
+      {
+        "feature": "has_priority",
+        "risk": "MEDIUM-HIGH",
+        "reason": "k8s priority labels (priority/critical, priority/important-soon) added during triage workflow, not necessarily at issue-creation time. Fill=27%. Correlation with log(res_hrs)=0.595. Priority fill: fast (<1d) 7% vs slow (>6mo) 93%."
+      },
+      {
+        "feature": "has_component / comp_* one-hots",
+        "risk": "MEDIUM",
+        "reason": "Component labels added during triage. Fill=19%. Correlation with log(res_hrs)=0.411."
+      },
+      {
+        "feature": "num_comments",
+        "risk": "NOT IN FEATURES",
+        "reason": "num_comments NOT present in feature matrix (confirmed). Good \u2014 comments accumulate over issue lifetime and would be severely leaky."
+      }
+    ],
+    "label_fill_rates": {
+      "has_type": 0.1455104222340994,
+      "has_component": 0.19281133083912347,
+      "has_priority": 0.2713121325494388
+    },
+    "correlations_with_log_res_hrs": {
+      "num_assignees": 0.0452,
+      "has_priority": 0.5947,
+      "has_component": 0.4114
+    },
+    "priority_fill_by_speed": {
+      "fast_lt_1day_pct": 6.9,
+      "slow_gt_6mo_pct": 93.1
+    },
+    "num_comments_in_features": false
+  },
+  "t1_5": {
+    "vscode": {
+      "name": "microsoft/vscode",
+      "train_n": 4923,
+      "test_n": 616,
+      "train_created_at_span": [
+        "2015-10-13",
+        "2016-04-06"
+      ],
+      "test_created_at_span": [
+        "2025-07-25",
+        "2026-04-27"
+      ],
+      "train_closed_at_span": [
+        "2015-11-13",
+        "2020-11-05"
+      ],
+      "test_closed_at_span": [
+        "2026-04-22",
+        "2026-04-27"
+      ],
+      "train_res_median_days": 3.8,
+      "train_res_p95_days": 684.1,
+      "test_res_median_days": 0.1,
+      "test_res_p95_days": 7.0,
+      "test_res_min_days": 0.0,
+      "train_test_overlap_in_res_range": true
+    },
+    "k8s": {
+      "name": "kubernetes/kubernetes",
+      "train_n": 11974,
+      "test_n": 1498,
+      "train_created_at_span": [
+        "2014-06-06",
+        "2015-09-08"
+      ],
+      "test_created_at_span": [
+        "2014-06-07",
+        "2015-10-02"
+      ],
+      "train_closed_at_span": [
+        "2014-06-07",
+        "2015-09-08"
+      ],
+      "test_closed_at_span": [
+        "2015-12-01",
+        "2025-05-18"
+      ],
+      "train_res_median_days": 1.0,
+      "train_res_p95_days": 67.1,
+      "test_res_median_days": 676.8,
+      "test_res_p95_days": 1352.1,
+      "test_res_min_days": 65.4,
+      "train_test_overlap_in_res_range": true
+    },
+    "key_difference": "vscode test set resolution times overlap with train range \u2014 test min 0.0d vs train max 684.1d (p95). k8s test set is completely disjoint \u2014 test min 65.4d > train p95 67.1d. This explains the entire performance gap."
+  }
+}

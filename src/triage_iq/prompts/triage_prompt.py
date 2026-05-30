@@ -53,6 +53,8 @@ def build_triage_prompt(
     resolution_lower_days: float,
     resolution_upper_days: float,
     repo: str,
+    resolution_bucket: str | None = None,
+    resolution_confidence_pct: float | None = None,
 ) -> str:
     """Build the user-turn prompt for the triage assistant.
 
@@ -63,10 +65,14 @@ def build_triage_prompt(
             Each dict has keys: label, confidence.
         similar_issues: Top-5 similar issues from BGE retrieval.
             Each dict has keys: number, score, text.
-        resolution_point_days: Point estimate from LightGBM predictor in days.
+        resolution_point_days: Point estimate from predictor in days.
         resolution_lower_days: Q10 lower bound in days.
         resolution_upper_days: Q90 upper bound in days.
         repo: Repository slug (e.g., "microsoft/vscode").
+        resolution_bucket: Optional coarse bucket (hours/days/weeks/months/long).
+            When provided (Config C), appended to System 3 section alongside floats.
+            When None (Config A, default), only float signals are shown.
+        resolution_confidence_pct: Bucket confidence 0–100%. Used only when bucket provided.
 
     Returns:
         Formatted user-turn string.
@@ -82,6 +88,17 @@ def build_triage_prompt(
         f"  #{s['number']} (similarity: {s['score']:.3f}): {s['text'][:120]}..."
         for s in similar_issues[:5]
     )
+
+    # Config C: optionally append coarse bucket alongside floats
+    bucket_line = ""
+    if resolution_bucket is not None:
+        bucket_descs = {
+            "hours": "< 1 day", "days": "1–7 days", "weeks": "1–4 weeks",
+            "months": "1–6 months", "long": "> 6 months",
+        }
+        desc = bucket_descs.get(resolution_bucket, resolution_bucket)
+        conf = f"(confidence: {resolution_confidence_pct:.0f}%)" if resolution_confidence_pct and resolution_confidence_pct >= 40 else "(low confidence)"
+        bucket_line = f"\nBucket estimate: {resolution_bucket} ({desc}) {conf}"
 
     return f"""\
 Repository: {repo}
@@ -100,7 +117,7 @@ Top-3 predictions:
 
 --- SYSTEM 3: RESOLUTION TIME PREDICTOR (LightGBM) ---
 Point estimate: {resolution_point_days:.1f} days
-80% prediction interval: [{resolution_lower_days:.1f}d, {resolution_upper_days:.1f}d]
+80% prediction interval: [{resolution_lower_days:.1f}d, {resolution_upper_days:.1f}d]{bucket_line}
 Note: These estimates are trained on historical data and may not account for current team velocity or issue priority changes.
 
 --- TASK ---

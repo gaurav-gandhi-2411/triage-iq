@@ -1,1 +1,100 @@
-[]
+[
+  {
+    "repo": "microsoft/vscode",
+    "issue_number": 312155,
+    "issue_title": "error de IA al acceder a Git",
+    "gold_component": "open_issue",
+    "gold_priority": "unknown",
+    "actual_resolution_days": null,
+    "triage_plan": {
+      "predicted_component": "electron",
+      "component_confidence": 0.99,
+      "similar_issues": [
+        {
+          "number": 311947,
+          "similarity": 0.803,
+          "relevance_note": "GitHub Copilot issue with a similar error message and context, but unclear if directly related."
+        },
+        {
+          "number": 311864,
+          "similarity": 0.754,
+          "relevance_note": "GitHub-related issue with a different error message, but possibly connected to the same underlying problem."
+        },
+        {
+          "number": 312820,
+          "similarity": 0.732,
+          "relevance_note": "Extension Signature Verification Failed error in GitHub Copilot for Azure, possibly related to the same backend issue."
+        },
+        {
+          "number": 311524,
+          "similarity": 0.723,
+          "relevance_note": "GitHub Copilot backend issue with a similar error message, but unclear if directly related."
+        },
+        {
+          "number": 311607,
+          "similarity": 0.723,
+          "relevance_note": "Extension Signature Verification Failed error in GitHub Copilot Chat, possibly related to the same backend issue."
+        }
+      ],
+      "expected_resolution_summary": "Electron-related bug; resolution time uncertain due to lack of clear connection to existing issues.",
+      "expected_resolution_lower_days": 0.1,
+      "expected_resolution_upper_days": 125.9,
+      "resolution_bucket": "days",
+      "resolution_confidence_pct": 33.0,
+      "priority_guess": "medium",
+      "priority_rationale": "Error occurs when accessing Git, but unclear if directly related to existing issues. Similar issues exist, but their connection to this problem is uncertain.",
+      "suggested_assignee_class": "electron team",
+      "suggested_next_steps": [
+        "Investigate the nativeGitCommandExecutor.ExecuteWithOutput function in native_git.go to identify the root cause of the error.",
+        "Check if the error is related to a known Electron issue or a bug in the Git extension.",
+        "Gather more information about the error by including the full log output and analyzing the system info provided."
+      ],
+      "triage_summary": "Error accessing Git with Electron, but unclear if directly related to existing issues. Medium priority due to uncertainty; assign to electron team for further investigation."
+    },
+    "judge_score_total": null
+  },
+  {
+    "repo": "kubernetes/kubernetes",
+    "issue_number": 8702,
+    "issue_title": "Generalize container image representation",
+    "gold_component": "open_issue",
+    "gold_priority": "unknown",
+    "actual_resolution_days": null,
+    "triage_plan": {
+      "predicted_component": "api",
+      "component_confidence": 0.18,
+      "similar_issues": [
+        {
+          "number": 8839,
+          "similarity": 0.828,
+          "relevance_note": "Directly related to introducing a new image format for Docker images, aligning with the proposed format in this issue."
+        },
+        {
+          "number": 6301,
+          "similarity": 0.802,
+          "relevance_note": "Image build machinery changes, likely related to the proposed container image representation generalization."
+        },
+        {
+          "number": 7832,
+          "similarity": 0.777,
+          "relevance_note": "Support for manually-created and generated conversion functions, possibly related to the new image format or representation."
+        }
+      ],
+      "expected_resolution_summary": "Breaking change to support future features; requires careful review and testing across all API versions; 2\u20136 weeks typical.",
+      "expected_resolution_lower_days": 0.4,
+      "expected_resolution_upper_days": 375.4,
+      "resolution_bucket": "days",
+      "resolution_confidence_pct": 33.0,
+      "priority_guess": "medium",
+      "priority_rationale": "Breaking change to support future features, but no immediate user impact. Requires careful review and testing across all API versions.",
+      "suggested_assignee_class": "api team",
+      "suggested_next_steps": [
+        "Review the proposed format and ensure it aligns with the VolumeSource approach.",
+        "Update the API documentation to reflect the new container image representation.",
+        "Test the new representation across all API versions and ensure backward compatibility."
+      ],
+      "triage_summary": "Generalize container image representation to support future features, breaking all API versions. Similar issues suggest a clear direction, but careful review and testing are required. Medium priority; assign to api team for 2\u20136 weeks."
+    },
+    "judge_score_total": null
+  }
+]

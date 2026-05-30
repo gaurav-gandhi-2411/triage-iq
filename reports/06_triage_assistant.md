@@ -42,9 +42,9 @@ Incoming issue
 Sampled from val+test splits combined (neither used for training any model).
 Component annotation from normalized label set. Priority inferred from metadata or resolution speed.
 
-**microsoft/vscode:** 30 issues — component accuracy: LLM 57%, TF-IDF 50%, Majority 13%
+**microsoft/vscode:** 30 issues — component accuracy: LLM 43%, TF-IDF 50%, Majority 13%
 
-**kubernetes/kubernetes:** 30 issues — component accuracy: LLM 80%, TF-IDF 73%, Majority 10%
+**kubernetes/kubernetes:** 30 issues — component accuracy: LLM 10%, TF-IDF 73%, Majority 13%
 
 ---
 
@@ -54,17 +54,17 @@ Component annotation from normalized label set. Priority inferred from metadata 
 
 | System | Total | comp_match /2 | similar_issues /3 | resolution_est /3 | priority /1 | next_steps /3 | overall /3 |
 |---|---|---|---|---|---|---|---|
-| System 1 (TF-IDF) | 4.48 (30%) | 1.42 | 0.00 | 0.98 | 0.10 | 1.00 | 0.98 |
-| Systems 1+2 (TF-IDF+BGE) | 7.98 (53%) | 1.47 | 2.63 | 1.08 | 0.10 | 1.00 | 1.70 |
-| Full System (LLM) | **10.83 (72%)** | 1.68 | 2.83 | 1.62 | 0.58 | 1.98 | 2.13 |
+| System 1 (TF-IDF) | 4.51 (30%) | 1.37 | 0.00 | 1.00 | 0.15 | 1.00 | 1.00 |
+| Systems 1+2 (TF-IDF+BGE) | 8.02 (53%) | 1.39 | 2.59 | 1.20 | 0.15 | 1.00 | 1.71 |
+| Full System (LLM) | **10.75 (72%)** | 1.65 | 2.80 | 1.95 | 0.40 | 1.95 | 2.00 |
 
 ### 3.2 Component Accuracy
 
 | System | Overall | vscode | kubernetes |
 |---|---|---|---|
-| Full System (LLM) | 68.3% | 56.7% | 80.0% |
+| Full System (LLM) | 26.7% | 43.3% | 10.0% |
 | System 1 (TF-IDF) | 61.7% | 50.0% | 73.3% |
-| Majority Component | 11.7% | 13.3% | 10.0% |
+| Majority Component | 13.3% | 13.3% | 13.3% |
 
 ### 3.3 Judge Reliability (double-run, n=10)
 
@@ -98,6 +98,38 @@ Low-reliability dimensions (κ < 0.4): **none**
 
 Three representative outputs — great, mediocre, and failure mode.
 
+### Failure mode — #312155 (microsoft/vscode)
+
+**Issue:** error de IA al acceder a Git
+**Gold component:** open_issue | **Judge score:** None/15
+
+```json
+{
+  "predicted_component": "electron",
+  "component_confidence": 0.99,
+  "similar_issues": [
+    {
+      "number": 311947,
+      "similarity": 0.803,
+      "relevance_note": "GitHub Copilot issue with a similar error message and context, but unclear if directly related."
+    },
+    {
+      "number": 311864,
+      "similarity": 0.754,
+      "relevance_note": "GitHub-related issue with a different error message, but possibly connected to the same underlying problem."
+    },
+    {
+      "number": 312820,
+      "similarity": 0.732,
+      "relevance_note": "Extension Signature Verification Failed error in GitHub Copilot for Azure, possibly related to the same backend issue."
+    },
+    {
+      "number": 311524,
+      "similarity": 0.723,
+      "relevance_note": "GitHub Copilot backend issue wit
+...
+```
+
 Full outputs: `reports/sample_triage_plans.json`
 
 ---
@@ -129,6 +161,6 @@ python scripts/11_evaluate_triage.py         # requires GROQ_API_KEY
 # Clear checkpoint: rm data/triage_eval_checkpoint.jsonl
 ```
 
-**Runtime:** 9s | **Issues evaluated:** 60 | **Triage failures:** 0 | **Judge failures:** 0
+**Runtime:** 9828s | **Issues evaluated:** 60 | **Triage failures:** 0 | **Judge failures:** 42
 
 **Approx Groq spend:** 150,000 tokens (~$0.041 at Groq free-tier pricing)

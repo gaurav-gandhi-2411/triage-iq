@@ -249,7 +249,8 @@ def _make_split_df(n: int, labels=None):
     for i in range(n):
         rows.append({
             "number": i + 1,
-            "closed_at": base + pd.Timedelta(hours=i),
+            "created_at": base + pd.Timedelta(hours=i),
+            "closed_at": base + pd.Timedelta(hours=i, days=1),
             "component": labels[i % len(labels)] if labels else f"comp_{i % 3}",
         })
     return pd.DataFrame(rows)
@@ -265,13 +266,14 @@ class TestTimeBasedSplit:
     def test_train_before_val_before_test(self):
         df = _make_split_df(100)
         train, val, test = time_based_split(df, 0.8, 0.1, 0.1)
-        assert train["closed_at"].max() <= val["closed_at"].min()
-        assert val["closed_at"].max() <= test["closed_at"].min()
+        assert train["created_at"].max() <= val["created_at"].min()
+        assert val["created_at"].max() <= test["created_at"].min()
 
     def test_open_issues_excluded(self):
         import pandas as pd
         df = _make_split_df(90)
-        open_row = pd.DataFrame([{"number": 999, "closed_at": None, "component": "x"}])
+        # Row with null created_at should be excluded by time_based_split
+        open_row = pd.DataFrame([{"number": 999, "created_at": None, "closed_at": None, "component": "x"}])
         df = pd.concat([df, open_row], ignore_index=True)
         train, val, test = time_based_split(df, 0.8, 0.1, 0.1)
         assert len(train) + len(val) + len(test) == 90

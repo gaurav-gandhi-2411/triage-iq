@@ -32,9 +32,9 @@ Schema:
       "relevance_note": "string — one sentence on why this is related"
     }
   ],
-  "expected_resolution_summary": "string — human-readable resolution estimate, e.g. 'Typically resolves within days for this component; similar issues closed in 2-5 days'",
-  "resolution_bucket": "one of: hours | days | weeks | months | long — your estimate of resolution time bucket",
-  "resolution_confidence_pct": "number 0-100 — your confidence in the resolution_bucket estimate",
+  "expected_resolution_summary": "string — human-readable estimate (e.g., '2–7 days typical for this component')",
+  "expected_resolution_lower_days": "number — optimistic estimate in days",
+  "expected_resolution_upper_days": "number — conservative estimate in days",
   "priority_guess": "one of: low | medium | high",
   "priority_rationale": "string — 1–2 sentences explaining priority assignment",
   "suggested_assignee_class": "string — team or role best suited (e.g., 'core-runtime team', 'documentation team', 'first-time-contributor friendly')",
@@ -49,8 +49,9 @@ def build_triage_prompt(
     issue_body: str,
     classifier_top3: list[dict],
     similar_issues: list[dict],
-    resolution_bucket: str,
-    resolution_confidence_pct: float,
+    resolution_point_days: float,
+    resolution_lower_days: float,
+    resolution_upper_days: float,
     repo: str,
 ) -> str:
     """Build the user-turn prompt for the triage assistant.
@@ -62,9 +63,9 @@ def build_triage_prompt(
             Each dict has keys: label, confidence.
         similar_issues: Top-5 similar issues from BGE retrieval.
             Each dict has keys: number, score, text.
-        resolution_bucket: Coarse bucket from ordinal classifier
-            (hours/days/weeks/months/long).
-        resolution_confidence_pct: Model confidence 0–100%.
+        resolution_point_days: Point estimate from predictor in days.
+        resolution_lower_days: Q10 lower bound in days.
+        resolution_upper_days: Q90 upper bound in days.
         repo: Repository slug (e.g., "microsoft/vscode").
 
     Returns:
@@ -82,20 +83,6 @@ def build_triage_prompt(
         for s in similar_issues[:5]
     )
 
-    bucket_desc = {
-        "hours":  "< 1 day",
-        "days":   "1–7 days",
-        "weeks":  "1–4 weeks",
-        "months": "1–6 months",
-        "long":   "> 6 months",
-    }.get(resolution_bucket, resolution_bucket)
-
-    conf_note = (
-        "(low confidence — use as a rough prior only)"
-        if resolution_confidence_pct < 40
-        else f"(model confidence: {resolution_confidence_pct:.0f}%)"
-    )
-
     return f"""\
 Repository: {repo}
 
@@ -111,9 +98,10 @@ Top-3 predictions:
 --- SYSTEM 2: SIMILAR ISSUES (BGE retrieval) ---
 {similar_lines}
 
---- SYSTEM 3: RESOLUTION TIME PREDICTOR ---
-Estimated bucket: {resolution_bucket} ({bucket_desc}) {conf_note}
-Note: Based on historical issue data. Use similar issues and component patterns to refine.
+--- SYSTEM 3: RESOLUTION TIME PREDICTOR (LightGBM) ---
+Point estimate: {resolution_point_days:.1f} days
+80% prediction interval: [{resolution_lower_days:.1f}d, {resolution_upper_days:.1f}d]
+Note: These estimates are trained on historical data and may not account for current team velocity or issue priority changes.
 
 --- TASK ---
 Produce a triage plan as valid JSON matching the schema in the system prompt.
@@ -146,8 +134,9 @@ Top-3 predictions:
   #8821 (similarity: 0.803): Child processes not cleaned up when extension deactivates...
   #7144 (similarity: 0.694): Extension worker threads linger after disable on Linux...
 
---- SYSTEM 3: RESOLUTION TIME PREDICTOR ---
-Estimated bucket: weeks (1–4 weeks) (model confidence: 52%)
+--- SYSTEM 3: RESOLUTION TIME PREDICTOR (LightGBM) ---
+Point estimate: 18.7 days
+80% prediction interval: [3.1d, 74.2d]
 
 --- TASK ---
 Produce a triage plan as valid JSON matching the schema in the system prompt.
@@ -164,8 +153,8 @@ Produce a triage plan as valid JSON matching the schema in the system prompt.
     {"number": 7144, "similarity": 0.694, "relevance_note": "Worker thread lingering on Linux disable — same OS-level lifecycle gap."}
   ],
   "expected_resolution_summary": "Extension lifecycle cleanup on Linux. Requires platform-specific process management fix; typical 2–8 weeks.",
-  "resolution_bucket": "weeks",
-  "resolution_confidence_pct": 52,
+  "expected_resolution_lower_days": 3.1,
+  "expected_resolution_upper_days": 74.2,
   "priority_guess": "low",
   "priority_rationale": "Despite resource-leak framing, this is low priority: the workers are reclaimed on VS Code exit (no persistent leak), the issue affects only extension authors on Linux, and VS Code remains fully usable. Resource leak framing alone does not make this high.",
   "suggested_assignee_class": "extension-host team",
@@ -198,8 +187,9 @@ Top-3 predictions:
   #12345 (similarity: 0.891): Terminal cursor blink regression after 1.85 update...
   #11902 (similarity: 0.762): Integrated terminal: animation stops when switching focus...
 
---- SYSTEM 3: RESOLUTION TIME PREDICTOR ---
-Estimated bucket: days (1–7 days) (model confidence: 61%)
+--- SYSTEM 3: RESOLUTION TIME PREDICTOR (LightGBM) ---
+Point estimate: 4.2 days
+80% prediction interval: [0.8d, 18.3d]
 
 --- TASK ---
 Produce a triage plan as valid JSON matching the schema in the system prompt.
@@ -216,8 +206,8 @@ Produce a triage plan as valid JSON matching the schema in the system prompt.
     {"number": 11902, "similarity": 0.762, "relevance_note": "Focus-switch animation stoppage in terminal — same root cause area as tab-switching."}
   ],
   "expected_resolution_summary": "Typical terminal UI regression: 1–3 weeks depending on whether root cause is a CSS animation state bug or a deeper renderer issue.",
-  "resolution_bucket": "days",
-  "resolution_confidence_pct": 61,
+  "expected_resolution_lower_days": 0.8,
+  "expected_resolution_upper_days": 18.3,
   "priority_guess": "medium",
   "priority_rationale": "Reproducible regression affecting a highly visible UX feature (cursor blink). Workaround exists (reopen panel), so not blocking, but degrades daily workflow.",
   "suggested_assignee_class": "terminal team",
@@ -250,8 +240,9 @@ Top-3 predictions:
   #19201 (similarity: 0.931): VS Code crash on startup with git repo after update...
   #18877 (similarity: 0.814): Fatal error opening workspace with .git folder on 1.85...
 
---- SYSTEM 3: RESOLUTION TIME PREDICTOR ---
-Estimated bucket: hours (< 1 day) (model confidence: 71%)
+--- SYSTEM 3: RESOLUTION TIME PREDICTOR (LightGBM) ---
+Point estimate: 1.8 days
+80% prediction interval: [0.3d, 6.1d]
 
 --- TASK ---
 Produce a triage plan as valid JSON matching the schema in the system prompt.
@@ -268,8 +259,8 @@ Produce a triage plan as valid JSON matching the schema in the system prompt.
     {"number": 18877, "similarity": 0.814, "relevance_note": "Identical reproduction: fatal error opening any workspace with .git folder on 1.85."}
   ],
   "expected_resolution_summary": "Critical regression requiring hotfix; typically resolved within 1–3 days for a P0 crash.",
-  "resolution_bucket": "hours",
-  "resolution_confidence_pct": 71,
+  "expected_resolution_lower_days": 0.3,
+  "expected_resolution_upper_days": 6.1,
   "priority_guess": "high",
   "priority_rationale": "Crash affecting all users on 1.85.0 when opening any git-backed workspace with no in-product workaround. This blocks the core workflow (opening a project) for every upgraded user.",
   "suggested_assignee_class": "git / scm team",

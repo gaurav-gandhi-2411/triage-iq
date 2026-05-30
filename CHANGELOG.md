@@ -21,7 +21,39 @@ This file documents *what matters and why*, not every commit.
   no metric change. User-facing `SimilarIssue` Pydantic type was already correctly named.
   See ADR-0008.
 
+### Added
+
+- `TriagePlan.resolution_bucket` (supplemental): coarse ordinal bucket from new bucket
+  classifier (hours/days/weeks/months/long). Bucket computed independently of the float
+  fields; both are returned in API responses. k8s passes the 60% off-by-one accuracy
+  threshold (65.9%); vscode uses naive prior (insufficient creation-time signal). See ADR-0009.
+- `TriagePlan.resolution_confidence_pct`: bucket classifier confidence, 0–100%. Values below
+  40% indicate low signal (vscode will typically be below threshold).
+
+### Fixed
+
+- **Resolution predictor: temporal split methodology** — `closed_at` ordering produced a
+  systematic train/test distribution shift (train=fast-resolvers, test=decade-long stragglers)
+  that made k8s CI coverage 0% and rendered all prior metrics invalid. Split now uses
+  `created_at` ordering. k8s CI coverage: 0% → 77%. See ADR-0009.
+- **Resolution predictor: feature leakage** — `has_priority` (top feature by gain, corr 0.595
+  with log(resolution_hours)) was assigned post-creation during triage. Dropped from
+  `engineer_features()` alongside `has_component`, `has_type`, `num_assignees`, and `comp_*`
+  one-hots. Honest de-leaked MAE: k8s +1.4% over naive; vscode 0% (no creation-time signal).
+
+### Documentation
+
+- ADR-0009: resolution predictor Phase 1 diagnosis + Phase 2 ablation table + judge impact.
+  Prior resolution metrics (k8s +3.3%, vscode +19.1%) explicitly invalidated.
+- `reports/01_data_card.md` §6: split methodology correction noted, prior metrics retracted.
+
 ### Evaluated (no change shipped)
+
+- **W4 Phase 2 T2.7 — bucket-only LLM prompting** regressed `resolution_estimate_reasonableness`
+  by −0.532 (1.617 → 1.085, Cohere judge). Float signals retained in LLM prompt; bucket exposed
+  as additional API field only. See ADR-0009 T2.7.
+
+### Evaluated (no change shipped — prior sessions)
 
 - **W3 Phase 2 — bge-v2-m3 repo-gated reranker:** Robustness check at n=300 (k8s, seed=42,
   1000-resample bootstrap) showed the W1.3 screening k8s +6pp was a small-sample false positive.

@@ -227,3 +227,80 @@ matters.
 | Keep point regression, tune hyperparameters | Best achievable is ~+5% over naive; insufficient given extreme right skew. Diminishing returns. |
 | Conformal prediction intervals on existing model | Addresses CI coverage symptom but not intrinsic unpredictability or leakage. |
 | Drop resolution predictor entirely | The coarse-bucket reframe makes the problem tractable. Drop only if bucket classifier also fails. |
+
+---
+
+## Phase 2 Results (W4 Phase 2 — 2026-05-30)
+
+### Ablation table (created_at split throughout)
+
+| Step | k8s MAE | k8s CI% | k8s Impr | vscode MAE | vscode CI% | vscode Impr |
+|---|---|---|---|---|---|---|
+| Old (broken `closed_at` split) | 682d | 0% | +3.3% | 3.4d | 42.5% | +19.1% |
+| T2.1 Baseline (correct split, leaky) | 100.2d | 77.1% | +5.8% | 101.7d | 76.5% | +12.4% |
+| T2.3 De-leaked | 104.8d | 77.5% | **+1.4%** | 116.1d | 76.5% | **0.0%** |
+
+| Step | k8s acc | k8s obo | k8s F1 | vscode acc | vscode obo | vscode F1 |
+|---|---|---|---|---|---|---|
+| T2.4 Bucket classifier | 34.3% | **65.9% ✓** | 0.212 | 33.6% | **55.1% ✗** | 0.101 |
+
+T2.4 threshold: obo ≥ 60%. k8s passes; vscode fails stop condition.
+
+### T2.5 Decision: point vs bucket
+
+Ship decision: k8s bucket model passes (65.9% obo). Vscode uses naive prior (majority class
+"hours", 33% training frequency) flagged as low-confidence. However, the bucket is output as a
+**supplemental API field** alongside the float fields — not as a replacement — because T2.7 showed
+bucket-only prompting regresses judge quality.
+
+### T2.3 Other-model leakage audit
+
+No leakage in component classifier (text → component) or LLM prompt path. `has_priority` /
+`has_component` / `has_type` leakage was confined to resolution predictor training. Fixed by
+removing them from `engineer_features()`.
+
+### T2.7 Judge impact (stop condition triggered)
+
+Ran Cohere Command A over 60 gold issues with the new bucket-format triage plans:
+
+| Dimension | W1.2 | W4 bucket-only | Delta |
+|---|---|---|---|
+| component_match | 1.683 | 1.712 | +0.029 |
+| similar_issues_relevance | 2.800 | 2.847 | +0.047 |
+| **resolution_estimate_reasonableness** | **1.617** | **1.085** | **−0.532** |
+| priority_alignment | 0.583 | 0.576 | −0.007 |
+| next_steps_actionability | 2.000 | 2.034 | +0.034 |
+| overall_quality | 2.133 | 2.017 | −0.116 |
+| **TOTAL /15** | **10.817** | **10.271** | **−0.545** |
+
+**Stop condition triggered.** Bucket-only LLM prompting degrades `resolution_estimate_reasonableness`
+by −0.532 (1.617 → 1.085). The LLM was previously synthesizing reasonable narrative from float
+signals ("Point estimate: X days, CI: [Y, Z]") and generating calibrated summary text. The coarser
+bucket format ("Estimated bucket: days (1–7 days)") gives less context for narrative generation.
+
+**Root cause:** The judge evaluates quality of the LLM's *narrative* resolution estimate. Float
+context provides richer signal for the LLM even if the underlying predictor has high MAE. The
+regression is in prompting strategy, not model quality.
+
+### T2.8 Schema decision
+
+Float fields retained in TriagePlan and LLM prompt. `resolution_bucket` and
+`resolution_confidence_pct` added as **supplemental fields** (bucket computed from the new bucket
+classifier, not replacing floats). This preserves judge quality while exposing the bucket for API
+consumers who prefer coarse categorical estimates.
+
+### Shipped changes (final)
+
+- `splits.py` / `03_split.py`: `closed_at` → `created_at` ordering for resolution splits
+- `resolution.py`: drop leaky label features (`has_priority`, `has_component`, `has_type`,
+  `num_assignees`, `comp_*`); add bucket classifier; expose `predict_bucket()` method
+- `TriagePlan`: float fields retained; `resolution_bucket` + `resolution_confidence_pct` added
+- `triage.py` `_collect_signals`: computes both float and bucket outputs
+- Models retrained on fixed splits: k8s CI coverage 0% → 77%, honest MAE 104d
+- Data card updated: prior metrics marked invalid, split change documented
+
+### What was NOT shipped
+
+- Bucket-only LLM prompting (T2.7 regression)
+- vscode bucket model (T2.4 stop condition: obo=55.1% < 60%)
+- Resolution predictor re-scrape (not needed — split fix sufficient)

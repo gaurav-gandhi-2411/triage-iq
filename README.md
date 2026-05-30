@@ -1,6 +1,6 @@
 # TriageIQ
 
-TriageIQ turns raw GitHub issues into structured triage decisions in under 4 seconds. Given an issue title and body, it runs a four-stage ML pipeline — component classification, duplicate retrieval, resolution-time prediction, and LLM synthesis — and returns a JSON `TriagePlan` with predicted component, similar issues, expected resolution window, priority assessment, and suggested next steps. It is trained on ~20K real issues from `microsoft/vscode` and `kubernetes/kubernetes`, deployed to Cloud Run, and built to demonstrate a full production ML lifecycle: evaluation, reproducible builds, Prometheus metrics, fail-closed auth, Workload Identity Federation CI/CD, and CVE-audited dependencies.
+TriageIQ turns raw GitHub issues into structured triage decisions in under 4 seconds. Given an issue title and body, it runs a four-stage ML pipeline — component classification, similar issue retrieval, resolution-time prediction, and LLM synthesis — and returns a JSON `TriagePlan` with predicted component, similar issues, expected resolution window, priority assessment, and suggested next steps. It is trained on ~20K real issues from `microsoft/vscode` and `kubernetes/kubernetes`, deployed to Cloud Run, and built to demonstrate a full production ML lifecycle: evaluation, reproducible builds, Prometheus metrics, fail-closed auth, Workload Identity Federation CI/CD, and CVE-audited dependencies.
 
 ---
 
@@ -42,7 +42,7 @@ POST /triage {repo, title, body}
                    │ top-3 component candidates + confidence
                    ▼
 ┌───────────────────────────────────────┐
-│ System 2: Duplicate Detector           │  ~27ms p50
+│ System 2: Similar Issue Retriever      │  ~27ms p50
 │ BGE-base-en-v1.5 + FAISS cosine       │
 │ vscode MRR 0.294, Recall@5 36.7%     │
 └──────────────────┬────────────────────┘
@@ -77,9 +77,9 @@ suggested_next_steps, triage_summary
 | Component classifier | kubernetes | Top-1 accuracy (35 classes) | 51.4% |
 | Component classifier | vscode | Macro F1 | 0.585 |
 | Component classifier | vscode | Inference latency p50 | 4.9ms |
-| Duplicate detector | vscode | MRR | 0.294 |
-| Duplicate detector | vscode | Recall@5 / @10 | 36.7% / 52.1% |
-| Duplicate detector | vscode | Index size (BGE) | 24.3 MB |
+| Similar issue retriever | vscode | MRR | 0.294 |
+| Similar issue retriever | vscode | Recall@5 / @10 | 36.7% / 52.1% |
+| Similar issue retriever | vscode | Index size (BGE) | 24.3 MB |
 | Resolution predictor | vscode | MAE | 3.4 days |
 | Resolution predictor | vscode | Improvement vs naive | +19.1% |
 | Resolution predictor | vscode | Inference latency p50 | 4.0ms |
@@ -153,8 +153,8 @@ python scripts/01_scrape_issues.py        # scrape from GitHub API
 python scripts/02_preprocess.py           # clean bodies, extract features
 python scripts/03_split.py                # temporal train/val/test splits
 python scripts/04_train_classifier.py     # TF-IDF classifier + evaluation
-python scripts/07_extract_duplicates.py   # extract ground-truth duplicate pairs
-python scripts/08_build_duplicate_index.py # BGE+FAISS index
+python scripts/07_extract_related_pairs.py   # extract related-issue pairs for training/eval
+python scripts/08_build_similar_issue_index.py # BGE+FAISS index
 python scripts/09_train_resolution.py     # LightGBM resolution predictor
 python scripts/10_curate_triage_gold.py   # gold triage examples for eval
 python scripts/11_evaluate_triage.py      # full pipeline evaluation
@@ -193,7 +193,7 @@ Rate-limited: 10/hour, 30/day per IP.
 | `repo` | string | Yes | `"microsoft/vscode"` or `"kubernetes/kubernetes"` |
 | `title` | string | Yes | 1–512 chars |
 | `body` | string | No | Up to 32,000 chars; truncated to 800 in LLM prompt |
-| `issue_number` | int | No | Excludes self from duplicate search |
+| `issue_number` | int | No | Excludes self from similar-issue search |
 | `created_at` | ISO 8601 | No | Defaults to request time if omitted |
 
 **Response fields:** `predicted_component`, `component_confidence`, `similar_issues[]`, `expected_resolution_summary`, `expected_resolution_lower_days`, `expected_resolution_upper_days`, `priority_guess` (`low`/`medium`/`high`), `priority_rationale`, `suggested_assignee_class`, `suggested_next_steps[]`, `triage_summary`, `_request_id`, `_llm_status`.

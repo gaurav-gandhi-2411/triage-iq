@@ -1,11 +1,11 @@
-"""Build FAISS duplicate detection indices and evaluate Recall@K.
+"""Build FAISS similar-issue retrieval indices and evaluate Recall@K.
 
 Runs both BGE-base and MiniLM-L6 embeddings per repo.
 CPU-only inference (production target).
 
 Usage:
-    python scripts/08_build_duplicate_index.py
-    python scripts/08_build_duplicate_index.py --repos microsoft_vscode --models bge
+    python scripts/08_build_similar_issue_index.py
+    python scripts/08_build_similar_issue_index.py --repos microsoft_vscode --models bge
 """
 
 import argparse
@@ -23,7 +23,7 @@ import pandas as pd
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from triage_iq.models.duplicates import DuplicateDetector, _build_text
+from triage_iq.models.similar_issues import SimilarIssueRetriever, _build_text
 
 logging.basicConfig(
     level=logging.INFO,
@@ -37,8 +37,8 @@ DEFAULT_MODELS = ["bge", "minilm"]
 PROCESSED_DIR = Path("data/processed")
 MODELS_DIR = Path("data/models")
 CHARTS_DIR = Path("reports/charts")
-GOLD_PATH = Path("data/gold_duplicates.parquet")
-RESULTS_PATH = Path("reports/duplicate_results.json")
+GOLD_PATH = Path("data/gold_related.parquet")
+RESULTS_PATH = Path("reports/related_issue_results.json")
 
 K_VALUES = [1, 5, 10, 20]
 
@@ -57,7 +57,7 @@ def reciprocal_rank(retrieved_numbers: list[int], relevant_number: int) -> float
 
 
 def evaluate_detector(
-    detector: DuplicateDetector,
+    detector: SimilarIssueRetriever,
     gold_df: pd.DataFrame,
     repo: str,
     k_max: int = 20,
@@ -106,7 +106,7 @@ def evaluate_detector(
     return result
 
 
-def latency_single_sample_benchmark(detector: DuplicateDetector, sample_texts: list[str], n=100) -> dict:
+def latency_single_sample_benchmark(detector: SimilarIssueRetriever, sample_texts: list[str], n=100) -> dict:
     """Single-query latency (p50/p95) without batch encoding."""
     import random
     rng = random.Random(42)
@@ -153,7 +153,7 @@ def plot_recall_at_k(all_results: list[dict], out_path: str) -> None:
         ax.legend()
         ax.grid(axis="y", alpha=0.4)
 
-    plt.suptitle("Duplicate Retrieval — Recall@K", fontsize=13)
+    plt.suptitle("Similar Issue Retrieval — Recall@K", fontsize=13)
     plt.tight_layout()
     plt.savefig(out_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -161,7 +161,7 @@ def plot_recall_at_k(all_results: list[dict], out_path: str) -> None:
 
 
 def plot_score_distribution(
-    detector: DuplicateDetector,
+    detector: SimilarIssueRetriever,
     gold_df: pd.DataFrame,
     repo: str,
     out_path: str,
@@ -229,9 +229,9 @@ def run_repo_model(repo: str, model_key: str, gold_df: pd.DataFrame) -> dict:
 
     if index_path.exists():
         log.info("[%s/%s] Loading cached index from %s", repo, model_key, index_dir)
-        detector = DuplicateDetector.load(index_dir)
+        detector = SimilarIssueRetriever.load(index_dir)
     else:
-        detector = DuplicateDetector(repo=repo, model_key=model_key)
+        detector = SimilarIssueRetriever(repo=repo, model_key=model_key)
         t0 = time.perf_counter()
         detector.build_index(df)
         log.info("[%s/%s] Index built in %.1fs", repo, model_key, time.perf_counter() - t0)
@@ -252,7 +252,7 @@ def run_repo_model(repo: str, model_key: str, gold_df: pd.DataFrame) -> dict:
     CHARTS_DIR.mkdir(parents=True, exist_ok=True)
     plot_score_distribution(
         detector, gold_df, repo,
-        str(CHARTS_DIR / f"duplicate_score_dist_{repo}_{model_key}.png"),
+        str(CHARTS_DIR / f"similar_issue_score_dist_{repo}_{model_key}.png"),
     )
 
     # Index disk size

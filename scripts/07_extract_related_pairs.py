@@ -1,14 +1,14 @@
-"""Extract duplicate issue pairs for gold-standard evaluation.
+"""Extract related-issue pairs for supervised similar-issue retrieval evaluation.
 
 Strategy (in priority order):
 1. vscode issues with '*duplicate' label + explicit #N reference in body  (high confidence)
 2. Any body pattern: 'duplicate of #N', 'see #N', 'closes #N' in issues   (medium confidence)
 3. Title-similarity pairs: TF-IDF cosine >= threshold on title text        (fallback)
 
-Gold pairs are (query_id, original_id) where query is the duplicate
-and original is the issue it duplicates.
+Pairs are (query_id, original_id) where the relationship is captured by a body
+reference or title similarity — see ADR-0008 for task framing.
 
-Output: data/gold_duplicates.parquet
+Output: data/gold_related.parquet
 Schema: repo, query_number, original_number, query_title, original_title,
         query_body, original_body, source (label|body_ref|title_sim), confidence
 """
@@ -30,7 +30,7 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 PROCESSED_DIR = Path("data/processed")
-OUTPUT_PATH = Path("data/gold_duplicates.parquet")
+OUTPUT_PATH = Path("data/gold_related.parquet")
 
 # Patterns for extracting referenced issue numbers from body text
 BODY_PATTERNS = [

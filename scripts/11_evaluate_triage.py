@@ -35,7 +35,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from triage_iq.cache import LLMCache
 from triage_iq.models.component_classifier import TFIDFComponentClassifier
-from triage_iq.models.duplicates import DuplicateDetector
+from triage_iq.models.similar_issues import SimilarIssueRetriever
 from triage_iq.models.resolution import ResolutionTimePredictor
 from triage_iq.models.triage import TriageAssistant, TriagePlan
 from triage_iq.evaluation.triage_eval import (
@@ -73,11 +73,11 @@ def load_classifier(repo_slug: str) -> TFIDFComponentClassifier:
     raise FileNotFoundError(f"No classifier found for {repo_slug}")
 
 
-def load_detector(repo_slug: str, model_key: str = "bge") -> DuplicateDetector:
+def load_detector(repo_slug: str, model_key: str = "bge") -> SimilarIssueRetriever:
     path = ROOT / "data" / "models" / f"dup_index_{repo_slug}_{model_key}"
     if not Path(path).exists():
         raise FileNotFoundError(f"Detector not found: {path}")
-    return DuplicateDetector.load(str(path))
+    return SimilarIssueRetriever.load(str(path))
 
 
 def load_predictor(repo_slug: str) -> ResolutionTimePredictor:

@@ -275,6 +275,8 @@ class TriageAssistant:
             resolution_bucket, resolution_conf_pct = "days", 33.0
         t_predict = time.perf_counter() - t3
 
+        # Config C: include bucket in prompt when TRIAGE_PROMPT_INCLUDE_BUCKET=1
+        _include_bucket = os.environ.get("TRIAGE_PROMPT_INCLUDE_BUCKET") == "1"
         prompt = build_triage_prompt(
             issue_title=title,
             issue_body=body,
@@ -284,6 +286,8 @@ class TriageAssistant:
             resolution_lower_days=lo_days,
             resolution_upper_days=hi_days,
             repo=self.repo,
+            resolution_bucket=resolution_bucket if _include_bucket else None,
+            resolution_confidence_pct=resolution_conf_pct if _include_bucket else None,
         )
         return {
             "prompt": prompt,

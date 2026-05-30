@@ -28,11 +28,11 @@ Incoming issue
 
 | Component | p50 | p95 |
 |---|---|---|
-| System 1 (TF-IDF) | 3ms | 5ms |
-| System 2 (BGE) | 37ms | 137ms |
-| System 3 (LightGBM) | 1375ms | 1518ms |
-| LLM call (Groq) | 32581ms | 165295ms |
-| Total pipeline | 33860ms | 165968ms |
+| System 1 (TF-IDF) | 0ms | 0ms |
+| System 2 (BGE) | 0ms | 0ms |
+| System 3 (LightGBM) | 0ms | 0ms |
+| LLM call (Groq) | 0ms | 0ms |
+| Total pipeline | 0ms | 0ms |
 
 ---
 
@@ -42,9 +42,9 @@ Incoming issue
 Sampled from val+test splits combined (neither used for training any model).
 Component annotation from normalized label set. Priority inferred from metadata or resolution speed.
 
-**microsoft/vscode:** 30 issues — component accuracy: LLM 57%, TF-IDF 50%, Majority 13%
+**microsoft/vscode:** 30 issues — component accuracy: LLM 43%, TF-IDF 50%, Majority 13%
 
-**kubernetes/kubernetes:** 30 issues — component accuracy: LLM 83%, TF-IDF 73%, Majority 13%
+**kubernetes/kubernetes:** 30 issues — component accuracy: LLM 10%, TF-IDF 73%, Majority 13%
 
 ---
 
@@ -54,15 +54,15 @@ Component annotation from normalized label set. Priority inferred from metadata 
 
 | System | Total | comp_match /2 | similar_issues /3 | resolution_est /3 | priority /1 | next_steps /3 | overall /3 |
 |---|---|---|---|---|---|---|---|
-| System 1 (TF-IDF) | 3.92 (26%) | 1.38 | 0.00 | 0.63 | 0.10 | 1.00 | 0.80 |
-| Systems 1+2 (TF-IDF+BGE) | 6.85 (46%) | 1.47 | 2.62 | 0.33 | 0.10 | 1.00 | 1.33 |
-| Full System (LLM) | **10.22 (68%)** | 1.72 | 2.87 | 1.07 | 0.57 | 2.02 | 1.98 |
+| System 1 (TF-IDF) | 4.51 (30%) | 1.37 | 0.00 | 1.00 | 0.15 | 1.00 | 1.00 |
+| Systems 1+2 (TF-IDF+BGE) | 8.02 (53%) | 1.39 | 2.59 | 1.20 | 0.15 | 1.00 | 1.71 |
+| Full System (LLM) | **10.75 (72%)** | 1.65 | 2.80 | 1.95 | 0.40 | 1.95 | 2.00 |
 
 ### 3.2 Component Accuracy
 
 | System | Overall | vscode | kubernetes |
 |---|---|---|---|
-| Full System (LLM) | 70.0% | 56.7% | 83.3% |
+| Full System (LLM) | 26.7% | 43.3% | 10.0% |
 | System 1 (TF-IDF) | 61.7% | 50.0% | 73.3% |
 | Majority Component | 13.3% | 13.3% | 13.3% |
 
@@ -86,7 +86,7 @@ Low-reliability dimensions (κ < 0.4): **none**
 
 **Verdict:** Judge appears calibrated
 
-**Judge leniency:** Mean score 10.2/15 (68%). Scores below 50% suggest strict rubric or model limitations.
+**Judge leniency:** Mean score 10.8/15 (72%). Scores below 50% suggest strict rubric or model limitations.
 
 **Failure modes observed:** Check issues where full_plan is None — these are parse failures.
 
@@ -98,93 +98,35 @@ Low-reliability dimensions (κ < 0.4): **none**
 
 Three representative outputs — great, mediocre, and failure mode.
 
-### Great plan — #4601 (microsoft/vscode)
+### Failure mode — #312155 (microsoft/vscode)
 
-**Issue:** [ts lint] unable to find module references in TS project.
-**Gold component:** typescript | **Judge score:** 11/15
-
-```json
-{
-  "predicted_component": "typescript",
-  "component_confidence": 0.46,
-  "similar_issues": [
-    {
-      "number": 1742,
-      "similarity": 0.825,
-      "relevance_note": "Identical module resolution failure in TypeScript project, same error message."
-    },
-    {
-      "number": 4591,
-      "similarity": 0.81,
-      "relevance_note": "Duplicate error message in TypeScript editor without linter extension, similar to this issue's Cannot find module error."
-    },
-    {
-      "number": 1915,
-      "similarity": 0.79,
-      "relevance_note": "Cannot find module error despite typings folder, same error type as this issue."
-    }
-  ],
-  "expected_resolution_summary": "Typical TypeScript module resolution issue; likely a configuration or extension conflict. Resolution time: 1\u20133 hours.",
-
-...
-```
-
-### Mediocre plan — #567 (microsoft/vscode)
-
-**Issue:** Extension is not deactivated on closing the editor window
-**Gold component:** api | **Judge score:** 10/15
-
-```json
-{
-  "predicted_component": "api",
-  "component_confidence": 0.81,
-  "similar_issues": [
-    {
-      "number": 4131,
-      "similarity": 0.814,
-      "relevance_note": "Windows-specific stop button behavior not triggering extension teardown, similar to editor window close."
-    },
-    {
-      "number": 4239,
-      "similarity": 0.787,
-      "relevance_note": "Extension Code instance not properly stopped when closing, echoing similar lifecycle issues."
-    }
-  ],
-  "expected_resolution_summary": "Typical API lifecycle regression; likely resolved within 1\u20133 days for a P2 issue.",
-  "resolution_bucket": "hours",
-  "resolution_confidence_pct": 20.0,
-  "priority_guess": "medium",
-  "priority_rationale": "Extension deactivation callback not invoked when closing the editor window, leaving han
-...
-```
-
-### Failure mode — #311035 (microsoft/vscode)
-
-**Issue:** We need more settings for modifying SystemPrompts and ReminderPrompts.
+**Issue:** error de IA al acceder a Git
 **Gold component:** open_issue | **Judge score:** None/15
 
 ```json
 {
-  "predicted_component": "ux",
-  "component_confidence": 0.24,
+  "predicted_component": "electron",
+  "component_confidence": 0.99,
   "similar_issues": [
     {
-      "number": 312400,
-      "similarity": 0.745,
-      "relevance_note": "Agent misbehavior in ask mode, possibly related to prompt customization."
+      "number": 311947,
+      "similarity": 0.803,
+      "relevance_note": "GitHub Copilot issue with a similar error message and context, but unclear if directly related."
     },
     {
-      "number": 312399,
-      "similarity": 0.739,
-      "relevance_note": "Custom agent selection via keyboard shortcut, hinting at a broader UX customization need."
+      "number": 311864,
+      "similarity": 0.754,
+      "relevance_note": "GitHub-related issue with a different error message, but possibly connected to the same underlying problem."
     },
     {
-      "number": 311513,
-      "similarity": 0.726,
-      "relevance_note": "Feature request for using all subscription features, possibly tied to prompt customization or agent selection."
-    }
-  ],
-  "expected_resolution_summary": "UX feature enhancement: adding settings for customizing SystemPrompts and ReminderPrompts. May require changes to multiple componen
+      "number": 312820,
+      "similarity": 0.732,
+      "relevance_note": "Extension Signature Verification Failed error in GitHub Copilot for Azure, possibly related to the same backend issue."
+    },
+    {
+      "number": 311524,
+      "similarity": 0.723,
+      "relevance_note": "GitHub Copilot backend issue wit
 ...
 ```
 
@@ -219,6 +161,6 @@ python scripts/11_evaluate_triage.py         # requires GROQ_API_KEY
 # Clear checkpoint: rm data/triage_eval_checkpoint.jsonl
 ```
 
-**Runtime:** 4927s | **Issues evaluated:** 60 | **Triage failures:** 0 | **Judge failures:** 0
+**Runtime:** 9828s | **Issues evaluated:** 60 | **Triage failures:** 0 | **Judge failures:** 42
 
 **Approx Groq spend:** 150,000 tokens (~$0.041 at Groq free-tier pricing)

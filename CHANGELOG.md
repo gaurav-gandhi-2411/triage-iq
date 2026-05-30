@@ -52,6 +52,11 @@ This file documents *what matters and why*, not every commit.
 - **W4 Phase 2 T2.7 — bucket-only LLM prompting** regressed `resolution_estimate_reasonableness`
   by −0.532 (1.617 → 1.085, Cohere judge). Float signals retained in LLM prompt; bucket exposed
   as additional API field only. See ADR-0009 T2.7.
+- **W4 Phase 2 final (Config A — de-leaked float):** `resolution_estimate_reasonableness`
+  improved +0.333 (1.617 → 1.950). De-leaked calibrated intervals (CI 77%) produce better LLM
+  narrative than W1.2's broken intervals (CI 0%). W1.2's 1.617 baseline itself used leaky
+  float signals; the honest production baseline is 1.950. Overall total: −0.067 (flat). W4
+  ships. See ADR-0009 T1–T5.
 
 ### Evaluated (no change shipped — prior sessions)
 

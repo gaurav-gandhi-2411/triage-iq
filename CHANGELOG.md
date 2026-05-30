@@ -21,6 +21,14 @@ This file documents *what matters and why*, not every commit.
   no metric change. User-facing `SimilarIssue` Pydantic type was already correctly named.
   See ADR-0008.
 
+### Evaluated (no change shipped)
+
+- **W3 Phase 2 — bge-v2-m3 repo-gated reranker:** Robustness check at n=300 (k8s, seed=42,
+  1000-resample bootstrap) showed the W1.3 screening k8s +6pp was a small-sample false positive.
+  True delta at n=300: +0.67pp, 95% CI [−3.7pp, +5.3pp]. CI crosses zero → stop condition
+  triggered at T2. T3/T4/T5 not run. ADR-0006 rejection stands under reframing. Next step:
+  W3 fine-tuning on `gold_related.parquet` pairs. See ADR-0006 Phase 2 verdict section.
+
 ---
 
 ## W2.A — LLM Response Cache (2026-05-19)

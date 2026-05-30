@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "triage-iq"
 version = "0.1.0"
-description = "Production-grade GitHub Issue intelligence: classification, duplicate detection, resolution prediction, LLM triage"
+description = "Production-grade GitHub Issue intelligence: classification, similar issue retrieval, resolution prediction, LLM triage"
 authors = [{ name = "Gaurav Gandhi", email = "gaurav.gandhi2411@gmail.com" }]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -41,5 +41,6 @@ omit = [
     # These require trained artifacts (sklearn/FAISS/LightGBM pickles) unavailable in CI
     "src/triage_iq/models/component_classifier.py",
     "src/triage_iq/models/duplicates.py",
+    "src/triage_iq/models/similar_issues.py",
     "src/triage_iq/models/resolution.py",
 ]

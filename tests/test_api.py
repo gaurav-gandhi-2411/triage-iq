@@ -128,7 +128,7 @@ def test_triage_includes_resolution_prediction(client):
     # System 1: component classifier
     assert "predicted_component" in body
     assert body["predicted_component"] != ""
-    # System 2: duplicate detector
+    # System 2: similar issue retriever
     assert "similar_issues" in body
     assert isinstance(body["similar_issues"], list)
     # System 3 & 4: resolution predictor feeds LLM context, LLM returns these

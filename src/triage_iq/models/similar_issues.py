@@ -1,8 +1,13 @@
-"""Sentence embedding + FAISS retrieval for duplicate issue detection.
+"""Sentence embedding + FAISS retrieval for related-issue retrieval.
 
-One DuplicateDetector per repo. Supports BGE and MiniLM embeddings.
+One SimilarIssueRetriever per repo. Supports BGE and MiniLM embeddings.
 Index built over all issues; retrieval excludes the query issue itself.
+
+Task context: retrieves the most semantically related historical issues given a
+new issue's title + body. Relatedness is supervised by PR→issue references and
+text-similarity pairs (see ADR-0008 for task framing).
 """
+from __future__ import annotations
 
 import logging
 from pathlib import Path
@@ -27,8 +32,8 @@ def _build_text(title: pd.Series, body: pd.Series, max_body: int = 512) -> list[
     return (titles + ". " + bodies).tolist()
 
 
-class DuplicateDetector:
-    """Sentence embedding + FAISS IndexFlatIP retrieval for duplicate detection."""
+class SimilarIssueRetriever:
+    """Sentence embedding + FAISS IndexFlatIP retrieval for related-issue retrieval."""
 
     def __init__(self, repo: str, model_key: str = "bge") -> None:
         self.repo = repo
@@ -44,7 +49,7 @@ class DuplicateDetector:
     # Index construction
     # ------------------------------------------------------------------
 
-    def build_index(self, df: pd.DataFrame) -> "DuplicateDetector":
+    def build_index(self, df: pd.DataFrame) -> "SimilarIssueRetriever":
         """Embed all issues and build inner-product (cosine) FAISS index.
 
         Embeddings are L2-normalised so inner product == cosine similarity.
@@ -64,7 +69,10 @@ class DuplicateDetector:
         dim = embs.shape[1]
         self.index = faiss.IndexFlatIP(dim)
         self.index.add(embs)
-        logger.info("[%s/%s] Index built: %d vectors, dim=%d", self.repo, self.model_key, len(self.texts), dim)
+        logger.info(
+            "[%s/%s] Index built: %d vectors, dim=%d",
+            self.repo, self.model_key, len(self.texts), dim,
+        )
         return self
 
     # ------------------------------------------------------------------
@@ -72,7 +80,7 @@ class DuplicateDetector:
     # ------------------------------------------------------------------
 
     def retrieve(self, query_text: str, k: int = 20, exclude_number: int | None = None) -> list[dict]:
-        """Return top-k most similar issues (excluding query issue itself)."""
+        """Return top-k most related issues (excluding query issue itself)."""
         assert self.index is not None, "Call build_index first"
         assert self.issue_numbers is not None
         assert self.texts is not None
@@ -128,7 +136,7 @@ class DuplicateDetector:
         logger.info("Saved index to %s", out_dir)
 
     @classmethod
-    def load(cls, out_dir: str) -> "DuplicateDetector":
+    def load(cls, out_dir: str) -> "SimilarIssueRetriever":
         p = Path(out_dir)
         meta = joblib.load(str(p / "meta.pkl"))
         obj = cls(repo=meta["repo"], model_key=meta["model_key"])
@@ -136,3 +144,9 @@ class DuplicateDetector:
         obj.issue_numbers = meta["issue_numbers"]
         obj.texts = meta["texts"]
         return obj
+
+
+# ---------------------------------------------------------------------------
+# Backward-compat alias — remove after all callers are updated
+# ---------------------------------------------------------------------------
+DuplicateDetector = SimilarIssueRetriever

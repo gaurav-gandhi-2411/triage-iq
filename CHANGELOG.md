@@ -12,6 +12,15 @@ This file documents *what matters and why*, not every commit.
 
 ## [Unreleased]
 
+### Changed
+
+- Internal naming: "duplicate detection" renamed to "similar issue retrieval" throughout the
+  codebase. `DuplicateDetector` class → `SimilarIssueRetriever`, `duplicates.py` → `similar_issues.py`,
+  `gold_duplicates.parquet` → `gold_related.parquet`, `duplicate_results.json` →
+  `related_issue_results.json`, construction scripts renamed. No behavior change, no API change,
+  no metric change. User-facing `SimilarIssue` Pydantic type was already correctly named.
+  See ADR-0008.
+
 ---
 
 ## W2.A — LLM Response Cache (2026-05-19)

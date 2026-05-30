@@ -212,4 +212,25 @@ The following gates decide the final ADR-0006 verdict:
 | T4 | Repo-gated implementation (k8s only, vscode=None) | Only if T2+T3 pass |
 | T5 | Cohere judge k8s-subset similar_issues_relevance delta | No movement → don't ship |
 
-Final verdict updates will be appended to this ADR when Phase 2 concludes.
+### Phase 2 verdict (2026-05-30)
+
+**T2 triggered stop condition. Original rejection stands under reframing.**
+
+T2 robustness result (n=300 k8s, seed=42, 1000-resample bootstrap):
+
+| | Baseline (BGE FAISS k=20) | bge-v2-m3 (top-50 → top-5) | Δ |
+|---|---|---|---|
+| k8s R@5 | 0.4633 | 0.4700 | +0.0067 |
+| 95% CI on Δ | — | — | [−0.037, +0.053] |
+
+The CI spans zero. The W1.3 n=100 result of +6pp (0.430 → 0.490) was a small-sample false
+positive. At 3× the sample size with the same seed, the true effect is indistinguishable from zero.
+
+**T3, T4, T5 not run.** Stop condition satisfied at T2.
+
+**Final status: Rejected.** bge-v2-m3 does not reliably improve related-issue retrieval on either
+corpus. The original CASE D verdict from W1.3 stands: no cross-encoder from either screening slate
+produces a robust gain. W3 fine-tuning is the next step — a domain-fine-tuned model on
+`gold_related.parquet` pairs is the path to real retrieval improvement.
+
+Raw results: `reports/phase2_robustness.json`

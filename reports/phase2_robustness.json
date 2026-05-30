@@ -1,0 +1,17 @@
+{
+  "repo": "kubernetes_kubernetes",
+  "n_eval": 300,
+  "seed": 42,
+  "retrieval_k_baseline": 20,
+  "retrieval_k_reranker": 50,
+  "final_k": 5,
+  "model_id": "BAAI/bge-reranker-v2-m3",
+  "baseline_r5": 0.4633333333333333,
+  "reranker_r5": 0.47,
+  "delta_mean": 0.006666666666666667,
+  "ci_lo_95": -0.03666666666666667,
+  "ci_hi_95": 0.05333333333333334,
+  "n_bootstrap": 1000,
+  "robust": false,
+  "decision": "STOP_Phase2_noise"
+}

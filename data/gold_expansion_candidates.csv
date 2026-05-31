@@ -1,0 +1,1079 @@
+id,number,title,code_blocks,labels_raw,component,type,priority,state,created_at,closed_at,resolution_hours,author,num_comments,num_assignees,repo,res_bucket,tfidf_top1,tfidf_top1_conf,tfidf_top2,tfidf_top2_conf,tfidf_top3,tfidf_top3_conf,bge_similar_1,bge_similar_1_score,bge_similar_2,bge_similar_2_score,bge_similar_3,bge_similar_3_score,stratum,label_status,body_excerpt
+135717183,3313,Screen reader misses out '!' when reading lines of code,,['accessibility'],accessibility,,,closed,2016-02-23 11:57:56+00:00,2016-02-23 12:19:14+00:00,0.355,stevencl,1,1,microsoft/vscode,hours,accessibility,0.4314,suggest,0.0537,debug,0.0306,2623,0.7457,2258,0.728,2360,0.7143,vsc-hours-accessibility,pending,"Screen reader turned on using NVDA
+
+I arrow down to this line
+
+if (!containsFunctionSig) {
+
+The screen reader says ""if containsFunctionSig"" - i.e., it misses out the crucial '!' symbol.
+
+Found when testing #3247"
+142421221,4516,Selecting install extension then clicking Readme shows two conflicting dialogs,,['extensions' '*duplicate'],extensions,,,closed,2016-03-21 17:47:30+00:00,2016-03-22 12:14:36+00:00,18.451666666666668,vsccarl,1,1,microsoft/vscode,hours,extensions,0.1703,l10n-platform,0.0873,suggest,0.0729,4518,0.8494,4282,0.8218,1411,0.8168,vsc-hours-extensions,pending,"- VSCode Version: 0.10.12-alpha
+- OS Version: Windows 10
+
+Steps to Reproduce:
+1. F1 -> Install extension
+2. Click install button
+3. Click Readme button
+4. Click out of the command window
+
+Actual:
+Two notifications come up. One asking if you would like to install that extension (which you already hav"
+144615990,4800,intellisense in html files,,['html'],html,,,closed,2016-03-30 14:47:23+00:00,2016-03-31 08:39:45+00:00,17.872777777777777,yussica,1,1,microsoft/vscode,hours,html,0.2598,suggest,0.2096,javascript,0.0484,765,0.8885,3465,0.8523,4629,0.8426,vsc-hours-html,pending,"- VSCode Version:0.10.11
+- OS Version:OS X 10.10.5
+
+When I edit a html file with some javascript code, there is no intellisense. But the previous version does have the intellisense. For instance, I typed 'aler', vscode would popup a list to choose. In the latest version html file only intellisense h"
+128448825,2212,VS Code cannot update itself if the user is not an administrator,"```
+1/24/16 18:51:15.361 ShipIt[47813]: Beginning installation
+1/24/16 18:51:15.375 ShipIt[47813]: Couldn't abort install and restore owned bundle to previous location file:///Applications/Visual%20Studio%20Code.app, error NSError { domain: NSPOSIXErrorDomain, code: 2, description: ""No such file or directory"" }
+1/24/16 18:51:17.223 ShipIt[47813]: Installation error: Error Domain=NSPOSIXErrorDomain Code=13 ""Permission denied"" UserInfo={NSLocalizedDescription=Permission denied}
+1/24/16 18:51:17.223 ShipIt[47813]: ShipIt quitting
+```",['verified' 'install-update'],install-update,,,closed,2016-01-25 02:53:00+00:00,2016-01-25 09:48:57+00:00,6.9325,jguerin,1,1,microsoft/vscode,hours,install-update,0.1536,debug,0.0565,javascript,0.0456,3520,0.7838,510,0.781,311598,0.7791,vsc-hours-install-update,pending,"The app should request admin privileges if the user is not an admin. 
+
+Otherwise, the installer gives up:
+
+[CODE_BLOCK]
+
+Once VS Code comes back up, the UI keeps prompting for an update."
+142894559,4602,"Fixes --locale switch incorrect for Simplified Chinese, should be zh-cn not zh-ch",,['bug' 'verified' 'l10n-platform' 'candidate'],l10n-platform,bug,,closed,2016-03-23 08:25:23+00:00,2016-03-23 08:27:26+00:00,0.034166666666666665,dbaeumer,1,1,microsoft/vscode,hours,l10n-platform,0.1271,suggest,0.0562,accessibility,0.0473,4589,0.7969,312073,0.7493,330,0.7267,vsc-hours-l10n-platform,pending,
+120216921,975,[python] Add .gn as a python file extension,,['bug' 'languages-basic'],languages-basic,bug,,closed,2015-12-03 16:40:16+00:00,2015-12-04 07:55:02+00:00,15.24611111111111,Tyriar,2,1,microsoft/vscode,hours,languages-basic,0.1008,file-explorer,0.065,api,0.0575,1583,0.684,4081,0.6584,2136,0.6544,vsc-hours-languages-basic,pending,GN is a meta-build system that generates NinjaBuild files. GN syntax is a stripped down version of python.
+4306706140,311836,Use real streaming for loading webview resources,,['verification-needed' 'webview' 'perf' 'insiders-released'],perf,,,closed,2026-04-22 04:32:33+00:00,2026-04-22 17:28:41+00:00,12.935555555555556,mjbvz,2,1,microsoft/vscode,hours,suggest,0.0558,accessibility,0.0557,debug,0.0539,311844,0.8888,312490,0.7263,312020,0.6913,vsc-hours-perf,pending,"Let's see if we can speed up webview perf by using proper streams to load resources
+
+Right now we instead have to read the entire resource in to a buffer and then send that large buffer over. That's especially bad for large resources such as video files"
+4292467329,311284,Fix disposed SCM source control retention,,['scm'],scm,,,closed,2026-04-20 00:43:02+00:00,2026-04-20 12:01:00+00:00,11.299444444444445,roblourens,1,1,microsoft/vscode,hours,tasks,0.0774,git,0.0711,api,0.0682,311282,0.8865,311990,0.75,312211,0.7338,vsc-hours-scm,pending,"This fixes an extension-host SCM bookkeeping leak where disposed source controls remained reachable from [INLINE_CODE] after they had been unregistered from the main thread.
+
+Disposed source controls are now removed from both handle-based and extension-based bookkeeping when [INLINE_CODE] fires. Thi"
+4308268043,311878,Avoid computing and storing commands to skip shell per terminal instance,,['debt' 'terminal' 'insiders-released'],terminal,,,closed,2026-04-22 10:14:09+00:00,2026-04-22 13:50:01+00:00,3.597777777777778,Tyriar,1,1,microsoft/vscode,hours,api,0.0859,error-telemetry,0.0749,tasks,0.051,438,0.7834,1037,0.7808,2575,0.7751,vsc-hours-terminal,pending,"I noticed this inefficiency:
+
+https://github.com/microsoft/vscode/blob/200fb2ed1db2556b3da5a524d4d418835bd9de39/src/vs/workbench/contrib/terminal/browser/terminalInstance.ts#L1962-L1967
+
+Currently this will compute and store [INLINE_CODE] per terminal instance when really this should be shared acros"
+140715439,4191,[themes] Inconsistent coloring of CSS rules values,,['bug' 'verified' 'themes'],themes,bug,,closed,2016-03-14 15:55:46+00:00,2016-03-15 15:53:24+00:00,23.960555555555555,aeschli,6,1,microsoft/vscode,hours,themes,0.1701,css-less-scss,0.1491,ux,0.0811,1283,0.8174,4251,0.8082,3534,0.8072,vsc-hours-themes,pending,"- Switch to the Dark+ default theme
+- open a CSS file:
+ ![image](https://cloud.githubusercontent.com/assets/6461412/13750321/3f25dbc0-ea05-11e5-9962-8b33878292ed.png)
+- Open a LESS file:
+ ![image](https://cloud.githubusercontent.com/assets/6461412/13750226/ddb12caa-ea04-11e5-878a-f2d28b2b14d5.png)
+ "
+133233412,2965,[folding] incorrect folding region when folding vscode.d.ts,,['bug' 'verified' 'editor-folding'],editor-folding,bug,,closed,2016-02-12 12:52:17+00:00,2016-02-12 17:07:42+00:00,4.256944444444445,egamma,1,1,microsoft/vscode,hours,editor-folding,0.5355,l10n-platform,0.0425,suggest,0.0347,4736,0.8456,4968,0.8293,3307,0.8277,vsc-hours-editor-folding,pending,"pls see the screenshot.
+
+The comment [INLINE_CODE] shows as collapsed and folded but it isn't.
+
+![image](https://cloud.githubusercontent.com/assets/172399/13007297/aace840a-d18f-11e5-9119-7aaf41c5af2d.png)"
+128465882,2213,"How exactly do I download a repository if there's no ""initialize"" button?",,['*question' 'git'],git,,,closed,2016-01-25 05:21:53+00:00,2016-01-25 10:54:37+00:00,5.545555555555556,ghost,1,1,microsoft/vscode,hours,install-update,0.083,suggest,0.0712,debug,0.0487,1508,0.7536,3663,0.7523,3592,0.7497,vsc-hours-git,pending,"Hi, 
+
+Sorry for the newbie question. I'm following this tutorial (http://michaelcrump.net/using-github-with-visualstudio-code/) and others too but all of them assume that there is a ""Initialize"" button on my Visual Studio Code. 
+http://michaelcrump.net/files/addtogitvscode.jpg
+
+However mine doesn't "
+129725011,2531,Messages are not announced to screen reader,,['bug' 'verified' 'accessibility'],accessibility,bug,,closed,2016-01-29 10:21:30+00:00,2016-02-01 08:14:26+00:00,69.88222222222223,jrieken,2,1,microsoft/vscode,days,accessibility,0.2811,debug,0.0764,file-explorer,0.0552,3408,0.7521,2941,0.7487,3363,0.7327,vsc-days-accessibility,pending,"- open F1
+- select Debug: Continue
+- message appears that saying I am not debugging but explorer has focus, message isn't read"
+141937429,4432,Sorting installed extensions,,['extensions' '*duplicate'],extensions,,,closed,2016-03-18 18:00:26+00:00,2016-03-22 12:00:17+00:00,89.9975,vsccarl,2,1,microsoft/vscode,days,extensions,0.377,l10n-platform,0.085,suggest,0.0707,4337,0.8276,4621,0.8155,4624,0.8088,vsc-days-extensions,pending,"- VSCode Version: 0.10.12-alpha
+- OS Version: Windows 10
+
+Steps to Reproduce:
+1. F1 -> Show installed extensions
+
+Actual:
+Extensions sorted by number of downloads
+
+Expected:
+Extensions sorted by name. If this is by design, it would be nice to have an option to sort them by name if possible."
+146106717,4982,Do not ask to save for dirty files on delete,,['bug' 'verified' 'file-explorer'],file-explorer,bug,,closed,2016-04-05 21:08:48+00:00,2016-04-07 06:27:18+00:00,33.30833333333333,vsccarl,2,1,microsoft/vscode,days,file-explorer,0.2276,suggest,0.0862,extensions,0.0515,4984,0.8923,1538,0.8485,4137,0.8393,vsc-days-file-explorer,pending,"- VSCode Version: 0.10.12-alpha (latest)
+- OS Version: Windows 10
+
+Steps to Reproduce:
+1. Modify a file and do not save
+2. Delete the file
+
+Actual:
+Confirmation that you want to delete shows up, then after it asks if you would like to save the file.
+
+Expected:
+No confirmation asking if you would lik"
+137637251,3595,Create rpm package,,['verified' 'install-update' 'linux'],install-update,,,closed,2016-03-01 17:27:58+00:00,2016-03-07 20:36:57+00:00,147.1497222222222,Tyriar,5,1,microsoft/vscode,days,install-update,0.1373,suggest,0.062,debug,0.0491,2679,0.7811,4041,0.7808,229,0.7596,vsc-days-install-update,pending,Related #1056
+144828135,4818,Translations are missing key SelectStartMenuFolderBrowseLabel for file Default.isl,,['bug' 'important' 'verified' 'l10n-platform' 'candidate'],l10n-platform,bug,,closed,2016-03-31 08:42:19+00:00,2016-04-05 06:57:41+00:00,118.25611111111111,dbaeumer,5,1,microsoft/vscode,days,l10n-platform,0.1156,suggest,0.0765,file-explorer,0.0526,4611,0.776,4275,0.7573,4549,0.753,vsc-days-l10n-platform,pending,The translations are missing a proper translation for the key SelectStartMenuFolderBrowseLabel in file vscode-distro\build\tfs\win32\i18n\Default.resx.lcg. The item is still in English in all translations.
+130004846,2569,Associate .cson with CoffeeScript,,['languages-basic'],languages-basic,,,closed,2016-01-30 16:16:43+00:00,2016-02-01 13:50:07+00:00,45.556666666666665,Tyriar,3,1,microsoft/vscode,days,suggest,0.0655,languages-basic,0.0559,debug,0.0531,2568,0.8264,2460,0.6967,311727,0.6851,vsc-days-languages-basic,pending,Fixes #2568
+123095541,1481,Markdown preview does not show a SVG image,,['bug' 'verified' 'markdown'],markdown,bug,,closed,2015-12-19 16:15:38+00:00,2015-12-24 15:19:16+00:00,119.06055555555555,ErikSchierboom,6,1,microsoft/vscode,days,markdown,0.4283,suggest,0.0458,workbench-editors,0.0439,2210,0.8452,803,0.8215,4481,0.8028,vsc-days-markdown,pending,"Currently, when I include an SVG image in my Markdown file, the preview window does not correctly display it. Would be great if it did."
+3797725507,286776,Git Source Control Graph tree doesn't expand for some entries,,['bug' 'candidate' 'scm' 'unreleased'],scm,bug,,closed,2026-01-09 17:18:39+00:00,2026-01-12 16:44:19+00:00,71.42777777777778,yurkovych,5,1,microsoft/vscode,days,git,0.1101,typescript,0.0572,debug,0.0554,311189,0.7781,1844,0.7644,210,0.7516,vsc-days-scm,pending,"Does this issue occur when all extensions are disabled?: Yes
+
+- VS Code Version: 1.108
+- OS Version: Windows 10
+
+In Git Source Control Graph tree some entires don't expand. I can't describe logic of bug for certain, just when there are many commited files it glitches. Like below ~12 all is fine. 
+
+I"
+2836292767,239838,VSCode freezes when opening a terminal,,"['important' 'freeze-slow-crash-leak' 'candidate' 'terminal' 'gpu'
+ 'unreleased']",terminal,,,closed,2025-02-06 18:30:33+00:00,2025-02-12 13:10:02+00:00,138.65805555555556,anrikun,82,3,microsoft/vscode,days,electron,0.0721,install-update,0.0692,typescript,0.067,311834,0.8514,312633,0.8328,311145,0.8318,vsc-days-terminal,pending,"Does this issue occur when all extensions are disabled? **Yes**
+
+- VS Code Version: 
+Version: 1.97.0 (user setup)
+Commit: 33fc5a94a3f99ebe7087e8fe79fbe1d37a251016
+Date: 2025-02-04T22:41:26.688Z
+Electron: 32.2.7
+ElectronBuildId: 10660205
+Chromium: 128.0.6613.186
+Node.js: 20.18.1
+V8: 12.8.374.38-elect"
+129777394,2543,[themes] Two themse are marked as default. Why?,,['bug' 'verified' 'themes'],themes,bug,,closed,2016-01-29 14:15:07+00:00,2016-02-01 10:02:14+00:00,67.78527777777778,dbaeumer,4,1,microsoft/vscode,days,themes,0.1585,json,0.1286,ux,0.0631,2564,0.81,4056,0.7857,3279,0.7776,vsc-days-themes,pending,![capture](https://cloud.githubusercontent.com/assets/1931590/12677693/12b80cee-c69b-11e5-8de4-2d61d04998e5.png)
+136026964,3401,[folding] Setting `editor.folding` to `false` should expand all folded regions,,['bug' 'verified' 'editor-folding'],editor-folding,bug,,closed,2016-02-24 11:05:29+00:00,2016-02-25 13:35:18+00:00,26.496944444444445,joaomoreno,1,1,microsoft/vscode,days,editor-folding,0.5729,suggest,0.0506,ux,0.0317,3486,0.8659,4069,0.8033,4005,0.7964,vsc-days-editor-folding,pending,"Testing #2994
+
+![bug](https://cloud.githubusercontent.com/assets/22350/13283604/e005526c-daee-11e5-9f23-fb1702f8d0c5.gif)"
+2836812205,239862,Native context menu hijacks custom one in webview editor,"```
+vsliv368:30146709
+vspor879:30202332
+vspor708:30202333
+vspor363:30204092
+vscod805cf:30301675
+binariesv615:30325510
+vsaa593:30376534
+py29gd2263:31024239
+c4g48928:30535728
+azure-dev_surveyone:30548225
+2i9eh265:30646982
+962ge761:30959799
+pythonnoceb:30805159
+pythonmypyd1:30879173
+h48ei257:31000450
+pythontbext0:30879054
+cppperfnew:31000557
+dwnewjupyter:31046869
+nativerepl1:31139838
+pythonrstrctxt:31112756
+nativeloc2:31192216
+iacca1:31171482
+5fd0e150:31155592
+dwcopilot:31170013
+stablechunks:31184530
+6074i472:31201624
+customenabled:31232589
+8did9651:31230678
+9064b325:31222308
+copilot_t_ci:31222730
+
+```","['bug' 'verified' 'candidate' 'electron' 'confirmed' 'regression'
+ 'unreleased']",electron,bug,,closed,2025-02-06 23:08:52+00:00,2025-02-12 08:55:23+00:00,129.77527777777777,dvdrtrgn,16,1,microsoft/vscode,days,electron,0.7506,git,0.0251,suggest,0.0189,312492,0.7961,310879,0.7896,311930,0.7772,vsc-days-electron,pending,"Type: <b>Bug</b>
+
+VS code january... 
+
+Open Git Graph and right-click an item. 
+
+The context menu shows only text operations.
+
+VS Code version: Code 1.97.0 (Universal) (33fc5a94a3f99ebe7087e8fe79fbe1d37a251016, 2025-02-04T22:41:26.688Z)
+OS version: Darwin arm64 23.6.0
+Modes:
+
+<details>
+<summary>Syst"
+140692744,4167,Mac: Recent files should be split into files and folders,,['feature-request' 'file-explorer'],file-explorer,feature-request,,closed,2016-03-14 14:40:05+00:00,2016-03-24 16:12:25+00:00,241.5388888888889,joaomoreno,2,1,microsoft/vscode,weeks,electron,0.0853,ux,0.081,suggest,0.0732,342,0.7566,1662,0.7544,1098,0.7453,vsc-weeks-file-explorer,pending,"I love [INLINE_CODE], am using it left and right. The problem is that all those files are occupying space in my **Recent** list... My most common workspaces don't even show up anymore after a few simple file edits.
+
+![image](https://cloud.githubusercontent.com/assets/22350/13747951/f994e59c-e9fa-11e"
+144731448,4806,[html] Prevent single line auto-formatting for html attributes,"```
+<div ng-repeat=""item in items""
+     ng-class=""item.classes""
+     ng-init=""i = $index"">
+</div>
+```
+
+```
+<div ng-repeat=""item in items"" ng-class=""item.classes"" ng-init=""i = $index"">
+</div>
+```",['feature-request' 'html'],html,feature-request,,closed,2016-03-30 21:56:44+00:00,2016-04-25 10:45:17+00:00,612.8091666666667,parliament718,3,1,microsoft/vscode,weeks,html,0.2494,suggest,0.0676,api,0.0441,2204,0.8399,4409,0.7977,2044,0.7892,vsc-weeks-html,pending,"Is there any way to prevent Visual Studio form auto-formatting html onto one line? 
+
+For example
+
+[CODE_BLOCK]
+
+Gets auto-formatted to:
+
+[CODE_BLOCK]
+
+This seems unreasonably opinionated, especially since many frameworks these days take advantage of element attributes. It's not nice to have 5+ attri"
+140695496,4170,Provide a setting to define the `locale`,,['feature-request' 'verified' 'l10n-platform' 'candidate'],l10n-platform,feature-request,,closed,2016-03-14 14:49:18+00:00,2016-03-22 15:19:19+00:00,192.50027777777777,egamma,25,1,microsoft/vscode,weeks,l10n-platform,0.0691,file-explorer,0.0662,suggest,0.057,4118,0.8365,4592,0.8173,4522,0.8039,vsc-weeks-l10n-platform,pending,"I can configure the locale on the command line using --locale. The issue is that the setting can easily be lost since Code launches Code again without this command line setting, e.g., after an auto update or after installing an extension.
+
+In addition, a setting is more user friendly than a command "
+123527103,1583,[python] Disassociate .gn with python language,,['bug' 'verified' 'languages-basic'],languages-basic,bug,,closed,2015-12-22 17:49:28+00:00,2016-01-11 15:28:29+00:00,477.6502777777778,Tyriar,1,1,microsoft/vscode,weeks,languages-basic,0.169,markdown,0.0495,javascript,0.0491,2563,0.693,1467,0.6924,4546,0.6902,vsc-weeks-languages-basic,pending,"While Python worked well with GN in v0.10.3, since then the progress made with
+the Python language syntax highlighting doesn't play well with the extra quirks
+on top of Python that GN introduces (braces, no colons to indicate blocks).
+Making it less usable than no language mode."
+139107091,3786,poor syntax highlighting for javascript/react files,,['themes'],themes,,,closed,2016-03-07 21:55:53+00:00,2016-03-17 09:51:40+00:00,227.9297222222222,luisrudge,5,1,microsoft/vscode,weeks,languages-basic,0.1212,javascript,0.0768,themes,0.0737,4210,0.8422,3610,0.8389,4061,0.8382,vsc-weeks-themes,pending,"Code looks like a plain text file, until it parses the [INLINE_CODE] jsx tags. Atom has way more visual information about the syntax. Is there anything missing? Is this a bug?
+
+![2016-03-07 18_51_50-changepasswordcontainer jsx - cis-v2-frontend - visual studio code](https://cloud.githubusercontent.c"
+136657370,3484,[folding] Expand action should restore cursor position inside folded region iff cursor didn't change since fold action,,['feature-request' 'verified' 'editor-folding'],editor-folding,feature-request,,closed,2016-02-26 10:32:03+00:00,2016-03-08 16:00:24+00:00,269.4725,joaomoreno,1,1,microsoft/vscode,weeks,editor-folding,0.3875,suggest,0.0622,api,0.0439,3400,0.8835,3403,0.8517,3398,0.8462,vsc-weeks-editor-folding,pending,"Confusing, but let me elaborate. Before #3400, I could run [INLINE_CODE] [INLINE_CODE] [INLINE_CODE] actions in a deeply nested folding region and then [INLINE_CODE] [INLINE_CODE] [INLINE_CODE] and my cursor would return back to the original position.
+
+Although #3400 is the good fix, it did remove t"
+133444750,2995,[json] [0.10.8] Wrapping JSON with double quotes replaces the text,,['bug' 'verified' 'json'],json,bug,,closed,2016-02-13 16:08:38+00:00,2016-02-22 09:31:44+00:00,209.385,jalendrum,2,1,microsoft/vscode,weeks,json,0.0949,suggest,0.0733,languages-basic,0.0641,3641,0.7785,874,0.7769,2445,0.7615,vsc-weeks-json,pending,"In <= 0.10.5, you could highlight text in a JSON file and wrap it in double quotes:
+
+![wrap_0105](https://cloud.githubusercontent.com/assets/16483697/13028604/7fc9452e-d26b-11e5-9894-0569c23296e6.gif)
+
+In 0.10.8, the highlighted text is now replaced with a double quote rather than wrapped:
+
+![wrap_0"
+139208277,3815,[php] autocomplete is not showing user variables,,['bug' 'important' 'verified' 'php'],php,bug,,closed,2016-03-08 08:09:12+00:00,2016-03-16 14:12:42+00:00,198.05833333333334,h2u,8,1,microsoft/vscode,weeks,suggest,0.1521,php,0.1145,debug,0.0571,161,0.8592,663,0.8126,2461,0.812,vsc-weeks-php,pending,"I don't really understand how it's working. VSCode does not suggest me any of my variables. Only globals as $_COOKIE and etc.
+I was trying to type few letters of my variable name and press Ctrl+Space, and it's says ""No suggestions""."
+136294110,3444,Python UnicodeEncodeError in output window,,['tasks' '*duplicate'],tasks,,,closed,2016-02-25 06:24:06+00:00,2016-03-09 14:41:49+00:00,320.29527777777776,sun1991,2,1,microsoft/vscode,weeks,tasks,0.1545,api,0.0652,debug,0.0569,377,0.7577,310885,0.7242,3550,0.7218,vsc-weeks-tasks,pending,"[INLINE_CODE]
+[INLINE_CODE]
+
+The output in output window is: 
+[INLINE_CODE]
+
+Is output window support ASCII only? Or where can I change it?"
+122753035,1420,"Unable navigate to file from ""Errors and Warnings"" when errors occur in TypeScript.",,['info-needed' 'typescript' 'verified'],typescript,,,closed,2015-12-17 15:04:47+00:00,2016-01-05 09:15:40+00:00,450.1813888888889,liandaoacc,10,1,microsoft/vscode,weeks,typescript,0.1735,javascript,0.0817,suggest,0.0644,3106,0.8119,3107,0.8104,1390,0.7869,vsc-weeks-typescript,pending,"I followed [Transpiling TypeScript into JavaScript](https://code.visualstudio.com/docs/languages/typescript#_transpiling-typescript-into-javascript), and got an error **Unable to open 'HelloWorld.ts': File not found (e:\SoftwareProgram\Test\E:\SoftwareProgram\Test\HelloWorld.ts)** in step 4 when I c"
+118902289,645,Cannot read property 'toString' of undefined,,['error-telemetry'],error-telemetry,,,closed,2015-11-25 19:02:31+00:00,2015-12-11 10:10:16+00:00,375.12916666666666,vscodeerrors,2,1,microsoft/vscode,weeks,error-telemetry,0.7105,suggest,0.0184,javascript,0.0184,656,0.8287,672,0.8157,311073,0.8133,vsc-weeks-error-telemetry,pending,Issue Id: <b>67160aeb-b96f-e291-6bc8-324197f4dcf6</b><br /><br />_Versions_ <br />\- 0.10.1-release<br />_Stack_ <br />[/vs/editor/contrib/parameterHints/browser/parameterHintsModel.ts#L31:37 (hashParameterHints)](https://github.com/microsoft/vscode/blob/df352367df2efcfa9d602d471e4e2f42140a0f05/src/
+121806216,1213,tsd mocha does not apply to files past index.js,,['bug' 'javascript'],javascript,bug,,closed,2015-12-11 22:40:46+00:00,2015-12-20 01:14:02+00:00,194.55444444444444,khrome83,1,1,microsoft/vscode,weeks,javascript,0.0922,file-explorer,0.0835,install-update,0.0641,984,0.7303,3701,0.7243,2977,0.7173,vsc-weeks-javascript,pending,"The mocha file for tsd works correctly for the index.js file that is at the root level of the test folder. 
+
+Any nested files within the test folder, as well as any files that are siblings to index.js does not hide the green underline that shows ""can't find it"" or ""can't find describe"". 
+
+Expected t"
+127453424,2108,Accessibility,,['plan-item' 'accessibility'],accessibility,,,closed,2016-01-19 14:06:04+00:00,2016-03-01 09:49:52+00:00,1003.73,bpasero,30,1,microsoft/vscode,months,accessibility,0.1301,ux,0.0683,debug,0.0618,2145,0.7962,2304,0.7811,311175,0.7762,vsc-months-accessibility,pending,"We break Accessibility down into multiple chunks of work:
+## Issues labeled Accessibility
+
+https://github.com/Microsoft/vscode/labels/accessibility
+## Keyboard navigation & Focus indication
+- [x] Define central CSS rules for focus indication
+- [x] Support navigation in actions and action bars
+- [x] "
+119211335,751,Allow to save with UTF-8 + BOM encoding,,['feature-request' 'verified' 'file-explorer'],file-explorer,feature-request,,closed,2015-11-27 15:19:12+00:00,2016-03-03 08:01:53+00:00,2320.711388888889,kmpm,13,1,microsoft/vscode,months,file-explorer,0.1071,api,0.0779,suggest,0.0607,4197,0.8967,3575,0.8844,3924,0.869,vsc-months-file-explorer,pending,"In version 0.10.2 I am having issues with making sure a file is saved with UTF-8 and BOM character encoding.
+
+Please add such an option."
+141945413,4433,Incorrect font on overall GUI on Japanese environment,,['bug' 'important' 'verified' 'l10n-platform'],l10n-platform,bug,,closed,2016-03-18 18:31:35+00:00,2016-04-18 20:23:52+00:00,745.8713888888889,espresso3389,6,1,microsoft/vscode,months,suggest,0.131,l10n-platform,0.1214,ux,0.0583,4679,0.8128,4628,0.7965,4688,0.7895,vsc-months-l10n-platform,pending,"- VSCode Version:
+ 0.10.12-insider
+- OS Version:
+ Windows 10 Build 14291
+ Steps to Reproduce:
+ -
+
+Basically, VS Code does not use correct Japanese font on VS Code.
+It's acceptable on the editor pane if we choose correct font-family.
+
+But recent build introduces Japanese localization on the GUI and
+i"
+132176274,2793,[grammars] Pluggable syntax highlight engine for templating languages between backticks ``,"``` typescript
+@Component({
+  selector: 'tabs',
+  template: `
+    <ul>
+      <li>Tab 1</li>
+      <li>Tab 2</li>
+    </ul>
+    <ng-content></ng-content>
+  `
+})
+```",['feature-request' 'verified' 'languages-basic'],languages-basic,feature-request,,closed,2016-02-08 15:43:54+00:00,2016-05-23 20:54:43+00:00,2525.180277777778,alber70g,16,1,microsoft/vscode,months,languages-basic,0.1639,typescript,0.1121,markdown,0.0607,130,0.8512,1917,0.8064,3729,0.7997,vsc-months-languages-basic,pending,"I've shamelessly copied from the [atom-typescript issue](https://github.com/TypeStrong/atom-typescript/issues/221).
+To illustrate this, please [look at a followup which contains a screenshot](https://github.com/TypeStrong/atom-typescript/issues/800)
+### The issue
+
+Since backticks `` are ment for tem"
+130001508,2564,[themes] Should the default theme be applied when a theme is active?,,['verified' 'debt' 'themes'],themes,,,closed,2016-01-30 15:49:34+00:00,2016-03-17 07:06:20+00:00,1119.2794444444444,Tyriar,4,1,microsoft/vscode,months,themes,0.2432,css-less-scss,0.0893,ux,0.0592,2543,0.8096,4056,0.7784,2632,0.7565,vsc-months-themes,pending,Playing around with making themes for the first time and I'm finding it a little frustrating how my styles are being overridden by the default theme due to having a lower CSS specificity. Was this intentional or am I doing it wrong? Seems like theme development would be a lot nicer if I could be as 
+138111663,3663,GitHub Desktop not recognized by Visual Studio Code,,['feature-request' 'git'],git,feature-request,,closed,2016-03-03 08:34:02+00:00,2016-06-01 14:32:13+00:00,2165.969722222222,feutl,9,1,microsoft/vscode,months,git,0.1565,install-update,0.117,suggest,0.0417,2947,0.837,4690,0.8252,490,0.8015,vsc-months-git,pending,"Hi am using GitHub Desktop on my Windows Machines because it is the easiest way to interact with GitHub especially if you work with multiple tools changing files in a repo.
+
+Now VS Code is not recognizing the installed GitHub Desktop and wants me to install git-scm again. This is already there other"
+118927679,663,[php] Suggest '<?php',,['feature-request' 'php'],php,feature-request,,closed,2015-11-25 21:34:55+00:00,2016-03-16 14:24:47+00:00,2680.831111111111,ghost,5,1,microsoft/vscode,months,php,0.4692,suggest,0.1493,install-update,0.0236,3815,0.8126,2461,0.7993,3683,0.7905,vsc-months-php,pending,"When I want to type ""<?php"", auto completion dosen't suggest 'php', so I had to press Esc key to keep going."
+143386371,4662,Icon to show running task in the status bar is not displaying all the time.,,['bug' 'verified' 'tasks'],tasks,bug,,closed,2016-03-24 23:24:16+00:00,2016-05-20 14:05:18+00:00,1358.683888888889,v-pavanp,3,1,microsoft/vscode,months,tasks,0.1702,ux,0.0706,suggest,0.069,4661,0.8342,4666,0.8049,4768,0.7805,vsc-months-tasks,pending,"- VSCode Version:0.10.12-alpha
+- OS Version: Windows10
+
+Steps to Reproduce:
+1. launch app and open any folder which has a project with gruntfile.js.
+2. Press F1 and enter "">task run"" and select option for run task like below and choose ""serve"" task from the list.
+![image](https://cloud.githubusercon"
+119442430,812,No Intellisense with typescript,,['info-needed' 'typescript' 'verified'],typescript,,,closed,2015-11-30 08:35:44+00:00,2016-03-14 10:29:48+00:00,2521.9011111111113,joesonw,12,1,microsoft/vscode,months,suggest,0.2278,typescript,0.0651,api,0.0464,3160,0.87,3889,0.8685,3017,0.8503,vsc-months-typescript,pending,"It went smoothly at the start. Everything stopped working after a certain point (I use default settings, so nothing about [INLINE_CODE]). No autocomplete or type hinting anymore, it's just like a regular text editor to me right now. But it has hints when i was editing[INLINE_CODE] though."
+132922427,2925,Cannot start Omnisharp because Mono version >=4.0.1 is required. See http://go.microsoft.com/fwlink/?linkID=534832#_20001,,['error-telemetry'],error-telemetry,,,closed,2016-02-11 09:11:01+00:00,2016-04-11 21:04:15+00:00,1451.8872222222221,vscodeerrors,2,1,microsoft/vscode,months,error-telemetry,0.1395,suggest,0.079,install-update,0.0555,2924,0.8875,4517,0.8633,3949,0.8154,vsc-months-error-telemetry,pending,Issue Id: <b>56238236-aa6b-f992-ba17-42b9b36c761f</b><br /><br />_Versions_ <br />\- 0.10.6-release<br />\- dfc08dc9edf6607483b193bf934d3badc3fa2e11<br />\- db71ac615ddf9f33b133ff2536f5d33a77d4774e<br />_Stack_ <br />Error: Cannot start Omnisharp because Mono version >=4.0.1 is required. See http://
+118331883,474,No autocompletion from .d.ts files inside node_modules for JavaScript projects,,['feature-request' 'javascript'],javascript,feature-request,,closed,2015-11-23 07:28:46+00:00,2016-03-16 13:56:48+00:00,2742.467222222222,Mitko-Kerezov,1,1,microsoft/vscode,months,javascript,0.1042,typescript,0.0954,file-explorer,0.0738,462,0.8118,99,0.7983,1068,0.7961,vsc-months-javascript,pending,"Autocompletion from .d.ts definition files placed in node_modules directory works just fine for TypeScript projects (projects which have a .tsconfig file).
+It even works for JS-based projects if one has .d.ts files inside the project. However if the definition files are placed inside node_modules di"
+142423722,4519,"VsCode doesn't indicate the ""currently debugged thread"" when multilple threads are stopped during debugging.","```
+#include <iostream>
+#include <cstdlib>
+#include <pthread.h>
+
+using namespace std;
+#define NUM_THREADS 5
+
+void *PrintHello(void *threadid)
+long tid;
+tid = (long)threadid; //set a breakpoint here
+cout << ""Hello World! Thread ID, "" << tid << endl;
+pthread_exit(NULL);
+}
+
+int main()
+{
+pthread_t threads[NUM_THREADS];
+int rc;
+int i;
+for (i = 0; i < NUM_THREADS; i++) { //set a breakpoint here
+cout << ""main() : creating thread, "" << i << endl;
+rc = pthread_create(&threads[i], NULL,
+PrintHello, (void *)i);
+if (rc) {
+cout << ""Error:unable to create thread,"" << rc << endl;
+exit(-1);
+}
+}
+pthread_exit(NULL);
+}
+```",['debug' '*duplicate'],debug,,,closed,2016-03-21 17:57:59+00:00,2016-04-21 08:24:51+00:00,734.4477777777778,delmyers,11,0,microsoft/vscode,months,debug,0.1268,suggest,0.091,l10n-platform,0.0528,4623,0.8498,3650,0.8287,4993,0.8095,vsc-months-debug,pending,"- VSCode Version: 0.10.12-alpha
+- OS Version: Ubuntu 14.04
+- Debugging using Microsoft cpp debugger, but will happen in any ""stop-all"" style debugger.
+
+Steps to Reproduce:
+1. Compile following C++ code
+
+[CODE_BLOCK]
+1. Set two breakpoints in the lines with comments ""//set a breakpoint here"" 
+2. pres"
+135716786,3312,"When using word navigation, the screen reader announces tokens twice",,['bug' 'upstream' 'accessibility' '*duplicate' 'electron'],accessibility,bug,,closed,2016-02-23 11:55:35+00:00,2017-05-24 07:59:29+00:00,10940.065,stevencl,3,1,microsoft/vscode,long,accessibility,0.2345,suggest,0.0881,api,0.0545,4352,0.8064,512,0.7533,3249,0.7505,vsc-long-accessibility,pending,"screen reader support turned on and using NVDA
+
+Imagine I have the cursor at teh end of this line of code
+
+vscode.window.activeTextEditor.document.languageId
+
+When I press ctrl + left arrow, I hear 'languageId' being announced. I then press ctrl + left arrow again. The cursor moves to before the '.'"
+139238958,3828,Render white spaces: provide option to show white space between words,,"['help wanted' 'feature-request' 'verified' 'verification-needed'
+ 'editor-core']",editor-core,feature-request,,closed,2016-03-08 10:31:18+00:00,2016-09-27 12:37:13+00:00,4874.0986111111115,bpasero,13,1,microsoft/vscode,long,suggest,0.0885,ux,0.0727,languages-basic,0.0546,3501,0.7962,4418,0.776,2085,0.7708,vsc-long-editor-core,pending,"I have a use case to render whitespace but we seem to not render whitespace between words in a line:
+
+![image](https://cloud.githubusercontent.com/assets/900690/13599004/3708247c-e521-11e5-81a0-8bbe6d4218c8.png)
+
+Here I cannot figure out how the help text is formatted unless I use the keyboard."
+130922493,2657,Feature request: Resize grip on find/replace popup,,['feature-request' 'editor-find'],editor-find,feature-request,,closed,2016-02-03 06:07:32+00:00,2017-05-24 21:50:23+00:00,11439.714166666667,jumpinjackie,5,1,microsoft/vscode,long,suggest,0.1116,ux,0.0627,themes,0.0524,2401,0.7833,406,0.7814,210,0.7613,vsc-long-editor-find,pending,"Sometimes, when I do a find and replace, the text I want to find or replace may be longer than the width of the UI component and before I click the replace button I'd like to review that bit of text. 
+
+Unfortunately, the find/replace UI has a fixed size, meaning I cannot resize it making reviewing t"
+146186979,4996,Multiple cursor paste pastes contents of all cursors,,['bug' 'verified' 'editor-multicursor'],editor-multicursor,bug,,closed,2016-04-06 05:01:31+00:00,2017-12-14 17:10:13+00:00,14820.145,jtremback,6,1,microsoft/vscode,long,suggest,0.422,editor-core,0.0488,keybindings,0.0456,4375,0.7875,4134,0.7854,110,0.7763,vsc-long-editor-multicursor,pending,"- VSCode Version: 0.10.11
+- OS Version: OSX 10.11.3
+
+Steps to Reproduce:
+1. Select something with multiple cursors
+2. Cut or Copy.
+3. Paste, and you will get the contents of all cursors at each cursor.
+
+Sublime Text must have a clipboard per cursor because it will only paste the text that was select"
+140507951,4090,Preview the changelog when looking for outdated extensions,,['feature-request' 'extensions'],extensions,feature-request,,closed,2016-03-13 17:24:01+00:00,2022-01-11 23:42:00+00:00,51126.299722222226,alefragnani,6,0,microsoft/vscode,long,extensions,0.099,api,0.078,suggest,0.0596,1961,0.8055,4108,0.8052,1367,0.7927,vsc-long-extensions,pending,"When you check for outdated extensions ([INLINE_CODE]), you are able to see the [INLINE_CODE] and [INLINE_CODE], but not [INLINE_CODE] :cry: . 
+
+Besides not being a required file when publishing extensions (in [INLINE_CODE]), the [INLINE_CODE] should be shown, if existed. Even better if it could sho"
+122567238,1391,"When replacing folders, offer an option to merge the files",,['feature-request' 'file-explorer'],file-explorer,feature-request,,closed,2015-12-16 18:00:43+00:00,2017-11-17 09:59:50+00:00,16839.985277777778,tazejin,3,0,microsoft/vscode,long,file-explorer,0.0884,search,0.072,git,0.0579,331,0.7344,2014,0.7171,3256,0.7114,vsc-long-file-explorer,pending,"When you have in root folder named ""images"" for example and in lets say folder ""secret"" you have another ""images folder"" and you move the images from secret to root, it ask you to replace files but it does not replace them, it deletes whole folder and copy new one rather than replacing only existing"
+119764801,877,[html] tag auto close on intellisense,,['feature-request' 'html'],html,feature-request,,closed,2015-12-01 17:14:08+00:00,2016-12-08 16:48:42+00:00,8951.576111111111,tigran-hakobyan-1,14,1,microsoft/vscode,long,html,0.6215,suggest,0.0599,languages-basic,0.0236,2246,0.8656,1145,0.8281,1048,0.8162,vsc-long-html,pending,HTML tags are not closing automatically and when i edit one tag the ending part is not being modified too.
+118007754,329,Portable version!,,['feature-request' 'install-update' 'on-testplan'],install-update,feature-request,,closed,2015-11-20 10:09:32+00:00,2018-06-18 18:06:25+00:00,22591.948055555556,crper,137,0,microsoft/vscode,long,suggest,0.065,file-explorer,0.0617,install-update,0.0519,679,0.7169,2743,0.7099,3326,0.6962,vsc-long-install-update,pending,"You can provide a portable version of it? Or to support the configuration file or plug-sync to the cloud;
+Otherwise, each computer must be installed once, configured once. . It is a waste of time;
+
+Thank you"
+123113000,1493,Insert Line Above/Below keyboard shortcuts are swapped relative to Visual Studio,,['feature-request' 'keybindings'],keybindings,feature-request,,closed,2015-12-19 21:49:35+00:00,2017-11-22 15:21:37+00:00,16889.533888888887,rkeithhill,6,0,microsoft/vscode,long,keybindings,0.1574,suggest,0.1174,install-update,0.05,1760,0.812,406,0.8102,4880,0.8061,vsc-long-keybindings,pending,"I use Ctrl+Enter and Ctrl+Shift+Enter to insert lines above and below respectively in Visual Studio **all the time**. It drives me a bit bonkers that the shortcuts are swapped in VSCode. 
+
+Given the name ""Visual Studio Code"" implies somewhat of a derivative of ""Visual Studio"", could you please chang"
+140628773,4109,How to generate xxx.i18n.json,,['feature-request' 'l10n-platform'],l10n-platform,feature-request,,closed,2016-03-14 10:07:09+00:00,2017-05-29 07:19:38+00:00,10581.208055555555,f111fei,7,1,microsoft/vscode,long,json,0.1187,api,0.0649,file-explorer,0.0513,4281,0.7836,1769,0.7815,4958,0.7803,vsc-long-l10n-platform,pending,"It`s great that vscode supports internationalization. I want to know how to generate and edit
+the json files in the https://github.com/Microsoft/vscode/tree/master/i18n. 
+Is there a tool? Is it open source?"
+118750016,605,[css] Support auto-complete of gradient function parameters like currently do for rgb/hsl,,['feature-request' 'languages-basic' 'css-less-scss' '*out-of-scope'],languages-basic,feature-request,,closed,2015-11-25 03:01:04+00:00,2017-11-20 21:54:07+00:00,17442.884166666667,dstorey,3,1,microsoft/vscode,long,css-less-scss,0.171,suggest,0.063,api,0.0558,1654,0.7617,1220,0.745,735,0.7425,vsc-long-languages-basic,pending,"The colour functions in CSS currently prefill the parameters and allow you to tab through the values. Similarly it would be nice to support that for the 4 gradient functions, especially as the syntax is some times hard to remember (not helped by the fact it has changed so many times). Currently it j"
+139794019,3948,Bold+italic style in markdown is styled as just bold in code view,,['bug' 'upstream' 'verified' 'markdown'],markdown,bug,,closed,2016-03-10 05:54:22+00:00,2018-02-09 22:49:38+00:00,16840.92111111111,Tyriar,6,1,microsoft/vscode,long,markdown,0.246,suggest,0.0595,ux,0.0574,3947,0.8395,2005,0.824,1837,0.7731,vsc-long-markdown,pending,"The last link should also be in italics.
+
+![image](https://cloud.githubusercontent.com/assets/2193314/13660712/64e6799a-e641-11e5-83f0-3c454be23d55.png)"
+107902328,14418,Remove dead RateLimit function from API server handlers,,['kind/cleanup' 'area/apiserver' 'lgtm' 'size/S'],apiserver,cleanup,,closed,2015-09-23 11:45:25+00:00,2015-09-23 23:25:06+00:00,11.661388888888888,gmarek,3,1,kubernetes/kubernetes,hours,apiserver,0.1791,provider/gcp,0.053,nodecontroller,0.0494,13452,0.7564,6314,0.7298,12584,0.7266,k8s-hours-apiserver,pending,
+69919904,7120,gce provider's restart-apiserver function is no longer correct,,"['kind/bug' 'priority/important-soon' 'area/cloudprovider'
+ 'area/test-infra']",cloudprovider,bug,important-soon,closed,2015-04-21 18:36:57+00:00,2015-04-21 21:33:54+00:00,2.9491666666666667,roberthbailey,1,0,kubernetes/kubernetes,hours,platform/gce,0.076,provider/gcp,0.0573,cloudprovider,0.0571,7141,0.8072,7137,0.8057,11904,0.8049,k8s-hours-cloudprovider,pending,"Now that kube-apiserver runs in a container, [INLINE_CODE] no longer exists:
+
+https://github.com/GoogleCloudPlatform/kubernetes/blob/master/cluster/gce/util.sh#L983-L985
+
+/cc @ArtfulCoder"
+58108681,4540,Fire event for pod when volume setup failed,,['priority/important-soon' 'area/introspection' 'sig/node'],introspection,,important-soon,closed,2015-02-18 18:37:23+00:00,2015-02-19 18:26:42+00:00,23.821944444444444,dchen1107,0,0,kubernetes/kubernetes,hours,kubelet,0.0815,introspection,0.0772,reliability,0.0451,4586,0.8708,6302,0.796,10729,0.7849,k8s-hours-introspection,pending,"When volume setup failed, pod stays at pending state; then kubelet will retry volume setup in next sync loop. We should fire event for such failure.
+
+cc/ @erictune"
+100608364,12596,kube-proxy: userspace proxier should clean up iptables proxier's mess,,['priority/backlog' 'sig/network' 'area/kube-proxy'],kube-proxy,,backlog,closed,2015-08-12 18:41:59+00:00,2015-08-13 08:18:34+00:00,13.609722222222222,thockin,4,0,kubernetes/kubernetes,hours,kube-proxy,0.6568,provider/gcp,0.0228,ui,0.0193,3760,0.9001,12682,0.8783,12597,0.8477,k8s-hours-kube-proxy,pending,"If you switch from iptables back to userspace, all the rules are left behind.
+
+@BenTheElder"
+59556018,4959,Use proxy instead of load balancer for Elasticsearch and Kibana,,['area/logging'],logging,,,closed,2015-03-02 21:42:34+00:00,2015-03-02 22:36:37+00:00,0.9008333333333334,satnam6502,6,0,kubernetes/kubernetes,hours,logging,0.167,introspection,0.049,provider/gcp,0.0461,7995,0.7991,7950,0.7985,7818,0.7961,k8s-hours-logging,pending,"This change:
+- Removes the external load balancer from the Elasticsearch and Kibana services for cluster level logging and uses the proxy instead (are you happy now @thockin ?).
+- Updates our [INLINE_CODE] image to specify the Elasticsearch service using its proxy address and removes the nginx proxy"
+107462036,14261,Temporarily add Pod Garbage Collection to NodeController,,['priority/important-soon' 'area/nodecontroller'],nodecontroller,,important-soon,closed,2015-09-21 08:02:12+00:00,2015-09-21 08:11:31+00:00,0.15527777777777776,gmarek,1,0,kubernetes/kubernetes,hours,nodecontroller,0.2375,provider/gcp,0.0457,introspection,0.04,14325,0.8054,6228,0.7974,11631,0.7955,k8s-hours-nodecontroller,pending,"Spin off from #7660
+
+We need to add a loop through Pods in NC that will periodically remove:
+- Pods that are scheduled on non-existent Nodes,
+- Pods that have their deletion grace period passed,
+- terminated Pods (#12055 (comment))"
+108218689,14524,MESOS: updated mesos-go and dep libs: zk and gogo/protobuf,,['lgtm' 'area/platform/mesos' 'size/XS'],platform/mesos,,,closed,2015-09-24 21:34:28+00:00,2015-09-25 20:30:29+00:00,22.933611111111112,jdef,5,1,kubernetes/kubernetes,hours,platform/mesos,0.8183,kubelet,0.0101,kube-proxy,0.0097,12313,0.8134,10733,0.8043,13596,0.7729,k8s-hours-platform-mesos,pending,"this is needed for mesos v0.24 compat
+
+xref https://github.com/mesosphere/kubernetes-mesos/issues/494"
+53700639,3297,GKE: Create network if needed.,,['area/provider/gcp'],provider/gcp,,,closed,2015-01-08 00:28:56+00:00,2015-01-08 00:53:17+00:00,0.4058333333333333,mbforbes,1,1,kubernetes/kubernetes,hours,provider/gcp,0.4027,test,0.0338,reliability,0.0256,3046,0.8175,3280,0.7794,5728,0.7703,k8s-hours-provider-gcp,pending,
+99257349,12287,"(Openstack) Creating load balancer requests ""nil"" IP address if unspecified",,['kind/bug' 'area/provider/openstack'],provider/openstack,bug,,closed,2015-08-05 17:25:57+00:00,2015-08-05 22:45:57+00:00,5.333333333333333,jpgxs,0,0,kubernetes/kubernetes,hours,cloudprovider,0.1446,usability,0.056,kubectl,0.0499,12288,0.8718,12284,0.8328,7199,0.8129,k8s-hours-provider-openstack,pending,"When creating an external load balancer in OpenStack, if a Public IP is not specified (e.g. kubectl expose --public-ip=...) then the call to create a VirtualIP uses string ""nil"" as the IP Address (causing this to fail)"
+79543526,8685,Infra pod status on kubectl get pods is confusing and probably not necessary,"```
+$ kubectl get pods 
+POD                        IP             CONTAINER(S)   IMAGE(S)                               HOST                  LABELS         STATUS    CREATED      MESSAGE
+nettest-controller-3a11u   172.17.0.103                                                         127.0.0.1/127.0.0.1   name=nettest   Running   47 seconds   
+                                          webserver      gcr.io/google_containers/nettest:1.4                                        Running   22 seconds   
+nettest-controller-5453i   172.17.0.110                                                         127.0.0.1/127.0.0.1   name=nettest   Running   47 seconds   
+                                          webserver      gcr.io/google_containers/nettest:1.4                                        Running   20 seconds   
+```",['priority/backlog' 'area/usability' 'area/kubectl' 'sig/api-machinery'],usability,,backlog,closed,2015-05-22 17:40:39+00:00,2015-05-22 20:49:08+00:00,3.141388888888889,smarterclayton,8,0,kubernetes/kubernetes,hours,introspection,0.0681,kubelet,0.0623,usability,0.0533,4989,0.7995,4787,0.7976,4188,0.7969,k8s-hours-usability,pending,"I couldn't find an issue specifically describing this, so I'm assuming it's a bug:
+
+[CODE_BLOCK]
+
+The infra container being unidentified is confusing - and the only thing that's unique to it is the creation time relative to the first pod (which could be represented in one field). For single containe"
+92160945,10559,Release 0.20.2,,['area/build-release' 'lgtm'],build-release,,,closed,2015-06-30 18:06:51+00:00,2015-06-30 18:38:25+00:00,0.5261111111111111,alex-mohr,3,1,kubernetes/kubernetes,hours,kubelet,0.0953,provider/gcp,0.0674,docker,0.0638,10400,0.8324,2874,0.8112,6936,0.7927,k8s-hours-build-release,pending,"Cherrypick 3 PRs into v0.20.2:
+- Don't make kubelet systemd service depend on Docker #10400
+- Kubelet doesn't fight apiserver for cputime on the master. #10471
+- Wait until a token shows up to start addons (redux) #10542"
+105416894,13677,MySQL Galera 3-Node Synchronous example provided,,['area/example'],example,,,closed,2015-09-08 16:19:42+00:00,2015-09-09 12:20:06+00:00,20.006666666666668,CaptTofu,1,0,kubernetes/kubernetes,hours,example,0.2347,provider/gcp,0.0443,ui,0.0385,13729,0.9009,1675,0.7644,8355,0.7379,k8s-hours-example,pending,"At Percona Live in Santa Clare in April, I did a talk on running a 3-node Galera cluster on Kubernetes. I recently updated this work for v1 and have a pull request I could immediately make. I work for HP and we have a corporate CLA. I would love to provide this example in the example directory and h"
+100779024,12654,Remove external function setting Kubelet flags,,['kind/cleanup' 'area/apiserver' 'lgtm'],apiserver,cleanup,,closed,2015-08-13 14:12:37+00:00,2015-08-19 13:48:55+00:00,143.605,gmarek,4,1,kubernetes/kubernetes,days,apiserver,0.1575,kubelet,0.0588,provider/gcp,0.0445,1667,0.8003,6768,0.7866,6940,0.7821,k8s-days-apiserver,pending,"I find this function unnecessary. It made me look into different file to see how flags are named, plus it's used only in this one place.
+
+@davidopp"
+106322235,13915,Improve documentation for client/metrics pkg,,['kind/documentation' 'area/client-libraries' 'lgtm' 'size/XS'],client-libraries,documentation,,closed,2015-09-14 11:26:02+00:00,2015-09-17 04:17:37+00:00,64.85972222222222,tmrts,9,1,kubernetes/kubernetes,days,client-libraries,0.3554,provider/gcp,0.0397,introspection,0.0294,12484,0.8433,14296,0.7934,9992,0.7618,k8s-days-client-libraries,pending,Adds documenation for the [INLINE_CODE] package and it's exposed members.
+102411693,13034,runtime error when using OpenStack cloud provider,"```
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: panic: runtime error: invalid memory address or nil pointer dereference
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: [signal 0xb code=0x1 addr=0x0 pc=0x7f43bd]
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: goroutine 1 [running]:
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: k8s.io/kubernetes/pkg/cloudprovider/providers/openstack.(*OpenStack).Instances(0x0, 0x0, 0x0, 0x6)
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: /builddir/build/BUILD/kubernetes-b5a4a548df0cffb99bdcc3b9b9e48d4025d0541c/_output/local/go/src/k8s.io/kubernetes/pkg/cloudprovider/providers/openstack/openstack.go:163 +0x8ed
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: k8s.io/kubernetes/cmd/kube-apiserver/app.(*APIServer).Run(0xc82029b500, 0xc8202b6400, 0x0, 0x10, 0x0, 0x0)
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: /builddir/build/BUILD/kubernetes-b5a4a548df0cffb99bdcc3b9b9e48d4025d0541c/_output/local/go/src/k8s.io/kubernetes/cmd/kube-apiserver/app/server.go:384 +0x1439
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: main.main()
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: /builddir/build/BUILD/kubernetes-b5a4a548df0cffb99bdcc3b9b9e48d4025d0541c/_output/local/go/src/k8s.io/kubernetes/cmd/kube-apiserver/apiserver.go:48 +0x171
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: goroutine 17 [chan receive]:
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: github.com/golang/glog.(*loggingT).flushDaemon(0x1d27440)
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: /builddir/build/BUILD/kubernetes-b5a4a548df0cffb99bdcc3b9b9e48d4025d0541c/Godeps/_workspace/src/github.com/golang/glog/glog.go:879 +0x67
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: created by github.com/golang/glog.init.1
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: /builddir/build/BUILD/kubernetes-b5a4a548df0cffb99bdcc3b9b9e48d4025d0541c/Godeps/_workspace/src/github.com/golang/glog/glog.go:410 +0x297
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: goroutine 24 [syscall]:
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: os/signal.loop()
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: /usr/lib/golang/src/os/signal/signal_unix.go:22 +0x18
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: created by os/signal.init.1
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: /usr/lib/golang/src/os/signal/signal_unix.go:28 +0x37
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: goroutine 26 [runnable]:
+```",['kind/support' 'area/cloudprovider'],cloudprovider,support,,closed,2015-08-21 16:06:12+00:00,2015-08-25 23:27:59+00:00,103.36305555555556,altvnk,1,0,kubernetes/kubernetes,days,cloudprovider,0.0751,extensibility,0.0577,provider/gcp,0.0466,14352,0.7897,13412,0.7826,13365,0.7658,k8s-days-cloudprovider,pending,"Hi,
+I cannot configure OpenStack cloud provider in k8s. Apiserver fails immediately with following error:
+
+[CODE_BLOCK]
+
+[INLINE_CODE] contains all creds needed to operate OpenStack API, [INLINE_CODE] is starting with options [INLINE_CODE]
+
+I assume that i make a mistake in configuration, but there "
+108309805,14550,Fix bugs in daemonset controller and e2e tests,,['kind/bug' 'area/controller-manager' 'lgtm' 'size/L'],controller-manager,bug,,closed,2015-09-25 11:46:14+00:00,2015-09-30 07:37:46+00:00,115.85888888888888,sttts,21,1,kubernetes/kubernetes,days,provider/gcp,0.0819,platform/mesos,0.0686,test,0.0659,14553,0.8665,9345,0.7971,13896,0.7949,k8s-days-controller-manager,pending,"This PR is a preparation to get daemonsets working on Mesos. On the way towards this, the following bugs were found and fixed by this PR:
+- the e2e tests delete all node labels. Other e2e tests might rely on them, e.g. on kubernetes.io/hostname, or in the Mesos case on some other labels.
+- the pods "
+101798083,12893,Set pod hostname to node name if --net=host,,['priority/important-soon' 'area/downward-api' 'sig/node'],downward-api,,important-soon,closed,2015-08-19 03:20:54+00:00,2015-08-22 19:46:18+00:00,88.42333333333333,thockin,7,0,kubernetes/kubernetes,days,downward-api,0.4351,provider/gcp,0.0361,kubelet,0.0293,12980,0.8536,4825,0.8477,12895,0.8305,k8s-days-downward-api,pending,"Forked from #4825 - there seems to be no disagreement. If a pod uses host networking, the host's UTS should be used, too (or at least hostname and domainname fields in the docker API).
+
+This seems like a pretty easy change that just about anyone could make (hint hint)"
+51912447,2923,Collect Kubelet logs with Fluentd->(Elasticsearch|Cloud Logging),,['priority/important-soon' 'area/introspection' 'area/logging'],introspection,,important-soon,closed,2014-12-14 07:21:21+00:00,2014-12-15 19:46:33+00:00,36.42,satnam6502,3,1,kubernetes/kubernetes,days,logging,0.3939,introspection,0.07,kubelet,0.0522,12567,0.8653,14029,0.8386,7006,0.8206,k8s-days-introspection,pending,"This PR allows us to collect Kubelet logs. This PR:
+- Modifies the manifest files for the Fluentd -> Elasticsearch and Cloud Logging images to map /var/log to allow /var/log/kubelet.log to be collected
+- Modifies the Docker images for Fluentd collector containers to collect /var/log/kubelet.log and "
+64780766,6061,Suspicious logic in proxier.go,"```
+if A & B & C {
+continue
+}
+if A & (!B || !C || !D) {
+do something
+}
+```",['priority/backlog' 'area/kube-proxy' 'sig/node'],kube-proxy,,backlog,closed,2015-03-27 15:11:02+00:00,2015-03-30 21:32:03+00:00,78.35027777777778,justinsb,4,1,kubernetes/kubernetes,days,kube-proxy,0.0624,client-libraries,0.053,cloudprovider,0.0465,6536,0.7679,6737,0.7591,9500,0.74,k8s-days-kube-proxy,pending,"https://github.com/GoogleCloudPlatform/kubernetes/blob/master/pkg/proxy/proxier.go#L480-L483
+
+I think this is:
+
+[CODE_BLOCK]
+
+I think the !D can never be a factor in the second if statement. !D only comes in to play if A & B & C, but in that case the first if statement would have been hit.
+
+I'm thin"
+100845785,12678,Improve readability of scheduling failure logs,,['sig/scheduling' 'lgtm' 'area/logging'],logging,,,closed,2015-08-13 19:08:57+00:00,2015-08-17 11:06:47+00:00,87.96388888888889,karlkfi,7,1,kubernetes/kubernetes,days,introspection,0.0653,logging,0.058,kubectl,0.0473,1249,0.7571,14739,0.7434,8526,0.7209,k8s-days-logging,pending,- Add struct fields to log output.
+98302753,12062,The kube-apiserver cannot remove the invalid nodes,,['area/nodecontroller'],nodecontroller,,,closed,2015-07-31 02:20:53+00:00,2015-08-04 23:57:59+00:00,117.61833333333334,qq690388648,12,1,kubernetes/kubernetes,days,nodecontroller,0.1734,provider/gcp,0.1079,apiserver,0.0423,6285,0.773,9850,0.7557,8661,0.7522,k8s-days-nodecontroller,pending,"I have raise a 300-nodes kubernetes cluster with 1.0 version, and the bellow cmd show 300:
+<code>kubectl get nodes | grep -c Ready</code>
+The below cmd show 9:
+<code>kubectl get nodes | grep -c NotReady</code>
+And then I shutdown the 100 nodes of them (kill kubelet and halt the machine) and wait for"
+97784149,11945,Can not set `--service-node-port-range` using `kube-up.sh` on ubuntu cluster,,['area/os/ubuntu'],os/ubuntu,,,closed,2015-07-28 19:32:41+00:00,2015-08-03 19:01:42+00:00,143.48361111111112,mamikonyana,1,0,kubernetes/kubernetes,days,os/ubuntu,0.2469,provider/gcp,0.0441,platform/vagrant,0.0395,11690,0.8322,9114,0.7945,10185,0.7908,k8s-days-os-ubuntu,pending,There is currently no way to set [INLINE_CODE] if you are trying to set up kuberenetes using [INLINE_CODE] on ubuntu cluster
+108458862,14614,"MESOS: Fix deleting gracefully terminating, not-yet-scheduled, pre-scheduled pods",,['lgtm' 'area/platform/mesos' 'size/S'],platform/mesos,,,closed,2015-09-26 11:53:16+00:00,2015-09-29 01:04:39+00:00,61.18972222222222,sttts,11,1,kubernetes/kubernetes,days,platform/mesos,0.3989,kubelet,0.0473,provider/gcp,0.0311,13966,0.8085,6804,0.801,11156,0.7973,k8s-days-platform-mesos,pending,"In upstream the kubelet is responsible for all pods which have the spec.NodeName
+set. In Mesos we have a two-stage scheduling process:
+1. pods with a pre-set spec.NodeName are still scheduled by the scheduler.
+2. The kubelet will only see them when a Mesos task was started and the executor
+ passes t"
+107655437,14338,GKE Release Notes possibly outdated,,['kind/documentation' 'area/provider/gcp'],provider/gcp,documentation,,closed,2015-09-22 06:45:07+00:00,2015-09-23 18:22:47+00:00,35.62777777777778,JeanMertz,1,1,kubernetes/kubernetes,days,provider/gcp,0.991,build-release,0.0007,platform/gce,0.0005,3315,0.8397,871,0.8315,3146,0.8177,k8s-days-provider-gcp,pending,"Looking at this page: https://cloud.google.com/container-engine/release-notes#supported_kubernetes_api_versions
+
+It seems that:
+1. GCE is running a Kubernetes master version ([INLINE_CODE]) that was released a month and a half ago
+2. the Release Notes itself are almost a month old, while updates whe"
+100814748,12665,automatically configuring HAProxy,,['kind/support' 'area/HA'],HA,support,,closed,2015-08-13 16:37:29+00:00,2015-08-25 21:57:57+00:00,293.3411111111111,erictune,5,1,kubernetes/kubernetes,weeks,app-lifecycle,0.0636,provider/gcp,0.0493,api,0.0479,12111,0.8289,12655,0.7774,11221,0.7682,k8s-weeks-HA,pending,"## @jjfiguep wrote in another issue : 
+
+Hi,
+
+First of all, this is my first comment in GitHub and sorry if this is not the correct place.
+
+In previous comments it is discussed the possibility to use Kubernetes and HAProxy. Also it is commented the option to periodically detect new services and updat"
+91913614,10501,Unregister v1beta3,,['priority/critical-urgent' 'area/apiserver' 'sig/api-machinery'],apiserver,,critical-urgent,closed,2015-06-29 21:25:58+00:00,2015-07-09 22:02:36+00:00,240.61055555555555,nikhiljindal,4,1,kubernetes/kubernetes,weeks,api,0.0647,apiserver,0.0622,cloudprovider,0.0595,10525,0.9123,6098,0.8639,8087,0.8287,k8s-weeks-apiserver,pending,"We need to stop supporting v1beta3 before 1.0.
+
+We can stop exposing v1beta3 by default in the master (https://github.com/GoogleCloudPlatform/kubernetes/blob/master/cmd/kube-apiserver/app/server.go#L290), which is a small change.
+To totally disallow users to use v1beta3, we can stop registering the "
+59609515,4977,Proxy endpoint for services does not appear to be working for client library,"```
+func getURL(c *client.Client, url string) ([]byte, error) {
+    body, err := c.Get().Namespace(api.NamespaceDefault).
+        AbsPath(fmt.Sprintf(""/api/v1beta1/proxy/services/elasticsearch-logging/%s"", url)).Do().Raw()
+    if err != nil {
+        return nil, err
+    }
+    return body, nil
+}
+
+...
+    body, err := getURL(c, """")
+```
+
+```
+I0302 17:33:14.873064    8431 request.go:508] finalURL = https://104.197.8.236/api/v1beta1/proxy/services/elasticsearch-logging/?namespace=default
+
+• Failure [0.334 seconds]
+Cluster level logging using Elasticsearch
+/usr/local/google/home/satnam/gocode/src/github.com/GoogleCloudPlatform/kubernetes/_output/local/go/src/github.com/GoogleCloudPlatform/kubernetes/test/e2e/es_cluster_logging.go:47
+  should check that logs from pods on all nodes are ingested into Elasticsearch [It]
+  /usr/local/google/home/satnam/gocode/src/github.com/GoogleCloudPlatform/kubernetes/_output/local/go/src/github.com/GoogleCloudPlatform/kubernetes/test/e2e/es_cluster_logging.go:46
+
+  Expected error:
+      <*errors.StatusError | 0x4c2081da900>: {
+          ErrStatus: {
+              TypeMeta: {Kind: """", APIVersion: """"},
+              ListMeta: {SelfLink: """", ResourceVersion: """"},
+              Status: ""200"",
+              Message: """",
+              Reason: """",
+              Details: nil,
+              Code: 0,
+          },
+      }
+
+  not to have occurred
+
+  /usr/local/google/home/satnam/gocode/src/github.com/GoogleCloudPlatform/kubernetes/_output/local/go/src/github.com/GoogleCloudPlatform/kubernetes/test/e2e/es_cluster_logging.go:93
+------------------------------
+SSSSSSSSSSSSSSSSSSSSS
+
+Summarizing 1 Failure:
+
+[Fail] Cluster level logging using Elasticsearch [It] should check that logs from pods on all nodes are ingested into Elasticsearch 
+/usr/local/google/home/satnam/gocode/src/github.com/GoogleCloudPlatform/kubernetes/_output/local/go/src/github.com/GoogleCloudPlatform/kubernetes/test/e2e/es_cluster_logging.go:93
+
+Ran 1 of 28 Specs in 0.334 seconds
+FAIL! -- 0 Passed | 1 Failed | 0 Pending | 27 Skipped F0302 17:33:14.919906    8431 driver.go:87] At least one test failed
+```
+
+```
+$ curl -k -u admin:Drt3KdRGnoQL7TQM  https://104.197.8.236/api/v1beta1/proxy/services/elasticsearch-logging/?namespace=default
+{
+  ""status"" : 200,
+  ""name"" : ""Gorgeous George"",
+  ""cluster_name"" : ""kubernetes_logging"",
+  ""version"" : {
+    ""number"" : ""1.4.4"",
+    ""build_hash"" : ""c88f77ffc81301dfa9dfd81ca2232f09588bd512"",
+    ""build_timestamp"" : ""2015-02-19T13:05:36Z"",
+    ""build_snapshot"" : false,
+    ""lucene_version"" : ""4.10.3""
+  },
+  ""tagline"" : ""You Know, for Search""
+}
+```",['area/client-libraries' 'kind/support' 'sig/api-machinery'],client-libraries,support,,closed,2015-03-03 08:23:53+00:00,2015-03-11 17:59:37+00:00,201.59555555555556,satnam6502,12,1,kubernetes/kubernetes,weeks,client-libraries,0.0942,provider/gcp,0.0863,test-infra,0.0464,7305,0.8166,11296,0.7742,7950,0.7661,k8s-weeks-client-libraries,pending,"I am trying to access the Elasticsearch service via the proxy in our e2e tests:
+
+[CODE_BLOCK]
+
+However, this fails although there is mention of a 200 status code:
+
+[CODE_BLOCK]
+
+If I curl against the URL directly everything seems fine:
+
+[CODE_BLOCK]
+
+I assume I am either doing something wrong with t"
+98626105,12131,OpenStack implementation does not pass SubnetID when creating a VIP,,['area/cloudprovider' 'area/provider/openstack'],cloudprovider,,,closed,2015-08-02 18:16:50+00:00,2015-08-11 08:59:56+00:00,206.71833333333333,jpgxs,3,0,kubernetes/kubernetes,weeks,cloudprovider,0.2387,provider/gcp,0.0423,api,0.0357,12203,0.7991,12284,0.7896,12261,0.7878,k8s-weeks-cloudprovider,pending,"When creating a load balancer in OpenStack, the call to vips.create() does not pass the subnet ID - this is required, thus all calls fail."
+101871681,12910,New Job resource,,['area/controller-manager' 'lgtm' 'release-note' 'size/XL'],controller-manager,,,closed,2015-08-19 11:38:20+00:00,2015-09-11 22:52:37+00:00,563.2380555555555,soltysh,53,1,kubernetes/kubernetes,weeks,controller-manager,0.5131,api,0.0295,app-lifecycle,0.0254,7380,0.8211,13259,0.8135,14308,0.8057,k8s-weeks-controller-manager,pending,"I'm adding new job resource as defined in #11746. I picked up the initial changes from #7380, but per @erictune suggestion I'm placing the new object in [INLINE_CODE].
+
+@smarterclayton @derekwaynecarr @sdminonne @akaram @bprashanth fyi"
+65946844,6354,Add KUBERNETES_NAMESPACE variable to Pod containers,,"['area/downward-api' 'priority/awaiting-more-evidence' 'sig/node'
+ 'sig/api-machinery']",downward-api,,awaiting-more-evidence,closed,2015-04-02 15:07:39+00:00,2015-04-28 14:20:55+00:00,623.2211111111111,mfojtik,5,0,kubernetes/kubernetes,weeks,provider/gcp,0.0775,kubelet,0.0596,downward-api,0.0533,7853,0.8303,560,0.8052,8006,0.7959,k8s-weeks-downward-api,pending,"If you want to make a REST calls from containers running in Pod to KUBERNETES_SERVICE, it would be handy to have the namespace that container is launched in available inside the container."
+65797671,6321,Propagate docker creation failure as containerStatus,,['priority/important-soon' 'area/introspection' 'sig/node'],introspection,,important-soon,closed,2015-04-01 23:12:35+00:00,2015-04-13 20:54:40+00:00,285.7013888888889,dchen1107,4,1,kubernetes/kubernetes,weeks,introspection,0.0876,kubelet,0.0803,docker,0.0634,2902,0.8333,6711,0.8205,14491,0.8133,k8s-weeks-introspection,pending,"Kubelet current only populate create failure as events, not in ContainerStatus. We should propagate such failures through ContainerStatus. Before PodStatus is polling by master, and there is no way to obtain those failure except scanning docker.log. Now Kubelet directly post PodStatus, which makes c"
+99612137,12389,GCE machine unresponsive,,['area/isolation' 'kind/support' 'sig/node'],isolation,support,,closed,2015-08-07 09:17:28+00:00,2015-08-25 21:56:17+00:00,444.64694444444444,ghost,3,0,kubernetes/kubernetes,weeks,isolation,0.1048,introspection,0.0534,reliability,0.0488,12391,0.7471,8207,0.7353,8126,0.73,k8s-weeks-isolation,pending,"After deploying a pod without memory limit and running in this pod a program which allocates a lot of memory (more than machine has) a machine becomes completely unresponsive. It is impossible to ssh into it or check cAdvisor status.
+Machine type: g1-small"
+108930902,14756,Increase the kube-proxy memory footprint.  Improve test failure output.,,['area/kube-proxy' 'size/S'],kube-proxy,,,closed,2015-09-29 18:32:29+00:00,2015-10-07 19:03:13+00:00,192.51222222222222,brendandburns,10,1,kubernetes/kubernetes,weeks,kube-proxy,0.2925,test-infra,0.0363,test,0.0345,14719,0.8863,8891,0.8693,14118,0.8382,k8s-weeks-kube-proxy,pending,"@thockin @dchen1107 
+
+Fixes https://github.com/kubernetes/kubernetes/issues/12429 (I think)
+
+I've observed kube-proxy usage as high as 26MB, so set to 30MB, assuming this is expected and not a regression."
+55239214,3750,Remove master ip cache or stop querying cloudprovider,,['priority/important-soon' 'area/nodecontroller'],nodecontroller,,important-soon,closed,2015-01-23 02:55:45+00:00,2015-02-03 02:58:49+00:00,264.0511111111111,ddysher,2,1,kubernetes/kubernetes,weeks,nodecontroller,0.1165,cloudprovider,0.0575,provider/gcp,0.0466,235,0.7818,14218,0.7557,3988,0.7508,k8s-weeks-nodecontroller,pending,"Master used to cache ip address of node, to update pod.status.hostIP; and when cache expires, it is refreshed by querying cloudprovider.
+
+We should stop querying cloudprovider and just get node status; or better yet, remove the master ip cache if necessary."
+108075983,14474,deployment for ubuntu fails for unknown admission plugin,"```
+$ log for kube-apiserver
+F0924 15:12:51.526539   25709 plugins.go:106] Unknown admission plugin: DenyEscalatingExec
+```",['priority/backlog' 'area/os/ubuntu' 'sig/cluster-lifecycle'],os/ubuntu,,backlog,closed,2015-09-24 07:41:15+00:00,2015-10-01 22:22:50+00:00,182.69305555555556,dalanlan,11,0,kubernetes/kubernetes,weeks,os/ubuntu,0.9169,provider/gcp,0.0059,apiserver,0.0041,14478,0.8587,8936,0.7394,4749,0.737,k8s-weeks-os-ubuntu,pending,"api-server fails to start with admission control DenyEscalatingExec on ubuntu 14.04 
+
+[CODE_BLOCK]
+
+Once I deprecate the plugin DenyEscalatingExec, everything works fine again.
+
+Related to #13447
+/cc @pweil- @derekwaynecarr 
+/cc @resouer @WIZARD-CXY"
+105251096,13647,mesos: Use IPs to connect to masters,,['area/platform/mesos'],platform/mesos,,,closed,2015-09-07 17:39:14+00:00,2015-09-23 18:26:19+00:00,384.78472222222223,discordianfish,1,0,kubernetes/kubernetes,weeks,platform/mesos,0.3765,cloudprovider,0.0372,provider/gcp,0.035,13730,0.9073,13247,0.7498,7237,0.7491,k8s-weeks-platform-mesos,pending,"A mesos master host's hostname doesn't necessarily resolve to the IP mesos is listening on. Since we have the IP mesos registers itself in ZK with, we should use that instead.
+
+Basically, we just need to remove 135 and 136:
+https://github.com/kubernetes/kubernetes/blob/HEAD/pkg/cloudprovider/provide"
+101055498,12737,Incorrect error message when a namespace is omitted from POST request,,['priority/important-soon' 'area/apiserver' 'sig/api-machinery'],apiserver,,important-soon,closed,2015-08-14 17:08:50+00:00,2015-09-15 18:26:12+00:00,769.2894444444445,vaikas-personal,5,1,kubernetes/kubernetes,months,example,0.0851,apiserver,0.0707,api,0.0622,11181,0.7903,12446,0.7824,11218,0.7815,k8s-months-apiserver,pending,"https://github.com/kubernetes/kubernetes/blob/master/examples/cassandra/cassandra-controller.yaml
+
+Converting that to JSON and trying to post to master without namespace in the URL results in 403, which seems incorrect.
+ curl -X POST -k -H 'Authorization: Basic XXX' https://aaa.bbb.ccc.ddd/api/v1/re"
+105890383,13830,kubeclient --skip-tls-verify -> fail fast if certs are provided.,,"['kind/bug' 'area/client-libraries' 'priority/awaiting-more-evidence'
+ 'sig/api-machinery']",client-libraries,bug,awaiting-more-evidence,closed,2015-09-10 20:21:48+00:00,2015-10-13 13:29:16+00:00,785.1244444444444,jayunit100,2,0,kubernetes/kubernetes,months,client-libraries,0.2688,security,0.0414,kubelet,0.0367,13713,0.816,8211,0.8002,3610,0.7945,k8s-months-client-libraries,pending,"Thanks to @liggitt and @timothysc for helping me figure this out. Turns out there is a bug that i ran into in testing #13152 .
+
+For example. If you try to connect using kubeconfig w/ a client-certificate = .... but your ignoring tls, the client will try to use the certs anyway. This results in an [I"
+106208892,13901,kubernetes cluster deployment & management using docker containers,,['area/cloudprovider' 'sig/cluster-lifecycle' 'size/XXL'],cloudprovider,,,closed,2015-09-13 10:22:10+00:00,2016-02-22 09:43:51+00:00,3887.361388888889,resouer,53,1,kubernetes/kubernetes,months,cloudprovider,0.2389,os/ubuntu,0.0831,os/coreos,0.0554,13424,0.8083,9580,0.8043,167,0.7936,k8s-months-cloudprovider,pending,"Fixes: #13424 as well as: #8798
+
+As we discussed in original issue, this PR aims at fixing OS differentiation issues and replacing the old [INLINE_CODE] work. But as the kube-in-docker issues have not been fully resolved yet, we have to keep both of the methods for now.
+
+In this guide we still choos"
+108947632,14765,Namespace deletion should not include an open-coded  list of resources,"```
+    err = deleteServiceAccounts(kubeClient, namespace)
+    if err != nil {
+        return estimate, err
+    }
+    err = deleteServices(kubeClient, namespace)
+    if err != nil {
+        return estimate, err
+    }
+    err = deleteReplicationControllers(kubeClient, namespace)
+    if err != nil {
+        return estimate, err
+    }
+    estimate, err = deletePods(kubeClient, namespace, before)
+    if err != nil {
+        return estimate, err
+    }
+```",['priority/important-soon' 'area/controller-manager'],controller-manager,,important-soon,closed,2015-09-29 20:00:04+00:00,2016-03-04 05:33:01+00:00,3753.5491666666667,thockin,8,1,kubernetes/kubernetes,months,controller-manager,0.0804,ui,0.0654,provider/gcp,0.0507,9084,0.7904,14907,0.7861,14562,0.7855,k8s-months-controller-manager,pending,"pkg/controller/namespace/namespace_controller.go [INLINE_CODE] includes this:
+
+[CODE_BLOCK]
+
+And more. This is antithetical to maintainable software. We need to fix this in 1.2"
+105454981,13690,soak test failure: Downward API fails to provide pod IP as an env variable after a while,"```
+Downward API should provide pod IP as an env var
+
+/go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/test/e2e/downward_api.go:90
+""POD_IP=(?:\\d+)\\.(?:\\d+)\\.(?:\\d+)\\.(?:\\d+)"" in container output
+Expected
+    <string>: POD_IP=
+    KUBERNETES_PORT=tcp://10.0.0.1:443
+    KUBERNETES_SERVICE_PORT=443
+    HOSTNAME=downward-api-ba4e2059-5656-11e5-91ed-42010af01555
+    SHLVL=1
+    HOME=/root
+    KUBERNETES_PORT_443_TCP_ADDR=10.0.0.1
+    PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    KUBERNETES_PORT_443_TCP_PORT=443
+    KUBERNETES_PORT_443_TCP_PROTO=tcp
+    KUBERNETES_PORT_443_TCP=tcp://10.0.0.1:443
+    PWD=/
+    KUBERNETES_SERVICE_HOST=10.0.0.1
+
+to match regular expression
+    <string>: POD_IP=(?:\d+)\.(?:\d+)\.(?:\d+)\.(?:\d+)
+```","['kind/bug' 'priority/important-soon' 'area/downward-api' 'sig/node'
+ 'kind/flake']",downward-api,bug,important-soon,closed,2015-09-08 19:40:25+00:00,2016-01-25 18:11:24+00:00,3334.5163888888887,ghost,13,1,kubernetes/kubernetes,months,downward-api,0.3278,test-infra,0.0808,test,0.0666,14597,0.7961,10899,0.7838,14125,0.7564,k8s-months-downward-api,pending,"In our soak test CI environment, the test below starts to fail consistently after a few hours/runs.
+
+Possibly related:
+#13052
+#12595
+
+[CODE_BLOCK]
+
+Example successful runs (immediately after a cluster build:
+- job/kubernetes-soak-continuous-e2e-gce/3045/
+- job/kubernetes-soak-continuous-e2e-gce/3046"
+36023358,160,Integration with cAdvisor,,['area/introspection' 'sig/scheduling' 'area/isolation'],introspection,,,closed,2014-06-18 20:17:23+00:00,2014-10-10 16:34:28+00:00,2732.284722222222,monnand,14,1,kubernetes/kubernetes,months,kubelet,0.1165,introspection,0.0673,provider/gcp,0.0561,448,0.8351,174,0.8297,5777,0.814,k8s-months-introspection,pending,[cAdvisor](http://github.com/google/cadvisor) right now already have some basic statistical information about containers running on the machine. We currently hold most recent stats in memory but we have a framework to dump stats into some backend storage. google/cadvisor#39 has a discussion about su
+108019813,14452,"Node becomes unstable when overcommit on memory qos, does not always recover","```
+$ export KUBERNETES_PROVIDER=vagrant || gce
+$ export NUM_MINIONS=1
+$ export KUBE_ENABLE_CLUSTER_MONITORING=none
+$ export KUBE_ENABLE_CLUSTER_DNS=false
+$ export KUBE_ENABLE_CLUSTER_UI=false
+$ cluster/kube-up.sh
+```
+
+```
+$ cluster/kubectl.sh run mem-guaranteed --image=derekwaynecarr/memhog --replicas=2 --requests=cpu=10m --limits=memory=600Mi --command -- memhog -r100000 500m
+$ cluster/kubectl.sh run mem-burstable --image=derekwaynecarr/memhog --replicas=2 --requests=cpu=10m,memory=600Mi --command -- memhog -r100000 100m
+```
+
+```
+$ cluster/kubectl.sh run mem-besteffort --replicas=10 --image=derekwaynecarr/memhog --requests=cpu=10m --command -- memhog -r10000 500m
+```
+
+```
+/proc/2892/net/dev: open /proc/2892/net/dev: no such file or directory
+I0923 21:41:28.895452    1361 helpers.go:96] Unable to get network stats from pid 2856: couldn't read network stats: failure opening /proc/2856/net/dev: open /proc/2856/net/dev: no such file or directory
+...
+failed to update stats for container ""/0afe9347f4f12a9bfe3a6558f05cb48d0b3fd88540eb6e9950faa55c0ce41c1d"": du command failed on /var/lib/docker/aufs/diff/0afe9347f4f12a9bfe3a6558f05cb48d0b3fd88540eb6e9950faa55c0ce41c1d with output  - fork/exec /usr/bin/du: cannot allocate memory, continuing to push stats
+```",['priority/backlog' 'area/isolation' 'sig/node'],isolation,,backlog,closed,2015-09-23 22:28:07+00:00,2016-01-07 22:17:55+00:00,2543.83,derekwaynecarr,15,0,kubernetes/kubernetes,months,provider/gcp,0.0676,introspection,0.0528,kubelet,0.0493,10368,0.8088,14935,0.7971,4610,0.7808,k8s-months-isolation,pending,"I can reproduce a situation where the node can become unstable and never recover from a NotReady status using either the Vagrant or GCE based Kubernetes setups.
+
+[CODE_BLOCK]
+
+Assuming you are using GCE, let's spin up the following:
+
+[CODE_BLOCK]
+
+At this point, the Node is stable, and we have 2 gua"
+107852382,14398,iptables kube-proxy could handle empty endpoints better,,['priority/backlog' 'sig/network' 'area/kube-proxy'],kube-proxy,,backlog,closed,2015-09-23 05:27:20+00:00,2015-11-23 08:13:44+00:00,1466.7733333333333,thockin,1,0,kubernetes/kubernetes,months,kube-proxy,0.4001,provider/gcp,0.0375,api,0.0271,14399,0.9069,3760,0.8255,8567,0.8214,k8s-months-kube-proxy,pending,"Rather than just hanging trying to connect, we should find a way to terminate the connection."
+103507951,13258,Node controller kills pods on a recently recovered node,,['priority/backlog' 'area/nodecontroller' 'kind/flake'],nodecontroller,flake,backlog,closed,2015-08-27 13:22:14+00:00,2015-11-25 10:38:25+00:00,2157.2697222222223,wojtek-t,18,1,kubernetes/kubernetes,months,nodecontroller,0.1645,test-infra,0.0825,test,0.0798,5020,0.8215,4166,0.8076,2532,0.807,k8s-months-nodecontroller,pending,"This test is failing pretty frequently at head. It fails with the following message:
+
+/go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/test/e2e/resize_nodes.go:567
+Expected error:
+ <*errors.errorString | 0xc2088f40b0>: {
+ s: ""failed to wait for pods responding: pod with UID 3a70"
+107158020,14162,Node in NotReady status after kernel upgrade and reboot on Ubuntu Vivid (15.04) due to Docker service failure (no aufs),"```
+export KUBERNETES_PROVIDER=aws
+export KUBE_AWS_ZONE=eu-west-1a
+export NUM_MINIONS=3
+export MINION_SIZE=t2.micro
+export AWS_S3_REGION=eu-west-1
+export AWS_S3_BUCKET=xxx
+export KUBE_AWS_INSTANCE_PREFIX=xxx
+```
+
+```
+$ sudo docker info
+FATA[0001] Get http:///var/run/docker.sock/v1.18/info: read unix /var/run/docker.sock: connection reset by peer. Are you trying to connect to a TLS-enabled daemon without TLS?
+```
+
+```
+$ sudo journalctl -u docker -f
+-- Logs begin at Fri 2015-09-18 08:06:53 UTC. --
+Sep 18 08:09:49 ip-172-20-0-149 systemd[1]: docker.service failed.
+Sep 18 08:09:51 ip-172-20-0-149 systemd[1]: docker.service holdoff time over, scheduling restart.
+Sep 18 08:09:51 ip-172-20-0-149 systemd[1]: Started Docker Application Container Engine.
+Sep 18 08:09:51 ip-172-20-0-149 systemd[1]: Starting Docker Application Container Engine...
+Sep 18 08:09:51 ip-172-20-0-149 docker[3397]: time=""2015-09-18T08:09:51Z"" level=info msg=""+job serveapi(fd://)""
+Sep 18 08:09:51 ip-172-20-0-149 docker[3397]: time=""2015-09-18T08:09:51Z"" level=info msg=""Listening for HTTP on fd ()""
+Sep 18 08:09:51 ip-172-20-0-149 docker[3397]: time=""2015-09-18T08:09:51Z"" level=fatal msg=""Shutting down daemon due to errors: error intializing graphdriver: driver not supported""
+Sep 18 08:09:51 ip-172-20-0-149 systemd[1]: docker.service: main process exited, code=exited, status=1/FAILURE
+Sep 18 08:09:51 ip-172-20-0-149 systemd[1]: Unit docker.service entered failed state.
+Sep 18 08:09:51 ip-172-20-0-149 systemd[1]: docker.service failed.
+```",['priority/backlog' 'area/os/ubuntu' 'sig/node' 'sig/cluster-lifecycle'],os/ubuntu,,backlog,closed,2015-09-18 08:44:00+00:00,2015-10-29 05:08:00+00:00,980.4,romanek-adam,6,0,kubernetes/kubernetes,months,os/ubuntu,0.8223,provider/gcp,0.018,docker,0.0089,7938,0.7911,10486,0.789,14408,0.7837,k8s-months-os-ubuntu,pending,"Hi. I'm writing this partially because I want to start a discussion and to leave some trails for others potentially affected.
+
+I started my journey with Kubernetes just a few days ago. I downloaded the 1.0.6 release (now I know this a only a pre-release and I should've downloaded the 1.0.4 release b"
+64431108,5980,[DISCUSSION] Proposal: hierarchical cloud providers,,['area/platform/mesos'],platform/mesos,,,closed,2015-03-26 03:21:10+00:00,2015-05-22 06:49:16+00:00,1371.4683333333332,ConnorDoyle,13,1,kubernetes/kubernetes,months,platform/mesos,0.099,extensibility,0.0875,cloudprovider,0.0571,357,0.8175,7447,0.8084,6995,0.8002,k8s-months-platform-mesos,pending,"This is admittedly open-ended. Hopefully this can rekindle a discussion around generalizing, augmenting, or repurposing the cloud provider interface for cluster resource schedulers.
+
+cc: @adam-mesos @jdef @bgrant0607 @alex-mohr"
+98793085,12155,kubernetes deletes info from all NFS shares when one of the mounts becames stalled (google container engine),"```
+apt-get update && apt-get install nfs-common
+```
+
+```
+/export     10.240.0.0/16(rw,sync,crossmnt,no_subtree_check)
+```
+
+```
+#ls -la ubuntutest ubuntutest2 ubuntutest3
+ubuntutest:
+total 12
+drwxrwxrwx  2 root root 4096 Aug  3 15:07 .
+drwxr-xr-x 12 root root 4096 Aug  3 15:06 ..
+-rw-r--r--  1 root root 1580 Aug  3 15:06 testifail
+ubuntutest2:
+total 12
+drwxrwxrwx  2 root root 4096 Aug  3 15:06 .
+drwxr-xr-x 12 root root 4096 Aug  3 15:06 ..
+-rw-r--r--  1 root root 1580 Aug  3 15:06 testifail2
+ubuntutest3:
+total 12
+drwxr-xr-x  2 root root 4096 Aug  3 15:07 .
+drwxr-xr-x 12 root root 4096 Aug  3 15:06 ..
+-rw-r--r--  1 root root 1580 Aug  3 15:07 testifail3
+```
+
+```
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  labels:
+    name: zubuntu
+  name: zubuntu
+spec:
+  replicas: 1
+  selector:
+    name: zubuntu-rc
+  template:
+    metadata:
+      labels:
+        name: zubuntu-rc
+    spec:
+      restartPolicy: Always
+      containers:
+        - image: tutum/apache-php
+          name: ubuntu-cont
+          ports:
+            - containerPort: 80
+              name: web-port
+          volumeMounts:
+            - name: test-nfs-1
+              mountPath: /app
+            - name: test-nfs-2
+              mountPath: /app2
+            - name: test-nfs-3
+              mountPath: /app3
+      volumes:
+        - name: test-nfs-1
+          nfs:
+            server: 10.240.175.237
+            path: /export/test/ubuntutest
+        - name: test-nfs-2
+          nfs:
+            server: 10.240.175.237
+            path: /export/test/ubuntutest2
+        - name: test-nfs-3
+          nfs:
+            server: 10.240.175.237
+            path: /export/test/ubuntutest3
+```
+
+```
+kubectl create -f ubuntutest.yaml 
+kubectl get pods
+```
+
+```
+kubectl exec -ti zubuntu-8y55c bash
+# ls -la /app*
+/app:
+total 12
+drwxrwxrwx  2 root root 4096 Aug  3 18:07 .
+drwxr-xr-x 69 root root 4096 Aug  3 18:09 ..
+-rw-r--r--  1 root root 1580 Aug  3 18:06 testifail
+
+/app2:
+total 12
+drwxrwxrwx  2 root root 4096 Aug  3 18:06 .
+drwxr-xr-x 69 root root 4096 Aug  3 18:09 ..
+-rw-r--r--  1 root root 1580 Aug  3 18:06 testifail2
+
+/app3:
+total 12
+drwxr-xr-x  2 root root 4096 Aug  3 18:07 .
+drwxr-xr-x 69 root root 4096 Aug  3 18:09 ..
+-rw-r--r--  1 root root 1580 Aug  3 18:07 testifail3
+```
+
+```
+ # rm -rf ubuntutest
+```
+
+```
+# ls -la /app*
+/app:
+ls: reading directory /app: Stale file handle
+total 0
+
+/app2:
+total 12
+drwxrwxrwx  2 root root 4096 Aug  3 18:06 .
+drwxr-xr-x 69 root root 4096 Aug  3 18:09 ..
+-rw-r--r--  1 root root 1580 Aug  3 18:06 testifail2
+
+/app3:
+total 12
+drwxr-xr-x  2 root root 4096 Aug  3 18:07 .
+drwxr-xr-x 69 root root 4096 Aug  3 18:09 ..
+-rw-r--r--  1 root root 1580 Aug  3 18:07 testifail3
+```
+
+```
+kubectl stop -f ubuntutest.yaml 
+```
+
+```
+# ls -la ubuntutest ubuntutest2 ubuntutest3
+ls: cannot access ubuntutest: No such file or directory
+ubuntutest2:
+total 8
+drwxrwxrwx  2 root root 4096 Aug  3 15:18 .
+drwxr-xr-x 11 root root 4096 Aug  3 15:17 ..
+ubuntutest3:
+total 12
+drwxr-xr-x  2 root root 4096 Aug  3 15:07 .
+drwxr-xr-x 11 root root 4096 Aug  3 15:17 ..
+-rw-r--r--  1 root root 1580 Aug  3 15:07 testifail3
+```
+
+```
+# chmod 777 ubuntutest3
+
+# ls -la ubuntutest ubuntutest2 ubuntutest3
+ls: cannot access ubuntutest: No such file or directory
+ubuntutest2:
+total 8
+drwxrwxrwx  2 root root 4096 Aug  3 15:18 .
+drwxr-xr-x 11 root root 4096 Aug  3 15:17 ..
+ubuntutest3:
+total 8
+drwxrwxrwx  2 root root 4096 Aug  3 15:20 .
+drwxr-xr-x 11 root root 4096 Aug  3 15:17 ..
+```",['priority/important-soon' 'area/provider/gcp' 'sig/storage'],provider/gcp,,important-soon,closed,2015-08-03 16:54:57+00:00,2015-09-18 21:44:33+00:00,1108.8266666666666,jyrip,14,1,kubernetes/kubernetes,months,provider/gcp,0.9912,kubelet,0.0004,nodecontroller,0.0003,7360,0.8082,9634,0.7938,12210,0.7676,k8s-months-provider-gcp,pending,"When mounting several shares over NFS to container and when one of the directories is deleted from NFS server, something in the node is deleting content from other shares. I suspect that something goes wrong with ""cleanupOrphanedVolumes""? not sure tough.
+
+Use case: php-app is running in container, u"
+104758528,13567,Add support for Quotas on Running Pods,,['priority/backlog' 'sig/scheduling' 'area/admin' 'lifecycle/rotten'],admin,,backlog,closed,2015-09-03 18:50:28+00:00,2018-02-12 12:25:21+00:00,21425.581388888888,cameronbrunner,21,1,kubernetes/kubernetes,long,controller-manager,0.0685,introspection,0.0506,provider/gcp,0.0475,10928,0.8165,11793,0.8095,10242,0.8084,k8s-long-admin,pending,"This is a continuation of a discussion started in the #sig-scheduling kubernetes slack channel between @davidopp, @smarterclayton, and @quinton-hoole.
+
+Fundamentally the quota system prevents the 'creation' of pods but has nothing (as far as I can tell) to do with the 'running' of pods. There are lo"
+91416364,10446,Memory use of go-restful high?,,['priority/backlog' 'sig/scalability' 'area/apiserver' 'sig/api-machinery'],apiserver,,backlog,closed,2015-06-27 05:07:29+00:00,2016-08-28 04:14:52+00:00,10271.123055555556,smarterclayton,3,0,kubernetes/kubernetes,long,example,0.052,kubelet,0.0439,apiserver,0.0424,11406,0.7308,5407,0.7121,10445,0.712,k8s-long-apiserver,pending,"Saw https://github.com/labstack/echo and the benchmark numbers for go restful seemed really high. 700k bytes allocated to serve a simple request? This hasn't shown up on my profiles yet, but not sure why the two would be out of sync."
+108942603,14762,kubelet stats missing on Ubuntu 15.04,,['priority/important-soon' 'area/cadvisor' 'sig/node'],cadvisor,,important-soon,closed,2015-09-29 19:31:28+00:00,2017-03-01 04:22:26+00:00,12440.849444444444,satheessh,24,0,kubernetes/kubernetes,long,provider/gcp,0.0801,ui,0.0603,os/ubuntu,0.053,12315,0.8013,10659,0.7987,10451,0.7896,k8s-long-cadvisor,pending,"Attached the screen shot from grafana. 
+we can notice that heapster memory usage is zero.
+
+Environment:
+1. Kubernetes version 1.06
+2. Amazon webservice machines. 
+ c3.large for master and minions.
+3. ami version. -- ubuntu-vivid-15.04-amd64-server-20150611 (ami-f57b8f9e)
+4. see below pics from cadvi"
+99262141,12290,"pkg/client separation from godep, or using godep save -r ./..., or ?",,"['area/client-libraries' 'priority/awaiting-more-evidence'
+ 'sig/api-machinery' 'lifecycle/rotten']",client-libraries,,awaiting-more-evidence,closed,2015-08-05 17:54:07+00:00,2018-02-12 11:24:11+00:00,22121.501111111113,bufdev,6,0,kubernetes/kubernetes,long,client-libraries,0.0998,build-release,0.0617,provider/gcp,0.0527,1054,0.8323,5660,0.8143,12105,0.8092,k8s-long-client-libraries,pending,"I ran into this issue today re: https://github.com/GoogleCloudPlatform/kubernetes/issues/12272
+
+Kubernetes has a ton of uses just through the client library, which is primarily in pkg/client, but the typical way to use golang libraries is to just do a simple import. Vendoring is obviously golang's b"
+105993583,13858,AWS EBS Credential NoCredential Provider error.,"```
+          volumeMounts:
+            - mountPath: ""/opt/phabricator/repo""
+              name: ebsvol
+      volumes:
+        -
+          name: ebsvol
+          awsElasticBlockStore:
+            volumeID: aws://us-west-2a/vol-*****
+            fsType: ext4
+
+
+```
+
+```
+Fri, 11 Sep 2015 11:29:14 +0000 Fri, 11 Sep 2015 11:29:34 +0000 3   {kubelet 172.31.24.103}         failedMount Unable to mount volumes for pod ""phabricator-controller-zvg7z_default"": error listing AWS instances: NoCredentialProviders: no valid providers in chain
+  Fri, 11 Sep 2015 11:29:14 +0000   Fri, 11 Sep 2015 11:29:34 +0000 3   {kubelet 172.31.24.103}         failedSync  Error syncing pod, skipping: error listing AWS instances: NoCredentialProviders: no valid providers in chain
+```",['priority/backlog' 'area/cloudprovider' 'lifecycle/rotten'],cloudprovider,,backlog,closed,2015-09-11 11:40:10+00:00,2018-02-24 22:16:50+00:00,21538.61111111111,sumsuddin,11,0,kubernetes/kubernetes,long,provider/gcp,0.0867,cloudprovider,0.0651,os/coreos,0.0651,14335,0.7402,2674,0.7214,3426,0.7205,k8s-long-cloudprovider,pending,"We are trying to Configure kubernetes RC in AWS instance with AWS Elastic Block Store(EBS). here is the key part of our controller yaml file -
+
+[CODE_BLOCK]
+
+our rc can start pod and works fine with out mounting it to a AWS EBS but with volume mounting in an AWS EBS it gives us -
+
+[CODE_BLOCK]
+
+We h"
+107166107,14163,Creating kube-controller-manager pod fails when following steps in scratch.md,"```
+# cat kube-controller-manager.json
+{
+  ""kind"": ""Pod"",
+  ""apiVersion"": ""v1"",
+  ""metadata"": {
+    ""name"": ""kube-controller-manager""
+  },
+  ""spec"": {
+    ""hostNetwork"": true,
+    ""containers"": [
+      {
+        ""name"": ""kube-controller-manager"",
+        ""image"": ""gcr.io/google_containers/hyperkube:v1.0.3"",
+        ""command"": [
+          ""/hyperkube"",
+          ""controller-manager""
+        ],
+        ""volumeMounts"": [
+          {
+            ""name"": ""srvkube"",
+            ""mountPath"": ""/srv/kubernetes"",
+            ""readOnly"": true
+          },
+          {
+            ""name"": ""etcssl"",
+            ""mountPath"": ""/etc/ssl"",
+            ""readOnly"": true
+          }
+        ],
+        ""livenessProbe"": {
+          ""httpGet"": {
+            ""host"": ""127.0.0.1"",
+            ""path"": ""/healthz"",
+            ""port"": 10252
+          },
+          ""initialDelaySeconds"": 15,
+          ""timeoutSeconds"": 15
+        }
+      }
+    ],
+    ""volumes"": [
+      {
+        ""name"": ""srvkube"",
+        ""hostPath"": {
+          ""path"": ""/srv/kubernetes""
+        }
+      },
+      {
+        ""name"": ""etcssl"",
+        ""hostPath"": {
+          ""path"": ""/etc/ssl""
+        }
+      }
+    ]
+  }
+}
+
+# ./kubectl get pod
+NAME                        READY     STATUS              RESTARTS   AGE
+kube-controller-manager     0/1       ContainerCreating   0          5m
+
+# ./kubectl describe pod kube-controller-manager
+Name:               kube-controller-manager
+Namespace:          default
+Image(s):           gcr.io/google_containers/hyperkube:v1.0.3
+Node:               127.0.0.1/127.0.0.1
+Start Time:         Fri, 18 Sep 2015 07:14:37 +0000
+Labels:             <none>
+Status:             Pending
+Reason:             
+Message:            
+IP:             127.0.0.1
+Replication Controllers:    <none>
+Containers:
+  kube-controller-manager:
+    Container ID:   
+    Image:      gcr.io/google_containers/hyperkube:v1.0.3
+    Image ID:       
+    State:      Waiting
+      Reason:       ContainerCreating
+    Ready:      False
+    Restart Count:  0
+    Environment Variables:
+Conditions:
+  Type      Status
+  Ready     False 
+Volumes:
+  srvkube:
+    Type:   HostPath (bare host directory volume)
+    Path:   /srv/kubernetes
+  etcssl:
+    Type:   HostPath (bare host directory volume)
+    Path:   /etc/ssl
+  default-token-7l129:
+    Type:   Secret (a secret that should populate this volume)
+    SecretName: default-token-7l129
+Events:
+  FirstSeen LastSeen    Count   From            SubobjectPath   Reason      Message
+  ─────────   ────────    ───── ────            ───────────── ──────      ───────
+  46s       46s     1   {scheduler }                Scheduled   Successfully assigned kube-controller-manager to 127.0.0.1
+  43s       23s     3   {kubelet 127.0.0.1}         FailedSync  Error syncing pod, skipping: pod with UID ""e9fb0eb3-5dd4-11e5-bce0-22000b102286"" specified host networking, but is disallowed
+```","['area/controller-manager' 'sig/node' 'sig/cluster-lifecycle'
+ 'lifecycle/stale']",controller-manager,,,closed,2015-09-18 09:27:12+00:00,2017-12-15 00:13:10+00:00,19646.766111111112,qwang1,12,0,kubernetes/kubernetes,long,os/coreos,0.0829,controller-manager,0.057,cloudprovider,0.0502,13220,0.779,12740,0.7734,2930,0.769,k8s-long-controller-manager,pending,"I'm trying to create a kube-controller-manager pod according to the template ( https://github.com/kubernetes/kubernetes/blob/master/docs/getting-started-guides/scratch.md#controller-manager-template). I found if hostNetwork=true, with/without host specified localhost on livenessProbe, the pod is alw"
+86593222,9473,Downward API for resource limits,,['priority/backlog' 'area/downward-api' 'sig/node'],downward-api,,backlog,closed,2015-06-09 13:04:10+00:00,2016-06-03 18:34:11+00:00,8645.500277777777,justinsb,48,0,kubernetes/kubernetes,long,downward-api,0.0745,api,0.0553,introspection,0.0517,12652,0.7705,12198,0.76,12015,0.7468,k8s-long-downward-api,pending,"Is it possible inside a container to discover your resource limits, in particular the memory limit.
+
+Apparently this is sometime put under [INLINE_CODE], but that isn't present. And /proc/meminfo is the memory of the host (AFAICT)
+
+I would like, for example, to specify memory limits for things like "
+64833861,6081,Etcd salt defaults file is confusingly not used.,,['area/etcd' 'priority/awaiting-more-evidence'],etcd,,awaiting-more-evidence,closed,2015-03-27 19:17:12+00:00,2016-05-18 06:24:52+00:00,10019.127777777778,erictune,3,0,kubernetes/kubernetes,long,security,0.0573,kubelet,0.0538,etcd,0.049,4024,0.7994,262,0.7976,6067,0.7949,k8s-long-etcd,pending,"Commit ba749284d0a8a12cf7067b9ba3b959cf55a1c375 by 
+@davidopp says:
+[INLINE_CODE].
+
+Listening on all interfaces is the wrong thing to do from a security standpoint because it exposes etcd to modification. 
+
+Once @ArtfulCoder change to put etcd in a pod is complete, then kubelet can monitor instead o"
+63086966,5665,CloudProvider reconciler/controller for required dependencies,,"['priority/backlog' 'area/extensibility' 'area/cloudprovider'
+ 'sig/cluster-lifecycle']",extensibility,,backlog,closed,2015-03-19 20:41:20+00:00,2017-06-12 20:37:27+00:00,19583.93527777778,alex-mohr,6,0,kubernetes/kubernetes,long,cloudprovider,0.118,extensibility,0.0597,controller-manager,0.0514,6464,0.7839,8164,0.7813,4909,0.7745,k8s-long-extensibility,pending,"A number of resources in Kubernetes need to be synced with the cloud provider -- disks, VMs, load balancers. See e.g. https://github.com/GoogleCloudPlatform/kubernetes/issues/5180
+
+Options are:
+- Each XController has a big switch statement and calls out to the appropriate provider when a matching re"
+57086364,4255,Fluentd logging agents should attach kubernetes labels to the logs they collect,,['priority/backlog' 'area/introspection' 'area/logging'],introspection,,backlog,closed,2015-02-09 20:39:27+00:00,2015-09-12 00:06:24+00:00,5139.449166666666,a-robinson,1,0,kubernetes/kubernetes,long,logging,0.2828,introspection,0.0582,provider/gcp,0.0556,10061,0.8475,8632,0.7908,2918,0.7852,k8s-long-introspection,pending,"All of the labels attached to the container whose logs are being collected should be added on to the logs. For example, if logs are being collected for container foo with the labels env=prod and service=backend, those labels (env=prod, service=backend) should be attached such that someone querying l"
+108237924,14532,Better memory manager at node to guarantee QoS,,['priority/important-soon' 'area/isolation' 'sig/node' 'lifecycle/rotten'],isolation,,important-soon,closed,2015-09-25 00:06:58+00:00,2018-02-12 22:35:09+00:00,20926.469722222224,dchen1107,8,0,kubernetes/kubernetes,long,isolation,0.1153,kubelet,0.0632,provider/gcp,0.0555,2852,0.8127,1962,0.8087,14935,0.8026,k8s-long-isolation,pending,"Forked from https://github.com/kubernetes/kubernetes/issues/14452...
+
+We introduced QoS concept and API to Kubernetes 1.1 release, but lack of the support on node side to ensure QoS. Filed this umbrella issue for memory management for current known issues:
+1. At node level, the only improvement was "
+107852468,14399,iptables kube-proxy could maybe remove dead endpoints faster,,['priority/backlog' 'sig/network' 'area/kube-proxy' 'lifecycle/stale'],kube-proxy,,backlog,closed,2015-09-23 05:28:53+00:00,2017-12-15 00:14:26+00:00,19530.759166666667,thockin,1,0,kubernetes/kubernetes,long,kube-proxy,0.4723,ui,0.0314,provider/gcp,0.0283,14398,0.9069,14118,0.8283,8567,0.8199,k8s-long-kube-proxy,pending,"It's tricky because it is all in-kernel, but maybe we can find a way to recognize failed connections to endpoints an ""penalty-box"" flaky endpoints."

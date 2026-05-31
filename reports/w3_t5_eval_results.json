@@ -1,58 +1,54 @@
 {
   "winner": "combined",
+  "eval_protocol": "test_split_only",
+  "correction_note": "2026-05-31: Original eval used sample_gold() which contaminated 66-71% of eval pairs with training data. Corrected to use test-split pairs only. See ADR-0010 correction note.",
   "repos": {
     "kubernetes_kubernetes": {
-      "test_split": {
+      "baseline_metrics": {
         "n_pairs": 152,
         "repo": "kubernetes_kubernetes",
-        "recall_at_1": 0.47368421052631576,
-        "recall_at_5": 0.6578947368421053,
-        "recall_at_10": 0.7105263157894737,
-        "recall_at_20": 0.756578947368421,
-        "r5_ci_lo": 0.5855263157894737,
-        "r5_ci_hi": 0.7302631578947368
+        "recall_at_1": 0.3158,
+        "recall_at_5": 0.5263,
+        "recall_at_10": 0.5921,
+        "recall_at_20": 0.6447
       },
-      "n100_sample": {
-        "n_pairs": 100,
+      "finetuned_metrics": {
+        "n_pairs": 152,
         "repo": "kubernetes_kubernetes",
-        "recall_at_1": 0.38,
-        "recall_at_5": 0.67,
-        "recall_at_10": 0.75,
-        "recall_at_20": 0.82,
-        "r5_ci_lo": 0.57,
-        "r5_ci_hi": 0.76
+        "recall_at_1": 0.4737,
+        "recall_at_5": 0.6579,
+        "recall_at_10": 0.7105,
+        "recall_at_20": 0.7566
       },
-      "baseline_r5": 0.4102,
-      "delta_r5_point": 0.25980000000000003,
-      "delta_r5_ci_lo": 0.15979999999999994,
-      "delta_r5_ci_hi": 0.3498,
+      "baseline_r5": 0.5263,
+      "finetuned_r5": 0.6579,
+      "delta_r5_point": 0.1316,
+      "delta_r5_ci_lo": 0.0658,
+      "delta_r5_ci_hi": 0.1974,
       "verdict": "PASS"
     },
     "microsoft_vscode": {
-      "test_split": {
+      "baseline_metrics": {
         "n_pairs": 60,
         "repo": "microsoft_vscode",
-        "recall_at_1": 0.5,
-        "recall_at_5": 0.8166666666666667,
-        "recall_at_10": 0.8166666666666667,
-        "recall_at_20": 0.85,
-        "r5_ci_lo": 0.7166666666666667,
-        "r5_ci_hi": 0.9
+        "recall_at_1": 0.4333,
+        "recall_at_5": 0.6833,
+        "recall_at_10": 0.7667,
+        "recall_at_20": 0.8333
       },
-      "n100_sample": {
-        "n_pairs": 100,
+      "finetuned_metrics": {
+        "n_pairs": 60,
         "repo": "microsoft_vscode",
-        "recall_at_1": 0.31,
-        "recall_at_5": 0.5,
-        "recall_at_10": 0.65,
-        "recall_at_20": 0.88,
-        "r5_ci_lo": 0.4,
-        "r5_ci_hi": 0.6
+        "recall_at_1": 0.5000,
+        "recall_at_5": 0.8167,
+        "recall_at_10": 0.8167,
+        "recall_at_20": 0.8500
       },
-      "baseline_r5": 0.3674,
-      "delta_r5_point": 0.1326,
-      "delta_r5_ci_lo": 0.03260000000000002,
-      "delta_r5_ci_hi": 0.23259999999999997,
+      "baseline_r5": 0.6833,
+      "finetuned_r5": 0.8167,
+      "delta_r5_point": 0.1333,
+      "delta_r5_ci_lo": 0.0500,
+      "delta_r5_ci_hi": 0.2333,
       "verdict": "PASS"
     }
   },

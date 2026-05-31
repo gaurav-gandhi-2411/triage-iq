@@ -36,6 +36,11 @@ acceptable latency addition.
 All three candidates screened on GPU with n=100 random queries per repo (seed=42).
 Baseline anchor for the same 100 queries: vscode R@5=0.470, k8s R@5=0.430.
 
+*Note (2026-05-31): This n=100 sample was a favorable draw. The full-corpus baseline
+(n=1,024 k8s / n=411 vsc) is 0.410 / 0.367 — meaningfully lower. Small random samples
+produce high variance baselines; the W3 correction note in ADR-0010 documents the lesson:
+baselines must be computed on the same query set and protocol as the comparison model.*
+
 | Candidate | Size | License | vscode R@5 | Δ | k8s R@5 | Δ | Result |
 |---|---|---|---|---|---|---|---|
 | Baseline (BGE FAISS k=20) | — | — | 0.470 | — | 0.430 | — | — |

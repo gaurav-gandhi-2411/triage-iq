@@ -107,10 +107,30 @@ def _load_classifier(models_dir: Path, slug: str):
 
 def _load_detector(models_dir: Path, slug: str):
     from triage_iq.models.similar_issues import SimilarIssueRetriever
-    p = models_dir / f"dup_index_{slug}_bge"  # TODO(#3): GCS artifact rename pending. See https://github.com/gaurav-gandhi-2411/triage-iq/issues/3
+
+    alias = "k8s" if "kubernetes" in slug else "vsc"
+    repo = "kubernetes_kubernetes" if "kubernetes" in slug else "microsoft_vscode"
+
+    # Prefer W3 fine-tuned index when available (ADR-0010)
+    ft_index_path = models_dir / f"bge_finetuned_{alias}_index"
+    ft_model_path = models_dir / "bge_finetuned_combined"
+    if (
+        ft_index_path.exists()
+        and (ft_index_path / "numbers.npy").exists()
+        and ft_model_path.exists()
+    ):
+        logger.info("Using fine-tuned BGE retriever for %s (W3 Track A)", slug)
+        return SimilarIssueRetriever.load_finetuned(
+            index_dir=str(ft_index_path),
+            model_dir=str(ft_model_path),
+            repo=repo,
+        )
+
+    # Fall back to baseline BGE index (W1.1 artifact)
+    p = models_dir / f"dup_index_{slug}_bge"  # TODO(#3): GCS artifact rename pending
     if p.exists():
         return SimilarIssueRetriever.load(str(p))
-    raise FileNotFoundError(f"Detector not found: {p}")
+    raise FileNotFoundError(f"Detector not found: {ft_index_path} or {p}")
 
 
 def _load_predictor(models_dir: Path, slug: str):

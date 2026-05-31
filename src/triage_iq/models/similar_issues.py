@@ -144,3 +144,32 @@ class SimilarIssueRetriever:
         obj.issue_numbers = meta["issue_numbers"]
         obj.texts = meta["texts"]
         return obj
+
+    @classmethod
+    def load_finetuned(
+        cls,
+        index_dir: str,
+        model_dir: str,
+        repo: str,
+    ) -> "SimilarIssueRetriever":
+        """Load from T5 fine-tuned index format (index.faiss + numbers.npy + texts.json).
+
+        Used by the API loader to swap in the W3 fine-tuned retriever without changing
+        the on-disk format of the older dup_index_*_bge artifacts.
+        """
+        import json as _json
+
+        p = Path(index_dir)
+        obj = cls.__new__(cls)
+        obj.repo = repo
+        obj.model_key = model_dir
+        logger.info("Loading fine-tuned model from %s", model_dir)
+        obj.model = SentenceTransformer(model_dir)
+        obj.index = faiss.read_index(str(p / "index.faiss"))
+        obj.issue_numbers = np.load(str(p / "numbers.npy")).astype(np.int64)
+        with open(p / "texts.json") as f:
+            obj.texts = _json.load(f)
+        logger.info(
+            "Loaded fine-tuned index from %s  (n=%d)", index_dir, len(obj.issue_numbers)
+        )
+        return obj

@@ -1,9 +1,11 @@
 # ADR-0010 — W3: Fine-tune BGE bi-encoder for similar-issue retrieval
 
+**Status:** Accepted (on corrected numbers — see Correction note below)
+
 ## Context
 
-Baseline BAAI/bge-base-en-v1.5 (zero-shot) achieved R@5 of 0.4102 (k8s) and 0.3674 (vsc) on the gold
-similar-issue pairs (ADR-0008). ADR-0006 rejected cross-encoder reranking as a latency-neutral path
+Baseline BAAI/bge-base-en-v1.5 (zero-shot) achieved R@5 of 0.4102 (k8s) and 0.3674 (vsc) on the full
+gold similar-issue pairs (ADR-0008). ADR-0006 rejected cross-encoder reranking as a latency-neutral path
 to improvement. The next hypothesis: domain-specific fine-tuning of the bi-encoder itself should
 lift recall with zero added inference latency.
 
@@ -36,34 +38,27 @@ Combined model (both repos jointly) chosen over per-repo split: vsc-only trainin
 due to GPU state degradation from sequential training in the same process. Per-repo would have required
 separate processes. Given the combined model's strong performance, the per-repo experiment was deprioritised.
 
-**T5 — Evaluation**: Full-corpus FAISS rebuild with fine-tuned model. Test split (152 k8s + 60 vsc pairs)
-+ n=100 seed=42 sample (W1.3 comparable protocol). Self-exclusion applied (query issue excluded from
-retrieval, matching baseline methodology). Bootstrap 95% CI (n=2,000) on delta.
+**T5 — Evaluation**: Full-corpus FAISS rebuild with fine-tuned model. Baseline computed on the same
+test-split pairs using the pre-built dup_index_*_bge index. Self-exclusion applied (query issue excluded
+from retrieval, matching baseline methodology). Bootstrap 95% paired CI (n=2,000) on delta.
 
 ## Consequences
 
-**Results (n=100 seed=42 sample, self-excluded)**:
+**Results (test split, zero training overlap — corrected, 2026-05-31)**:
 
-| Repo | Baseline R@5 | Fine-tuned R@5 | Delta | CI 95% | Verdict |
-|---|---|---|---|---|---|
-| kubernetes_kubernetes | 0.4102 | 0.6700 | +25.98 pp | [+15.98, +34.98] | PASS |
-| microsoft_vscode | 0.3674 | 0.5000 | +13.26 pp | [+3.26, +23.26] | PASS |
+| Repo | n | Baseline R@5 | Fine-tuned R@5 | Delta | CI 95% | Verdict |
+|---|---|---|---|---|---|---|
+| kubernetes_kubernetes | 152 | 0.5263 | 0.6579 | +13.16 pp | [+6.58, +19.74] | PASS |
+| microsoft_vscode | 60 | 0.6833 | 0.8167 | +13.33 pp | [+5.00, +23.33] | PASS |
 
-**Test split (152 k8s, 60 vsc)**:
-
-| Repo | R@5 | R@1 |
-|---|---|---|
-| kubernetes_kubernetes | 0.6579 | 0.4737 |
-| microsoft_vscode | 0.8167 | 0.5000 |
-
-**Overall verdict: TRACK_A_SUCCESS** — ≥3 pp R@5 BOTH repos, CI lower bound > 0 on both.
+**Overall verdict: TRACK_A_SUCCESS** — >=3 pp R@5 BOTH repos, CI lower bound > 0 on both.
 
 **CPU latency**: No regression. Same architecture (BGE-base 86M params), same FAISS IndexFlatIP;
 only weights changed.
 
 **What worked**:
 - Hard negatives from the existing FAISS top-50 were effective (rank-1 negatives, 15% soft-positive rate tolerated)
-- Even 1,028 training triplets (1 neg/pair, epoch 0 only) gave massive improvement
+- Even 1,028 training triplets (1 neg/pair, epoch 0 only) gave substantial improvement
 - Combined model generalises across both repos despite vocabulary differences
 
 **What didn't work / open questions**:
@@ -76,12 +71,49 @@ only weights changed.
 - Per-repo fine-tuning: not completed — combined model covers both repos, per-repo deferred
 - More hard negatives per pair (10 instead of 1): not attempted — single hardest negative was sufficient
 
+---
+
+## Correction note (2026-05-31)
+
+**Pre-merge verification caught eval contamination in the original T5 run.**
+
+The initial T5 eval script used `sample_gold(gold, repo, n=100, seed=42)` to draw the evaluation
+sample. This function sampled from `data/gold_related.parquet` — the **full gold corpus**, not
+filtered to held-out splits. Since the 70/15/15 temporal split assigned ~70% of gold pairs to
+training, any random draw from full gold is ~70% training data.
+
+Measured contamination:
+
+| Repo | Eval pairs in training | Eval pairs in val | Eval pairs in test | Not in any split |
+|---|---|---|---|---|
+| kubernetes_kubernetes | **66 / 100** | 17 / 100 | 14 / 100 | 3 / 100 |
+| microsoft_vscode | **71 / 100** | 1 / 100 | 22 / 100 | 6 / 100 |
+
+The fine-tuned model was evaluated on its own training pairs for 66–71% of queries, inflating the
+reported delta to ~2× the true value (originally reported +25.98 pp k8s / +13.26 pp vsc).
+
+A secondary issue: the `BASELINE_R5` constants in T5 were the full-corpus W1.1 numbers (k8s=0.4102,
+vsc=0.3674), while the fine-tuned model was evaluated on the n=100 contaminated sample — a
+cross-protocol delta that would be meaningless even without contamination.
+
+**Fix applied**: `sample_gold` removed from T5. Canonical eval is now test-split pairs only
+(k8s n=152, vsc n=60, confirmed zero overlap with training data). Baseline computed live on the
+same query set using the pre-built `dup_index_*_bge` FAISS indexes. An `assert_eval_disjoint_from_train`
+guard prevents silent reintroduction of this bug. The corrected numbers above supersede all prior
+reported W3 Track A results.
+
+This correction is kept permanently — it is evidence of the verification discipline applied before
+merge, not an embarrassment to hide. The finding mirrors the W4 data-card invalidation: honest
+reporting of pre-merge audits, not post-hoc cleanup.
+
+---
+
 ## Scripts
 
 - `scripts/w3_t2_mine_negatives.py` — hard-negative mining
 - `scripts/w3_t3_split.py` — connected-component temporal split
 - `scripts/w3_t4_train.py` — fine-tuning with direct HF loop
-- `scripts/w3_t5_eval.py` — evaluation + bootstrap CI
+- `scripts/w3_t5_eval.py` — evaluation + bootstrap CI (corrected post-verification)
 
 ## Data / model artifacts
 
@@ -91,4 +123,5 @@ only weights changed.
 - `data/models/bge_finetuned_k8s_index/` — FAISS index built on fine-tuned model (k8s)
 - `data/models/bge_finetuned_vsc_index/` — FAISS index built on fine-tuned model (vsc)
 - `reports/w3_t4_val_results.json` — T4 variant comparison
-- `reports/w3_t5_eval_results.json` — full T5 eval table
+- `reports/w3_t5_eval_results.json` — full T5 eval table (corrected)
+- `reports/w3_corrected_eval_results.json` — verification run results (pre-fix)

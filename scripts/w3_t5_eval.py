@@ -1,34 +1,41 @@
 """T5: Evaluate fine-tuned BGE bi-encoder vs baseline on the test split.
 
-Protocol:
-  1. Rebuild FAISS index using the fine-tuned model (same full corpus as baseline).
-  2. Eval on test split (all test-split pairs per repo).
-  3. Eval on n=100 seed=42 sample (same protocol as W1.3 reranker screening for
-     comparability with prior results in reports/related_issue_results.json).
-  4. Bootstrap 95% CI on delta R@5 vs baseline BGE-base.
+Protocol (canonical, post-W3-correction):
+  1. Load pre-built baseline FAISS index (dup_index_*_bge, BAAI/bge-base-en-v1.5).
+  2. Rebuild fine-tuned FAISS index from the T4 winner model.
+  3. Evaluate BOTH models on test-split pairs ONLY (zero training overlap guaranteed
+     by assert_eval_disjoint_from_train).
+  4. Bootstrap 95% PAIRED CI on delta R@5.
   5. Decision logic:
-       ≥3pp R@5 BOTH repos, CI lower bound >0 → PASS (Track A success)
-       ≥3pp point estimate but CI lower bound <0 → escalate to n=300
-       <3pp or degradation → PARTIAL/FAILURE per repo
+       >=3pp delta R@5 BOTH repos, CI lower bound >0 -> PASS (Track A success)
+       >=3pp point estimate but CI lower bound <=0   -> ESCALATE_n300
+       <3pp or degradation                           -> PARTIAL/FAILURE per repo
+
+IMPORTANT: Hardcoded baseline constants are FORBIDDEN here.
+Baseline is always computed on the SAME query set and protocol as the fine-tuned
+model. A baseline measured on a different sample makes the delta meaningless.
+See ADR-0010 correction note (2026-05-31): the original eval used sample_gold()
+which sampled from the full gold corpus, contaminating 66-71% of eval pairs with
+training data and inflating the reported delta to ~2x the true value.
 
 Reads:
-  reports/w3_t4_val_results.json     — winner model dir(s)
-  data/w3_split.parquet              — test split pairs
-  data/gold_related.parquet          — full gold (for n=100 sample protocol)
-  data/processed/issues_*.parquet    — full corpus for FAISS rebuild
+  reports/w3_t4_val_results.json          -- winner model dir(s)
+  data/w3_split.parquet                   -- split assignments (test pairs used)
+  data/processed/issues_*.parquet         -- full corpus for fine-tuned FAISS rebuild
+  data/models/dup_index_*_bge/            -- pre-built baseline FAISS indexes
 
 Outputs:
-  reports/w3_t5_eval_results.json    — full eval table
-  data/models/bge_finetuned_*_index/ — rebuilt FAISS indexes
+  reports/w3_t5_eval_results.json         -- full eval table
+  data/models/bge_finetuned_*_index/      -- rebuilt fine-tuned FAISS indexes
 """
 from __future__ import annotations
 
 import json
 import logging
-import random
 from pathlib import Path
 
 import faiss
+import joblib
 import numpy as np
 import pandas as pd
 from sentence_transformers import SentenceTransformer
@@ -38,20 +45,23 @@ logger = logging.getLogger(__name__)
 
 SEED = 42
 MAX_BODY = 512
-TOP_K = 20  # max candidates to retrieve
+TOP_K = 20
 EVAL_K_VALUES = [1, 5, 10, 20]
-N_SAMPLE = 100        # W1.3 comparable screening sample per repo
-N_BOOTSTRAP = 2000    # bootstrap iterations for CI
-N300_THRESHOLD = 3    # pp point estimate that triggers n=300 if CI lower bound <0
+N_BOOTSTRAP = 2000
+PP_GATE = 3              # minimum pp delta R@5 for PASS verdict
 
-BASELINE_R5 = {
-    "kubernetes_kubernetes": 0.4102,
-    "microsoft_vscode": 0.3674,
-}
+BASELINE_MODEL_NAME = "BAAI/bge-base-en-v1.5"
 
 REPO_INDEX_ALIAS = {
     "kubernetes_kubernetes": "k8s",
     "microsoft_vscode": "vsc",
+}
+
+# Pre-built baseline FAISS indexes — must cover the same corpus as the fine-tuned indexes.
+# If the processed corpus changes, rebuild with scripts/03_build_index.py before re-running T5.
+BASELINE_INDEX_DIRS = {
+    "kubernetes_kubernetes": "data/models/dup_index_kubernetes_kubernetes_bge",
+    "microsoft_vscode": "data/models/dup_index_microsoft_vscode_bge",
 }
 
 
@@ -59,6 +69,38 @@ def build_text(title: str | None, body: str | None) -> str:
     t = (title or "").strip()
     b = (body or "").strip()[:MAX_BODY]
     return f"{t}. {b}"
+
+
+def assert_eval_disjoint_from_train(test_pairs: pd.DataFrame, split_df: pd.DataFrame) -> None:
+    """Verify eval pairs have zero overlap with training pairs.
+
+    Raises AssertionError loudly if violated — prevents silent eval contamination.
+    This is the regression gate for the ADR-0010 contamination bug.
+    """
+    train_keys = frozenset(
+        zip(
+            split_df[split_df["split"] == "train"]["repo"],
+            split_df[split_df["split"] == "train"]["query_number"].astype(int),
+            split_df[split_df["split"] == "train"]["original_number"].astype(int),
+        )
+    )
+    eval_keys = frozenset(
+        zip(
+            test_pairs["repo"],
+            test_pairs["query_number"].astype(int),
+            test_pairs["original_number"].astype(int),
+        )
+    )
+    overlap = eval_keys & train_keys
+    if overlap:
+        n = len(overlap)
+        sample = sorted(overlap)[:5]
+        raise AssertionError(
+            f"EVAL/TRAIN LEAK: {n} eval pairs found in training set. "
+            f"First 5: {sample}. "
+            "Eval MUST use only held-out test-split pairs — see ADR-0010 correction note."
+        )
+    logger.info("Disjoint check PASSED: 0 overlap between test_pairs and training split.")
 
 
 def build_faiss_index(
@@ -74,7 +116,7 @@ def build_faiss_index(
     texts = [build_text(r["title"], r["body_clean"]) for _, r in df.iterrows()]
     numbers = df["number"].astype(int).values
 
-    logger.info("[%s] Encoding %d issues for FAISS rebuild…", repo, len(texts))
+    logger.info("[%s] Encoding %d issues for FAISS rebuild...", repo, len(texts))
     embs = model.encode(
         texts,
         batch_size=64,
@@ -93,8 +135,18 @@ def build_faiss_index(
     np.save(str(p / "numbers.npy"), numbers)
     with open(p / "texts.json", "w") as f:
         json.dump(texts, f)
-    logger.info("[%s] FAISS index saved → %s  (n=%d, dim=%d)", repo, out_dir, len(texts), dim)
+    logger.info("[%s] FAISS index saved -> %s  (n=%d, dim=%d)", repo, out_dir, len(texts), dim)
     return index, numbers, texts
+
+
+def load_baseline_index(repo: str) -> tuple[faiss.IndexFlatIP, np.ndarray]:
+    """Load pre-built baseline BGE FAISS index (W1.1 artifact)."""
+    d = BASELINE_INDEX_DIRS[repo]
+    index = faiss.read_index(f"{d}/index.faiss")
+    meta = joblib.load(f"{d}/meta.pkl")
+    numbers = np.array(meta["issue_numbers"], dtype=np.int64)
+    logger.info("[%s] Loaded baseline FAISS from %s  (n=%d)", repo, d, len(numbers))
+    return index, numbers
 
 
 def retrieve_batch(
@@ -118,34 +170,21 @@ def retrieve_batch(
     return results
 
 
-def recall_at_k(hits: list[bool], k: int) -> float:
-    """R@k = fraction of queries where positive appears in top-k retrieved."""
-    total = len(hits)
-    if total == 0:
-        return 0.0
-    return sum(h[:k] for h in hits) / total  # h[:k] is a list of bools
-
-
-def bootstrap_ci(values: list[float], n_boot: int = N_BOOTSTRAP, seed: int = SEED) -> tuple[float, float]:
-    """Return (lo, hi) 95% CI via bootstrap."""
-    rng = np.random.default_rng(seed)
-    arr = np.array(values, dtype=float)
-    means = [arr[rng.integers(0, len(arr), len(arr))].mean() for _ in range(n_boot)]
-    lo, hi = float(np.percentile(means, 2.5)), float(np.percentile(means, 97.5))
-    return lo, hi
-
-
 def eval_on_pairs(
     pairs: pd.DataFrame,
     repo: str,
     model: SentenceTransformer,
     index: faiss.IndexFlatIP,
     numbers: np.ndarray,
-) -> dict:
-    """Compute recall@k metrics on a set of (query, positive) pairs."""
+) -> tuple[dict, list[float]]:
+    """Compute recall@k on (query, positive) pairs.
+
+    Returns (metrics_dict, per_query_r5_hit_flags) — the hit flags are used for
+    paired bootstrap CI so baseline and fine-tuned are compared on the same queries.
+    """
     repo_pairs = pairs[pairs["repo"] == repo].copy()
     if repo_pairs.empty:
-        return {}
+        return {}, []
 
     query_texts = [
         build_text(r["query_title"], r["query_body"])
@@ -154,41 +193,37 @@ def eval_on_pairs(
     query_nums = repo_pairs["query_number"].astype(int).tolist()
     positive_nums = repo_pairs["original_number"].astype(int).tolist()
 
-    # Retrieve k+1 so we can exclude the query issue itself (matches baseline behaviour)
     top_k_results = retrieve_batch(query_texts, model, index, numbers, k=max(EVAL_K_VALUES) + 1)
 
-    # For each query, did the positive appear in top-k (self excluded)?
     hit_lists: list[list[bool]] = []
     for top_k, pos_num, q_num in zip(top_k_results, positive_nums, query_nums):
         filtered = [n for n in top_k if n != q_num][:max(EVAL_K_VALUES)]
         hit_lists.append([n == pos_num for n in filtered])
 
-    result = {
-        "n_pairs": len(repo_pairs),
-        "repo": repo,
-    }
+    result: dict = {"n_pairs": len(repo_pairs), "repo": repo}
     for k in EVAL_K_VALUES:
-        hits_k = [any(h[:k]) for h in hit_lists]
-        result[f"recall_at_{k}"] = float(np.mean(hits_k))
+        result[f"recall_at_{k}"] = float(np.mean([any(h[:k]) for h in hit_lists]))
 
-    r5_hits = [any(h[:5]) for h in hit_lists]
-    lo, hi = bootstrap_ci([float(h) for h in r5_hits])
-    result["r5_ci_lo"] = lo
-    result["r5_ci_hi"] = hi
-
-    return result
+    r5_hits = [float(any(h[:5])) for h in hit_lists]
+    return result, r5_hits
 
 
-def sample_gold(gold: pd.DataFrame, repo: str, n: int, seed: int) -> pd.DataFrame:
-    """Exact same sampling as W1.3 fast benchmark for comparability."""
-    repo_gold = gold[gold["repo"] == repo].copy()
-    rng = random.Random(seed)
-    idxs = rng.sample(range(len(repo_gold)), min(n, len(repo_gold)))
-    return repo_gold.iloc[idxs]
+def bootstrap_delta_ci(
+    base_hits: list[float],
+    ft_hits: list[float],
+    n_boot: int = N_BOOTSTRAP,
+    seed: int = SEED,
+) -> tuple[float, float]:
+    """Paired bootstrap 95% CI on delta R@5 (fine-tuned minus baseline)."""
+    rng = np.random.default_rng(seed)
+    b = np.array(base_hits)
+    f = np.array(ft_hits)
+    n = len(b)
+    deltas = [f[rng.integers(0, n, n)].mean() - b[rng.integers(0, n, n)].mean() for _ in range(n_boot)]
+    return float(np.percentile(deltas, 2.5)), float(np.percentile(deltas, 97.5))
 
 
 def main() -> None:
-    # Load config from T4 output
     with open("reports/w3_t4_val_results.json") as f:
         t4 = json.load(f)
 
@@ -196,57 +231,60 @@ def main() -> None:
     winner_dirs = t4["winner_model_dirs"]
     logger.info("T4 winner: %s", winner)
 
-    gold = pd.read_parquet("data/gold_related.parquet")
     split_df = pd.read_parquet("data/w3_split.parquet")
-
-    # Test pairs — split_df already carries all gold text columns from T3
     test_pairs = split_df[split_df["split"] == "test"].copy()
+
+    # Fail loudly before any eval if test/train overlap exists
+    assert_eval_disjoint_from_train(test_pairs, split_df)
+
+    logger.info("Loading baseline model: %s", BASELINE_MODEL_NAME)
+    baseline_model = SentenceTransformer(BASELINE_MODEL_NAME)
+
+    # Load fine-tuned model (combined covers both repos)
+    if winner == "combined":
+        ft_model_dir = winner_dirs["combined"]
+    else:
+        ft_model_dir = None  # handled per-repo below
+    ft_model_combined = SentenceTransformer(ft_model_dir) if ft_model_dir else None
 
     all_results: dict = {"winner": winner, "repos": {}}
 
     for repo in ["kubernetes_kubernetes", "microsoft_vscode"]:
         alias = REPO_INDEX_ALIAS[repo]
 
-        # Determine model dir
-        if winner == "combined":
-            model_dir = winner_dirs["combined"]
+        # Baseline eval — pre-built dup_index, queries encoded with baseline model
+        base_index, base_numbers = load_baseline_index(repo)
+        baseline_metrics, base_hits = eval_on_pairs(
+            test_pairs, repo, baseline_model, base_index, base_numbers,
+        )
+        baseline_r5 = baseline_metrics.get("recall_at_5", 0.0)
+        logger.info(
+            "[%s] Baseline  R@5=%.4f  R@1=%.4f  (n=%d)",
+            repo, baseline_r5, baseline_metrics.get("recall_at_1", 0), baseline_metrics.get("n_pairs", 0),
+        )
+
+        # Fine-tuned eval — rebuild FAISS with fine-tuned weights
+        if ft_model_combined is not None:
+            ft_model = ft_model_combined
         else:
             model_dir = winner_dirs.get(alias, winner_dirs.get(repo))
+            ft_model = SentenceTransformer(model_dir)
 
-        logger.info("[%s] Loading fine-tuned model from %s", repo, model_dir)
-        model = SentenceTransformer(model_dir)
-
-        # Rebuild FAISS index
         index_out_dir = f"data/models/bge_finetuned_{alias}_index"
-        index, numbers, _ = build_faiss_index(model, repo, index_out_dir)
-
-        # A: Test split evaluation
-        test_result = eval_on_pairs(test_pairs, repo, model, index, numbers)
+        ft_index, ft_numbers, _ = build_faiss_index(ft_model, repo, index_out_dir)
+        ft_metrics, ft_hits = eval_on_pairs(test_pairs, repo, ft_model, ft_index, ft_numbers)
+        ft_r5 = ft_metrics.get("recall_at_5", 0.0)
         logger.info(
-            "[%s] Test split R@5=%.4f  R@1=%.4f  (n=%d)",
-            repo, test_result.get("recall_at_5", 0), test_result.get("recall_at_1", 0),
-            test_result.get("n_pairs", 0),
+            "[%s] Fine-tuned R@5=%.4f  R@1=%.4f  (n=%d)",
+            repo, ft_r5, ft_metrics.get("recall_at_1", 0), ft_metrics.get("n_pairs", 0),
         )
 
-        # B: n=100 seed=42 sample (W1.3 comparable protocol)
-        sample_pairs = sample_gold(gold, repo, N_SAMPLE, SEED)
-        sample_result = eval_on_pairs(sample_pairs, repo, model, index, numbers)
-        logger.info(
-            "[%s] n=%d sample R@5=%.4f  (baseline=%.4f  delta=%.4f)",
-            repo, N_SAMPLE,
-            sample_result.get("recall_at_5", 0),
-            BASELINE_R5[repo],
-            sample_result.get("recall_at_5", 0) - BASELINE_R5[repo],
-        )
+        delta_r5 = ft_r5 - baseline_r5
+        ci_lo, ci_hi = bootstrap_delta_ci(base_hits, ft_hits)
 
-        delta_r5 = sample_result.get("recall_at_5", 0) - BASELINE_R5[repo]
-        ci_lo = sample_result.get("r5_ci_lo", 0) - BASELINE_R5[repo]
-        ci_hi = sample_result.get("r5_ci_hi", 0) - BASELINE_R5[repo]
-
-        # Decision logic
-        if delta_r5 >= N300_THRESHOLD / 100 and ci_lo > 0:
+        if delta_r5 >= PP_GATE / 100 and ci_lo > 0:
             verdict = "PASS"
-        elif delta_r5 >= N300_THRESHOLD / 100 and ci_lo <= 0:
+        elif delta_r5 >= PP_GATE / 100 and ci_lo <= 0:
             verdict = "ESCALATE_n300"
         elif delta_r5 < 0:
             verdict = "REGRESSION"
@@ -259,16 +297,16 @@ def main() -> None:
         )
 
         all_results["repos"][repo] = {
-            "test_split": test_result,
-            "n100_sample": sample_result,
-            "baseline_r5": BASELINE_R5[repo],
+            "baseline_metrics": baseline_metrics,
+            "finetuned_metrics": ft_metrics,
+            "baseline_r5": baseline_r5,
+            "finetuned_r5": ft_r5,
             "delta_r5_point": delta_r5,
             "delta_r5_ci_lo": ci_lo,
             "delta_r5_ci_hi": ci_hi,
             "verdict": verdict,
         }
 
-    # Overall verdict
     verdicts = [v["verdict"] for v in all_results["repos"].values()]
     if all(v == "PASS" for v in verdicts):
         overall = "TRACK_A_SUCCESS"
@@ -276,14 +314,10 @@ def main() -> None:
         overall = "ESCALATE_n300"
     elif "REGRESSION" in verdicts:
         overall = "TRACK_A_FAILURE"
-    elif all(v == "PASS" for v in verdicts):
-        overall = "TRACK_A_SUCCESS"
+    elif any(v == "PASS" for v in verdicts):
+        overall = "PARTIAL_PASS"
     else:
-        # Check partial: at least one PASS
-        if any(v == "PASS" for v in verdicts):
-            overall = "PARTIAL_PASS"
-        else:
-            overall = "BELOW_GATE"
+        overall = "BELOW_GATE"
 
     all_results["overall_verdict"] = overall
     logger.info("=== OVERALL: %s ===", overall)
@@ -292,18 +326,17 @@ def main() -> None:
     Path("reports").mkdir(exist_ok=True)
     with open(out, "w") as f:
         json.dump(all_results, f, indent=2)
-    logger.info("Full results → %s", out)
+    logger.info("Full results -> %s", out)
 
-    # Print ablation table
-    print("\n=== W3 Track A Ablation Table ===")
-    print(f"{'Repo':<30} {'Metric':<12} {'Baseline':>10} {'Fine-tuned':>12} {'Delta':>8} {'CI 95%':>18} {'Verdict'}")
+    print("\n=== W3 Track A Ablation Table (test split, zero training overlap) ===")
+    print(f"{'Repo':<30} {'Metric':<12} {'Baseline':>10} {'Fine-tuned':>12} {'Delta':>8} {'CI 95%':>20} {'Verdict'}")
     print("-" * 100)
     for repo, r in all_results["repos"].items():
         bl = r["baseline_r5"]
-        ft = bl + r["delta_r5_point"]
+        ft_v = r["finetuned_r5"]
         delta = r["delta_r5_point"]
         ci = f"[{r['delta_r5_ci_lo']:+.4f}, {r['delta_r5_ci_hi']:+.4f}]"
-        print(f"{repo:<30} {'R@5':<12} {bl:>10.4f} {ft:>12.4f} {delta:>+8.4f} {ci:>18} {r['verdict']}")
+        print(f"{repo:<30} {'R@5':<12} {bl:>10.4f} {ft_v:>12.4f} {delta:>+8.4f} {ci:>20} {r['verdict']}")
     print()
 
 

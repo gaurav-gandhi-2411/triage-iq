@@ -1,223 +1,185 @@
-# TriageIQ — Project State & Session Handoff
+# TriageIQ — Project State
 
 **Last updated:** 2026-05-31  
 **Maintainer:** Gaurav Gandhi  
-**Purpose:** Single source of truth for picking up this project in a fresh consultant session. Read top-to-bottom in order; each section is self-contained.
+**Workflow model:** `docs/ORCHESTRATION.md`
 
 ---
 
 ## 1. What TriageIQ is
 
-TriageIQ accepts a raw GitHub issue (repo slug, title, body) and returns a structured JSON `TriagePlan` in under 4 seconds. The plan includes: predicted component, component confidence, top-5 similar historical issues, expected resolution window (days p10/p50/p90), priority assessment, suggested assignee class, next steps, and a one-paragraph triage summary. The pipeline has four systems in sequence: (1) TF-IDF logistic-regression component classifier (~5ms), (2) BGE-base-en-v1.5 + FAISS cosine similar-issue retriever (~27ms), (3) LightGBM quantile-regression resolution-time predictor (~4ms), and (4) Groq `llama-3.1-8b-instant` LLM synthesis (~3s p50). It is trained on ~22K real issues from `microsoft/vscode` and `kubernetes/kubernetes`.
+TriageIQ turns a raw GitHub issue (repo, title, body) into a structured `TriagePlan` JSON in under 4 seconds. The pipeline has four systems in sequence:
+
+| # | System | Impl | Latency | Key metric |
+|---|---|---|---|---|
+| 1 | Component classifier | TF-IDF logistic regression, 28–35 classes | ~5 ms | vscode 69% acc, 0.585 macro-F1 |
+| 2 | Similar-issue retriever | BGE-base-en-v1.5 + FAISS cosine | ~27 ms | vscode R@5 0.367 baseline → 0.683 W3 fine-tuned (test split) |
+| 3 | Resolution predictor | LightGBM quantile regression, 93 feats | ~4 ms | k8s +2.1% vs naive; vscode 0% (naive wins) |
+| 4 | LLM synthesis | Groq `llama-3.1-8b-instant`, 3-shot, T=0 | ~3 s | Judge 10.75/15, similar_issues_relevance 2.87/3 |
+
+Trained on ~22K real issues from `microsoft/vscode` and `kubernetes/kubernetes`.
 
 **Repos:**
 - `triage-iq` — Python/FastAPI backend, ML models, Cloud Run. This repo.
-- `triage-iq-ui` — React 19/Vite SPA. Separate repo, hosted on Vercel.
+- `triage-iq-ui` — React 19/Vite SPA. Separate repo. (`gaurav-gandhi-2411/triage-iq-ui`)
 
 **Live endpoints:**
 - API: `https://triageiq-api-779563952988.us-central1.run.app`
-- UI: Vercel (separate repo — check `gaurav-gandhi-2411/triage-iq-ui`)
-- `/health` returns `{"status":"ok","repos_loaded":[...],"retrievers":{"microsoft/vscode":"finetuned"|"baseline",...}}`
+- UI: Vercel (see triage-iq-ui repo)
+- `/health` returns `retrievers: {"microsoft/vscode": "finetuned"|"baseline", ...}`
 
-**Rate limits:** 10 req/hr, 30/day per IP on `/triage`. `/`, `/health`, `/metrics` unrated.
+**Free-tier constraint:** Groq free tier for all LLM calls. The 8b triage LLM and 70b judge LLM share one daily token pool (~100K tokens/day for 70b). Cohere Trial caps at 1,000 judge calls/month — the binding scarce resource. Budget every Cohere call; one bad run wastes ~450 of 1,000.
 
-**Free-tier constraint:** All LLM calls route through Groq free tier. Triage LLM (`8b-instant`) and judge LLM (`70b-versatile`) share the same Tokens-Per-Day pool (~100K tokens/day for 70b). Cohere Trial key caps at 1,000 judge calls/month — the scarce resource gating all judge evals. Budget every Cohere call deliberately.
-
-**Portfolio intent:** Demonstrate a complete production ML lifecycle (evaluation harness, reproducible builds, Prometheus metrics, Workload Identity Federation CI/CD, CVE-audited deps) to support senior IC job applications at Microsoft/Google/similar Applied ML roles.
+**Portfolio intent:** Demonstrate a complete production ML lifecycle (eval harness, reproducible builds, Prometheus metrics, Workload Identity Federation CI/CD) for senior IC roles at Microsoft/Google.
 
 ---
 
-## 2. The operating model
+## 2. Workstream ledger
 
-**Roles:**
-- **GG** — data-science consultant (Gaurav Gandhi). Makes final decisions and approvals. Provides domain context. Writes prompts when engaging external consultant. Does not execute shell/git/file operations directly during sessions — everything goes through CC.
-- **CC (Claude Code)** — executes all code changes, git operations, file writes, and gcloud commands.
-- **External ML consultant** — Principal ML Engineer perspective, relayed to CC via GG. Reviews results, writes session-handoff prompts, diagnoses failure modes.
-
-**Standing operating rules (non-negotiable, never override):**
-1. Shell, git, file reads/writes, and gcloud commands all go through CC tools. Never suggest GG run a command in a separate terminal unless it requires interactive auth (in which case use `! <command>` in the CC prompt).
-2. `ANTHROPIC_API_KEY` is never set, referenced, or used anywhere in this project.
-3. All train/val/test splits for time-series or resolution-time models use `created_at` as the sort key, never `closed_at`. ADR-0009 documents why (closed_at causes systematic distribution shift that makes test metrics meaningless).
-4. Verification-before-merge discipline: every model result is verified for eval/train overlap, baseline-protocol consistency, and overfit evidence before a PR is opened. Pre-merge contamination was caught in W3 (+26pp → +13pp correction). This is a feature, not a process tax.
-5. Clean negative results are valid and valuable outcomes. W1.3 (reranker rejected) and the W4 vscode resolution predictor (0% improvement) are both documented as accepted decisions, not failures.
-6. Never compare a fine-tuned/modified model metric against a baseline measured on a different query set or protocol. The delta is only meaningful if both numbers came from identical sampling.
-
----
-
-## 3. Workstream ledger
-
-| ID | Goal | Status | Headline result | ADR | PR/branch |
+| ID | Goal | Status | Headline result | ADR | Merge |
 |---|---|---|---|---|---|
-| W1.1 | Cross-family judge validation | **DONE, merged** | Cohere Command A ≈ llama-70b on 6 judge dims; qwen3-32b validated as cross-family control | ADR-0002, ADR-0003 | main |
-| W1.2 | Component classifier calibration | **DONE, merged** | Temperature scaling reduces ECE; T<1 underconfidence diagnosed (class imbalance, not model defect) | ADR-0004 | main |
-| W1.3 | Cross-encoder reranker | **REJECTED (clean negative), merged** | n=100 showed +6pp k8s but CI crossed zero at n=300 robustness check — false positive. No CE candidate improves both repos. | ADR-0006 | main (rejection merged) |
-| W2.A | LLM response cache | **DONE, merged** | Opt-in SQLite cache; Prometheus hit/miss counters; 50%+ latency reduction on repeated requests | ADR-0005 | main |
-| W3 reframe | Task reframe: dup detection → similar-issue retrieval | **DONE, merged** | Gold dataset reinterpreted; pipeline unchanged; ADR-0008 corrects task framing for all downstream workstreams | ADR-0008 | main |
-| W3 fine-tune | BGE bi-encoder in-domain fine-tune | **CODE COMPLETE, PR #7 OPEN** | +13.16pp R@5 k8s [CI +6.58, +19.74]; +13.33pp R@5 vsc [CI +5.00, +23.33] on clean test split. Loader wired. | ADR-0010 (on PR #7 branch only) | `feat/w3-finetune` |
-| W4 | Resolution predictor: fix split + remove leakage | **DONE, merged** | Corrected closed_at→created_at split; removed temporal feature leakage. k8s: +2.1% vs naive (not +3.3%). vscode: 0% improvement — naive baseline cannot be beaten with creation-time features on this corpus. | ADR-0009 | main |
-| W5 | Gold eval set expansion: n=60 → n=150 | **PREP DONE, PR #8 OPEN** | 120-candidate pool generated; ingestion pipeline + 33 tests ready; awaiting GG labeling (~2–3h) | ADR-0011 (on PR #8 branch only) | `feat/w5-eval-expansion` |
+| W1.1 | Cross-family judge validation | DONE | Cohere Command A ≈ llama-70b; qwen3-32b confirmed as cross-family control | 0002, 0003 | main |
+| W1.2 | Component classifier calibration | DONE | Temperature scaling reduces ECE; T<1 underconfidence diagnosed (class imbalance, not defect) | 0004 | main |
+| W1.3 | Cross-encoder reranker | REJECTED (clean neg.) | n=100 +6pp k8s collapsed to noise at n=300; CI crossed zero — false positive | 0006 | main |
+| W2.A | LLM response cache | DONE | Opt-in SQLite cache; Prometheus hit/miss; 50%+ latency on repeat requests | 0005 | main |
+| W3-reframe | Task reframe: dup detection → similar-issue retrieval | DONE | Gold dataset reinterpreted; pipeline unchanged; corrects all downstream metrics | 0008 | main |
+| W3-finetune | BGE bi-encoder in-domain fine-tune | **PR #7 OPEN** | +13.16 pp R@5 k8s [+6.58, +19.74]; +13.33 pp vsc [+5.00, +23.33] — clean test split | 0010 (branch) | `feat/w3-finetune` |
+| W4 | Resolution predictor: fix split + remove leakage | DONE | closed_at → created_at; removed triage-time feature leakage. k8s +2.1% vs naive; vscode 0% | 0009 | main |
+| W5 | Gold eval set expansion: n=60 → n=150 | **PR #8 OPEN** | 120-candidate pool generated; ingestion + tests ready; awaiting GG labeling | 0011 (branch) | `feat/w5-eval-expansion` |
 
-### Open PRs in detail
+### PR #7 — `feat/w3-finetune`
 
-**PR #7 — `feat/w3-finetune`** ([github.com/gaurav-gandhi-2411/triage-iq/pull/7](https://github.com/gaurav-gandhi-2411/triage-iq/pull/7))
+**Blocked on:** Cohere judge confirming `similar_issues_relevance ≥ 2.87/3` with fine-tuned retriever active.
 
-Blocked on: Cohere judge eval confirming `similar_issues_relevance` holds (≥ 2.87/3) with the fine-tuned retriever active.
+Contains: fine-tuned model at `data/models/bge_finetuned_combined/`; loader preference for fine-tuned index; `SimilarIssueRetriever.source` ("finetuned"/"baseline") surfaced in `/health`; `assert_eval_disjoint_from_train()` guard; ADR-0010 with permanent correction note (original +26pp was 66–71% train/eval contaminated; corrected to +13pp); 5 loader branch tests (75 tests on that branch).
 
-What's in it:
-- Fine-tuned BAAI/bge-base-en-v1.5 model at `data/models/bge_finetuned_combined/`
-- `loader.py` prefers `bge_finetuned_{alias}_index` over `dup_index_*_bge` when present
-- `SimilarIssueRetriever.source` attribute ("finetuned" | "baseline") visible in `/health` response
-- `assert_eval_disjoint_from_train()` guard in `w3_t5_eval.py` — fails loudly on any future eval/train overlap
-- 5 loader branch tests (75 tests total on that branch)
-- ADR-0010 with correction note: original eval was 66–71% contaminated with training pairs (+26pp → corrected +13pp)
+### PR #8 — `feat/w5-eval-expansion`
 
-**PR #8 — `feat/w5-eval-expansion`** ([github.com/gaurav-gandhi-2411/triage-iq/pull/8](https://github.com/gaurav-gandhi-2411/triage-iq/pull/8))
+**Blocked on:** GG labeling `data/gold_expansion_candidates.csv` (~2–3h; 120 candidates, target ~90 accepts).
 
-Blocked on: GG labeling `data/gold_expansion_candidates.csv` (marks ~90 of 120 candidates accept/reject; ~2–3h).
-
-What's in it:
-- T1 audit: current n=60 gold set gaps (era bias 95% from 2014–2016, coarse ">30d" bucket, component concentration)
-- T2 stratification plan: +45 per repo, 9 × 5 buckets (hours/days/weeks/months/long)
-- T3 candidate pool: `data/gold_expansion_candidates.csv` — 120 candidates with TF-IDF top-3 + BGE top-3 pre-computed (offline, no API)
-- T4 labeling protocol: `docs/eval/gold_labeling_protocol.md` — exact column spec, acceptance criteria, rejection codes
-- T5 ingestion script: `scripts/w5_ingest_labeled.py` — validates contract, merges into canonical gold, dry-run by default
-- 33 ingestion tests (102 tests total on that branch)
-- ADR-0011
+Contains: T1 gold audit (`reports/w5_gold_audit.json`); T2 stratification plan (9 × 5 resolution buckets); T3 candidate pool with TF-IDF + BGE pre-computed offline; T4 labeling protocol (`docs/eval/gold_labeling_protocol.md`); T5 ingestion script (`scripts/w5_ingest_labeled.py`, dry-run by default); 33 ingestion tests (102 tests on that branch); ADR-0011.
 
 ---
 
-## 4. The critical path right now
+## 3. Critical path right now
 
-GG must label first. Everything else is blocked.
+### Pre-condition: GG labels the candidate pool
 
-### Step 0 — GG labels (unblocks everything)
+Open `data/gold_expansion_candidates.csv`. Fill exactly these columns per row:
 
-Open `data/gold_expansion_candidates.csv`. For each row, fill exactly four columns:
-- `label_decision`: `accept` or `reject`  
-- `label_rejection_code`: one of `empty-body | bot | non-english | mislabeled | trivial | duplicate-theme | wontfix | other` (required on rejects)
-- `corrected_component`: fill if the `component` column is wrong (optional)
-- `labeler_notes`: free text (optional)
+| Column | Required | Values |
+|---|---|---|
+| `label_decision` | **yes** | `accept` or `reject` |
+| `label_rejection_code` | yes (if reject) | `empty-body` / `bot` / `non-english` / `mislabeled` / `trivial` / `duplicate-theme` / `wontfix` / `other` |
+| `corrected_component` | optional | correct value if the `component` column is wrong |
+| `labeler_notes` | optional | free text |
 
-Save as `data/gold_expansion_candidates_labeled.csv`. Target: ~9 accepts per resolution bucket per repo (45 per repo, 90 total). The 12-per-bucket pool gives a 3-slot margin for rejects. See `docs/eval/gold_labeling_protocol.md` for the full rubric.
+Save as `data/gold_expansion_candidates_labeled.csv`. Target: ~9 accepts per resolution bucket per repo (45/repo). The 12-per-bucket pool gives 3 slots of margin. See `docs/eval/gold_labeling_protocol.md` for the rubric.
 
-### Step 1 — Pre-flight: confirm fine-tuned model is active (W3 gate)
+### T3a gate: confirm fine-tuned model is live (must pass before any Cohere spend)
 
-**PR #7 must be checked out or its changes applied** before the judge run. Verify:
+PR #7 must be checked out or its changes applied. Then:
 
 ```bash
 curl http://localhost:PORT/health | python -m json.tool
+# retrievers must show "finetuned" for BOTH repos
+# If either shows "baseline" → STOP, debug loader before spending quota
 ```
 
-`retrievers` must show `"finetuned"` for both repos. If either shows `"baseline"`, STOP — the loader is not finding the fine-tuned index. Debug with `tests/test_loader.py` before spending any Cohere quota.
-
-### Step 2 — Ingest labels (dry-run first, then write)
+### Runbook (run in order)
 
 ```bash
-# Dry-run: see composition vs strata targets
+# 1. Ingest labels (dry-run first, then write)
 python scripts/w5_ingest_labeled.py \
   --labeled data/gold_expansion_candidates_labeled.csv
-
-# Write when composition looks right
+# review composition vs strata targets, then:
 python scripts/w5_ingest_labeled.py \
   --labeled data/gold_expansion_candidates_labeled.csv \
   --write
-```
 
-### Step 3 — Generate LLM plans for new issues
-
-```bash
+# 2. Generate LLM plans for new issues (cache handles repeats)
 python scripts/11_evaluate_triage.py \
   --repos microsoft/vscode kubernetes/kubernetes \
-  --skip-judge \
-  --n-samples 0 \
-  --clear-checkpoint
-```
+  --skip-judge --n-samples 0 --clear-checkpoint
 
-### Step 4 — Run the n=150 Cohere judge (one run, two purposes)
-
-This run simultaneously provides (a) W3's final gate and (b) the new n=150 baseline.
-
-```bash
+# 3. Run the n=150 Cohere judge — one run, two purposes
 python scripts/11_evaluate_triage.py \
-  --judge-provider cohere \
-  --judge-model command-a-03-2025 \
+  --judge-provider cohere --judge-model command-a-03-2025 \
   --output-file reports/triage_results_w5_n150_cohere.json \
-  --judge-delay 6 \
-  --skip-reliability \
-  --clear-judge-checkpoint
+  --judge-delay 6 --skip-reliability --clear-judge-checkpoint
 ```
 
-**Decision criteria:**
-- `similar_issues_relevance` vs baseline **2.87/3** (w4_cohere, baseline retriever):
-  - Hold (≥ 2.87) or rise → merge PR #7 (W3 accepted)
-  - Material drop → surface and investigate before merge
-- The full scorecard (all 6 dims, both repos) becomes the new n=150 reference for all future comparisons — update ADR-0009 and ADR-0010/ADR-0011 before merging.
+**Decision on `similar_issues_relevance` vs baseline 2.87/3:**
+- Hold or rise → merge PR #7 (W3 accepted). Record delta in ADR-0010.
+- Material drop → surface, investigate before merge.
 
-### Step 5 — Merge order
+The same run's full scorecard becomes the n=150 baseline for all future workstreams. Update ADR-0011 before merging PR #8.
 
-Merge PR #7 first (W3 retriever), then PR #8 (W5 eval infra). Both are independent of each other but the judge run requires PR #7's model to be active.
+**Merge order:** PR #7 first (W3 retriever), then PR #8 (W5 eval infra).
 
 ---
 
-## 5. Known constraints and recurring gotchas
+## 4. Constraints and recurring gotchas
 
-**Cohere Trial key (1000 calls/month):** The single hardest constraint on eval cadence. Every judge run costs 60 issues × 3 systems = 180 calls. At n=150, one run costs 150 × 3 = 450 calls — nearly half the monthly budget. Always check `/health source=finetuned` before starting; never waste quota on a misconfigured run. Quota resets monthly; check the Cohere dashboard if runs fail with 429s.
+**Cohere Trial (1,000 calls/month):** The binding constraint on eval cadence. One n=150 judge run = 150 × 3 systems = 450 calls — nearly half the monthly budget. Always verify `/health source=finetuned` before starting. The W3 judge run was wasted because the process launched before the loader change took effect. Never run the judge against a misconfigured model.
 
-**Groq TPD (tokens per day):** The triage LLM (8b-instant) and judge LLM (70b-versatile) share one daily pool. 70b is ~5× more expensive per token than 8b. A 60-issue eval run with judge ≈ 200K 70b tokens — can hit the ceiling in one session. Batch with `--triage-delay 1.5` and `--judge-delay 6` (these are the hardcoded defaults). If TPD is hit mid-run, the checkpoint resumes from where it stopped the next day.
+**Groq TPD (tokens/day):** The 8b triage LLM and 70b judge share one daily pool. 70b is ~5× more expensive per token. A 60-issue eval with judge ≈ 200K 70b tokens. If TPD is hit mid-run, the JSONL checkpoint resumes where it stopped — re-run the same command the next day. Default delays (1.5s triage, 6s judge) are calibrated for free tier.
 
-**Gemini free tier:** 20 requests-per-day (RPD) — not 1,500. Don't plan any Gemini judge runs without checking this.
+**Gemini free tier:** 20 requests-per-day (RPD), not 1,500. Don't schedule any Gemini-backed evals without checking this.
 
-**n=60 CI width:** At n=30 per repo, the 95% CI on any proportion metric is ±18 pp. This means you cannot detect deltas smaller than ~7 pp at p=0.05, and most reported improvements are technically not significant at n=30. This is why W5 exists. Until n=150 is live, all judge deltas are directional indicators, not statistical proof.
+**Checkpoint scoping:** `data/triage_eval_checkpoint.jsonl` and `data/judge_scores_checkpoint_{model}.jsonl` are NOT scoped to the `--output-file`. Changing the output file does NOT reset checkpoints. Use `--clear-checkpoint` and/or `--clear-judge-checkpoint` explicitly when a fresh run is needed.
 
-**Priority dimension unreliability:** `gold_priority` is inferred from resolution speed (< 24h → high, < 7d → medium, else → low), not from explicit GitHub labels (vscode has no priority labels; k8s has sparse priority/critical coverage). Even at n=150, the priority judge dimension is directional at best. Don't report priority improvements as headline metrics.
+**n=60 CI width:** At n=30/repo, the 95% CI on any proportion metric is ±18 pp. Deltas smaller than ~7 pp cannot be detected at p=0.05. All current judge scores are directional until n=150 is live. This is why W5 exists.
 
-**Baseline-instability lesson (from W3):** Never compare a post-training model metric against a baseline measured on a different sample. The W3 original eval drew its "baseline" from the full gold corpus (including training pairs) and hardcoded a full-corpus R@5 as the baseline — the delta measured on a contaminated sample against a different-protocol baseline. Rule: baseline and fine-tuned must be measured on identical query sets, in the same run.
+**Priority dimension:** `gold_priority` is inferred from resolution speed (< 24h → high, < 7d → medium, else → low) because vscode has no explicit priority labels and k8s coverage is sparse. Even at n=150, priority scores are directional only. Do not report priority improvements as headline metrics.
 
-**The W3 eval contamination:** The original T5 eval script used `sample_gold()` which sampled from the full gold corpus. Since the training split was ~70% of gold, ~70% of the eval sample was training data. The inflated result (+26pp k8s) was caught in pre-merge verification and corrected to +13pp on the clean test split. The `assert_eval_disjoint_from_train()` guard in the fixed T5 script makes this impossible to reintroduce silently.
+**Baseline-instability lesson:** Never compare a fine-tuned/modified model metric against a baseline measured on a different sample or protocol. The delta is only valid when baseline and model are measured on identical query sets in the same run. Two incidents:
+1. W3 original eval: hardcoded full-corpus W1.1 baselines vs contaminated n=100 fine-tuned sample — two different protocols.
+2. W1.3: n=100 baseline (0.430/0.470) was a favorable draw vs full-corpus (0.410/0.367) — small-N sampling variance masqueraded as a real signal until n=300 robustness.
 
-**Checkpoint resume:** All eval scripts write to `data/triage_eval_checkpoint.jsonl` and `data/judge_scores_checkpoint_{model}.jsonl`. If a run is interrupted, re-running picks up from the checkpoint. Use `--clear-checkpoint` and/or `--clear-judge-checkpoint` when you need a fresh run. The checkpoint is NOT output-file-scoped — if you change `--output-file`, the old checkpoint is still loaded unless cleared.
-
----
-
-## 6. Open backlog (not yet started)
-
-**W2.B — Migrate triage LLM:** Replace `llama-3.1-8b-instant` with `openai/gpt-oss-20b` on Groq. Server-side prompt caching on Groq means cached tokens do not count toward TPD — the structural fix for recurring TPD walls on long evals. Likely a quality upgrade as well. Requires re-running the full eval suite to establish a new baseline. Moderate scope (~1 session).
-
-**GitHub issue #3 — Artifact rename:** Rename `dup_index_*` directories to `similar_issue_index_*` to match the ADR-0008 task-reframing vocabulary. The loader currently has a `TODO(#3)` comment pointing at this. Low priority but reduces confusion in new sessions.
-
-**GitHub issue #5 — UI type drift fix:** Surface `resolution_bucket` and `resolution_confidence_pct` fields in the React UI (currently returned by the API but not displayed). Run `openapi-typescript` codegen to regenerate types from the FastAPI OpenAPI spec — closes the type-drift risk ADR-0001 documented. Scope: 1 session in the UI repo.
-
-**llama-70b W1.2 retrofit:** The `data/judge_scores_checkpoint_llama_3_3_70b_versatile.jsonl` checkpoint has 17/180 scores from a 2026-05-20 session that hit TPD. Once Groq TPD resets and the W2.B migration (prompt caching) is in place, re-running this is cheap — cached responses serve at ~0 token cost. Resume with: `python scripts/11_evaluate_triage.py --judge-model llama-3.3-70b-versatile --output-file reports/triage_results_llama70b_retrofit.json`
+**The W3 eval contamination (canonical example):** The original T5 eval script used `sample_gold()` which drew from the full gold corpus. Since ~70% of gold was in the training split, ~70% of the eval sample was training data — inflating the apparent result by ~2×. Caught in pre-merge verification; corrected from +26pp to +13pp. The `assert_eval_disjoint_from_train()` guard in the fixed T5 script makes silent reintroduction impossible.
 
 ---
 
-## 7. Key file map
+## 5. Open backlog
+
+**W2.B — Migrate triage LLM to `openai/gpt-oss-20b` on Groq:** Server-side prompt caching on Groq means cached tokens do NOT count toward TPD — the structural fix for recurring daily quota walls. Likely a quality upgrade. Requires re-running the full eval suite (one full judge run) to establish a new baseline. ~1 session.
+
+**GitHub #3 — Artifact rename:** Rename `data/models/dup_index_*` directories to `similar_issue_index_*` to match the ADR-0008 vocabulary. Loader has a `TODO(#3)` comment. Low effort, reduces confusion in new sessions.
+
+**GitHub #5 — UI type drift closure:** Surface `resolution_bucket` and `resolution_confidence_pct` in the React UI (returned by API, not yet displayed). Wire `openapi-typescript` codegen to auto-generate TypeScript types from the FastAPI OpenAPI spec — closes the type-drift risk ADR-0001 documented. Scope: 1 session in the UI repo.
+
+**llama-70b W1.2 retrofit (opportunistic):** `data/judge_scores_checkpoint_llama_3_3_70b_versatile.jsonl` has 17/180 scored from a 2026-05-20 session that hit TPD. After W2.B (prompt caching), the remaining 163 calls will largely serve from cache at near-zero token cost. Resume with: `python scripts/11_evaluate_triage.py --judge-model llama-3.3-70b-versatile --output-file reports/triage_results_llama70b_retrofit.json`
+
+---
+
+## 6. File map and ADR index
+
+### Key files
 
 | What | Where |
 |---|---|
-| Canonical gold eval set | `data/gold_triage_plans.parquet` (60 issues; n=150 after W5 ingestion) |
-| W5 labeling worklist | `data/gold_expansion_candidates.csv` (120 candidates; GG fills `label_decision` etc.) |
+| Canonical gold eval set | `data/gold_triage_plans.parquet` (60 issues; n=150 post-W5 ingest) |
+| W5 labeling worklist | `data/gold_expansion_candidates.csv` |
 | Labeling protocol | `docs/eval/gold_labeling_protocol.md` |
 | W5 ingestion script | `scripts/w5_ingest_labeled.py` |
 | Gold curation script | `scripts/10_curate_triage_gold.py` |
 | Full eval + judge script | `scripts/11_evaluate_triage.py` |
-| ADRs | `docs/architecture/adr/0001–0011` |
+| Workflow contract | `docs/ORCHESTRATION.md` |
 | Data card (biases) | `reports/01_data_card.md` |
-| LLM response cache | `data/llm_cache.sqlite` (path from `config.llm_cache_path`) |
-| API loader | `src/triage_iq/api/loader.py` — prefers fine-tuned index (`bge_finetuned_{alias}_index/`) over baseline (`dup_index_{slug}_bge/`) |
-| Similar-issue retriever | `src/triage_iq/models/similar_issues.py` — `.source` attribute ("finetuned" or "baseline") |
-| Fine-tuned model | `data/models/bge_finetuned_combined/` (SentenceTransformer) |
-| Fine-tuned FAISS indexes | `data/models/bge_finetuned_k8s_index/`, `data/models/bge_finetuned_vsc_index/` |
-| Baseline FAISS indexes | `data/models/dup_index_kubernetes_kubernetes_bge/`, `dup_index_microsoft_vscode_bge/` |
+| LLM cache | `data/llm_cache.sqlite` |
+| API loader | `src/triage_iq/api/loader.py` (prefers fine-tuned index over baseline) |
+| Similar-issue retriever | `src/triage_iq/models/similar_issues.py` (`.source` attribute) |
+| Fine-tuned model | `data/models/bge_finetuned_combined/` |
+| Fine-tuned FAISS | `data/models/bge_finetuned_k8s_index/`, `bge_finetuned_vsc_index/` |
+| Baseline FAISS | `data/models/dup_index_kubernetes_kubernetes_bge/`, `dup_index_microsoft_vscode_bge/` |
 | Eval checkpoints | `data/triage_eval_checkpoint.jsonl`, `data/judge_scores_checkpoint_{model}.jsonl` |
 | Current judge baseline | `reports/triage_results_w4_cohere.json` — `similar_issues_relevance: 2.87/3` |
-| Verified W3 R@5 results | `reports/w3_corrected_eval_results.json` — corrected test-split results |
+| W3 corrected results | `reports/w3_corrected_eval_results.json` |
 | W5 gold audit | `reports/w5_gold_audit.json` |
-| Tests | `tests/` — 69 tests on main; 75 on feat/w3-finetune; 102 on feat/w5-eval-expansion |
+| Tests | `tests/` — 69 on main; 75 on feat/w3-finetune; 102 on feat/w5-eval-expansion |
 
----
-
-## 8. ADR index
+### ADR index
 
 | ADR | Title | Status | Branch |
 |---|---|---|---|
@@ -226,11 +188,9 @@ Merge PR #7 first (W3 retriever), then PR #8 (W5 eval infra). Both are independe
 | 0003 | Judge default — llama-3.3-70b-versatile retained | Accepted | main |
 | 0004 | Temperature scaling for component classifier confidence calibration | Accepted | main |
 | 0005 | Opt-in SQLite LLM response cache with Prometheus observability | Accepted | main |
-| 0006 | Cross-encoder reranker for similar-issue retrieval | **Rejected** (clean negative — n=300 robustness check; CI crosses zero) | main |
-| 0007 | *(not used — number skipped)* | — | — |
+| 0006 | Cross-encoder reranker for similar-issue retrieval | **Rejected** — n=300 robustness check; CI crosses zero | main |
+| 0007 | *(number skipped)* | — | — |
 | 0008 | Task reframing: "duplicate detection" → "similar-issue retrieval" | Accepted | main |
-| 0009 | Resolution-time predictor diagnosis: split fix + feature leakage removal | Accepted | main |
-| 0010 | W3: Fine-tune BGE bi-encoder (+13pp R@5, corrected from inflated +26pp) | Accepted (on branch; pending merge) | feat/w3-finetune only |
-| 0011 | Expand gold eval set n=60 → n=150 (W5 stratification plan) | In progress (labeling phase) | feat/w5-eval-expansion only |
-
-To read any ADR in full: `docs/architecture/adr/NNNN-kebab-title.md`. ADRs 0010 and 0011 are visible on their respective PR branches only until those PRs are merged.
+| 0009 | Resolution-time predictor: split fix + feature leakage removal | Accepted | main |
+| 0010 | W3: BGE bi-encoder fine-tune (+13pp R@5, corrected) | Accepted (pending merge) | feat/w3-finetune |
+| 0011 | W5: Gold eval set expansion n=60 → n=150 | In progress | feat/w5-eval-expansion |

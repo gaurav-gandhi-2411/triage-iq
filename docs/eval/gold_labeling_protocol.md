@@ -14,13 +14,22 @@ Select ~90 issues from the 120 candidates (45 per repo) to expand the gold eval 
 
 ---
 
-## 2. Working file
+## 2. Working file and labeled output contract
 
 Open `data/gold_expansion_candidates.csv` in a spreadsheet editor or any tool that can edit CSVs.
 
-Add two columns if not already present:
-- `label_decision` — values: `accept` | `reject` | `pending`
-- `label_notes` — free text (optional, e.g. "bot-generated", "empty body", "duplicate theme")
+**Exact columns GG fills (do not rename, do not modify any other column):**
+
+| Column | Required | Values | Notes |
+|---|---|---|---|
+| `label_decision` | **yes** | `accept` or `reject` | Every row must have one of these two values |
+| `label_rejection_code` | when reject | see §3 | Required on every rejected row |
+| `corrected_component` | optional | any string | Fill if the `component` column in the CSV is wrong |
+| `labeler_notes` | optional | free text | Any observation or flag for future reference |
+
+All other columns are read-only context — do not modify them. The ingestion script will fail loudly on any row missing required fields.
+
+Save the labeled file as `data/gold_expansion_candidates_labeled.csv` when complete.
 
 Target selection: 9 per resolution bucket per repo (45 per repo). The 12-per-bucket pool gives 3 slots of margin per bucket.
 

@@ -1,0 +1,16 @@
+{
+  "kubernetes_kubernetes": {
+    "total_pairs": 1006,
+    "train": 704,
+    "val": 150,
+    "test": 152,
+    "n_components": 888
+  },
+  "microsoft_vscode": {
+    "total_pairs": 394,
+    "train": 324,
+    "val": 10,
+    "test": 60,
+    "n_components": 120
+  }
+}

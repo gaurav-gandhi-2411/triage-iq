@@ -322,11 +322,19 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
 def health(request: Request) -> HealthResponse:
     cfg = get_settings()
     store: ModelStore = request.app.state.store
+    retrievers: dict[str, str] = {}
+    for repo in store.repos:
+        try:
+            bundle = store.get(repo)
+            retrievers[repo] = str(getattr(bundle.detector, "source", "unknown"))
+        except Exception:
+            retrievers[repo] = "unknown"
     return HealthResponse(
         status="ok",
         repos_loaded=store.repos,
         groq_key_present=bool(cfg.groq_api_key.get_secret_value()),
         uptime_s=round(time.monotonic() - store.start_time, 1),
+        retrievers=retrievers,
     )
 
 

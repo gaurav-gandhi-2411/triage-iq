@@ -119,17 +119,26 @@ def _load_detector(models_dir: Path, slug: str):
         and (ft_index_path / "numbers.npy").exists()
         and ft_model_path.exists()
     ):
-        logger.info("Using fine-tuned BGE retriever for %s (W3 Track A)", slug)
-        return SimilarIssueRetriever.load_finetuned(
+        retriever = SimilarIssueRetriever.load_finetuned(
             index_dir=str(ft_index_path),
             model_dir=str(ft_model_path),
             repo=repo,
         )
+        logger.info(
+            "Detector for %s: source=%s  index=%s",
+            slug, retriever.source, retriever.index_dir,
+        )
+        return retriever
 
     # Fall back to baseline BGE index (W1.1 artifact)
     p = models_dir / f"dup_index_{slug}_bge"  # TODO(#3): GCS artifact rename pending
     if p.exists():
-        return SimilarIssueRetriever.load(str(p))
+        retriever = SimilarIssueRetriever.load(str(p))
+        logger.info(
+            "Detector for %s: source=%s  index=%s",
+            slug, retriever.source, retriever.index_dir,
+        )
+        return retriever
     raise FileNotFoundError(f"Detector not found: {ft_index_path} or {p}")
 
 

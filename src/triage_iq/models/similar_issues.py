@@ -44,6 +44,9 @@ class SimilarIssueRetriever:
         self.index: faiss.IndexFlatIP | None = None
         self.issue_numbers: np.ndarray | None = None
         self.texts: list[str] | None = None
+        # Observable at runtime — "finetuned" | "baseline" | "unknown"
+        self.source: str = "unknown"
+        self.index_dir: str = ""
 
     # ------------------------------------------------------------------
     # Index construction
@@ -143,6 +146,9 @@ class SimilarIssueRetriever:
         obj.index = faiss.read_index(str(p / "index.faiss"))
         obj.issue_numbers = meta["issue_numbers"]
         obj.texts = meta["texts"]
+        obj.source = "baseline"
+        obj.index_dir = str(p)
+        logger.info("Loaded baseline retriever from %s  (source=baseline)", out_dir)
         return obj
 
     @classmethod
@@ -169,7 +175,10 @@ class SimilarIssueRetriever:
         obj.issue_numbers = np.load(str(p / "numbers.npy")).astype(np.int64)
         with open(p / "texts.json") as f:
             obj.texts = _json.load(f)
+        obj.source = "finetuned"
+        obj.index_dir = str(p)
         logger.info(
-            "Loaded fine-tuned index from %s  (n=%d)", index_dir, len(obj.issue_numbers)
+            "Loaded fine-tuned retriever from %s  (n=%d, source=finetuned)",
+            index_dir, len(obj.issue_numbers),
         )
         return obj

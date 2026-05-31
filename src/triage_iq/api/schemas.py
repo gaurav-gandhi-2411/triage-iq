@@ -24,6 +24,7 @@ class HealthResponse(BaseModel):
     repos_loaded: list[str]
     groq_key_present: bool
     uptime_s: float
+    retrievers: dict[str, str] = {}  # repo -> "finetuned" | "baseline" | "unknown"
 
 
 class ServiceInfoResponse(BaseModel):

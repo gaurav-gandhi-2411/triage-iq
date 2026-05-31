@@ -54,6 +54,7 @@ def _fake_meta() -> dict:
 def _make_store() -> ModelStore:
     bundle = MagicMock()
     bundle.assistant.triage_with_metadata.return_value = (_fake_plan(), _fake_meta())
+    bundle.detector.source = "baseline"
     store = MagicMock()
     store.repos = ["microsoft/vscode", "kubernetes/kubernetes"]
     store.start_time = time.monotonic() - 5.0
@@ -103,6 +104,9 @@ def test_health(client):
     assert "microsoft/vscode" in body["repos_loaded"]
     assert body["groq_key_present"] is True
     assert body["uptime_s"] >= 0
+    assert "retrievers" in body
+    assert body["retrievers"].get("microsoft/vscode") == "baseline"
+    assert body["retrievers"].get("kubernetes/kubernetes") == "baseline"
 
 
 def test_triage_returns_plan(client):

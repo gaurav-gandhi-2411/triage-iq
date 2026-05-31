@@ -379,13 +379,19 @@ def _save_st_model(model: AutoModel, tokenizer: AutoTokenizer, out_dir: str) -> 
     model.save_pretrained(str(transformer_dir))
     tokenizer.save_pretrained(str(transformer_dir))
 
-    # Build SentenceTransformer wrapper around the saved weights
+    # Build SentenceTransformer wrapper around the saved weights.
+    # Move to CPU before creating the ST wrapper to avoid GPU memory accumulation across
+    # sequential train_model() calls (ST Transformer loads weights onto GPU by default).
     word_embedding_model = st_models.Transformer(str(transformer_dir), max_seq_length=MAX_LEN)
+    word_embedding_model = word_embedding_model.cpu()
     pooling_model = st_models.Pooling(word_embedding_model.get_word_embedding_dimension())
     normalize_model = st_models.Normalize()
     st = SentenceTransformer(modules=[word_embedding_model, pooling_model, normalize_model])
     st.save(str(p))
-    logger.info("Saved SentenceTransformer model → %s", out_dir)
+    # Explicit cleanup to release GPU/CPU memory before returning to the training loop
+    del st, word_embedding_model, pooling_model, normalize_model
+    torch.cuda.empty_cache()
+    logger.info("Saved SentenceTransformer model -> %s", out_dir)
 
 
 # ---------------------------------------------------------------------------

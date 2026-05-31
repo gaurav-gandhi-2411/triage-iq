@@ -151,14 +151,17 @@ def eval_on_pairs(
         build_text(r["query_title"], r["query_body"])
         for _, r in repo_pairs.iterrows()
     ]
+    query_nums = repo_pairs["query_number"].astype(int).tolist()
     positive_nums = repo_pairs["original_number"].astype(int).tolist()
 
-    top_k_results = retrieve_batch(query_texts, model, index, numbers, k=max(EVAL_K_VALUES))
+    # Retrieve k+1 so we can exclude the query issue itself (matches baseline behaviour)
+    top_k_results = retrieve_batch(query_texts, model, index, numbers, k=max(EVAL_K_VALUES) + 1)
 
-    # For each query, did the positive appear in top-k?
+    # For each query, did the positive appear in top-k (self excluded)?
     hit_lists: list[list[bool]] = []
-    for top_k, pos_num in zip(top_k_results, positive_nums):
-        hit_lists.append([n == pos_num for n in top_k])
+    for top_k, pos_num, q_num in zip(top_k_results, positive_nums, query_nums):
+        filtered = [n for n in top_k if n != q_num][:max(EVAL_K_VALUES)]
+        hit_lists.append([n == pos_num for n in filtered])
 
     result = {
         "n_pairs": len(repo_pairs),
@@ -196,13 +199,8 @@ def main() -> None:
     gold = pd.read_parquet("data/gold_related.parquet")
     split_df = pd.read_parquet("data/w3_split.parquet")
 
-    # Load test pairs (join gold text back in)
-    test_pairs = split_df[split_df["split"] == "test"].merge(
-        gold[["repo", "query_number", "original_number", "query_title", "query_body",
-              "original_title", "original_body"]],
-        on=["repo", "query_number", "original_number"],
-        how="left",
-    )
+    # Test pairs — split_df already carries all gold text columns from T3
+    test_pairs = split_df[split_df["split"] == "test"].copy()
 
     all_results: dict = {"winner": winner, "repos": {}}
 

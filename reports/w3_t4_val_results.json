@@ -1,0 +1,22 @@
+{
+  "val_r5_by_variant": {
+    "combined": 0.85,
+    "k8s": 0.8533,
+    "vsc": null
+  },
+  "winner": "combined",
+  "winner_model_dirs": {
+    "combined": "data/models/bge_finetuned_combined"
+  },
+  "notes": "vsc-only not trained; combined wins by coverage (both repos). k8s-only had 0.8533 proxy R@5 on k8s val, combined had 0.8500 on combined val. Combined chosen as primary.",
+  "hyperparams": {
+    "base_model": "BAAI/bge-base-en-v1.5",
+    "lr": 2e-05,
+    "batch_size": 16,
+    "epochs": 5,
+    "warmup_ratio": 0.1,
+    "temperature": 0.05,
+    "max_len": 128,
+    "seed": 42
+  }
+}

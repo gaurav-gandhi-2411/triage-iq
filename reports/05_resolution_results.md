@@ -1,6 +1,8 @@
 # System 3 — Resolution Time Predictor
 
-**Version:** Day 6  
+> **SUPERSEDED — DO NOT CITE.** All metrics in this report were produced with a broken `closed_at` temporal split and include leaky triage-assigned features (`has_priority` and 13 others). Both vscode (+19.1%) and k8s (+3.3%) numbers are artifacts. See ADR-0009 for the full diagnosis and Phase 2 for corrected metrics: k8s MAE 104.8d (+1.4% vs naive, CI 77.5%), vscode MAE 116.1d (0.0% vs naive, CI 76.5%). Retained as a historical record of the pre-fix evaluation.
+
+**Version:** Day 6 (PRE-FIX — see ADR-0009)
 **Last updated:** 2026-04-29  
 **Maintainer:** Gaurav Gandhi
 

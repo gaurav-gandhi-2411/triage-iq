@@ -50,8 +50,8 @@ POST /triage {repo, title, body}
                    ▼
 ┌───────────────────────────────────────┐
 │ System 3: Resolution Time Predictor    │  ~4ms p50
-│ LightGBM quantile regression, 93 feats│
-│ vscode MAE 3.4 days (+19% vs naive)  │
+│ LightGBM quantile regression, 79 feats│
+│ k8s +1.4% vs naive; vscode 0.0%      │
 └──────────────────┬────────────────────┘
                    │ p10/p50/p90 days estimate
                    ▼
@@ -80,9 +80,14 @@ suggested_next_steps, triage_summary
 | Similar issue retriever | vscode | MRR | 0.294 |
 | Similar issue retriever | vscode | Recall@5 / @10 | 36.7% / 52.1% |
 | Similar issue retriever | vscode | Index size (BGE) | 24.3 MB |
-| Resolution predictor | vscode | MAE | 3.4 days |
-| Resolution predictor | vscode | Improvement vs naive | +19.1% |
-| Resolution predictor | vscode | Inference latency p50 | 4.0ms |
+| Resolution predictor | kubernetes | MAE (within-window, de-leaked) | 104.8 days |
+| Resolution predictor | kubernetes | Improvement vs naive | +1.4% |
+| Resolution predictor | kubernetes | Q10–Q90 CI coverage | 77.5% |
+| Resolution predictor | kubernetes | Inference latency p50 | 1.5ms |
+| Resolution predictor | vscode | MAE (within-window, de-leaked) | 116.1 days |
+| Resolution predictor | vscode | Improvement vs naive | 0.0% |
+| Resolution predictor | vscode | Q10–Q90 CI coverage | 76.5% |
+| Resolution predictor | vscode | Inference latency p50 | 1.4ms |
 
 Full evaluation reports: [`reports/`](reports/)
 
@@ -331,7 +336,7 @@ jsonPayload.log_type="access" AND jsonPayload.llm_status="parse_failure"  # LLM 
 
 **Cold-start latency.** Cloud Run scales to zero. Cold start is ~23s (BGE model + FAISS index load + lifespan model init). Not a problem for demo use; `min-instances=1` would be required for SLA adherence (~$15/month).
 
-**Resolution predictor on kubernetes.** MAE is 682 days (vs 3.4 days on vscode). The kubernetes issue lifecycle is highly bimodal; the predictor cannot capture this. The LLM prompt marks the estimate as low-confidence for kubernetes issues.
+**Resolution predictor: near-chance accuracy on both repos.** After fixing the temporal split (`closed_at` → `created_at`) and removing 14 leaky triage-assigned features (`has_priority` and related label columns), honest within-window metrics are: k8s MAE 104.8d (+1.4% vs naive, CI 77.5%), vscode MAE 116.1d (0.0% vs naive, CI 76.5%). The prior numbers (vscode +19.1%, k8s +682d/+3.3%) were artifacts of a broken evaluation — see ADR-0009. Resolution time is near-unlearnable from issue-creation features; the determinants are organizational (who picks the issue up, team priorities, release cycles), none of which are captured at creation time. The LLM uses the float signals for narrative generation but the resolution estimate should be treated as coarse guidance, not a precise forecast.
 
 **CVE-2026-1839 in transformers 4.x.** Suppressed in `pip-audit` — the vulnerable code path (`Trainer._load_rng_state`) is not reachable in an inference-only service. Fix requires `sentence-transformers 2→5` + `transformers 4→5` (triple major bump). Tracked in [`DEPENDENCIES.md`](DEPENDENCIES.md).
 

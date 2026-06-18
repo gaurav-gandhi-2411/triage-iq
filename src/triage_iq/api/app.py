@@ -353,7 +353,7 @@ def health(request: Request) -> HealthResponse:
 def eval_summary() -> JSONResponse:
     """Return the static eval methodology summary from reports/eval_summary.json."""
     from pathlib import Path
-    _eval_path = Path(__file__).parent.parent.parent / "reports" / "eval_summary.json"
+    _eval_path = Path(__file__).parent.parent.parent.parent / "reports" / "eval_summary.json"
     try:
         data = json.loads(_eval_path.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):

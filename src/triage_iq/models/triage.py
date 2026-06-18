@@ -150,6 +150,11 @@ class TriageAssistant:
         t0 = time.perf_counter()
         signals = self._collect_signals(issue)
         plan, raw, usage, llm_status, cache_hit = self._call_llm_verbose(signals)
+        # Write back bucket-classifier output — the LLM prompt excludes these by default
+        # (TRIAGE_PROMPT_INCLUDE_BUCKET off), so without this the Pydantic field default
+        # (33.0) is returned for every request regardless of repo. See ADR-0009.
+        plan.resolution_confidence_pct = signals["resolution_conf_pct"]
+        plan.resolution_bucket = signals["resolution_bucket"]
         elapsed = time.perf_counter() - t0
 
         t_llm = max(

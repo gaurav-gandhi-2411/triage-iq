@@ -177,6 +177,7 @@ class TriageAssistant:
             "resolution_confidence_pct": plan.resolution_confidence_pct,
             "llm_status": llm_status,
             "llm_cache_hit": cache_hit,
+            "classifier_top3": signals["classifier_top3"],
         }
         logger.info(
             "[%s] Triaged #%s in %.2fs (groq %d+%d tok)",

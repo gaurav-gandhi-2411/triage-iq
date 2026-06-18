@@ -332,6 +332,8 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     result = plan.model_dump()
     result["_request_id"] = request_id
     result["_llm_status"] = llm_status
+    result["_llm_cache_hit"] = meta.get("llm_cache_hit")
+    result["classifier_top3"] = meta.get("classifier_top3")
     return JSONResponse(content=result)
 
 
@@ -345,6 +347,18 @@ def health(request: Request) -> HealthResponse:
         groq_key_present=bool(cfg.groq_api_key.get_secret_value()),
         uptime_s=round(time.monotonic() - store.start_time, 1),
     )
+
+
+@app.get("/eval/summary")
+def eval_summary() -> JSONResponse:
+    """Return the static eval methodology summary from reports/eval_summary.json."""
+    from pathlib import Path
+    _eval_path = Path(__file__).parent.parent.parent / "reports" / "eval_summary.json"
+    try:
+        data = json.loads(_eval_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return JSONResponse({"detail": "eval summary not available"}, status_code=503)
+    return JSONResponse(content=data)
 
 
 # ---------------------------------------------------------------------------

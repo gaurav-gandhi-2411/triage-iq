@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 
 import pandas as pd
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -209,6 +210,16 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
 app.add_middleware(SlowAPIMiddleware)
+
+_cfg = get_settings()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cfg.cors_allowed_origins,
+    allow_origin_regex=_cfg.cors_allow_origin_regex,
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Instrument all routes for automatic HTTP metrics (request count, latency).
 # We do NOT call .expose() — we add /metrics manually below with token auth.

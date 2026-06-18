@@ -11,6 +11,11 @@ from typing import Literal
 from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+_DEFAULT_CORS_ORIGINS: list[str] = [
+    "https://triage-iq-orcin.vercel.app",
+    "http://localhost:5173",
+]
+
 _PROJECT_ROOT: Path = Path(__file__).parent.parent.parent
 
 
@@ -23,6 +28,8 @@ class Settings(BaseSettings):
     )
 
     groq_api_key: SecretStr
+    cors_allowed_origins: list[str] = _DEFAULT_CORS_ORIGINS
+    cors_allow_origin_regex: str = r"https://triage-iq-orcin-.*\.vercel\.app"
     data_dir: Path = _PROJECT_ROOT / "data"
     port: int = 8080
     log_level: str = "INFO"
@@ -34,6 +41,13 @@ class Settings(BaseSettings):
     metrics_token: SecretStr | None = None
     llm_cache_enabled: bool = False
     llm_cache_path: Path = _PROJECT_ROOT / "data" / "llm_cache.sqlite"
+
+    @field_validator("cors_allowed_origins", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, v: object) -> list[str]:
+        if isinstance(v, str):
+            return [o.strip() for o in v.split(",") if o.strip()]
+        return v  # type: ignore[return-value]
 
     @field_validator("groq_api_key", mode="after")
     @classmethod

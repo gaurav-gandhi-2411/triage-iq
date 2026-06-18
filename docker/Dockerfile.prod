@@ -52,6 +52,7 @@ COPY --from=deps /build/hf_cache /app/hf_cache
 # App source
 COPY src/ src/
 COPY pyproject.toml .
+COPY reports/eval_summary.json reports/eval_summary.json
 RUN pip install --no-cache-dir --no-deps -e .
 
 # Production model artifacts (populated by CI/CD workflow from GCS)

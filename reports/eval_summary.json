@@ -1,0 +1,115 @@
+{
+  "_sources": {
+    "calibration": "reports/calibration_results.json + docs/architecture/adr/0004-classifier-calibration.md",
+    "resolution": "reports/resolution_results.json + docs/architecture/adr/0009-resolution-predictor-diagnosis.md",
+    "judge_cohere": "reports/triage_results_judge_cohere_command_a.json + docs/architecture/adr/0003-judge-default-verdict.md",
+    "judge_llama": "reports/triage_results_judge_llama70b.json",
+    "judge_w12": "docs/architecture/adr/0004-classifier-calibration.md (W1.2 Verdict section)",
+    "reranker": "reports/phase2_robustness.json + docs/architecture/adr/0006-cross-encoder-reranker.md"
+  },
+  "leakage": {
+    "feature_removed": "has_priority",
+    "removal_reason": "Assigned post-creation (not available at triage time); corr=0.595 with log(resolution_hours), fills 6.9% on fast issues vs 93.1% on slow — pure leakage.",
+    "fixed_split": "created_at (was: closed_at)",
+    "prior_metrics_invalidated": {
+      "k8s_improvement_pct": "+3.3%",
+      "vscode_improvement_pct": "+19.1%",
+      "note": "These metrics were computed on a broken closed_at temporal split where test issues were closed before some train issues were created. Retracted. See ADR-0009."
+    },
+    "honest_metrics": {
+      "k8s": {
+        "lgbm_mae_days": 104.32,
+        "naive_mae_days": 106.29,
+        "improvement_pct": "+1.9%",
+        "ci_coverage": 0.751
+      },
+      "vscode": {
+        "lgbm_mae_days": 5.91,
+        "naive_mae_days": 3.53,
+        "improvement_pct": "-67.4%",
+        "ci_coverage": 0.4091,
+        "note": "LightGBM underperforms naive on vscode because there is no creation-time signal that predicts resolution time for this repo. The system detects this (CI coverage 40.9%, resolution_confidence_pct < 40%) and falls back to the naive prior at inference rather than shipping a worse prediction. This is intentional graceful degradation — the low-confidence badge surfaces this to the user."
+      }
+    }
+  },
+  "calibration": {
+    "method": "temperature scaling (sklearn CalibratedClassifierCV not used — custom T_opt applied to raw logit scores)",
+    "test_accuracy_delta_pp": 0.0,
+    "repos": {
+      "microsoft_vscode": {
+        "T_opt": 0.2981,
+        "ece_before_val": 0.4995,
+        "ece_after_val": 0.1458,
+        "ece_test": 0.1381
+      },
+      "kubernetes_kubernetes": {
+        "T_opt": 0.3234,
+        "ece_before_val": 0.3427,
+        "ece_after_val": 0.1309,
+        "ece_test": 0.1558
+      }
+    },
+    "isotonic_note": "Isotonic calibration tested (vscode test ECE 0.072, k8s 0.026) but not shipped — accuracy CIs overlapped zero and temperature scaling is simpler/more interpretable."
+  },
+  "judge": {
+    "production_judge_model": "llama-3.3-70b-versatile",
+    "production_judge_provider": "groq",
+    "cross_family_judge_model": "command-a-03-2025",
+    "cross_family_judge_provider": "cohere",
+    "n_issues_evaluated": 60,
+    "cross_family_rationale": "Not one model grading its own homework — Cohere Command A is a different model family from the Groq/Meta LLaMA triage model.",
+    "w1_1_pre_calibration": {
+      "judge": "command-a-03-2025",
+      "score": 10.40,
+      "score_pct": 69.3,
+      "max": 15
+    },
+    "w1_2_post_calibration": {
+      "judge": "command-a-03-2025",
+      "score": 10.83,
+      "score_pct": 72.2,
+      "max": 15,
+      "delta_vs_w1_1": "+0.43 pts (+2.89pp)",
+      "best_mover": "resolution_estimate_reasonableness (+0.17)"
+    },
+    "production_llama_score": {
+      "judge": "llama-3.3-70b-versatile",
+      "score": 10.93,
+      "score_pct": 72.9,
+      "max": 15
+    },
+    "cross_family_validation": {
+      "cohere_score": 10.40,
+      "llama_score": 10.93,
+      "gap_pts": -0.53,
+      "gap_pp": -3.6,
+      "pearson_r": 0.729,
+      "gap_threshold_pp": 5.0,
+      "decision": "Llama-70b retained as default judge — gap is -3.6pp, below the 5pp escalation threshold. High ranking agreement (r=0.729) confirms cross-family result is not an outlier."
+    },
+    "dimensions": {
+      "component_match": {"max": 2, "production_mean": 1.55},
+      "similar_issues_relevance": {"max": 3, "production_mean": 2.717},
+      "resolution_estimate_reasonableness": {"max": 3, "production_mean": 1.283},
+      "priority_alignment": {"max": 1, "production_mean": 0.583},
+      "next_steps_actionability": {"max": 3, "production_mean": 2.65},
+      "overall_quality": {"max": 3, "production_mean": 2.15}
+    }
+  },
+  "reranker": {
+    "model_tested": "bge-reranker-v2-m3",
+    "phase1_screening_n": 100,
+    "phase1_k8s_delta_pp": "+6pp",
+    "phase1_vscode_delta_pp": "-8pp",
+    "phase1_verdict": "Mixed — k8s gain, vscode regression. Proceeded to robustness test.",
+    "phase2_robustness_n": 300,
+    "phase2_metric": "Recall@5",
+    "phase2_baseline_r5": 0.4633,
+    "phase2_reranker_r5": 0.4700,
+    "phase2_delta_pp": "+0.67pp",
+    "phase2_ci_95": "[-3.7pp, +5.3pp]",
+    "phase2_verdict": "CI crosses zero — the Phase 1 +6pp k8s result was a false positive at n=100. Reranker rejected. BGE FAISS k=20 baseline shipped.",
+    "n_slates_tested": 2,
+    "slates_note": "8 cross-encoder candidates across 2 slates (general-purpose + duplicate/STS models); all failed or showed mixed/negative results before bge-v2-m3 robustness test."
+  }
+}

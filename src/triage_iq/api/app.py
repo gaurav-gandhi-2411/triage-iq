@@ -8,6 +8,7 @@ GET  /health: returns loaded repos and uptime.
 import hmac
 import json
 import logging
+import os
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -211,11 +212,16 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
 app.add_middleware(SlowAPIMiddleware)
 
-_cfg = get_settings()
+_cors_env = os.environ.get("CORS_ALLOWED_ORIGINS", "")
+_cors_origins = (
+    [o.strip() for o in _cors_env.split(",") if o.strip()]
+    if _cors_env
+    else ["https://triage-iq-orcin.vercel.app", "http://localhost:5173"]
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_cfg.cors_allowed_origins,
-    allow_origin_regex=_cfg.cors_allow_origin_regex,
+    allow_origins=_cors_origins,
+    allow_origin_regex=r"https://triage-iq-orcin-.*\.vercel\.app",
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

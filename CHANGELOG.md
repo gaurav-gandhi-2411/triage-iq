@@ -20,6 +20,16 @@ This file documents *what matters and why*, not every commit.
   `related_issue_results.json`, construction scripts renamed. No behavior change, no API change,
   no metric change. User-facing `SimilarIssue` Pydantic type was already correctly named.
   See ADR-0008.
+- **Resolution bucket model retrained** — prior pkl artifacts predated the bucket classifier;
+  `predict_bucket()` was silently returning the hardcoded 0.33 floor for all requests.
+  New pkl artifacts trained with `model_bucket` included via `scripts/09_train_resolution.py`.
+  `resolution_confidence_pct` now returns real per-issue values (vscode ~41%, k8s ~65%).
+  De-leaked feature set and `created_at` temporal split unchanged from ADR-0009; tiny metric
+  deltas (k8s +1.9%→+2.1%, vscode −67.4%→−70.5%) are Optuna randomness, not a methodology
+  change. `eval_summary.json` updated atomically.
+- **ConfidenceBadge logic changed to repo-level** — badge now reflects whether the repo's
+  model beats a naive median predictor (`resolution_model_beats_naive`), not a per-issue
+  confidence threshold. Per-issue bucket confidence is still shown in "Under the Hood".
 
 ### Added
 
@@ -27,8 +37,13 @@ This file documents *what matters and why*, not every commit.
   classifier (hours/days/weeks/months/long). Bucket computed independently of the float
   fields; both are returned in API responses. k8s passes the 60% off-by-one accuracy
   threshold (65.9%); vscode uses naive prior (insufficient creation-time signal). See ADR-0009.
-- `TriagePlan.resolution_confidence_pct`: bucket classifier confidence, 0–100%. Values below
-  40% indicate low signal (vscode will typically be below threshold).
+- `TriagePlan.resolution_confidence_pct`: per-issue bucket classifier confidence, 0–100%.
+  Returns real values from the retrained bucket model (vscode ~41%, k8s ~65%). Shown in the
+  "Under the Hood" panel. Not the badge trigger — see `resolution_model_beats_naive`.
+- `resolution_model_beats_naive` (supplemental, `/triage` response): `bool`. `True` when the
+  repo's resolution model beats a naive median predictor in evaluation; `False` otherwise.
+  Drives the "Model below naive baseline" badge in the UI. vscode: `False` (−70.5% vs naive);
+  k8s: `True` (+2.1% vs naive).
 
 ### Fixed
 

@@ -31,6 +31,14 @@ from .schemas import HealthResponse, ServiceInfoResponse, TriageRequest
 
 logger = logging.getLogger(__name__)
 
+# Repo-level resolution model viability — from retrained artifact (09_train_resolution.py).
+# True = model beats naive median predictor; False = model underperforms, surface badge.
+# Unknown repos default to True (no badge — safe default for unseen repos).
+_RESOLUTION_MODEL_BEATS_NAIVE: dict[str, bool] = {
+    "microsoft/vscode": False,       # improvement −70.5% vs naive; no creation-time signal
+    "kubernetes/kubernetes": True,   # improvement +2.1% vs naive; bucket model 50 rounds
+}
+
 # llama-3.1-8b-instant pricing (per million tokens, as of 2025)
 _GROQ_PRICE_PER_MTOK = 0.27
 
@@ -334,6 +342,7 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     result["_llm_status"] = llm_status
     result["_llm_cache_hit"] = meta.get("llm_cache_hit")
     result["classifier_top3"] = meta.get("classifier_top3")
+    result["resolution_model_beats_naive"] = _RESOLUTION_MODEL_BEATS_NAIVE.get(body.repo, True)
     return JSONResponse(content=result)
 
 

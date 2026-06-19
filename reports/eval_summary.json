@@ -18,17 +18,17 @@
     },
     "honest_metrics": {
       "k8s": {
-        "lgbm_mae_days": 104.32,
+        "lgbm_mae_days": 104.05,
         "naive_mae_days": 106.29,
-        "improvement_pct": "+1.9%",
-        "ci_coverage": 0.751
+        "improvement_pct": "+2.1%",
+        "ci_coverage": 0.7537
       },
       "vscode": {
-        "lgbm_mae_days": 5.91,
+        "lgbm_mae_days": 6.02,
         "naive_mae_days": 3.53,
-        "improvement_pct": "-67.4%",
-        "ci_coverage": 0.4091,
-        "note": "LightGBM underperforms naive on vscode because there is no creation-time signal that predicts resolution time for this repo. The system detects this (CI coverage 40.9%, resolution_confidence_pct < 40%) and falls back to the naive prior at inference rather than shipping a worse prediction. This is intentional graceful degradation — the low-confidence badge surfaces this to the user."
+        "improvement_pct": "-70.5%",
+        "ci_coverage": 0.4156,
+        "note": "LightGBM underperforms naive on vscode because there is no creation-time signal that predicts resolution time for this repo. The system detects this at the repo level (bucket model improvement −70.5% vs naive) and surfaces a badge to the user rather than presenting a prediction that is worse than the baseline. See /eval for full methodology."
       }
     }
   },

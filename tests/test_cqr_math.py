@@ -7,10 +7,11 @@ Uses synthetic data with known coverage properties to verify:
 """
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import numpy as np
 import pandas as pd
 import pytest
-from unittest.mock import patch
 
 from triage_iq.models.resolution import ConformalAdjustment, ResolutionTimePredictor
 
@@ -27,7 +28,6 @@ def _make_predictor() -> ResolutionTimePredictor:
 
 def test_cqr_q_formula() -> None:
     """Q equals the ceil((n+1)(1-alpha))/n quantile of the conformity scores."""
-    rng = np.random.default_rng(42)
     n = 9
     # Known scores 1..9 in sorted order
     scores = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0])

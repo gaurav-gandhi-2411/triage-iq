@@ -5,7 +5,8 @@
     "judge_cohere": "reports/triage_results_judge_cohere_command_a.json + docs/architecture/adr/0003-judge-default-verdict.md",
     "judge_llama": "reports/triage_results_judge_llama70b.json",
     "judge_w12": "docs/architecture/adr/0004-classifier-calibration.md (W1.2 Verdict section)",
-    "reranker": "reports/phase2_robustness.json + docs/architecture/adr/0006-cross-encoder-reranker.md"
+    "reranker": "reports/phase2_robustness.json + docs/architecture/adr/0006-cross-encoder-reranker.md",
+    "conformal": "data/models/cqr_conformal_adjustments.json + scripts/10_calibrate_cqr.py + docs/architecture/adr/0010-conformal-quantile-regression.md"
   },
   "leakage": {
     "feature_removed": "has_priority",
@@ -111,5 +112,35 @@
     "phase2_verdict": "CI crosses zero — the Phase 1 +6pp k8s result was a false positive at n=100. Reranker rejected. BGE FAISS k=20 baseline shipped.",
     "n_slates_tested": 2,
     "slates_note": "8 cross-encoder candidates across 2 slates (general-purpose + duplicate/STS models); all failed or showed mixed/negative results before bge-v2-m3 robustness test."
+  },
+  "conformal": {
+    "method": "CQR split-conformal, Romano et al. 2019",
+    "target_coverage": 0.80,
+    "caveats": "Marginal (not conditional) coverage; assumes exchangeability. vscode train(2015-16)/test(2026, 7-day window) violates this — report empirical coverage, not theoretical guarantee.",
+    "by_repo": {
+      "kubernetes/kubernetes": {
+        "calibration_split": "30/70 of test (449 cal / 1049 true-test)",
+        "q_adjustment_hours": 0.2835,
+        "q_adjustment_days": 0.0118,
+        "empirical_coverage": 0.766,
+        "coverage_ci95_lower": 0.740,
+        "coverage_ci95_upper": 0.791,
+        "raw_interval_coverage": 0.744,
+        "median_width_raw_days": 87.6,
+        "median_width_conformal_days": 87.7
+      },
+      "microsoft/vscode": {
+        "calibration_split": "40/60 of test (246 cal / 370 true-test); 30/70 (68.3%) also computed — 5.8pp divergence reported in ADR-0010 as temporal non-stationarity finding",
+        "q_adjustment_hours": 1.2542,
+        "q_adjustment_days": 0.0523,
+        "empirical_coverage": 0.741,
+        "coverage_ci95_lower": 0.694,
+        "coverage_ci95_upper": 0.783,
+        "raw_interval_coverage": 0.373,
+        "median_width_raw_days": 117.0,
+        "median_width_conformal_days": 117.1,
+        "exchangeability_note": "train 2015-10-13..2016-04-05, test 2026-04-21..2026-04-27 (7-day window). Temporal regime gap violates exchangeability; 74.1% empirical coverage vs 80% target is the honest outcome."
+      }
+    }
   }
 }

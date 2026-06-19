@@ -61,6 +61,7 @@ COPY data/models/component_classifier_*.pkl   data/models/
 COPY data/models/dup_index_microsoft_vscode_bge   data/models/dup_index_microsoft_vscode_bge
 COPY data/models/dup_index_kubernetes_kubernetes_bge   data/models/dup_index_kubernetes_kubernetes_bge
 COPY data/models/resolution_predictor_*.pkl   data/models/
+COPY data/models/cqr_conformal_adjustments.json   data/models/
 COPY data/processed/microsoft_vscode_temporal_train.parquet   data/processed/
 COPY data/processed/kubernetes_kubernetes_temporal_train.parquet   data/processed/
 

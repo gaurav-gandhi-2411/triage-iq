@@ -549,3 +549,191 @@ def test_build_triage_prompt_contains_signals():
     assert "#1234" in prompt
     assert "3.0 days" in prompt
     assert "[1.0d, 7.0d]" in prompt
+
+
+# ---------------------------------------------------------------------------
+# Conformal interval — ConformalIntervalResult + /triage injection
+# ---------------------------------------------------------------------------
+
+def test_conformal_interval_result_validates():
+    """ConformalIntervalResult rejects out-of-range coverage values."""
+    from pydantic import ValidationError
+
+    from triage_iq.models.triage import ConformalIntervalResult
+
+    # Valid construction
+    r = ConformalIntervalResult(
+        lower_days=1.0,
+        upper_days=10.0,
+        target_coverage=0.80,
+        empirical_coverage=0.766,
+        coverage_ci95_lower=0.740,
+        coverage_ci95_upper=0.791,
+    )
+    assert r.lower_days == 1.0
+    assert r.upper_days == 10.0
+    assert r.target_coverage == 0.80
+
+    # Coverage > 1.0 must fail
+    with pytest.raises(ValidationError):
+        ConformalIntervalResult(
+            lower_days=0.0,
+            upper_days=5.0,
+            target_coverage=1.5,  # invalid
+            empirical_coverage=0.8,
+            coverage_ci95_lower=0.75,
+            coverage_ci95_upper=0.85,
+        )
+
+    # lower_days < 0 must fail
+    with pytest.raises(ValidationError):
+        ConformalIntervalResult(
+            lower_days=-1.0,  # invalid
+            upper_days=5.0,
+            target_coverage=0.80,
+            empirical_coverage=0.8,
+            coverage_ci95_lower=0.75,
+            coverage_ci95_upper=0.85,
+        )
+
+
+def test_triage_plan_conformal_field_defaults_none():
+    """resolution_interval_conformal defaults to None — existing plan construction unaffected."""
+    plan = TriagePlan(
+        predicted_component="editor",
+        component_confidence=0.87,
+        similar_issues=[],
+        expected_resolution_summary="3 days",
+        expected_resolution_lower_days=2.0,
+        expected_resolution_upper_days=5.0,
+        resolution_bucket="days",
+        resolution_confidence_pct=61.0,
+        priority_guess="medium",
+        priority_rationale="Standard bug",
+        suggested_assignee_class="editor team",
+        suggested_next_steps=["Investigate"],
+        triage_summary="Editor bug",
+    )
+    assert plan.resolution_interval_conformal is None
+
+
+def test_triage_injects_conformal_when_adjustment_present():
+    """When conformal_adjustments has an entry for the repo, /triage response includes the interval."""
+    from triage_iq.models.triage import ConformalIntervalResult
+
+    _adj = {
+        "q_adjustment_hours": 0.2835,
+        "target_coverage": 0.80,
+        "empirical_coverage": 0.766,
+        "coverage_ci95_lower": 0.740,
+        "coverage_ci95_upper": 0.791,
+    }
+
+    store = _make_store()
+    store.conformal_adjustments = {"microsoft/vscode": _adj}
+
+    with (
+        patch.dict("os.environ", {"GROQ_API_KEY": "test-key-for-tests"}),
+        patch("triage_iq.api.app.ModelStore.load_all", return_value=store),
+        TestClient(app) as c,
+    ):
+        r = c.post("/triage", json={
+            "repo": "microsoft/vscode",
+            "title": "Editor crashes on paste",
+            "body": "Reproducible every time I paste a 1 MB block.",
+            "issue_number": 9999,
+        })
+    assert r.status_code == 200
+    body = r.json()
+    ci = body.get("resolution_interval_conformal")
+    assert ci is not None, "Expected conformal interval to be populated"
+    assert ci["target_coverage"] == 0.80
+    assert ci["empirical_coverage"] == pytest.approx(0.766)
+    assert ci["lower_days"] >= 0.0
+    assert ci["upper_days"] >= ci["lower_days"]
+    # Validate via Pydantic to lock the schema
+    parsed = ConformalIntervalResult.model_validate(ci)
+    assert 0.0 <= parsed.empirical_coverage <= 1.0
+
+
+def test_triage_conformal_none_when_no_adjustment():
+    """When conformal_adjustments is empty, resolution_interval_conformal is None."""
+    store = _make_store()
+    store.conformal_adjustments = {}  # no adjustments loaded
+
+    with (
+        patch.dict("os.environ", {"GROQ_API_KEY": "test-key-for-tests"}),
+        patch("triage_iq.api.app.ModelStore.load_all", return_value=store),
+        TestClient(app) as c,
+    ):
+        r = c.post("/triage", json={
+            "repo": "microsoft/vscode",
+            "title": "Editor crash",
+            "body": "Crash on startup.",
+        })
+    assert r.status_code == 200
+    assert r.json().get("resolution_interval_conformal") is None
+
+
+def test_model_store_conformal_adjustments_attribute():
+    """ModelStore exposes conformal_adjustments dict on construction."""
+    from triage_iq.api.loader import ModelStore, RepoBundle
+
+    bundle = MagicMock(spec=RepoBundle)
+    store_empty = ModelStore({"k8s": bundle}, start_time=0.0)
+    assert store_empty.conformal_adjustments == {}
+
+    adj = {"kubernetes/kubernetes": {"q_adjustment_hours": 0.28}}
+    store_with = ModelStore({"k8s": bundle}, start_time=0.0, conformal_adjustments=adj)
+    assert store_with.conformal_adjustments["kubernetes/kubernetes"]["q_adjustment_hours"] == 0.28
+
+
+def test_load_conformal_adjustments_missing_file(tmp_path):
+    """_load_conformal_adjustments returns empty dict and logs warning when file absent."""
+    from triage_iq.api.loader import _load_conformal_adjustments
+
+    result = _load_conformal_adjustments(tmp_path)
+    assert result == {}
+
+
+def test_load_conformal_adjustments_parses_json(tmp_path):
+    """_load_conformal_adjustments correctly parses vscode (nested) and k8s (flat) entries."""
+    import json
+
+    from triage_iq.api.loader import _load_conformal_adjustments
+
+    payload = {
+        "target_coverage": 0.80,
+        "repos": {
+            "kubernetes/kubernetes": {
+                "split": "30_70",
+                "q_adjustment_hours": 0.2835,
+                "empirical_test_coverage": 0.7664,
+                "coverage_ci95_lower": 0.7399,
+                "coverage_ci95_upper": 0.791,
+            },
+            "microsoft/vscode": {
+                "40_60": {
+                    "q_adjustment_hours": 1.2542,
+                    "empirical_test_coverage": 0.7405,
+                    "coverage_ci95_lower": 0.6936,
+                    "coverage_ci95_upper": 0.7826,
+                }
+            },
+        },
+    }
+    (tmp_path / "cqr_conformal_adjustments.json").write_text(
+        json.dumps(payload), encoding="utf-8"
+    )
+
+    result = _load_conformal_adjustments(tmp_path)
+
+    assert set(result.keys()) == {"kubernetes/kubernetes", "microsoft/vscode"}
+    k8s = result["kubernetes/kubernetes"]
+    assert k8s["q_adjustment_hours"] == pytest.approx(0.2835)
+    assert k8s["target_coverage"] == pytest.approx(0.80)
+    assert k8s["empirical_coverage"] == pytest.approx(0.7664)
+
+    vscode = result["microsoft/vscode"]
+    assert vscode["q_adjustment_hours"] == pytest.approx(1.2542)
+    assert vscode["empirical_coverage"] == pytest.approx(0.7405)

@@ -29,12 +29,75 @@ class RepoBundle:
     assistant: Any
 
 
+def _load_conformal_adjustments(models_dir: Path) -> dict[str, dict]:
+    """Load per-repo CQR conformal adjustments from JSON.
+
+    Returns a dict keyed by repo canonical name (e.g. "microsoft/vscode").
+    Returns empty dict and logs a warning if the file is missing or invalid.
+    Falls back gracefully — callers must handle missing repos.
+    """
+    import json
+    p = models_dir / "cqr_conformal_adjustments.json"
+    if not p.exists():
+        logger.warning(
+            "cqr_conformal_adjustments.json not found at %s — "
+            "resolution_interval_conformal will be None for all repos. "
+            "Upload the file to GCS and rebuild the image to enable conformal intervals.",
+            p,
+        )
+        return {}
+    try:
+        raw = json.loads(p.read_text(encoding="utf-8"))
+    except Exception as exc:
+        logger.warning(
+            "Failed to parse cqr_conformal_adjustments.json: %s — falling back to raw intervals",
+            exc,
+        )
+        return {}
+
+    result: dict[str, dict] = {}
+    repos_data = raw.get("repos", {})
+    target_coverage = float(raw.get("target_coverage", 0.80))
+
+    for repo, data in repos_data.items():
+        # vscode has split sub-dicts; kubernetes has a flat dict
+        if "40_60" in data:
+            adj = data["40_60"]
+        elif "30_70" in data:
+            adj = data["30_70"]
+        else:
+            adj = data  # flat dict (kubernetes case)
+        result[repo] = {
+            "q_adjustment_hours": float(adj["q_adjustment_hours"]),
+            "target_coverage": target_coverage,
+            "empirical_coverage": float(adj["empirical_test_coverage"]),
+            "coverage_ci95_lower": float(adj["coverage_ci95_lower"]),
+            "coverage_ci95_upper": float(adj["coverage_ci95_upper"]),
+        }
+        logger.info(
+            "Conformal adjustment loaded for %s: Q=%.4fh empirical_coverage=%.3f [%.3f, %.3f]",
+            repo,
+            result[repo]["q_adjustment_hours"],
+            result[repo]["empirical_coverage"],
+            result[repo]["coverage_ci95_lower"],
+            result[repo]["coverage_ci95_upper"],
+        )
+
+    return result
+
+
 class ModelStore:
     """Per-repo model bundles, loaded once at startup."""
 
-    def __init__(self, bundles: dict[str, RepoBundle], start_time: float) -> None:
+    def __init__(
+        self,
+        bundles: dict[str, RepoBundle],
+        start_time: float,
+        conformal_adjustments: dict[str, dict] | None = None,
+    ) -> None:
         self._bundles = bundles
         self.start_time = start_time
+        self.conformal_adjustments: dict[str, dict] = conformal_adjustments if conformal_adjustments is not None else {}
 
     @property
     def repos(self) -> list[str]:
@@ -89,7 +152,8 @@ class ModelStore:
         if not bundles:
             raise RuntimeError("No repo models could be loaded; check data/models/")
 
-        return cls(bundles, start_time=time.monotonic())
+        conformal = _load_conformal_adjustments(models_dir)
+        return cls(bundles, start_time=time.monotonic(), conformal_adjustments=conformal)
 
 
 # ---------------------------------------------------------------------------

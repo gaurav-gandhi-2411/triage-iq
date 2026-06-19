@@ -29,6 +29,23 @@ class SimilarIssue(BaseModel):
     relevance_note: str
 
 
+class ConformalIntervalResult(BaseModel):
+    """CQR-adjusted prediction interval with empirical coverage metadata.
+
+    lower_days / upper_days are per-request predictions (raw interval ± Q scalar).
+    empirical_coverage and CI bounds are fixed per repo from the calibration run.
+    This is marginal (not conditional) coverage; temporal data may violate exchangeability.
+    See ADR-0010.
+    """
+
+    lower_days: float = Field(ge=0.0)
+    upper_days: float = Field(ge=0.0)
+    target_coverage: float = Field(ge=0.0, le=1.0)
+    empirical_coverage: float = Field(ge=0.0, le=1.0)
+    coverage_ci95_lower: float = Field(ge=0.0, le=1.0)
+    coverage_ci95_upper: float = Field(ge=0.0, le=1.0)
+
+
 class TriagePlan(BaseModel):
     """Structured triage plan produced by the LLM assistant.
 
@@ -56,6 +73,14 @@ class TriagePlan(BaseModel):
     resolution_confidence_pct: float = Field(
         default=33.0, ge=0.0, le=100.0,
         description="Bucket classifier confidence (0–100%). Below 40% = low signal.",
+    )
+    resolution_interval_conformal: ConformalIntervalResult | None = Field(
+        default=None,
+        description=(
+            "CQR-adjusted interval. Empirical marginal coverage under temporal drift: "
+            "k8s 76.6% [74.0%, 79.1%], vscode 74.1% [69.4%, 78.3%]. "
+            "None when conformal adjustments are unavailable. See ADR-0010."
+        ),
     )
     priority_guess: Literal["low", "medium", "high"]
     priority_rationale: str

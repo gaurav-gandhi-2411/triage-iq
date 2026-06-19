@@ -13,6 +13,7 @@ Bucket boundaries (days): [1, 7, 30, 180]
 """
 
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
@@ -40,6 +41,22 @@ def hours_to_bucket(hours: np.ndarray | float) -> np.ndarray:
     return out
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ConformalAdjustment:
+    """CQR scalar adjustment per repo per target level.
+
+    Q is the conformal quantile of conformity scores on a held-out calibration
+    set. The conformal interval is [q_lo(x) - Q, q_hi(x) + Q].
+    Conformity score: E_i = max(q_lo(x_i) - y_i, y_i - q_hi(x_i)).
+    """
+
+    target_coverage: float          # e.g. 0.80
+    n_calibration: int              # number of calibration points used
+    q_adjustment_hours: float       # Q in hours (applied to raw interval predictions)
+    empirical_test_coverage: float  # measured on held-out test set (post-calibration)
+    n_test: int                     # size of the test set used
 
 # ------------------------------------------------------------------
 # Feature engineering
@@ -177,6 +194,7 @@ class ResolutionTimePredictor:
         self.pca = None
         self.top_components: list[str] = []
         self.feature_names: list[str] = []
+        self.conformal_adjustments: dict[float, ConformalAdjustment] = {}
 
     # ------------------------------------------------------------------
     # Training
@@ -289,6 +307,62 @@ class ResolutionTimePredictor:
         upper = np.expm1(self.model_q90.predict(X)).clip(min=0)
         return lower, upper
 
+    def calibrate_cqr(
+        self,
+        X_cal: pd.DataFrame,
+        y_cal_hours: np.ndarray,
+        target_coverage: float = 0.80,
+    ) -> ConformalAdjustment:
+        """Compute the CQR scalar adjustment Q from a held-out calibration set.
+
+        Args:
+            X_cal: Feature DataFrame for calibration points (out-of-sample; model
+                   must never have been trained on these rows).
+            y_cal_hours: True resolution_hours for each calibration row.
+            target_coverage: Desired marginal coverage level (e.g. 0.80).
+
+        Returns:
+            ConformalAdjustment with q_adjustment_hours filled in.
+            empirical_test_coverage and n_test are left at 0.0 / 0 — fill them
+            in from an evaluation script after measuring coverage on a test set.
+        """
+        lower_cal, upper_cal = self.predict_intervals(X_cal)
+        E = np.maximum(lower_cal - y_cal_hours, y_cal_hours - upper_cal)
+        n = len(E)
+        # CQR finite-sample level: ceil((n+1)*(1-alpha))/n where alpha=1-target_coverage.
+        # Equivalent to ceil((n+1)*target_coverage)/n. Clips to 1.0 for small n.
+        level = np.ceil((n + 1) * target_coverage) / n
+        Q = float(np.quantile(E, min(level, 1.0)))
+        return ConformalAdjustment(
+            target_coverage=target_coverage,
+            n_calibration=n,
+            q_adjustment_hours=Q,
+            empirical_test_coverage=0.0,
+            n_test=0,
+        )
+
+    def predict_conformal_interval(
+        self,
+        X: pd.DataFrame,
+        adjustment: ConformalAdjustment,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Return CQR-adjusted prediction intervals.
+
+        Args:
+            X: Feature DataFrame for new points.
+            adjustment: ConformalAdjustment from calibrate_cqr.
+
+        Returns:
+            (lower_hours, upper_hours) conformal interval. lower_hours is clipped
+            to >= 0; upper_hours is not clipped (Q can be negative when the base
+            intervals already over-cover, which is valid and tightens the interval).
+        """
+        raw_lower, raw_upper = self.predict_intervals(X)
+        Q = adjustment.q_adjustment_hours
+        conformal_lower = np.clip(raw_lower - Q, 0, None)
+        conformal_upper = raw_upper + Q
+        return conformal_lower, conformal_upper
+
     def predict_bucket(self, X: pd.DataFrame) -> tuple[list[str], np.ndarray]:
         """Return (bucket_labels, confidences) for each row.
 
@@ -338,6 +412,7 @@ class ResolutionTimePredictor:
             "pca": self.pca,
             "top_components": self.top_components,
             "feature_names": self.feature_names,
+            "conformal_adjustments": getattr(self, "conformal_adjustments", {}),
         }, path)
         logger.info("Saved model to %s", path)
 
@@ -353,4 +428,6 @@ class ResolutionTimePredictor:
             obj.model_bucket = None
         if not hasattr(obj, "bucket_train_distribution"):
             obj.bucket_train_distribution = {}
+        if not hasattr(obj, "conformal_adjustments"):
+            obj.conformal_adjustments = {}
         return obj

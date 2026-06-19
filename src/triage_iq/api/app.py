@@ -25,7 +25,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from ..config import get_settings
-from ..models.triage import TriagePlan
+from ..models.triage import ConformalIntervalResult, TriagePlan
 from .loader import ModelStore
 from .schemas import HealthResponse, ServiceInfoResponse, TriageRequest
 
@@ -307,6 +307,24 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         )
         logger.exception("Triage failed for repo=%s", body.repo)
         raise HTTPException(status_code=500, detail="Internal server error") from exc
+
+    # Attach conformal interval — fail-safe (never blocks the response)
+    try:
+        adj = store.conformal_adjustments.get(body.repo)
+        if adj is not None:
+            q_days = adj["q_adjustment_hours"] / 24.0
+            plan.resolution_interval_conformal = ConformalIntervalResult(
+                lower_days=max(0.0, plan.expected_resolution_lower_days - q_days),
+                upper_days=plan.expected_resolution_upper_days + q_days,
+                target_coverage=adj["target_coverage"],
+                empirical_coverage=adj["empirical_coverage"],
+                coverage_ci95_lower=adj["coverage_ci95_lower"],
+                coverage_ci95_upper=adj["coverage_ci95_upper"],
+            )
+    except Exception as _conf_err:
+        logger.warning(
+            "Conformal interval computation failed: %s — returning raw interval", _conf_err
+        )
 
     total_ms = round((time.perf_counter() - t_start) * 1000, 1)
     llm_status = meta.get("llm_status", "ok")

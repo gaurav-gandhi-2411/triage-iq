@@ -2,6 +2,7 @@
 
 Status: Accepted
 Date: 2026-06-20
+Last updated: 2026-06-20
 
 ## Context
 
@@ -14,8 +15,7 @@ The gate is split into two layers:
 1. **Structural invariants** (no LLM, deterministic, fast): verifies mathematical contracts,
    schema shape, and calibration properties that must hold regardless of model quality.
 2. **Quality regression** (cassette-replayed LLM-judge): verifies that the end-to-end pipeline
-   score on a frozen eval set does not drop below a committed baseline. **This layer is deferred
-   to a follow-up PR** — see "Consequences" below.
+   score on a frozen eval set does not drop below a committed baseline.
 
 A key design constraint: the gate must run fully offline in CI (no live LLM, no live judge calls,
 no Groq quota consumed). All LLM interactions are pre-recorded into committed cassettes and
@@ -47,17 +47,31 @@ models from GCS, runs `pytest eval/test_invariants.py -v --no-cov`. **Non-blocki
 (`continue-on-error: true`) — will be promoted to a required status check after one confirmed
 green cycle on the main branch.
 
-**Quality regression suite** — deferred to follow-up PR:
+**Quality regression suite** (`eval/test_quality_regression.py`) — shipped in this PR:
 
-The full pipeline (synthesis + judge) must be re-run in replay-only mode and scored per-repo
-against a committed baseline (`reports/eval_baseline.json`). The recording pass to populate
-cassettes was interrupted by Groq TPD at issue 44/60 (vscode complete 30/30, k8s partial
-13/30). The follow-up PR will:
+**Baseline:** `reports/eval_baseline.json` (committed) — blessed scores with eval-set hash +
+cassette hash. Scores were validated against a full 60-issue recording (30 vscode + 30 k8s).
+The partial (n=13) k8s sample from the interrupted first recording run was validated: partial
+mean 10.69 vs full-30 mean 10.97 (+1.9% delta), confirming the sample was representative
+before the baseline was locked.
 
-- Resume recording from checkpoint (16 k8s issues remaining)
-- Build `eval/test_quality_regression.py` with per-repo thresholds (0.0 drop + 1e-4 epsilon)
-- Commit `reports/eval_baseline.json` (blessed scores + eval-set hash + cassette hash)
-- Add quality regression job to `eval-gate.yml`, non-blocking
+**Thresholds (per-repo, independent):**
+
+- microsoft/vscode: baseline 9.8667/15 — gate fails if drop > 0.0001
+- kubernetes/kubernetes: baseline 10.9667/15 — gate fails if drop > 0.0001
+- Threshold = 0.0 absolute drop + 1e-4 epsilon (float noise tolerance only)
+- Both repos gated independently: a vscode-only regression fails even if k8s holds
+- On failure: per-criterion sub-scores emitted (6 dimensions shown with baseline/current/delta)
+
+**CI wiring:** `eval-gate.yml` job `quality-regression`, `continue-on-error: true`
+(non-blocking until promoted after first confirmed green cycle).
+
+**Gate behavior:**
+
+- Cassette hit + score within threshold → PASS
+- Cassette miss (any LLM call not in cassette) → hard fail (`CassetteMissError`) — signals
+  that the system under test changed without a corresponding cassette update
+- Score drop beyond threshold → fail with per-criterion breakdown
 
 ## Important limitation: code-vs-recorded, not code-vs-live
 
@@ -80,9 +94,9 @@ miss in CI is therefore a signal to re-record, not a signal to revert.
   or the conformal JSON require updating the test expectations in the same PR.
 - **What becomes easier:** verifying that infrastructure PRs (dependency updates, refactors,
   CI changes) haven't accidentally broken the pipeline's mathematical contracts.
-- **Known gap (until quality layer ships):** synthesis quality regressions are not caught
-  automatically. Manual eval (`scripts/11_evaluate_triage.py`) is still required for LLM
-  prompt changes.
+- **Quality regressions on the frozen 60-issue eval set are now caught automatically.** Manual
+  eval is still needed for testing against live API behavior (the gate verifies code-vs-recorded,
+  not code-vs-live).
 
 ## Alternatives considered
 
@@ -94,3 +108,20 @@ miss in CI is therefore a signal to re-record, not a signal to revert.
   add a dependency. `eval/cassette.py` reuses the same key function.
 - **Blocking from day one** — rejected per spec. Ship non-blocking first; promote after one
   confirmed green cycle to avoid breaking the branch on a first-run infra issue.
+
+## Baseline update procedure
+
+When intentionally changing the system under test (prompt edit, model swap, retrieval change):
+
+1. Make the change on your branch.
+2. Re-record cassettes locally (requires GROQ_API_KEY):
+   `python eval/record_cassettes.py`
+3. Compute new scores and update baseline:
+   `python eval/run_eval.py --update-baseline`
+4. Review the score delta in the baseline diff. If it represents a regression, justify it in
+   the PR description.
+5. Commit the updated cassette + checkpoint + baseline in the same PR as the system change.
+   CI will use the new cassette for replay — no live calls in the gate.
+
+A cassette miss in CI (CassetteMissError) means someone changed the system without following
+this procedure. Fix: re-run steps 2–5 above.

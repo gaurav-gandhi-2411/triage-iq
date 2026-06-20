@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     rate_limit_enabled: bool = True
     rate_limit_per_hour: str = "10/hour"
     rate_limit_per_day: str = "30/day"
+    # INERT — loader.py never reads this; GROQ_MODEL_TRIAGE env var has no effect.
+    # See docs/architecture/adr/ADR-0014-stub-dead-groq-model-setting.md for fix options.
+    # Recommended fix: delete this setting (ADR-0014 Option B) after eval-gate PR merges.
     groq_model_triage: str = "llama-3.1-8b-instant"
     environment: Literal["dev", "test", "prod"] = "prod"
     metrics_token: SecretStr | None = None

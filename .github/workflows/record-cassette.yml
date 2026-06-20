@@ -1,0 +1,118 @@
+name: Record Cassette (Manual)
+
+# Trigger manually to re-record eval cassette on the exact CI platform.
+# Run when: models change (GCS upload), platform env changes, or cassette is stale.
+# After it completes, eval-gate re-runs automatically on the pushed commit.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: record-cassette-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GCP_REGION: us-central1
+  GCP_PROJECT: triageiq-portfolio-495022
+
+jobs:
+  record:
+    name: Record cassette on CI platform
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements-dev.txt
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: triageiq-deployer@triageiq-portfolio-495022.iam.gserviceaccount.com
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Download production models from GCS
+        run: |
+          mkdir -p data/models data/processed
+          gsutil -m cp \
+            "gs://triageiq-portfolio-495022-models/models/component_classifier_microsoft_vscode.pkl" \
+            "gs://triageiq-portfolio-495022-models/models/component_classifier_kubernetes_kubernetes.pkl" \
+            "gs://triageiq-portfolio-495022-models/models/resolution_predictor_microsoft_vscode.pkl" \
+            "gs://triageiq-portfolio-495022-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
+            "gs://triageiq-portfolio-495022-models/models/cqr_conformal_adjustments.json" \
+            data/models/
+          gsutil -m cp -r \
+            "gs://triageiq-portfolio-495022-models/models/dup_index_microsoft_vscode_bge" \
+            "gs://triageiq-portfolio-495022-models/models/dup_index_kubernetes_kubernetes_bge" \
+            data/models/
+          gsutil -m cp \
+            "gs://triageiq-portfolio-495022-models/processed/microsoft_vscode_temporal_train.parquet" \
+            "gs://triageiq-portfolio-495022-models/processed/kubernetes_kubernetes_temporal_train.parquet" \
+            data/processed/
+
+      - name: Get Groq API key from Secret Manager
+        run: |
+          KEY=$(gcloud secrets versions access latest \
+            --secret=groq-api-key \
+            --project=${{ env.GCP_PROJECT }})
+          echo "::add-mask::$KEY"
+          echo "GROQ_API_KEY=$KEY" >> "$GITHUB_ENV"
+
+      - name: Clear cassette and checkpoint
+        run: |
+          python - <<'EOF'
+import json
+payload = {
+    "schema_version": "v1",
+    "description": (
+        "Recorded LLM interactions for eval/test_quality_regression.py. "
+        "DO NOT EDIT manually. Re-record via eval/record_cassettes.py."
+    ),
+    "entries": {}
+}
+open("eval/cassettes/eval_cassette.json", "w").write(
+    json.dumps(payload, indent=2, ensure_ascii=False)
+)
+open("eval/cassettes/recording_checkpoint.json", "w").write(
+    json.dumps({"done": {}}, indent=2, ensure_ascii=False)
+)
+print("Cassette cleared (0 entries), checkpoint reset")
+EOF
+
+      - name: Record cassette (live Groq API calls ~20 min)
+        run: python eval/record_cassettes.py
+
+      - name: Update eval baseline
+        run: python eval/run_eval.py --update-baseline
+
+      - name: Configure git
+        run: |
+          git config user.email "gaurav.gandhi2411@gmail.com"
+          git config user.name "Gaurav Gandhi"
+
+      - name: Commit and push cassette + baseline
+        run: |
+          git add eval/cassettes/eval_cassette.json \
+                  eval/cassettes/recording_checkpoint.json \
+                  reports/eval_baseline.json
+          git diff --staged --stat
+          git commit -m "test(eval): re-record cassette on CI platform (ubuntu-latest Python 3.11)"
+          git push origin HEAD:refs/heads/${{ github.ref_name }}

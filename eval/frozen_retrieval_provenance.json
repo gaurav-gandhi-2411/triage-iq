@@ -1,0 +1,10 @@
+{
+  "embedding_model": "BAAI/bge-base-en-v1.5",
+  "k": 5,
+  "frozen_at": "2026-06-21",
+  "frozen_on": "cpu-float32",
+  "index_hashes": {
+    "microsoft_vscode": "32bfc53cfaf2c240a5998424b3b83fcbf16edc9c2b879e79100fa6b13f918efc",
+    "kubernetes_kubernetes": "d9ed7e3e2951f4042e6955b8249c0c68887db58912ecc054b3192e73d6a0be68"
+  }
+}

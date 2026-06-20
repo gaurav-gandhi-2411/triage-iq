@@ -109,6 +109,28 @@ miss in CI is therefore a signal to re-record, not a signal to revert.
 - **Blocking from day one** — rejected per spec. Ship non-blocking first; promote after one
   confirmed green cycle to avoid breaking the branch on a first-run infra issue.
 
+## Frozen retrieval: synthesis eval vs retrieval correctness
+
+The synthesis eval (`test_quality_regression.py`) uses **frozen similar_issues** committed in
+`eval_set.jsonl` rather than live FAISS retrieval. The frozen top-k was produced on CPU float32
+(`CUDA_VISIBLE_DEVICES=""`) and its provenance recorded in `eval/frozen_retrieval_provenance.json`.
+
+**Root cause of the original cassette key coupling:** BAAI/bge-base-en-v1.5 query-time
+embeddings differ by ~1e-4 between CUDA and CPU float32 paths. These differences propagate to
+cosine similarity scores, which can flip top-k ordering at tight rank boundaries (e.g. vscode
+#311565, rank-5/6 gap = 0.0000). The synthesis prompt includes the similar_issues text, so any
+ordering change produces a different prompt → different cassette key → CI replay miss.
+
+**Option C fix (permanent):** commit `similar_issues` as a field in `eval_set.jsonl` and route
+the eval path through `FrozenRetriever` (duck-typed, lives only in `eval/frozen_retriever.py`).
+The synthesis prompt is now a deterministic function of committed inputs on any hardware.
+
+**Retrieval correctness is tested separately:** `test_retrieval_top_k` (invariant #7 in
+`eval/test_invariants.py`) asserts that live FAISS on the current index agrees with the frozen
+top-k for 2 probe issues per repo (top-1 exact match + ≥4/5 set-membership). Full ordering is
+not asserted — float-path variation makes exact ordering unstable at tied rank positions.
+Production `/triage` is unchanged and continues to use live `SimilarIssueRetriever`.
+
 ## Baseline update procedure
 
 When intentionally changing the system under test (prompt edit, model swap, retrieval change):

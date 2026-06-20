@@ -35,10 +35,10 @@ load_dotenv(ROOT / ".env")
 import os
 
 from cassette import CassettePlayer
+from frozen_retriever import build_frozen_retrievers
 from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore, TriageJudge
 from triage_iq.models.component_classifier import TFIDFComponentClassifier
 from triage_iq.models.resolution import ResolutionTimePredictor
-from triage_iq.models.similar_issues import SimilarIssueRetriever
 from triage_iq.models.triage import TriageAssistant
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -114,6 +114,13 @@ def main() -> None:
     done_ids = set(checkpoint.get("done", {}).keys())
     logger.info("Checkpoint: %d issues already processed", len(done_ids))
 
+    # Build frozen retrievers — deterministic prompts regardless of hardware
+    try:
+        frozen_retrievers = build_frozen_retrievers(EVAL_SET)
+    except ValueError as exc:
+        logger.error("%s", exc)
+        sys.exit(1)
+
     # Load models per repo
     models: dict[str, dict] = {}
     for repo, slug in REPO_MAP.items():
@@ -123,9 +130,6 @@ def main() -> None:
             classifier = TFIDFComponentClassifier.load(
                 str(models_dir / f"component_classifier_{slug}.pkl")
             )
-            detector = SimilarIssueRetriever.load(
-                str(models_dir / f"dup_index_{slug}_bge")
-            )
             predictor = ResolutionTimePredictor.load(
                 str(models_dir / f"resolution_predictor_{slug}.pkl")
             )
@@ -133,7 +137,7 @@ def main() -> None:
             assistant = TriageAssistant(
                 repo=repo,
                 classifier=classifier,
-                detector=detector,
+                detector=frozen_retrievers[repo],  # frozen, not live FAISS
                 predictor=predictor,
                 train_df=train_df,
                 groq_api_key=groq_key,
@@ -141,7 +145,6 @@ def main() -> None:
             )
             models[repo] = {
                 "classifier": classifier,
-                "detector": detector,
                 "predictor": predictor,
                 "train_df": train_df,
                 "assistant": assistant,

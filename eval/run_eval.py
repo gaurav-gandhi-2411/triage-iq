@@ -24,10 +24,10 @@ import numpy as np
 import pandas as pd
 
 from cassette import CassettePlayer
+from frozen_retriever import build_frozen_retrievers
 from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore, TriageJudge
 from triage_iq.models.component_classifier import TFIDFComponentClassifier
 from triage_iq.models.resolution import ResolutionTimePredictor
-from triage_iq.models.similar_issues import SimilarIssueRetriever
 from triage_iq.models.triage import TriageAssistant
 
 MODELS_DIR = ROOT / "data" / "models"
@@ -63,13 +63,19 @@ def _load_eval_set(path: Path) -> list[dict]:
     return issues
 
 
-def _load_models(repo: str, slug: str, cassette: CassettePlayer) -> dict[str, Any]:
-    """Load all per-repo models and return a dict containing the TriageAssistant."""
+def _load_models(
+    repo: str,
+    slug: str,
+    cassette: CassettePlayer,
+    frozen_retrievers: dict,
+) -> dict[str, Any]:
+    """Load all per-repo models and return a dict containing the TriageAssistant.
+
+    Uses FrozenRetriever instead of live FAISS so synthesis prompts are
+    deterministic on any hardware. Production /triage is unchanged.
+    """
     classifier = TFIDFComponentClassifier.load(
         str(MODELS_DIR / f"component_classifier_{slug}.pkl")
-    )
-    detector = SimilarIssueRetriever.load(
-        str(MODELS_DIR / f"dup_index_{slug}_bge")
     )
     predictor = ResolutionTimePredictor.load(
         str(MODELS_DIR / f"resolution_predictor_{slug}.pkl")
@@ -78,7 +84,7 @@ def _load_models(repo: str, slug: str, cassette: CassettePlayer) -> dict[str, An
     assistant = TriageAssistant(
         repo=repo,
         classifier=classifier,
-        detector=detector,
+        detector=frozen_retrievers[repo],  # frozen, not live FAISS
         predictor=predictor,
         train_df=train_df,
         groq_api_key=CI_API_KEY,
@@ -86,7 +92,6 @@ def _load_models(repo: str, slug: str, cassette: CassettePlayer) -> dict[str, An
     )
     return {
         "classifier": classifier,
-        "detector": detector,
         "predictor": predictor,
         "train_df": train_df,
         "assistant": assistant,
@@ -110,10 +115,11 @@ def compute_scores(
     """
     cassette = CassettePlayer(cassette_path, strict=True)
     issues = _load_eval_set(eval_set_path)
+    frozen_retrievers = build_frozen_retrievers(eval_set_path)
 
     models: dict[str, dict] = {}
     for repo, slug in REPO_MAP.items():
-        models[repo] = _load_models(repo, slug, cassette)
+        models[repo] = _load_models(repo, slug, cassette, frozen_retrievers)
 
     judge = TriageJudge(
         groq_api_key=CI_API_KEY,

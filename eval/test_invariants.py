@@ -281,6 +281,74 @@ def test_conformal_coverage_on_eval_set() -> None:
         )
 
 
+def test_retrieval_top_k() -> None:
+    """Live FAISS top-5 agrees with the CPU-frozen top-5 on 2 probe issues per repo.
+
+    Checks: top-1 exact match + >=4/5 set-membership.
+    Full ordering is not asserted — FAISS cosine scores can differ by <1e-4 between
+    CPU float32 runs, causing rank swaps at tied positions (e.g. vscode #311565,
+    delta=0.0000). The frozen provenance is in eval/frozen_retrieval_provenance.json.
+
+    Failures here mean the FAISS index was rebuilt or the embedding model changed.
+    Re-run eval/freeze_similar_issues.py and recommit eval_set.jsonl.
+    """
+    from triage_iq.models.similar_issues import SimilarIssueRetriever
+
+    # 2 probe issues per repo — chosen for clear score gaps at rank 1.
+    # vscode #311565 (zero-gap at rank 5/6) is intentionally excluded; its ordering
+    # is unstable even within CPU float32 runs due to FAISS tie-breaking.
+    PROBES: dict[str, list[int]] = {
+        "microsoft/vscode": [2093, 4223],
+        "kubernetes/kubernetes": [11079, 13257],
+    }
+
+    if not EVAL_SET.exists():
+        pytest.skip("eval_set.jsonl not found")
+
+    issues_by_num: dict[str, dict[int, dict]] = {}
+    for line in EVAL_SET.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        iss = json.loads(line)
+        issues_by_num.setdefault(iss["repo"], {})[iss["number"]] = iss
+
+    for repo, slug in REPO_SLUGS.items():
+        idx_dir = MODELS_DIR / f"dup_index_{slug}_bge"
+        if not idx_dir.exists():
+            pytest.skip(f"FAISS index not found: {idx_dir}")
+
+        det = SimilarIssueRetriever.load(str(idx_dir))
+
+        for num in PROBES[repo]:
+            iss = issues_by_num.get(repo, {}).get(num)
+            if iss is None:
+                pytest.fail(f"Probe issue {repo} #{num} not found in eval_set.jsonl")
+
+            frozen_top5 = iss.get("similar_issues")
+            if not frozen_top5:
+                pytest.fail(
+                    f"{repo} #{num} missing 'similar_issues' — "
+                    "re-run eval/freeze_similar_issues.py"
+                )
+
+            frozen_nums = [s["number"] for s in frozen_top5[:5]]
+            query_text = iss["title"] + ". " + iss["body"]
+            live_results = det.retrieve(query_text, k=5, exclude_number=num)
+            live_nums = [s["number"] for s in live_results[:5]]
+
+            assert live_nums[0] == frozen_nums[0], (
+                f"{repo} #{num}: live rank-1={live_nums[0]} ≠ frozen rank-1={frozen_nums[0]}. "
+                "FAISS index may have been rebuilt — re-run eval/freeze_similar_issues.py."
+            )
+            overlap = len(set(live_nums) & set(frozen_nums))
+            assert overlap >= 4, (
+                f"{repo} #{num}: only {overlap}/5 issues match between live and frozen top-5. "
+                f"live={live_nums} frozen={frozen_nums}. "
+                "FAISS index may have been rebuilt — re-run eval/freeze_similar_issues.py."
+            )
+
+
 def test_model_manifest_clean() -> None:
     """Verify all model artifacts match the committed MANIFEST.sha256.
 

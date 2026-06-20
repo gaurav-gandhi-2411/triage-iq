@@ -1,0 +1,71 @@
+name: Eval Regression Gate
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+concurrency:
+  group: eval-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GCP_REGION: us-central1
+  GCP_PROJECT: triageiq-portfolio-495022
+
+jobs:
+  structural-invariants:
+    name: Structural invariants (no LLM)
+    runs-on: ubuntu-latest
+    # NON-BLOCKING: this check is informational only until explicitly promoted
+    # to a required status check after one confirmed green cycle on the branch.
+    continue-on-error: true
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: triageiq-deployer@triageiq-portfolio-495022.iam.gserviceaccount.com
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Download production models from GCS
+        run: |
+          mkdir -p data/models data/processed
+          gsutil -m cp \
+            "gs://triageiq-portfolio-495022-models/models/component_classifier_microsoft_vscode.pkl" \
+            "gs://triageiq-portfolio-495022-models/models/component_classifier_kubernetes_kubernetes.pkl" \
+            "gs://triageiq-portfolio-495022-models/models/resolution_predictor_microsoft_vscode.pkl" \
+            "gs://triageiq-portfolio-495022-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
+            "gs://triageiq-portfolio-495022-models/models/cqr_conformal_adjustments.json" \
+            data/models/
+          gsutil -m cp -r \
+            "gs://triageiq-portfolio-495022-models/models/dup_index_microsoft_vscode_bge" \
+            "gs://triageiq-portfolio-495022-models/models/dup_index_kubernetes_kubernetes_bge" \
+            data/models/
+          gsutil -m cp \
+            "gs://triageiq-portfolio-495022-models/processed/microsoft_vscode_temporal_train.parquet" \
+            "gs://triageiq-portfolio-495022-models/processed/kubernetes_kubernetes_temporal_train.parquet" \
+            data/processed/
+
+      - name: Run structural invariants (offline — no LLM calls)
+        run: pytest eval/test_invariants.py -v --no-cov
+
+      # Quality regression gate is deferred — cassette recording is incomplete.
+      # Will be added in a follow-up PR once the full 60-issue recording is done.
+      # See ADR-0011 and eval/README.md for the update procedure.

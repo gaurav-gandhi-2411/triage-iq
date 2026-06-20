@@ -26,6 +26,9 @@ REPO_ROOT = Path(__file__).parent.parent
 MANIFEST_PATH = REPO_ROOT / "data" / "models" / "MANIFEST.sha256"
 GCS_PREFIX = "gs://triageiq-portfolio-495022-models"
 
+# On Windows, gcloud is a .cmd file; bare "gcloud" requires shell=True or the .cmd suffix.
+_GCLOUD = "gcloud.cmd" if sys.platform == "win32" else "gcloud"
+
 # Artifacts to publish, relative to REPO_ROOT.
 # Any addition here must be mirrored in verify_model_manifest.py.
 ARTIFACTS: list[str] = [
@@ -96,7 +99,7 @@ def main(dry_run: bool = False) -> None:
             print("  [dry-run skipped]")
             continue
         result = subprocess.run(
-            ["gcloud", "storage", "cp", str(REPO_ROOT / rel), gcs],
+            [_GCLOUD, "storage", "cp", str(REPO_ROOT / rel), gcs],
             capture_output=True, text=True,
         )
         if result.returncode != 0:
@@ -116,7 +119,7 @@ def main(dry_run: bool = False) -> None:
             gcs = _gcs_path(rel)
             tmp = Path(tmpdir) / Path(rel).name
             dl = subprocess.run(
-                ["gcloud", "storage", "cp", gcs, str(tmp)],
+                [_GCLOUD, "storage", "cp", gcs, str(tmp)],
                 capture_output=True, text=True,
             )
             if dl.returncode != 0:

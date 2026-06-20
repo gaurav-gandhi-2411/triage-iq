@@ -5,8 +5,8 @@ Reads MANIFEST.sha256 committed to the repo, downloads each GCS artifact to
 a temp directory, and compares SHA-256 hashes. Exits non-zero if any artifact
 is missing from GCS, fails to download, or has a hash mismatch.
 
-Intended for CI (Linux, ubuntu-latest). Requires gcloud CLI with ADC set up
-via Workload Identity Federation — no service account key.
+Works on Linux (CI) and Windows (dev). Requires gcloud CLI with ADC:
+    gcloud auth application-default login
 
 Usage:
     python scripts/verify_model_manifest.py
@@ -25,6 +25,9 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).parent.parent
 MANIFEST_PATH = REPO_ROOT / "data" / "models" / "MANIFEST.sha256"
 GCS_PREFIX = "gs://triageiq-portfolio-495022-models"
+
+# On Windows, gcloud is a .cmd file; bare "gcloud" requires shell=True or the .cmd suffix.
+_GCLOUD = "gcloud.cmd" if sys.platform == "win32" else "gcloud"
 
 
 def _sha256_file(path: Path) -> str:
@@ -63,7 +66,7 @@ def main() -> None:
             tmp = Path(tmpdir) / artifact_name
 
             dl = subprocess.run(
-                ["gcloud", "storage", "cp", gcs, str(tmp)],
+                [_GCLOUD, "storage", "cp", gcs, str(tmp)],
                 capture_output=True,
                 text=True,
             )

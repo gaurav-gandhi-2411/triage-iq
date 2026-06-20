@@ -9,12 +9,14 @@ Run with:
     pytest eval/test_quality_regression.py -v
 """
 
+import hashlib
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).parent.parent
 BASELINE_PATH = ROOT / "reports" / "eval_baseline.json"
+CASSETTE_PATH = ROOT / "eval" / "cassettes" / "eval_cassette.json"
 
 DIMENSION_KEYS: list[str] = [
     "component_match",
@@ -103,3 +105,29 @@ def test_vscode_quality_regression(current_scores: dict, baseline: dict) -> None
 def test_k8s_quality_regression(current_scores: dict, baseline: dict) -> None:
     """kubernetes/kubernetes mean score must not drop below baseline."""
     _check_repo_quality("kubernetes/kubernetes", current_scores, baseline)
+
+
+def test_cassette_hash_matches_baseline(baseline: dict) -> None:
+    """Cassette on disk must match the hash recorded in eval_baseline.json.
+
+    A mismatch means scores in the baseline were computed from a different cassette
+    than the one currently on disk — the baseline cannot be trusted for regression
+    gating until they are re-synced via run_eval.py --update-baseline.
+    """
+    import json
+
+    baseline_hash: str = baseline.get("cassette_hash", "")
+    if not baseline_hash:
+        pytest.fail("eval_baseline.json is missing 'cassette_hash' — re-run run_eval.py --update-baseline")
+
+    if not CASSETTE_PATH.exists():
+        pytest.fail(f"Cassette not found: {CASSETTE_PATH}")
+
+    actual_hash = hashlib.sha256(CASSETTE_PATH.read_bytes()).hexdigest()
+
+    assert actual_hash == baseline_hash, (
+        f"Cassette on disk does not match eval_baseline.json:\n"
+        f"  baseline cassette_hash : {baseline_hash[:32]}\n"
+        f"  disk cassette SHA-256  : {actual_hash[:32]}\n"
+        f"Re-run: python eval/run_eval.py --update-baseline"
+    )

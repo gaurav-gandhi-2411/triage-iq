@@ -80,7 +80,8 @@ def main(dry_run: bool = False) -> None:
     lines = [f"{local_hashes[rel]}  {rel}" for rel in ARTIFACTS]
     manifest_content = "\n".join(lines) + "\n"
     if not dry_run:
-        MANIFEST_PATH.write_text(manifest_content, encoding="utf-8")
+        # Explicit newline='\n' prevents CRLF on Windows; CI (Linux) reads LF
+        MANIFEST_PATH.write_text(manifest_content, encoding="utf-8", newline="\n")
     else:
         print("  [dry-run] would write:")
         for line in lines:

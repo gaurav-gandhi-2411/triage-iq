@@ -3,7 +3,7 @@ __pycache__/
 .ipynb_checkpoints/
 data/raw/
 data/processed/*.parquet
-data/models/
+data/models/**
 !data/models/MANIFEST.sha256
 /models/
 *.pkl

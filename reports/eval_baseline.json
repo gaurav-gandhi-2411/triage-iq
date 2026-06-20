@@ -1,7 +1,7 @@
 {
   "schema_version": "v1",
   "eval_set_hash": "406ff49ab67cb7809ffac7312d2119096a26e5ef5899aebc9e055e1e5ddc4f9d",
-  "cassette_hash": "c7d4af6e665590ac3225bbce51d1e86a6005fc5d64acdf45b34cd5ea7921524b",
+  "cassette_hash": "bd277275449df13a816c616dc0ad6d69425cfa3b85a31d082684e46447c3a015",
   "per_repo": {
     "microsoft/vscode": {
       "n": 30,

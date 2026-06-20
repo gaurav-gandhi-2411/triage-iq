@@ -120,5 +120,8 @@ jobs:
             "gs://triageiq-portfolio-495022-models/processed/kubernetes_kubernetes_temporal_train.parquet" \
             data/processed/
 
+      - name: Diagnose synthesis key for vscode-2093 (platform fingerprint)
+        run: python -W ignore scripts/diag_ci_key.py
+
       - name: Run quality regression gate (offline — cassette replay, no live LLM)
         run: pytest eval/test_quality_regression.py -v --no-cov

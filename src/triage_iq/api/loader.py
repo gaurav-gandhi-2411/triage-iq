@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Model loading for the triage API.
 
 Loads all per-repo models once at startup and caches them as app state.
@@ -125,6 +126,8 @@ class ModelStore:
         models_dir = data_dir / "models"
         processed_dir = data_dir / "processed"
 
+        _check_manifest_drift(models_dir)  # warn-not-crash: image-baked artifact integrity
+
         key = (groq_api_key if groq_api_key else os.environ.get("GROQ_API_KEY", "")).strip()
 
         bundles: dict[str, RepoBundle] = {}
@@ -191,3 +194,50 @@ def _load_train(processed_dir: Path, slug: str) -> pd.DataFrame:
         if p.exists():
             return pd.read_parquet(p)
     raise FileNotFoundError(f"No train split for {slug} in {processed_dir}")
+
+
+def _check_manifest_drift(models_dir: Path) -> None:
+    """Compare image-baked artifacts against MANIFEST.sha256.
+
+    Catches image-level corruption (stale artifact baked into the Docker layer).
+    GCS-level drift is caught earlier by the deploy-gate step in deploy.yml.
+    Warns with ARTIFACT_DRIFT: prefix and does NOT crash — the API stays up.
+    """
+    import hashlib
+
+    manifest = models_dir / "MANIFEST.sha256"
+    if not manifest.exists():
+        logger.warning(
+            "ARTIFACT_DRIFT: MANIFEST.sha256 not found at %s — skipping drift check. "
+            "Run python scripts/publish_models.py to generate and commit the manifest.",
+            manifest,
+        )
+        return
+
+    lines = [ln.strip() for ln in manifest.read_text(encoding="utf-8").splitlines() if ln.strip()]
+    drifted: list[str] = []
+    for line in lines:
+        expected, rel_path = line.split("  ", 1)
+        # rel_path is repo-relative (e.g. data/models/foo.pkl); strip prefix to get models_dir-relative
+        filename = rel_path.removeprefix("data/models/")
+        p = models_dir / filename
+        if not p.exists():
+            logger.warning("ARTIFACT_DRIFT: missing %s", rel_path)
+            drifted.append(rel_path)
+            continue
+        actual = hashlib.sha256(p.read_bytes()).hexdigest()
+        if actual != expected:
+            logger.warning(
+                "ARTIFACT_DRIFT: %s — manifest=%s actual=%s",
+                rel_path, expected[:16], actual[:16],
+            )
+            drifted.append(rel_path)
+
+    if drifted:
+        logger.warning(
+            "ARTIFACT_DRIFT: %d/%d artifact(s) do not match MANIFEST.sha256. "
+            "Re-deploy after running python scripts/publish_models.py.",
+            len(drifted), len(lines),
+        )
+    else:
+        logger.info("Manifest check: all %d artifacts verified OK", len(lines))

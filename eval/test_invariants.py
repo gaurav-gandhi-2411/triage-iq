@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -12,6 +13,7 @@ PROCESSED_DIR = ROOT / "data" / "processed"
 EVAL_SET = ROOT / "eval" / "eval_set.jsonl"
 CALIBRATION_RESULTS = ROOT / "reports" / "calibration_results.json"
 CONFORMAL_ADJ = ROOT / "data" / "models" / "cqr_conformal_adjustments.json"
+MANIFEST_PATH = ROOT / "data" / "models" / "MANIFEST.sha256"
 
 REPOS = ["microsoft/vscode", "kubernetes/kubernetes"]
 REPO_SLUGS = {
@@ -277,3 +279,46 @@ def test_conformal_coverage_on_eval_set() -> None:
             f"{repo}: conformal coverage {coverage:.2f} is outside [0.40, 1.00] — "
             f"complete breakdown detected"
         )
+
+
+def test_model_manifest_clean() -> None:
+    """Verify all model artifacts match the committed MANIFEST.sha256.
+
+    Guards against the 6-week calibration gap (ADR-0013): a locally-committed
+    model file that was never uploaded to GCS, or an artifact baked into a
+    Docker layer that has since diverged. Failure here means scripts/publish_models.py
+    needs to be run and the manifest re-committed.
+    """
+    if not MANIFEST_PATH.exists():
+        pytest.fail(
+            f"MANIFEST.sha256 not found at {MANIFEST_PATH}. "
+            "Run python scripts/publish_models.py to generate and commit it."
+        )
+
+    lines = [ln.strip() for ln in MANIFEST_PATH.read_text(encoding="utf-8").splitlines() if ln.strip()]
+    assert lines, f"MANIFEST.sha256 at {MANIFEST_PATH} is empty"
+
+    drifted: list[str] = []
+    missing: list[str] = []
+
+    for line in lines:
+        expected_hash, rel_path = line.split("  ", 1)
+        filename = rel_path.removeprefix("data/models/")
+        p = MODELS_DIR / filename
+        if not p.exists():
+            missing.append(rel_path)
+            continue
+        actual = hashlib.sha256(p.read_bytes()).hexdigest()
+        if actual != expected_hash:
+            drifted.append(f"{rel_path}: manifest={expected_hash[:16]} actual={actual[:16]}")
+
+    errors: list[str] = []
+    if missing:
+        errors.append(f"Missing artifacts ({len(missing)}): {missing}")
+    if drifted:
+        errors.append(f"Hash mismatches ({len(drifted)}): {drifted}")
+
+    assert not errors, (
+        "Model artifact drift detected — run python scripts/publish_models.py "
+        "and commit the updated manifest:\n" + "\n".join(errors)
+    )

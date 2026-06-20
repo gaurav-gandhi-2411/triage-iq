@@ -4,6 +4,7 @@ __pycache__/
 data/raw/
 data/processed/*.parquet
 data/models/
+!data/models/MANIFEST.sha256
 /models/
 *.pkl
 *.bin

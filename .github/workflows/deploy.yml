@@ -34,6 +34,9 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
 
+      - name: Verify model artifacts against manifest (drift guard)
+        run: python scripts/verify_model_manifest.py
+
       - name: Download production models from GCS
         run: |
           mkdir -p data/models data/processed

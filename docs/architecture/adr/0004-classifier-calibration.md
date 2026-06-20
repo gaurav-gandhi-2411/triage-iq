@@ -1,6 +1,6 @@
 # ADR-0004: Temperature scaling for component classifier probability calibration
 
-Status: Accepted  
+Status: Accepted (corrected 2026-06-20 — see Deployment Correction below)
 Date: 2026-05-19
 
 ## Context
@@ -167,5 +167,53 @@ specific, grounded resolution estimates. `priority_alignment` regression (−0.0
 noise. `next_steps_actionability` is unchanged; this dimension appears insensitive to the
 confidence signal.
 
-**Llama-70b judge result:** Pending (Groq TPD constraint; will be appended when run
-completes). Cross-family Cohere result is the authoritative W1.2 signal.
+**Llama-70b judge result:** 10.93/15 (72.9%) — appended 2026-06-20. Gap vs Cohere: −0.53 pts
+(−3.6pp), below the 5pp cross-family escalation threshold. Ranking correlation r=0.729.
+Llama-70b retained as default CI gate judge.
+
+---
+
+## Deployment Correction (2026-06-20)
+
+**What was claimed:** "Calibrated models in production as of commit `2472c1c`" (2026-05-19).
+
+**What was actually deployed:** The calibrated classifier pkl was fitted on 2026-05-19 and
+committed, but the GCS artifact (`gs://triageiq-portfolio-495022-models/models/`) was not
+updated at that time. Subsequent deployments of Cloud Run pulled the existing (uncalibrated)
+pkl from GCS. Production served raw, uncalibrated probabilities from the W1.2 merge
+(~2026-05-02) through 2026-06-19.
+
+**Actual ECE served in production during that period:**
+
+| Repo | ECE (uncalibrated — what was live) | ECE (calibrated — what was claimed) |
+|---|---|---|
+| microsoft/vscode | **~0.310** | 0.138 |
+| kubernetes/kubernetes | **~0.609** | 0.156 |
+
+**Discovery:** Detected 2026-06-20 via the eval-regression CI gate (ADR-0011). The gate's
+`test_calibration_ece_in_tolerance` test computes ECE on a live model load from GCS. The
+structural invariant test `test_classifier_ece` (±0.15 tolerance around 0.138/0.156) was
+passing because it used locally-cached pkls with the calibrator present. CI loaded from GCS
+(uncalibrated) and would have failed if the gate had been gating on ECE.
+
+**Fix applied 2026-06-20:**
+- Calibrated vscode pkl re-uploaded to GCS at 16:26 UTC.
+- Calibrated k8s pkl re-uploaded to GCS at 16:26 UTC.
+- Cloud Run revision `triageiq-api-00049-m26` deployed at 17:41 UTC with calibrated models.
+- Live `/triage` for vscode#2093 (full body) now returns `component_confidence: 0.19`
+  (was ~0.08 raw from uncalibrated classifier).
+
+**Eval set ECE on the 60-issue harness (post-fix, 2026-06-20):**
+
+| Repo | Eval-set ECE (60 issues) | Test-split ECE |
+|---|---|---|
+| microsoft/vscode | 0.1984 | 0.1381 |
+| kubernetes/kubernetes | 0.2057 | 0.1558 |
+
+The eval-set ECE is higher than the test-split ECE because the 60-issue eval harness has a
+different distribution (hand-curated for breadth across resolution buckets) than the IID test
+split. Both are measured on the now-deployed calibrated model.
+
+**What the `/eval/summary` API reports as of 2026-06-20:** `ece_test` reflects the calibrated
+test-split numbers (0.1381/0.1558). The `deployment` block in the same response documents the
+gap. These are correct as of 2026-06-20.

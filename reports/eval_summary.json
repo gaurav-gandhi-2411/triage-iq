@@ -36,18 +36,33 @@
   "calibration": {
     "method": "temperature scaling (sklearn CalibratedClassifierCV not used — custom T_opt applied to raw logit scores)",
     "test_accuracy_delta_pp": 0.0,
+    "deployment": {
+      "calibrated_model_fitted": "2026-05-19",
+      "calibrated_gcs_uploaded": "2026-06-20T16:26Z",
+      "calibrated_deployed": "2026-06-20T17:41Z",
+      "cloud_run_revision": "triageiq-api-00049-m26",
+      "gap_disclosure": "The calibrated classifier pkl was fitted on 2026-05-19 but the GCS artifact was not updated at that time. Production served the UNCALIBRATED classifier from approximately 2026-05-02 to 2026-06-19. The ece_test values below (0.138/0.156) were accurate for the calibrated model but were NOT what production was serving during that period.",
+      "ece_while_uncalibrated": {
+        "microsoft_vscode": 0.3096,
+        "kubernetes_kubernetes": 0.6090
+      }
+    },
     "repos": {
       "microsoft_vscode": {
         "T_opt": 0.2981,
         "ece_before_val": 0.4995,
         "ece_after_val": 0.1458,
-        "ece_test": 0.1381
+        "ece_test": 0.1381,
+        "ece_test_as_of": "2026-06-20",
+        "ece_eval_set_60": 0.1984
       },
       "kubernetes_kubernetes": {
         "T_opt": 0.3234,
         "ece_before_val": 0.3427,
         "ece_after_val": 0.1309,
-        "ece_test": 0.1558
+        "ece_test": 0.1558,
+        "ece_test_as_of": "2026-06-20",
+        "ece_eval_set_60": 0.2057
       }
     },
     "isotonic_note": "Isotonic calibration tested (vscode test ECE 0.072, k8s 0.026) but not shipped — accuracy CIs overlapped zero and temperature scaling is simpler/more interpretable."

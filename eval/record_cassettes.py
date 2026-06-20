@@ -60,8 +60,14 @@ JUDGE_PROVIDER = "groq"
 
 
 def _is_tpd_error(exc: Exception) -> bool:
+    """True only for genuine per-day token exhaustion (cannot retry same day)."""
     msg = str(exc).lower()
-    return any(kw in msg for kw in ("tokens per day", "daily limit", "tpd", "rate_limit_exceeded"))
+    return any(kw in msg for kw in ("tokens per day", "daily limit", "tpd"))
+
+
+def _is_rate_limit_error(exc: Exception) -> bool:
+    """True for any Groq 429 — per-minute or per-day."""
+    return "rate_limit_exceeded" in str(exc).lower() or _is_tpd_error(exc)
 
 
 def load_checkpoint() -> dict:
@@ -219,41 +225,53 @@ def main() -> None:
         }
 
         judge_score = None
-        try:
-            score = judge.score(
-                issue_title=issue["title"],
-                issue_body=issue["body"][:600],
-                triage_plan_json=plan_json,
-                gold=gold,
-            )
-            judge_score = score.model_dump()
-            n_judge_recorded += 1
-            logger.info(
-                "  judge → %d/%d (cassette_entries=%d)",
-                score.total(), sum(DIMENSION_MAX.values()),
-                cassette.stats()["entries"],
-            )
-        except Exception as exc:
-            if _is_tpd_error(exc):
-                logger.warning(
-                    "STOP: Groq TPD limit hit during judging after %d judge calls. "
-                    "Cassette has %d entries.",
-                    n_judge_recorded, cassette.stats()["entries"],
+        _judge_exc: Exception | None = None
+        for _attempt in range(6):
+            try:
+                score = judge.score(
+                    issue_title=issue["title"],
+                    issue_body=issue["body"][:600],
+                    triage_plan_json=plan_json,
+                    gold=gold,
                 )
-                # Save plan result even without judge score
-                results[issue_id] = {
-                    "plan": plan.model_dump(),
-                    "judge_score": None,
-                    "tpd_hit": True,
-                }
-                checkpoint["done"][issue_id] = results[issue_id]
-                save_checkpoint(checkpoint)
-                print(f"\n=== TPD HIT (during judge) ===")
-                print(f"Synthesis recorded: {n_synthesis_recorded}")
-                print(f"Judge recorded: {n_judge_recorded}")
-                print(f"Cassette entries: {cassette.stats()['entries']}")
-                sys.exit(0)
-            logger.warning("  judge FAILED: %s", exc)
+                judge_score = score.model_dump()
+                n_judge_recorded += 1
+                logger.info(
+                    "  judge → %d/%d (cassette_entries=%d)",
+                    score.total(), sum(DIMENSION_MAX.values()),
+                    cassette.stats()["entries"],
+                )
+                _judge_exc = None
+                break
+            except Exception as exc:
+                if _is_tpd_error(exc):
+                    _judge_exc = exc
+                    break  # genuine daily limit — stop outer loop below
+                if _is_rate_limit_error(exc):
+                    _wait = 20 * (2 ** _attempt)
+                    logger.info("  judge rate-limited, waiting %ds (attempt %d/6)", _wait, _attempt + 1)
+                    time.sleep(_wait)
+                    continue
+                logger.warning("  judge FAILED: %s", exc)
+                break
+        if _judge_exc is not None:
+            logger.warning(
+                "STOP: Groq TPD limit hit during judging after %d judge calls. "
+                "Cassette has %d entries.",
+                n_judge_recorded, cassette.stats()["entries"],
+            )
+            results[issue_id] = {
+                "plan": plan.model_dump(),
+                "judge_score": None,
+                "tpd_hit": True,
+            }
+            checkpoint["done"][issue_id] = results[issue_id]
+            save_checkpoint(checkpoint)
+            print(f"\n=== TPD HIT (during judge) ===")
+            print(f"Synthesis recorded: {n_synthesis_recorded}")
+            print(f"Judge recorded: {n_judge_recorded}")
+            print(f"Cassette entries: {cassette.stats()['entries']}")
+            sys.exit(0)
 
         rec = {
             "plan": plan.model_dump(),

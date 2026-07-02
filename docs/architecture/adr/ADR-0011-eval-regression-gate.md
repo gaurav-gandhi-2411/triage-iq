@@ -2,7 +2,7 @@
 
 Status: Accepted
 Date: 2026-06-20
-Last updated: 2026-06-20
+Last updated: 2026-07-02
 
 ## Context
 
@@ -147,3 +147,59 @@ When intentionally changing the system under test (prompt edit, model swap, retr
 
 A cassette miss in CI (CassetteMissError) means someone changed the system without following
 this procedure. Fix: re-run steps 2–5 above.
+
+## 2026-07-02: Baseline re-established for the Option C frozen eval set
+
+The baseline committed alongside Option C (9.8667 vscode / 10.9667 k8s) was never actually
+re-recorded against the frozen `similar_issues` — the cassette was recorded incrementally across
+several interrupted sessions and had 2 unresolved defects. This update closes both and
+re-establishes the baseline cleanly.
+
+**Defect 1 — TPD/TPM rate-limit misclassification.** `_is_tpd_error` (used by both the judge
+retry loop and `record_cassettes.py`) matched Groq's `'"type": "tokens"'` JSON field, which
+appears on *both* daily (TPD) and per-minute (TPM) 429s. A retryable TPM burst was misread as an
+unrecoverable daily-quota exhaustion and aborted the recording. Fixed to match only unambiguous
+TPD phrases (`"tokens per day"`, `"daily limit"`, `"tpd"`). `JUDGE_DELAY` raised 2.0s → 12.0s
+(70B judge model, Groq free-tier 6K TPM: ~1,053 tok/call → 12s spacing ≈ 5,265 tok/min, under the
+limit). Both fixes are eval-infra only (`record_cassettes.py`, `scripts/11_evaluate_triage.py`,
+`triage_eval.py`) — zero effect on `TriagePlan` content.
+
+**Defect 2 — corrupted-cache-hit fell through to a live call instead of checking the retry
+cache.** `TriageAssistant._call_llm_verbose` retries with a corrective prompt when the LLM
+returns malformed JSON, and caches that retry's response separately. But if the *primary* prompt's
+cached response was itself malformed, the code went straight to a live Groq call — it never
+checked whether a valid retry response was already cached for that exact malformed content. In
+strict replay (CI/eval, fake credentials) this is fatal: `groq.AuthenticationError` on the fake
+`ci-replay-only` key, crashing `run_eval.py` outright. In production (real credentials) it isn't a
+crash, just a wasted redundant call. Fixed by checking the retry-prompt cache key before falling
+through to live (`src/triage_iq/models/triage.py`); regression test added
+(`tests/test_api.py::test_triage_corrupted_primary_cache_uses_retry_cache_not_live_call`).
+
+**Proven plan-neutral, not a re-baseline confound:** instrumented all 60 eval issues —
+59/60 hit `llm_status == "ok"` (first-parse success, the fixed branch is unreached, byte-identical
+code path with or without the fix). Exactly 1/60 (`vscode-3826`) has a malformed primary cache
+entry; the plan the fix retrieves for it is byte-identical to the plan already recorded in
+`recording_checkpoint.json` from an earlier live recording session — the fix surfaces pre-existing
+recorded data, it does not generate new content. **Not deployed**: uncommitted-until-this-PR,
+never pushed, no code-vs-deployed gap introduced.
+
+**Why the baseline moved (vscode 9.8667 → 10.0333, k8s 10.9667 → 10.8667) is not judge noise:**
+the two inputs are not comparable. `eval_set.jsonl`'s committed content changed at the Option C
+commit (`f79deb0`) — diffed field-by-field against the pre-Option-C commit (`b5d8d27`): the *only*
+field that differs across all 60 issues is `similar_issues` (`null` → frozen top-k), confirming
+the change is exactly and only Option C's intended freeze, no stray edits. Separately (and
+independent of this session's work): the *old* baseline's recorded `eval_set_hash` (`406ff49a...`)
+does not match any eval_set.jsonl ever committed to this repo — not the pre-Option-C version, not
+even the file committed alongside the baseline itself (`81c2d2c`). That baseline was already
+untraceable to a committed input before Option C existed. The old baseline is superseded, not
+beaten by 0.03 — it was scored against a different, uncommitted, now-unrecoverable eval set.
+
+**Determinism verified before re-baselining:** `compute_scores()` run twice in-process against
+the same on-disk cassette (no re-recording) produced identical results, including all 6
+per-dimension means for both repos, not just the rounded totals. The zero-tolerance gate
+(`absolute_drop: 0.0`) is justified — any future drop against this baseline reflects a real
+system change, not replay variance.
+
+**New baseline:** microsoft/vscode 10.0333/15 (n=30), kubernetes/kubernetes 10.8667/15 (n=30),
+overall 10.4500/15 (n=60). `eval_set_hash` and `cassette_hash` in `reports/eval_baseline.json`
+now match the committed `eval_set.jsonl` and `eval_cassette.json` exactly.

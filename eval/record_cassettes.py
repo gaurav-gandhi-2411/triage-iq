@@ -53,8 +53,9 @@ REPO_MAP = {
     "kubernetes/kubernetes": "kubernetes_kubernetes",
 }
 
-SYNTHESIS_DELAY = 1.5  # seconds between synthesis calls
-JUDGE_DELAY = 2.0  # seconds between judge calls
+SYNTHESIS_DELAY = 1.5  # seconds between synthesis calls (8B model: high TPM, 1.5s is safe)
+# 70B judge: Groq free tier is 6K TPM; ~1,053 tok/call → 12s ≈ 5 calls/min (5,265 tok/min) — under limit
+JUDGE_DELAY = 12.0
 JUDGE_MODEL = "llama-3.3-70b-versatile"
 JUDGE_PROVIDER = "groq"
 
@@ -111,8 +112,12 @@ def main() -> None:
 
     # Load checkpoint
     checkpoint = load_checkpoint()
-    done_ids = set(checkpoint.get("done", {}).keys())
-    logger.info("Checkpoint: %d issues already processed", len(done_ids))
+    _done_entries = checkpoint.get("done", {})
+    # Exclude tpd_hit entries so they are retried — their synthesis is cached, only the judge reruns.
+    done_ids = {k for k, v in _done_entries.items() if not v.get("tpd_hit")}
+    n_tpd_retry = len(_done_entries) - len(done_ids)
+    logger.info("Checkpoint: %d issues already processed (%d tpd_hit will retry)",
+                len(done_ids), n_tpd_retry)
 
     # Build frozen retrievers — deterministic prompts regardless of hardware
     try:
@@ -198,10 +203,10 @@ def main() -> None:
             logger.info("  synthesis → %s (cache_hit=%s)", plan.predicted_component, meta.get("llm_cache_hit"))
         except Exception as exc:
             if _is_tpd_error(exc):
-                logger.warning(
-                    "STOP: Groq TPD limit hit after %d synthesis calls. "
-                    "Cassette has %d entries. Run again tomorrow to continue.",
-                    n_synthesis_recorded, cassette.stats()["entries"],
+                logger.error(
+                    "STOP: Groq TPD (daily quota) hit after %d synthesis calls. "
+                    "Cassette has %d entries. Groq error: %s",
+                    n_synthesis_recorded, cassette.stats()["entries"], exc,
                 )
                 save_checkpoint({"done": checkpoint.get("done", {})})
                 print(f"\n=== TPD HIT ===")
@@ -252,16 +257,19 @@ def main() -> None:
                     break  # genuine daily limit — stop outer loop below
                 if _is_rate_limit_error(exc):
                     _wait = 20 * (2 ** _attempt)
-                    logger.info("  judge rate-limited, waiting %ds (attempt %d/6)", _wait, _attempt + 1)
+                    logger.warning(
+                        "  judge TPM rate limit (per-minute) — waiting %ds (attempt %d/6): %s",
+                        _wait, _attempt + 1, str(exc)[:200],
+                    )
                     time.sleep(_wait)
                     continue
                 logger.warning("  judge FAILED: %s", exc)
                 break
         if _judge_exc is not None:
-            logger.warning(
-                "STOP: Groq TPD limit hit during judging after %d judge calls. "
-                "Cassette has %d entries.",
-                n_judge_recorded, cassette.stats()["entries"],
+            logger.error(
+                "STOP: Groq TPD (daily quota) hit during judging after %d judge calls. "
+                "Cassette has %d entries. Groq error: %s",
+                n_judge_recorded, cassette.stats()["entries"], _judge_exc,
             )
             results[issue_id] = {
                 "plan": plan.model_dump(),

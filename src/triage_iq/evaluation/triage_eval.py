@@ -379,14 +379,23 @@ Score this triage plan using the rubric. Return ONLY valid JSON.
                 )
                 return resp.choices[0].message.content.strip()
             except RateLimitError as e:
-                # Fail fast on daily token quota (TPD) — retrying won't help within hours.
                 err_str = str(e)
-                if "tokens per day" in err_str or '"type": "tokens"' in err_str or "TPD" in err_str:
+                err_lower = err_str.lower()
+                # Fail fast only on genuine daily exhaustion. "tokens per day" and
+                # "daily limit" are unambiguous TPD strings in Groq's error message.
+                # '"type": "tokens"' is intentionally NOT checked — Groq uses that
+                # JSON field for both TPM and TPD 429s, so it would abort on
+                # retryable per-minute bursts and mask the real daily limit.
+                if "tokens per day" in err_lower or "daily limit" in err_lower or "tpd" in err_lower:
+                    logger.error("Judge TPD (daily quota exhausted) — Groq error: %s", err_str)
                     raise
                 if attempt == 5:
                     raise
                 jitter = backoff * (0.5 + 0.5 * (attempt / 5))
-                logger.warning("Judge rate limit — sleeping %.1fs (attempt %d/6)", jitter, attempt + 1)
+                logger.warning(
+                    "Judge TPM rate limit (per-minute, retrying) — sleeping %.1fs (attempt %d/6)",
+                    jitter, attempt + 1,
+                )
                 time.sleep(jitter)
                 backoff = min(backoff * 2, 90.0)
             except APIStatusError as e:

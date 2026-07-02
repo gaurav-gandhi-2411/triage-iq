@@ -1,36 +1,36 @@
 {
   "schema_version": "v1",
-  "eval_set_hash": "406ff49ab67cb7809ffac7312d2119096a26e5ef5899aebc9e055e1e5ddc4f9d",
-  "cassette_hash": "bd277275449df13a816c616dc0ad6d69425cfa3b85a31d082684e46447c3a015",
+  "eval_set_hash": "7834d8ad5b59306ac84ccd241e3cd6cfb926e8135023c8121bfc9638bb06e0d1",
+  "cassette_hash": "2420d000d49bca3b40b45dad808ef387cae6f417086bfae8a92935b6dac9e1a8",
   "per_repo": {
     "microsoft/vscode": {
       "n": 30,
-      "mean": 9.8667,
+      "mean": 10.0333,
       "dimensions": {
-        "component_match": 1.4666666666666666,
+        "component_match": 1.5,
         "similar_issues_relevance": 2.7666666666666666,
-        "resolution_estimate_reasonableness": 0.6,
-        "priority_alignment": 0.4,
-        "next_steps_actionability": 2.7,
+        "resolution_estimate_reasonableness": 0.6666666666666666,
+        "priority_alignment": 0.43333333333333335,
+        "next_steps_actionability": 2.7333333333333334,
         "overall_quality": 1.9333333333333333
       }
     },
     "kubernetes/kubernetes": {
       "n": 30,
-      "mean": 10.9667,
+      "mean": 10.8667,
       "dimensions": {
         "component_match": 1.8333333333333333,
         "similar_issues_relevance": 2.8333333333333335,
-        "resolution_estimate_reasonableness": 0.9666666666666667,
+        "resolution_estimate_reasonableness": 0.9,
         "priority_alignment": 0.43333333333333335,
         "next_steps_actionability": 2.8333333333333335,
-        "overall_quality": 2.066666666666667
+        "overall_quality": 2.033333333333333
       }
     }
   },
   "overall": {
     "n": 60,
-    "mean": 10.4167
+    "mean": 10.45
   },
   "threshold": {
     "absolute_drop": 0.0,

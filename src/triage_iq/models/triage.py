@@ -342,6 +342,20 @@ class TriageAssistant:
         plan, raw, _, _, _ = self._call_llm_verbose(signals)
         return plan, raw
 
+    @staticmethod
+    def _build_retry_messages(messages: list[dict], raw: str) -> list[dict]:
+        return [
+            *messages,
+            {"role": "assistant", "content": raw},
+            {
+                "role": "user",
+                "content": (
+                    "Your previous response was not valid JSON. "
+                    "Respond with ONLY valid JSON. No preamble, no markdown fences, no trailing commas."
+                ),
+            },
+        ]
+
     def _call_llm_verbose(self, signals: dict) -> tuple[TriagePlan, str, dict, str, bool]:
         """Return (plan, raw, usage, llm_status, cache_hit)."""
         from triage_iq.prompts.triage_prompt import SYSTEM_PROMPT, build_few_shot_examples
@@ -363,7 +377,24 @@ class TriageAssistant:
                 try:
                     return self._parse_plan(raw), raw, usage, "ok", True
                 except (json.JSONDecodeError, ValueError):
-                    pass  # corrupted entry — fall through to live call
+                    # Corrupted primary entry — a valid retry may already be cached
+                    # from a prior recovery of this exact malformed response. Check
+                    # before falling through to a live call (which a replay-mode
+                    # cache with no real credentials cannot make).
+                    retry_messages = self._build_retry_messages(messages, raw)
+                    retry_key = cache.compute_key(
+                        "groq", self.model, retry_messages, self.temperature, self.max_tokens
+                    )
+                    cached_retry = cache.get(retry_key)
+                    if cached_retry is not None:
+                        raw2 = cached_retry["content"]
+                        usage2 = cached_retry.get("usage", {})
+                        try:
+                            return (
+                                self._parse_plan(raw2), raw2, usage2, "parse_retry_succeeded", True,
+                            )
+                        except (json.JSONDecodeError, ValueError):
+                            pass  # retry entry also corrupted — fall through to live call
 
         raw, usage = self._groq_completion(messages)
         if cache is not None and cache_key is not None:
@@ -377,17 +408,7 @@ class TriageAssistant:
                 "LLM JSON parse failed (attempt 1): %s — retrying with strict prompt. Raw: %.300s",
                 exc, raw,
             )
-            retry_messages = [
-                *messages,
-                {"role": "assistant", "content": raw},
-                {
-                    "role": "user",
-                    "content": (
-                        "Your previous response was not valid JSON. "
-                        "Respond with ONLY valid JSON. No preamble, no markdown fences, no trailing commas."
-                    ),
-                },
-            ]
+            retry_messages = self._build_retry_messages(messages, raw)
             # Check cache for retry call too
             retry_key: str | None = None
             if cache is not None:

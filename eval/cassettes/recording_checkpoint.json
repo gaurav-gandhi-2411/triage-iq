@@ -47,9 +47,9 @@
         "similar_issues_relevance": 3,
         "resolution_estimate_reasonableness": 1,
         "priority_alignment": 0,
-        "next_steps_actionability": 2,
+        "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match and highly relevant similar issues, but the priority guess is incorrect, and the resolution estimate is order-of-magnitude correct but imprecise. The suggested next steps are concrete and actionable, making the plan useful with minor edits."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority alignment is incorrect, as the gold standard priority is medium, but the triage plan guesses it as low. The resolution estimate reasonableness is also order-of-magnitude correct but imprecise."
       },
       "error": null
     },
@@ -102,12 +102,12 @@
       },
       "judge_score": {
         "component_match": 0,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 0,
+        "similar_issues_relevance": 2,
+        "resolution_estimate_reasonableness": 1,
         "priority_alignment": 0,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan provides highly relevant similar issues and actionable next steps, but incorrectly identifies the component and priority, and the resolution estimate is wildly off."
+        "next_steps_actionability": 2,
+        "overall_quality": 1,
+        "judge_rationale": "The triage plan incorrectly identifies the component as 'suggest' instead of 'javascript', and the priority is guessed as 'medium' instead of 'high'. However, the similar issues listed are mostly relevant, and the suggested next steps are concrete and actionable."
       },
       "error": null
     },
@@ -142,7 +142,7 @@
             "relevance_note": "Same error message and stack trace; another likely duplicate of the same issue."
           }
         ],
-        "expected_resolution_summary": "Typical error telemetry fix: 1â€“2 weeks, depending on whether it's a configuration issue or a deeper code problem.",
+        "expected_resolution_summary": "Typical error telemetry fix: 1–2 weeks, depending on whether it's a configuration issue or a deeper code problem.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 207.8,
         "resolution_bucket": "hours",
@@ -165,7 +165,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority guess is incorrect, and the resolution estimate is imprecise, which prevents it from being an excellent plan."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority guess is incorrect, and the resolution estimate reasonableness is only order-of-magnitude correct, preventing it from being an excellent plan."
       },
       "error": null
     },
@@ -190,14 +190,14 @@
             "relevance_note": "Generated tasks.json issue, although not directly related, suggests a broader Task Runner configuration problem."
           }
         ],
-        "expected_resolution_summary": "Low-priority JSON schema validation fix; likely resolved within 1â€“5 days.",
+        "expected_resolution_summary": "Low-priority JSON schema validation fix; likely resolved within 1–5 days.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 191.0,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 31.3,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "Alternate version number not accepted in tasks.json is a cosmetic issue with a trivial workaround (use the default version). Although it affects a specific version (0.10.11), it's not a regression or a blocking issue.",
+        "priority_rationale": "Alternate version number not accepted in tasks.json is a cosmetic issue with a trivial workaround (using the default version). Although it affects a specific version (0.10.11), it's not a regression or a blocking issue.",
         "suggested_assignee_class": "tasks team",
         "suggested_next_steps": [
           "Review the tasks.json schema validation logic to identify the root cause of the version number rejection.",
@@ -213,7 +213,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 2,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match and relevant similar issues, but the priority alignment is incorrect as the gold standard has a medium priority, whereas the triage plan suggests a low priority."
+        "judge_rationale": "The triage plan is solid, with a correct component match and relevant similar issues, but the priority guess is incorrect as the gold standard has a medium priority, and the resolution estimate is order-of-magnitude correct but imprecise."
       },
       "error": null
     },
@@ -225,20 +225,20 @@
           {
             "number": 2172,
             "similarity": 0.785,
-            "relevance_note": "Duplicate symbols in 'Go to Symbols' and 'Show all Symbols' â€” same symptom of duplicate entries."
+            "relevance_note": "Duplicate symbols in 'Go to Symbols' and 'Show all Symbols' — same root cause area as outline duplication."
           },
           {
             "number": 1773,
             "similarity": 0.771,
-            "relevance_note": "Duplicate function implementation error â€” same root cause of duplicate entries in JavaScript code."
+            "relevance_note": "Duplicate function implementation error — same JavaScript-specific issue as outline duplication."
           },
           {
             "number": 2428,
             "similarity": 0.767,
-            "relevance_note": "Duplicate symbol in Salsa outline â€” same issue of duplicate entries in JavaScript code."
+            "relevance_note": "Salsa shows duplicate symbol in outline — same symptom as reported issue."
           }
         ],
-        "expected_resolution_summary": "Typical JavaScript language service bug; 1â€“4 weeks depending on complexity and existing test coverage.",
+        "expected_resolution_summary": "Typical JavaScript language service bug; 1–4 weeks depending on complexity and existing test coverage.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 58.0,
         "resolution_bucket": "hours",
@@ -249,10 +249,10 @@
         "suggested_assignee_class": "javascript team",
         "suggested_next_steps": [
           "Verify the issue on a minimal JavaScript project with a single top-level function.",
-          "Check the JavaScript language service's symbol resolution logic for potential duplicate entry generation.",
-          "Add a test that checks for duplicate outline entries in a JavaScript file with a top-level function."
+          "Check the JavaScript language service's symbol resolution logic for potential issues.",
+          "Add a test that checks for duplicate outline entries in a JavaScript file."
         ],
-        "triage_summary": "Duplicate outline entries for top-level JavaScript functions. Similar issues exist (#2172, #1773, #2428), suggesting a known weakness in the JavaScript language service. Medium priority; assign to javascript team for resolution."
+        "triage_summary": "Duplicate outline entries for top-level JavaScript functions. Similar issues exist in 'Go to Symbols', 'Show all Symbols', and JavaScript function implementation error. Medium priority; assign to JavaScript team for resolution."
       },
       "judge_score": {
         "component_match": 1,
@@ -261,7 +261,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with highly relevant similar issues and actionable next steps, but it incorrectly identifies the component as 'javascript' instead of 'typescript' and underestimates the resolution time, and also misaligns the priority as 'medium' instead of 'high'."
+        "judge_rationale": "The triage plan is solid, with highly relevant similar issues and actionable next steps, but it incorrectly identifies the component as 'javascript' instead of 'typescript' and underestimates the priority and overestimates the resolution time."
       },
       "error": null
     },
@@ -276,21 +276,21 @@
             "relevance_note": "Launch occurs even if preLaunchTask fails, similar to the described behavior of make running on compile errors."
           }
         ],
-        "expected_resolution_summary": "Feature enhancement for tasks and launch configuration; typical 2â€“6 weeks depending on the scope of changes.",
+        "expected_resolution_summary": "Feature enhancement for tasks and debug integration; typical 2–6 weeks depending on the scope of changes.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 115.0,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 28.8,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "Feature request for improved build and launch behavior; no regression or crash reported. The described issues are edge cases and do not block the core workflow.",
+        "priority_rationale": "Feature request for improved build and debug support; while useful, it does not block core workflows or introduce regressions.",
         "suggested_assignee_class": "tasks team",
         "suggested_next_steps": [
-          "Review the existing tasks and launch configuration documentation to understand the current behavior and limitations.",
-          "Discuss with the tasks team to determine the feasibility and scope of implementing the requested features.",
-          "Create a new issue for the tasks team to track the implementation of the requested features."
+          "Review the existing tasks and debug integration code to understand the current limitations and potential solutions.",
+          "Discuss with the tasks team to determine the scope of changes required to implement the requested features.",
+          "Create a detailed specification for the enhancements, including any necessary API changes or documentation updates."
         ],
-        "triage_summary": "Feature request for improved build and launch behavior in tasks and launch configuration. No regression or crash reported; low priority. Assign to tasks team for further discussion and implementation planning."
+        "triage_summary": "Feature request for improved build and debug support in VS Code. Similar issues exist, but none are exact duplicates. Assign to tasks team; low priority due to the lack of blocking regressions or critical issues."
       },
       "judge_score": {
         "component_match": 1,
@@ -299,7 +299,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 2,
         "overall_quality": 1,
-        "judge_rationale": "The triage plan is marginally useful, but it incorrectly identifies the component as 'tasks' instead of 'debug', and the priority is guessed as 'low' instead of 'medium'. The suggested next steps are concrete, but the resolution estimate is wildly off, and the overall plan has significant gaps."
+        "judge_rationale": "The triage plan is marginally useful, but it has significant gaps, such as incorrect component matching and wildly off resolution estimate, and it also misaligns with the gold standard priority."
       },
       "error": null
     },
@@ -319,7 +319,7 @@
             "relevance_note": "Incorrect folding region when folding a specific file type, indicating a deeper issue with folding logic."
           }
         ],
-        "expected_resolution_summary": "Typical editor-folding regression; 1â€“4 weeks depending on the complexity of the folding logic involved.",
+        "expected_resolution_summary": "Typical editor-folding regression; 1–4 weeks depending on the complexity of the folding logic involved.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 57.8,
         "resolution_bucket": "hours",
@@ -342,7 +342,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority alignment is incorrect, as the gold standard priority is 'high' but the triage plan suggests 'medium'."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority alignment is incorrect, as the gold standard priority is 'high' but the triage plan suggests 'medium'. The resolution estimate reasonableness is also imprecise, as the expected resolution time is estimated to be between 0.1 and 57.8 days, which is a wide range."
       },
       "error": null
     },
@@ -377,7 +377,7 @@
             "relevance_note": "Similar error message and stack trace; likely related issue."
           }
         ],
-        "expected_resolution_summary": "Memory leak fix; typical 1â€“2 weeks depending on the complexity of the affected code path.",
+        "expected_resolution_summary": "Memory leak fix; typical 1–2 weeks depending on the complexity of the affected code path.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 207.8,
         "resolution_bucket": "hours",
@@ -391,7 +391,7 @@
           "Review the stack trace and identify the specific code path causing the leak.",
           "Add a test to detect and prevent the memory leak in the affected code path."
         ],
-        "triage_summary": "Memory leak detected in error telemetry; multiple users affected. Similar issues exist with identical error messages and stack traces. Medium priority; assign to error-telemetry team for a fix within 1â€“2 weeks."
+        "triage_summary": "Memory leak detected in error telemetry; multiple users affected. Similar issues exist with identical error messages and stack traces. Medium priority; assign to error-telemetry team for a fix within 1–2 weeks."
       },
       "judge_score": {
         "component_match": 2,
@@ -400,7 +400,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority alignment is incorrect, as the gold standard priority is high, but the triage plan suggests medium priority. The resolution estimate reasonableness is also order-of-magnitude correct but imprecise."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority alignment is incorrect, as the gold standard indicates a high priority, while the triage plan suggests a medium priority. The resolution estimate reasonableness is also order-of-magnitude correct but imprecise."
       },
       "error": null
     },
@@ -425,7 +425,7 @@
             "relevance_note": "Confirmation dialog suggestion for git Sync, highlighting the importance of clear approval workflows."
           }
         ],
-        "expected_resolution_summary": "UX refinement; likely resolved within 1â€“5 days for a minor UI tweak.",
+        "expected_resolution_summary": "UX refinement; likely resolved within 1–5 days for a minor UI tweak.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 151.0,
         "resolution_bucket": "hours",
@@ -448,7 +448,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority alignment is incorrect, as the gold standard priority is medium, but the triage plan suggests low priority."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority alignment is incorrect, as the gold standard priority is medium, but the triage plan guesses it as low."
       },
       "error": null
     },
@@ -483,7 +483,7 @@
             "relevance_note": "CSS transition fix for folding icons; tangentially related to the current icon style issues."
           }
         ],
-        "expected_resolution_summary": "Visual styling tweak; likely resolved within 1â€“5 days.",
+        "expected_resolution_summary": "Visual styling tweak; likely resolved within 1–5 days.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 108.5,
         "resolution_bucket": "hours",
@@ -531,7 +531,7 @@
             "relevance_note": "Git suggestions and UI issues, possibly related to extension or configuration conflicts."
           }
         ],
-        "expected_resolution_summary": "Typical UX regression or extension interference; 1â€“4 weeks depending on whether it's a configuration issue or a deeper extension conflict.",
+        "expected_resolution_summary": "Typical UX regression or extension interference; 1–4 weeks depending on whether it's a configuration issue or a deeper extension conflict.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 168.9,
         "resolution_bucket": "days",
@@ -554,7 +554,7 @@
         "priority_alignment": 1,
         "next_steps_actionability": 3,
         "overall_quality": 3,
-        "judge_rationale": "The triage plan accurately identifies the component as 'git', provides highly relevant similar issues, and offers a reasonable resolution estimate. The suggested next steps are precise, ordered, and actionable, addressing the root cause of the issue."
+        "judge_rationale": "The triage plan accurately identifies the component as 'git', provides highly relevant similar issues, and offers a reasonable resolution estimate. The suggested next steps are precise, ordered, and actionable, making the plan excellent and ready to be shipped directly to the triage queue."
       },
       "error": null
     },
@@ -574,7 +574,7 @@
             "relevance_note": "Intellisense option not recognized for opening PHP tag, similar to missing user code auto-completion."
           }
         ],
-        "expected_resolution_summary": "Typical language server regression; 2â€“7 days for a P2 feature gap.",
+        "expected_resolution_summary": "Typical language server regression; 2–7 days for a P2 feature gap.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 133.0,
         "resolution_bucket": "hours",
@@ -588,7 +588,7 @@
           "Check the IntelliSense configuration for PHP and ensure it's correctly set up.",
           "Test user code auto-completion with a minimal PHP project and report findings."
         ],
-        "triage_summary": "PHP user code auto-completion missing in 0.10.1, affecting PHP authors. Two similar prior reports confirm the regression. Medium priority; assign to PHP team for a 2â€“7 day resolution."
+        "triage_summary": "PHP user code auto-completion missing in 0.10.1, affecting PHP authors. Two similar prior reports confirm the regression. Medium priority; assign to PHP team for a 2–7 day resolution."
       },
       "judge_score": {
         "component_match": 2,
@@ -597,7 +597,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority guess is incorrect, and the resolution estimate is order-of-magnitude correct but imprecise, which prevents it from being an excellent plan."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority guess is incorrect, and the resolution estimate is order-of-magnitude correct but imprecise, preventing it from being an excellent plan."
       },
       "error": null
     },
@@ -622,7 +622,7 @@
             "relevance_note": "High-contrast theme should be default when OS is in High-Contrast Mode, aligning with existing feature requests."
           }
         ],
-        "expected_resolution_summary": "Theme and accessibility feature development; typical 2â€“6 weeks depending on team velocity and priority.",
+        "expected_resolution_summary": "Theme and accessibility feature development; typical 2–6 weeks depending on team velocity and priority.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 77.9,
         "resolution_bucket": "hours",
@@ -632,9 +632,9 @@
         "priority_rationale": "Feature request for high contrast theme support, which is already partially implemented (Windows high contrast theme). No blocking issues or crashes; a low-priority feature development task.",
         "suggested_assignee_class": "themes / accessibility team",
         "suggested_next_steps": [
-          "Review and update the existing high contrast theme for Windows to match new features and design guidelines.",
+          "Review and update the existing high contrast theme for Windows to match new features and design standards.",
           "Discuss and decide on the scope of high contrast theme support: all OS or only Windows.",
-          "Create a plan to adjust contrast for current themes or implement a high contrast theme as a separate feature."
+          "Research and document the necessary changes to adjust contrast for current themes, if required."
         ],
         "triage_summary": "Feature request for high contrast theme support in VS Code. Existing high contrast theme on Windows is outdated, and multiple similar issues exist. Low priority; assign to themes / accessibility team for development and discussion."
       },
@@ -645,7 +645,7 @@
         "priority_alignment": 1,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with relevant similar issues and actionable next steps, but the resolution estimate is wildly off, and the component match is plausible but not the gold label."
+        "judge_rationale": "The triage plan is solid, with highly relevant similar issues and actionable next steps, but the resolution estimate is wildly off and the component match is plausible but not the gold label."
       },
       "error": null
     },
@@ -680,30 +680,30 @@
             "relevance_note": "Different error message but same null property access pattern; possible root cause overlap."
           }
         ],
-        "expected_resolution_summary": "Typical null pointer dereference fix; 1â€“4 weeks depending on the specific code path and team velocity.",
+        "expected_resolution_summary": "Typical null pointer dereference fix; 1–4 weeks depending on the specific code path and team velocity.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 164.5,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 32.8,
         "resolution_interval_conformal": null,
-        "priority_guess": "medium",
-        "priority_rationale": "Reproducible error affecting error telemetry, but no immediate user impact or data loss. Similar issues suggest a possible null pointer dereference bug.",
+        "priority_guess": "low",
+        "priority_rationale": "Error telemetry issue with a null 'detail' property access. Similar issues exist with different error messages but the same null property access pattern. Given the lack of user impact and the presence of similar issues, this is a low priority.",
         "suggested_assignee_class": "error-telemetry team",
         "suggested_next_steps": [
           "Investigate the null 'detail' property access in AbstractTelemetryService.onErrorEvent and determine the root cause.",
-          "Review the stack traces from similar issues (#3229, #3231, #4577, #2239, #4572) for potential connections to the current issue.",
-          "Add a null check for the 'detail' property in AbstractTelemetryService.onErrorEvent to prevent future crashes."
+          "Review the similar issues (#3229, #3231, #4577, #2239, #4572) to see if they share the same root cause.",
+          "Add a null check for the 'detail' property in AbstractTelemetryService.onErrorEvent to prevent the null pointer dereference."
         ],
-        "triage_summary": "Reproducible error in error telemetry due to null 'detail' property access. Similar issues suggest a possible null pointer dereference bug. Medium priority; assign to error-telemetry team for a typical null pointer dereference fix."
+        "triage_summary": "Error telemetry issue with a null 'detail' property access. Similar issues exist with different error messages but the same null property access pattern. Low priority; assign to error-telemetry team for a typical null pointer dereference fix."
       },
       "judge_score": {
         "component_match": 2,
         "similar_issues_relevance": 3,
         "resolution_estimate_reasonableness": 1,
-        "priority_alignment": 0,
+        "priority_alignment": 1,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority guess is incorrect, and the resolution estimate is order-of-magnitude correct but imprecise."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the resolution estimate is order-of-magnitude correct but imprecise, and the overall quality is good but not excellent due to some minor gaps in the analysis."
       },
       "error": null
     },
@@ -738,7 +738,7 @@
             "relevance_note": "Syntax highlighting issue in attribute values for Jade, a CSS-related language."
           }
         ],
-        "expected_resolution_summary": "Typical CSS-related bug fix; 1â€“4 weeks depending on the complexity of the CSS parsing logic involved.",
+        "expected_resolution_summary": "Typical CSS-related bug fix; 1–4 weeks depending on the complexity of the CSS parsing logic involved.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 167.0,
         "resolution_bucket": "days",
@@ -761,7 +761,7 @@
         "priority_alignment": 1,
         "next_steps_actionability": 2,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, relevant similar issues, and a reasonable resolution estimate. The suggested next steps are concrete and actionable, but could be more precise. The priority alignment is correct, and the overall quality is good, but not excellent, as some minor edits might be needed to make the plan perfect."
+        "judge_rationale": "The triage plan is solid, with a correct component match, relevant similar issues, and a reasonable resolution estimate. The suggested next steps are concrete and actionable, but the plan could be improved with more specific details on the root cause and testing strategies."
       },
       "error": null
     },
@@ -786,21 +786,21 @@
             "relevance_note": "Duplicate error message in editor for typescript, similar to this report's highlighting issue."
           }
         ],
-        "expected_resolution_summary": "Typical task-related UI regression; 1â€“4 weeks depending on the complexity of the task system and the fix.",
+        "expected_resolution_summary": "Typical task-related UI regression; 1–4 weeks depending on the complexity of the task system and the fix.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 159.3,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 31.7,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "Reproducible regression affecting a key workflow (build operation) with a clear visual issue (missing error highlighting).",
+        "priority_rationale": "Reproducible regression affecting a key workflow (build operation) with a clear, specific failure mode (no red flag in the editor).",
         "suggested_assignee_class": "tasks team",
         "suggested_next_steps": [
           "Reproduce the issue with the latest Insiders build to rule out already-fixed regression.",
-          "Check the task.json and tsconfig.json handling in the build task runner for any issues.",
-          "Add a test that verifies error highlighting for the build operation with CTRL+SHIFT+B."
+          "Check the task.json and tsconfig.json handling in the build operation to identify the root cause.",
+          "Add a regression test that builds a project with tsconfig.json and verifies error highlighting in the editor."
         ],
-        "triage_summary": "Build errors are not highlighted in the editor when performing the build operation with CTRL+SHIFT+B. This regression is similar to prior issues with typescript error highlighting and task system behavior. Assign to tasks team; medium priority given the clear visual issue and reproducibility."
+        "triage_summary": "Build errors are not highlighted in the editor when performing the build operation with CTRL+SHIFT+B. This regression is similar to prior issues with typescript error highlighting and tsconfig.json handling. Assign to tasks team; medium priority given the clear failure mode and key workflow impact."
       },
       "judge_score": {
         "component_match": 2,
@@ -834,7 +834,7 @@
             "relevance_note": "Cannot find module error despite having typings folder, similar to this issue."
           }
         ],
-        "expected_resolution_summary": "Typical TypeScript module resolution issue; 1â€“4 weeks depending on the complexity of the fix.",
+        "expected_resolution_summary": "Typical TypeScript module resolution issue; 1–4 weeks depending on the complexity of the fix.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 168.2,
         "resolution_bucket": "hours",
@@ -848,7 +848,7 @@
           "Investigate the TypeScript configuration and tsconfig.json file for potential issues.",
           "Check the TypeScript documentation and community resources for similar issues and potential solutions."
         ],
-        "triage_summary": "VS Code users report an issue with TypeScript module resolution, affecting users with specific project configurations. Similar issues exist in the past, and the resolution estimate suggests a typical fix within 1â€“4 weeks. Assign to the TypeScript team for investigation and resolution."
+        "triage_summary": "VS Code users report an issue with TypeScript module resolution, affecting users with specific project configurations. Similar issues exist in the past, and the resolution estimate suggests a typical fix within 1–4 weeks. Assign to the TypeScript team for investigation and resolution."
       },
       "judge_score": {
         "component_match": 2,
@@ -857,7 +857,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 2,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match and highly relevant similar issues. However, the priority alignment is incorrect, and the resolution estimate reasonableness is only order-of-magnitude correct. The suggested next steps are concrete and actionable, making the plan useful for a triager to act on with minor edits."
+        "judge_rationale": "The triage plan is solid, with a correct component match and highly relevant similar issues. However, the priority guess is incorrect, and the resolution estimate, while reasonable, is not precise. The suggested next steps are concrete and actionable, making the plan useful for a triager to act on with minor edits."
       },
       "error": null
     },
@@ -877,21 +877,21 @@
             "relevance_note": "Extension Code instance not properly closed, affecting Run command and similar to editor window close."
           }
         ],
-        "expected_resolution_summary": "Typical API-related regression; 2â€“4 weeks depending on whether it's a lifecycle event handling bug or a deeper extension activation issue.",
+        "expected_resolution_summary": "Typical API-related issue; 2–4 weeks depending on whether it's a documentation gap, a missing event, or a platform-specific lifecycle issue.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 372.4,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 28.4,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "Reproducible regression affecting extension deactivation on editor window close, with a known workaround (stop debugger). This degrades the extension author's workflow but does not block core functionality.",
+        "priority_rationale": "Reproducible regression affecting extension authors on closing the editor window, but no user-facing breakage. Workaround exists (manually stop Extension Development Host).",
         "suggested_assignee_class": "api team",
         "suggested_next_steps": [
-          "Verify the deactivation callback is invoked when closing the editor window on OSX, and identify the root cause.",
-          "Review the extension lifecycle events and ensure proper teardown on editor window close.",
-          "Add a test that closes the editor window and verifies the extension is properly deactivated."
+          "Review the deactivation callback invocation path for editor window close events.",
+          "Check if the Extension Development Host stop button is properly triggering the deactivation callback.",
+          "Add a test that verifies the deactivation callback is invoked when closing the editor window."
         ],
-        "triage_summary": "Extension deactivation callback not invoked on closing the editor window, affecting extension authors. Similar issues exist on Windows and Linux, suggesting a known weak point in extension lifecycle handling. Medium priority; assign to api team for investigation and fix."
+        "triage_summary": "Extension deactivation callback not invoked on closing the editor window, affecting extension authors. Similar issues exist on Windows and Linux. Medium priority; assign to api team for API-related lifecycle fix."
       },
       "judge_score": {
         "component_match": 2,
@@ -900,7 +900,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 2,
         "overall_quality": 1,
-        "judge_rationale": "The triage plan is marginally useful, with correct component identification and relevant similar issues, but it fails to accurately estimate the resolution time and misaligns with the gold standard priority, indicating significant gaps in the plan."
+        "judge_rationale": "The triage plan is marginally useful, with correct component identification and relevant similar issues, but it has significant gaps, such as a wildly off resolution estimate and incorrect priority alignment."
       },
       "error": null
     },
@@ -912,53 +912,53 @@
           {
             "number": 3455,
             "similarity": 0.796,
-            "relevance_note": "Custom debug adapter issue with variable display on test client â€” likely related to adapter configuration."
+            "relevance_note": "Custom debug adapter issue with variable display on test client — likely related to adapter configuration."
           },
           {
             "number": 3499,
             "similarity": 0.789,
-            "relevance_note": "Large object variable expansion issue in debugger â€” possibly tied to variable rendering logic."
+            "relevance_note": "Large object variable expansion issue in debugger — possibly tied to variable rendering logic."
           },
           {
             "number": 2963,
             "similarity": 0.781,
-            "relevance_note": "Node debugger variables undefined issue â€” may be connected to variable name filtering or adapter protocol handling."
+            "relevance_note": "Node debugger variables undefined issue — may be connected to variable name filtering or adapter protocol handling."
           },
           {
             "number": 3794,
             "similarity": 0.768,
-            "relevance_note": "Variable name filtering issue with 'let' or 'var' keywords â€” possibly related to variable name sanitization or regex patterns."
+            "relevance_note": "Variable name filtering issue with 'let' or 'var' keywords — possibly related to variable name sanitization or regex patterns."
           },
           {
             "number": 230,
             "similarity": 0.765,
-            "relevance_note": "TypeScript error display issue in JavaScript files â€” may be connected to variable name formatting or syntax highlighting logic."
+            "relevance_note": "TypeScript error display issue in JavaScript files — may be connected to variable name or type handling in the debugger."
           }
         ],
-        "expected_resolution_summary": "Variable name filtering or rendering issue in the debugger; may require adapter protocol or variable name sanitization changes; 1â€“4 weeks typical.",
+        "expected_resolution_summary": "Typical debugger adapter issue; resolution time may vary depending on team velocity and issue complexity.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 174.2,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 30.8,
         "resolution_interval_conformal": null,
-        "priority_guess": "medium",
-        "priority_rationale": "Reproducible issue with variable name display in the debugger, affecting custom debug adapter authors. While not a blocking regression, it degrades the debugging experience and requires a fix.",
+        "priority_guess": "low",
+        "priority_rationale": "Variable name filtering issue in debugger; while it affects a specific use case (debugger adapter development), it's not a blocking issue for end-users. Workaround exists (rename variable).",
         "suggested_assignee_class": "debug team",
         "suggested_next_steps": [
-          "Review the custom debug adapter protocol and variable name filtering logic to identify the root cause.",
-          "Test variable name rendering with different adapter configurations and variable types.",
-          "Update the variable name sanitization regex patterns or adapter protocol to fix the issue."
+          "Review the custom debug adapter code and verify that it's correctly configured and sending the expected variable data.",
+          "Check the variable name filtering logic in the debugger and ensure it's not incorrectly blocking the variable name in question.",
+          "Add a test case to cover this specific variable name filtering scenario in the debugger."
         ],
-        "triage_summary": "Custom debug adapter authors report variable name display issues in the debugger. Similar issues suggest a variable name filtering or rendering problem. Medium priority; assign to debug team for investigation and fix."
+        "triage_summary": "Variable name filtering issue in debugger affecting custom debug adapter development. Similar issues exist, suggesting a known weak point in variable name handling. Low priority; assign to debug team for resolution."
       },
       "judge_score": {
         "component_match": 2,
         "similar_issues_relevance": 3,
         "resolution_estimate_reasonableness": 0,
-        "priority_alignment": 0,
+        "priority_alignment": 1,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the resolution estimate is wildly off, and the priority alignment is incorrect, which prevents it from being an excellent plan."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the resolution estimate is wildly off, which prevents it from being an excellent plan."
       },
       "error": null
     },
@@ -980,38 +980,38 @@
           {
             "number": 2345,
             "similarity": 0.752,
-            "relevance_note": "Focus moving to the <body> element, which is an issue that could be addressed by implementing focus preservation."
+            "relevance_note": "Focus moving to the <body> element, which is a problem that the focus preservation feature aims to solve."
           },
           {
             "number": 4339,
             "similarity": 0.751,
-            "relevance_note": "Request to add focus indication to text editors and panels, which is related to the desired focus preservation feature."
+            "relevance_note": "Adding focus indication to text editors and panels, which is a prerequisite for the focus preservation feature."
           }
         ],
-        "expected_resolution_summary": "UX improvement: implement focus preservation for editors and output channels. Typical resolution time: 1â€“2 weeks.",
+        "expected_resolution_summary": "UX improvement: implement focus preservation for editors and output channels. Typical 1–2 weeks depending on the complexity of the changes.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 210.0,
         "resolution_bucket": "days",
         "resolution_confidence_pct": 28.0,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "UX improvement request with no reported crashes or data loss. The issue is related to focus preservation, which is a nice-to-have feature. The resolution estimate is quite wide, but the issue is not blocking or critical.",
+        "priority_rationale": "UX improvement with a clear request from a user. While it's a nice-to-have feature, it doesn't block any critical workflows or cause any data loss.",
         "suggested_assignee_class": "ux team",
         "suggested_next_steps": [
-          "Review the existing code for opening editors and output channels to identify the focus-stealing behavior.",
-          "Implement the `preserveFocus` flag to preserve the current focus when opening editors or an output channel.",
-          "Test the feature to ensure it works as expected and does not introduce any regressions."
+          "Review the existing code for opening editors and output channels to identify the points where focus is currently being stolen.",
+          "Implement the `preserveFocus` flag and test it thoroughly to ensure it works as expected in all scenarios.",
+          "Update the documentation to reflect the new feature and provide examples of how to use it."
         ],
-        "triage_summary": "UX improvement request to implement focus preservation for editors and output channels. The issue is related to several similar requests and has a wide resolution estimate. Assign to the UX team for implementation."
+        "triage_summary": "Implement focus preservation for editors and output channels to improve the user experience. This is a low-priority feature that doesn't block any critical workflows, but it's a nice-to-have improvement that will make VS Code more user-friendly."
       },
       "judge_score": {
-        "component_match": 0,
+        "component_match": 1,
         "similar_issues_relevance": 3,
         "resolution_estimate_reasonableness": 0,
         "priority_alignment": 1,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with highly relevant similar issues and actionable next steps, but the component match is incorrect and the resolution estimate is wildly off, which prevents it from being excellent."
+        "judge_rationale": "The triage plan is solid, with relevant similar issues and actionable next steps, but the resolution estimate is wildly off and the component match is not exact, which prevents it from being excellent."
       },
       "error": null
     },
@@ -1036,7 +1036,7 @@
             "relevance_note": "Prevent completion provider execution in strings and comments; similar goal of disabling completion in specific scenarios."
           }
         ],
-        "expected_resolution_summary": "Feature enhancement; typical 2â€“6 weeks depending on team velocity and priority.",
+        "expected_resolution_summary": "Feature enhancement; typical 2–6 weeks depending on team velocity and priority.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 141.7,
         "resolution_bucket": "hours",
@@ -1076,7 +1076,7 @@
           {
             "number": 530,
             "similarity": 0.715,
-            "relevance_note": "File/Folder picker issue related to workspace and current folder selection."
+            "relevance_note": "File/Folder picker issue related to workspace selection and folder navigation."
           },
           {
             "number": 1152,
@@ -1084,7 +1084,7 @@
             "relevance_note": "Folder creation issue in root-level folder, possibly related to picker behavior."
           }
         ],
-        "expected_resolution_summary": "Typical UX regression; 1â€“5 weeks depending on complexity and team velocity.",
+        "expected_resolution_summary": "Typical UX regression fix; 1–5 days depending on complexity and team velocity.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 128.6,
         "resolution_bucket": "hours",
@@ -1095,19 +1095,19 @@
         "suggested_assignee_class": "file-explorer team",
         "suggested_next_steps": [
           "Reproduce the issue on a modern Ubuntu version (e.g., 20.04) to ensure it's not a version-specific bug.",
-          "Check the file-explorer's folder selection logic and ensure it's correctly handling the current folder.",
-          "Add a test that verifies the folder picker starts at the correct directory."
+          "Check the `openFolder` command's default behavior and whether it's being overridden by any extension or internal logic.",
+          "Review the `Explorer` API documentation to ensure the expected behavior is correctly documented."
         ],
-        "triage_summary": "Folder picker always chooses the root directory, affecting a specific user on an outdated Ubuntu version. Similar issues exist, suggesting a known weak point in the picker's behavior. Low priority; assign to file-explorer team for UX regression fix."
+        "triage_summary": "Folder picker always selects the root directory, affecting a core workflow. Similar issues exist, and a workaround exists. Low priority; assign to file-explorer team for a typical UX regression fix."
       },
       "judge_score": {
         "component_match": 1,
         "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 0,
+        "resolution_estimate_reasonableness": 1,
         "priority_alignment": 1,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a clear and actionable set of next steps, but the resolution estimate is wildly off, and the predicted component, while plausible, does not match the gold standard."
+        "judge_rationale": "The triage plan is solid, with relevant similar issues and actionable next steps, but the predicted component is not the gold standard, and the resolution estimate is order-of-magnitude correct but imprecise."
       },
       "error": null
     },
@@ -1119,7 +1119,7 @@
           {
             "number": 662,
             "similarity": 0.798,
-            "relevance_note": "Identical problem statement: proposing keys that already exist in JSON files."
+            "relevance_note": "Identical problem statement: proposing keys that are already existing in JSON files."
           },
           {
             "number": 3673,
@@ -1134,38 +1134,38 @@
           {
             "number": 881,
             "similarity": 0.767,
-            "relevance_note": "Intellisense suggesting another property due to casing mismatch in JSON files."
+            "relevance_note": "Intellisense suggesting another property when casing is incorrect, a JSON-specific issue."
           },
           {
             "number": 888,
             "similarity": 0.765,
-            "relevance_note": "Truncated intellisense help text in JSON files, another UI-related issue."
+            "relevance_note": "Truncated Intellisense help text, a minor JSON-related issue."
           }
         ],
-        "expected_resolution_summary": "Typical JSON-related feature request or bug fix; 1â€“4 weeks depending on complexity and team velocity.",
+        "expected_resolution_summary": "Typical JSON language service bug; 1–4 weeks depending on complexity and team velocity.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 261.0,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 30.5,
         "resolution_interval_conformal": null,
-        "priority_guess": "low",
-        "priority_rationale": "While the issue affects a specific use case (Azure RM Deployment templates), it's not a blocking or critical regression. The provided screenshots show minor UI issues rather than a crash or data loss.",
-        "suggested_assignee_class": "json / language-service team",
+        "priority_guess": "medium",
+        "priority_rationale": "Reproducible regression affecting a specific edge case in JSON file authoring. While not a showstopper, it degrades the user experience and requires a fix.",
+        "suggested_assignee_class": "json / language service team",
         "suggested_next_steps": [
-          "Reproduce the issue with a minimal Azure RM Deployment template and verify the expected behavior.",
-          "Check the JSON language service's handling of single-quoted strings inside double-quoted property values.",
-          "Review the existing code assist and intellisense logic for JSON files to identify potential root causes."
+          "Reproduce the issue with a minimal JSON file and identify the specific language service component causing the problem.",
+          "Check the JSON grammar and syntax rules for any potential issues with single-quoted strings inside double-quoted property values.",
+          "Add a test that covers this edge case and ensure the fix does not introduce any regressions."
         ],
-        "triage_summary": "Minor intellisense issue in Azure RM Deployment templates, affecting a specific use case. Similar issues exist in the JSON language service, suggesting a known weak point. Low priority; assign to json / language-service team for investigation and potential fix."
+        "triage_summary": "Intellisense provides strange suggestions in JSON property values, affecting a specific edge case in Azure RM Deployment template authoring. Similar issues exist, and the resolution estimate suggests a typical language service bug. Assign to json / language service team; medium priority."
       },
       "judge_score": {
         "component_match": 2,
         "similar_issues_relevance": 3,
         "resolution_estimate_reasonableness": 1,
-        "priority_alignment": 1,
+        "priority_alignment": 0,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the resolution estimate is order-of-magnitude correct but imprecise, and the overall quality is good but not excellent due to some minor gaps in the analysis."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority alignment is incorrect, and the resolution estimate reasonableness is only order-of-magnitude correct."
       },
       "error": null
     },
@@ -1193,28 +1193,23 @@
             "number": 3506,
             "similarity": 0.751,
             "relevance_note": "Cannot navigate from the error list to the file; a smoke test case demonstrates the issue."
-          },
-          {
-            "number": 3002,
-            "similarity": 0.747,
-            "relevance_note": "Error navigation question: how to get all errors and warnings for the entire project, as VS Code currently only shows errors and warnings for the current file."
           }
         ],
-        "expected_resolution_summary": "Typical file-explorer navigation regression; 2â€“4 weeks depending on the complexity of the fix.",
+        "expected_resolution_summary": "Error navigation and file linking in the file explorer; 2–4 weeks typical for this component.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 184.6,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 30.7,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "Reproducible error navigation failure affecting the core workflow (navigating to errors). Although the issue is old, it remains a significant UX gap.",
+        "priority_rationale": "Error navigation failure when switching between files in the file explorer. While not a crash, this affects the user experience and requires a fix to maintain a smooth workflow.",
         "suggested_assignee_class": "file-explorer team",
         "suggested_next_steps": [
-          "Reproduce the issue with the latest Insiders build to confirm it's not already fixed.",
-          "Investigate the file-explorer navigation logic, focusing on the error list handling.",
-          "Add a test that navigates to the next error in the list and asserts the correct file is opened."
+          "Reproduce the issue with the latest Insiders build to confirm the problem persists.",
+          "Investigate the file explorer's error navigation logic and identify the root cause.",
+          "Create a test case to verify the fix and ensure error navigation works as expected."
         ],
-        "triage_summary": "Error navigation fails when switching between files in the error list. Five similar prior reports confirm the regression. Medium priority; assign to file-explorer team for a fix within 2â€“4 weeks."
+        "triage_summary": "Error navigation fails when switching between files in the file explorer. Four similar issues exist, indicating a known weakness in error handling. Medium priority; assign to the file-explorer team for a fix within 2–4 weeks."
       },
       "judge_score": {
         "component_match": 0,
@@ -1223,7 +1218,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 3,
         "overall_quality": 1,
-        "judge_rationale": "The triage plan incorrectly identifies the component as 'file-explorer' and misaligns the priority as 'medium', but it provides highly relevant similar issues and actionable next steps, making it marginally useful despite significant gaps."
+        "judge_rationale": "The triage plan incorrectly identifies the component as 'file-explorer' instead of 'javascript', and the priority is guessed as 'medium' instead of 'low'. However, it provides highly relevant similar issues and actionable next steps."
       },
       "error": null
     },
@@ -1243,7 +1238,7 @@
             "relevance_note": "Python loop syntax highlighting issue, but highlights the importance of accurate syntax highlighting in code templates."
           }
         ],
-        "expected_resolution_summary": "Typical code completion enhancement; 1â€“2 weeks for a minor tweak.",
+        "expected_resolution_summary": "Typical code completion enhancement; 1–2 weeks for a minor tweak.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 190.4,
         "resolution_bucket": "hours",
@@ -1257,7 +1252,7 @@
           "Propose a fix to improve the template completion engine's context awareness for common loop variable names.",
           "Add a test case to cover this specific scenario and ensure the fix does not introduce regressions."
         ],
-        "triage_summary": "JavaScript for loop template completion needs more context to handle common loop variable names like 'i'. Minor annoyance for developers; assign to javascript/suggest team for a 1â€“2 week fix."
+        "triage_summary": "JavaScript for loop template completion needs more context to handle common loop variable names like 'i'. Minor annoyance for developers; assign to javascript/suggest team for a 1–2 week fix."
       },
       "judge_score": {
         "component_match": 1,
@@ -1266,7 +1261,7 @@
         "priority_alignment": 1,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with actionable next steps and a reasonable priority alignment, but the component match is not exact and the resolution estimate is wildly off, which prevents it from being excellent."
+        "judge_rationale": "The triage plan is solid, with actionable next steps and a reasonable priority assessment, but the component match is not exact and the resolution estimate is wildly off, which prevents it from being excellent."
       },
       "error": null
     },
@@ -1283,38 +1278,38 @@
           {
             "number": 2792,
             "similarity": 0.781,
-            "relevance_note": "Line highlighting not working with Find is a related issue that affects the usability of the debug console."
+            "relevance_note": "Line highlighting in the Find dialog is another related feature request, indicating a broader need for improved console interaction."
           },
           {
             "number": 2350,
             "similarity": 0.77,
-            "relevance_note": "Debug console not showing stderr output is another related issue that affects the completeness of the debug experience."
+            "relevance_note": "The debug console not showing stderr output is another related issue, highlighting the need for more comprehensive console support."
           }
         ],
-        "expected_resolution_summary": "Feature enhancement: add find support to the debug console. Estimated 1â€“7 days, depending on the complexity of the implementation.",
+        "expected_resolution_summary": "Feature enhancement; typical 1–4 weeks depending on team velocity and priority.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 291.0,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 30.3,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "Feature request for find support in the debug console. While related to other debugging issues, this is a cosmetic improvement rather than a blocking regression.",
+        "priority_rationale": "Feature request for a specific console functionality; while related to debugging, it's not a blocking or critical issue. The existing similar issues (#1627, #2792, #2350) indicate a broader need for console improvements, but this specific request is a lower priority.",
         "suggested_assignee_class": "debug team",
         "suggested_next_steps": [
-          "Review existing debug console implementation to determine the best approach for adding find support.",
-          "Create a minimal reproducible example to demonstrate the issue and potential solutions.",
-          "Discuss with the team to prioritize this feature enhancement and estimate the required resources."
+          "Review existing console-related feature requests (#1627, #2792, #2350) to identify potential dependencies or synergies.",
+          "Discuss with the team whether this feature request aligns with current priorities and resource availability.",
+          "Create a new issue for this feature request and link it to the related issues (#1627, #2792, #2350)."
         ],
-        "triage_summary": "Feature request to add find support to the debug console. This is a low-priority enhancement that can be addressed by the debug team. The resolution estimate is uncertain due to the lack of historical data for this specific feature."
+        "triage_summary": "Feature request for find support in the Debug Console. While related to debugging, this is a lower-priority issue due to its non-blocking nature and the existence of similar, higher-priority feature requests (#1627, #2792, #2350). Assign to the debug team for consideration and prioritization."
       },
       "judge_score": {
         "component_match": 2,
         "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 1,
+        "resolution_estimate_reasonableness": 0,
         "priority_alignment": 1,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the resolution estimate is order-of-magnitude correct but imprecise, and the overall quality is not excellent due to some uncertainty in the resolution estimate."
+        "judge_rationale": "The triage plan accurately identifies the component and provides relevant similar issues, and the suggested next steps are concrete and actionable. However, the resolution estimate is wildly off, which prevents the plan from being considered excellent."
       },
       "error": null
     },
@@ -1334,21 +1329,21 @@
             "relevance_note": "Existing feature request for viewing up to three panels side by side, matching the user's desired layout."
           }
         ],
-        "expected_resolution_summary": "Feature enhancement request; typical resolution time 2â€“6 weeks depending on team velocity and priority.",
+        "expected_resolution_summary": "Feature enhancement request; typical resolution time 2–6 weeks depending on team velocity and priority.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 246.5,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 29.6,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "Feature request for multiple visible panels, which is a cosmetic change. The user has found workarounds (e.g., using multiple windows) and is seeking an enhancement.",
+        "priority_rationale": "Feature request for multiple visible panels, which is a cosmetic change. The user has provided a clear description of their desired workflow and has searched for existing issues.",
         "suggested_assignee_class": "file-explorer team",
         "suggested_next_steps": [
-          "Discuss the feasibility of implementing a fixed pane count and/or horizontal layout with the file-explorer team.",
-          "Gather more information on the user's desired layout and potential edge cases.",
-          "Create a new issue for the enhancement request and assign it to the file-explorer team."
+          "Discuss the feasibility of implementing a fixed pane count and horizontal layout with the file-explorer team.",
+          "Create a new issue for the feature request and assign it to the file-explorer team.",
+          "Add a comment to the original issue thanking the user for their feedback and providing an update on the status of the feature request."
         ],
-        "triage_summary": "User requests the ability to display multiple panels simultaneously, specifically the folder explorer, working files, and git working tree status. This is a feature enhancement request with a low priority, as the user has found workarounds and is seeking an optional layout change."
+        "triage_summary": "User requests the ability to display multiple panels at once, specifically the folder explorer, working files, and git working tree status. This is a feature enhancement request with a low priority, as it is a cosmetic change. Assign to the file-explorer team for discussion and potential implementation."
       },
       "judge_score": {
         "component_match": 1,
@@ -1357,7 +1352,7 @@
         "priority_alignment": 1,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with relevant similar issues and actionable next steps, but the resolution estimate is wildly off and the component match is not exact, as the predicted component is 'file-explorer' instead of the gold standard 'ux'."
+        "judge_rationale": "The triage plan is solid, with relevant similar issues and actionable next steps, but the component match is not exact and the resolution estimate is wildly off, which prevents it from being excellent."
       },
       "error": null
     },
@@ -1392,7 +1387,7 @@
             "relevance_note": "Color theme support for multi-line variable declarations in JavaScript, which shares some technical overlap with CSS variable support."
           }
         ],
-        "expected_resolution_summary": "Feature enhancement for CSS variable support, likely requiring 1â€“6 weeks depending on implementation complexity and team velocity.",
+        "expected_resolution_summary": "Feature enhancement for CSS variable support, likely requiring 1–6 weeks depending on implementation complexity and team velocity.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 145.1,
         "resolution_bucket": "hours",
@@ -1410,12 +1405,12 @@
       },
       "judge_score": {
         "component_match": 2,
-        "similar_issues_relevance": 2,
-        "resolution_estimate_reasonableness": 1,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
         "priority_alignment": 1,
-        "next_steps_actionability": 2,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, relevant similar issues, and actionable next steps. However, the resolution estimate is order-of-magnitude correct but imprecise, and the overall quality is not excellent due to some minor gaps in the plan."
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan accurately identifies the component and provides highly relevant similar issues, demonstrating a clear understanding of the feature request. The resolution estimate is reasonable, and the suggested next steps are precise and actionable, making it an excellent plan that could be shipped directly to the triage queue."
       },
       "error": null
     },
@@ -1457,14 +1452,14 @@
         "resolution_confidence_pct": 32.6,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "Feature request for an event handler that is not critical or blocking; existing similar issues are not directly related but show event handling in VS Code.",
+        "priority_rationale": "Feature request for an event handler that is not critical or blocking; existing similar issues are not directly related to the requested feature.",
         "suggested_assignee_class": "file-explorer team",
         "suggested_next_steps": [
           "Discuss with the file-explorer team whether a new API or event handler is needed to support the requested feature.",
           "Research existing event handlers and APIs in VS Code to determine if a similar solution can be adapted.",
-          "Create a new issue to track the implementation of the requested event handler."
+          "Create a new issue for the file-explorer team to track the implementation of the requested feature."
         ],
-        "triage_summary": "Feature request for an event handler to detect when a project/folder is opened in VS Code. Similar issues exist but are not directly related. Low priority; assign to file-explorer team for discussion and potential implementation."
+        "triage_summary": "Feature request for an event handler to detect when a project/folder is opened in VS Code. Similar issues exist, but they are not directly related to the requested feature. Assign to file-explorer team; low priority due to the lack of critical or blocking issues."
       },
       "judge_score": {
         "component_match": 1,
@@ -1473,7 +1468,7 @@
         "priority_alignment": 1,
         "next_steps_actionability": 2,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a plausible component match and relevant similar issues. The resolution estimate is order-of-magnitude correct, and the priority alignment is correct. The next steps are concrete and actionable, but the plan could be improved with more specific details on the implementation and potential challenges."
+        "judge_rationale": "The triage plan is solid, with a plausible component match and relevant similar issues, but the resolution estimate is order-of-magnitude correct but imprecise, and the next steps are concrete but could be more detailed."
       },
       "error": null
     },
@@ -1508,7 +1503,7 @@
             "relevance_note": "Allow colon to be a valid keybinding, which is a specific request that might be addressed by the reporter's proposed feature."
           }
         ],
-        "expected_resolution_summary": "API extension to support 'e.key' keybindings; likely requires a 2â€“14 week effort depending on team velocity.",
+        "expected_resolution_summary": "API extension to support 'e.key' keybindings; likely requires a 2–14 week effort depending on team velocity.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 245.9,
         "resolution_bucket": "hours",
@@ -1556,7 +1551,7 @@
             "relevance_note": "Killing POD container before main container starts; may be a duplicate or related issue."
           }
         ],
-        "expected_resolution_summary": "Test infrastructure update to account for namespace changes; likely 1â€“5 days depending on the scope of changes.",
+        "expected_resolution_summary": "Test infrastructure update to account for namespace changes; likely 1–5 days depending on the scope of changes.",
         "expected_resolution_lower_days": 0.3,
         "expected_resolution_upper_days": 182.7,
         "resolution_bucket": "hours",
@@ -1579,7 +1574,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority alignment is incorrect, as the issue is marked as high priority in the gold standard, but the triage plan suggests a medium priority."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority alignment is incorrect, as the issue is deemed high priority in the gold standard but medium in the triage plan."
       },
       "error": null
     },
@@ -1614,21 +1609,21 @@
             "relevance_note": "Flaky test pattern: 'Events should be sent by kubelets and the scheduler about pods scheduling and running' on GKE 0.17.0."
           }
         ],
-        "expected_resolution_summary": "Flaky test due to test infrastructure issues; likely requires a test-infra fix or a temporary workaround.",
+        "expected_resolution_summary": "Flaky test due to test infrastructure issues; likely requires a test-infra fix or a test rewrite.",
         "expected_resolution_lower_days": 0.2,
         "expected_resolution_upper_days": 53.7,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 42.2,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "Flaky test due to test infrastructure issues; does not block core functionality or user workflows.",
+        "priority_rationale": "Flaky test with no immediate impact on production; likely a test-infra issue rather than a code bug.",
         "suggested_assignee_class": "test-infra team",
         "suggested_next_steps": [
           "Investigate test infrastructure changes around the failing test to identify the root cause.",
-          "Temporarily add a workaround to the test to prevent flakiness.",
-          "Review and update the test to make it more robust against test infrastructure issues."
+          "Consider rewriting the test to make it more robust or less prone to flakiness.",
+          "Add additional logging or debugging statements to the test to help diagnose the issue."
         ],
-        "triage_summary": "Flaky test 'Pod Disks should schedule a pod w/ a RW PD, remove it, then schedule it on another host' due to test infrastructure issues. Similar flaky tests exist, and the resolution is expected to be a test-infra fix or a temporary workaround."
+        "triage_summary": "Flaky test 'Pod Disks should schedule a pod w/ a RW PD, remove it, then schedule it on another host' at head. Similar issues suggest a test-infra problem. Assign to test-infra team; low priority due to no immediate production impact."
       },
       "judge_score": {
         "component_match": 1,
@@ -1695,7 +1690,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 2,
         "overall_quality": 1,
-        "judge_rationale": "The triage plan correctly identifies the component as test-infra, provides concrete next steps, but fails to retrieve relevant similar issues, and misaligns with the gold standard priority and resolution estimate."
+        "judge_rationale": "The triage plan correctly identifies the component as test-infra, but fails to provide relevant similar issues, and the resolution estimate and priority alignment are incorrect. The suggested next steps are concrete and actionable, but the plan has significant gaps, making it only marginally useful."
       },
       "error": null
     },
@@ -1778,7 +1773,7 @@
             "relevance_note": "Support for asymmetric rolling rollbacks; directly related to the current issue of rollingUpdate rollback behavior."
           }
         ],
-        "expected_resolution_summary": "App lifecycle bug fix; typically resolved within 1â€“5 days for a P1 bug.",
+        "expected_resolution_summary": "App lifecycle bug fix; typically resolved within 1–5 days for a P1 bug.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 114.4,
         "resolution_bucket": "hours",
@@ -1859,7 +1854,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the resolution estimate is wildly off, and the priority alignment is incorrect, as the gold standard priority is medium, but the triage plan guesses it as low."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the resolution estimate is wildly off, and the priority alignment is incorrect, as the gold standard has a medium priority."
       },
       "error": null
     },
@@ -1889,7 +1884,7 @@
         "priority_rationale": "Security fix with a clear solution (restricting healthz port access to localhost). No reported impact on functionality or user experience.",
         "suggested_assignee_class": "security team",
         "suggested_next_steps": [
-          "Update the kube-proxy configuration to bind the healthz port to localhost (0.0.0.0) instead of 0.0.0.0.",
+          "Update the kube-proxy configuration to bind the healthz port to localhost (127.0.0.1).",
           "Verify the change does not break any existing functionality or tests.",
           "Document the change in the security guidelines and release notes."
         ],
@@ -1902,7 +1897,7 @@
         "priority_alignment": 1,
         "next_steps_actionability": 3,
         "overall_quality": 3,
-        "judge_rationale": "The triage plan is excellent, with a correct component match, highly relevant similar issues, a reasonable resolution estimate, and actionable next steps that address the root cause and assign the issue to the correct team."
+        "judge_rationale": "The triage plan accurately identifies the component as security, provides highly relevant similar issues, and offers a precise and actionable set of next steps that address the root cause of the issue. The resolution estimate and priority alignment are also reasonable and well-justified."
       },
       "error": null
     },
@@ -1937,7 +1932,7 @@
             "relevance_note": "GKE upgrade tests, adding support for running with the GKE node and master upgrade tests."
           }
         ],
-        "expected_resolution_summary": "Low-priority test-infra config update; likely resolved within 1â€“3 days.",
+        "expected_resolution_summary": "Low-priority test-infra config update; likely resolved within 1–3 days.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 73.1,
         "resolution_bucket": "hours",
@@ -1960,7 +1955,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority alignment is incorrect, as the predicted priority is 'low' while the gold standard priority is 'medium'. The resolution estimate reasonableness is also order-of-magnitude correct but imprecise."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority alignment is incorrect, as the gold standard priority is medium, but the triage plan guesses it as low. The resolution estimate reasonableness is also order-of-magnitude correct but imprecise."
       },
       "error": null
     },
@@ -1975,35 +1970,35 @@
             "relevance_note": "Same failing test, TestRunExposeService, with a similar code block."
           },
           {
-            "number": 5810,
-            "similarity": 0.838,
-            "relevance_note": "Integration tests returning warnings, possibly related to the current failing tests."
+            "number": 2023,
+            "similarity": 0.833,
+            "relevance_note": "e2e test failure with a code block, indicating a similar test infrastructure issue."
           }
         ],
-        "expected_resolution_summary": "Quick fix or temporary workaround expected; likely resolved within 1 day.",
+        "expected_resolution_summary": "Typical test infrastructure regression; usually resolved within 1 day by the test-infra team.",
         "expected_resolution_lower_days": 0.0,
         "expected_resolution_upper_days": 7.0,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 52.0,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "Integration tests failing on HEAD, but no immediate data loss or service impact. Given the low confidence in the component classifier and the lack of high-priority similar issues, this is likely a minor test infrastructure issue.",
+        "priority_rationale": "Integration tests failing on HEAD, but no user-facing impact or data loss. Workaround exists (downgrade to a previous commit), and the issue is likely a test infrastructure regression.",
         "suggested_assignee_class": "test-infra team",
         "suggested_next_steps": [
           "Run `git bisect` to identify the commit that introduced the test failure.",
-          "Check the test logs for any error messages or clues about the failure.",
-          "Temporarily disable the failing test or apply a workaround to allow CI to pass."
+          "Check the test logs for any error messages or clues about the root cause.",
+          "Verify that the failing test is not a duplicate of an existing issue."
         ],
-        "triage_summary": "Integration tests failing on HEAD, likely due to a minor test infrastructure issue. Given the low priority and the presence of similar issues, assign to test-infra team for a quick fix or temporary workaround."
+        "triage_summary": "Integration tests failing on HEAD due to a test infrastructure regression. No user impact or data loss; assign to test-infra team for quick resolution. Low priority given the available workaround."
       },
       "judge_score": {
         "component_match": 2,
         "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 3,
+        "resolution_estimate_reasonableness": 2,
         "priority_alignment": 0,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and a reasonable resolution estimate. However, the priority alignment is incorrect, as the gold standard priority is 'high' but the triage plan guesses 'low'. The next steps are concrete and actionable, making the plan useful despite some gaps."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and a reasonable resolution estimate. However, the priority alignment is incorrect, as the gold standard priority is 'high' but the triage plan suggests 'low'. The next steps are precise and actionable, making the plan useful despite some gaps."
       },
       "error": null
     },
@@ -2066,7 +2061,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 2,
         "overall_quality": 1,
-        "judge_rationale": "The triage plan correctly identifies the component and provides highly relevant similar issues, but its resolution estimate is wildly off and its priority guess is clearly wrong given the issue severity and gold context."
+        "judge_rationale": "The triage plan is marginally useful due to its accurate component identification and relevant similar issues, but it has significant gaps in resolution estimate reasonableness and priority alignment, which detract from its overall quality."
       },
       "error": null
     },
@@ -2101,7 +2096,7 @@
             "relevance_note": "A Docker image for Kibana designed to work with Kubernetes logging, indicating a need for better logging integration."
           }
         ],
-        "expected_resolution_summary": "Logging configuration and dependency fix; likely resolved within 1â€“7 days, given the existing similar issues and logging team's expertise.",
+        "expected_resolution_summary": "Logging configuration and dependency fix; likely resolved within 1–7 days, given the existing similar issues and logging team's expertise.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 144.4,
         "resolution_bucket": "hours",
@@ -2115,7 +2110,7 @@
           "Update the elasticsearch-logging-controller to depend on a specific version of the Elasticsearch Docker image.",
           "Verify the fix by testing the updated controller with various Elasticsearch versions."
         ],
-        "triage_summary": "The elasticsearch addon depends on a specific Docker image version, which can break k8s logging if the upstream image changes. Several similar issues exist, and the logging team can address this with a fix within 1â€“7 days."
+        "triage_summary": "The elasticsearch addon depends on a specific Docker image version, which can break k8s logging if the upstream image changes. Several similar issues exist, and the logging team can address this with a fix within 1–7 days."
       },
       "judge_score": {
         "component_match": 1,
@@ -2146,7 +2141,7 @@
           {
             "number": 12349,
             "similarity": 0.848,
-            "relevance_note": "Registers the kubelet with the master, same goal as the original issue."
+            "relevance_note": "Registers the kubelet with the master, same functionality as the original issue."
           },
           {
             "number": 3385,
@@ -2170,10 +2165,10 @@
         "suggested_assignee_class": "kubelet team",
         "suggested_next_steps": [
           "Revert the original commit that introduced the issue.",
-          "Verify that the revert fixes the issue and does not introduce new problems.",
+          "Verify that the revert fixes the issue and does not introduce any new problems.",
           "Update the documentation to reflect the change."
         ],
-        "triage_summary": "This issue is a revert of a previous commit that registers the kubelet with the master. Given the similar issues and the resolution estimate, it is likely a quick fix that will be resolved within 1 day. Assign to the kubelet team for a simple revert or fix."
+        "triage_summary": "This issue is a revert of a previous commit that registers the kubelet with the master. Given the similar issues and the resolution estimate, this is likely a quick fix that will be resolved within 1 day. Assign to the kubelet team for a simple revert or fix."
       },
       "judge_score": {
         "component_match": 1,
@@ -2182,7 +2177,7 @@
         "priority_alignment": 1,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with highly relevant similar issues and actionable next steps, but the resolution estimate is wildly off, and the component match is plausible but not the gold label, which prevents it from being excellent."
+        "judge_rationale": "The triage plan is solid, with highly relevant similar issues and actionable next steps, but the resolution estimate is wildly off from the gold standard of 23 days, and the component match is plausible but not the gold label."
       },
       "error": null
     },
@@ -2209,14 +2204,14 @@
         "resolution_confidence_pct": 58.8,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "Error message suggests a build issue, not a critical Kubernetes functionality failure. Similar issues exist, but none indicate a high-priority regression.",
+        "priority_rationale": "Error message suggests a build issue, not a critical Kubernetes functionality failure. The user is likely missing a build flag or dependency.",
         "suggested_assignee_class": "platform/vagrant team",
         "suggested_next_steps": [
-          "Verify build flags and dependencies for the hyperkube binary on the Vagrant platform.",
-          "Check the build logs for any obvious errors or warnings.",
-          "Test the hyperkube binary with a minimal test case to reproduce the issue."
+          "Verify the build flags and dependencies for the hyperkube binary on the user's platform.",
+          "Check the build logs for any errors or warnings related to the binary size or output.",
+          "Test the hyperkube binary with the same build flags and dependencies on a different platform."
         ],
-        "triage_summary": "Hyperkube binary fails to run on Vagrant with a build error. Similar issues exist, but none indicate a high-priority regression. Assign to platform/vagrant team for a quick build flag or dependency fix."
+        "triage_summary": "Hyperkube binary build issue on the user's platform. Similar issues suggest a platform-specific problem. Assign to platform/vagrant team; low priority given the likely build flag or dependency issue."
       },
       "judge_score": {
         "component_match": 2,
@@ -2225,7 +2220,50 @@
         "priority_alignment": 1,
         "next_steps_actionability": 3,
         "overall_quality": 3,
-        "judge_rationale": "The triage plan accurately identifies the component, provides highly relevant similar issues, and offers a reasonable resolution estimate. The suggested next steps are precise, ordered, and actionable, making the plan excellent and ready to ship directly to the triage queue."
+        "judge_rationale": "The triage plan accurately identifies the component, provides highly relevant similar issues, and offers precise next steps that address the root cause, making it an excellent plan that could be shipped directly to the triage queue."
+      },
+      "error": null
+    },
+    "k8s-13096": {
+      "plan": {
+        "predicted_component": "api",
+        "component_confidence": 0.22,
+        "similar_issues": [
+          {
+            "number": 5800,
+            "similarity": 0.78,
+            "relevance_note": "API type definitions for persistentVolumes and persistentVolumeClaims, likely related to the reported inconsistency."
+          },
+          {
+            "number": 8583,
+            "similarity": 0.754,
+            "relevance_note": "PersistentVolume search bug fix, which might be connected to the reported issue due to shared API concerns."
+          }
+        ],
+        "expected_resolution_summary": "Typical API inconsistency fix: 1–3 days for a small, isolated bug.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 94.7,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 41.8,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "Inconsistency in API response, but no reported data loss or blocking behavior. The issue is relatively isolated and might be a small bug.",
+        "suggested_assignee_class": "api team",
+        "suggested_next_steps": [
+          "Review the API implementation for persistentVolumes and persistentVolumeClaims to identify the root cause of the inconsistency.",
+          "Check if the reported behavior is consistent across different API versions and clients.",
+          "Update the API documentation to reflect the expected behavior when there are no items in the list."
+        ],
+        "triage_summary": "Inconsistency in the API response for persistentVolumes and persistentVolumeClaims, where nil is returned instead of an empty list. This issue is likely related to API type definitions and might be a small bug. Assign to the api team for a quick fix."
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the resolution estimate is order-of-magnitude correct but imprecise, and the overall quality is not excellent due to some minor gaps in the plan."
       },
       "error": null
     },
@@ -2308,7 +2346,7 @@
             "relevance_note": "Another flaky test with a similar failure pattern, indicating a broader test infrastructure issue."
           }
         ],
-        "expected_resolution_summary": "Test infrastructure or environment issue; likely resolved within 1â€“3 days with a targeted fix.",
+        "expected_resolution_summary": "Test infrastructure or environment issue; likely resolved within 1–3 days with a targeted fix.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 29.9,
         "resolution_bucket": "hours",
@@ -2366,7 +2404,7 @@
             "relevance_note": "Regression: API server proxy doesn't work with v1beta3; related to this issue's api-prefix flag and kubectl proxy behavior."
           }
         ],
-        "expected_resolution_summary": "Usability fix for kubectl proxy; likely a documentation update or minor code tweak; 1â€“3 days.",
+        "expected_resolution_summary": "Usability fix for kubectl proxy; likely a documentation update or minor code tweak; 1–3 days.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 30.4,
         "resolution_bucket": "hours",
@@ -2389,7 +2427,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the resolution estimate is wildly off, and the priority alignment is incorrect, given the issue's severity and the gold context."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the resolution estimate is wildly off, and the priority alignment is incorrect, given the issue's severity and impact on usability."
       },
       "error": null
     },
@@ -2424,21 +2462,21 @@
             "relevance_note": "Addressing unintentionally skipped e2e tests on GCE/GKE, highlighting the need for test environment management."
           }
         ],
-        "expected_resolution_summary": "Containerization of verification checks, unit tests, and integration tests to prevent interference; 1â€“5 weeks depending on complexity and test infrastructure updates.",
+        "expected_resolution_summary": "Containerization of verification checks, unit tests, and integration tests to prevent interference; 1–5 weeks depending on complexity and test infrastructure updates.",
         "expected_resolution_lower_days": 0.2,
         "expected_resolution_upper_days": 153.7,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 31.3,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "Multiple unit tests and verification checks interfere with each other due to shared resources and static file names. Containerization is necessary to prevent conflicts and ensure accurate test execution.",
+        "priority_rationale": "Multiple unit tests and verification checks interfere with each other due to shared resources (e.g., /tmp, etcd). Containerization is necessary to prevent conflicts and ensure accurate test execution.",
         "suggested_assignee_class": "test-infra team",
         "suggested_next_steps": [
           "Containerize unit tests that write to static file names in /tmp to prevent conflicts.",
-          "Update etcd helper to allow multiple etcd binaries to run on the same host, or containerize the etcd test environment.",
-          "Review and update test infrastructure to ensure accurate test execution and prevent interference between tests."
+          "Update etcd helper to allow multiple etcd binaries to run on the same host, or containerize the integration test.",
+          "Review and update test infrastructure (e.g., Jenkins scripts, Travis.yml) to support containerized tests."
         ],
-        "triage_summary": "Verification checks, unit tests, and integration tests interfere with each other due to shared resources and static file names. Containerization is necessary to prevent conflicts and ensure accurate test execution. Medium priority; assign to test-infra team for infrastructure updates and test environment management."
+        "triage_summary": "Multiple tests interfere with each other due to shared resources. Containerization is necessary to prevent conflicts and ensure accurate test execution. Medium priority; assign to test-infra team for infrastructure updates and test containerization."
       },
       "judge_score": {
         "component_match": 2,
@@ -2447,7 +2485,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority alignment is incorrect, as the gold standard priority is 'high' but the triage plan suggests 'medium'. The resolution estimate reasonableness is also order-of-magnitude correct but imprecise."
+        "judge_rationale": "The triage plan accurately identifies the component and provides relevant similar issues, and the suggested next steps are concrete and actionable. However, the priority guess is incorrect, and the resolution estimate is imprecise, which prevents the plan from being excellent."
       },
       "error": null
     },
@@ -2505,7 +2543,7 @@
         "priority_alignment": 1,
         "next_steps_actionability": 3,
         "overall_quality": 3,
-        "judge_rationale": "The triage plan is of high quality, with a correct component match, highly relevant similar issues, a reasonable resolution estimate, and actionable next steps that address the root cause of the issue."
+        "judge_rationale": "The triage plan is of excellent quality, with a correct component match, highly relevant similar issues, a reasonable resolution estimate, and precise next steps that address the root cause. The plan could be shipped directly to the triage queue."
       },
       "error": null
     },
@@ -2540,19 +2578,19 @@
             "relevance_note": "New example of porting a simple two-tier app to containers and Kubernetes, which is not directly related to the user's question."
           }
         ],
-        "expected_resolution_summary": "Documentation or setup issue with the guestbook example; likely resolved within 1â€“3 days by updating the example's documentation or fixing a deployment issue.",
+        "expected_resolution_summary": "Documentation or setup issue with the guestbook example; likely resolved within 1–3 days by updating the example's documentation or fixing a deployment issue.",
         "expected_resolution_lower_days": 0.2,
         "expected_resolution_upper_days": 88.4,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 38.0,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "User question about the guestbook example's port, which is a cosmetic issue. The user has already tried troubleshooting steps (exposing ports, using netstat), and the issue is not blocking the core functionality of the example.",
+        "priority_rationale": "User question about the guestbook example's port, which is a cosmetic issue. The user has already tried troubleshooting steps and is seeking guidance.",
         "suggested_assignee_class": "example team",
         "suggested_next_steps": [
           "Review the guestbook example's documentation and deployment process to identify potential issues.",
           "Update the example's documentation to include information about the port used by the php application.",
-          "Test the example's deployment process to ensure it is working correctly and the port is exposed."
+          "Test the guestbook example to ensure it deploys correctly and the php application is accessible on the correct port."
         ],
         "triage_summary": "User question about the guestbook example's port, which is a cosmetic issue. Review the example's documentation and deployment process to identify potential issues and update the documentation accordingly."
       },
@@ -2563,7 +2601,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 2,
         "overall_quality": 1,
-        "judge_rationale": "The triage plan has a correct component match and provides relevant similar issues, but its resolution estimate is wildly off and its priority alignment is incorrect, indicating significant gaps in the plan."
+        "judge_rationale": "The triage plan correctly identifies the component and provides relevant similar issues, but its resolution estimate is wildly off and its priority alignment is incorrect, indicating significant gaps in the plan."
       },
       "error": null
     },
@@ -2575,29 +2613,29 @@
           {
             "number": 3612,
             "similarity": 0.764,
-            "relevance_note": "Directly related to adding reverse proxy headers in apiserver proxy, which is a similar feature request."
+            "relevance_note": "Directly related to adding reverse proxy headers in the apiserver proxy, which is a key part of this feature."
           },
           {
             "number": 651,
             "similarity": 0.75,
-            "relevance_note": "Allows changing API port/host via hack/local-up, which is a related use case for accessing the API server."
+            "relevance_note": "Allows changing API port/host via hack/local-up, which is a related use case for the proposed bastion feature."
           }
         ],
-        "expected_resolution_summary": "Feature addition to apiserver; likely 1â€“5 days depending on complexity and current team velocity.",
+        "expected_resolution_summary": "Feature addition to apiserver; likely 1–5 days depending on complexity and existing implementation.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 35.9,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 51.5,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "Feature request to add a bastion to apiserver for reverse lookup by IP address + proxy. While related to security and api, this is a new feature and not a critical bug fix. The resolution estimate is relatively short, and the team can likely prioritize this based on their current velocity.",
+        "priority_rationale": "Feature addition with no reported blockers or critical use cases; existing similar issues (#3612, #651) suggest a clear path forward.",
         "suggested_assignee_class": "apiserver team",
         "suggested_next_steps": [
-          "Discuss the feature with the apiserver team to determine the feasibility and complexity of the implementation.",
-          "Review the existing code and APIs to understand how the bastion can be integrated with the apiserver.",
-          "Create a clear design document outlining the proposed solution and its implications."
+          "Review existing apiserver proxy implementation and identify potential integration points for the proposed bastion feature.",
+          "Discuss with the apiserver team to determine the best approach for implementing the bastion feature.",
+          "Create a detailed design document outlining the proposed implementation and any necessary changes to existing code."
         ],
-        "triage_summary": "Feature request to add a bastion to apiserver for reverse lookup by IP address + proxy. Similar to existing feature requests (#3612, #651), this is a new feature that can be implemented within a short timeframe. Assign to apiserver team for further discussion and planning."
+        "triage_summary": "Add a bastion to apiserver for reverse lookup by IP address + proxy. Similar issues (#3612, #651) provide a clear path forward. Feature addition with no reported blockers; assign to apiserver team for 1–5 days."
       },
       "judge_score": {
         "component_match": 2,
@@ -2631,7 +2669,7 @@
             "relevance_note": "Errors updating Fedora in Vagrant setup, which might be related to the mirror issues in this report."
           }
         ],
-        "expected_resolution_summary": "Cluster bootstrap mirror issues on Fedora; likely a configuration or dependency problem; 1â€“5 days to resolve.",
+        "expected_resolution_summary": "Cluster bootstrap mirror issues on Fedora; likely a configuration or dependency problem; 1–5 days to resolve.",
         "expected_resolution_lower_days": 0.5,
         "expected_resolution_upper_days": 151.6,
         "resolution_bucket": "hours",
@@ -2654,7 +2692,7 @@
         "priority_alignment": 1,
         "next_steps_actionability": 2,
         "overall_quality": 1,
-        "judge_rationale": "The triage plan incorrectly identifies the component as cluster/bootstrap, but provides relevant similar issues and actionable next steps. However, the resolution estimate is wildly off, and the plan lacks precision in addressing the root cause of the issue."
+        "judge_rationale": "The triage plan incorrectly identifies the component as cluster/bootstrap, but provides relevant similar issues and actionable next steps. However, the resolution estimate is wildly off, and the plan lacks precision in addressing the root cause."
       },
       "error": null
     },
@@ -2674,7 +2712,7 @@
             "relevance_note": "Similar goal of creating a dashboard for e2e test results across cloud providers."
           }
         ],
-        "expected_resolution_summary": "Low-effort task to export test completion times into the performance dashboard; likely resolved within 1â€“4 days.",
+        "expected_resolution_summary": "Low-effort task to export test completion times into the performance dashboard; likely resolved within 1–4 days.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 183.9,
         "resolution_bucket": "hours",
@@ -2755,7 +2793,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority alignment is incorrect, as the gold standard indicates a low priority, while the triage plan suggests a high priority. The resolution estimate reasonableness is also imprecise, with a wide range of possible resolution days."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority alignment is incorrect, as the gold standard indicates a low priority, while the triage plan suggests a high priority. The resolution estimate reasonableness is also order-of-magnitude correct but imprecise."
       },
       "error": null
     },
@@ -2787,14 +2825,14 @@
         "resolution_confidence_pct": 31.7,
         "resolution_interval_conformal": null,
         "priority_guess": "high",
-        "priority_rationale": "Critical security issue: any node on the cluster's network can talk to the apiserver without authn/z, potentially leading to unauthorized access.",
+        "priority_rationale": "Critical security issue: CoreOS distro allows unauthenticated access to the apiserver, exposing the cluster to potential attacks. This is a high-priority fix to ensure cluster security.",
         "suggested_assignee_class": "security team",
         "suggested_next_steps": [
-          "Investigate why CoreOS does not distribute a token to kubelet, and how to make it similar to other distros.",
-          "Evaluate the feasibility of making the [INLINE_CODE] port authenticated by default.",
-          "Collaborate with the CoreOS team to address this issue."
+          "Investigate the authn/z configuration differences between CoreOS and other distros to identify the root cause.",
+          "Propose a fix to either make CoreOS like other distros or to authenticate the [INLINE_CODE] port by default.",
+          "Collaborate with the CoreOS team to implement the fix and ensure it does not introduce any regressions."
         ],
-        "triage_summary": "Critical security issue: CoreOS does not enforce authn/z, allowing any node on the cluster's network to talk to the apiserver without authentication. Similar issues exist in libvirt-coreos and cluster-addon services. High priority; assign to security team for immediate attention."
+        "triage_summary": "Critical security issue: CoreOS distro allows unauthenticated access to the apiserver, exposing the cluster to potential attacks. High priority; assign to security team for immediate attention."
       },
       "judge_score": {
         "component_match": 2,
@@ -2803,7 +2841,7 @@
         "priority_alignment": 0,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the resolution estimate is wildly off, and the priority alignment is incorrect, as the gold standard priority is low, but the triage plan suggests high priority."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the resolution estimate is wildly off, and the priority alignment is incorrect, as the gold standard priority is low, but the triage plan suggests a high priority."
       },
       "error": null
     },
@@ -2825,33 +2863,33 @@
           {
             "number": 10301,
             "similarity": 0.822,
-            "relevance_note": "Retry namespace creation for e2e tests, addressing a related issue (#10289)."
+            "relevance_note": "Retry namespace creation for e2e tests, addressing a related issue with namespace creation failures."
           }
         ],
-        "expected_resolution_summary": "Low-hanging fruit in test-infra; likely resolved within 1 day, given the direct fixes to related issues.",
+        "expected_resolution_summary": "Low-priority refactoring of e2e tests to Framework; likely resolved within 1 day.",
         "expected_resolution_lower_days": 0.0,
         "expected_resolution_upper_days": 16.7,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 65.1,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "This is a low-priority issue as it's a feature request to add an option to not delete namespaces after e2e tests, which is a minor annoyance. The related issues (#10380, #13503, #10301) have already been addressed, making this a low-priority follow-up.",
+        "priority_rationale": "This is a refactoring task to port e2e tests to Framework, with a related but distinct goal of adding an option to not delete namespaces. Given the existing fixes for similar issues (#10380, #13503), this is a low-priority task.",
         "suggested_assignee_class": "test-infra team",
         "suggested_next_steps": [
-          "Review the existing e2e tests and identify the namespace deletion logic to be modified.",
-          "Implement the option to not delete namespaces after e2e tests and add relevant documentation.",
-          "Verify the changes and ensure they do not break any existing tests."
+          "Port the remaining e2e tests to Framework, following the existing pattern in the test suite.",
+          "Implement the option to not delete namespaces after e2e tests, as requested in #13503.",
+          "Verify that the changes do not introduce any regressions or break existing tests."
         ],
-        "triage_summary": "This issue aims to port remaining e2e tests to the Framework and add an option to not delete namespaces after e2e tests. Given the direct fixes to related issues (#10380, #13503, #10301), this is a low-priority issue that should be resolved quickly by the test-infra team."
+        "triage_summary": "Port e2e tests to Framework and add an option to not delete namespaces after e2e tests. This is a low-priority refactoring task with a clear scope and related fixes for similar issues (#10380, #13503)."
       },
       "judge_score": {
         "component_match": 2,
         "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 2,
+        "resolution_estimate_reasonableness": 1,
         "priority_alignment": 1,
         "next_steps_actionability": 3,
-        "overall_quality": 3,
-        "judge_rationale": "The triage plan is of high quality, accurately identifying the component and providing relevant similar issues. The resolution estimate is reasonable, and the suggested next steps are concrete and actionable. The priority alignment is also correct, and the overall plan is well-structured and easy to follow."
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the resolution estimate is order-of-magnitude correct but imprecise, and the overall quality is not excellent due to some minor gaps in the plan."
       },
       "error": null
     },
@@ -2886,7 +2924,7 @@
             "relevance_note": "Config generation for common scenarios; while not directly related, shares theme of user-facing documentation and API clarity."
           }
         ],
-        "expected_resolution_summary": "Documentation update and API field clarification; likely 1â€“4 weeks depending on team velocity and complexity.",
+        "expected_resolution_summary": "Documentation update and API field clarification; likely 1–4 weeks depending on team velocity and complexity.",
         "expected_resolution_lower_days": 0.6,
         "expected_resolution_upper_days": 247.0,
         "resolution_bucket": "hours",
@@ -2909,7 +2947,7 @@
         "priority_alignment": 1,
         "next_steps_actionability": 3,
         "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and concrete next steps that a triager could act on immediately. However, the resolution estimate is order-of-magnitude correct but imprecise, and the overall quality is not excellent due to some minor gaps in the plan."
+        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the resolution estimate is order-of-magnitude correct but imprecise, and the overall quality is not excellent due to some minor gaps in the plan."
       },
       "error": null
     },
@@ -2939,7 +2977,7 @@
             "relevance_note": "Comprehensive reporting of termination reasons; related to container lifecycle events."
           }
         ],
-        "expected_resolution_summary": "Feature enhancement to support PreStart and PostStop event hooks; typical 4â€“12 weeks depending on team velocity.",
+        "expected_resolution_summary": "Feature enhancement to support PreStart and PostStop event hooks; typical 4–12 weeks depending on team velocity.",
         "expected_resolution_lower_days": 0.9,
         "expected_resolution_upper_days": 321.3,
         "resolution_bucket": "months",
@@ -3069,49 +3107,6 @@
         "next_steps_actionability": 3,
         "overall_quality": 2,
         "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the priority guess is incorrect, as the gold standard indicates a low priority, whereas the triage plan suggests a medium priority."
-      },
-      "error": null
-    },
-    "k8s-13096": {
-      "plan": {
-        "predicted_component": "api",
-        "component_confidence": 0.22,
-        "similar_issues": [
-          {
-            "number": 5800,
-            "similarity": 0.78,
-            "relevance_note": "API type definitions for persistentVolumes and persistentVolumeClaims, likely related to the reported inconsistency."
-          },
-          {
-            "number": 8583,
-            "similarity": 0.754,
-            "relevance_note": "PersistentVolume search bug fix, which might be connected to the reported issue due to shared API concerns."
-          }
-        ],
-        "expected_resolution_summary": "Typical API inconsistency fix; usually resolved within 1–3 days for a minor bug.",
-        "expected_resolution_lower_days": 0.1,
-        "expected_resolution_upper_days": 94.7,
-        "resolution_bucket": "hours",
-        "resolution_confidence_pct": 41.8,
-        "resolution_interval_conformal": null,
-        "priority_guess": "low",
-        "priority_rationale": "Inconsistency in API response for persistentVolumes and persistentVolumeClaims, but no reported data loss or blocking behavior. Workaround exists (expecting an empty list instead of nil).",
-        "suggested_assignee_class": "api team",
-        "suggested_next_steps": [
-          "Review the API response handling for persistentVolumes and persistentVolumeClaims to ensure consistency with other entities.",
-          "Check if the reported behavior is a regression or a new feature.",
-          "Add a test case to cover the expected behavior for an empty list of items."
-        ],
-        "triage_summary": "Inconsistency in the API response for persistentVolumes and persistentVolumeClaims, where nil is returned instead of an empty list. Similar issues exist, and a workaround exists. Assign to the api team for a minor bug fix."
-      },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 1,
-        "priority_alignment": 1,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid, with a correct component match, highly relevant similar issues, and actionable next steps. However, the resolution estimate is order-of-magnitude correct but imprecise, and the overall quality is good but not excellent due to some minor gaps in the plan."
       },
       "error": null
     }

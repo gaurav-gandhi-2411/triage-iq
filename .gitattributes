@@ -1,0 +1,2 @@
+eval/cassettes/*.json text eol=lf
+eval/*.jsonl text eol=lf

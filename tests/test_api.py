@@ -523,6 +523,45 @@ def test_triage_parse_retry_succeeded():
     assert plan.priority_guess == "medium"
 
 
+def test_triage_corrupted_primary_cache_uses_retry_cache_not_live_call():
+    """Primary cache entry fails schema validation (e.g. malformed LLM JSON) but a
+    valid retry-prompt entry is already cached from a prior recovery. The retry
+    cache must be used — no live Groq call, since a replay-only cache (CI) has no
+    real credentials to make one."""
+    asst = _make_assistant()
+    corrupted_content = _json.dumps({
+        "predicted_component": "editor",
+        "similar_issues": [{"number": None, "similarity": 0.5, "relevance_note": "x"}],
+    })
+
+    def fake_compute_key(provider, model, messages, temp, max_tok):
+        is_retry = any(
+            m.get("role") == "user" and "not valid JSON" in m.get("content", "")
+            for m in messages
+        )
+        return "retry-key" if is_retry else "primary-key"
+
+    def fake_get(key):
+        if key == "primary-key":
+            return {"content": corrupted_content, "usage": {}}
+        if key == "retry-key":
+            return {"content": _VALID_PLAN_JSON, "usage": {"prompt_tokens": 10, "completion_tokens": 5}}
+        return None
+
+    cache = MagicMock()
+    cache.compute_key.side_effect = fake_compute_key
+    cache.get.side_effect = fake_get
+    asst._cache = cache
+
+    with patch.object(asst, "_groq_completion") as mock_live:
+        plan, _, _, status, cache_hit = asst._call_llm_verbose(_MINIMAL_SIGNALS)
+
+    mock_live.assert_not_called()
+    assert status == "parse_retry_succeeded"
+    assert cache_hit is True
+    assert plan.predicted_component == "editor"
+
+
 def test_build_triage_prompt_contains_signals():
     """build_triage_prompt must embed all system signals in the returned string."""
     from triage_iq.prompts.triage_prompt import build_triage_prompt

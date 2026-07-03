@@ -53,7 +53,8 @@ REPO_MAP = {
 }
 
 TRIAGE_DELAY = 1.5
-JUDGE_DELAY = 2.0
+# 70B judge: Groq free tier is 6K TPM; ~1,053 tok/call → 12s ≈ 5 calls/min (5,265 tok/min) — under limit
+JUDGE_DELAY = 12.0
 JUDGE_FLUSH_EVERY = 5  # write progress log every N judge calls
 CHECKPOINT_PATH = ROOT / "data" / "triage_eval_checkpoint.jsonl"
 # Judge checkpoint path is set in main() after args are parsed; model-name-scoped

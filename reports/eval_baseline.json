@@ -1,0 +1,41 @@
+{
+  "schema_version": "v1",
+  "eval_set_hash": "7834d8ad5b59306ac84ccd241e3cd6cfb926e8135023c8121bfc9638bb06e0d1",
+  "cassette_hash": "06f1bf79ed62b841547cdd313700b9a348cc7a2d59f4901e958b34fe4a0ad401",
+  "per_repo": {
+    "microsoft/vscode": {
+      "n": 30,
+      "mean": 10.0333,
+      "dimensions": {
+        "component_match": 1.5,
+        "similar_issues_relevance": 2.7666666666666666,
+        "resolution_estimate_reasonableness": 0.6666666666666666,
+        "priority_alignment": 0.43333333333333335,
+        "next_steps_actionability": 2.7333333333333334,
+        "overall_quality": 1.9333333333333333
+      }
+    },
+    "kubernetes/kubernetes": {
+      "n": 30,
+      "mean": 10.8667,
+      "dimensions": {
+        "component_match": 1.8333333333333333,
+        "similar_issues_relevance": 2.8333333333333335,
+        "resolution_estimate_reasonableness": 0.9,
+        "priority_alignment": 0.43333333333333335,
+        "next_steps_actionability": 2.8333333333333335,
+        "overall_quality": 2.033333333333333
+      }
+    }
+  },
+  "overall": {
+    "n": 60,
+    "mean": 10.45
+  },
+  "threshold": {
+    "absolute_drop": 0.0,
+    "epsilon": 0.0001,
+    "per_repo": true,
+    "note": "Gate fails if EITHER repo's mean drops below (baseline_mean - absolute_drop - epsilon)."
+  }
+}

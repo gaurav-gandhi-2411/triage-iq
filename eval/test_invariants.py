@@ -371,8 +371,7 @@ def test_model_manifest_clean() -> None:
 
     for line in lines:
         expected_hash, rel_path = line.split("  ", 1)
-        filename = rel_path.removeprefix("data/models/")
-        p = MODELS_DIR / filename
+        p = ROOT / rel_path
         if not p.exists():
             missing.append(rel_path)
             continue

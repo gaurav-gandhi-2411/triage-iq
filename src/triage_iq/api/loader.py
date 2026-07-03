@@ -126,7 +126,7 @@ class ModelStore:
         models_dir = data_dir / "models"
         processed_dir = data_dir / "processed"
 
-        _check_manifest_drift(models_dir)  # warn-not-crash: image-baked artifact integrity
+        _check_manifest_drift(data_dir)  # warn-not-crash: image-baked artifact integrity
 
         key = (groq_api_key if groq_api_key else os.environ.get("GROQ_API_KEY", "")).strip()
 
@@ -196,7 +196,7 @@ def _load_train(processed_dir: Path, slug: str) -> pd.DataFrame:
     raise FileNotFoundError(f"No train split for {slug} in {processed_dir}")
 
 
-def _check_manifest_drift(models_dir: Path) -> None:
+def _check_manifest_drift(data_dir: Path) -> None:
     """Compare image-baked artifacts against MANIFEST.sha256.
 
     Catches image-level corruption (stale artifact baked into the Docker layer).
@@ -205,7 +205,7 @@ def _check_manifest_drift(models_dir: Path) -> None:
     """
     import hashlib
 
-    manifest = models_dir / "MANIFEST.sha256"
+    manifest = data_dir / "models" / "MANIFEST.sha256"
     if not manifest.exists():
         logger.warning(
             "ARTIFACT_DRIFT: MANIFEST.sha256 not found at %s — skipping drift check. "
@@ -218,9 +218,9 @@ def _check_manifest_drift(models_dir: Path) -> None:
     drifted: list[str] = []
     for line in lines:
         expected, rel_path = line.split("  ", 1)
-        # rel_path is repo-relative (e.g. data/models/foo.pkl); strip prefix to get models_dir-relative
-        filename = rel_path.removeprefix("data/models/")
-        p = models_dir / filename
+        # rel_path is repo-relative (e.g. data/models/foo.pkl or data/processed/bar.parquet)
+        filename = rel_path.removeprefix("data/")
+        p = data_dir / filename
         if not p.exists():
             logger.warning("ARTIFACT_DRIFT: missing %s", rel_path)
             drifted.append(rel_path)

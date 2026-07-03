@@ -65,6 +65,9 @@ jobs:
             "gs://triageiq-portfolio-495022-models/processed/kubernetes_kubernetes_temporal_train.parquet" \
             data/processed/
 
+      - name: Verify GCS artifacts match MANIFEST.sha256 (drift guard)
+        run: python scripts/verify_model_manifest.py
+
       - name: Run structural invariants (offline — no LLM calls)
         run: pytest eval/test_invariants.py -v --no-cov
 
@@ -119,6 +122,9 @@ jobs:
             "gs://triageiq-portfolio-495022-models/processed/microsoft_vscode_temporal_train.parquet" \
             "gs://triageiq-portfolio-495022-models/processed/kubernetes_kubernetes_temporal_train.parquet" \
             data/processed/
+
+      - name: Verify GCS artifacts match MANIFEST.sha256 (drift guard)
+        run: python scripts/verify_model_manifest.py
 
       - name: Diagnose synthesis key for vscode-2093 (platform fingerprint)
         run: python -W ignore scripts/diag_ci_key.py

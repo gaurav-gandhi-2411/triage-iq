@@ -41,6 +41,8 @@ ARTIFACTS: list[str] = [
     "data/models/dup_index_microsoft_vscode_bge/meta.pkl",
     "data/models/dup_index_kubernetes_kubernetes_bge/index.faiss",
     "data/models/dup_index_kubernetes_kubernetes_bge/meta.pkl",
+    "data/processed/microsoft_vscode_temporal_train.parquet",
+    "data/processed/kubernetes_kubernetes_temporal_train.parquet",
 ]
 
 

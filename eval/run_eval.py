@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 import numpy as np
 import pandas as pd
 
-from cassette import CassetteMissError, CassettePlayer
+from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
 from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore, TriageJudge
 from triage_iq.models.component_classifier import TFIDFComponentClassifier
@@ -146,30 +146,7 @@ def compute_scores(
             ),
         })
 
-        try:
-            plan, _meta = assistant.triage_with_metadata(row)
-        except CassetteMissError:
-            # TEMPORARY DIAGNOSTIC — see ADR-0011 cassette-key-divergence investigation.
-            # Will be reverted once the CI-vs-local mismatch is root-caused.
-            signals = assistant._collect_signals(row)
-            print(
-                "CASSETTE_MISS_DEBUG="
-                + json.dumps(
-                    {
-                        "index": issues.index(issue),
-                        "repo": repo,
-                        "number": issue["number"],
-                        "classifier_top3": signals["classifier_top3"],
-                        "pred_days": signals["pred_days"],
-                        "lo_days": signals["lo_days"],
-                        "hi_days": signals["hi_days"],
-                        "resolution_bucket": signals["resolution_bucket"],
-                        "resolution_conf_pct": signals["resolution_conf_pct"],
-                    },
-                    sort_keys=True,
-                )
-            )
-            raise
+        plan, _meta = assistant.triage_with_metadata(row)
 
         plan_json = json.dumps(plan.model_dump(), ensure_ascii=False)
         gold = {

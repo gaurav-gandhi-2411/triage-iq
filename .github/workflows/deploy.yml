@@ -3,6 +3,19 @@ name: Deploy to Cloud Run
 on:
   push:
     branches: [main]
+    # Skip paths that never reach the built image or the deploy job itself.
+    # Verified against docker/Dockerfile.prod's COPY list before adding any
+    # entry here — reports/** is ignored EXCEPT eval_summary.json, which
+    # Dockerfile.prod bakes in directly and /eval/summary serves live.
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'notebooks/**'
+      - 'eval/**'
+      - 'tests/**'
+      - 'deploy/**'
+      - 'reports/**'
+      - '!reports/eval_summary.json'
   workflow_dispatch:
 
 env:

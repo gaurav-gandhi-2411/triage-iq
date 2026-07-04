@@ -1,6 +1,9 @@
 # ADR-0017 — Expand gold eval set: n=60 → n=150 (W5)
 
-**Status:** Accepted (partial result — n=119 achieved, not the targeted n=150; see Consequences)
+**Status:** Accepted (partial result — n=119 achieved, not the targeted n=150; see Consequences). Gold
+data expansion is complete and committed. The eval-gate cassette re-record against n=119 is
+deferred, not done — the frozen CI eval-gate still runs against the old n=60 cassette (see
+Consequences (e)). This is a scoped, TPD-gated follow-up, not an open item blocking anything today.
 **Date:** 2026-05-31 (rebased from `feat/w5-eval-expansion`, 2026-07-04; results 2026-07-04)
 **Decider:** Gaurav Gandhi
 
@@ -250,6 +253,47 @@ already applied to validate the 4 existing `body_ref` pairs in ADR-0007's own ma
 table. This remains a real, viable, but labor-intensive path to eventually growing
 `gold_related.parquet` beyond what corpus growth alone would give. Noted here as a candidate
 follow-up task for whoever eventually attempts the W3 retry — not committed to now.
+
+### (e) Judge-eval cassette re-record — DEFERRED
+
+GG's explicit decision: **defer the full re-record against n=119; do not spend the ~4-day TPD
+budget now.** The re-record's only payoff is sharper k8s judge-mean statistical power (n=30 → 78
+for k8s) — nothing in the pipeline is currently broken without it, and the existing n=60 cassette
+plus `reports/eval_baseline.json` still validly gate the current pipeline. The original motivating
+reason for that extra power — unblocking the W3 fine-tune retry — is dead per (b) above. Spending
+4 serialized days of the scarcest resource (70B TPD) on the lowest-leverage remaining piece isn't
+justified right now.
+
+What's banked at zero TPD cost from this iteration: the committed n=119 disjoint gold set
+(`data/gold_triage_plans.parquet`), the per-repo grounding-ratchet restructure (commit `b1dd48a`,
+which split the pooled ungrounded-count baseline into per-repo counts so a regression concentrated
+in one repo can't hide under the other's volume), and this ADR's findings.
+
+**Coherence check — confirmed clean, not just asserted.** `eval/eval_set.jsonl` (the frozen CI
+eval set) and `eval/cassettes/eval_cassette.json` are still built from the OLD n=60 gold set and
+are fully decoupled from `data/gold_triage_plans.parquet` — the CI eval-gate (`eval/run_eval.py`,
+`eval/test_quality_regression.py`, `eval/test_invariants.py`) reads only `eval_set.jsonl` / the
+cassette, never the raw gold parquet directly, and the `eval_set_hash` guard (unchanged, since
+`eval_set.jsonl` hasn't changed) will loudly fail if anyone tries to silently compare across the
+two sets. `reports/eval_baseline.json`'s per-repo means and the just-restructured per-repo
+grounding-ratchet baseline both still validly reference the n=60 set. **Nothing currently
+references n=119 expecting a cassette or baseline that doesn't exist.**
+
+**One operational note, not a bug:** `scripts/11_evaluate_triage.py` (the LIVE, non-cassette eval
+script) reads `data/gold_triage_plans.parquet` directly, so a live/manual run of that script now
+naturally operates on n=119, not n=60 — this is expected behavior (a live script should reflect
+current gold data), but means a manual live run and the frozen CI cassette will report different
+sample sizes until the deferred re-record happens. Worth knowing before anyone runs it manually and
+is confused by the discrepancy.
+
+**Scoped follow-up, not open-ended:** when 4+ clear consecutive TPD windows are available,
+re-run `eval/freeze_similar_issues.py` (rebuild `eval_set.jsonl` for n=119 with frozen CPU
+retrieval), re-record the cassette (synthesis + judge, ~397K 70B tokens estimated, ~30 issues/day
+× 4 days using the existing JSONL-checkpoint-resume mechanism), re-derive
+`reports/eval_baseline.json`'s per-repo means (human-approved before `--update-baseline`, as
+always), and re-derive the per-repo grounding-ratchet baseline plus known-case pins against the new
+hash — all atomically, per the original spec's re-baseline discipline. This is a fully scoped,
+ready-to-execute follow-up, not vague future work.
 
 ---
 

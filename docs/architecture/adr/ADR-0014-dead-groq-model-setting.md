@@ -1,7 +1,7 @@
-# ADR-0014 (stub): Wire or delete `groq_model_triage` config setting
+# ADR-0014: Wire or delete `groq_model_triage` config setting
 
-Status: **Stub — pending decision PR after eval-gate lands**
-Date: 2026-06-21
+Status: **Accepted — Option B implemented**
+Date: 2026-06-21 (decided), 2026-07-04 (implemented)
 
 ## Problem
 
@@ -42,11 +42,13 @@ cassette locally, run eval, approve means, commit all three in one PR.
 
 ## Decision
 
-**Pending.** Recommendation is Option B (delete). Implement after the eval-gate PR (#feat/eval-regression-gate) merges.
+**Accepted.** Option B (delete) implemented 2026-07-04, after the eval-gate PR (#9) merged.
 
-## Implementation (Option B)
+## Implementation (Option B) — done
 
-1. Delete `groq_model_triage` line from `config.py`.
+1. Deleted `groq_model_triage` from `config.py` (and its `GROQ_MODEL_TRIAGE` reference in
+   `README.md`'s environment-variable table).
 2. No change to `loader.py` or `triage.py` — the hardcoded default stays as-is.
-3. Update this ADR to `Status: Accepted` and remove the stub marker.
-4. Verify `GROQ_MODEL_TRIAGE` not set in Cloud Run env (it isn't — confirmed 2026-06-21).
+3. This ADR updated to `Status: Accepted`.
+4. Re-verified `GROQ_MODEL_TRIAGE` not set in Cloud Run env immediately before implementing
+   (2026-07-04, via `gcloud run services describe`) — confirmed absent.

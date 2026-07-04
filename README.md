@@ -232,7 +232,6 @@ All values from environment variables or `.env` file. Managed by `src/triage_iq/
 | `PORT` | No | `8080` | Uvicorn listen port (Cloud Run sets this automatically). |
 | `LOG_LEVEL` | No | `INFO` | Python logging level. |
 | `RATE_LIMIT_ENABLED` | No | `true` | Set `false` to disable rate limiting (tests use this). |
-| `GROQ_MODEL_TRIAGE` | No | `llama-3.1-8b-instant` | Groq model used for triage synthesis. |
 | `LLM_CACHE_ENABLED` | No | `false` | Set `true` to enable the SQLite LLM response cache. |
 | `LLM_CACHE_PATH` | No | `<repo-root>/data/llm_cache.sqlite` | Path to the SQLite cache DB. |
 

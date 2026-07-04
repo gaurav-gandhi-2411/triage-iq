@@ -8,3 +8,4 @@ _EVAL = Path(__file__).parent
 
 sys.path.insert(0, str(_ROOT / "src"))
 sys.path.insert(0, str(_EVAL))
+sys.path.insert(0, str(_ROOT / "scripts"))

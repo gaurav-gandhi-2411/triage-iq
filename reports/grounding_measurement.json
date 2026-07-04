@@ -1,0 +1,85 @@
+{
+  "per_repo": {
+    "microsoft/vscode": {
+      "n": 30,
+      "component_ungrounded_count": 0,
+      "component_ungrounded_pct": 0.0,
+      "component_ungrounded_ci_recoverable_count": 0,
+      "component_ungrounded_ci_recoverable_pct_of_ungrounded": 0.0,
+      "similar_issue_ungrounded_count": 0,
+      "similar_issue_ungrounded_pct": 0.0,
+      "all_grounded_false_count": 0,
+      "all_grounded_false_pct": 0.0
+    },
+    "kubernetes/kubernetes": {
+      "n": 30,
+      "component_ungrounded_count": 1,
+      "component_ungrounded_pct": 3.33,
+      "component_ungrounded_ci_recoverable_count": 0,
+      "component_ungrounded_ci_recoverable_pct_of_ungrounded": 0.0,
+      "similar_issue_ungrounded_count": 1,
+      "similar_issue_ungrounded_pct": 3.33,
+      "all_grounded_false_count": 2,
+      "all_grounded_false_pct": 6.67
+    }
+  },
+  "overall": {
+    "n": 60,
+    "component_ungrounded_count": 1,
+    "component_ungrounded_pct": 1.67,
+    "component_ungrounded_ci_recoverable_count": 0,
+    "component_ungrounded_ci_recoverable_pct_of_ungrounded": 0.0,
+    "similar_issue_ungrounded_count": 1,
+    "similar_issue_ungrounded_pct": 1.67,
+    "all_grounded_false_count": 2,
+    "all_grounded_false_pct": 3.33
+  },
+  "ungrounded_cases": [
+    {
+      "issue_number": 1678,
+      "repo": "kubernetes/kubernetes",
+      "component_grounded": true,
+      "component_reason": "in classifier_top3",
+      "case_insensitive_match_diagnostic": true,
+      "ungrounded_refs": [
+        13632
+      ],
+      "all_grounded": false,
+      "predicted_component": "test",
+      "classifier_top3_labels": [
+        "test",
+        "test-infra",
+        "provider/gcp"
+      ],
+      "retrieved_numbers": [
+        5084,
+        5821,
+        6056,
+        11075,
+        14342
+      ]
+    },
+    {
+      "issue_number": 13435,
+      "repo": "kubernetes/kubernetes",
+      "component_grounded": false,
+      "component_reason": "not in classifier_top3",
+      "case_insensitive_match_diagnostic": false,
+      "ungrounded_refs": [],
+      "all_grounded": false,
+      "predicted_component": "cluster/bootstrap",
+      "classifier_top3_labels": [
+        "provider/gcp",
+        "platform/vagrant",
+        "example"
+      ],
+      "retrieved_numbers": [
+        1085,
+        2054,
+        2597,
+        2824,
+        6962
+      ]
+    }
+  ]
+}

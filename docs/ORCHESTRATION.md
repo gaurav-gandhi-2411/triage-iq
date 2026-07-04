@@ -110,7 +110,7 @@ These rules apply to every session, every workstream, with no exceptions.
 
 6. **CHANGELOG per substantive PR. Squash-merge, one clean commit per workstream.**
 
-7. **Correction notes are permanent.** The W3 ADR-0010 has a correction note documenting the eval contamination. This note stays in the history permanently. It is evidence of verification discipline, not an embarrassment.
+7. **Correction notes are permanent.** The W3 ADR-0016 has a correction note documenting the eval contamination. This note stays in the history permanently. It is evidence of verification discipline, not an embarrassment.
 
 8. **`created_at` temporal splits, always.** See Verifier Check 4.
 

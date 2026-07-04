@@ -14,7 +14,7 @@ Protocol (canonical, post-W3-correction):
 IMPORTANT: Hardcoded baseline constants are FORBIDDEN here.
 Baseline is always computed on the SAME query set and protocol as the fine-tuned
 model. A baseline measured on a different sample makes the delta meaningless.
-See ADR-0010 correction note (2026-05-31): the original eval used sample_gold()
+See ADR-0016 correction note (2026-05-31): the original eval used sample_gold()
 which sampled from the full gold corpus, contaminating 66-71% of eval pairs with
 training data and inflating the reported delta to ~2x the true value.
 
@@ -75,7 +75,7 @@ def assert_eval_disjoint_from_train(test_pairs: pd.DataFrame, split_df: pd.DataF
     """Verify eval pairs have zero overlap with training pairs.
 
     Raises AssertionError loudly if violated — prevents silent eval contamination.
-    This is the regression gate for the ADR-0010 contamination bug.
+    This is the regression gate for the ADR-0016 contamination bug.
     """
     train_keys = frozenset(
         zip(
@@ -98,7 +98,7 @@ def assert_eval_disjoint_from_train(test_pairs: pd.DataFrame, split_df: pd.DataF
         raise AssertionError(
             f"EVAL/TRAIN LEAK: {n} eval pairs found in training set. "
             f"First 5: {sample}. "
-            "Eval MUST use only held-out test-split pairs — see ADR-0010 correction note."
+            "Eval MUST use only held-out test-split pairs — see ADR-0016 correction note."
         )
     logger.info("Disjoint check PASSED: 0 overlap between test_pairs and training split.")
 

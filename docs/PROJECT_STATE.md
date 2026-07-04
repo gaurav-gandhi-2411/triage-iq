@@ -43,15 +43,17 @@ Trained on ~22K real issues from `microsoft/vscode` and `kubernetes/kubernetes`.
 | W1.3 | Cross-encoder reranker | REJECTED (clean neg.) | n=100 +6pp k8s collapsed to noise at n=300; CI crossed zero — false positive | 0006 | main |
 | W2.A | LLM response cache | DONE | Opt-in SQLite cache; Prometheus hit/miss; 50%+ latency on repeat requests | 0005 | main |
 | W3-reframe | Task reframe: dup detection → similar-issue retrieval | DONE | Gold dataset reinterpreted; pipeline unchanged; corrects all downstream metrics | 0008 | main |
-| W3-finetune | BGE bi-encoder in-domain fine-tune | **PR #7 OPEN** | +13.16 pp R@5 k8s [+6.58, +19.74]; +13.33 pp vsc [+5.00, +23.33] — clean test split | 0010 (branch) | `feat/w3-finetune` |
+| W3-finetune | BGE bi-encoder in-domain fine-tune | **REBASING** | Prior branch result (+13.16 pp k8s / +13.33 pp vsc) unverified on current main — weights never committed; retraining + re-eval in progress on `feat/w3-finetune-rebased` | 0016 (rebased, was 0010 on stale branch) | `feat/w3-finetune-rebased` |
 | W4 | Resolution predictor: fix split + remove leakage | DONE | closed_at → created_at; removed triage-time feature leakage. k8s +2.1% vs naive; vscode 0% | 0009 | main |
 | W5 | Gold eval set expansion: n=60 → n=150 | **PR #8 OPEN** | 120-candidate pool generated; ingestion + tests ready; awaiting GG labeling | 0011 (branch) | `feat/w5-eval-expansion` |
 
-### PR #7 — `feat/w3-finetune`
+### PR #7 — `feat/w3-finetune` (superseded by `feat/w3-finetune-rebased`, not yet a PR)
 
-**Blocked on:** Cohere judge confirming `similar_issues_relevance ≥ 2.87/3` with fine-tuned retriever active.
+**Status:** PR #7 is 47 commits stale (rooted before CQR/eval-gate/drift-guard/grounding landed) with failing CI from 2026-05-31 — not being merged as-is. `feat/w3-finetune-rebased` ports the four T2–T5 scripts and tracked mining/split data onto current main; the fine-tuned weights (never committed — `data/models/**` gitignored) are being retrained and re-evaluated from scratch. The old +13pp result is provenance only until re-verified.
 
-Contains: fine-tuned model at `data/models/bge_finetuned_combined/`; loader preference for fine-tuned index; `SimilarIssueRetriever.source` ("finetuned"/"baseline") surfaced in `/health`; `assert_eval_disjoint_from_train()` guard; ADR-0010 with permanent correction note (original +26pp was 66–71% train/eval contaminated; corrected to +13pp); 5 loader branch tests (75 tests on that branch).
+**Blocked on:** re-established recall@k + bootstrap CI on current main (ship/no-ship gate), then Cohere judge confirming `similar_issues_relevance ≥ 2.87/3` with fine-tuned retriever active.
+
+Will contain (once re-verified): fine-tuned model at `data/models/bge_finetuned_combined/`; loader preference for fine-tuned index; `SimilarIssueRetriever.source` ("finetuned"/"baseline") surfaced in `/health`; `assert_eval_disjoint_from_train()` guard; ADR-0016 with permanent correction note (original +26pp was 66–71% train/eval contaminated; corrected to +13pp on the stale branch — pending re-verification on current main).
 
 ### PR #8 — `feat/w5-eval-expansion`
 
@@ -110,7 +112,7 @@ python scripts/11_evaluate_triage.py \
 ```
 
 **Decision on `similar_issues_relevance` vs baseline 2.87/3:**
-- Hold or rise → merge PR #7 (W3 accepted). Record delta in ADR-0010.
+- Hold or rise → merge PR #7 (W3 accepted). Record delta in ADR-0016.
 - Material drop → surface, investigate before merge.
 
 The same run's full scorecard becomes the n=150 baseline for all future workstreams. Update ADR-0011 before merging PR #8.

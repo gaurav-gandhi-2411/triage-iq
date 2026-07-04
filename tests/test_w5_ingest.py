@@ -21,15 +21,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 # Import the functions under test directly (not via CLI)
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 from w5_ingest_labeled import (  # noqa: E402
+    _days_to_bucket,
     assert_gold_disjoint_from_train,
     build_gold_rows,
     extract_related_issue_numbers,
     infer_priority,
     validate_accepted_rows,
     validate_labeled_csv,
-    _days_to_bucket,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

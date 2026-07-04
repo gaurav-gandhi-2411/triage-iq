@@ -43,17 +43,26 @@ Trained on ~22K real issues from `microsoft/vscode` and `kubernetes/kubernetes`.
 | W1.3 | Cross-encoder reranker | REJECTED (clean neg.) | n=100 +6pp k8s collapsed to noise at n=300; CI crossed zero — false positive | 0006 | main |
 | W2.A | LLM response cache | DONE | Opt-in SQLite cache; Prometheus hit/miss; 50%+ latency on repeat requests | 0005 | main |
 | W3-reframe | Task reframe: dup detection → similar-issue retrieval | DONE | Gold dataset reinterpreted; pipeline unchanged; corrects all downstream metrics | 0008 | main |
-| W3-finetune | BGE bi-encoder in-domain fine-tune | **REBASING** | Prior branch result (+13.16 pp k8s / +13.33 pp vsc) unverified on current main — weights never committed; retraining + re-eval in progress on `feat/w3-finetune-rebased` | 0016 (rebased, was 0010 on stale branch) | `feat/w3-finetune-rebased` |
+| W3-finetune | BGE bi-encoder in-domain fine-tune | **REJECTED (current evidence)** | Re-verified on current main: +11.84pp k8s CI [+0.00,+22.38], +10.00pp vsc CI [-6.67,+25.00] — neither excludes zero, same bar that rejected W1.3. Stale branch's +13pp was a GPU-leak training-bug artifact (see ADR-0016 pt.2). No cutover, baseline retriever stays live. | 0016 (rejected, was 0010 on stale branch) | not merging — `feat/w3-finetune-rebased` stays documented-and-rejected |
 | W4 | Resolution predictor: fix split + remove leakage | DONE | closed_at → created_at; removed triage-time feature leakage. k8s +2.1% vs naive; vscode 0% | 0009 | main |
 | W5 | Gold eval set expansion: n=60 → n=150 | **PR #8 OPEN** | 120-candidate pool generated; ingestion + tests ready; awaiting GG labeling | 0011 (branch) | `feat/w5-eval-expansion` |
 
-### PR #7 — `feat/w3-finetune` (superseded by `feat/w3-finetune-rebased`, not yet a PR)
+### PR #7 — `feat/w3-finetune` — CLOSE, do not merge (superseded by `feat/w3-finetune-rebased`, rejected)
 
-**Status:** PR #7 is 47 commits stale (rooted before CQR/eval-gate/drift-guard/grounding landed) with failing CI from 2026-05-31 — not being merged as-is. `feat/w3-finetune-rebased` ports the four T2–T5 scripts and tracked mining/split data onto current main; the fine-tuned weights (never committed — `data/models/**` gitignored) are being retrained and re-evaluated from scratch. The old +13pp result is provenance only until re-verified.
+**Status: REJECTED on current evidence (2026-07-04), see ADR-0016.** PR #7 itself is 47 commits stale
+with failing CI from 2026-05-31 and was never going to be merged as-is. Its four T2–T5 scripts and
+tracked mining/split data were ported to `feat/w3-finetune-rebased` and re-run against current main:
+the fine-tune was retrained and re-evaluated fresh (weights were never committed — `data/models/**`
+gitignored). Result: +11.84pp k8s (CI [+0.00, +22.38]), +10.00pp vsc (CI [−6.67, +25.00]) — neither
+CI excludes zero, so it does not clear the ADR-0006 ship bar. GG decision: reject rather than escalate
+to n=300 (vscode's 411-pair gold pool can't support n=300 without gutting training — escalating k8s
+alone would be an asymmetric standard). **No index cutover happened. The baseline (non-fine-tuned)
+retriever remains in production.** `feat/w3-finetune-rebased` stays as a documented-and-rejected
+branch, not merged. PR #7 should be closed without merging (mirrors how PR #1, the W1.3 reranker, was
+closed on rejection).
 
-**Blocked on:** re-established recall@k + bootstrap CI on current main (ship/no-ship gate), then Cohere judge confirming `similar_issues_relevance ≥ 2.87/3` with fine-tuned retriever active.
-
-Will contain (once re-verified): fine-tuned model at `data/models/bge_finetuned_combined/`; loader preference for fine-tuned index; `SimilarIssueRetriever.source` ("finetuned"/"baseline") surfaced in `/health`; `assert_eval_disjoint_from_train()` guard; ADR-0016 with permanent correction note (original +26pp was 66–71% train/eval contaminated; corrected to +13pp on the stale branch — pending re-verification on current main).
+**Unblock for revisiting:** growing `gold_related.parquet` beyond 1,435 pairs (1,024 k8s / 411 vsc) —
+see W5 below.
 
 ### PR #8 — `feat/w5-eval-expansion`
 
@@ -78,15 +87,15 @@ Open `data/gold_expansion_candidates.csv`. Fill exactly these columns per row:
 
 Save as `data/gold_expansion_candidates_labeled.csv`. Target: ~9 accepts per resolution bucket per repo (45/repo). The 12-per-bucket pool gives 3 slots of margin. See `docs/eval/gold_labeling_protocol.md` for the rubric.
 
-### T3a gate: confirm fine-tuned model is live (must pass before any Cohere spend)
+### T3a gate — SUPERSEDED (2026-07-04): W3 fine-tune rejected, no cutover happening
 
-PR #7 must be checked out or its changes applied. Then:
-
-```bash
-curl http://localhost:PORT/health | python -m json.tool
-# retrievers must show "finetuned" for BOTH repos
-# If either shows "baseline" → STOP, debug loader before spending quota
-```
+This gate assumed PR #7 would merge and a fine-tuned retriever would go live before the W5 Cohere
+run. Per ADR-0016, W3 is rejected on current evidence — the baseline (non-fine-tuned) retriever stays
+in production, `/health` will correctly show `"baseline"` for both repos indefinitely, and that is
+not a stop condition anymore. **GG is re-specifying W5 next** with a second purpose folded in: growing
+`gold_related.parquet` (not just `gold_triage_plans.parquet`) is now the concrete unblock for revisiting
+the W3 rejection. The runbook below (steps 1-3) still stands for W5's original n=60→150 judge-eval
+purpose; treat it as pending revision once the respec lands.
 
 ### Runbook (run in order)
 
@@ -111,11 +120,13 @@ python scripts/11_evaluate_triage.py \
   --judge-delay 6 --skip-reliability --clear-judge-checkpoint
 ```
 
-**Decision on `similar_issues_relevance` vs baseline 2.87/3:**
-- Hold or rise → merge PR #7 (W3 accepted). Record delta in ADR-0016.
-- Material drop → surface, investigate before merge.
+**Decision on `similar_issues_relevance` vs baseline 2.87/3** (W3 branch no longer in play — this now
+measures the baseline retriever's judge score at n=150, not a fine-tuned-vs-baseline comparison):
+- Hold or rise → expected; baseline retriever is unchanged, this just tightens the CI at n=150.
+- Material drop → surface, investigate — would indicate a W5 sampling/labeling issue, not a retriever regression.
 
-The same run's full scorecard becomes the n=150 baseline for all future workstreams. Update ADR-0011 before merging PR #8.
+The same run's full scorecard becomes the n=150 baseline for all future workstreams, including any
+future revisit of W3 once `gold_related.parquet` grows. Update ADR-0011 before merging PR #8.
 
 **Merge order:** PR #7 first (W3 retriever), then PR #8 (W5 eval infra).
 

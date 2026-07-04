@@ -18,6 +18,14 @@ on:
       - '!reports/eval_summary.json'
   workflow_dispatch:
 
+# Serialize deploys to the same ref — two unordered concurrent `gcloud run
+# deploy` calls against the same Cloud Run service is a real race (whichever
+# finishes last wins traffic, regardless of which commit is newer).
+# cancel-in-progress: false — queue, don't cancel a deploy mid-cutover.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   GCP_REGION: us-central1
   GCP_PROJECT: triageiq-portfolio-495022

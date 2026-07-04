@@ -385,3 +385,58 @@ Known limitations:
   flag. Creation-time features have insufficient signal for the 2015-2016 corpus.
 - Config B (bucket-only LLM prompt) regressed resolution by −0.532; bucket kept as API-only.
 - 42 Cohere judge failures (rate limiting) in the W4-A eval run; results directionally reliable.
+
+---
+
+## Deployment Correction (2026-07-03/04)
+
+**What was claimed:** "Accepted. W4 ships." (2026-05-31) — the de-leaked, correct-`created_at`-split
+resolution predictor is the production model as of that date.
+
+**What was actually deployed:** `resolution_predictor_{slug}.pkl` was retrained on the corrected
+split and republished to GCS on 2026-06-19 (05:52 UTC) — but `engineer_features()`
+(`src/triage_iq/models/resolution.py`) also joins each request against `data/processed/
+{slug}_temporal_train.parquet` at inference time to compute historical-aggregate features, and
+that companion file was never republished. GCS retained the **pre-ADR-0009 parquet** (uploaded
+2026-05-02, before this diagnosis existed). `data/models/MANIFEST.sha256` and
+`scripts/publish_models.py` only ever covered `data/models/*` (see ADR-0013 "What this does NOT
+catch"), so nothing detected the mismatch.
+
+Net effect: Cloud Run revisions `triageiq-api-00045-kpk` (deployed 2026-06-19 06:00 UTC) through
+`triageiq-api-00049-m26` (deployed 2026-06-20 17:41 UTC, live until this correction) served the
+**correctly-retrained model weights joined against pre-fix training data** — an internally
+inconsistent hybrid, not simply "the old leaky behavior" and not the honest post-fix behavior
+either. Revisions before `00045-kpk` served the fully pre-fix pairing (old model + old data,
+at least internally consistent with itself, just leaky).
+
+**Discovery:** Detected 2026-07-03 while diagnosing an unrelated eval-gate CI failure
+(`CassetteMissError` in `test_quality_regression.py`, ADR-0011). `classifier_top3` matched
+bit-for-bit between the local recording machine and CI, ruling out a platform float issue;
+`pred_days`/`hi_days` from the resolution predictor did not, isolating the mismatch to
+`engineer_features()`'s `train_df` input. GCS vs. local MD5 comparison confirmed the parquet
+itself — not the model — had drifted.
+
+**Actual behavior served during the gap, measured directly on live `/triage`** (vscode #4760,
+"Task Runner: Alternate version number not accepted in tasks.json"):
+
+| Field | Served 2026-06-19 → 2026-07-03 (stale parquet) | Corrected (post-fix) |
+|---|---|---|
+| `expected_resolution_upper_days` | **166.2** | **191.0** |
+| `resolution_confidence_pct` | **31.1** | **31.3** |
+| `resolution_interval_conformal.upper_days` | 166.25 | 191.05 |
+
+**Fix applied 2026-07-03/04:**
+- Corrected `data/processed/{microsoft_vscode,kubernetes_kubernetes}_temporal_train.parquet`
+  republished to GCS via `scripts/publish_models.py` (readback-verified).
+- `MANIFEST.sha256` / `publish_models.py` / `verify_model_manifest.py` / the `deploy.yml`
+  pre-deploy gate / the eval-gate CI check / `loader.py`'s startup assertion all extended to
+  cover `data/processed/*.parquet` — closing the exact gap ADR-0013 flagged as out of scope.
+- Cloud Run revision `triageiq-api-00050-flt` deployed 2026-07-04 00:00 UTC with the corrected
+  pairing. Live `/triage` for the same vscode #4760 request now returns `expected_resolution_
+  upper_days: 191.0` (was 166.2) and `resolution_confidence_pct: 31.3` (was 31.1) — confirmed
+  by direct before/after requests against the same endpoint.
+
+**What `/eval/summary` reports as of 2026-07-04:** the `leakage.deployment` block documents this
+gap. The `honest_metrics` (k8s +2.1%, vscode −70.5%) were computed against the corrected model
+and are accurate as of this date; they were NOT what production was serving between 2026-06-19
+and 2026-07-04.

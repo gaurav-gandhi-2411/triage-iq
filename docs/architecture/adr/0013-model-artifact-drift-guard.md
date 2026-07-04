@@ -106,8 +106,15 @@ This catches developer workflow errors before a branch is merged to main.
 **What this does NOT catch:**
 - A manifest that is committed but never pushed (push is the engineer's responsibility
   after `publish_models.py` prints the `git commit && git push` instructions).
-- Training data drift (`data/processed/`) — out of scope; training data is larger and
-  less frequently changed. Add to manifest when training cycle management is formalized.
+- ~~Training data drift (`data/processed/`) — out of scope~~ **Closed 2026-07-04.** This
+  exact gap caused a real incident: the ADR-0009 resolution-predictor pkl was retrained and
+  republished, but its companion `{slug}_temporal_train.parquet` (read by `engineer_features()`
+  at inference time) was not, and GCS silently kept serving the pre-fix parquet for ~2 weeks
+  in production. `MANIFEST.sha256` / `publish_models.py` / `verify_model_manifest.py` are now
+  extended to cover `data/processed/*.parquet`; `_check_manifest_drift` (loader.py) and
+  `test_model_manifest_clean` (eval/test_invariants.py) were also fixed — both hardcoded a
+  `data/models/` prefix strip that would have silently misresolved the new entries as
+  "missing" rather than checking them. See ADR-0009 "Deployment Correction" for the incident.
 
 ## Alternatives considered
 

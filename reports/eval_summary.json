@@ -31,6 +31,25 @@
         "ci_coverage": 0.4156,
         "note": "LightGBM underperforms naive on vscode because there is no creation-time signal that predicts resolution time for this repo. The system detects this at the repo level (bucket model improvement −70.5% vs naive) and surfaces a badge to the user rather than presenting a prediction that is worse than the baseline. See /eval for full methodology."
       }
+    },
+    "deployment": {
+      "corrected_model_fitted": "2026-05-30",
+      "corrected_model_gcs_uploaded": "2026-06-19T05:52Z",
+      "companion_train_parquet_gcs_uploaded": "2026-07-03T23:15Z",
+      "corrected_pairing_deployed": "2026-07-04T00:00Z",
+      "cloud_run_revision": "triageiq-api-00050-flt",
+      "gap_disclosure": "resolution_predictor_{slug}.pkl was retrained on the corrected created_at split and uploaded to GCS on 2026-06-19, but engineer_features() also reads data/processed/{slug}_temporal_train.parquet at inference time for historical-aggregate features, and that companion file was NOT re-uploaded — GCS retained the pre-ADR-0009 parquet (uploaded 2026-05-02). MANIFEST.sha256 only covered data/models/*, so nothing detected the mismatch. Cloud Run revisions triageiq-api-00045-kpk (2026-06-19 06:00 UTC) through triageiq-api-00049-m26 (2026-06-20 17:41 UTC) served the corrected model weights joined against pre-fix training data — an internally inconsistent hybrid, not simply the old leaky behavior. See ADR-0009 'Deployment Correction' for full detail including measured before/after values on live /triage.",
+      "served_vs_corrected_example": {
+        "test_issue": "microsoft/vscode#4760",
+        "served_2026_06_19_to_2026_07_03": {
+          "expected_resolution_upper_days": 166.2,
+          "resolution_confidence_pct": 31.1
+        },
+        "corrected": {
+          "expected_resolution_upper_days": 191.0,
+          "resolution_confidence_pct": 31.3
+        }
+      }
     }
   },
   "calibration": {

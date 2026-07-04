@@ -5,7 +5,10 @@ held-out eval splits, with TF-IDF and BGE systems 1+2 output pre-computed.
 
 Outputs:
   data/gold_expansion_candidates.parquet  — full data (all columns)
-  data/gold_expansion_candidates.csv      — human-readable (no body_clean)
+  data/gold_expansion_candidates.csv      — same columns as parquet; includes both
+                                             body_excerpt (300-char skim column) and the
+                                             full body_clean (required standalone by
+                                             scripts/w5_ingest_labeled.py)
   reports/w5_gold_audit.json              — current gold audit + candidate pool stats
 """
 
@@ -130,16 +133,66 @@ def load_retrieval_train_numbers(repo_key: str) -> set[int]:
     return numbers
 
 
+def load_classifier_train_numbers(repo_key: str) -> set[int]:
+    """Load the component classifier's train-split issue numbers for a repo.
+
+    Reads ``data/processed/{repo_key}_classifier_train.parquet`` and returns its
+    ``number`` column as an issue-number set. Candidates matching any of these numbers
+    must be excluded from the labeling pool — a gold issue that leaks into the
+    classifier's train split would silently inflate classifier accuracy evaluated
+    against gold (mirrors scripts/w5_ingest_labeled.py's
+    ``assert_gold_disjoint_from_train`` check #1).
+    """
+    path = REPO_ROOT / "data/processed" / f"{repo_key}_classifier_train.parquet"
+    if not path.exists():
+        logger.warning(
+            "%s not found — skipping classifier-train disjointness filter", path
+        )
+        return set()
+    df = pd.read_parquet(path, columns=["number"])
+    return set(df["number"].astype(int))
+
+
+def load_temporal_train_numbers(repo_key: str) -> set[int]:
+    """Load the resolution-time model's temporal train-split issue numbers for a repo.
+
+    Reads ``data/processed/{repo_key}_temporal_train.parquet`` and returns its
+    ``number`` column as an issue-number set. Mirrors
+    scripts/w5_ingest_labeled.py's ``assert_gold_disjoint_from_train`` check #2.
+    """
+    path = REPO_ROOT / "data/processed" / f"{repo_key}_temporal_train.parquet"
+    if not path.exists():
+        logger.warning(
+            "%s not found — skipping temporal-train disjointness filter", path
+        )
+        return set()
+    df = pd.read_parquet(path, columns=["number"])
+    return set(df["number"].astype(int))
+
+
 def filter_pool(
     df: pd.DataFrame,
     gold_numbers: set[int],
     retrieval_train_numbers: set[int],
-) -> tuple[pd.DataFrame, int, int]:
-    """Keep: component not-null, resolution_hours > 0, not in current gold, not in retrieval train.
+    classifier_train_numbers: set[int],
+    temporal_train_numbers: set[int],
+) -> tuple[pd.DataFrame, dict[str, int]]:
+    """Keep: component not-null, resolution_hours > 0, not in current gold, and not in
+    any of the three training-data issue-number sets (retrieval-train, classifier-train,
+    temporal-train).
 
-    Returns the filtered DataFrame plus the counts dropped by the "already in
-    current gold" filter and the "retrieval-train disjointness" filter, reported
-    separately so each filter's impact is auditable per repo.
+    The three training-set exclusions are each measured independently against the same
+    post-gold-filter pool (not sequentially), so every filter's reported drop count
+    reflects its own true overlap rather than an order-dependent residual after earlier
+    filters already removed some of the same issues. The actual removal applied to the
+    pool is the UNION of the three masks — an issue present in more than one training
+    set is only removed once, so ``dropped_training_union`` is <= the sum of the three
+    individual counts (equality only when the three sets don't overlap).
+
+    Returns the filtered DataFrame plus a stats dict with keys:
+    ``dropped_already_in_current_gold``, ``dropped_retrieval_train_overlap``,
+    ``dropped_classifier_train_overlap``, ``dropped_temporal_train_overlap``,
+    ``dropped_training_union``.
     """
     mask = df["component"].notna() & (df["resolution_hours"] > 0)
     df = df[mask].copy()
@@ -153,16 +206,42 @@ def filter_pool(
         dropped_gold,
     )
 
-    before_retrain = len(df)
-    df = df[~df["number"].isin(retrieval_train_numbers)]
-    dropped_retrain = before_retrain - len(df)
+    in_retrain = df["number"].isin(retrieval_train_numbers)
+    in_classifier = df["number"].isin(classifier_train_numbers)
+    in_temporal = df["number"].isin(temporal_train_numbers)
+
+    dropped_retrain = int(in_retrain.sum())
+    dropped_classifier = int(in_classifier.sum())
+    dropped_temporal = int(in_temporal.sum())
+
+    union_mask = in_retrain | in_classifier | in_temporal
+    dropped_union = int(union_mask.sum())
+    sum_individual = dropped_retrain + dropped_classifier + dropped_temporal
+
     logger.info(
-        "After retrieval-train disjointness filter: %d issues (removed %d present in "
-        "w3_split.parquet train split)",
+        "Training-disjointness exclusions (independent counts against post-gold pool of "
+        "%d): retrieval_train=%d, classifier_train=%d, temporal_train=%d, union=%d "
+        "(sum=%d, overcounted by %d due to overlap across the three sets)",
         len(df),
         dropped_retrain,
+        dropped_classifier,
+        dropped_temporal,
+        dropped_union,
+        sum_individual,
+        sum_individual - dropped_union,
     )
-    return df, dropped_gold, dropped_retrain
+
+    df = df[~union_mask]
+    logger.info("After training-disjointness filters: %d issues remain", len(df))
+
+    stats = {
+        "dropped_already_in_current_gold": dropped_gold,
+        "dropped_retrieval_train_overlap": dropped_retrain,
+        "dropped_classifier_train_overlap": dropped_classifier,
+        "dropped_temporal_train_overlap": dropped_temporal,
+        "dropped_training_union": dropped_union,
+    }
+    return df, stats
 
 
 # ---------------------------------------------------------------------------
@@ -413,15 +492,18 @@ def main() -> None:
         logger.info("=== Processing %s ===", repo_name)
         gold_numbers_repo = set(gold[gold["repo"] == repo_name]["number"].tolist())
         retrieval_train_numbers = load_retrieval_train_numbers(repo_key)
+        classifier_train_numbers = load_classifier_train_numbers(repo_key)
+        temporal_train_numbers = load_temporal_train_numbers(repo_key)
 
         pool = load_eval_pool(repo_key)
-        pool, dropped_gold, dropped_retrain = filter_pool(
-            pool, gold_numbers_repo, retrieval_train_numbers
+        pool, stats = filter_pool(
+            pool,
+            gold_numbers_repo,
+            retrieval_train_numbers,
+            classifier_train_numbers,
+            temporal_train_numbers,
         )
-        filter_stats[repo_name] = {
-            "dropped_already_in_current_gold": dropped_gold,
-            "dropped_retrieval_train_overlap": dropped_retrain,
-        }
+        filter_stats[repo_name] = stats
         pool["repo"] = repo_name
 
         # Stratified sample with diversity
@@ -456,9 +538,12 @@ def main() -> None:
     candidates.to_parquet(OUTPUT_PARQUET, index=False)
     logger.info("Saved parquet: %s", OUTPUT_PARQUET)
 
-    # CSV drops body_clean, keeps body_excerpt
-    csv_cols = [c for c in candidates.columns if c != "body_clean"]
-    candidates[csv_cols].to_csv(OUTPUT_CSV, index=False)
+    # CSV keeps both body_excerpt (300-char skim column, for human review) and the
+    # full body_clean (required by scripts/w5_ingest_labeled.py's validate_accepted_rows
+    # / extract_related_issue_numbers — ingestion reads the labeled CSV standalone and
+    # must not depend on re-joining against the parquet). Kept as two distinct columns
+    # (not deduped) so the excerpt stays skimmable while body_clean remains available.
+    candidates.to_csv(OUTPUT_CSV, index=False)
     logger.info("Saved CSV: %s", OUTPUT_CSV)
 
     # --- Audit JSON ---
@@ -474,9 +559,14 @@ def main() -> None:
             "(temporal_val + temporal_test + classifier_val + classifier_test). "
             "Component diversity constraint: prefer underrepresented components, "
             "max 3 per component per bucket. Seed 42. Pool additionally excludes any "
-            "issue number already in the current gold set and any issue number present "
-            "in data/w3_split.parquet's train split (query_number or original_number, "
-            "per repo) to guarantee retrieval-train disjointness."
+            "issue number already in the current gold set, plus the union of three "
+            "training-data issue-number sets: (1) data/w3_split.parquet's train split "
+            "(query_number or original_number, per repo — retrieval-train disjointness), "
+            "(2) data/processed/{repo}_classifier_train.parquet's number column "
+            "(classifier-train disjointness), and (3) "
+            "data/processed/{repo}_temporal_train.parquet's number column "
+            "(temporal-train disjointness). Mirrors scripts/w5_ingest_labeled.py's "
+            "assert_gold_disjoint_from_train three-way check."
         ),
     }
 
@@ -497,8 +587,11 @@ def main() -> None:
         for b in BUCKET_ORDER:
             print(f"  {b:8s}: {bucket_counts.get(b, 0)}")
         stats = filter_stats.get(repo_name, {})
-        print(f"  dropped (already in current gold):      {stats.get('dropped_already_in_current_gold', 0)}")
-        print(f"  dropped (retrieval-train disjointness):  {stats.get('dropped_retrieval_train_overlap', 0)}")
+        print(f"  dropped (already in current gold):       {stats.get('dropped_already_in_current_gold', 0)}")
+        print(f"  dropped (retrieval-train overlap):       {stats.get('dropped_retrieval_train_overlap', 0)}")
+        print(f"  dropped (classifier-train overlap):      {stats.get('dropped_classifier_train_overlap', 0)}")
+        print(f"  dropped (temporal-train overlap):        {stats.get('dropped_temporal_train_overlap', 0)}")
+        print(f"  dropped (training union, net):           {stats.get('dropped_training_union', 0)}")
     print()
 
     new_comps = candidate_audit["new_components_introduced"]

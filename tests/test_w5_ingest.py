@@ -196,6 +196,17 @@ class TestBuildGoldRows:
         result = build_gold_rows(df, issue_created_at_maps={"microsoft/vscode": {}})
         assert isinstance(result.iloc[0]["number"], (int, np.integer))
 
+    def test_created_at_coerced_to_timestamp_from_csv_string(self):
+        """Regression test: pd.read_csv yields created_at as a plain string, not a
+        Timestamp. build_gold_rows must coerce it, or concatenating with the existing
+        gold set's datetime64[ns, UTC] column produces a mixed str/Timestamp object
+        column that pyarrow rejects on to_parquet (the bug this test guards against)."""
+        df = pd.DataFrame([_make_candidate(created_at="2016-03-15 03:43:21+00:00")])
+        result = build_gold_rows(df, issue_created_at_maps={"microsoft/vscode": {}})
+        assert isinstance(result.iloc[0]["created_at"], pd.Timestamp)
+        combined = pd.concat([_make_existing_gold(n=1), result], ignore_index=True)
+        assert pd.api.types.is_datetime64_any_dtype(combined["created_at"])
+
     def test_no_body_ref_yields_empty_related_and_no_spot_check(self):
         df = pd.DataFrame([_make_candidate(body_clean="Nothing related mentioned here.")])
         result = build_gold_rows(df, issue_created_at_maps={"microsoft/vscode": {}})

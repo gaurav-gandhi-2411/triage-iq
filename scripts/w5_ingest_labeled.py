@@ -341,7 +341,10 @@ def build_gold_rows(
             "type": str(row.get("type", "")) if pd.notna(row.get("type")) else "",
             "gold_priority": infer_priority(row),
             "actual_resolution_days": float(row["resolution_hours"]) / 24.0,
-            "created_at": row["created_at"],
+            # CSV-sourced created_at is a plain string (pd.read_csv does not parse
+            # dates); must coerce to Timestamp here or the merged frame ends up with
+            # a mixed str/Timestamp object column that pyarrow rejects on to_parquet.
+            "created_at": pd.to_datetime(row["created_at"], utc=True),
             "related_issue_numbers": related,
             "related_issue_needs_spot_check": len(related) > 0,
         })

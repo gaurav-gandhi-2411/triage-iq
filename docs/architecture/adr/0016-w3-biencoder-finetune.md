@@ -1,6 +1,6 @@
 # ADR-0016 — W3: Fine-tune BGE bi-encoder for similar-issue retrieval
 
-**Status:** Proposed — re-verification in progress on current main
+**Status:** Re-verified on current main — does NOT clear the ADR-0006 ship bar (see Results). Awaiting GG decision: escalate to a larger held-out test (mirroring ADR-0006's n=300 robustness check) or reject.
 **Date:** 2026-07-04 (rebased from a draft originally numbered ADR-0010 on `feat/w3-finetune`, 2026-05-31)
 
 ---
@@ -14,13 +14,17 @@ drift guard, and the grounding verifier landed). That branch's number collided w
 
 More importantly: the branch's fine-tuned model weights were never committed
 (`data/models/**` is gitignored except the manifest), so the original +13.16pp k8s / +13.33pp vsc
-R@5 result cannot simply be carried over — it must be reproduced end-to-end on current main before
-it is claimed or shipped. The scripts (`scripts/w3_t2_mine_negatives.py`, `w3_t3_split.py`,
+R@5 result could not simply be carried over — it had to be reproduced end-to-end on current main
+before being claimed or shipped. The scripts (`scripts/w3_t2_mine_negatives.py`, `w3_t3_split.py`,
 `w3_t4_train.py`, `w3_t5_eval.py`) and their tracked inputs (`data/w3_hard_negatives.parquet`,
 `data/w3_split.parquet`) were ported as-is — `data/gold_related.parquet` was confirmed unchanged
-(1,435 pairs) since the original run, so those mining/split outputs remain valid. The model itself
-is being retrained and re-evaluated fresh; **the Results section below is pending until that
-re-verification completes.**
+(1,435 pairs) since the original run, so those mining/split outputs remain valid.
+
+**Re-verification result: the honest re-run does NOT match the stale branch's claim.** Retraining on
+current main (same seed, same hyperparameters, same ported hard negatives/split) produced smaller,
+statistically weaker deltas — see Results below. This is the expected outcome of the "verify against
+current, don't trust the stale report" discipline: the original PASS verdict does not survive
+reproduction.
 
 ---
 
@@ -60,29 +64,53 @@ from retrieval, matching baseline methodology). Bootstrap 95% paired CI (n=2,000
 
 ## Consequences
 
-**Results (test split, zero training overlap):** PENDING re-verification on current main — see
-Rebase note above. The prior draft's numbers (kept here for provenance only, NOT a current claim):
+**Results (test split, zero training overlap, re-established on current main 2026-07-04):**
 
-| Repo | n | Baseline R@5 | Fine-tuned R@5 | Delta | CI 95% | Verdict |
+| Repo | n | Baseline R@5 | Fine-tuned R@5 | Delta | CI 95% (2,000 boot) | Verdict |
 |---|---|---|---|---|---|---|
-| kubernetes_kubernetes | 152 | 0.5263 | 0.6579 | +13.16 pp | [+6.58, +19.74] | PASS (stale — pre-rebase) |
-| microsoft_vscode | 60 | 0.6833 | 0.8167 | +13.33 pp | [+5.00, +23.33] | PASS (stale — pre-rebase) |
+| kubernetes_kubernetes | 152 | 0.5263 | 0.6447 | +11.84 pp | [+0.00, +22.38] | ESCALATE_n300 |
+| microsoft_vscode | 60 | 0.6833 | 0.7833 | +10.00 pp | [−6.67, +25.00] | ESCALATE_n300 |
 
-This table will be replaced with the re-established numbers once T4/T5 complete on current main.
-Decision gate (per ADR-0006's bar, which rejected the cross-encoder reranker): CI must exclude zero
-on both repos to ship.
+**Overall verdict: ESCALATE_n300.** Point-estimate deltas are still positive and well above the 3pp
+gate on both repos, but the CI does not cleanly exclude zero: k8s's lower bound sits exactly at 0.0000
+and vscode's lower bound is negative. Per ADR-0006's own bar ("CI must exclude zero on both repos to
+ship") and its own precedent (bge-v2-m3 looked like a +6pp k8s win at n=100, then the CI crossed zero
+at n=300 and the reranker was rejected) — **this result does not clear the ship bar as measured.** It
+also does not cleanly fail: it lands in the same "looked promising at this n, needs a larger sample to
+know" zone the T5 script's own decision logic anticipates (`ESCALATE_n300`), rather than either PASS
+or REGRESSION.
 
-**CPU latency**: No regression expected. Same architecture (BGE-base 86M params), same FAISS
+**Why this differs from the stale branch's +13pp claim:** The stale run's T4 winner was the *combined*
+model (both repos trained jointly) because per-repo training crashed on GPU state leak before it could
+compare fairly. This run's T4 fix (explicit `del` + `torch.cuda.empty_cache()` between sequential
+`train_model()` calls) let all three variants — combined (val R@5=0.8500), k8s-only (0.8533), vsc-only
+(0.8000) — train to completion. k8s-only edged out combined by 0.33pp on val R@5, so T4's `max()`
+selection picked the **per-repo models** (`bge_finetuned_k8s` + `bge_finetuned_vsc`) as winner instead
+of combined. Per-repo models trained on ~1/3 to ~2/3 the data of the combined model, which plausibly
+explains the wider CIs and smaller point deltas on this run versus the stale branch's combined-model
+result. This is a real architecture difference introduced by fixing a real bug, not noise from a typo.
+
+**Data ceiling for escalating to n=300 (per ADR-0006's own robustness-check precedent):** k8s test
+split is currently capped at n=152 (out of 1,024 total k8s gold pairs; the rest are in train/val).
+Reaching n=300 test pairs would require re-splitting with a smaller train fraction, which shrinks the
+already-small training set (704 k8s triplets) further — a real trade-off, not a free re-run. vscode's
+ceiling is worse: only 411 total gold pairs, so an n=300 vscode test split is not reachable without
+gutting training data to near-zero. Escalating "the ADR-0006 way" is only fully available for k8s.
+
+**CPU latency**: No regression observed. Same architecture (BGE-base 86M params), same FAISS
 IndexFlatIP; only weights change.
 
-**What worked (from the prior run, being re-verified)**:
+**What worked**:
 - Hard negatives from the existing FAISS top-50 were effective (rank-1 negatives, 15% soft-positive rate tolerated)
-- Even 1,028 training triplets (1 neg/pair, epoch 0 only) gave substantial improvement
-- Combined model generalises across both repos despite vocabulary differences
+- The T4 GPU-state-leak fix now lets per-repo variants train to completion instead of crashing
+- Both repos still show a positive point-estimate delta after honest re-verification (not a null result)
 
-**What didn't work / open questions (from the prior run)**:
-- Per-repo training blocked by GPU state leak in sequential training (same process); fix documented in T4 script
-- Proxy val R@5 peaked at epoch 0, declining afterwards — small dataset (1,028 triplets) overfits quickly
+**What didn't work / open questions**:
+- The winning architecture flipped from combined to per-repo between the stale run and this run —
+  variant selection is sensitive to the GPU-leak fix, which is a sign the val-R@5-based winner pick
+  (n=10-60 val pairs) is itself noisy at this data scale
+- Proxy val R@5 peaked early across all three variants (epoch 0-1), declining afterwards — small
+  dataset (1,028 triplets) overfits quickly regardless of combined vs. per-repo split
 
 **Alternatives considered**:
 - Track B (ms-marco-MiniLM-L-6-v2 CE reranker, 22M): not attempted — Track A sufficient
@@ -124,8 +152,10 @@ merge, not an embarrassment to hide.
 
 - `data/w3_hard_negatives.parquet` — 14,350 hard-negative records (ported, gold_related.parquet unchanged)
 - `data/w3_split.parquet` — 1,400 pair split assignments (ported, gold_related.parquet unchanged)
-- `data/models/bge_finetuned_combined/` — fine-tuned SentenceTransformer (regenerated on current main, not committed — gitignored)
-- `data/models/bge_finetuned_k8s_index/` — FAISS index built on fine-tuned model (k8s, regenerated)
-- `data/models/bge_finetuned_vsc_index/` — FAISS index built on fine-tuned model (vsc, regenerated)
-- `reports/w3_t4_val_results.json` — T4 variant comparison (regenerated)
-- `reports/w3_t5_eval_results.json` — full T5 eval table (regenerated)
+- `data/models/bge_finetuned_combined/` — combined-repo SentenceTransformer, trained but NOT the winner this run (val R@5=0.8500) — not committed, gitignored
+- `data/models/bge_finetuned_k8s/` — k8s-only SentenceTransformer, T4 winner for k8s (val R@5=0.8533) — not committed, gitignored
+- `data/models/bge_finetuned_vsc/` — vsc-only SentenceTransformer, T4 winner for vsc (val R@5=0.8000) — not committed, gitignored
+- `data/models/bge_finetuned_k8s_index/` — FAISS index built on the k8s winner model (regenerated)
+- `data/models/bge_finetuned_vsc_index/` — FAISS index built on the vsc winner model (regenerated)
+- `reports/w3_t4_val_results.json` — T4 variant comparison, committed
+- `reports/w3_t5_eval_results.json` — full T5 eval table, committed

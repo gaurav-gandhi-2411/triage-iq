@@ -29,6 +29,19 @@ _ECE_TOLERANCE = 0.15
 
 _COVERAGE_TOL = 0.05
 
+# Recorded grounding baseline — mirrors _RECORDED_ECE above. Produced by
+# scripts/measure_grounding.py against the CURRENT (unmodified) cassette over all 60 eval
+# issues. See ADR-0015.
+_GROUNDING_BASELINE = {
+    "eval_set_hash": "7834d8ad5b59306ac84ccd241e3cd6cfb926e8135023c8121bfc9638bb06e0d1",
+    "ungrounded_count": 2,
+    "n": 60,
+    "known_ungrounded_cases": {
+        1678: {"axis": "similar_issue", "detail": "ref 13632 not in retrieval"},
+        13435: {"axis": "component", "detail": "predicted_component 'cluster/bootstrap' not in classifier_top3"},
+    },
+}
+
 
 def _extract_q_hours(repo: str, repos_data: dict) -> float:
     """Extract q_adjustment_hours for a repo using the same fallback logic as loader.py."""
@@ -388,4 +401,80 @@ def test_model_manifest_clean() -> None:
     assert not errors, (
         "Model artifact drift detected — run python scripts/publish_models.py "
         "and commit the updated manifest:\n" + "\n".join(errors)
+    )
+
+
+def _eval_set_hash_guard() -> str:
+    """Compute eval_set.jsonl's sha256 and return a loud failure message if it has drifted.
+
+    Returns the current hash. Callers assert `current_hash == _GROUNDING_BASELINE["eval_set_hash"]`
+    with this message so staleness surfaces instead of being silently compared across sets.
+    """
+    return hashlib.sha256(EVAL_SET.read_bytes()).hexdigest()
+
+
+_HASH_DRIFT_MSG = (
+    "eval_set.jsonl changed — re-derive _GROUNDING_BASELINE (ratchet + known-case pins) "
+    "deliberately, do not silently compare across different sets"
+)
+
+
+@pytest.fixture(scope="module")
+def grounding_reports() -> list[dict]:
+    """Compute grounding reports once for the module, shared by the ratchet and pin tests.
+
+    Reuses the same cassette-replay pipeline as scripts/measure_grounding.py (zero live
+    LLM calls — CassettePlayer(strict=True)). See ADR-0015.
+    """
+    if not EVAL_SET.exists():
+        pytest.skip(reason="eval_set.jsonl not found — skipping grounding checks")
+
+    from measure_grounding import compute_grounding_reports
+
+    return compute_grounding_reports()
+
+
+def test_grounding_ratchet_no_new_ungrounded_claims(grounding_reports: list[dict]) -> None:
+    """Ungrounded-claim count on the frozen eval set must not exceed the recorded baseline.
+
+    Guards against silent regressions in synthesis grounding (component/similar-issue
+    hallucination) creeping in above the measured 2/60 baseline. See ADR-0015.
+    """
+    current_hash = _eval_set_hash_guard()
+    assert current_hash == _GROUNDING_BASELINE["eval_set_hash"], _HASH_DRIFT_MSG
+
+    ungrounded_count = sum(1 for c in grounding_reports if not c["all_grounded"])
+    assert len(grounding_reports) == _GROUNDING_BASELINE["n"], (
+        f"eval set size changed ({len(grounding_reports)} vs baseline "
+        f"{_GROUNDING_BASELINE['n']}) despite matching hash — investigate"
+    )
+    assert ungrounded_count <= _GROUNDING_BASELINE["ungrounded_count"], (
+        f"Ungrounded claim count regressed: {ungrounded_count} > "
+        f"baseline {_GROUNDING_BASELINE['ungrounded_count']}"
+    )
+
+
+def test_grounding_known_cases_still_flagged(grounding_reports: list[dict]) -> None:
+    """The two known-bad cases (#1678, #13435) must still be individually caught by name.
+
+    This catches a verifier regressed to a no-op, which would otherwise trivially satisfy
+    the ratchet test at 0 <= 2 ungrounded. See ADR-0015.
+    """
+    current_hash = _eval_set_hash_guard()
+    assert current_hash == _GROUNDING_BASELINE["eval_set_hash"], _HASH_DRIFT_MSG
+
+    by_issue = {c["issue_number"]: c for c in grounding_reports}
+
+    case_1678 = by_issue.get(1678)
+    assert case_1678 is not None, "Issue #1678 not found in grounding reports"
+    assert 13632 in case_1678["ungrounded_refs"], (
+        f"Issue #1678: expected ref 13632 in ungrounded_refs, got {case_1678['ungrounded_refs']}"
+    )
+
+    case_13435 = by_issue.get(13435)
+    assert case_13435 is not None, "Issue #13435 not found in grounding reports"
+    assert case_13435["component_grounded"] is False, (
+        "Issue #13435: expected component_grounded is False "
+        f"(predicted_component={case_13435['predicted_component']!r}, "
+        f"classifier_top3_labels={case_13435['classifier_top3_labels']})"
     )

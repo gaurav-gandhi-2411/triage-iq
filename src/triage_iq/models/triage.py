@@ -16,6 +16,8 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from triage_iq.models.grounding import verify_plan_grounding
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -44,6 +46,32 @@ class ConformalIntervalResult(BaseModel):
     empirical_coverage: float = Field(ge=0.0, le=1.0)
     coverage_ci95_lower: float = Field(ge=0.0, le=1.0)
     coverage_ci95_upper: float = Field(ge=0.0, le=1.0)
+
+
+class GroundingAttribution(BaseModel):
+    """Reconstruction of what the LLM's TriagePlan already claimed as its sources.
+
+    Not new attribution elicited from a prompt change — the prompt is unchanged this
+    iteration. See ADR-0015.
+    """
+
+    component_source: str
+    similar_issue_refs: list[int]
+
+
+class GroundingStatus(BaseModel):
+    """Deterministic verification of the plan's claims against upstream pipeline outputs.
+
+    See src/triage_iq/models/grounding.py:verify_plan_grounding and ADR-0015. Grounding here
+    means traceable to this pipeline's own classifier_top3 / retrieval outputs for this
+    request — not verification against world/ground truth.
+    """
+
+    component_grounded: bool
+    component_reason: str
+    similar_issue_refs: list[int]
+    ungrounded_refs: list[int]
+    all_grounded: bool
 
 
 class TriagePlan(BaseModel):
@@ -87,6 +115,8 @@ class TriagePlan(BaseModel):
     suggested_assignee_class: str
     suggested_next_steps: list[str] = Field(min_length=1)
     triage_summary: str
+    grounding: GroundingAttribution | None = Field(default=None)
+    grounding_status: GroundingStatus | None = Field(default=None)
 
     @field_validator("component_confidence", mode="before")
     @classmethod
@@ -180,6 +210,23 @@ class TriageAssistant:
         # (33.0) is returned for every request regardless of repo. See ADR-0009.
         plan.resolution_confidence_pct = signals["resolution_conf_pct"]
         plan.resolution_bucket = signals["resolution_bucket"]
+
+        # Grounding: reconstruction of what the LLM already emitted (component + similar-issue
+        # refs), not new attribution elicited from a prompt change — the synthesis prompt is
+        # unchanged this iteration. See ADR-0015.
+        plan.grounding = GroundingAttribution(
+            component_source=plan.predicted_component,
+            similar_issue_refs=[s.number for s in plan.similar_issues],
+        )
+        retrieved_numbers = {s["number"] for s in signals["similar_raw"]}
+        report = verify_plan_grounding(plan, signals["classifier_top3"], retrieved_numbers)
+        plan.grounding_status = GroundingStatus(
+            component_grounded=report.component_grounded,
+            component_reason=report.component_reason,
+            similar_issue_refs=report.similar_issue_refs,
+            ungrounded_refs=report.ungrounded_refs,
+            all_grounded=report.all_grounded,
+        )
         elapsed = time.perf_counter() - t0
 
         t_llm = max(

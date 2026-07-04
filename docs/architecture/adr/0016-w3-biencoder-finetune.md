@@ -1,6 +1,6 @@
 # ADR-0016 — W3: Fine-tune BGE bi-encoder for similar-issue retrieval
 
-**Status:** Re-verified on current main — does NOT clear the ADR-0006 ship bar (see Results). Awaiting GG decision: escalate to a larger held-out test (mirroring ADR-0006's n=300 robustness check) or reject.
+**Status:** Rejected (current evidence) — not a failure, a not-yet-demonstrated result. See Consequences.
 **Date:** 2026-07-04 (rebased from a draft originally numbered ADR-0010 on `feat/w3-finetune`, 2026-05-31)
 
 ---
@@ -22,9 +22,10 @@ before being claimed or shipped. The scripts (`scripts/w3_t2_mine_negatives.py`,
 
 **Re-verification result: the honest re-run does NOT match the stale branch's claim.** Retraining on
 current main (same seed, same hyperparameters, same ported hard negatives/split) produced smaller,
-statistically weaker deltas — see Results below. This is the expected outcome of the "verify against
-current, don't trust the stale report" discipline: the original PASS verdict does not survive
-reproduction.
+statistically weaker deltas — see Consequences below. This is the expected outcome of the "verify
+against current, don't trust the stale report" discipline: the original PASS verdict does not survive
+reproduction. **Final decision: Rejected on current evidence** — no index cutover, no cassette
+re-record, no merge. The branch stays documented-and-rejected.
 
 ---
 
@@ -66,56 +67,88 @@ from retrieval, matching baseline methodology). Bootstrap 95% paired CI (n=2,000
 
 **Results (test split, zero training overlap, re-established on current main 2026-07-04):**
 
-| Repo | n | Baseline R@5 | Fine-tuned R@5 | Delta | CI 95% (2,000 boot) | Verdict |
-|---|---|---|---|---|---|---|
-| kubernetes_kubernetes | 152 | 0.5263 | 0.6447 | +11.84 pp | [+0.00, +22.38] | ESCALATE_n300 |
-| microsoft_vscode | 60 | 0.6833 | 0.7833 | +10.00 pp | [−6.67, +25.00] | ESCALATE_n300 |
+| Repo | n | Baseline R@5 | Fine-tuned R@5 | Delta | CI 95% (2,000 boot) | Script verdict | ADR verdict |
+|---|---|---|---|---|---|---|---|
+| kubernetes_kubernetes | 152 | 0.5263 | 0.6447 | +11.84 pp | [+0.00, +22.38] | ESCALATE_n300 | REJECTED — CI does not exclude zero |
+| microsoft_vscode | 60 | 0.6833 | 0.7833 | +10.00 pp | [−6.67, +25.00] | ESCALATE_n300 | REJECTED — CI crosses zero |
 
-**Overall verdict: ESCALATE_n300.** Point-estimate deltas are still positive and well above the 3pp
-gate on both repos, but the CI does not cleanly exclude zero: k8s's lower bound sits exactly at 0.0000
-and vscode's lower bound is negative. Per ADR-0006's own bar ("CI must exclude zero on both repos to
-ship") and its own precedent (bge-v2-m3 looked like a +6pp k8s win at n=100, then the CI crossed zero
-at n=300 and the reranker was rejected) — **this result does not clear the ship bar as measured.** It
-also does not cleanly fail: it lands in the same "looked promising at this n, needs a larger sample to
-know" zone the T5 script's own decision logic anticipates (`ESCALATE_n300`), rather than either PASS
-or REGRESSION.
+The T5 script's own decision logic (`ESCALATE_n300`) proposes testing at a larger sample before
+concluding. That path is itself rejected — see point 3 below. The ADR's final call is REJECTED, not
+ESCALATE, because escalation isn't available on equal terms for both repos.
 
-**Why this differs from the stale branch's +13pp claim:** The stale run's T4 winner was the *combined*
-model (both repos trained jointly) because per-repo training crashed on GPU state leak before it could
-compare fairly. This run's T4 fix (explicit `del` + `torch.cuda.empty_cache()` between sequential
-`train_model()` calls) let all three variants — combined (val R@5=0.8500), k8s-only (0.8533), vsc-only
-(0.8000) — train to completion. k8s-only edged out combined by 0.33pp on val R@5, so T4's `max()`
-selection picked the **per-repo models** (`bge_finetuned_k8s` + `bge_finetuned_vsc`) as winner instead
-of combined. Per-repo models trained on ~1/3 to ~2/3 the data of the combined model, which plausibly
-explains the wider CIs and smaller point deltas on this run versus the stale branch's combined-model
-result. This is a real architecture difference introduced by fixing a real bug, not noise from a typo.
+### Verdict: Rejected on current evidence (not "failed")
 
-**Data ceiling for escalating to n=300 (per ADR-0006's own robustness-check precedent):** k8s test
-split is currently capped at n=152 (out of 1,024 total k8s gold pairs; the rest are in train/val).
-Reaching n=300 test pairs would require re-splitting with a smaller train fraction, which shrinks the
-already-small training set (704 k8s triplets) further — a real trade-off, not a free re-run. vscode's
-ceiling is worse: only 411 total gold pairs, so an n=300 vscode test split is not reachable without
-gutting training data to near-zero. Escalating "the ADR-0006 way" is only fully available for k8s.
+**1. Does not clear the ADR-0006 bar, applied consistently.** ADR-0006 rejected the cross-encoder
+reranker on the rule "CI must exclude zero on BOTH repos to ship." Applying that same rule to our own
+fine-tune: k8s's CI lower bound sits exactly *at* zero (0.0000); vscode's lower bound is negative
+(−0.0667). Neither excludes zero. A bar that rejected someone else's model and then gets waived for
+our own model isn't a bar — it's theater. The fine-tune is rejected by the same standard, applied
+consistently.
 
-**CPU latency**: No regression observed. Same architecture (BGE-base 86M params), same FAISS
-IndexFlatIP; only weights change.
+**2. The stale +13pp was an artifact of a training bug, not a stronger model.** The original
+`feat/w3-finetune` run's T4 winner was the *combined* model (both repos trained jointly) only because
+per-repo training crashed on a GPU state leak before it could complete and compete fairly — combined
+won by elimination, not by being measured against a working alternative. This run's T4 fix (explicit
+`del` + `torch.cuda.empty_cache()` between sequential `train_model()` calls) let all three variants
+train to completion: combined (val R@5=0.8500), k8s-only (0.8533), vsc-only (0.8000). k8s-only edged
+out combined by 0.33pp on val R@5, so T4's `max()` selection correctly picked the **per-repo models**
+instead of combined. Per-repo models see roughly 1/3 to 2/3 the training data of the combined model,
+which is the direct cause of the wider CIs and smaller point deltas in this honest run. **The
+better-looking number came from a defect — the crash silently protected the eval from a weaker,
+higher-variance model class it would otherwise have had to compete against.** This belongs in the same
+class of finding as the `has_priority` feature leak and the parquet drift bug: a metric that looked
+good because something was broken, not because the model was good.
+
+**3. Escalating to n=300 is rejected as a path, not attempted.** vscode has only 411 total gold pairs;
+an n=300 vscode test split is not reachable without gutting the training set to near-zero. Running
+k8s alone to n=300 while leaving vscode at n=60 would hold the two repos to asymmetric evidentiary
+standards and cherry-pick the repo that happens to have enough data to look convincing. If the
+protocol can't run identically on both repos, the correct conclusion is **"not demonstrated,"** not
+"demonstrated where it was measurable." No re-split, no re-train, no n=300 run was executed for this
+ADR.
+
+**What this rejection is and isn't:** Both repos show a positive point estimate (+11.84pp k8s,
++10.00pp vsc) — this is not a null or negative result, and domain fine-tuning of the bi-encoder remains
+a promising direction. What isn't established at the available sample size is *significance*: the
+gold set (1,435 pairs total, 1,024 k8s / 411 vsc) is too small to produce a test split where both
+repos' CIs exclude zero. The limiting factor is data volume, not the modeling approach.
+
+**Path forward — linked to W5:** This is not shippable until either (a) more gold pairs enable a
+both-repos CI-excludes-zero result at the existing 70/15/15 split ratio, or (b) a gold-set labeling
+expansion grows the pair count enough to support a larger, still-symmetric test split. **W5 (gold set
+expansion, currently n=60→150 for the judge eval) is the concrete unblock**: if the W5 labeling
+protocol is extended to also grow `gold_related.parquet` (not just `gold_triage_plans.parquet`), the
+resulting larger pair count is what would let this fine-tune be honestly revisited — either or both
+repos reaching enough test pairs for the CI to genuinely resolve one way or the other. Until that gold
+set exists, re-running T2-T5 on the same 1,435 pairs would just reproduce this same ambiguous CI.
+
+**CPU latency**: Not a factor in the rejection — no regression was observed (same architecture, same
+FAISS IndexFlatIP, only weights would change). The rejection is entirely about retrieval-quality
+significance, not cost or latency.
 
 **What worked**:
 - Hard negatives from the existing FAISS top-50 were effective (rank-1 negatives, 15% soft-positive rate tolerated)
-- The T4 GPU-state-leak fix now lets per-repo variants train to completion instead of crashing
-- Both repos still show a positive point-estimate delta after honest re-verification (not a null result)
+- The T4 GPU-state-leak fix now lets per-repo variants train to completion instead of crashing —
+  this is a real bug fix, independent of the rejection, and should stay fixed
+- Both repos show a positive point-estimate delta after honest re-verification — the hypothesis
+  (domain fine-tuning helps) is not refuted, only unproven at this data scale
 
 **What didn't work / open questions**:
 - The winning architecture flipped from combined to per-repo between the stale run and this run —
-  variant selection is sensitive to the GPU-leak fix, which is a sign the val-R@5-based winner pick
-  (n=10-60 val pairs) is itself noisy at this data scale
+  variant selection is sensitive to the GPU-leak fix, which is itself a sign the val-R@5-based winner
+  pick (n=10-60 val pairs) is noisy at this data scale
 - Proxy val R@5 peaked early across all three variants (epoch 0-1), declining afterwards — small
   dataset (1,028 triplets) overfits quickly regardless of combined vs. per-repo split
 
 **Alternatives considered**:
-- Track B (ms-marco-MiniLM-L-6-v2 CE reranker, 22M): not attempted — Track A sufficient
-- Per-repo fine-tuning: not completed — combined model covers both repos, per-repo deferred
-- More hard negatives per pair (10 instead of 1): not attempted — single hardest negative was sufficient
+- Escalate k8s to n=300 while leaving vscode at n=60: rejected — asymmetric standard, cherry-picks the
+  repo with enough data (see point 3 above)
+- Ship despite the ambiguous CI, treat as a judgment call: rejected — would abandon the exact bar
+  ADR-0006 established and applied against a different model class
+- Track B (ms-marco-MiniLM-L-6-v2 CE reranker, 22M): not attempted — Track A was prioritized; moot now
+  that Track A itself doesn't clear the bar
+- More hard negatives per pair (10 instead of 1): not attempted — would not address the root
+  constraint, which is total gold pair count, not negative-mining depth
 
 ---
 

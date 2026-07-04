@@ -31,14 +31,28 @@ _COVERAGE_TOL = 0.05
 
 # Recorded grounding baseline — mirrors _RECORDED_ECE above. Produced by
 # scripts/measure_grounding.py against the CURRENT (unmodified) cassette over all 60 eval
-# issues. See ADR-0015.
+# issues. Structured per_repo (mirrors reports/eval_baseline.json) rather than pooled: a
+# pooled count on a 65.5% k8s-weighted gold set could mask a vscode-only regression going
+# 0 -> N ungrounded underneath k8s's volume. See ADR-0015.
 _GROUNDING_BASELINE = {
     "eval_set_hash": "7834d8ad5b59306ac84ccd241e3cd6cfb926e8135023c8121bfc9638bb06e0d1",
-    "ungrounded_count": 2,
-    "n": 60,
-    "known_ungrounded_cases": {
-        1678: {"axis": "similar_issue", "detail": "ref 13632 not in retrieval"},
-        13435: {"axis": "component", "detail": "predicted_component 'cluster/bootstrap' not in classifier_top3"},
+    "per_repo": {
+        "kubernetes/kubernetes": {
+            "ungrounded_count": 2,
+            "n": 30,
+            "known_ungrounded_cases": {
+                1678: {"axis": "similar_issue", "detail": "ref 13632 not in retrieval"},
+                13435: {
+                    "axis": "component",
+                    "detail": "predicted_component 'cluster/bootstrap' not in classifier_top3",
+                },
+            },
+        },
+        "microsoft/vscode": {
+            "ungrounded_count": 0,
+            "n": 30,
+            "known_ungrounded_cases": {},
+        },
     },
 }
 
@@ -437,21 +451,26 @@ def grounding_reports() -> list[dict]:
 def test_grounding_ratchet_no_new_ungrounded_claims(grounding_reports: list[dict]) -> None:
     """Ungrounded-claim count on the frozen eval set must not exceed the recorded baseline.
 
-    Guards against silent regressions in synthesis grounding (component/similar-issue
-    hallucination) creeping in above the measured 2/60 baseline. See ADR-0015.
+    Checked per-repo (not pooled): a regression concentrated in one repo must fail this
+    test on its own, independent of the other repo's volume. Guards against silent
+    regressions in synthesis grounding (component/similar-issue hallucination) creeping in
+    above the measured 2/30 (k8s) + 0/30 (vscode) baseline. See ADR-0015.
     """
     current_hash = _eval_set_hash_guard()
     assert current_hash == _GROUNDING_BASELINE["eval_set_hash"], _HASH_DRIFT_MSG
 
-    ungrounded_count = sum(1 for c in grounding_reports if not c["all_grounded"])
-    assert len(grounding_reports) == _GROUNDING_BASELINE["n"], (
-        f"eval set size changed ({len(grounding_reports)} vs baseline "
-        f"{_GROUNDING_BASELINE['n']}) despite matching hash — investigate"
-    )
-    assert ungrounded_count <= _GROUNDING_BASELINE["ungrounded_count"], (
-        f"Ungrounded claim count regressed: {ungrounded_count} > "
-        f"baseline {_GROUNDING_BASELINE['ungrounded_count']}"
-    )
+    for repo, baseline in _GROUNDING_BASELINE["per_repo"].items():
+        repo_reports = [c for c in grounding_reports if c["repo"] == repo]
+        ungrounded_count = sum(1 for c in repo_reports if not c["all_grounded"])
+
+        assert len(repo_reports) == baseline["n"], (
+            f"{repo}: eval set size changed ({len(repo_reports)} vs baseline "
+            f"{baseline['n']}) despite matching top-level hash — investigate"
+        )
+        assert ungrounded_count <= baseline["ungrounded_count"], (
+            f"{repo}: ungrounded claim count regressed: {ungrounded_count} > "
+            f"baseline {baseline['ungrounded_count']}"
+        )
 
 
 def test_grounding_known_cases_still_flagged(grounding_reports: list[dict]) -> None:

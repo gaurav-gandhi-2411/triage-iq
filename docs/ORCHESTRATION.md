@@ -137,7 +137,7 @@ Priority order. Each item is blocked until its predecessor completes.
 |---|---|---|---|
 | 1 | **n=150 Cohere judge run** (closes W3 + sets baseline) | GG labels gold_expansion_candidates.csv; /health shows finetuned | ~450 Cohere calls |
 | 2 | Merge PR #7 (W3 fine-tuned retriever) | Task 1 result: similar_issues_relevance ≥ 2.87 | — |
-| 3 | Merge PR #8 (W5 eval infrastructure) | Task 1 complete; ADR-0011 updated | — |
+| 3 | Merge PR #8 (W5 eval infrastructure) | Task 1 complete; ADR-0017 updated | — |
 | 4 | **W2.B: gpt-oss-20b migration** (unlocks Groq server-side caching, fixes TPD) | PRs #7 and #8 merged; new baseline established | 1 full judge run |
 | 5 | **UI debt**: GitHub #3 (artifact rename) + #5 (openapi-typescript codegen) | W2.B complete (stable API contract) | ~1 session each |
 | 6 | **llama-70b retrofit** (opportunistic, 17/180 done) | W2.B merged (cached tokens free) | ~163 Cohere calls (mostly cached) |

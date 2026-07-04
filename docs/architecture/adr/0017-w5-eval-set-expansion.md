@@ -1,7 +1,7 @@
 # ADR-0017 — Expand gold eval set: n=60 → n=150 (W5)
 
-**Status:** In progress (labeling phase — results pending, see placeholder in Consequences)
-**Date:** 2026-05-31 (rebased from `feat/w5-eval-expansion`, 2026-07-04)
+**Status:** Accepted (partial result — n=119 achieved, not the targeted n=150; see Consequences)
+**Date:** 2026-05-31 (rebased from `feat/w5-eval-expansion`, 2026-07-04; results 2026-07-04)
 **Decider:** Gaurav Gandhi
 
 ---
@@ -149,32 +149,137 @@ Outputs:
 
 ## Consequences
 
-**RESULTS: PENDING.** Labeling of the ~90 new judge-eval issues and the `gold_related.parquet`
-expansion have not happened yet (this port/rediff pass only produced the 120-candidate pool — see
-T3 below — and the disjointness/related-issue-extraction machinery in `w5_ingest_labeled.py`). The
-figures immediately below are the *targets* this expansion is designed to hit, not measured
-outcomes. This section will be updated with actual n=150 per-repo means, CI widths, and the
-`gold_related.parquet` pair-count delta once labeling completes and `--write` is run.
+**RESULTS: COMPLETE.** Labeling finished 2026-07-04 (GG, 76 candidates) and the merge into
+`data/gold_triage_plans.parquet` ran the same day. The outcome differs from this ADR's original
+n=150 target. Reported honestly below, including the parts that did not work out — this is an
+honest, thorough negative-and-partial result, not a failure to hide (same framing as ADR-0016's
+"rejected on current evidence, not failed").
 
-**When complete (after labeling):**
-- Component accuracy CI: ±18 pp → ±11 pp (n=30→75 per repo)
-- Judge delta detectability: minimum detectable effect ≈ 0.5 judge points (vs ~0.7 currently at α=0.05)
-- Resolution bucket coverage: months + hours each get 20+ samples (vs 8 each currently)
-- 36 new component categories tested (28→64 unique components in gold)
+### (a) Final composition
 
-**What changes in the eval pipeline** (W5 follow-up, not this PR):
-- `scripts/10_curate_triage_gold.py` gains a `--extend` flag to add labeled issues without regenerating the base set
-- The gold set uses 5-bucket stratification (`hours/days/weeks/months/long`) instead of the coarse 3-bucket scheme
-- The eval report reports per-bucket resolution estimate accuracy
+The gold set expanded from n=60 to **n=119** — not the originally-targeted n=150. After adding the
+missing `classifier_train`/`temporal_train` disjointness filters to the candidate generator
+(`scripts/w5_t3_generate_candidates.py`) — a real bug fix; the original filter only excluded
+`retrieval_train` overlap — vscode's eligible candidate pool collapsed from a 60-candidate target
+to **17 clean candidates**; 11 of those 17 passed quality labeling. k8s's pool held up: **138
+eligible candidates** survived the same three-way filter (from an original 60-candidate target
+pool), of which 59 were sampled into the labeling worklist and **48 were accepted**.
 
-**Risks:**
-- New components may have harder-to-judge issues (more domain-specific), which could lower component accuracy metrics — this would be a real measurement, not a regression
-- The era constraint (k8s = 2014–2015 only) cannot be resolved without new scraping; the expansion improves component and bucket coverage but not temporal diversity for k8s
+Final composition: **78 kubernetes/kubernetes (65.5%) / 41 microsoft/vscode (34.5%)** — a shift
+from the existing set's clean 50/50 split (see "Why 50/50 repo split" above, now superseded by
+this result).
+
+GG's explicit decision: **do not trim k8s to force parity.** Discarding valid, disjoint,
+quality-checked k8s data to hit an arbitrary ratio would invert the "quality over volume"
+principle this whole workstream is built on. Condition attached to that decision: **every
+downstream gate or metric must report per-repo, never a pooled number that could be misread as
+balanced.**
+
+vscode's per-bucket targets are missed explicitly, not silently absorbed — a visible, acknowledged
+gap:
+
+| Bucket | vscode target (new) | vscode actual (new) |
+|---|---|---|
+| days | 9 | 6 |
+| long | 9 | 8 |
+| months | 9 | 6 |
+| hours | 9 | 11 |
+| weeks | 9 | 10 |
+
+### (b) W3 unblock — dead end this iteration
+
+The hypothesis that growing the gold set would also grow `gold_related.parquet`'s retrieval-eval
+pairs (unblocking ADR-0016's rejected W3 fine-tune) did not materialize. This was verified
+analytically before attempting any mining pass, not discovered after the fact:
+`scripts/07_extract_related_pairs.py`'s `body_ref` pattern already scans the **entire corpus**
+(not a sample) and found exactly **4 hits total**, historically, across both repos
+(`data/gold_related.parquet`: 4 of 1,435 pairs tagged `source == "body_ref"`) — and all 4 are
+already inside `w3_split.parquet`'s **TRAIN** split (i.e., already spent as training data, not
+available as new test signal).
+
+Corpus size is unchanged since that extraction ran (kubernetes/kubernetes n=15,000,
+microsoft/vscode n=7,028 — identical to the W3 eval run). Applying the same `BODY_REF_PATTERNS`
+directly to the new 76-candidate W5 pool (title + body_clean, before the existence/predate checks)
+yields **0/76 hits** — confirming there is no additional signal to mine at this corpus size. This
+is not a sampling problem; the signal is structurally exhausted.
+
+**Conclusion: W5 does not, and structurally cannot, unblock W3 with the current corpus. Corpus
+growth (new scraping) is the actual prerequisite for any future W3 retry**, and that is out of
+scope for this iteration.
+
+### (c) vscode data ceiling — a project-level finding, not a W5 footnote
+
+This is not a W5-specific gap. The pattern recurs three times independently across three different
+workstreams:
+
+1. **W3's retrieval pairs**: microsoft/vscode has 411 total `gold_related.parquet` pairs vs.
+   kubernetes/kubernetes's 1,024 — vscode's fine-tune arm couldn't reach n=300 for the
+   ADR-0006-style robustness escalation.
+2. **Resolution-predictor CQR calibration** (ADR-0010): vscode's true-test set is n=370 under the
+   selected 40/60 calibration/test split (n=432 under the 30/70 split documented for comparison) —
+   see `docs/architecture/adr/0010-conformal-quantile-regression.md` for the full split table.
+3. **W5 (this ADR)**: vscode — only 17 of an original 60-candidate target pool survived
+   triple-disjointness filtering, vs. kubernetes/kubernetes's 138 of 60.
+
+**Root cause, verified directly this session:** vscode's `classifier_train/val/test` split (1,862
+issues total) and `temporal_train/val/test` split (6,154 issues total) are built over a much
+smaller absolute corpus (7,028 issues total) than kubernetes/kubernetes's (15,000). Any small
+held-out slice from one split overlaps the other split's much larger train allocation by base
+rate — measured: **92.2%** overlap between vscode's `classifier_val`+`classifier_test` (n=374) and
+`temporal_train` (n=4,923). kubernetes/kubernetes shows the same base-rate dynamic but at a lower
+measured rate (76.9%; `classifier_val`+`classifier_test` n=572 vs. `temporal_train` n=11,974) — it
+survives not because the mechanism differs, but because its absolute corpus is 2.1x larger, giving
+enough headroom even with substantial overlap.
+
+**State plainly: vscode is the binding data constraint on TriageIQ, not an incidental gap in any
+one workstream.** Future work must either (i) grow the vscode corpus (re-scrape a larger or more
+contiguous history), or (ii) explicitly treat kubernetes/kubernetes as the primary evaluated repo
+and vscode as a data-limited secondary. Do not let any future claim imply 41 vscode issues
+supports the same statistical confidence as 78 k8s issues.
+
+### (d) Deferred: human-confirmed `body_related` pairs
+
+GG's explicit decision: **defer, do not attempt now, do not reject either.** `body_related`
+(Closes/Fixes/#N patterns, ~1,010 pairs total in `gold_related.parquet`) was excluded from the
+automatic/bulk extraction because ADR-0007 found ~70% are PR→issue references, not genuine
+issue-to-issue relatedness — that exclusion is correct and unchanged for any bulk/automatic use.
+
+But per-pair **manual confirmation** (a human or careful agent reading each hit to filter the ~30%
+ADR-0007 estimated as genuine) is a different, not-yet-attempted mechanism — the same discipline
+already applied to validate the 4 existing `body_ref` pairs in ADR-0007's own manual spot-check
+table. This remains a real, viable, but labor-intensive path to eventually growing
+`gold_related.parquet` beyond what corpus growth alone would give. Noted here as a candidate
+follow-up task for whoever eventually attempts the W3 retry — not committed to now.
+
+---
+
+**What changed in the eval pipeline (this PR):**
+- `scripts/w5_t3_generate_candidates.py` gained `classifier_train`/`temporal_train` disjointness
+  filters (previously only excluded `retrieval_train` overlap) — the bug fix that produced the
+  138-vs-17 eligible-pool split in (a) above.
+- `scripts/w5_ingest_labeled.py` merges labeled candidates into `data/gold_triage_plans.parquet`,
+  asserting three-way training disjointness before every write, and extracts
+  `related_issue_numbers` (body_ref-only) per accepted row.
+- `data/gold_triage_plans.parquet` is now n=119 (78 k8s / 41 vscode), up from n=60 (30/30).
+
+**Risks (carried forward, now with measured outcomes):**
+- New components introduce harder-to-judge issues in the accepted set (24 new component
+  categories across both repos) — any component-accuracy delta against the old n=60 baseline
+  should be read as a real measurement against a broader, harder distribution, not a like-for-like
+  regression.
+- The era constraint (k8s = 2014–2016 only) remains unresolved, as anticipated — the expansion
+  improved component and bucket coverage but not temporal diversity for k8s.
+- vscode's resolution-bucket coverage remains uneven post-expansion (days/long/months under
+  target — see (a)) — this is now a durable, documented property of the gold set, not a transient
+  gap to be silently closed later.
 
 **What is NOT done in this PR:**
-- No changes to `scripts/11_evaluate_triage.py`
-- No changes to `data/gold_triage_plans.parquet`
-- No LLM triage plans generated for candidates
+- No changes to `scripts/11_evaluate_triage.py` (re-running the eval suite against n=119 is a
+  separate, later step).
+- No re-record of `eval/eval_set.jsonl`, any cassette, or `reports/eval_baseline.json` — pending a
+  further GG decision on the Groq re-record.
+- `gold_related.parquet` is unchanged (see (b) — W3 does not unblock this iteration).
+- No `body_related` manual-confirmation pass (see (d) — deferred, not rejected).
 
 ---
 
@@ -182,25 +287,36 @@ outcomes. This section will be updated with actual n=150 per-repo means, CI widt
 
 See `docs/eval/gold_labeling_protocol.md` for the per-issue rubric and the exact criteria for accepting/rejecting candidates.
 
-After labeling, the follow-up session wires the labeled additions into the gold set and re-runs the evaluation at n=150.
+Labeling completed 2026-07-04 (GG, 76 candidates: 59 accept / 17 reject). The labeled additions
+were merged into the gold set at n=119, not n=150 — see Consequences (a) for why.
 
 ## Scripts
 
 - `scripts/10_curate_triage_gold.py` — existing gold set curation
-- `scripts/w5_t3_generate_candidates.py` — candidate pool generation, now with an added
-  retrieval-train disjointness filter against `data/w3_split.parquet`'s train split (per-repo drop
-  counts logged and reported in `reports/w5_gold_audit.json["pool_filter_stats"]`)
-- `scripts/w5_ingest_labeled.py` — labeled-CSV ingestion, now with a three-way training
-  disjointness hard-fail and `related_issue_numbers` (body_ref-only) extraction — dry-run default,
-  `--write` gated
+- `scripts/w5_t3_generate_candidates.py` — candidate pool generation. Originally added a
+  retrieval-train disjointness filter against `data/w3_split.parquet`'s train split; a later fix in
+  this iteration (see Consequences (a)) added the missing `classifier_train`/`temporal_train`
+  disjointness filters as well, which is what shrank the pool from 120 (60/repo) to 76 (59 k8s / 17
+  vscode) — per-repo drop counts logged and reported in
+  `reports/w5_gold_audit.json["pool_filter_stats"]`.
+- `scripts/w5_ingest_labeled.py` — labeled-CSV ingestion, with a three-way training disjointness
+  hard-fail and `related_issue_numbers` (body_ref-only) extraction — dry-run default, `--write`
+  gated. Also fixed in this iteration: CSV-sourced `created_at` (a plain string from `pd.read_csv`)
+  is now coerced to `Timestamp` in `build_gold_rows`, since the mixed str/Timestamp column it
+  produced previously was rejected by pyarrow on `to_parquet`.
 
 ## Data artifacts
 
-- `data/gold_triage_plans.parquet` — UNCHANGED (existing gold, n=60) until labeling + `--write`
+- `data/gold_triage_plans.parquet` — **CHANGED**: n=60 (30/30) → n=119 (78 kubernetes/kubernetes /
+  41 microsoft/vscode)
+- `data/gold_expansion_candidates_labeled.csv` — GG's 76 labeled candidates (59 accept, 17 reject),
+  the source input to the merge above
 - `data/w3_split.parquet` — ported reference data (ADR-0016 retrieval fine-tune's train/val/test
   split assignments), used by both scripts above for disjointness filtering/assertion
-- `data/gold_expansion_candidates.parquet` — candidate pool (120 issues: 60/repo, confirmed full
-  12-per-bucket×5 after both the current-gold filter and the new retrieval-train filter — see T3)
+- `data/gold_expansion_candidates.parquet` — candidate pool, regenerated after the
+  classifier/temporal disjointness fix: 76 total (59 kubernetes/kubernetes / 17 microsoft/vscode),
+  down from the original 120 (60/repo) — see T3 and Consequences (a)
 - `data/gold_expansion_candidates.csv` — human-readable view
+- `data/gold_related.parquet` — UNCHANGED (1,435 pairs) — see Consequences (b)
 - `reports/w5_gold_audit.json` — T1 audit + T2 sampling summary + `pool_filter_stats` (drop counts
   per repo per filter)

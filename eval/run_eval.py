@@ -148,7 +148,16 @@ def compute_scores(
 
         plan, _meta = assistant.triage_with_metadata(row)
 
-        plan_json = json.dumps(plan.model_dump(), ensure_ascii=False)
+        # Exclude fields added to TriagePlan after the cassette was recorded (grounding,
+        # grounding_status — ADR-0015). The judge's cache key is a hash of the messages
+        # sent to it, which embed this JSON verbatim; any additive TriagePlan field
+        # changes that JSON and silently invalidates every cached judge entry even though
+        # the judge prompt template and cassette itself are unchanged. Excluding fields
+        # here keeps the judge's view of the plan identical to what was recorded, while
+        # production /triage responses (api/app.py) still return the new fields untouched.
+        plan_json = json.dumps(
+            plan.model_dump(exclude={"grounding", "grounding_status"}), ensure_ascii=False
+        )
         gold = {
             "component": issue["gold_component"],
             "priority": issue["gold_priority"],

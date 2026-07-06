@@ -122,10 +122,18 @@
       "gap_threshold_pp": 5.0,
       "decision": "Llama-70b retained as default judge — gap is -3.6pp, below the 5pp escalation threshold. High ranking agreement (r=0.729) confirms cross-family result is not an outlier."
     },
+    "known_issues": {
+      "train_contamination": {
+        "status": "under correction",
+        "adr": "docs/architecture/adr/0018-gold-set-train-contamination.md",
+        "affected_dimensions": ["component_match", "resolution_estimate_reasonableness"],
+        "note": "These two dimension means below were computed against a gold set later found to overlap classifier_train / temporal_train (see ADR-0018). component_match has been contaminated since the gold set's original 2026-04-29 curation (pre-existing curation-script gap, not caused by ADR-0009). resolution_estimate_reasonableness was contaminated starting 2026-06-19 as a direct side effect of the ADR-0009 split fix. Re-baseline on a verified-clean n=65 subset (54 kubernetes/kubernetes / 11 microsoft/vscode) is in progress. Not affected: similar_issues_relevance, priority_alignment, and the headline resolution 'beats naive' metric in reports/resolution_results.json."
+      }
+    },
     "dimensions": {
-      "component_match": {"max": 2, "production_mean": 1.55},
+      "component_match": {"max": 2, "production_mean": 1.55, "status": "under_correction"},
       "similar_issues_relevance": {"max": 3, "production_mean": 2.717},
-      "resolution_estimate_reasonableness": {"max": 3, "production_mean": 1.283},
+      "resolution_estimate_reasonableness": {"max": 3, "production_mean": 1.283, "status": "under_correction"},
       "priority_alignment": {"max": 1, "production_mean": 0.583},
       "next_steps_actionability": {"max": 3, "production_mean": 2.65},
       "overall_quality": {"max": 3, "production_mean": 2.15}

@@ -1,70 +1,17 @@
 {
-  "gold_total": 119,
+  "gold_total": 64,
   "cohort_counts": {
-    "original_60": 60,
-    "w5_added": 59
+    "w5_added": 58,
+    "original_60": 6
   },
   "eval_set_vs_gold": {
     "checked": true,
     "n_eval_set": 65,
-    "n_gold": 119,
-    "eval_minus_gold": [],
-    "gold_minus_eval": [
-      "('kubernetes/kubernetes', 10497)",
-      "('kubernetes/kubernetes', 11079)",
-      "('kubernetes/kubernetes', 11243)",
-      "('kubernetes/kubernetes', 13190)",
-      "('kubernetes/kubernetes', 13878)",
-      "('kubernetes/kubernetes', 13890)",
-      "('kubernetes/kubernetes', 140)",
-      "('kubernetes/kubernetes', 14228)",
-      "('kubernetes/kubernetes', 14284)",
-      "('kubernetes/kubernetes', 14598)",
-      "('kubernetes/kubernetes', 14669)",
-      "('kubernetes/kubernetes', 14743)",
-      "('kubernetes/kubernetes', 14781)",
-      "('kubernetes/kubernetes', 14921)",
-      "('kubernetes/kubernetes', 1548)",
-      "('kubernetes/kubernetes', 1678)",
-      "('kubernetes/kubernetes', 3121)",
-      "('kubernetes/kubernetes', 3481)",
-      "('kubernetes/kubernetes', 3606)",
-      "('kubernetes/kubernetes', 4746)",
-      "('kubernetes/kubernetes', 4947)",
-      "('kubernetes/kubernetes', 5634)",
-      "('kubernetes/kubernetes', 5963)",
-      "('kubernetes/kubernetes', 8362)",
-      "('microsoft/vscode', 1045)",
-      "('microsoft/vscode', 1057)",
-      "('microsoft/vscode', 1502)",
-      "('microsoft/vscode', 1508)",
-      "('microsoft/vscode', 161)",
-      "('microsoft/vscode', 2067)",
-      "('microsoft/vscode', 2093)",
-      "('microsoft/vscode', 2115)",
-      "('microsoft/vscode', 2468)",
-      "('microsoft/vscode', 2496)",
-      "('microsoft/vscode', 2636)",
-      "('microsoft/vscode', 3047)",
-      "('microsoft/vscode', 3077)",
-      "('microsoft/vscode', 311414)",
-      "('microsoft/vscode', 311543)",
-      "('microsoft/vscode', 311565)",
-      "('microsoft/vscode', 3299)",
-      "('microsoft/vscode', 3360)",
-      "('microsoft/vscode', 3486)",
-      "('microsoft/vscode', 3655)",
-      "('microsoft/vscode', 3671)",
-      "('microsoft/vscode', 3826)",
-      "('microsoft/vscode', 4223)",
-      "('microsoft/vscode', 4338)",
-      "('microsoft/vscode', 4601)",
-      "('microsoft/vscode', 4741)",
-      "('microsoft/vscode', 4759)",
-      "('microsoft/vscode', 4760)",
-      "('microsoft/vscode', 567)",
-      "('microsoft/vscode', 814)"
+    "n_gold": 64,
+    "eval_minus_gold": [
+      "('kubernetes/kubernetes', 14398)"
     ],
+    "gold_minus_eval": [],
     "identical": false
   },
   "near_dup_thresholds": [
@@ -73,9 +20,8 @@
   ],
   "repos": {
     "microsoft/vscode": {
-      "n_gold": 41,
+      "n_gold": 11,
       "gold_cohorts": {
-        "original_60": 30,
         "w5_added": 11
       },
       "train_set_sizes": {
@@ -88,89 +34,33 @@
       },
       "id_overlap": {
         "classifier_train": {
-          "n_overlap": 5,
-          "by_cohort": {
-            "original_60": 5
-          },
-          "numbers": [
-            3671,
-            4338,
-            311414,
-            311543,
-            311565
-          ]
+          "n_overlap": 0,
+          "by_cohort": {},
+          "numbers": []
         },
         "temporal_train": {
-          "n_overlap": 27,
-          "by_cohort": {
-            "original_60": 27
-          },
-          "numbers": [
-            161,
-            567,
-            814,
-            1045,
-            1057,
-            1502,
-            1508,
-            2067,
-            2093,
-            2115,
-            2468,
-            2496,
-            2636,
-            3047,
-            3077,
-            3299,
-            3360,
-            3486,
-            3655,
-            3671,
-            3826,
-            4223,
-            4338,
-            4601,
-            4741,
-            4759,
-            4760
-          ]
+          "n_overlap": 0,
+          "by_cohort": {},
+          "numbers": []
         },
         "retrieval_train_w3": {
-          "n_overlap": 2,
-          "by_cohort": {
-            "original_60": 2
-          },
-          "numbers": [
-            311543,
-            311565
-          ]
+          "n_overlap": 0,
+          "by_cohort": {},
+          "numbers": []
         },
         "classifier_val": {
-          "n_overlap": 12,
+          "n_overlap": 1,
           "by_cohort": {
-            "original_60": 11,
             "w5_added": 1
           },
           "numbers": [
-            161,
-            567,
-            814,
-            1057,
-            2468,
-            2636,
-            3047,
-            3655,
-            4601,
-            4741,
-            4759,
             312423
           ]
         },
         "temporal_val": {
-          "n_overlap": 10,
+          "n_overlap": 7,
           "by_cohort": {
-            "w5_added": 7,
-            "original_60": 3
+            "w5_added": 7
           },
           "numbers": [
             4978,
@@ -179,10 +69,7 @@
             239838,
             278113,
             286776,
-            311284,
-            311414,
-            311543,
-            311565
+            311284
           ]
         },
         "cqr_calibration_slice": {
@@ -199,97 +86,49 @@
       "hash_overlap": {
         "classifier_train": {
           "train_set": "classifier_train",
-          "n_same_number": 5,
-          "n_cross_number": 6,
-          "cross_number_pairs": [
-            {
-              "gold_number": 311565,
-              "train_number": 311562,
-              "cohort": "original_60"
-            },
-            {
-              "gold_number": 311565,
-              "train_number": 311563,
-              "cohort": "original_60"
-            },
-            {
-              "gold_number": 311565,
-              "train_number": 311564,
-              "cohort": "original_60"
-            },
-            {
-              "gold_number": 311543,
-              "train_number": 311544,
-              "cohort": "original_60"
-            },
-            {
-              "gold_number": 311543,
-              "train_number": 311545,
-              "cohort": "original_60"
-            },
-            {
-              "gold_number": 311543,
-              "train_number": 311546,
-              "cohort": "original_60"
-            }
-          ]
+          "n_same_number": 0,
+          "n_cross_number": 0,
+          "cross_number_pairs": []
         },
         "temporal_train": {
           "train_set": "temporal_train",
-          "n_same_number": 27,
+          "n_same_number": 0,
           "n_cross_number": 0,
           "cross_number_pairs": []
         }
       },
       "near_dup": {
         "classifier_train": {
-          "n_gold_scanned": 41,
+          "n_gold_scanned": 11,
           "n_gold_missing_from_index": 0,
           "n_train_vectors": 1488,
           "n_train_missing_from_index": 0,
           "max_cosine_distribution": {
-            "p50": 0.7809,
-            "p90": 0.8266,
-            "max": 1.0
+            "p50": 0.739,
+            "p90": 0.7863,
+            "max": 0.824
           },
           "threshold_counts": {
             "0.9": {
-              "n_gold_over_threshold": 2,
-              "by_cohort": {
-                "original_60": 2
-              }
+              "n_gold_over_threshold": 0,
+              "by_cohort": {}
             },
             "0.95": {
-              "n_gold_over_threshold": 2,
-              "by_cohort": {
-                "original_60": 2
-              }
+              "n_gold_over_threshold": 0,
+              "by_cohort": {}
             }
           },
-          "pairs_over_lowest_threshold": [
-            {
-              "gold_number": 311565,
-              "cohort": "original_60",
-              "max_train_cosine": 1.0,
-              "nearest_train_number": 311562
-            },
-            {
-              "gold_number": 311543,
-              "cohort": "original_60",
-              "max_train_cosine": 1.0,
-              "nearest_train_number": 311544
-            }
-          ]
+          "pairs_over_lowest_threshold": []
         },
         "temporal_train": {
-          "n_gold_scanned": 41,
+          "n_gold_scanned": 11,
           "n_gold_missing_from_index": 0,
           "n_train_vectors": 4923,
           "n_train_missing_from_index": 0,
           "max_cosine_distribution": {
-            "p50": 0.7897,
-            "p90": 0.85,
-            "max": 0.8891
+            "p50": 0.7759,
+            "p90": 0.8095,
+            "max": 0.824
           },
           "threshold_counts": {
             "0.9": {
@@ -306,10 +145,10 @@
       }
     },
     "kubernetes/kubernetes": {
-      "n_gold": 78,
+      "n_gold": 53,
       "gold_cohorts": {
-        "w5_added": 48,
-        "original_60": 30
+        "w5_added": 47,
+        "original_60": 6
       },
       "train_set_sizes": {
         "classifier_train": 2284,
@@ -321,71 +160,27 @@
       },
       "id_overlap": {
         "classifier_train": {
-          "n_overlap": 15,
-          "by_cohort": {
-            "original_60": 15
-          },
-          "numbers": [
-            3121,
-            3481,
-            3606,
-            4947,
-            8362,
-            13190,
-            13878,
-            13890,
-            14228,
-            14284,
-            14598,
-            14669,
-            14743,
-            14781,
-            14921
-          ]
+          "n_overlap": 0,
+          "by_cohort": {},
+          "numbers": []
         },
         "temporal_train": {
-          "n_overlap": 14,
-          "by_cohort": {
-            "original_60": 14
-          },
-          "numbers": [
-            140,
-            1548,
-            1678,
-            3121,
-            3481,
-            3606,
-            4746,
-            4947,
-            5634,
-            5963,
-            8362,
-            10497,
-            11079,
-            11243
-          ]
+          "n_overlap": 0,
+          "by_cohort": {},
+          "numbers": []
         },
         "retrieval_train_w3": {
-          "n_overlap": 3,
-          "by_cohort": {
-            "original_60": 3
-          },
-          "numbers": [
-            1678,
-            3121,
-            5963
-          ]
+          "n_overlap": 0,
+          "by_cohort": {},
+          "numbers": []
         },
         "classifier_val": {
-          "n_overlap": 28,
+          "n_overlap": 24,
           "by_cohort": {
-            "w5_added": 23,
-            "original_60": 5
+            "w5_added": 22,
+            "original_60": 2
           },
           "numbers": [
-            1548,
-            5963,
-            10497,
             12122,
             12248,
             12254,
@@ -405,7 +200,6 @@
             14078,
             14135,
             14363,
-            14398,
             14552,
             14553,
             14557,
@@ -414,10 +208,10 @@
           ]
         },
         "temporal_val": {
-          "n_overlap": 29,
+          "n_overlap": 28,
           "by_cohort": {
             "w5_added": 24,
-            "original_60": 5
+            "original_60": 4
           },
           "numbers": [
             12122,
@@ -443,7 +237,6 @@
             13057,
             13062,
             13096,
-            13190,
             13257,
             13270,
             13276,
@@ -452,95 +245,74 @@
           ]
         },
         "cqr_calibration_slice": {
-          "n_overlap": 4,
+          "n_overlap": 2,
           "by_cohort": {
-            "original_60": 2,
             "w5_added": 2
           },
           "numbers": [
             13508,
-            13784,
-            13878,
-            13890
+            13784
           ]
         }
       },
       "hash_overlap": {
         "classifier_train": {
           "train_set": "classifier_train",
-          "n_same_number": 15,
+          "n_same_number": 0,
           "n_cross_number": 0,
           "cross_number_pairs": []
         },
         "temporal_train": {
           "train_set": "temporal_train",
-          "n_same_number": 14,
+          "n_same_number": 0,
           "n_cross_number": 0,
           "cross_number_pairs": []
         }
       },
       "near_dup": {
         "classifier_train": {
-          "n_gold_scanned": 78,
+          "n_gold_scanned": 53,
           "n_gold_missing_from_index": 0,
           "n_train_vectors": 2284,
           "n_train_missing_from_index": 0,
           "max_cosine_distribution": {
-            "p50": 0.7918,
-            "p90": 0.8402,
-            "max": 0.9069
+            "p50": 0.7934,
+            "p90": 0.8379,
+            "max": 0.8895
           },
           "threshold_counts": {
             "0.9": {
-              "n_gold_over_threshold": 1,
-              "by_cohort": {
-                "w5_added": 1
-              }
+              "n_gold_over_threshold": 0,
+              "by_cohort": {}
             },
             "0.95": {
               "n_gold_over_threshold": 0,
               "by_cohort": {}
             }
           },
-          "pairs_over_lowest_threshold": [
-            {
-              "gold_number": 14398,
-              "cohort": "w5_added",
-              "max_train_cosine": 0.9069,
-              "nearest_train_number": 14399
-            }
-          ]
+          "pairs_over_lowest_threshold": []
         },
         "temporal_train": {
-          "n_gold_scanned": 78,
+          "n_gold_scanned": 53,
           "n_gold_missing_from_index": 0,
           "n_train_vectors": 11974,
           "n_train_missing_from_index": 0,
           "max_cosine_distribution": {
-            "p50": 0.7965,
-            "p90": 0.8543,
-            "max": 0.9202
+            "p50": 0.7972,
+            "p90": 0.8439,
+            "max": 0.8693
           },
           "threshold_counts": {
             "0.9": {
-              "n_gold_over_threshold": 1,
-              "by_cohort": {
-                "original_60": 1
-              }
+              "n_gold_over_threshold": 0,
+              "by_cohort": {}
             },
             "0.95": {
               "n_gold_over_threshold": 0,
               "by_cohort": {}
             }
           },
-          "pairs_over_lowest_threshold": [
-            {
-              "gold_number": 14598,
-              "cohort": "original_60",
-              "max_train_cosine": 0.9202,
-              "nearest_train_number": 8943
-            }
-          ]
+          "pairs_over_lowest_threshold": []
         }
       }
     }

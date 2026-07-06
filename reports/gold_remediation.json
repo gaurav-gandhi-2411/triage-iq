@@ -1,0 +1,114 @@
+{
+  "near_dup_threshold": 0.9,
+  "explicit_near_dup_drops": [
+    "('kubernetes/kubernetes', 14398)"
+  ],
+  "drop": {
+    "per_repo": {
+      "microsoft/vscode": {
+        "before": 41,
+        "before_by_cohort": {
+          "original_60": 30,
+          "w5_added": 11
+        },
+        "dropped_id_contaminated": 30,
+        "dropped_near_dup": 0,
+        "dropped_numbers": [
+          161,
+          567,
+          814,
+          1045,
+          1057,
+          1502,
+          1508,
+          2067,
+          2093,
+          2115,
+          2468,
+          2496,
+          2636,
+          3047,
+          3077,
+          3299,
+          3360,
+          3486,
+          3655,
+          3671,
+          3826,
+          4223,
+          4338,
+          4601,
+          4741,
+          4759,
+          4760,
+          311414,
+          311543,
+          311565
+        ],
+        "after": 11
+      },
+      "kubernetes/kubernetes": {
+        "before": 78,
+        "before_by_cohort": {
+          "w5_added": 48,
+          "original_60": 30
+        },
+        "dropped_id_contaminated": 24,
+        "dropped_near_dup": 1,
+        "dropped_numbers": [
+          140,
+          1548,
+          1678,
+          3121,
+          3481,
+          3606,
+          4746,
+          4947,
+          5634,
+          5963,
+          8362,
+          10497,
+          11079,
+          11243,
+          13190,
+          13878,
+          13890,
+          14228,
+          14284,
+          14398,
+          14598,
+          14669,
+          14743,
+          14781,
+          14921
+        ],
+        "after": 53
+      }
+    },
+    "total_before": 119,
+    "total_dropped": 55,
+    "total_after": 64
+  },
+  "reconciliation": {
+    "checked": true,
+    "n_eval_set": 65,
+    "n_clean_gold": 64,
+    "eval_minus_gold": [
+      "('kubernetes/kubernetes', 14398)"
+    ],
+    "gold_minus_eval": [],
+    "reconciles_as_expected": true
+  },
+  "vscode_backfill": {
+    "pool_unique": 1592,
+    "with_component_and_resolution": 410,
+    "excluded_already_in_clean_gold": 11,
+    "excluded_w5_rejected": 6,
+    "dropped_id_train_overlap": 393,
+    "dropped_near_dup_cosine_ge_0.90": 0,
+    "missing_from_bge_index": [],
+    "eligible_for_labeling": 0,
+    "near_dup_threshold": 0.9
+  },
+  "written": true
+}

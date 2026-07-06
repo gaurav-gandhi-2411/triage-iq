@@ -1,8 +1,10 @@
 # Investigation: gold-set train-data leakage
 
 **Date:** 2026-07-06
-**Status:** CONFIRMED — 54/119 gold rows (45.4%) overlap training data; 54/60 rows (90%) of
-the frozen CI-baseline eval set are contaminated.
+**Status:** CONFIRMED, then **REMEDIATED same day** (phases 1–2 + phase-4 invariant — see
+§5). Phase 3 (baseline re-record) remains blocked on the ADR-0019 Ollama judge switch.
+Pre-remediation finding: 54/119 gold rows (45.4%) overlapped training data; 54/60 rows (90%)
+of the frozen CI-baseline eval set were contaminated.
 **Scope:** triage gold set (`data/gold_triage_plans.parquet`, n=119) and every metric derived
 from it. Reproduce all numbers: `python scripts/verify_gold_train_overlap.py`
 (writes `reports/gold_leakage_overlap.json`).
@@ -200,6 +202,78 @@ the gold set is rebuilt. No production/deploy action needed (revision
 - README classifier / retrieval / resolution metrics (clean, per §3).
 - No model retraining, no redeploy — the training pipeline and artifacts are sound; the
   defect is entirely in evaluation-set construction.
+
+---
+
+## 5. Remediation executed (2026-07-06)
+
+Phases 1–2 and the phase-4 invariant were executed via `scripts/remediate_gold_leakage.py`
+(idempotent, dry-run by default, `--write` applied). Evidence: `reports/gold_remediation.json`.
+Phase 3 (re-freeze eval_set, re-record cassettes, re-derive `eval_baseline.json`, reset CI
+gate hashes/thresholds) is **deliberately not executed** — blocked on the ADR-0019 Ollama
+judge switch so the re-record happens once.
+
+### Drop (before → after, per repo)
+
+| Repo | Before | Dropped (ID) | Dropped (near-dup) | After | Cohorts after |
+|---|---|---|---|---|---|
+| microsoft/vscode | 41 (30 orig + 11 w5) | 30 | 0 | **11** | 11 w5_added |
+| kubernetes/kubernetes | 78 (30 orig + 48 w5) | 24 | 1 (#14398) | **53** | 47 w5_added + 6 original_60 |
+| **Total** | **119** | **54** | **1** | **64** | |
+
+k8s **#14398** dropped per explicit decision (BGE cosine 0.907 to classifier_train #14399 —
+re-filed duplicate). Near-dup admission threshold fixed at **cosine 0.90**: measured
+non-duplicate background tops out at 0.85–0.89 (p90 0.83–0.85) while confirmed re-filed
+duplicates sit at 0.907–1.0 — the bands do not overlap. Contamination sets were
+**recomputed live** from the split parquets at drop time, not read from this report.
+
+### Reconciliation with the in-flight eval set (verified, not assumed)
+
+`eval/eval_set.jsonl` (65 rows, in-flight for the ADR-0019 re-record) minus clean gold
+(64 rows) = exactly `{kubernetes/kubernetes #14398}`; gold − eval_set = ∅
+(`reports/gold_remediation.json → reconciliation.reconciles_as_expected: true`).
+**Action required before phase-3 re-record:** remove #14398 from `eval/eval_set.jsonl`.
+
+### Post-remediation audit (all zeros)
+
+`scripts/verify_gold_train_overlap.py` re-run on the clean set: ID overlap 0, hash overlap 0
+(same- and cross-number), near-dups ≥0.90 = 0 against classifier_train, temporal_train, and
+retrieval-train for both repos (max residual cosine: vsc 0.824, k8s 0.890). Residual
+secondary overlaps remain by design and are documented: val-split overlaps (model selection,
+not training) and 2+2 rows in the CQR calibration slices — these bias only
+coverage-measured-on-gold, not the conformal model itself.
+
+### vscode backfill: structurally impossible from the current corpus (n stated)
+
+Enumerating ALL remaining vscode candidates from the held-out eval-split union with the dual
+admission checks (ID-disjoint from all three training sources AND max BGE cosine < 0.90),
+excluding GG's 6 W5 rejections: of 1,592 unique pooled rows, 410 have component +
+resolution labels; 393 of those overlap training IDs; 11 are already in gold; 6 were
+rejected → **0 eligible candidates** (`reports/gold_remediation.json → vscode_backfill`).
+This is consistent with the W5 round (17 candidates found then = today's 11 accepts + 6
+rejects) and makes ADR-0017's vscode data-ceiling finding absolute: per-repo balance cannot
+be restored from the existing corpus. Options, for a future decision: (a) scrape additional
+vscode eras/issues (extend `01_scrape_issues.py` window) and route new candidates through
+the W5 labeling + ingest flow; (b) accept the 11/53 imbalance and report per-repo metrics
+only (never pooled); (c) relax nothing — the disjointness discipline stays.
+`data/gold_backfill_candidates_vscode.csv` was written with headers and 0 rows as evidence.
+
+### Regression guard now active
+
+`eval/test_invariants.py::test_gold_disjoint_from_training_ids` and
+`::test_gold_no_near_duplicate_of_training_text` assert over the FULL gold artifact on every
+run (not delta-scoped). Demonstrated failing on the pre-remediation set — ID test: all 54
+rows across 6 repo×source pairs; near-dup test: all 4 pairs including #14398 — and passing
+post-remediation (2 passed, 1.5s; near-dup test reconstructs vectors from the saved BGE
+index, no model load). `scripts/10_curate_triage_gold.py` docstrings corrected and the
+script marked DEPRECATED for gold regeneration.
+
+### Metric status after this remediation
+
+Unchanged from §3 until phase 3 runs: the judge baseline and CI gate remain invalid (they
+still reference the contaminated frozen n=60 set) — they become valid only after re-record
+against the clean 64-row set (or its labeled successor). README metrics were and remain
+CLEAN.
 
 ---
 

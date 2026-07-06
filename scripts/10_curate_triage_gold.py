@@ -35,12 +35,37 @@ ISSUES_PER_BUCKET = 10
 RANDOM_SEED = 42
 
 
+def load_train_numbers(repo: str, suffix: str) -> set[int]:
+    """Load a train split's issue numbers for cross-split disjointness checks.
+
+    ADR-0018: the temporal split and the classifier split are computed
+    independently (different logic, different label). Membership in one
+    split's held-out portion says nothing about membership in the OTHER
+    split's train set — an issue held out by the temporal split can still be
+    a training example for the classifier, and vice versa. `load_eval_splits`
+    must exclude both train sets, not just the held-out portions of each.
+    """
+    path = ROOT / "data" / "processed" / f"{repo}_{suffix}.parquet"
+    if not path.exists():
+        logger.warning("%s not found — skipping %s disjointness filter", path, suffix)
+        return set()
+    df = pd.read_parquet(path, columns=["number"])
+    return set(df["number"].astype(int))
+
+
 def load_eval_splits(repo: str) -> pd.DataFrame:
-    """Load val + test splits (neither used for training any model).
+    """Load val + test splits, excluding any issue in EITHER split's train set.
 
     The temporal test split for some repos is entirely in one resolution bucket
     due to distribution shift. Combining val + test gives better stratification
     for the gold evaluation set without leaking training data.
+
+    ADR-0018: temporal_val/temporal_test and classifier_val/classifier_test are
+    two independently-computed splits over the same corpus. An issue held out
+    by one split can simultaneously be a training example in the OTHER split —
+    this was not checked prior to ADR-0018 and caused a component_match
+    train-contamination that went undetected from the gold set's original
+    curation (2026-04-29) until W5 built the first disjointness guard.
     """
     parts = []
     for suffix in ["temporal_val", "temporal_test", "classifier_val", "classifier_test"]:
@@ -50,7 +75,23 @@ def load_eval_splits(repo: str) -> pd.DataFrame:
     if not parts:
         raise FileNotFoundError(f"No eval splits found for {repo} in data/processed/")
     df = pd.concat(parts, ignore_index=True)
-    return df.drop_duplicates(subset=["number"]).reset_index(drop=True)
+    df = df.drop_duplicates(subset=["number"]).reset_index(drop=True)
+
+    classifier_train_numbers = load_train_numbers(repo, "classifier_train")
+    temporal_train_numbers = load_train_numbers(repo, "temporal_train")
+    train_numbers = classifier_train_numbers | temporal_train_numbers
+
+    before = len(df)
+    df = df[~df["number"].isin(train_numbers)].reset_index(drop=True)
+    dropped = before - len(df)
+    if dropped:
+        logger.warning(
+            "%s: dropped %d issues held out by one split but present in the OTHER "
+            "split's train set (cross-split disjointness, ADR-0018)",
+            repo,
+            dropped,
+        )
+    return df
 
 
 def infer_priority(row: pd.Series) -> str:

@@ -42,18 +42,39 @@ eval/eval_set.jsonl (frozen from the OLD n=60 gold) → eval/record_cassettes.py
   → reports/eval_baseline.json → eval/test_quality_regression.py (CI gate)
 ```
 
-### The defect
+### The defect — two contributing bugs (per ADR-0018, independently verified 2026-07-06)
 
-`scripts/10_curate_triage_gold.py::load_eval_splits` (lines 38–53) treats
-"val + test of *any* split scheme" as held-out. That is only true within a scheme. The
-temporal and classifier splits are **independent partitions of the same issues**: membership
-in one scheme's val/test says nothing about the other scheme's train. A row sampled because
-it sits in `classifier_val` (random split, spans all eras) has roughly a `train_pct` = 80%
-prior of sitting in `temporal_train` (earliest 80% by `created_at`) — higher in practice for
-vscode because the gold stratification favored old (2014–2016) issues, which are almost all
-inside the temporal-train era (ADR-0017 measured a 92.2% vscode val/test↔temporal_train
-base-rate overlap). The script's own docstring — "Sampled from test split only (no training
-leakage)" — is false across schemes.
+**Bug 1 — curation-time cross-scheme sampling (2026-04-29, dominant).**
+`scripts/10_curate_triage_gold.py::load_eval_splits` treated "val + test of *any* split
+scheme" as held-out. That is only true within a scheme. The temporal and classifier splits
+are **independent partitions of the same issues**: membership in one scheme's val/test says
+nothing about the other scheme's train. A row sampled because it sits in `classifier_val`
+(random split, spans all eras) has roughly a `train_pct` = 80% prior of sitting in
+`temporal_train` — higher in practice for vscode because the gold stratification favored old
+(2014–2016) issues (ADR-0017 measured a 92.2% vscode val/test↔temporal_train base-rate
+overlap). The script's original docstring — "Sampled from test split only (no training
+leakage)" — was false across schemes. Fixed in-code by ADR-0018's cross-check (both train
+sets now excluded in `load_eval_splits`); script remains deprecated for gold regeneration.
+
+**Bug 2 — post-freeze re-split (ADR-0009, 2026-05-31).** The gold set was frozen 2026-04-29
+(`7ac6da6`) against the then-current splits. ADR-0009 (`5560eb9`, 2026-05-31) changed the
+temporal sort from `closed_at` to `created_at` and regenerated the split parquets (on-disk
+mtime 2026-05-30 17:06) — re-partitioning `temporal_train` **under the already-frozen gold
+set**. The resolution predictor was refit on the new membership and deployed 2026-06-19
+(pkl mtime). Rows correctly held out at curation were silently reassigned into training.
+
+**Verified attribution (reconstruction of the old `closed_at` split, fidelity 1.0000 against
+on-disk parquets; issues parquets unchanged since 2026-04-28, so the reconstruction is
+exact):** of the 41 gold rows found in the new `temporal_train`, only **8** were re-partitioned
+in by ADR-0009 (vscode #3671, #4338; k8s #140, #3121, #3481, #3606, #4947, #8362) — the other
+**33 were inside `temporal_train` under BOTH sorts**, i.e. Bug 1 contaminated the temporal
+channel from day one as well. This **corrects ADR-0018's framing**, which attributes the
+temporal channel entirely to ADR-0009: the re-split mechanism is real (CONFIRMED) but
+accounts for 8/41 of the temporal-channel rows, not all of them. The classifier channel
+(20 rows) is pure Bug 1, as ADR-0018 states. Timeline evidence: splits created `c989980`
+2026-04-28 → gold frozen `7ac6da6` 2026-04-29 → classifier pkl calibration-only update
+2026-05-19 (no retrain) → re-split `5560eb9` 2026-05-31 (parquets 05-30) → resolution model
+refit + deployed 2026-06-19.
 
 The W5 expansion (2026) added exactly the right guard
 (`w5_ingest_labeled.py::assert_gold_disjoint_from_train`, three-way, hard-fail) but ran it

@@ -20,6 +20,23 @@
 
 ---
 
+## Active follow-ups (2026-07-06 — gold-set remediation close-out)
+
+- [ ] **Remove k8s #14398 from `eval/eval_set.jsonl`** before the phase-3 re-record —
+      do this inside the ADR-0019 work. Clean gold (n=64) = current eval_set (65) minus
+      #14398 (near-dup drop; see docs/investigations/gold-set-leakage.md §5).
+- [ ] **Phase-3 baseline re-record** (re-freeze similar_issues → re-record cassettes →
+      re-derive `reports/eval_baseline.json` → reset CI-gate hashes/thresholds) —
+      **BLOCKED on ADR-0019** (Ollama judge switch) so the re-record happens once.
+      Judge means expected to drop vs the contaminated 10.45/15 baseline; report honestly.
+- [ ] **vscode gold corpus expansion via the W5 flow** — queued. 0 eligible clean
+      candidates exist in the current corpus (data ceiling, verified); interim decision:
+      accepted at 11 vscode / 53 k8s with per-repo-only reporting (never pooled). Requires
+      extending the `01_scrape_issues.py` window, then W5 candidate generation → GG
+      labeling → `w5_ingest_labeled.py` (whole-gold invariants enforce disjointness).
+
+---
+
 ## Why This Project Wins Microsoft/Google Interviews
 
 | Concern they ask about | Demonstrated by |

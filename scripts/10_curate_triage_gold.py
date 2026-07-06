@@ -1,5 +1,15 @@
 """Curate gold-standard triage evaluation set.
 
+DEPRECATED — DO NOT regenerate gold with this script. Its sampling pool is the
+union of val+test from TWO INDEPENDENT split schemes (temporal and stratified-
+classifier) with no exclusion against either scheme's train split, so a row
+held out in one scheme is very likely inside the other scheme's train split.
+This produced the 2026-07 gold contamination (54/60 original rows in training
+data — see docs/investigations/gold-set-leakage.md). Gold admission now goes
+through scripts/w5_ingest_labeled.py (three-way ID disjointness, hard-fail) and
+is enforced repo-wide by eval/test_invariants.py's whole-gold invariants
+(ID-level + BGE near-dup < 0.90). Kept for provenance of the original 60 rows.
+
 Selects 30 closed issues per repo (60 total) with known outcomes:
 - component label (from normalized label set)
 - priority (inferred from label or position)
@@ -9,7 +19,8 @@ Selection criteria:
 - Must be closed (resolution_hours known)
 - Must have component + type labels (so gold component is unambiguous)
 - Stratified: 10 issues per resolution bucket (<7d, 7–30d, >30d)
-- Sampled from test split only (no training leakage)
+- Sampled from the union of val+test of both split schemes (NOT train-disjoint
+  across schemes — see deprecation note above)
 
 Output: data/gold_triage_plans.parquet
 """
@@ -36,11 +47,16 @@ RANDOM_SEED = 42
 
 
 def load_eval_splits(repo: str) -> pd.DataFrame:
-    """Load val + test splits (neither used for training any model).
+    """Load val + test splits of BOTH split schemes (temporal and classifier).
+
+    WARNING (leakage): the two schemes partition the same corpus independently,
+    so this pool is NOT disjoint from either scheme's train split — a row from
+    classifier_val/test is usually inside temporal_train and vice versa. This
+    is the root cause of the 2026-07 gold contamination; see the module
+    deprecation note and docs/investigations/gold-set-leakage.md.
 
     The temporal test split for some repos is entirely in one resolution bucket
-    due to distribution shift. Combining val + test gives better stratification
-    for the gold evaluation set without leaking training data.
+    due to distribution shift; combining val + test was done for stratification.
     """
     parts = []
     for suffix in ["temporal_val", "temporal_test", "classifier_val", "classifier_test"]:

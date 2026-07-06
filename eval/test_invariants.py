@@ -497,3 +497,134 @@ def test_grounding_known_cases_still_flagged(grounding_reports: list[dict]) -> N
         f"(predicted_component={case_13435['predicted_component']!r}, "
         f"classifier_top3_labels={case_13435['classifier_top3_labels']})"
     )
+
+
+# ---------------------------------------------------------------------------
+# Gold-set / training-data disjointness (whole-artifact invariant)
+#
+# The 2026-07 leakage investigation (docs/investigations/gold-set-leakage.md)
+# found 54/119 gold rows inside shipped-model training splits. The root cause
+# survived because the only disjointness check was delta-scoped (ran on newly
+# ingested rows at w5_ingest time, never on the merged artifact). These two
+# tests assert over the FULL data/gold_triage_plans.parquet on every run, so
+# contamination is a CI failure rather than a one-time audit finding.
+# ---------------------------------------------------------------------------
+
+GOLD_PATH = ROOT / "data" / "gold_triage_plans.parquet"
+W3_SPLIT_PATH = ROOT / "data" / "w3_split.parquet"
+
+# Admission threshold from the remediation decision (docs/investigations/
+# gold-set-leakage.md §Remediation executed): a gold row whose max BGE cosine
+# against any training row is >= 0.90 is treated as a near-duplicate. Chosen
+# because measured non-dup background tops out ~0.85-0.89 (p90 0.83-0.85)
+# while confirmed re-filed dups sit at 0.907-1.0 — the bands don't overlap.
+NEAR_DUP_COSINE_MAX = 0.90
+
+
+def _training_id_sets(slug: str) -> dict[str, set[int]]:
+    """Issue-number sets of the three training sources for one repo."""
+    import pandas as pd
+
+    sets: dict[str, set[int]] = {}
+    for split in ("classifier_train", "temporal_train"):
+        path = PROCESSED_DIR / f"{slug}_{split}.parquet"
+        sets[split] = set(pd.read_parquet(path, columns=["number"])["number"].astype(int))
+    if W3_SPLIT_PATH.exists():
+        w3 = pd.read_parquet(W3_SPLIT_PATH)
+        train = w3[(w3["repo"] == slug) & (w3["split"] == "train")]
+        sets["retrieval_train_w3"] = set(train["query_number"].astype(int)) | set(
+            train["original_number"].astype(int)
+        )
+    else:
+        sets["retrieval_train_w3"] = set()
+    return sets
+
+
+def test_gold_disjoint_from_training_ids() -> None:
+    """Every gold row must be ID-disjoint from all three training sources.
+
+    Whole-artifact, not delta-scoped: re-checks every row of the gold parquet
+    against classifier_train, temporal_train, and the W3 retrieval-train pair
+    numbers on every run.
+    """
+    import pandas as pd
+
+    gold = pd.read_parquet(GOLD_PATH)
+    gold["number"] = gold["number"].astype(int)
+
+    violations: list[str] = []
+    for repo in REPOS:
+        slug = REPO_SLUGS[repo]
+        gold_numbers = set(gold[gold["repo"] == repo]["number"])
+        for source, train_numbers in _training_id_sets(slug).items():
+            overlap = sorted(gold_numbers & train_numbers)
+            if overlap:
+                violations.append(
+                    f"{repo} vs {source}: {len(overlap)} gold rows in training data "
+                    f"(first 10: {overlap[:10]})"
+                )
+
+    assert not violations, (
+        "GOLD/TRAIN LEAK — gold set is not disjoint from training data:\n  "
+        + "\n  ".join(violations)
+        + "\nSee docs/investigations/gold-set-leakage.md for the drop procedure."
+    )
+
+
+def test_gold_no_near_duplicate_of_training_text() -> None:
+    """No gold row may be a near-duplicate (BGE cosine >= 0.90) of a training row.
+
+    Catches re-filed duplicate content under a different issue number — the one
+    channel ID-level checks structurally cannot see (e.g. k8s gold #14398 ~
+    train #14399 at cosine 0.907, found post-W5). Uses vectors reconstructed
+    from the saved dup_index FAISS indexes (no model load, no re-encoding);
+    same-number pairs are masked so this test stays orthogonal to the ID test.
+    """
+    import faiss
+    import joblib
+    import pandas as pd
+
+    gold = pd.read_parquet(GOLD_PATH)
+    gold["number"] = gold["number"].astype(int)
+
+    violations: list[str] = []
+    for repo in REPOS:
+        slug = REPO_SLUGS[repo]
+        idx_dir = MODELS_DIR / f"dup_index_{slug}_bge"
+        if not idx_dir.exists():
+            pytest.skip(f"BGE dup index missing at {idx_dir} — model bundle not downloaded")
+
+        meta = joblib.load(str(idx_dir / "meta.pkl"))
+        index = faiss.read_index(str(idx_dir / "index.faiss"))
+        vecs = index.reconstruct_n(0, index.ntotal)  # L2-normalized at build time
+        num_to_row = {int(n): i for i, n in enumerate(meta["issue_numbers"])}
+
+        id_sets = _training_id_sets(slug)
+        train_numbers = id_sets["classifier_train"] | id_sets["temporal_train"]
+        train_rows = [num_to_row[n] for n in train_numbers if n in num_to_row]
+        train_nums = np.asarray(
+            [n for n in train_numbers if n in num_to_row], dtype=np.int64
+        )
+
+        gold_repo = gold[gold["repo"] == repo]
+        gold_nums = [int(n) for n in gold_repo["number"] if int(n) in num_to_row]
+        gold_rows = [num_to_row[n] for n in gold_nums]
+
+        sims = vecs[gold_rows] @ vecs[train_rows].T  # cosine (normalized vectors)
+        for gi, gnum in enumerate(gold_nums):
+            sims[gi, train_nums == gnum] = -1.0  # mask same-number pairs
+
+        max_sim = sims.max(axis=1)
+        nearest = train_nums[sims.argmax(axis=1)]
+        for gi, gnum in enumerate(gold_nums):
+            if max_sim[gi] >= NEAR_DUP_COSINE_MAX:
+                violations.append(
+                    f"{repo} gold #{gnum} ~ train #{int(nearest[gi])} "
+                    f"cosine={float(max_sim[gi]):.4f}"
+                )
+
+    assert not violations, (
+        f"GOLD NEAR-DUP — gold rows within cosine {NEAR_DUP_COSINE_MAX} of training text:\n  "
+        + "\n  ".join(violations)
+        + "\nRe-filed duplicates leak label information; drop or replace these rows."
+    )

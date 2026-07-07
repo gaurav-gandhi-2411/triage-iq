@@ -168,6 +168,7 @@ class TriageAssistant:
         model: str = "llama-3.1-8b-instant",
         temperature: float = 0.0,
         max_tokens: int = 1024,
+        seed: int = 42,
         cache=None,
     ) -> None:
         self.repo = repo
@@ -178,6 +179,7 @@ class TriageAssistant:
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
+        self.seed = seed
         self._cache = cache  # LLMCache | None
 
         key = groq_api_key or os.environ.get("GROQ_API_KEY", "")
@@ -430,7 +432,7 @@ class TriageAssistant:
                     # cache with no real credentials cannot make).
                     retry_messages = self._build_retry_messages(messages, raw)
                     retry_key = cache.compute_key(
-                        "groq", self.model, retry_messages, self.temperature, self.max_tokens
+                        "groq", self.model, retry_messages, self.temperature, self.max_tokens,
                     )
                     cached_retry = cache.get(retry_key)
                     if cached_retry is not None:
@@ -460,7 +462,7 @@ class TriageAssistant:
             retry_key: str | None = None
             if cache is not None:
                 retry_key = cache.compute_key(
-                    "groq", self.model, retry_messages, self.temperature, self.max_tokens
+                    "groq", self.model, retry_messages, self.temperature, self.max_tokens,
                 )
                 cached2 = cache.get(retry_key)
                 if cached2 is not None:
@@ -523,6 +525,7 @@ class TriageAssistant:
                     messages=messages,  # type: ignore[arg-type]
                     temperature=self.temperature,
                     max_tokens=self.max_tokens,
+                    seed=self.seed,
                 )
                 content = (resp.choices[0].message.content or "").strip()
                 usage = {}

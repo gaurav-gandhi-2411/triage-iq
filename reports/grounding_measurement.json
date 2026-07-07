@@ -1,84 +1,82 @@
 {
   "per_repo": {
     "microsoft/vscode": {
-      "n": 30,
-      "component_ungrounded_count": 0,
-      "component_ungrounded_pct": 0.0,
+      "n": 11,
+      "component_ungrounded_count": 1,
+      "component_ungrounded_pct": 9.09,
       "component_ungrounded_ci_recoverable_count": 0,
       "component_ungrounded_ci_recoverable_pct_of_ungrounded": 0.0,
       "similar_issue_ungrounded_count": 0,
       "similar_issue_ungrounded_pct": 0.0,
-      "all_grounded_false_count": 0,
-      "all_grounded_false_pct": 0.0
+      "all_grounded_false_count": 1,
+      "all_grounded_false_pct": 9.09
     },
     "kubernetes/kubernetes": {
-      "n": 30,
+      "n": 54,
       "component_ungrounded_count": 1,
-      "component_ungrounded_pct": 3.33,
+      "component_ungrounded_pct": 1.85,
       "component_ungrounded_ci_recoverable_count": 0,
       "component_ungrounded_ci_recoverable_pct_of_ungrounded": 0.0,
-      "similar_issue_ungrounded_count": 1,
-      "similar_issue_ungrounded_pct": 3.33,
-      "all_grounded_false_count": 2,
-      "all_grounded_false_pct": 6.67
+      "similar_issue_ungrounded_count": 0,
+      "similar_issue_ungrounded_pct": 0.0,
+      "all_grounded_false_count": 1,
+      "all_grounded_false_pct": 1.85
     }
   },
   "overall": {
-    "n": 60,
-    "component_ungrounded_count": 1,
-    "component_ungrounded_pct": 1.67,
+    "n": 65,
+    "component_ungrounded_count": 2,
+    "component_ungrounded_pct": 3.08,
     "component_ungrounded_ci_recoverable_count": 0,
     "component_ungrounded_ci_recoverable_pct_of_ungrounded": 0.0,
-    "similar_issue_ungrounded_count": 1,
-    "similar_issue_ungrounded_pct": 1.67,
+    "similar_issue_ungrounded_count": 0,
+    "similar_issue_ungrounded_pct": 0.0,
     "all_grounded_false_count": 2,
-    "all_grounded_false_pct": 3.33
+    "all_grounded_false_pct": 3.08
   },
   "ungrounded_cases": [
     {
-      "issue_number": 1678,
-      "repo": "kubernetes/kubernetes",
-      "component_grounded": true,
-      "component_reason": "in classifier_top3",
-      "case_insensitive_match_diagnostic": true,
-      "ungrounded_refs": [
-        13632
-      ],
+      "issue_number": 311836,
+      "repo": "microsoft/vscode",
+      "component_grounded": false,
+      "component_reason": "not in classifier_top3",
+      "case_insensitive_match_diagnostic": false,
+      "ungrounded_refs": [],
       "all_grounded": false,
-      "predicted_component": "test",
+      "predicted_component": "webview",
       "classifier_top3_labels": [
-        "test",
-        "test-infra",
-        "provider/gcp"
+        "suggest",
+        "accessibility",
+        "debug"
       ],
       "retrieved_numbers": [
-        5084,
-        5821,
-        6056,
-        11075,
-        14342
+        227,
+        2006,
+        311844,
+        312020,
+        312490
       ]
     },
     {
-      "issue_number": 13435,
+      "issue_number": 13057,
       "repo": "kubernetes/kubernetes",
       "component_grounded": false,
       "component_reason": "not in classifier_top3",
       "case_insensitive_match_diagnostic": false,
       "ungrounded_refs": [],
       "all_grounded": false,
-      "predicted_component": "cluster/bootstrap",
+      "predicted_component": "storage",
       "classifier_top3_labels": [
         "provider/gcp",
-        "platform/vagrant",
-        "example"
+        "kubectl",
+        "security"
       ],
       "retrieved_numbers": [
-        1085,
-        2054,
-        2597,
-        2824,
-        6962
+        2269,
+        4899,
+        5684,
+        7559,
+        9721
       ]
     }
   ]

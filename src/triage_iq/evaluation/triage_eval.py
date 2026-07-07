@@ -167,12 +167,16 @@ class TriageJudge:
         provider: str = "groq",
         gemini_api_key: str | None = None,
         cohere_api_key: str | None = None,
+        ollama_host: str | None = None,
+        ollama_seed: int = 42,
         cache=None,
     ) -> None:
         self.model = model
         self.temperature = temperature
         self.provider = provider
         self._cache = cache  # LLMCache | None
+        self._ollama_host = ollama_host or os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+        self._ollama_seed = ollama_seed
 
         if provider in self._GOOGLE_PROVIDERS:
             key = (
@@ -192,6 +196,11 @@ class TriageJudge:
             self._cohere_key = key
             self._groq_key = ""
             self._gemini_key = ""
+        elif provider == "ollama":
+            # Local inference — no API key, no rate limit, zero cost.
+            self._groq_key = ""
+            self._gemini_key = ""
+            self._cohere_key = ""
         else:
             key = groq_api_key or os.environ.get("GROQ_API_KEY", "")
             if not key:
@@ -235,6 +244,9 @@ class TriageJudge:
                 "type": "json_object",
                 "json_schema": self._cohere_sanitize_schema(JudgeScore.model_json_schema()),
             }
+        elif self.provider == "ollama":
+            # seed affects output determinism — must invalidate cache if it changes.
+            extra["seed"] = self._ollama_seed
         if cache is not None:
             cache_key = cache.compute_key(self.provider, self.model, messages, self.temperature, **extra)
             cached = cache.get(cache_key)
@@ -245,6 +257,8 @@ class TriageJudge:
             raw = self._gemini_completion(messages)
         elif self.provider == "cohere":
             raw = self._cohere_completion(messages)
+        elif self.provider == "ollama":
+            raw = self._ollama_completion(messages)
         else:
             raw = self._groq_completion(messages)
 
@@ -505,10 +519,57 @@ Score this triage plan using the rubric. Return ONLY valid JSON.
                     raise
         raise RuntimeError("Gemini judge completion failed after 6 attempts")
 
+    def _ollama_completion(self, messages: list[dict]) -> str:
+        try:
+            import ollama as _ollama
+        except ImportError as e:
+            raise ImportError("pip install ollama") from e
+
+        client = _ollama.Client(host=self._ollama_host)
+        backoff = 3.0
+        for attempt in range(6):
+            try:
+                resp = client.chat(
+                    model=self.model,
+                    messages=messages,
+                    think=False,  # qwen3 etc. emit <think> blocks by default; skip for
+                    # deterministic, fast JSON-only output (mirrors the Groq /no_think fix).
+                    # keep_alive=-1: never let Ollama idle-unload the model mid-run. A
+                    # reload would inject a "cold-start" response into what must stay an
+                    # all-warm sequence — cold and warm outputs are each independently
+                    # reproducible but differ from each other (verified empirically).
+                    keep_alive=-1,
+                    options={
+                        "temperature": self.temperature,
+                        "seed": self._ollama_seed,
+                    },
+                )
+                return resp["message"]["content"].strip()
+            except Exception as e:
+                # Local server hiccup (model still loading, transient connection reset) —
+                # no rate limit possible locally, so retry is purely for server-startup races.
+                if attempt < 5:
+                    logger.warning(
+                        "Ollama completion attempt %d/6 failed: %s — retrying in %.1fs",
+                        attempt + 1, e, backoff,
+                    )
+                    time.sleep(backoff)
+                    backoff = min(backoff * 2, 30.0)
+                else:
+                    raise
+        raise RuntimeError("Ollama judge completion failed after 6 attempts")
+
     @staticmethod
     def _parse_score(raw: str) -> JudgeScore:
         # Strip <think>...</think> blocks emitted by reasoning models (e.g. Qwen3).
         text = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
+        # Some Ollama qwen3 builds emit a bare closing </think> with no opening tag
+        # (the template starts the turn already "inside" the think block) — observed
+        # directly via the ollama-qwen3:30b-a3b judge path. If a lone </think> survives
+        # the paired-tag strip above, drop everything up to and including its LAST
+        # occurrence, since the real answer always follows it.
+        if "</think>" in text:
+            text = text.rsplit("</think>", 1)[-1].strip()
         text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.MULTILINE)
         text = re.sub(r"\s*```$", "", text.strip(), flags=re.MULTILINE)
         match = re.search(r"\{.*\}", text, re.DOTALL)

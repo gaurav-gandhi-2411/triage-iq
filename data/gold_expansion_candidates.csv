@@ -1,0 +1,1816 @@
+id,number,title,body_clean,code_blocks,labels_raw,component,type,priority,state,created_at,closed_at,resolution_hours,author,num_comments,num_assignees,repo,res_bucket,tfidf_top1,tfidf_top1_conf,tfidf_top2,tfidf_top2_conf,tfidf_top3,tfidf_top3_conf,bge_similar_1,bge_similar_1_score,bge_similar_2,bge_similar_2_score,bge_similar_3,bge_similar_3_score,stratum,label_status,body_excerpt
+4284795911,311074,[Error] Cannot read properties of undefined (reading 'search'),"## Error Message
+[CODE_BLOCK]`
+
+## Stack Trace
+&nbsp;&nbsp;&nbsp;&nbsp;at HQ.openSearch ([./src/vs/browser/extensionsWorkbenchService.ts:1616:0](https://github.com/microsoft/vscode/blob/41dd792b5e652393e7787322889ed5fdc58bd75b/src/vs/browser/extensionsWorkbenchService.ts#L1616))
+
+<details>
+<summary>Raw Stack Trace (minified)</summary>
+
+[CODE_BLOCK]`
+
+</details>
+
+## Details
+| Property | Value |
+| --- | --- |
+| Bucket ID | [[INLINE_CODE]](https://errors.code.visualstudio.com/bucket/7c2ea738-a655-7a00-ae2d-e6bd8343104a?product=Agents&commit=41dd792b5e652393e7787322889ed5fdc58bd75b) |
+| Version | 1.115.0-insider |
+| Commit | [[INLINE_CODE]](https://insiders.vscode.dev/github/microsoft/vscode/tree/41dd792b5e652393e7787322889ed5fdc58bd75b) |
+| Last Seen | Fri Apr 10 2026 18:06:11 GMT+0000 (Coordinated Universal Time) |
+| Platforms | Windows, Mac |
+| Product | Agents |
+
+---
+*This issue was automatically created from the VS Code Errors Dashboard*","````
+Cannot read properties of undefined (reading 'search')
+```
+
+````
+TypeError: Cannot read properties of undefined (reading 'search')     at HQ.openSearch (out/vs/sessions/sessions.desktop.main.js:2850:26029)
+```",['bug' 'error-telemetry' 'agents'],error-telemetry,bug,,closed,2026-04-17 19:15:14+00:00,2026-04-17 20:04:46+00:00,0.8255555555555556,vs-code-engineering[bot],0,1,microsoft/vscode,hours,error-telemetry,0.6696,typescript,0.019,suggest,0.0183,311073,0.8625,311558,0.857,311695,0.8482,vsc-hours-error-telemetry,pending,"## Error Message
+[CODE_BLOCK]`
+
+## Stack Trace
+&nbsp;&nbsp;&nbsp;&nbsp;at HQ.openSearch ([./src/vs/browser/extensionsWorkbenchService.ts:1616:0](https://github.com/microsoft/vscode/blob/41dd792b5e652393e7787322889ed5fdc58bd75b/src/vs/browser/extensionsWorkbenchService.ts#L1616))
+
+<details>
+<summary>"
+4292467329,311284,Fix disposed SCM source control retention,"This fixes an extension-host SCM bookkeeping leak where disposed source controls remained reachable from [INLINE_CODE] after they had been unregistered from the main thread.
+
+Disposed source controls are now removed from both handle-based and extension-based bookkeeping when [INLINE_CODE] fires. This allows disposed Git repositories and their refs/history/artifact state to be collected instead of staying alive through stale SCM provider references.
+
+Fixes #311282
+
+Validation:
+- [INLINE_CODE] task output was clean for Core Transpile, Core Typecheck, Ext Build, and Copilot Build.
+- Focused unit test passed: [INLINE_CODE].
+- Hygiene passed for the changed TypeScript files with only the existing TypeScript-version warning from [INLINE_CODE].
+
+(Written by Copilot)",,['scm'],scm,,,closed,2026-04-20 00:43:02+00:00,2026-04-20 12:01:00+00:00,11.299444444444445,roblourens,1,1,microsoft/vscode,hours,tasks,0.0774,git,0.0711,api,0.0682,311282,0.8865,311990,0.75,312211,0.7338,vsc-hours-scm,pending,"This fixes an extension-host SCM bookkeeping leak where disposed source controls remained reachable from [INLINE_CODE] after they had been unregistered from the main thread.
+
+Disposed source controls are now removed from both handle-based and extension-based bookkeeping when [INLINE_CODE] fires. Thi"
+4299616326,311578,[Error Telemetry] Suppress 'Cloud agent not enabled' from Agents error reporting,"## Error Buckets\n\n| Bucket ID | Users | Hits |\n|-----------|-------|------|\n| [INLINE_CODE] | 29 | 50 |\n| [INLINE_CODE] | 1 | 1 |\n\n**Error:** [INLINE_CODE]\n**Version:** 98b4d3e2 (1.117.0-insider, Apr 14)\n\n### Proposal\nThis is a user configuration error (user hasn't enabled cloud agent for their repo). The telemetry instrumentation should suppress this expected condition from being reported as an unhandled error.\n\n### Stack\n[CODE_BLOCK]\n\n_Auto-created by error telemetry scan._",```\nchatagenterror-Cloud agent is not enabled for this repository. You may need to enable it in [GitHub settings].\n```,['bug' 'error-telemetry' 'agents'],error-telemetry,bug,,closed,2026-04-21 01:06:02+00:00,2026-04-21 01:33:39+00:00,0.4602777777777778,bryanchen-d,1,1,microsoft/vscode,hours,error-telemetry,0.1067,suggest,0.0606,debug,0.0521,311575,0.9079,311577,0.9046,311574,0.8966,vsc-hours-error-telemetry,pending,"## Error Buckets\n\n| Bucket ID | Users | Hits |\n|-----------|-------|------|\n| [INLINE_CODE] | 29 | 50 |\n| [INLINE_CODE] | 1 | 1 |\n\n**Error:** [INLINE_CODE]\n**Version:** 98b4d3e2 (1.117.0-insider, Apr 14)\n\n### Proposal\nThis is a user configuration error (user hasn't enabled cloud agent for"
+4306706140,311836,Use real streaming for loading webview resources,"Let's see if we can speed up webview perf by using proper streams to load resources
+
+Right now we instead have to read the entire resource in to a buffer and then send that large buffer over. That's especially bad for large resources such as video files",,['verification-needed' 'webview' 'perf' 'insiders-released'],perf,,,closed,2026-04-22 04:32:33+00:00,2026-04-22 17:28:41+00:00,12.935555555555556,mjbvz,2,1,microsoft/vscode,hours,suggest,0.0558,accessibility,0.0557,debug,0.0539,311844,0.8888,312490,0.7263,312020,0.6913,vsc-hours-perf,pending,"Let's see if we can speed up webview perf by using proper streams to load resources
+
+Right now we instead have to read the entire resource in to a buffer and then send that large buffer over. That's especially bad for large resources such as video files"
+4308268043,311878,Avoid computing and storing commands to skip shell per terminal instance,"I noticed this inefficiency:
+
+https://github.com/microsoft/vscode/blob/200fb2ed1db2556b3da5a524d4d418835bd9de39/src/vs/workbench/contrib/terminal/browser/terminalInstance.ts#L1962-L1967
+
+Currently this will compute and store [INLINE_CODE] per terminal instance when really this should be shared across instances. It also does a filter/map/concat which isn't particularly optimized.
+
+I recommend the following:
+
+- Move [INLINE_CODE] into [INLINE_CODE] to be shared across instances, expose as something like [INLINE_CODE]
+- Use a [INLINE_CODE] over [INLINE_CODE] for faster lookup as this is used repeatedly, the [INLINE_CODE] used in [INLINE_CODE] is O(n) atm
+- Avoid functional array functions to use imperative to have more control over creating and GCing a bunch of arrays as this will be run on startup
+
+@anthonykim1",,['debt' 'terminal' 'insiders-released'],terminal,,,closed,2026-04-22 10:14:09+00:00,2026-04-22 13:50:01+00:00,3.597777777777778,Tyriar,1,1,microsoft/vscode,hours,api,0.0859,error-telemetry,0.0749,tasks,0.051,438,0.7834,1037,0.7808,2575,0.7751,vsc-hours-terminal,pending,"I noticed this inefficiency:
+
+https://github.com/microsoft/vscode/blob/200fb2ed1db2556b3da5a524d4d418835bd9de39/src/vs/workbench/contrib/terminal/browser/terminalInstance.ts#L1962-L1967
+
+Currently this will compute and store [INLINE_CODE] per terminal instance when really this should be shared acros"
+4319472929,312260,run_in_terminal returns partial output for multi-line POSIX commands (RichExecuteStrategy resolves on first onCommandFinished),"## Summary
+
+When the chat agent pastes a multi-line POSIX command via [INLINE_CODE] (for example a [INLINE_CODE] heredoc or a small [INLINE_CODE] script), the tool returns to the model after only the first line has run. The remaining lines continue executing in the terminal unattended while the agent moves on, causing empty/partial output, wasted follow-up turns, and incorrect patches.
+
+## Root cause
+
+[[INLINE_CODE]](https://github.com/microsoft/vscode/blob/main/src/vs/workbench/contrib/terminalContrib/chatAgentTools/browser/executeStrategy/richExecuteStrategy.ts) resolves on the **first** [INLINE_CODE] shell-integration marker:
+
+[CODE_BLOCK]
+
+Shell integration fires one marker per top-level statement. For a multi-line submission this means the strategy returns after line 1, even though the combined submission is logically a single tool call. Input detection in [INLINE_CODE] is unaffected (it reads the PTY directly), so interactive prompts still surface — but command completion semantics are wrong.
+
+### When was this introduced?
+
+The behavior has been present since the rich execute strategy was first wired up to shell integration in commit [INLINE_CODE] ""Get rich strat working"" (2025-07-14) and [INLINE_CODE] ""Use command detection output and exit code"". It was masked in practice by the nohup-compound corruption (#312202) for background commands; with that fixed, multi-line foreground heredocs now dominate the failure signal.
+
+## Impact
+
+Observed on eval run [INLINE_CODE] (terminalbench2, vscode agent). At least 8 of 25 failing instances trace directly to this bug, including:
+
+- [INLINE_CODE], [INLINE_CODE], [INLINE_CODE], [INLINE_CODE], [INLINE_CODE], [INLINE_CODE], [INLINE_CODE], [INLINE_CODE]
+
+Each of those produced an empty or near-empty patch ([INLINE_CODE]) after burning the model's token budget on spurious system-initiated follow-up turns triggered by early command completion.","```ts
+Event.toPromise(this._commandDetection.onCommandFinished, store).then(e => { ... })
+```",['bug' 'verified' 'terminal' 'insiders-released' 'chat'],terminal,bug,,closed,2026-04-23 23:32:54+00:00,2026-04-24 03:11:53+00:00,3.649722222222222,meganrogge,1,1,microsoft/vscode,hours,api,0.0708,tasks,0.0604,editor-find,0.054,312263,0.8137,312853,0.7817,312383,0.7743,vsc-hours-terminal,pending,"## Summary
+
+When the chat agent pastes a multi-line POSIX command via [INLINE_CODE] (for example a [INLINE_CODE] heredoc or a small [INLINE_CODE] script), the tool returns to the model after only the first line has run. The remaining lines continue executing in the terminal unattended while the agen"
+4325240002,312423,"Accessibility: Add verbosity setting, aria label hint, and keyboard shortcut to focus terminal from question carousel","## Feature Request
+
+When the [INLINE_CODE] tool renders a question carousel triggered by a terminal interaction, users need accessible ways to navigate back to the terminal. Currently the ""Focus Terminal"" button is click-only with no keyboard shortcut, no keybinding hint in the aria label, and no verbosity setting to control the hint.
+
+## Proposed Changes
+
+### 1. Verbosity setting
+Add [INLINE_CODE] (boolean, default [INLINE_CODE]) to control whether the carousel's aria label includes navigation hints (e.g., how to focus the terminal).
+
+### 2. Keyboard shortcut
+Register a new action [INLINE_CODE] with keybinding [INLINE_CODE], scoped to:
+- [INLINE_CODE]
+- [INLINE_CODE]
+- [INLINE_CODE] (new context key, set when the carousel has a [INLINE_CODE])
+
+This ensures the keybinding only activates when there's actually a terminal to focus.
+
+### 3. Aria label with keybinding hint
+- The Focus Terminal button's [INLINE_CODE] should include the keybinding: e.g., ""Focus Terminal (Alt+T)""
+- When verbosity is enabled and the carousel has a terminal, [INLINE_CODE] should append a hint: ""Use Alt+T to focus the terminal.""",,"['feature-request' 'verified' 'accessibility' 'verification-needed'
+ 'insiders-released']",accessibility,feature-request,,closed,2026-04-24 19:56:24+00:00,2026-04-24 21:01:59+00:00,1.0930555555555554,meganrogge,5,1,microsoft/vscode,hours,accessibility,0.1155,keybindings,0.08,api,0.0597,312429,0.9629,2145,0.7573,3643,0.733,vsc-hours-accessibility,pending,"## Feature Request
+
+When the [INLINE_CODE] tool renders a question carousel triggered by a terminal interaction, users need accessible ways to navigate back to the terminal. Currently the ""Focus Terminal"" button is click-only with no keyboard shortcut, no keybinding hint in the aria label, and no ve"
+4336281471,312766,Bump postcss from 8.5.8 to 8.5.12 in /test/monaco,"Bumps [postcss](https://github.com/postcss/postcss) from 8.5.8 to 8.5.12.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a href=""https://github.com/postcss/postcss/releases"">postcss's releases</a>.</em></p>
+<blockquote>
+<h2>8.5.12</h2>
+<ul>
+<li>Fixed reading any file via user-generated CSS.</li>
+<li>Added <code>opts.unsafeMap</code> to disable checks.</li>
+</ul>
+<h2>8.5.11</h2>
+<ul>
+<li>Fixed nested brackets parsing performance (by <a href=""https://github.com/offset""><code>@​offset</code></a>).</li>
+</ul>
+<h2>8.5.10</h2>
+<ul>
+<li>Fixed XSS via unescaped <code>&lt;/style&gt;</code> in non-bundler cases (by <a href=""https://github.com/TharVid""><code>@​TharVid</code></a>).</li>
+</ul>
+<h2>8.5.9</h2>
+<ul>
+<li>Speed up source map encoding paring in case of the error.</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a href=""https://github.com/postcss/postcss/blob/main/CHANGELOG.md"">postcss's changelog</a>.</em></p>
+<blockquote>
+<h2>8.5.12</h2>
+<ul>
+<li>Fixed reading any file via user-generated CSS.</li>
+<li>Added <code>opts.unsafeMap</code> to disable checks.</li>
+</ul>
+<h2>8.5.11</h2>
+<ul>
+<li>Fixed nested brackets parsing performance (by <a href=""https://github.com/offset""><code>@​offset</code></a>).</li>
+</ul>
+<h2>8.5.10</h2>
+<ul>
+<li>Fixed XSS via unescaped <code>&lt;/style&gt;</code> in non-bundler cases (by <a href=""https://github.com/TharVid""><code>@​TharVid</code></a>).</li>
+</ul>
+<h2>8.5.9</h2>
+<ul>
+<li>Speed up source map encoding paring in case of the error.</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a href=""https://github.com/postcss/postcss/commit/9bc81c48f054a630c9a2e3868263b7ad4fc15013""><code>9bc81c4</code></a> Release 8.5.12 version</li>
+<li><a href=""https://github.com/postcss/postcss/commit/85c4d7dab830be366f8a96047f9e5b7944e101d8""><code>85c4d7d</code></a> Another try to fix coverage</li>
+<li><a href=""https://github.com/postcss/postcss/commit/94484cae6d4308167939f2ac888d166bd80dff01""><code>94484ca</code></a> Try to fix coverage</li>
+<li><a href=""https://github.com/postcss/postcss/commit/c64b7488d2731dfa16213739b42c34faf5a9eba3""><code>c64b748</code></a> Load only .map source maps</li>
+<li><a href=""https://github.com/postcss/postcss/commit/aaec7b78b3ce2792585b4b300ef1bd5dd5b3e8ad""><code>aaec7b7</code></a> Avoid throwing JSON parsing errors for non-JSON source maps</li>
+<li><a href=""https://github.com/postcss/postcss/commit/233fb264ea4c37f9e2d7b64b2726e6d23fd02327""><code>233fb26</code></a> Mention original author of the solution</li>
+<li><a href=""https://github.com/postcss/postcss/commit/2502f750307acde733a39f9dfd4ef3cf6c6b734d""><code>2502f75</code></a> Release 8.5.11 version</li>
+<li><a href=""https://github.com/postcss/postcss/commit/5ca19019495b3fa08205f5fd2eeed57892f9fa3d""><code>5ca1901</code></a> Speed up parsing many nested brackets</li>
+<li><a href=""https://github.com/postcss/postcss/commit/42b5337dd7e2fa9a03566495cfad2737eb19e712""><code>42b5337</code></a> Update dependencies</li>
+<li><a href=""https://github.com/postcss/postcss/commit/7e36e153d075ef56ebc352f298b65f646c700a06""><code>7e36e15</code></a> Cache node.raws locally in Stringifier hot methods</li>
+<li>Additional commits viewable in <a href=""https://github.com/postcss/postcss/compare/8.5.8...8.5.12"">compare view</a></li>
+</ul>
+</details>
+<br />
+
+[![Dependabot compatibility score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=postcss&package-manager=npm_and_yarn&previous-version=8.5.8&new-version=8.5.12)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting [INLINE_CODE].
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- [INLINE_CODE] will rebase this PR
+- [INLINE_CODE] will recreate this PR, overwriting any edits that have been made to it
+- [INLINE_CODE] will show all of the ignore conditions of the specified dependency
+- [INLINE_CODE] will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)
+- [INLINE_CODE] will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)
+- [INLINE_CODE] will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)
+You can disable automated security fix PRs for this repo from the [Security Alerts page](https://github.com/microsoft/vscode/network/alerts).
+
+</details>",,['javascript' 'dependencies'],javascript,,,closed,2026-04-27 13:56:30+00:00,2026-04-27 16:20:00+00:00,2.3916666666666666,dependabot[bot],0,1,microsoft/vscode,hours,javascript,0.1396,suggest,0.0583,css-less-scss,0.0491,312410,0.9386,312573,0.9337,312031,0.7473,vsc-hours-javascript,pending,"Bumps [postcss](https://github.com/postcss/postcss) from 8.5.8 to 8.5.12.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a href=""https://github.com/postcss/postcss/releases"">postcss's releases</a>.</em></p>
+<blockquote>
+<h2>8.5.12</h2>
+<ul>
+<li>Fixed reading any file via user-genera"
+146228760,5007,Cannot read property 'document' of null,Issue Id: <b>098051f7-8a68-a04d-fe08-5331e1befd6f</b><br /><br />_Versions_ <br />\- 0.10.13-insider<br />\- 17fa1cbb49e3c5edd5868f304a64115fcc7c9c2c<br />_Stack_ <br />TypeError: Cannot read property 'document' of null<br /> at extensions\ms-vscode.cpptools-0.4.1\out\src\C_Cpp.js:59:24 <no sourcemaps><br />[vs/workbench/node/pluginHostProcess.js#L4:7](https://github.com/microsoft/vscode/blob/43ff6af3d4564f59196caa9be4897fc33c15f24c/srcvs/workbench/node/pluginHostProcess.js#L4:7)<br />[vs/workbench/node/pluginHostProcess.js#L4:7](https://github.com/microsoft/vscode/blob/43ff6af3d4564f59196caa9be4897fc33c15f24c/srcvs/workbench/node/pluginHostProcess.js#L4:7)<br />[vs/workbench/node/pluginHostProcess.js#L4:7](https://github.com/microsoft/vscode/blob/43ff6af3d4564f59196caa9be4897fc33c15f24c/srcvs/workbench/node/pluginHostProcess.js#L4:7)<br />[vs/workbench/node/pluginHostProcess.js#L4:7](https://github.com/microsoft/vscode/blob/43ff6af3d4564f59196caa9be4897fc33c15f24c/srcvs/workbench/node/pluginHostProcess.js#L4:7)<br />[vs/workbench/node/pluginHostProcess.js#L4:7](https://github.com/microsoft/vscode/blob/43ff6af3d4564f59196caa9be4897fc33c15f24c/srcvs/workbench/node/pluginHostProcess.js#L4:7)<br />[vs/workbench/node/pluginHostProcess.js#L4:7](https://github.com/microsoft/vscode/blob/43ff6af3d4564f59196caa9be4897fc33c15f24c/srcvs/workbench/node/pluginHostProcess.js#L4:7)<br /> at doNTCallback0 (node.js:420:9)<br /> at process._t<br />,,['error-telemetry'],error-telemetry,,,closed,2016-04-06 08:13:37+00:00,2016-04-08 16:32:30+00:00,56.31472222222222,vscodeerrors,3,1,microsoft/vscode,days,error-telemetry,0.4615,api,0.0376,debug,0.0356,2244,0.8594,648,0.8449,4572,0.8394,vsc-days-error-telemetry,pending,Issue Id: <b>098051f7-8a68-a04d-fe08-5331e1befd6f</b><br /><br />_Versions_ <br />\- 0.10.13-insider<br />\- 17fa1cbb49e3c5edd5868f304a64115fcc7c9c2c<br />_Stack_ <br />TypeError: Cannot read property 'document' of null<br /> at extensions\ms-vscode.cpptools-0.4.1\out\src\C_Cpp.js:59:24 <no sourcema
+2836292767,239838,VSCode freezes when opening a terminal,"Does this issue occur when all extensions are disabled? **Yes**
+
+- VS Code Version: 
+Version: 1.97.0 (user setup)
+Commit: 33fc5a94a3f99ebe7087e8fe79fbe1d37a251016
+Date: 2025-02-04T22:41:26.688Z
+Electron: 32.2.7
+ElectronBuildId: 10660205
+Chromium: 128.0.6613.186
+Node.js: 20.18.1
+V8: 12.8.374.38-electron.0
+OS: Windows_NT x64 10.0.19045
+
+Steps to Reproduce:
+
+1. Open VSCode
+2. Run update 1.97.0
+3. Open a project folder (TypeScript project)
+
+This issue makes VSCode completely unusable.
+
+![Image](https://github.com/user-attachments/assets/6066fc2e-1677-4684-b431-ef5109b695d6)",,"['important' 'freeze-slow-crash-leak' 'candidate' 'terminal' 'gpu'
+ 'unreleased']",terminal,,,closed,2025-02-06 18:30:33+00:00,2025-02-12 13:10:02+00:00,138.65805555555556,anrikun,82,3,microsoft/vscode,days,electron,0.0721,install-update,0.0692,typescript,0.067,311834,0.8514,312633,0.8328,311145,0.8318,vsc-days-terminal,pending,"Does this issue occur when all extensions are disabled? **Yes**
+
+- VS Code Version: 
+Version: 1.97.0 (user setup)
+Commit: 33fc5a94a3f99ebe7087e8fe79fbe1d37a251016
+Date: 2025-02-04T22:41:26.688Z
+Electron: 32.2.7
+ElectronBuildId: 10660205
+Chromium: 128.0.6613.186
+Node.js: 20.18.1
+V8: 12.8.374.38-elect"
+3797725507,286776,Git Source Control Graph tree doesn't expand for some entries,"Does this issue occur when all extensions are disabled?: Yes
+
+- VS Code Version: 1.108
+- OS Version: Windows 10
+
+In Git Source Control Graph tree some entires don't expand. I can't describe logic of bug for certain, just when there are many commited files it glitches. Like below ~12 all is fine. 
+
+If you hover over bugged entry and click its hash, you get error ""Git: The ""path"" argument must be of type string. Received undefined"".
+
+This issue first appeared in Insiders and is still there, so I switched back to Code, but today with 1.108 update this bug came as well.
+
+Also in Insiders there was a bug that ctrl + shift + g didn't open Source Control, but now it's fixed in Insiders, but appeared in Code.
+
+Hope video helps to understand this bug's nature.
+
+https://github.com/user-attachments/assets/96f293fd-a551-413b-bbc0-a02794d79fc5",,['bug' 'candidate' 'scm' 'unreleased'],scm,bug,,closed,2026-01-09 17:18:39+00:00,2026-01-12 16:44:19+00:00,71.42777777777778,yurkovych,5,1,microsoft/vscode,days,git,0.1101,typescript,0.0572,debug,0.0554,311189,0.7781,1844,0.7644,210,0.7516,vsc-days-scm,pending,"Does this issue occur when all extensions are disabled?: Yes
+
+- VS Code Version: 1.108
+- OS Version: Windows 10
+
+In Git Source Control Graph tree some entires don't expand. I can't describe logic of bug for certain, just when there are many commited files it glitches. Like below ~12 all is fine. 
+
+I"
+4299445766,311561,[Error] potential listener LEAK — menuService (2),"## Error Message
+[CODE_BLOCK]`
+
+## Stack Trace
+&nbsp;&nbsp;&nbsp;&nbsp;at a.create ([./src/vs/base/common/event.ts:1062:14](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/base/common/event.ts#L1062)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at nK._event [as onDidChange] ([./src/vs/base/common/event.ts:1263:33](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/base/common/event.ts#L1263)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at Object.u [as onWillAddFirstListener] ([./src/vs/platform/actions/common/menuService.ts:437:0](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/platform/actions/common/menuService.ts#L437)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at _ke._event [as onDidChange] ([./src/vs/base/common/event.ts:1272:19](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/base/common/event.ts#L1272)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at new mn ([./src/vs/platform/actions/browser/toolbar.ts:377:0](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/platform/actions/browser/toolbar.ts#L377)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at a._createInstance ([./src/vs/platform/instantiation/common/instantiationService.ts:162:17](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/platform/instantiation/common/instantiationService.ts#L162)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at a.createInstance ([./src/vs/platform/instantiation/common/instantiationService.ts:128:17](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/platform/instantiation/common/instantiationService.ts#L128)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at new Kx ([./src/vs/workbench/contrib/chat/browser/widget/chatContentParts/codeBlockPart.ts:210:0](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/workbench/contrib/chat/browser/widget/chatContentParts/codeBlockPart.ts#L210)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at a._createInstance ([./src/vs/platform/instantiation/common/instantiationService.ts:162:17](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/platform/instantiation/common/instantiationService.ts#L162)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at a.createInstance ([./src/vs/platform/instantiation/common/instantiationService.ts:128:17](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/platform/instantiation/common/instantiationService.ts#L128)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at Bfe._pool._register.iqt.maxIdleSize [as _itemFactory] ([./src/vs/workbench/contrib/chat/browser/widget/chatContentParts/chatContentCodePools.ts:32:31](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/workbench/contrib/chat/browser/widget/chatContentParts/chatContentCodePools.ts#L32)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at iqt.get ([./src/vs/workbench/contrib/chat/browser/widget/chatContentParts/chatCollections.ts:153:20](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/workbench/contrib/chat/browser/widget/chatContentParts/chatCollections.ts#L153)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at Bfe.get ([./src/vs/workbench/contrib/chat/browser/widget/chatContentParts/chatContentCodePools.ts:37:31](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/workbench/contrib/chat/browser/widget/chatContentParts/chatContentCodePools.ts#L37)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at d_.renderCodeBlock ([./src/vs/workbench/contrib/chat/browser/widget/chatContentParts/chatMarkdownContentPart.ts:396:0](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/workbench/contrib/chat/browser/widget/chatContentParts/chatMarkdownContentPart.ts#L396)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at Object.codeBlockRendererSync ([./src/vs/workbench/contrib/chat/browser/widget/chatContentParts/chatMarkdownContentPart.ts:253:0](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/workbench/contrib/chat/browser/widget/chatContentParts/chatMarkdownContentPart.ts#L253)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at i.codeBlockRendererSync.t.code ([./src/vs/base/browser/markdownRenderer.ts:401:25](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/base/browser/markdownRenderer.ts#L401)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at a.parse ([./src/vs/base/common/marked/marked.js:1946:41](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/base/common/marked/marked.js#L1946)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at parse ([./src/vs/base/common/marked/marked.js:1906:22](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/base/common/marked/marked.js#L1906)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at parser ([./src/vs/base/common/marked/marked.js:2384:27](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/base/common/marked/marked.js#L2384)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at tf ([./src/vs/base/browser/markdownRenderer.ts:229:36](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/base/browser/markdownRenderer.ts#L229))
+
+<details>
+<summary>Raw Stack Trace (minified)</summary>
+
+[CODE_BLOCK]`
+
+</details>
+
+## Details
+| Property | Value |
+| --- | --- |
+| Bucket ID | [[INLINE_CODE]](https://errors.code.visualstudio.com/bucket/9ab4bed4-5469-4718-1d16-29cac8f011de?product=Agents&commit=98b4d3e24443f6566e694021a376e1760c4a7f62) |
+| Version | 1.117.0-insider |
+| Commit | [[INLINE_CODE]](https://insiders.vscode.dev/github/microsoft/vscode/tree/98b4d3e24443f6566e694021a376e1760c4a7f62) |
+| Last Seen | Tue Apr 14 2026 21:14:42 GMT+0000 (Coordinated Universal Time) |
+| Platforms | Windows |
+| Product | Agents |
+
+---
+*This issue was automatically created from the VS Code Errors Dashboard*","````
+unhandlederror-potential listener LEAK detected, popular
+```
+
+````
+Error     at a.create (out/vs/sessions/sessions.desktop.main.js:403:18384)     at nK._event [as onDidChange] (out/vs/sessions/sessions.desktop.main.js:405:1891)     at Object.u [as onWillAddFirstListener] (out/vs/sessions/sessions.desktop.main.js:852:136321)     at _ke._event [as onDidChange] (out/vs/sessions/sessions.desktop.main.js:405:2158)     at new mn (out/vs/sessions/sessions.desktop.main.js:852:141166)     at a._createInstance (out/vs/sessions/sessions.desktop.main.js:1466:2000)     at a.createInstance (out/vs/sessions/sessions.desktop.main.js:1466:1440)     at new Kx (out/vs/sessions/sessions.desktop.main.js:2077:25754)     at a._createInstance (out/vs/sessions/sessions.desktop.main.js:1466:2000)     at a.createInstance (out/vs/sessions/sessions.desktop.main.js:1466:1440)     at Bfe._pool._register.iqt.maxIdleSize [as _itemFactory] (out/vs/sessions/sessions.desktop.main.js:2224:2135)     at iqt.get (out/vs/sessions/sessions.desktop.main.js:2208:54790)     at Bfe.get (out/vs/sessions/sessions.desktop.main.js:2224:2270)     at d_.renderCodeBlock (out/vs/sessions/sessions.desktop.main.js:2093:3659)     at Object.codeBlockRendererSync (out/vs/sessions/sessions.desktop.main.js:2093:1400)     at i.codeBlockRendererSync.t.code (out/vs/sessions/sessions.desktop.main.js:791:2542)     at a.parse (out/vs/sessions/sessions.desktop.main.js:787:1811)     at parse (out/vs/sessions/sessions.desktop.main.js:787:1176)     at ude.parse (out/vs/sessions/sessions.desktop.main.js:788:5469)     at tf (out/vs/sessions/sessions.desktop.main.js:791:275)     at SQe.render (out/vs/sessions/sessions.desktop.main.js:852:203414)     at soe.render (out/vs/sessions/sessions.desktop.main.js:2074:44)     at k (out/vs/sessions/sessions.desktop.main.js:2092:20536)     at new d_ (out/vs/sessions/sessions.desktop.main.js:2093:2818)     at a._createInstance (out/vs/sessions/sessions.desktop.main.js:1466:2000)     at a.createInstance (out/vs/sessions/sessions.desktop.main.js:1466:1440)     at YQ.renderMarkdown (out/vs/sessions/sessions.desktop.main.js:2480:61627)     at YQ.renderChatContentPart (out/vs/sessions/sessions.desktop.main.js:2480:47341)     at out/vs/sessions/sessions.desktop.main.js:2480:35377     at Array.forEach (<anonymous>)     at YQ.renderChatRequest (out/vs/sessions/sessions.desktop.main.js:2480:35034)     at YQ.renderChatTreeItem (out/vs/sessions/sessions.desktop.main.js:2480:26575)     at YQ.renderElement (out/vs/sessions/sessions.desktop.main.js:2480:20092)     at a.renderElement (out/vs/sessions/sessions.desktop.main.js:860:17535)     at vci.renderElement (out/vs/sessions/sessions.desktop.main.js:728:2164)     at GR.insertItemInDOM (out/vs/sessions/sessions.desktop.main.js:685:22575)     at out/vs/sessions/sessions.desktop.main.js:685:21230     at Mxt.transact (out/vs/sessions/sessions.desktop.main.js:685:5912)     at GR.render (out/vs/sessions/sessions.desktop.main.js:685:21090)     at GR.onScroll (out/vs/sessions/sessions.desktop.main.js:685:27657)     at E._deliver (out/vs/sessions/sessions.desktop.main.js:405:3150)     at E._deliverQueue (out/vs/sessions/sessions.desktop.main.js:405:3239)     at E.fire (out/vs/sessions/sessions.desktop.main.js:405:3574)     at _ye.value (out/vs/sessions/sessions.desktop.main.js:483:36808)     at E._deliver (out/vs/sessions/sessions.desktop.main.js:405:3150)     at E.fire (out/vs/sessions/sessions.desktop.main.js:405:3469)     at $_._setState (out/vs/sessions/sessions.desktop.main.js:414:21424)     at $_.setScrollPositionNow (out/vs/sessions/sessions.desktop.main.js:414:19817)     at vyt._setDesiredScrollPositionNow (out/vs/sessions/sessions.desktop.main.js:483:28098)     at LR._pointerMoveCallback (out/vs/sessions/sessions.desktop.main.js:483:27844)     at HTMLDivElement.<anonymous> (out/vs/sessions/sessions.desktop.main.js:478:48183)
+```",['bug' 'error-telemetry' 'insiders-released' 'recent-regression' 'agents'],error-telemetry,bug,,closed,2026-04-21 00:13:53+00:00,2026-04-22 00:45:58+00:00,24.53472222222222,vs-code-engineering[bot],1,1,microsoft/vscode,days,error-telemetry,0.6788,api,0.0188,suggest,0.0184,311550,0.9879,311547,0.9037,311553,0.8906,vsc-days-error-telemetry,pending,"## Error Message
+[CODE_BLOCK]`
+
+## Stack Trace
+&nbsp;&nbsp;&nbsp;&nbsp;at a.create ([./src/vs/base/common/event.ts:1062:14](https://github.com/microsoft/vscode/blob/98b4d3e24443f6566e694021a376e1760c4a7f62/src/vs/base/common/event.ts#L1062)) 
+&nbsp;&nbsp;&nbsp;&nbsp;at nK._event [as onDidChange] ([."
+146220231,5003,spawn REG ENOENT,Issue Id: <b>9cf75569-f3dd-823a-a718-5d80301fedb9</b><br /><br />_Versions_ <br />\- 0.10.10<br />\- f291f4ad600767626b24a4b15816b04bee9a3049<br />\- 43ff6af3d4564f59196caa9be4897fc33c15f24c<br />\- 97d4ad1c55a82369f65078406ed770e8a34055fc<br />\- db71ac615ddf9f33b133ff2536f5d33a77d4774e<br />\- 17fa1cbb49e3c5edd5868f304a64115fcc7c9c2c<br />\- ef2a1fcaa553d14d7731b284a5ac5e4a55c42936<br />\- 18ebb4a4f5491af7b16e91e42fc36410bbb2e4d7<br />_Stack_ <br />Error: spawn REG ENOENT<br /> at exports._errnoException (util.js:837:11)<br /> at Process.ChildProcess._handle.onexit (internal/child_process.js:178:32) <no sourcemaps><br /> at onErrorNT (internal/child_process.js:344:16) <no sourcemaps><br /> at doNTCallback2 (node.js:442:9)<br /> at Immediate._tickCallback [as _onImmediate](node.js:356:17)<br /> at processImmediate [as _immediateCallback](timers.js:374:17)<br />,,['verified' 'error-telemetry'],error-telemetry,,,closed,2016-04-06 07:46:31+00:00,2016-04-23 08:21:43+00:00,408.58666666666664,vscodeerrors,7,1,microsoft/vscode,weeks,error-telemetry,0.1636,javascript,0.0588,debug,0.0567,311583,0.7903,2930,0.7782,311576,0.7305,vsc-weeks-error-telemetry,pending,Issue Id: <b>9cf75569-f3dd-823a-a718-5d80301fedb9</b><br /><br />_Versions_ <br />\- 0.10.10<br />\- f291f4ad600767626b24a4b15816b04bee9a3049<br />\- 43ff6af3d4564f59196caa9be4897fc33c15f24c<br />\- 97d4ad1c55a82369f65078406ed770e8a34055fc<br />\- db71ac615ddf9f33b133ff2536f5d33a77d4774e<br />\- 17f
+3638474473,278113,"Always show ""detail"" field for debug adapter completions","Edit: Turns out this was WAI - it's only showing the [INLINE_CODE] field for the highlighted row.
+
+So please consider this a request to be able to always show the detail, since that's what many languages do in the editor now, and it's useful to show something like the type against a variable.
+
+-----
+
+Original bug report:
+
+My debug adapter contributes a completion like this:
+
+[CODE_BLOCK]
+
+If I invoke completion without typing anything, I see this with the detail. If I type ""m"" to filter, then it retains its detail field. However, if I then press [INLINE_CODE] and then re-trigger completion, it now shows up without the [INLINE_CODE] field being rendered:
+
+https://github.com/user-attachments/assets/1d3e33d3-0039-4384-806e-0d5ef231912f","```
+{
+	label: ""myVariable"",
+	text: ""myVariable"",
+	detail: ""the detail field"",
+	type: ""field"",
+},
+```",['bug' 'debug' 'verified' 'insiders-released'],debug,bug,,closed,2025-11-18 14:27:20+00:00,2026-04-21 01:31:32+00:00,3683.07,DanTup,1,2,microsoft/vscode,months,suggest,0.1388,debug,0.0869,api,0.0664,1793,0.7734,3455,0.7716,4563,0.7656,vsc-months-debug,pending,"Edit: Turns out this was WAI - it's only showing the [INLINE_CODE] field for the highlighted row.
+
+So please consider this a request to be able to always show the detail, since that's what many languages do in the editor now, and it's useful to show something like the type against a variable.
+
+-----"
+146088997,4978,Make search files exclusion editable,"- VSCode Version: 0.10.11
+- OS Version: OSX 10.11.4
+
+Steps to Reproduce:
+1. Click on the Search icon
+2. Unable to modify ""files excluded through settings""
+
+Multiple times recently I've wanted to search though node_modules, but because it is disabled in user settings, the only way I can do that is to remove that exclusion in a project specific config, or edit my user settings. 
+
+I get why these defaults exist - but why is that field in the UI read only? I don't want to search node_modules normally - just every now and then, and if I could edit that field that I could temporarily allow it for the search I'm doing right now.",,['feature-request' 'search'],search,feature-request,,closed,2016-04-05 19:36:37+00:00,2018-09-16 14:20:28+00:00,21450.730833333335,cfjedimaster,1,0,microsoft/vscode,long,suggest,0.0957,file-explorer,0.0688,electron,0.0622,1587,0.7728,4873,0.771,311806,0.7578,vsc-long-search,pending,"- VSCode Version: 0.10.11
+- OS Version: OSX 10.11.4
+
+Steps to Reproduce:
+1. Click on the Search icon
+2. Unable to modify ""files excluded through settings""
+
+Multiple times recently I've wanted to search though node_modules, but because it is disabled in user settings, the only way I can do that is to"
+146154192,4993,"Should provide option for ""Show next statement"" to get the current debug point.","When debugging the large app it is common scenario when user lose the current debug point.
+To get the current debug point VSCode should provide an option ""Show next statement"" in the context menu (when user right click on editor).
+
+Like in Visual Studio:
+![image](https://cloud.githubusercontent.com/assets/17735796/14302630/02d566a4-fb58-11e5-8292-e9870e212ef4.png)",,['feature-request' 'debug' '*out-of-scope'],debug,feature-request,,closed,2016-04-06 01:02:10+00:00,2017-11-17 15:20:41+00:00,14174.308611111112,v-pavanp,3,0,microsoft/vscode,long,debug,0.0884,suggest,0.0882,ux,0.0625,4519,0.8095,2671,0.7863,4733,0.7802,vsc-long-debug,pending,"When debugging the large app it is common scenario when user lose the current debug point.
+To get the current debug point VSCode should provide an option ""Show next statement"" in the context menu (when user right click on editor).
+
+Like in Visual Studio:
+![image](https://cloud.githubusercontent.com/"
+146186979,4996,Multiple cursor paste pastes contents of all cursors,"- VSCode Version: 0.10.11
+- OS Version: OSX 10.11.3
+
+Steps to Reproduce:
+1. Select something with multiple cursors
+2. Cut or Copy.
+3. Paste, and you will get the contents of all cursors at each cursor.
+
+Sublime Text must have a clipboard per cursor because it will only paste the text that was selected by that cursor when you copied it.",,['bug' 'verified' 'editor-multicursor'],editor-multicursor,bug,,closed,2016-04-06 05:01:31+00:00,2017-12-14 17:10:13+00:00,14820.145,jtremback,6,1,microsoft/vscode,long,suggest,0.422,editor-core,0.0488,keybindings,0.0456,4375,0.7875,4134,0.7854,110,0.7763,vsc-long-editor-multicursor,pending,"- VSCode Version: 0.10.11
+- OS Version: OSX 10.11.3
+
+Steps to Reproduce:
+1. Select something with multiple cursors
+2. Cut or Copy.
+3. Paste, and you will get the contents of all cursors at each cursor.
+
+Sublime Text must have a clipboard per cursor because it will only paste the text that was select"
+99257349,12287,"(Openstack) Creating load balancer requests ""nil"" IP address if unspecified","When creating an external load balancer in OpenStack, if a Public IP is not specified (e.g. kubectl expose --public-ip=...) then the call to create a VirtualIP uses string ""nil"" as the IP Address (causing this to fail)",,['kind/bug' 'area/provider/openstack'],provider/openstack,bug,,closed,2015-08-05 17:25:57+00:00,2015-08-05 22:45:57+00:00,5.333333333333333,jpgxs,0,0,kubernetes/kubernetes,hours,cloudprovider,0.1446,usability,0.056,kubectl,0.0499,12288,0.8718,12284,0.8328,7199,0.8129,k8s-hours-provider-openstack,pending,"When creating an external load balancer in OpenStack, if a Public IP is not specified (e.g. kubectl expose --public-ip=...) then the call to create a VirtualIP uses string ""nil"" as the IP Address (causing this to fail)"
+99991239,12461,Print human readable time for event,"Closes #12280
+Reduce the length of event time as AGE column does.
+
+Simplified implementation of #12331
+This PR uses existing function to reduce the length, no dependency is required.
+Doesn't add any new flags, users should use [INLINE_CODE] to view the precise event time.",,['area/usability' 'lgtm'],usability,,,closed,2015-08-10 07:07:59+00:00,2015-08-10 18:52:33+00:00,11.742777777777778,hurf,5,1,kubernetes/kubernetes,hours,kubectl,0.0535,usability,0.0506,provider/gcp,0.0472,12280,0.7058,12331,0.703,13501,0.6819,k8s-hours-usability,pending,"Closes #12280
+Reduce the length of event time as AGE column does.
+
+Simplified implementation of #12331
+This PR uses existing function to reduce the length, no dependency is required.
+Doesn't add any new flags, users should use [INLINE_CODE] to view the precise event time."
+106451797,13949,Fix the checkout instructions,,,['area/build-release' 'lgtm' 'size/XS'],build-release,,,closed,2015-09-15 00:13:01+00:00,2015-09-15 02:54:59+00:00,2.6994444444444445,zmerlynn,7,1,kubernetes/kubernetes,hours,provider/gcp,0.0768,build-release,0.0462,test-infra,0.0443,1551,0.7507,4543,0.7456,4023,0.7444,k8s-hours-build-release,pending,
+108329030,14557,Partial fix for issue #14263,"@thockin @yujuhong @pmorie 
+This PR contains a partial fix for #14263. Labels modification are no more reflected in the kubelet. since the labels are simply not checked. 
+I've added the necessary check.
+Thanks to have a look
+
+@qwang1 FYI",,['area/kubelet' 'lgtm' 'size/S'],kubelet,,,closed,2015-09-25 13:40:10+00:00,2015-09-25 17:59:52+00:00,4.328333333333333,sdminonne,7,1,kubernetes/kubernetes,hours,kubelet,0.0604,reliability,0.0488,provider/gcp,0.0453,11091,0.8543,7743,0.8394,3270,0.8294,k8s-hours-kubelet,pending,"@thockin @yujuhong @pmorie 
+This PR contains a partial fix for #14263. Labels modification are no more reflected in the kubelet. since the labels are simply not checked. 
+I've added the necessary check.
+Thanks to have a look
+
+@qwang1 FYI"
+108832231,14723,kube-apiserver tls cert does not work if no client-ca-file specified,"Only tls cert and key file specified, which means no client cert authentication here, does not work.
+It should be work.
+
+[CODE_BLOCK]
+
+specified with client-ca-file, works as expected
+
+[CODE_BLOCK]","```
+# kube-apiserver --service-cluster-ip-range=10.254.0.0/16  --etcd-servers=http://127.0.0.1:2379 --tls-cert-file=/etc/ssl/certs/host.crt --tls-private-key-file=/etc/ssl/certs/host.key
+I0929 17:22:23.726220   15841 plugins.go:69] No cloud provider specified.
+I0929 17:22:24.063938   15841 master.go:273] Node port range unspecified. Defaulting to 30000-32767.
+I0929 17:22:24.065227   15841 master.go:295] Will report 172.16.2.5 as public IP address.
+[restful] 2015/09/29 17:22:24 log.go:30: [restful/swagger] listing is available at https://10.73.2.5:6443/swaggerapi/
+[restful] 2015/09/29 17:22:24 log.go:30: [restful/swagger] https://172.16.2.5:6443/swaggerui/ is mapped to folder /swagger-ui/
+I0929 17:22:24.098802   15841 server.go:441] Serving securely on 0.0.0.0:6443
+I0929 17:22:24.098820   15841 server.go:483] Serving insecurely on 127.0.0.1:8080
+
+# curl --cacert /etc/ssl/certs/rootCA.crt https://test1.redhat.com:6443
+Unauthorized
+# kubectl -s https://test1.redhat.com:6443 --certificate-authority=/etc/ssl/certs/rootCA.crt api-versions 
+Please enter Username:
+```
+
+```
+# kube-apiserver --service-cluster-ip-range=10.254.0.0/16  --etcd-servers=http://127.0.0.1:2379 client-ca-file=/etc/ssl/certs/rootCA.crt --tls-cert-file=/etc/ssl/certs/host.crt --tls-private-key-file=/etc/ssl/certs/host.key
+I0929 17:33:07.420204   16349 plugins.go:69] No cloud provider specified.
+I0929 17:33:07.649465   16349 master.go:273] Node port range unspecified. Defaulting to 30000-32767.
+I0929 17:33:07.650717   16349 master.go:295] Will report 10.73.2.5 as public IP address.
+[restful] 2015/09/29 17:33:07 log.go:30: [restful/swagger] listing is available at https://10.73.2.5:6443/swaggerapi/
+[restful] 2015/09/29 17:33:07 log.go:30: [restful/swagger] https://10.73.2.5:6443/swaggerui/ is mapped to folder /swagger-ui/
+I0929 17:33:07.682704   16349 server.go:441] Serving securely on 0.0.0.0:6443
+I0929 17:33:07.682738   16349 server.go:483] Serving insecurely on 127.0.0.1:8080
+
+
+# curl --cacert /etc/ssl/certs/rootCA.crt --cert ^C
+# kubectl -s https://test1.redhat.com:6443 --certificate-authority=/etc/ssl/certs/rootCA.crt --client-certificate=/etc/ssl/certs/host.crt --client-key=/etc/ssl/certs/host.key api-versions 
+Available Server Api Versions: v1
+# curl --cacert /etc/ssl/certs/rootCA.crt --cert /etc/ssl/certs/host.crt --key /etc/ssl/certs/host.key https://test1.redhat.com:6443
+{
+  ""paths"": [
+    ""/api"",
+    ""/api/v1"",
+    ""/healthz"",
+    ""/healthz/ping"",
+    ""/logs/"",
+    ""/metrics"",
+    ""/resetMetrics"",
+    ""/swagger-ui/"",
+    ""/swaggerapi/"",
+    ""/ui/"",
+    ""/version""
+  ]
+```",['priority/important-soon' 'area/security' 'sig/api-machinery'],security,,important-soon,closed,2015-09-29 09:38:07+00:00,2015-09-30 02:06:10+00:00,16.4675,gouyang,11,0,kubernetes/kubernetes,hours,security,0.0777,provider/gcp,0.0729,client-libraries,0.0636,10159,0.8246,10577,0.8131,12085,0.8068,k8s-hours-security,pending,"Only tls cert and key file specified, which means no client cert authentication here, does not work.
+It should be work.
+
+[CODE_BLOCK]
+
+specified with client-ca-file, works as expected
+
+[CODE_BLOCK]"
+108081524,14477,Problems with accessing service with proxy,"In [autoscaling.go](https://github.com/kubernetes/kubernetes/blob/master/test/e2e/autoscaling.go) e2e test service is created and then using API server proxy a request is sent to it. Quite often the request (>30% times) fails and in kube-apiserver logs I can find:
+
+[CODE_BLOCK]
+
+Also in our standard gce-e2e suite I can find similar problem (in run 8188):
+
+[CODE_BLOCK]
+
+Both errors are silently ignored in e2e tests. EDIT: This is actually not right.","```
+E0923 12:09:18.003491       6 apiserver.go:210] recover from panic situation: - invalid argument to Intn
+    /usr/src/go/src/runtime/asm_amd64.s:401
+    /usr/src/go/src/runtime/panic.go:387
+    /usr/src/go/src/math/rand/rand.go:95
+    /usr/src/go/src/math/rand/rand.go:195
+    /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/pkg/registry/service/rest.go:301
+    /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/pkg/apiserver/proxy.go:114
+    /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/pkg/apiserver/api_installer.go:757
+    /go/src/k8s.io/kubernetes/Godeps/_workspace/src/github.com/emicklei/go-restful/container.go:244
+    /go/src/k8s.io/kubernetes/Godeps/_workspace/src/github.com/emicklei/go-restful/filter.go:21
+    /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/pkg/apiserver/apiserver.go:61
+    /go/src/k8s.io/kubernetes/Godeps/_workspace/src/github.com/emicklei/go-restful/filter.go:19
+    /go/src/k8s.io/kubernetes/Godeps/_workspace/src/github.com/emicklei/go-restful/container.go:246
+    /go/src/k8s.io/kubernetes/Godeps/_workspace/src/github.com/emicklei/go-restful/container.go:95
+    /usr/src/go/src/net/http/server.go:1265
+    /usr/src/go/src/net/http/server.go:1541
+    /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/pkg/apiserver/handlers.go:399
+    /usr/src/go/src/net/http/server.go:1265
+    /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/pkg/auth/handlers/handlers.go:47
+    /usr/src/go/src/net/http/server.go:1265
+    /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/pkg/api/requestcontext.go:101
+    /usr/src/go/src/net/http/server.go:1265
+    /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/pkg/api/requestcontext.go:101
+    /usr/src/go/src/net/http/server.go:1265
+    /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/pkg/apiserver/handlers.go:166
+    /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/pkg/apiserver/handlers.go:142
+    /usr/src/go/src/net/http/server.go:1265
+    /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/pkg/apiserver/handlers.go:86
+    /usr/src/go/src/net/http/server.go:1265
+    /usr/src/go/src/net/http/server.go:1703
+    /usr/src/go/src/net/http/server.go:1204
+    /usr/src/go/src/runtime/asm_amd64.s:2232
+
+I0923 12:09:18.003687       6 handlers.go:143] POST /api/v1/proxy/namespaces/e2e-tests-autoscaling-m33z0/services/rc/ConsumeCPU?durationSec=3600&millicores=600&timeout=30s: (33.781879ms) 500
+```
+
+```
+I0823 02:33:25.454805       9 handlers.go:142] GET /api/v1/proxy/namespaces/e2e-tests-kubectl-zt8kd/services/frontend/index.php?cmd=get&key=messages&value=: (1.424107ms) 503
+goroutine 102593 [running]:
+k8s.io/kubernetes/pkg/httplog.(*respLogger).WriteHeader(0xc20a982a80, 0x1f7)
+    /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/pkg/httplog/log.go:188 +0x9a
+k8s.io/kubernetes/pkg/apiserver.writeJSON(0x1f7, 0x7f16821ec0e0, 0xc2080b0b20, 0x7f16821ec3a0, 0xc20bb8a200, 0x7f1682216680, 0xc20a982a80, 0x1)
+    /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/pkg/apiserver/apiserver.go:278 +0x2b7
+k8s.io/kubernetes/pkg/apiserver.(*ProxyHandler).ServeHTTP(0xc2083ea370, 0x7f1682216680, 0xc20a982a80, 0xc20cac41a0)
+    /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/pkg/apiserver/proxy.go:118 +0xcb9
+k8s.io/kubernetes/pkg/apiserver.func·002(0xc20bfbbbc0, 0xc20a6c77c0)
+    /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/pkg/apiserver/api_installer.go:742 +0x60
+github.com/emicklei/go-restful.func·005(0xc20bfbbbc0, 0xc20a6c77c0)
+    /go/src/k8s.io/kubernetes/Godeps/_workspace/src/github.com/emicklei/go-restful/container.go:220 +0x41
+github.com/emicklei/go-restful.(*FilterChain).ProcessFilter(0xc20bfbbc50, 0xc20bfbbbc0, 0xc20a6c77c0)
+    /go/src/k8s.io/kubernetes/Godeps/_workspace/src/github.com/emicklei/go-restful/filter.go:21 +0xa2
+k8s.io/kubernetes/pkg/apiserver.func·003(0xc20bfbbbc0, 0xc20a6c77c0, 0xc20bfbbc50)
+    /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/pkg/apiserver/apiserver.go:59 +0x88
+github.com/emicklei/go-restful.(*FilterChain).ProcessFilter(0xc20bfbbc50, 0xc20bfbbbc0, 0xc20a6c77c0)
+    /go/src/k8s.io/kubernetes/Godeps/_workspace/src/github.com/emicklei/go-restful/filter.go:19 +0x84
+github.com/emicklei/go-restful.(*Container).dispatch(0xc2083e8230, 0x7f1682216680, 0xc20a982a80, 0xc20cac41a0)
+    /go/src/k8s.io/kubernetes/Godeps/_workspace/src/github.com/emicklei/go-restful/container.go:222 +0xec7
+github.com/emicklei/go-restful.*Container.(github.com/emicklei/go-restful.dispatch)·fm(0x7f1682216680, 0xc20a982a80, 0xc20cac41a0)
+    /go/src/k8s.io/kubernetes/Godeps/_workspace/src/github.com/emicklei/go-res
+Error getting ResourceLocation: no endpoints available for service ""frontend"" [[e2e.test/v1.1.0 (linux/amd64) kubernetes/5fe7029] 104.197.45.156:4",['kind/bug' 'area/test' 'priority/important-soon' 'area/apiserver'],test,bug,important-soon,closed,2015-09-24 08:13:37+00:00,2015-09-24 19:57:16+00:00,11.7275,piosz,2,1,kubernetes/kubernetes,hours,test,0.1104,test-infra,0.1104,provider/gcp,0.0487,12689,0.8041,11296,0.7972,5084,0.7941,k8s-hours-test,pending,"In [autoscaling.go](https://github.com/kubernetes/kubernetes/blob/master/test/e2e/autoscaling.go) e2e test service is created and then using API server proxy a request is sent to it. Quite often the request (>30% times) fails and in kube-apiserver logs I can find:
+
+[CODE_BLOCK]
+
+Also in our standard"
+107034901,14125,kubernetes-soak-continuous-e2e-gce went yellow,"Last night kubernetes-soak-continuous-e2e-gce went yellow, first failing with node not ready:
+Sep 16 21:06:18.783: All nodes should be ready after test, Not ready nodes: [{{ } {gce-soak-weekly-minion-xsmf 
+More recent builds have failed with eg:
+/go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/test/e2e/scheduler_predicates.go:162
+Expected error:
+ <*errors.errorString | 0xc20823b390>: {
+ s: ""Namespace e2e-tests-addon-update-test-wp1zy is active"",
+ }
+ Namespace e2e-tests-addon-update-test-wp1zy is active
+not to have occurred
+
+I haven't had time to dig, perhaps @kubernetes/goog-testing cabal has cycles?",,['priority/important-soon' 'area/test-infra'],test-infra,,important-soon,closed,2015-09-17 17:36:59+00:00,2015-09-17 17:51:21+00:00,0.23944444444444443,alex-mohr,1,0,kubernetes/kubernetes,hours,test-infra,0.1519,test,0.1261,nodecontroller,0.0541,10899,0.7787,14597,0.7661,10136,0.7615,k8s-hours-test-infra,pending,"Last night kubernetes-soak-continuous-e2e-gce went yellow, first failing with node not ready:
+Sep 16 21:06:18.783: All nodes should be ready after test, Not ready nodes: [{{ } {gce-soak-weekly-minion-xsmf 
+More recent builds have failed with eg:
+/go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8"
+101888914,12916,Enabled Autoscaling test that uses mem utilization metric,This is for kubernetes-e2e-gce-flaky Jenkins job,,['area/test' 'lgtm' 'sig/autoscaling'],test,,,closed,2015-08-19 13:08:38+00:00,2015-08-19 13:41:53+00:00,0.5541666666666667,piosz,2,1,kubernetes/kubernetes,hours,test-infra,0.1639,test,0.1204,provider/gcp,0.0455,12783,0.8493,12785,0.8385,13440,0.8318,k8s-hours-test,pending,This is for kubernetes-e2e-gce-flaky Jenkins job
+107066930,14135,"Demote e2e test ""Daemon set ... launch a pod on every node of the clu…","…ster"" to flaky.
+
+Note: in theory the funky regex with real spaces instead of \s should work, but lets see what Jenkins thinks of it. I think it's more readable than the \s's, so if it actually works, I'll convert all similar regexes to the more readable format (in a separate PR).
+
+ref: #14072 
+
+cc: @mikedanese",,['lgtm' 'area/test-infra'],test-infra,,,closed,2015-09-17 20:23:19+00:00,2015-09-17 20:51:24+00:00,0.46805555555555556,ghost,2,1,kubernetes/kubernetes,hours,test-infra,0.1115,test,0.0825,provider/gcp,0.0467,13325,0.8329,10904,0.829,14007,0.8288,k8s-hours-test-infra,pending,"…ster"" to flaky.
+
+Note: in theory the funky regex with real spaces instead of \s should work, but lets see what Jenkins thinks of it. I think it's more readable than the \s's, so if it actually works, I'll convert all similar regexes to the more readable format (in a separate PR).
+
+ref: #14072 
+
+cc:"
+101362022,12781,Update constants in monitor_resources test,,,['area/test' 'lgtm' 'area/test-infra'],test,,,closed,2015-08-17 07:54:28+00:00,2015-08-17 07:55:19+00:00,0.014166666666666666,gmarek,2,1,kubernetes/kubernetes,hours,test,0.1034,test-infra,0.0856,etcd,0.0454,13016,0.9495,12643,0.8463,12462,0.7171,k8s-hours-test,pending,
+99135409,12254,e2e: SchedulerPredicates flaky last 4 runs on gce,"The last 4 runs of Jenkins GCE tests have all failed with due to SchedulerPredicates test -- output is some variant of:
+""""""
+SchedulerPredicates validates MaxPods limit number of pods that are allowed to run.
+
+/go/src/github.com/GoogleCloudPlatform/kubernetes/_output/dockerized/go/src/github.com/GoogleCloudPlatform/kubernetes/test/e2e/scheduler_predicates.go:221
+Expected
+ <int>: 200
+to equal
+ <int>: 300
+""""""
+
+Appears to be insufficient time for a timeout. #12251 to fix pending.",,['area/test-infra'],test-infra,,,closed,2015-08-05 06:36:27+00:00,2015-08-05 06:40:59+00:00,0.07555555555555556,alex-mohr,3,1,kubernetes/kubernetes,hours,test,0.1682,test-infra,0.152,provider/gcp,0.0421,12709,0.8672,10916,0.8095,12251,0.7982,k8s-hours-test-infra,pending,"The last 4 runs of Jenkins GCE tests have all failed with due to SchedulerPredicates test -- output is some variant of:
+""""""
+SchedulerPredicates validates MaxPods limit number of pods that are allowed to run.
+
+/go/src/github.com/GoogleCloudPlatform/kubernetes/_output/dockerized/go/src/github.com/Goog"
+100067712,12477,Cacher for watch in apiserver,"Ref #10475
+
+Cacher implements watch and list at the apiserver level.
+
+@lavalamp @davidopp @nikhiljindal @bprashanth @gmarek @fgrzadkowski 
+@timothysc @smarterclayton",,['sig/scalability' 'area/apiserver' 'lgtm'],apiserver,,,closed,2015-08-10 13:35:07+00:00,2015-08-14 10:37:05+00:00,93.03277777777778,wojtek-t,28,1,kubernetes/kubernetes,days,apiserver,0.0933,api,0.0497,controller-manager,0.0439,8915,0.8258,13022,0.8188,758,0.8186,k8s-days-apiserver,pending,"Ref #10475
+
+Cacher implements watch and list at the apiserver level.
+
+@lavalamp @davidopp @nikhiljindal @bprashanth @gmarek @fgrzadkowski 
+@timothysc @smarterclayton"
+102411693,13034,runtime error when using OpenStack cloud provider,"Hi,
+I cannot configure OpenStack cloud provider in k8s. Apiserver fails immediately with following error:
+
+[CODE_BLOCK]
+
+[INLINE_CODE] contains all creds needed to operate OpenStack API, [INLINE_CODE] is starting with options [INLINE_CODE]
+
+I assume that i make a mistake in configuration, but there no information how to do it right.
+If needed i can put full log pastebin.","```
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: panic: runtime error: invalid memory address or nil pointer dereference
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: [signal 0xb code=0x1 addr=0x0 pc=0x7f43bd]
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: goroutine 1 [running]:
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: k8s.io/kubernetes/pkg/cloudprovider/providers/openstack.(*OpenStack).Instances(0x0, 0x0, 0x0, 0x6)
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: /builddir/build/BUILD/kubernetes-b5a4a548df0cffb99bdcc3b9b9e48d4025d0541c/_output/local/go/src/k8s.io/kubernetes/pkg/cloudprovider/providers/openstack/openstack.go:163 +0x8ed
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: k8s.io/kubernetes/cmd/kube-apiserver/app.(*APIServer).Run(0xc82029b500, 0xc8202b6400, 0x0, 0x10, 0x0, 0x0)
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: /builddir/build/BUILD/kubernetes-b5a4a548df0cffb99bdcc3b9b9e48d4025d0541c/_output/local/go/src/k8s.io/kubernetes/cmd/kube-apiserver/app/server.go:384 +0x1439
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: main.main()
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: /builddir/build/BUILD/kubernetes-b5a4a548df0cffb99bdcc3b9b9e48d4025d0541c/_output/local/go/src/k8s.io/kubernetes/cmd/kube-apiserver/apiserver.go:48 +0x171
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: goroutine 17 [chan receive]:
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: github.com/golang/glog.(*loggingT).flushDaemon(0x1d27440)
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: /builddir/build/BUILD/kubernetes-b5a4a548df0cffb99bdcc3b9b9e48d4025d0541c/Godeps/_workspace/src/github.com/golang/glog/glog.go:879 +0x67
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: created by github.com/golang/glog.init.1
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: /builddir/build/BUILD/kubernetes-b5a4a548df0cffb99bdcc3b9b9e48d4025d0541c/Godeps/_workspace/src/github.com/golang/glog/glog.go:410 +0x297
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: goroutine 24 [syscall]:
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: os/signal.loop()
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: /usr/lib/golang/src/os/signal/signal_unix.go:22 +0x18
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: created by os/signal.init.1
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: /usr/lib/golang/src/os/signal/signal_unix.go:28 +0x37
+Aug 21 15:58:00 k8s-master-01 kube-apiserver[29112]: goroutine 26 [runnable]:
+```",['kind/support' 'area/cloudprovider'],cloudprovider,support,,closed,2015-08-21 16:06:12+00:00,2015-08-25 23:27:59+00:00,103.36305555555556,altvnk,1,0,kubernetes/kubernetes,days,cloudprovider,0.0751,extensibility,0.0577,provider/gcp,0.0466,14352,0.7897,13412,0.7826,13365,0.7658,k8s-days-cloudprovider,pending,"Hi,
+I cannot configure OpenStack cloud provider in k8s. Apiserver fails immediately with following error:
+
+[CODE_BLOCK]
+
+[INLINE_CODE] contains all creds needed to operate OpenStack API, [INLINE_CODE] is starting with options [INLINE_CODE]
+
+I assume that i make a mistake in configuration, but there "
+108309805,14550,Fix bugs in daemonset controller and e2e tests,"This PR is a preparation to get daemonsets working on Mesos. On the way towards this, the following bugs were found and fixed by this PR:
+- the e2e tests delete all node labels. Other e2e tests might rely on them, e.g. on kubernetes.io/hostname, or in the Mesos case on some other labels.
+- the pods created by the daemonset controller don't have [INLINE_CODE] set, although the code suggests it should. Hence, they are scheduled by the scheduler first, hopefully onto the right nodes. During this time, the daemonset controller thinks again and again that the nodes have no daemon pod created yet. As a consequence, it creates more and more pods until it sees the already created daemon pods scheduled to the nodes which match the selector. In the case of a slow scheduler you easily end up with tens of pods for a 2 node setup.
+- the daemonset e2e test checks for resource version conflicts and tries to update again. But it does not base the update on the newest version. Hence, when the version conflict occurs, the code won't be able to fix it.",,['kind/bug' 'area/controller-manager' 'lgtm' 'size/L'],controller-manager,bug,,closed,2015-09-25 11:46:14+00:00,2015-09-30 07:37:46+00:00,115.85888888888888,sttts,21,1,kubernetes/kubernetes,days,provider/gcp,0.0819,platform/mesos,0.0686,test,0.0659,14553,0.8665,9345,0.7971,13896,0.7949,k8s-days-controller-manager,pending,"This PR is a preparation to get daemonsets working on Mesos. On the way towards this, the following bugs were found and fixed by this PR:
+- the e2e tests delete all node labels. Other e2e tests might rely on them, e.g. on kubernetes.io/hostname, or in the Mesos case on some other labels.
+- the pods "
+103549252,13270,kube-proxy eats too much cpu,"Hello kubernauts,
+
+I am running java/mysql application on single kubernetes node.
+Kube-proxy eats too much cpu as shown in the snapshot.
+any suggestion or idea to debug? 
+
+Thanks.
+Winston
+
+kubernetes 1.0.3
+go1.4.2
+Docker 1.8.1
+Gentoo Linux latest
+
+<img width=""634"" alt=""screen shot 2015-08-28 at 00 38 00"" src=""https://cloud.githubusercontent.com/assets/919606/9526677/3ea3b8a0-4d1d-11e5-8106-c20208bdde58.png"">",,['priority/backlog' 'area/kube-proxy'],kube-proxy,,backlog,closed,2015-08-27 16:43:37+00:00,2015-08-31 16:51:28+00:00,96.13083333333333,colorzhang,7,0,kubernetes/kubernetes,days,kube-proxy,0.2031,provider/gcp,0.0599,ui,0.0501,513,0.8315,14756,0.8214,8891,0.8174,k8s-days-kube-proxy,pending,"Hello kubernauts,
+
+I am running java/mysql application on single kubernetes node.
+Kube-proxy eats too much cpu as shown in the snapshot.
+any suggestion or idea to debug? 
+
+Thanks.
+Winston
+
+kubernetes 1.0.3
+go1.4.2
+Docker 1.8.1
+Gentoo Linux latest
+
+<img width=""634"" alt=""screen shot 2015-08-28 at 00 3"
+100845785,12678,Improve readability of scheduling failure logs,- Add struct fields to log output.,,['sig/scheduling' 'lgtm' 'area/logging'],logging,,,closed,2015-08-13 19:08:57+00:00,2015-08-17 11:06:47+00:00,87.96388888888889,karlkfi,7,1,kubernetes/kubernetes,days,introspection,0.0653,logging,0.058,kubectl,0.0473,1249,0.7571,14739,0.7434,8526,0.7209,k8s-days-logging,pending,- Add struct fields to log output.
+99228857,12277,Correctly handle Node deletion in NodeController,"Fixes #11631
+
+It needs a test - I'll add it tomorrow.",,['area/nodecontroller' 'lgtm'],nodecontroller,,,closed,2015-08-05 15:16:54+00:00,2015-08-06 20:02:44+00:00,28.76388888888889,gmarek,11,1,kubernetes/kubernetes,days,nodecontroller,0.2217,test-infra,0.0541,test,0.0462,12545,0.8045,14748,0.7973,12929,0.7941,k8s-days-nodecontroller,pending,"Fixes #11631
+
+It needs a test - I'll add it tomorrow."
+106834188,14060,[mesos] Add support for NUM_MINION to mesos/docker cluster,[CODE_BLOCK],"``` bash
+$ NUM_MINION=4 kube-up.sh
+```",['lgtm' 'area/platform/mesos' 'size/M'],platform/mesos,,,closed,2015-09-16 18:32:42+00:00,2015-09-18 15:38:11+00:00,45.091388888888886,sttts,13,1,kubernetes/kubernetes,days,platform/mesos,0.3642,provider/gcp,0.0535,kube-proxy,0.0331,8447,0.7859,13596,0.778,5254,0.774,k8s-days-platform-mesos,pending,[CODE_BLOCK]
+100582729,12587,Provide OpenStack instructions on the CoreOS cluster configuration,"The file: https://github.com/GoogleCloudPlatform/kubernetes/blob/release-1.0/docs/getting-started-guides/coreos/coreos_multinode_cluster.md has instructions for AWS, GCE, and VMware. I'd like to see documentation for OpenStack as well. 
+I'd be happy to do the work for this as I don't think it would take too much time. I'll add some instructions to this issue if its something that people think would be helpful.",,['priority/backlog' 'area/provider/openstack'],provider/openstack,,backlog,closed,2015-08-12 16:29:20+00:00,2015-08-17 09:58:36+00:00,113.48777777777778,vallard,3,0,kubernetes/kubernetes,days,os/coreos,0.371,cloudprovider,0.0614,build-release,0.0432,7498,0.8354,6973,0.8326,12656,0.8303,k8s-days-provider-openstack,pending,"The file: https://github.com/GoogleCloudPlatform/kubernetes/blob/release-1.0/docs/getting-started-guides/coreos/coreos_multinode_cluster.md has instructions for AWS, GCE, and VMware. I'd like to see documentation for OpenStack as well. 
+I'd be happy to do the work for this as I don't think it would "
+109385408,14935,Adjust memory overcommit on node for QoS,"With the current QoS policy, kubernetes guarantees that memory allocations will not fail up until the memory [INLINE_CODE] specified by the user. But the nodes are usually set up to fail memory allocations based on [kernel heuristics](https://www.kernel.org/doc/Documentation/vm/overcommit-accounting), if there isn't enough memory available to satisfy the request. A _Best-Effort_ container can cause malloc to fail for a _Guaranteed_ container. 
+To avoid this, we can change the memory overcommit policy to never fail and let the OOM killer handle real memory allocations.
+Kubelet on startup will have to run [INLINE_CODE].",,['priority/important-soon' 'sig/node' 'area/system-requirement'],system-requirement,,important-soon,closed,2015-10-01 21:07:50+00:00,2015-10-07 16:47:47+00:00,139.66583333333332,vishh,6,1,kubernetes/kubernetes,days,kubelet,0.0616,provider/gcp,0.0596,introspection,0.0467,14452,0.8227,14532,0.8209,11161,0.7734,k8s-days-system-requirement,pending,"With the current QoS policy, kubernetes guarantees that memory allocations will not fail up until the memory [INLINE_CODE] specified by the user. But the nodes are usually set up to fail memory allocations based on [kernel heuristics](https://www.kernel.org/doc/Documentation/vm/overcommit-accounting"
+109139262,14835,Use kube::release::gcs::publish_latest_official logic in mark-stable-release.sh,"Fixes #14785.
+
+@zmerlynn please give this a very skeptical review. I haven't checked to make sure this works properly; wanted to check with you about how to do so. My intention was to replace [INLINE_CODE] with my own bucket and run through things. Concerns about that approach?",,['area/build-release' 'lgtm' 'size/L'],build-release,,,closed,2015-09-30 17:19:00+00:00,2015-10-02 02:23:49+00:00,33.08027777777778,ikehz,21,1,kubernetes/kubernetes,days,build-release,0.0902,provider/gcp,0.0767,reliability,0.0494,14785,0.9236,7938,0.8544,1783,0.8373,k8s-days-build-release,pending,"Fixes #14785.
+
+@zmerlynn please give this a very skeptical review. I haven't checked to make sure this works properly; wanted to check with you about how to do so. My intention was to replace [INLINE_CODE] with my own bucket and run through things. Concerns about that approach?"
+105757315,13784,Pass cloudProvider from Kubelet to aws_ebs volume plugin,"This patch allows the aws_ebs volume plugin to pick up the configured cloud provider from the kubelet. It is required in case the AWS client needs to be configured via cloud config file. The mechanism was introduced recently by the Openstack Cinder plugin. 
+
+As discussed here:
+https://github.com/kubernetes/kubernetes/pull/13367
+https://github.com/kubernetes/kubernetes/pull/6689",,['area/kubelet' 'lgtm' 'size/XS'],kubelet,,,closed,2015-09-10 08:20:18+00:00,2015-09-15 05:25:16+00:00,117.08277777777778,BugRoger,8,1,kubernetes/kubernetes,days,cloudprovider,0.132,kubelet,0.0687,extensibility,0.0624,11543,0.7971,5667,0.7873,13872,0.7736,k8s-days-kubelet,pending,"This patch allows the aws_ebs volume plugin to pick up the configured cloud provider from the kubelet. It is required in case the AWS client needs to be configured via cloud config file. The mechanism was introduced recently by the Openstack Cinder plugin. 
+
+As discussed here:
+https://github.com/kub"
+106961023,14105,Bumped version of heapster to v0.18.0.,Bumped version of heapster to v0.18.0.,,['area/monitoring' 'size/M'],monitoring,,,closed,2015-09-17 11:09:52+00:00,2015-09-18 23:35:31+00:00,36.4275,jszczepkowski,6,1,kubernetes/kubernetes,days,provider/gcp,0.0956,monitoring,0.0851,build-release,0.0451,11998,0.8686,12190,0.8664,6331,0.856,k8s-days-monitoring,pending,Bumped version of heapster to v0.18.0.
+100814748,12665,automatically configuring HAProxy,"## @jjfiguep wrote in another issue : 
+
+Hi,
+
+First of all, this is my first comment in GitHub and sorry if this is not the correct place.
+
+In previous comments it is discussed the possibility to use Kubernetes and HAProxy. Also it is commented the option to periodically detect new services and update haproxy config file. 
+This is just my problem, I´m using NodePort to expose the services to internet but I would like replace the assigned port number to access to the service by something more user friendly and my idea is to use haproxy to do the same (when /foo is requested in the url, haproxy should redirect the traffic to the corresponding port). The problem is that my implementation of Kubernetes is continuously creating and destroying services and the process to update haproxy configuration should be automatic. My doubts below:
+1.- Am I focusing the problem from the correct side?
+2.- If not, how I can resolve my problem? If yes, there is some project or something to do this? or could someone help me with this?
+
+Thanks a lot!!",,['kind/support' 'area/HA'],HA,support,,closed,2015-08-13 16:37:29+00:00,2015-08-25 21:57:57+00:00,293.3411111111111,erictune,5,1,kubernetes/kubernetes,weeks,app-lifecycle,0.0636,provider/gcp,0.0493,api,0.0479,12111,0.8289,12655,0.7774,11221,0.7682,k8s-weeks-HA,pending,"## @jjfiguep wrote in another issue : 
+
+Hi,
+
+First of all, this is my first comment in GitHub and sorry if this is not the correct place.
+
+In previous comments it is discussed the possibility to use Kubernetes and HAProxy. Also it is commented the option to periodically detect new services and updat"
+108310875,14553,MESOS: Fix daemonsets on Mesos,"This PR enables the support for daemonsets in the apiserver such that the daemonset e2e test is passed. This test is part of the conformance test suite.
+
+Prerequisites:
+- NodeLabels support: https://github.com/kubernetes/kubernetes/pull/13857
+- daemonset bug fixes: https://github.com/kubernetes/kubernetes/pull/14550
+
+=> only the last two commits are relevant.
+
+Fixes https://github.com/mesosphere/kubernetes-mesos/issues/502",,['area/controller-manager' 'lgtm' 'area/platform/mesos' 'size/M'],controller-manager,,,closed,2015-09-25 11:56:02+00:00,2015-10-03 02:16:09+00:00,182.33527777777778,sttts,30,1,kubernetes/kubernetes,weeks,platform/mesos,0.3977,test,0.0521,test-infra,0.052,14550,0.8813,13896,0.8348,14535,0.7854,k8s-weeks-controller-manager,pending,"This PR enables the support for daemonsets in the apiserver such that the daemonset e2e test is passed. This test is part of the conformance test suite.
+
+Prerequisites:
+- NodeLabels support: https://github.com/kubernetes/kubernetes/pull/13857
+- daemonset bug fixes: https://github.com/kubernetes/kube"
+108930902,14756,Increase the kube-proxy memory footprint.  Improve test failure output.,"@thockin @dchen1107 
+
+Fixes https://github.com/kubernetes/kubernetes/issues/12429 (I think)
+
+I've observed kube-proxy usage as high as 26MB, so set to 30MB, assuming this is expected and not a regression.",,['area/kube-proxy' 'size/S'],kube-proxy,,,closed,2015-09-29 18:32:29+00:00,2015-10-07 19:03:13+00:00,192.51222222222222,brendandburns,10,1,kubernetes/kubernetes,weeks,kube-proxy,0.2925,test-infra,0.0363,test,0.0345,14719,0.8863,8891,0.8693,14118,0.8382,k8s-weeks-kube-proxy,pending,"@thockin @dchen1107 
+
+Fixes https://github.com/kubernetes/kubernetes/issues/12429 (I think)
+
+I've observed kube-proxy usage as high as 26MB, so set to 30MB, assuming this is expected and not a regression."
+100927896,12703,"kubectl get pods --namespace=kube-system works, but the UI does not show anything","Symptoms:
+- kubectl get pods --namespace=kube-system works, but the UI does not show anything.
+- kubectl get rc --namespace=kube-system works, but the UI shows nothing
+- kubectl get services --namespace=kube-system shows kube-dns and kube-ui as services, but in the UI, only 'kubernetes' is displayed as a service
+- kubectl get events --namespace=kube-system shows a lot of events (as follows), but in the UI, nothing is displayed
+
+[CODE_BLOCK]
+
+Further, sudo tail -f /var/log/upstart/kube-apiserver.log shows that the following log messages keep coming up.
+
+[CODE_BLOCK]","```
+...
+Fri, 14 Aug 2015 12:45:54 +0900   Fri, 14 Aug 2015 12:45:54 +0900   1         kube-dns-v8-nvo05   Pod       spec.containers{skydns}   killing     {kubelet 192.168.0.12}   Killing with docker id cc8e1a6d9dc3
+Fri, 14 Aug 2015 12:45:55 +0900   Fri, 14 Aug 2015 12:45:55 +0900   1         kube-dns-v8-nvo05   Pod       spec.containers{skydns}   started     {kubelet 192.168.0.12}   Started with docker id ec2f607bb402
+Fri, 14 Aug 2015 12:45:55 +0900   Fri, 14 Aug 2015 12:45:55 +0900   1         kube-dns-v8-nvo05   Pod       spec.containers{skydns}   created     {kubelet 192.168.0.12}   Created with docker id ec2f607bb402
+Fri, 14 Aug 2015 12:46:24 +0900   Fri, 14 Aug 2015 12:46:24 +0900   1         kube-dns-v8-nvo05   Pod       spec.containers{skydns}   unhealthy   {kubelet 192.168.0.12}   Liveness probe failed: Healthz probe error: Result of last exec: nslookup: can't resolve 'kubernetes.default.svc.cluster.local'
+, at 2015-08-14 03:46:23.126783729 +0000 UTC, error exit status 1
+
+Fri, 14 Aug 2015 12:46:24 +0900   Fri, 14 Aug 2015 12:46:24 +0900   1         kube-dns-v8-nvo05   Pod       spec.containers{skydns}   killing     {kubelet 192.168.0.12}   Killing with docker id ec2f607bb402
+Fri, 14 Aug 2015 12:46:25 +0900   Fri, 14 Aug 2015 12:46:25 +0900   1         kube-dns-v8-nvo05   Pod       spec.containers{skydns}   created     {kubelet 192.168.0.12}   Created with docker id 60d9c7b6f922
+Fri, 14 Aug 2015 12:46:25 +0900   Fri, 14 Aug 2015 12:46:25 +0900   1         kube-dns-v8-nvo05   Pod       spec.containers{skydns}   started     {kubelet 192.168.0.12}   Started with docker id 60d9c7b6f922
+Fri, 14 Aug 2015 12:47:04 +0900   Fri, 14 Aug 2015 12:47:04 +0900   1         kube-dns-v8-nvo05   Pod       spec.containers{skydns}   created     {kubelet 192.168.0.12}   Created with docker id 42f042302848
+Fri, 14 Aug 2015 12:47:04 +0900   Fri, 14 Aug 2015 12:47:04 +0900   1         kube-dns-v8-nvo05   Pod       spec.containers{skydns}   killing     {kubelet 192.168.0.12}   Killing with docker id 60d9c7b6f922
+Fri, 14 Aug 2015 12:47:04 +0900   Fri, 14 Aug 2015 12:47:04 +0900   1         kube-dns-v8-nvo05   Pod       spec.containers{skydns}   unhealthy   {kubelet 192.168.0.12}   Liveness probe failed: Healthz probe error: Result of last exec: nslookup: can't resolve 'kubernetes.default.svc.cluster.local'
+, at 2015-08-14 03:47:03.128313904 +0000 UTC, error exit status 1
+
+Fri, 14 Aug 2015 12:47:05 +0900   Fri, 14 Aug 2015 12:47:05 +0900   1         kube-dns-v8-nvo05   Pod       spec.containers{skydns}   started     {kubelet 192.168.0.12}   Started with docker id 42f042302848
+Fri, 14 Aug 2015 12:47:34 +0900   Fri, 14 Aug 2015 12:47:34 +0900   1         kube-dns-v8-nvo05   Pod       spec.containers{skydns}   unhealthy   {kubelet 192.168.0.12}   Liveness probe failed: Healthz probe error: Result of last exec: nslookup: can't resolve 'kubernetes.default.svc.cluster.local'
+, at 2015-08-14 03:47:33.127317546 +0000 UTC, error exit status 1
+
+Fri, 14 Aug 2015 12:47:34 +0900   Fri, 14 Aug 2015 12:47:34 +0900   1         kube-dns-v8-nvo05   Pod       spec.containers{skydns}   killing   {kubelet 192.168.0.12}   Killing with docker id 42f042302848
+Fri, 14 Aug 2015 12:47:35 +0900   Fri, 14 Aug 2015 12:47:35 +0900   1         kube-dns-v8-nvo05   Pod       spec.containers{skydns}   started   {kubelet 192.168.0.12}   Started with docker id 229c58ff1224
+Fri, 14 Aug 2015 12:47:35 +0900   Fri, 14 Aug 2015 12:47:35 +0900   1         kube-dns-v8-nvo05   Pod       spec.containers{skydns}   created   {kubelet 192.168.0.12}   Created with docker id 229c58ff1224
+...
+```
+
+```
+ubuntu@kuber-master:~/kubernetes/cluster/ubuntu$ sudo tail -f /var/log/upstart/kube-apiserver.log 
+I0814 12:50:10.383923   17576 logs.go:41] http: TLS handshake error from 192.168.0.12:32880: remote error: bad certificate
+I0814 12:50:10.819954   17576 logs.go:41] http: TLS handshake error from 192.168.0.12:32888: remote error: bad certificate
+I0814 12:50:11.388652   17576 logs.go:41] http: TLS handshake error from 192.168.0.12:32896: remote error: bad certificate
+I0814 12:50:11.824765   17576 logs.go:41] http: TLS handshake error from 192.168.0.12:32904: remote error: bad certificate
+I0814 12:50:12.395748   17576 logs.go:41] http: TLS handshake error from 192.168.0.12:32912: remote error: bad certificate
+I0814 12:50:12.827633   17576 logs.go:41] http: TLS handshake error from 192.168.0.12:32920: remote error: bad certificate
+I0814 12:50:13.400050   17576 logs.go:41] http: TLS handshake error from 192.168.0.12:32928: remote error: bad certificate
+I0814 12:50:13.836174   17576 logs.go:41] http: TLS handshake error from 192.168.0.12:32936: remote error: bad certificate
+I0814 12:50:14.409465   17576 logs.go:41] http: TLS handshake error from 192.168.0.12:32944: remote error: bad certificate
+I0814 12:50:14.839225   17576 logs.go:41] http: TLS handshake error from 192.168.0.12:32952: remote error: bad certificate
+I0814 12:50:15.417575   17576 logs.go:41] http: TLS handshake error from 1",['kind/support' 'area/ui'],ui,support,,closed,2015-08-14 03:51:22+00:00,2015-08-23 02:10:16+00:00,214.315,bjlee72,8,0,kubernetes/kubernetes,weeks,ui,0.5211,kubectl,0.0373,introspection,0.0346,14389,0.86,9435,0.78,10885,0.7798,k8s-weeks-ui,pending,"Symptoms:
+- kubectl get pods --namespace=kube-system works, but the UI does not show anything.
+- kubectl get rc --namespace=kube-system works, but the UI shows nothing
+- kubectl get services --namespace=kube-system shows kube-dns and kube-ui as services, but in the UI, only 'kubernetes' is displayed"
+99119553,12248,Deprecated -t so that we can make it --tty,"In the docker cli [INLINE_CODE] is used for shorthand for [INLINE_CODE], right now [INLINE_CODE] in kubectl is shorthand for [INLINE_CODE]
+
+We should deprecated the shorthand (and possibly the entire [INLINE_CODE] flag) and repurpose [INLINE_CODE] for [INLINE_CODE]",,['priority/important-soon' 'area/usability' 'area/kubectl'],usability,,important-soon,closed,2015-08-05 05:01:27+00:00,2015-08-24 17:37:55+00:00,468.60777777777776,brendandburns,11,1,kubernetes/kubernetes,weeks,kubectl,0.1009,provider/gcp,0.0619,usability,0.0563,9113,0.8409,8448,0.839,9577,0.8204,k8s-weeks-usability,pending,"In the docker cli [INLINE_CODE] is used for shorthand for [INLINE_CODE], right now [INLINE_CODE] in kubectl is shorthand for [INLINE_CODE]
+
+We should deprecated the shorthand (and possibly the entire [INLINE_CODE] flag) and repurpose [INLINE_CODE] for [INLINE_CODE]"
+108982982,14785,mark-stable-release.sh logic should be consolidated with kube::release::gcs::publish_latest_official,"(cc @zmerlynn @brendandburns)
+
+Despite doing very, very similar things, [INLINE_CODE] doesn't rely on [INLINE_CODE]. It should, or the logic should otherwise be consolidated.
+
+I'm going to maybe work on this to make #14771 easier.",,['priority/backlog' 'area/build-release'],build-release,,backlog,closed,2015-09-29 23:53:35+00:00,2015-10-07 16:07:32+00:00,184.2325,ikehz,0,1,kubernetes/kubernetes,weeks,build-release,0.1063,provider/gcp,0.0699,ui,0.0386,14835,0.9236,8448,0.8365,11676,0.834,k8s-weeks-build-release,pending,"(cc @zmerlynn @brendandburns)
+
+Despite doing very, very similar things, [INLINE_CODE] doesn't rely on [INLINE_CODE]. It should, or the logic should otherwise be consolidated.
+
+I'm going to maybe work on this to make #14771 easier."
+104364881,13470,No documentation on how to use kubelet API,"Hi,
+
+I would like to use the kubelet API from [INLINE_CODE]. However, I could not find any documentation around it. Could someone pls. point me to the right place? Thanks :)",,['area/kubelet' 'kind/documentation' 'sig/node'],kubelet,documentation,,closed,2015-09-01 22:09:11+00:00,2015-09-15 07:27:07+00:00,321.2988888888889,apeeyush,8,0,kubernetes/kubernetes,weeks,kubelet,0.0928,api,0.0534,security,0.0492,12386,0.8159,482,0.8105,12694,0.8085,k8s-weeks-kubelet,pending,"Hi,
+
+I would like to use the kubelet API from [INLINE_CODE]. However, I could not find any documentation around it. Could someone pls. point me to the right place? Thanks :)"
+101387526,12784,kube2sky not able to connect to the kubernetes api-server,"Kubernetes version: 1.0.3
+Set up: Using the local set up with coreos cluster (not using GCE).
+Note: I am not using any secrets explicitly and the same was working for the earlier version of kubernetes (have tried with kubernetes version 0.16 earlier)
+
+The cluster set up is working fine locally with 1 master and 1 node. Able to list the nodes using ""kubectl get no"" command.
+
+However dns pod is not working fine and while inspecting, kube2sky logs the following:
+
+I0817 06:36:26.364315 1 kube2sky.go:383] [Attempt: 1] Attempting access to etcd after 5 second sleep
+I0817 06:36:31.409058 1 kube2sky.go:389] Etcd server found: http://127.0.0.1:4001
+I0817 06:36:32.424772 1 kube2sky.go:455] Using http://localhost:8080 for kubernetes master
+I0817 06:36:32.426385 1 kube2sky.go:456] Using kubernetes API
+E0817 06:36:32.432580 1 reflector.go:136] Failed to list *api.Service: Get http://localhost:8080/api/v1/services: dial tcp 127.0.0.1:8080: connection refused
+E0817 06:36:32.434000 1 reflector.go:136] Failed to list *api.Endpoints: Get http://localhost:8080/api/v1/endpoints: dial tcp 127.0.0.1:8080: connection refused
+E0817 06:36:33.436988 1 reflector.go:136] Failed to list *api.Endpoints: Get http://localhost:8080/api/v1/endpoints: dial tcp 127.0.0.1:8080: connection refused
+E0817 06:36:33.437375 1 reflector.go:136] Failed to list *api.Service: Get http://localhost:8080/api/v1/services: dial tcp 127.0.0.1:8080: connection refused
+E0817 06:36:34.480639 1 reflector.go:136] Failed to list *api.Service: Get http://localhost:8080/api/v1/services: dial tcp 127.0.0.1:8080: connection refused
+E0817 06:36:34.481006 1 reflector.go:136] Failed to list *api.Endpoints: Get http://localhost:8080/api/v1/endpoints: dial tcp 127.0.0.1:8080: connection refused
+
+But when I curl http://localhost:8080/api/v1/endpoints (or 127.0.0.1), I get the output with details of the endpoints.
+
+Note: This is a fresh set up so not sure what more needs to be done to make this work. The exact set up works with kubernetes version 0.16 in a separate cluster.
+
+Here is the yaml file submitted via kubectl for the dns set up:
+
+apiVersion: v1
+kind: ReplicationController
+metadata:
+ name: kube-dns
+ namespace: default
+ labels:
+ k8s-app: kube-dns
+ kubernetes.io/cluster-service: ""true""
+spec:
+ replicas: 1
+ selector:
+ k8s-app: kube-dns
+ template:
+ metadata:
+ labels:
+ k8s-app: kube-dns
+ kubernetes.io/cluster-service: ""true""
+ spec:
+ containers:
+ - name: etcd
+ image: gcr.io/google_containers/etcd:2.0.9
+ command:
+ - /usr/local/bin/etcd
+ - -listen-client-urls
+ - http://127.0.0.1:2379,http://127.0.0.1:4001
+ - -advertise-client-urls
+ - http://127.0.0.1:2379,http://127.0.0.1:4001
+ - -initial-cluster-token
+ - skydns-etcd
+ - name: kube2sky
+ image: gcr.io/google_containers/kube2sky:1.11
+ args:
+ # command = ""/kube2sky""
+ - -domain=kubernetes.local
+ volumeMounts:
+ - mountPath: /etc/dns_token
+ name: dns-token
+ readOnly: true
+ - name: skydns
+ image: gcr.io/google_containers/skydns:2015-03-11-001
+ args:
+ # command = ""/skydns""
+ - -machines=http://localhost:4001
+ - -addr=0.0.0.0:53
+ - -domain=kubernetes.local
+ ports:
+ - containerPort: 53
+ name: dns
+ protocol: UDP
+ - containerPort: 53
+ name: dns-tcp
+ protocol: TCP
+ dnsPolicy: Default # Don't use cluster DNS.
+
+The only difference here compared to the working version earlier is the image version of kube2sky in the yaml, which was gcr.io/google_containers/google_containers-kube2sky:1.7
+
+Any suggestion on how to make this work ?",,['kind/support' 'area/os/coreos'],os/coreos,support,,closed,2015-08-17 10:12:07+00:00,2015-09-02 04:00:36+00:00,377.80805555555554,biswars,3,0,kubernetes/kubernetes,weeks,provider/gcp,0.0655,apiserver,0.0474,api,0.0459,10530,0.8171,8314,0.7998,14842,0.7854,k8s-weeks-os-coreos,pending,"Kubernetes version: 1.0.3
+Set up: Using the local set up with coreos cluster (not using GCE).
+Note: I am not using any secrets explicitly and the same was working for the earlier version of kubernetes (have tried with kubernetes version 0.16 earlier)
+
+The cluster set up is working fine locally with "
+104462989,13508,AWS /mnt/ephemeral/kubernetes runs out of space,"After a couple of days the mount point fills up and the node fails so I have to kill the EC2 instance. This happens regularly and in different kubernetes clusters
+
+Minion instance size m3.large
+AWS region eu-west-1
+Kubernetes version 1.0.3
+
+[CODE_BLOCK]
+
+[CODE_BLOCK]","```
+Filesystem                            Size  Used Avail Use% Mounted on
+udev                                  3.7G     0  3.7G   0% /dev
+tmpfs                                 748M   75M  674M  10% /run
+/dev/xvda1                            7.8G  2.0G  5.4G  27% /
+tmpfs                                 3.7G  1.1M  3.7G   1% /dev/shm
+tmpfs                                 5.0M     0  5.0M   0% /run/lock
+tmpfs                                 3.7G     0  3.7G   0% /sys/fs/cgroup
+/dev/mapper/vg--ephemeral-docker       30G  3.2G   25G  12% /mnt/ephemeral/docker
+/dev/mapper/vg--ephemeral-kubernetes  1.4G  1.4G     0 100% /mnt/ephemeral/kubernetes
+tmpfs                                 748M     0  748M   0% /run/user/1000
+```
+
+```
+/mnt/ephemeral/kubernetes$ sudo du
+4   ./kubelet/pods/c78ec9b6b03a20a64a85081486893ed5/containers/fluentd-elasticsearch
+8   ./kubelet/pods/c78ec9b6b03a20a64a85081486893ed5/containers
+4   ./kubelet/pods/c78ec9b6b03a20a64a85081486893ed5/plugins
+4   ./kubelet/pods/c78ec9b6b03a20a64a85081486893ed5/volumes
+20  ./kubelet/pods/c78ec9b6b03a20a64a85081486893ed5
+36  ./kubelet/pods/98fa50b7-507b-11e5-82e3-0681648242af/containers/heapster
+40  ./kubelet/pods/98fa50b7-507b-11e5-82e3-0681648242af/containers
+4   ./kubelet/pods/98fa50b7-507b-11e5-82e3-0681648242af/plugins/kubernetes.io~secret/default-token-2mpaq
+8   ./kubelet/pods/98fa50b7-507b-11e5-82e3-0681648242af/plugins/kubernetes.io~secret
+12  ./kubelet/pods/98fa50b7-507b-11e5-82e3-0681648242af/plugins
+8   ./kubelet/pods/98fa50b7-507b-11e5-82e3-0681648242af/volumes/kubernetes.io~secret/default-token-2mpaq
+12  ./kubelet/pods/98fa50b7-507b-11e5-82e3-0681648242af/volumes/kubernetes.io~secret
+16  ./kubelet/pods/98fa50b7-507b-11e5-82e3-0681648242af/volumes
+4   ./kubelet/pods/e8fac0e0-507d-11e5-82e3-0681648242af/plugins/kubernetes.io~secret/default-token-5ze85
+8   ./kubelet/pods/e8fac0e0-507d-11e5-82e3-0681648242af/plugins/kubernetes.io~secret
+12  ./kubelet/pods/e8fac0e0-507d-11e5-82e3-0681648242af/plugins
+8   ./kubelet/pods/e8fac0e0-507d-11e5-82e3-0681648242af/volumes/kubernetes.io~secret/default-token-5ze85
+12  ./kubelet/pods/e8fac0e0-507d-11e5-82e3-0681648242af/volumes/kubernetes.io~secret
+16  ./kubelet/pods/e8fac0e0-507d-11e5-82e3-0681648242af/volumes
+40  ./kubelet/pods/e8fac0e0-507d-11e5-82e3-0681648242af
+4   ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/containers/influxdb
+4   ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/containers/grafana
+12  ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/containers
+4   ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/plugins/kubernetes.io~secret/default-token-2mpaq
+8   ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/plugins/kubernetes.io~secret
+12  ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/plugins
+8   ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/volumes/kubernetes.io~secret/default-token-2mpaq
+12  ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/volumes/kubernetes.io~secret
+12  ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/volumes/kubernetes.io~empty-dir/influxdb-persistent-storage/raft/snapshot
+28  ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/volumes/kubernetes.io~empty-dir/influxdb-persistent-storage/raft
+4   ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/volumes/kubernetes.io~empty-dir/influxdb-persistent-storage/wal
+3340    ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/volumes/kubernetes.io~empty-dir/influxdb-persistent-storage/db/shard_db_v2/00001
+1428620 ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/volumes/kubernetes.io~empty-dir/influxdb-persistent-storage/db/shard_db_v2/00002
+1431964 ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/volumes/kubernetes.io~empty-dir/influxdb-persistent-storage/db/shard_db_v2
+1431968 ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/volumes/kubernetes.io~empty-dir/influxdb-persistent-storage/db
+1432004 ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/volumes/kubernetes.io~empty-dir/influxdb-persistent-storage
+1432008 ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/volumes/kubernetes.io~empty-dir
+1432024 ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af/volumes
+1432052 ./kubelet/pods/992fb63a-507b-11e5-82e3-0681648242af
+1432268 ./kubelet/pods
+4   ./kubelet/plugins
+1432280 ./kubelet
+16  ./lost+found
+1432300 .
+
+```",['area/reliability' 'sig/node'],reliability,,,closed,2015-09-02 11:48:25+00:00,2015-09-21 14:56:41+00:00,459.1377777777778,james-thimont-bcgdv,10,1,kubernetes/kubernetes,weeks,provider/gcp,0.0765,cloudprovider,0.0659,os/coreos,0.0465,13174,0.796,12995,0.7526,463,0.7483,k8s-weeks-reliability,pending,"After a couple of days the mount point fills up and the node fails so I have to kill the EC2 instance. This happens regularly and in different kubernetes clusters
+
+Minion instance size m3.large
+AWS region eu-west-1
+Kubernetes version 1.0.3
+
+[CODE_BLOCK]
+
+[CODE_BLOCK]"
+106869588,14078,flaky e2e: Kubectl client Kubectl expose should create services for rc,"Seems to be failing on ~10% of PRs:
+http://kubekins.dls.corp.google.com:8081/job/kubernetes-pull-build-test-e2e-gce/8733/testReport/junit/%28root%29/Kubernetes%20e2e%20suite/Kubectl_client_Kubectl_expose_should_create_services_for_rc/history/?start=75
+
+Appears to wait < 1 second for the command to succeed, e.g.
+06:05:15 STEP: exposing RC
+06:05:15 Sep 16 06:03:59.693: INFO: Running '/jenkins-master-data/jobs/kubernetes-pull-build-test-e2e-gce/workspace/kubernetes/platforms/linux/amd64/kubectl --server=https://104.197.153.46 --kubeconfig=/var/lib/jenkins/jobs/kubernetes-pull-build-test-e2e-gce/workspace/.kube/config expose rc redis-master --name=rm2 --port=1234 --target-port=6379 --namespace=e2e-tests-kubectl-pwnje'
+06:05:15 Sep 16 06:03:59.923: INFO: service ""rm2"" exposed
+06:05:15 
+06:05:15 Sep 16 06:04:04.928: INFO: Service rm2 in namespace e2e-tests-kubectl-pwnje found.
+06:05:15 Sep 16 06:04:04.930: INFO: No endpoint found, retrying
+06:05:15 Sep 16 06:04:09.983: INFO: No endpoint found, retrying
+06:05:15 Sep 16 06:04:14.997: INFO: No endpoint found, retrying
+06:05:15 Sep 16 06:04:20.000: INFO: No endpoint found, retrying
+06:05:15 Sep 16 06:04:25.004: INFO: No endpoint found, retrying
+06:05:15 Sep 16 06:04:30.007: INFO: No endpoint found, retrying
+06:05:15 Sep 16 06:04:35.017: INFO: No endpoint found, retrying
+06:05:15 Sep 16 06:04:40.394: INFO: No endpoint found, retrying
+06:05:15 Sep 16 06:04:45.397: INFO: No endpoint found, retrying
+06:05:15 Sep 16 06:04:50.400: INFO: No endpoint found, retrying
+06:05:15 Sep 16 06:04:55.413: INFO: No endpoint found, retrying
+06:05:15 Sep 16 06:05:00.450: INFO: No endpoint found, retrying
+06:05:15 [AfterEach] Kubectl client
+06:05:15 /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/test/e2e/kubectl.go:85
+06:05:15 STEP: Destroying namespace for this suite e2e-tests-kubectl-pwnje
+06:05:15 
+06:05:15 
+06:05:15 • Failure [102.315 seconds]
+06:05:15 Kubectl client
+06:05:15 /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/test/e2e/kubectl.go:663
+06:05:15 Kubectl expose
+06:05:15 /go/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes/test/e2e/kubectl.go:424",,['priority/backlog' 'area/kubectl' 'kind/flake'],kubectl,flake,backlog,closed,2015-09-16 21:39:52+00:00,2015-10-08 19:24:27+00:00,525.7430555555555,alex-mohr,5,1,kubernetes/kubernetes,weeks,test,0.114,test-infra,0.106,provider/gcp,0.0498,14086,0.7953,13039,0.7845,5821,0.7839,k8s-weeks-kubectl,pending,"Seems to be failing on ~10% of PRs:
+http://kubekins.dls.corp.google.com:8081/job/kubernetes-pull-build-test-e2e-gce/8733/testReport/junit/%28root%29/Kubernetes%20e2e%20suite/Kubectl_client_Kubectl_expose_should_create_services_for_rc/history/?start=75
+
+Appears to wait < 1 second for the command to s"
+107916620,14424,Some service e2e tests are timing out.,"I marked this test as _skip_, to unbreak the build.
+
+cc @quinton-hoole @thockin @wojtek-t",,['area/test' 'priority/critical-urgent'],test,,critical-urgent,closed,2015-09-23 13:15:30+00:00,2015-10-05 22:24:01+00:00,297.14194444444445,gmarek,11,1,kubernetes/kubernetes,weeks,test-infra,0.2366,test,0.1474,reliability,0.0487,9161,0.8653,14425,0.838,2383,0.8202,k8s-weeks-test,pending,"I marked this test as _skip_, to unbreak the build.
+
+cc @quinton-hoole @thockin @wojtek-t"
+101514046,12828,Support setting env vars in kubectl run,"Something like [INLINE_CODE]. Multiple --env flags should be accepted. Comma-separate values would get into an escape rathole, so I'd like to avoid that.",,['priority/backlog' 'area/usability' 'area/kubectl'],usability,,backlog,closed,2015-08-17 21:29:00+00:00,2015-09-08 17:32:48+00:00,524.0633333333334,bgrant0607,2,1,kubernetes/kubernetes,weeks,kubectl,0.0801,app-lifecycle,0.0741,usability,0.061,13422,0.8895,10688,0.8441,680,0.8314,k8s-weeks-usability,pending,"Something like [INLINE_CODE]. Multiple --env flags should be accepted. Comma-separate values would get into an escape rathole, so I'd like to avoid that."
+101055498,12737,Incorrect error message when a namespace is omitted from POST request,"https://github.com/kubernetes/kubernetes/blob/master/examples/cassandra/cassandra-controller.yaml
+
+Converting that to JSON and trying to post to master without namespace in the URL results in 403, which seems incorrect.
+ curl -X POST -k -H 'Authorization: Basic XXX' https://aaa.bbb.ccc.ddd/api/v1/replicationcontrollers --data @k8s.new.json 
+{
+ ""kind"": ""Status"",
+ ""apiVersion"": ""v1"",
+ ""metadata"": {},
+ ""status"": ""Failure"",
+ ""message"": ""ReplicationController \""cassandra\"" is forbidden: Namespace does not exist"",
+ ""reason"": ""Forbidden"",
+ ""details"": {
+ ""name"": ""cassandra"",
+ ""kind"": ""ReplicationController""
+ },
+ ""code"": 403
+}",,['priority/important-soon' 'area/apiserver' 'sig/api-machinery'],apiserver,,important-soon,closed,2015-08-14 17:08:50+00:00,2015-09-15 18:26:12+00:00,769.2894444444445,vaikas-personal,5,1,kubernetes/kubernetes,months,example,0.0851,apiserver,0.0707,api,0.0622,11181,0.7903,12446,0.7824,11218,0.7815,k8s-months-apiserver,pending,"https://github.com/kubernetes/kubernetes/blob/master/examples/cassandra/cassandra-controller.yaml
+
+Converting that to JSON and trying to post to master without namespace in the URL results in 403, which seems incorrect.
+ curl -X POST -k -H 'Authorization: Basic XXX' https://aaa.bbb.ccc.ddd/api/v1/re"
+98545199,12122,AWS: We should have a way to log AWS API calls,"@iterion suggested in https://github.com/GoogleCloudPlatform/kubernetes/issues/11979#issuecomment-126422608:
+
+> ...considering adding some logging at a higher log level for future debugging.
+
+We've had a few bugs where we were making too many AWS API calls, often in loops. If we logged all our AWS API calls, maybe at V(2) or V(4), then we might have spotted these problems earlier.",,['priority/backlog' 'area/cloudprovider'],cloudprovider,,backlog,closed,2015-08-01 15:45:19+00:00,2015-10-20 10:07:33+00:00,1914.3705555555555,justinsb,0,1,kubernetes/kubernetes,months,cloudprovider,0.1807,api,0.0439,introspection,0.0403,10032,0.772,7420,0.7638,12121,0.7632,k8s-months-cloudprovider,pending,"@iterion suggested in https://github.com/GoogleCloudPlatform/kubernetes/issues/11979#issuecomment-126422608:
+
+> ...considering adding some logging at a higher log level for future debugging.
+
+We've had a few bugs where we were making too many AWS API calls, often in loops. If we logged all our AWS A"
+107852382,14398,iptables kube-proxy could handle empty endpoints better,"Rather than just hanging trying to connect, we should find a way to terminate the connection.",,['priority/backlog' 'sig/network' 'area/kube-proxy'],kube-proxy,,backlog,closed,2015-09-23 05:27:20+00:00,2015-11-23 08:13:44+00:00,1466.7733333333333,thockin,1,0,kubernetes/kubernetes,months,kube-proxy,0.4001,provider/gcp,0.0375,api,0.0271,14399,0.9069,3760,0.8255,8567,0.8214,k8s-months-kube-proxy,pending,"Rather than just hanging trying to connect, we should find a way to terminate the connection."
+99252350,12284,Allow creation of floating IPs for Load Balancer VIPs (OpenStack),"It would be very, VERY, **VERY** useful if OpenStack external load balancers could be assigned a floating IP address.
+
+This involve adding [INLINE_CODE] as a configuration option to the cloud-config file and assigning an IP from here to the VIP.
+
+It can then add this IP address to the [INLINE_CODE] IP addresses.",,['priority/backlog' 'area/provider/openstack'],provider/openstack,,backlog,closed,2015-08-05 17:07:30+00:00,2015-10-06 20:41:31+00:00,1491.5669444444445,jpgxs,2,0,kubernetes/kubernetes,months,cloudprovider,0.113,extensibility,0.0472,downward-api,0.0469,12288,0.8907,12589,0.872,12287,0.8328,k8s-months-provider-openstack,pending,"It would be very, VERY, **VERY** useful if OpenStack external load balancers could be assigned a floating IP address.
+
+This involve adding [INLINE_CODE] as a configuration option to the cloud-config file and assigning an IP from here to the VIP.
+
+It can then add this IP address to the [INLINE_CODE] "
+107550515,14281,`rolling-update` requires a unique name when specifying a manifest,"Per a conversation in slack with @jimmidyson, [INLINE_CODE] should be able to do the same rename dance when a manifest is specified as when [INLINE_CODE] is used.
+
+Right now, it errors out with a message like: [INLINE_CODE]",,['area/app-lifecycle' 'area/kubectl' 'priority/awaiting-more-evidence'],app-lifecycle,,awaiting-more-evidence,closed,2015-09-21 16:34:26+00:00,2015-10-21 17:47:16+00:00,721.2138888888888,evanphx,1,0,kubernetes/kubernetes,months,app-lifecycle,0.0954,kubectl,0.0517,usability,0.0443,8827,0.8121,13350,0.7855,13486,0.781,k8s-months-app-lifecycle,pending,"Per a conversation in slack with @jimmidyson, [INLINE_CODE] should be able to do the same rename dance when a manifest is specified as when [INLINE_CODE] is used.
+
+Right now, it errors out with a message like: [INLINE_CODE]"
+100651217,12615,"Enhance PodCondition by adding LastTransitionTime, Reason, Message","Filing this issue to track implementing this TODO: https://github.com/kubernetes/kubernetes/blob/master/pkg/api/v1/types.go#L829.
+
+We need PodCondition.LastTransitionTime to support AvailableThresholdSeconds (minimum seconds for which the pod should be ""ready"", before it can be considered ""truly ready"") as discussed in https://github.com/kubernetes/kubernetes/pull/12236#discussion_r36823378
+
+cc @bgrant0607",,['priority/important-soon' 'area/kubelet' 'area/api'],kubelet,,important-soon,closed,2015-08-12 22:43:30+00:00,2015-09-19 01:59:51+00:00,891.2725,nikhiljindal,1,1,kubernetes/kubernetes,months,swagger,0.0577,kubelet,0.0515,app-lifecycle,0.05,12894,0.9219,14767,0.8746,13656,0.7918,k8s-months-kubelet,pending,"Filing this issue to track implementing this TODO: https://github.com/kubernetes/kubernetes/blob/master/pkg/api/v1/types.go#L829.
+
+We need PodCondition.LastTransitionTime to support AvailableThresholdSeconds (minimum seconds for which the pod should be ""ready"", before it can be considered ""truly rea"
+106666070,14009,Upgrade to InfluxDB v0.9,"The new version of InfluxDB provides a lot of features that will help improve the scalability and performance of the monitoring stack. Specifically InfluxDB v0.9+ supports labels, clustering and improved tail write latencies. More information [here](https://influxdb.com/blog/2015/08/26/InfluxDB-0_9_3-released-with-compression-and-improved-write-throughput.html) and [here](https://influxdb.com/blog/2014/12/08/clustering_tags_and_enhancements_in_0_9_0.html).
+
+cc @dchen1107",,['priority/important-soon' 'area/monitoring' 'sig/node'],monitoring,,important-soon,closed,2015-09-15 23:03:31+00:00,2016-02-12 18:18:23+00:00,3595.2477777777776,vishh,5,1,kubernetes/kubernetes,months,monitoring,0.0971,provider/gcp,0.0582,introspection,0.0398,13769,0.7803,8427,0.7776,14210,0.7698,k8s-months-monitoring,pending,"The new version of InfluxDB provides a lot of features that will help improve the scalability and performance of the monitoring stack. Specifically InfluxDB v0.9+ supports labels, clustering and improved tail write latencies. More information [here](https://influxdb.com/blog/2015/08/26/InfluxDB-0_9_"
+101637865,12853,Openshift installation on Kubernetes cluster running on CoreOS fails at packaging secrets for the Openshift pod,"Dear all,
+
+I am trying to install Openshift on a Kubernetes cluster running on CoreOS (in vSphere VMs). And the process fails when it tries to package secrets for the openshift pod.
+
+Here is what I do step by step. First I use this doc to install a Kubernetes cluster on 3 CoreOS VMs:
+https://github.com/kubernetes/kubernetes/blob/master/docs/getting-started-guides/coreos/coreos_multinode_cluster.md
+I added installation of the kubectl binary and friends in /opt/bin in the cloud-init.
+At the end I get a seemingly working Kube cluster, but without a config:
+
+[CODE_BLOCK]
+
+I populate the config (I'm not sure I do it right) since Openshift installation complains later otherwise:
+
+[CODE_BLOCK]
+
+And then I proceed to install Openshift with this doc:
+https://github.com/kubernetes/kubernetes/tree/master/examples/openshift-origin
+
+On the master:
+
+[CODE_BLOCK]
+
+Then I build the kube binaries because cluster/kubectl.sh complains that kubectl is not available:
+
+[CODE_BLOCK]
+
+And then proceed further:
+
+[CODE_BLOCK]
+
+The command to extract the public IP address fails so I just entrer manually what kubectl get service openshift shows me in the IP collumn:
+
+[CODE_BLOCK]
+
+Generate the Openshift configuration:
+
+[CODE_BLOCK]
+
+I then get the Kubernetes service account key from /opt/bin and add it to master-config.yaml:
+
+[CODE_BLOCK]
+
+And the next step fails:
+
+[CODE_BLOCK]
+
+Nothing listens on localhost:8443 , this URL appears in the master-config.yaml file in the oauthConfig section which I paste bellow:
+
+[CODE_BLOCK]
+
+Can anybody guess what is the problem ?","```
+sudo su -
+# kubectl get nodes
+NAME             LABELS                                  STATUS
+172.29.100.210   kubernetes.io/hostname=172.29.100.210   Ready
+172.29.100.211   kubernetes.io/hostname=172.29.100.211   Ready
+# kubectl config view
+apiVersion: v1
+clusters: []
+contexts: []
+current-context: """"
+kind: Config
+preferences: {}
+users: []
+```
+
+```
+kubectl config set-cluster default --server=http://172.29.100.200:8080 --api-version=v1
+kubectl config set-context default --cluster=default
+kubectl config use-context default
+```
+
+```
+git clone https://github.com/kubernetes/kubernetes.git
+cd kubernetes
+export OPENSHIFT_EXAMPLE=$(pwd)/examples/openshift-origin
+export OPENSHIFT_CONFIG=${OPENSHIFT_EXAMPLE}/config
+mkdir ${OPENSHIFT_CONFIG}
+export ETCD_INITIAL_CLUSTER_TOKEN=<a token generated on my workstation which has python>
+export ETCD_DISCOVERY_TOKEN=<another token generated on my workstation which has python>
+sed -i.bak -e ""s/INSERT_ETCD_INITIAL_CLUSTER_TOKEN/\""${ETCD_INITIAL_CLUSTER_TOKEN}\""/g"" -e ""s/INSERT_ETCD_DISCOVERY_TOKEN/\""${ETCD_DISCOVERY_TOKEN}\""/g"" ${OPENSHIFT_EXAMPLE}/etcd-controller.yaml
+```
+
+```
+./build/run.sh hack/build-cross.sh
+```
+
+```
+# cluster/kubectl.sh config view --output=yaml --flatten=true --minify=true > ${OPENSHIFT_CONFIG}/kubeconfig
+# cluster/kubectl.sh create -f $OPENSHIFT_EXAMPLE/openshift-service.yaml --namespace=""openshift-origin""
+service ""openshift"" created
+```
+
+```
+# export PUBLIC_OPENSHIFT_IP=$(kubectl get services openshift  --namespace=""openshift-origin"" --template=""{{ index .status.loadBalancer.ingress 0 \""ip\"" }}"")
+error: error executing template '{{ index .status.loadBalancer.ingress 0 ""ip"" }}': 'reflect: call of reflect.Value.Type on zero Value'
+----data----
+map[spec:map[selector:map[name:openshift] clusterIP:10.100.232.78 type:LoadBalancer sessionAffinity:None ports:[map[targetPort:8443 nodePort:31548 name:openshift protocol:TCP port:8443]]] status:map[loadBalancer:map[]] kind:Service apiVersion:v1 metadata:map[resourceVersion:2044 creationTimestamp:2015-08-18T11:35:39Z name:openshift namespace:openshift-origin selfLink:/api/v1/namespaces/openshift-origin/services/openshift uid:40430477-459d-11e5-af7c-005056b1362d]]
+
+# kubectl get services openshift  --namespace=""openshift-origin""
+NAME        LABELS    SELECTOR         IP(S)           PORT(S)
+openshift   <none>    name=openshift   10.100.232.78   8443/TCP
+export PUBLIC_OPENSHIFT_IP=10.100.232.78
+```
+
+```
+# docker run --privileged -v ${OPENSHIFT_CONFIG}:/config openshift/origin start master --write-config=/config --kubeconfig=/config/kubeconfig --master=https://localhost:8443 --public-master=https://${PUBLIC_OPENSHIFT_IP}:8443 --etcd=http://etcd:2379
+Unable to find image 'openshift/origin:latest' locally
+latest: Pulling from openshift/origin
+f1b10cd84249: Pull complete
+c852f6d61e65: Pull complete
+7322fbe74aa5: Pull complete
+8e3080fd3212: Pull complete
+34efa3fcf98a: Pull complete
+b04f336c8d94: Pull complete
+418bc9454e3b: Pull complete
+67f2a8ce1b00: Pull complete
+9b282d348ce3: Pull complete
+b58494105e14: Pull complete
+258f37799cc4: Pull complete
+a8dc00210788: Pull complete
+67d03f8ba59d: Pull complete
+d01574c58c34: Already exists
+Digest: sha256:9828dceca1f0ab120e3296721dbefac420b4d55b3bcf26f4cfc94ba2e2a8596f
+Status: Downloaded newer image for openshift/origin:latest
+Generated new key pair as /config/serviceaccounts.public.key and /config/serviceaccounts.private.key
+Wrote master config to: /config/master-config.yaml
+```
+
+```
+# cp /opt/bin/kube-serviceaccount.key ${OPENSHIFT_CONFIG}/serviceaccounts.private.key
+# sed -i -e 's/publicKeyFiles:.*$/publicKeyFiles:/g' -e '/publicKeyFiles:/a \ \ - serviceaccounts.private.key' ${OPENSHIFT_CONFIG}/master-config.yaml
+```
+
+```
+# sudo -E chown -R ${USER} ${OPENSHIFT_CONFIG}
+# docker run -it --privileged -e=""KUBECONFIG=/config/admin.kubeconfig"" -v ${OPENSHIFT_CONFIG}:/config openshift/origin cli secrets new openshift-config /config -o json
+error: couldn't read version from server: Get https://localhost:8443/api: dial tcp 127.0.0.1:8443: connection refused
+see 'openshift cli secrets new -h' for help.
+```
+
+```
+oauthConfig:
+  assetPublicURL: https://10.100.232.78:8443/console/
+  grantConfig:
+    method: auto
+  identityProviders:
+  - challenge: true
+    login: true
+    name: anypassword
+    provider:
+      apiVersion: v1
+      kind: AllowAllPasswordIdentityProvider
+  masterPublicURL: https://10.100.232.78:8443
+  masterURL: https://localhost:8443
+  sessionConfig:
+    sessionMaxAgeSeconds: 300
+    sessionName: ssn
+    sessionSecretsFile: """"
+  tokenConfig:
+    accessTokenMaxAgeSeconds: 86400
+    authorizeTokenMaxAgeSeconds: 300
+```",['priority/backlog' 'area/os/coreos'],os/coreos,,backlog,closed,2015-08-18 11:47:54+00:00,2015-09-17 12:43:17+00:00,720.9230555555556,groulot,6,0,kubernetes/kubernetes,months,os/coreos,0.217,provider/gcp,0.0544,example,0.05,11869,0.7963,4591,0.7898,11661,0.7852,k8s-months-os-coreos,pending,"Dear all,
+
+I am trying to install Openshift on a Kubernetes cluster running on CoreOS (in vSphere VMs). And the process fails when it tries to package secrets for the openshift pod.
+
+Here is what I do step by step. First I use this doc to install a Kubernetes cluster on 3 CoreOS VMs:
+https://github."
+101500208,12818,Enable /proc/sys/kernel/panic_on_oops on nodes so that they don't go AWOL,"#12809 refers
+
+Currently our nodes don't panic on oops, which causes them to simply go AWOL.
+
+$ cat /proc/sys/kernel/panic
+10
+$ cat /proc/sys/kernel/panic_on_oops 
+0
+
+On Monday, August 17, 2015 at 12:46:00 PM UTC-7, Eric Northup wrote:
+
+> Although it won't catch _all_ guest kernel problems, two mechanisms
+> get you most of the way there: 1) reboot on guest kernel panic, and
+> oops=panic.
+> 
+> To test for the first, examine /proc/sys/kernel/panic and make sure
+> it's not zero. Also, enabling ""oops=panic"" might be worth doing (if
+> that's not enabled, then the guest kernel ""oops"" encountered in the
+> bug will not trigger anything, while it might have left a usermode
+> thread unable to make forward progress).
+> 
+> See /proc/sys/kernel/panic_on_oops to enable the second (background:
+> https://www.kernel.org/pub/linux/kernel/people/akpm/patches/2.5/2.5.66/2.5.66-mm3/broken-out/panic-on-oops.patch
+> )",,['priority/backlog' 'area/reliability' 'sig/node' 'sig/cluster-lifecycle'],reliability,,backlog,closed,2015-08-17 20:10:37+00:00,2015-12-03 04:41:18+00:00,2576.511388888889,ghost,6,1,kubernetes/kubernetes,months,provider/gcp,0.0634,test-infra,0.0475,test,0.0449,8784,0.7233,8196,0.7095,8231,0.7036,k8s-months-reliability,pending,"#12809 refers
+
+Currently our nodes don't panic on oops, which causes them to simply go AWOL.
+
+$ cat /proc/sys/kernel/panic
+10
+$ cat /proc/sys/kernel/panic_on_oops 
+0
+
+On Monday, August 17, 2015 at 12:46:00 PM UTC-7, Eric Northup wrote:
+
+> Although it won't catch _all_ guest kernel problems, two mech"
+108799108,14711,Display bug using vim with exec,"Hello,
+
+I'm using GKE (1.0.6) and I have a weird display bug using vim in exec -ti.
+An image worth a thousand words, the gif was done using a ""fluentd-cloud-logging"" pod based on ubuntu-14.04.
+![5dd5b3485226687d52fe0de611996510](https://cloud.githubusercontent.com/assets/525763/10156095/8f5e1a28-667d-11e5-801f-2243a6cdf22f.gif)
+
+It may be os related as the same test with with the ""monitoring-heapster-v6"" pod doesn't show the problem.
+I have the same problem with my own pods using ubuntu.
+Note that connecting to the node and using docker exec -ti doesn't show the problem",,['priority/backlog' 'area/kubectl'],kubectl,,backlog,closed,2015-09-29 05:49:30+00:00,2016-02-01 14:35:36+00:00,3008.7683333333334,rvrignaud,10,0,kubernetes/kubernetes,months,provider/gcp,0.1029,os/ubuntu,0.0869,introspection,0.0512,3094,0.7468,7197,0.7455,10056,0.7394,k8s-months-kubectl,pending,"Hello,
+
+I'm using GKE (1.0.6) and I have a weird display bug using vim in exec -ti.
+An image worth a thousand words, the gif was done using a ""fluentd-cloud-logging"" pod based on ubuntu-14.04.
+![5dd5b3485226687d52fe0de611996510](https://cloud.githubusercontent.com/assets/525763/10156095/8f5e1a28-667"
+108310584,14552,API call latency regression,"Looking at the scalability tests running on Jenkins we can observer a huge regression in the latency metrics (this happened over a week ago).
+In particular (metrics from Density test):
+
+run 2441:
+
+[CODE_BLOCK]
+
+run 2442:
+
+[CODE_BLOCK]
+
+run 2443:
+
+[CODE_BLOCK]
+
+run 2444:
+
+[CODE_BLOCK]
+
+What I am looking at is latencies of calls that are NOT listing pods. There was a huge regreession from <200ms to >500ms
+
+However, it seems that there were no significant merges around that time that could break.
+
+I looked few runs before and few runs after and the trend is very clear.
+
+cc @davidopp @brendandburns @gmarek @fgrzadkowski @lavalamp 
+@kubernetes/goog-csi @kubernetes/goog-testing @kubernetes/sig-scalability","```
+Sep 16 10:50:28.615: INFO: Top latency metric: {Verb:LIST Resource:pods Quantile:0.99 Latency:1.691713s}
+Sep 16 10:50:28.615: INFO: Top latency metric: {Verb:LIST Resource:pods Quantile:0.9 Latency:1.604232s}
+Sep 16 10:50:28.615: INFO: Top latency metric: {Verb:DELETE Resource:pods Quantile:0.99 Latency:149.14ms}
+Sep 16 10:50:28.615: INFO: Top latency metric: {Verb:LIST Resource:endpoints Quantile:0.99 Latency:133.645ms}
+Sep 16 10:50:28.615: INFO: Top latency metric: {Verb:PUT Resource:nodes Quantile:0.99 Latency:119.654ms}
+```
+
+```
+Sep 16 13:03:38.470: INFO: Top latency metric: {Verb:LIST Resource:pods Quantile:0.9 Latency:1.343039s}
+Sep 16 13:03:38.471: INFO: Top latency metric: {Verb:LIST Resource:pods Quantile:0.99 Latency:1.343039s}
+Sep 16 13:03:38.471: INFO: Top latency metric: {Verb:LIST Resource:pods Quantile:0.5 Latency:169.136ms}
+Sep 16 13:03:38.471: INFO: Top latency metric: {Verb:DELETE Resource:pods Quantile:0.99 Latency:163.265ms}
+Sep 16 13:03:38.471: INFO: Top latency metric: {Verb:LIST Resource:nodes Quantile:0.99 Latency:131.781ms}
+```
+
+```
+Sep 16 13:46:28.158: INFO: Top latency metric: {Verb:LIST Resource:pods Quantile:0.99 Latency:1.3039s}
+Sep 16 13:46:28.158: INFO: Top latency metric: {Verb:LIST Resource:pods Quantile:0.9 Latency:1.216827s}
+Sep 16 13:46:28.158: INFO: Top latency metric: {Verb:POST Resource:pods Quantile:0.99 Latency:672.557ms}
+Sep 16 13:46:28.158: INFO: Top latency metric: {Verb:LIST Resource:services Quantile:0.99 Latency:574.865ms}
+Sep 16 13:46:28.158: INFO: Top latency metric: {Verb:PUT Resource:nodes Quantile:0.99 Latency:532.134ms}
+```
+
+```
+Sep 16 16:32:15.498: INFO: Top latency metric: {Verb:LIST Resource:pods Quantile:0.99 Latency:2.354339s}
+Sep 16 16:32:15.498: INFO: Top latency metric: {Verb:LIST Resource:pods Quantile:0.9 Latency:1.158089s}
+Sep 16 16:32:15.498: INFO: Top latency metric: {Verb:POST Resource:pods Quantile:0.99 Latency:802.564ms}
+Sep 16 16:32:15.498: INFO: Top latency metric: {Verb:PUT Resource:nodes Quantile:0.99 Latency:774.876ms}
+Sep 16 16:32:15.498: INFO: Top latency metric: {Verb:LIST Resource:endpoints Quantile:0.99 Latency:652.077ms}
+```","['area/test' 'priority/important-soon' 'sig/scalability'
+ 'sig/api-machinery']",test,,important-soon,closed,2015-09-25 11:53:27+00:00,2016-02-08 21:04:54+00:00,3273.1908333333336,wojtek-t,14,1,kubernetes/kubernetes,months,test-infra,0.086,test,0.0822,provider/gcp,0.069,10607,0.8379,10282,0.8156,12801,0.7792,k8s-months-test,pending,"Looking at the scalability tests running on Jenkins we can observer a huge regression in the latency metrics (this happened over a week ago).
+In particular (metrics from Density test):
+
+run 2441:
+
+[CODE_BLOCK]
+
+run 2442:
+
+[CODE_BLOCK]
+
+run 2443:
+
+[CODE_BLOCK]
+
+run 2444:
+
+[CODE_BLOCK]
+
+What I am look"
+102475986,13062,"Improve partitioning of tests across test jobs (slow, parallel, disruptive etc)","Some e2e tests are slow by necessity and design. Others are slow through non-optimal implementation. We don't want these to slow down the completion of the faster e2e tests. 
+
+The former group (slow by necessity) need to go into their own group in perpetuity. The latter need to go into quarantine until they can be speeded up. As a first step the two groups can share one test job.
+
+This is not just a theoretical problem. Right now, e2e tests are often timing out after 2 hours. Not long ago they completed in 30 minutes.",,['priority/important-soon' 'area/test-infra'],test-infra,,important-soon,closed,2015-08-21 22:53:08+00:00,2015-12-22 18:13:10+00:00,2947.333888888889,ghost,21,0,kubernetes/kubernetes,months,test-infra,0.1445,test,0.1434,provider/gcp,0.0723,14224,0.8272,6847,0.7976,14957,0.7841,k8s-months-test-infra,pending,"Some e2e tests are slow by necessity and design. Others are slow through non-optimal implementation. We don't want these to slow down the completion of the faster e2e tests. 
+
+The former group (slow by necessity) need to go into their own group in perpetuity. The latter need to go into quarantine un"
+104758528,13567,Add support for Quotas on Running Pods,"This is a continuation of a discussion started in the #sig-scheduling kubernetes slack channel between @davidopp, @smarterclayton, and @quinton-hoole.
+
+Fundamentally the quota system prevents the 'creation' of pods but has nothing (as far as I can tell) to do with the 'running' of pods. There are lots of reasons why a pod can't get get to the 'Ready' state especially in a resource constrained cluster. What a 'running' quota would do is not penalize a given user/namespace for having pods that can't be scheduled.
+
+A simple example would be a namespace with a quota of 4 pods that current has 2 ready/scheduled pods and 2 pods that can't be scheduled and may not be able to for quite a while. Given a the current quota system a new pod could not be created in this namespace. With a running quota system of 4, however, 2 additional pods could get scheduled.
+
+I believe that this is the time to address this functionality because the addition of the JobController, and support for batch workloads in general, will increase the potential of a given Kubernetes cluster to be resource constrained.",,['priority/backlog' 'sig/scheduling' 'area/admin' 'lifecycle/rotten'],admin,,backlog,closed,2015-09-03 18:50:28+00:00,2018-02-12 12:25:21+00:00,21425.581388888888,cameronbrunner,21,1,kubernetes/kubernetes,long,controller-manager,0.0685,introspection,0.0506,provider/gcp,0.0475,10928,0.8165,11793,0.8095,10242,0.8084,k8s-long-admin,pending,"This is a continuation of a discussion started in the #sig-scheduling kubernetes slack channel between @davidopp, @smarterclayton, and @quinton-hoole.
+
+Fundamentally the quota system prevents the 'creation' of pods but has nothing (as far as I can tell) to do with the 'running' of pods. There are lo"
+108942603,14762,kubelet stats missing on Ubuntu 15.04,"Attached the screen shot from grafana. 
+we can notice that heapster memory usage is zero.
+
+Environment:
+1. Kubernetes version 1.06
+2. Amazon webservice machines. 
+ c3.large for master and minions.
+3. ami version. -- ubuntu-vivid-15.04-amd64-server-20150611 (ami-f57b8f9e)
+4. see below pics from cadvisor memory and cpu usage is zero
+
+<img width=""557"" alt=""screen shot 2015-09-29 at 12 28 54 pm"" src=""https://cloud.githubusercontent.com/assets/8891432/10175819/e95113e6-66a5-11e5-96d8-19888c06bb3b.png"">
+![file-page1](https://cloud.githubusercontent.com/assets/8891432/10180545/f4455aba-66c2-11e5-89e4-683c88930760.jpg)
+![file-page2](https://cloud.githubusercontent.com/assets/8891432/10180547/f800b3f2-66c2-11e5-9ead-d3fb0edd1690.jpg)
+
+Thanks for Vish Kannan to debug this issue.",,['priority/important-soon' 'area/cadvisor' 'sig/node'],cadvisor,,important-soon,closed,2015-09-29 19:31:28+00:00,2017-03-01 04:22:26+00:00,12440.849444444444,satheessh,24,0,kubernetes/kubernetes,long,provider/gcp,0.0801,ui,0.0603,os/ubuntu,0.053,12315,0.8013,10659,0.7987,10451,0.7896,k8s-long-cadvisor,pending,"Attached the screen shot from grafana. 
+we can notice that heapster memory usage is zero.
+
+Environment:
+1. Kubernetes version 1.06
+2. Amazon webservice machines. 
+ c3.large for master and minions.
+3. ami version. -- ubuntu-vivid-15.04-amd64-server-20150611 (ami-f57b8f9e)
+4. see below pics from cadvi"
+109228512,14895,NegotiateVersion is not working properly,"NegotiateVersion has several problems:
+1. NegotiateVersion does not check group/versions exposed at /apis and prints a warning message when using kubectl to create an experimental resource.
+2. NegotiateVersion takes the client#Config.Version into consideration, but it's not clear what value should be put in client#Config.Version as we have multiple groups now. We plan to create a config for each group, and calls NegotiateVersion for each group.
+#14592 fixes the problem but it needs to be broken into smaller pieces to receive proper review.
+
+In #14893 we temporarily disable the warning message in NegotiateVersion. We need to revert that when we have a proper fix.
+
+@lavalamp @krousey",,['priority/backlog' 'area/client-libraries' 'sig/api-machinery'],client-libraries,,backlog,closed,2015-10-01 04:39:33+00:00,2017-03-31 20:17:13+00:00,13143.627777777778,caesarxuchao,4,1,kubernetes/kubernetes,long,provider/gcp,0.0805,client-libraries,0.0739,kubectl,0.0647,14893,0.8085,9762,0.7951,13794,0.784,k8s-long-client-libraries,pending,"NegotiateVersion has several problems:
+1. NegotiateVersion does not check group/versions exposed at /apis and prints a warning message when using kubectl to create an experimental resource.
+2. NegotiateVersion takes the client#Config.Version into consideration, but it's not clear what value should b"
+107756709,14363,vspere cloud provider fails if multiple ESX networks are present,"When attempting to create a Kubernetes cluster using KUBERNETES_PROVIDER=vsphere, I get the following error:
+
+[CODE_BLOCK]
+
+Following the thread a bit, this is because the instructions don't mention that you need to set the [INLINE_CODE] flag if your vcenter manages multiple networks (similarly, it omits the GOVC_DATACENTER flag which was also necessary in my case to upload the kube.vmdk file).
+
+Setting the [INLINE_CODE] env variable (using the output of [INLINE_CODE]) has got me past this issue.","```
+$ cluster/kube-up.sh 
+... Starting cluster using provider: vsphere
+... calling verify-prereqs
+... calling kube-up
+Starting master VM (this can take a minute)...
+Error: default network resolves to multiple instances, please specify
+```",['priority/backlog' 'area/cloudprovider'],cloudprovider,,backlog,closed,2015-09-22 17:00:12+00:00,2016-12-29 19:38:09+00:00,11138.6325,Symmetric,1,0,kubernetes/kubernetes,long,provider/gcp,0.0544,cloudprovider,0.0529,kubectl,0.0473,14366,0.8276,14368,0.8077,10029,0.8044,k8s-long-cloudprovider,pending,"When attempting to create a Kubernetes cluster using KUBERNETES_PROVIDER=vsphere, I get the following error:
+
+[CODE_BLOCK]
+
+Following the thread a bit, this is because the instructions don't mention that you need to set the [INLINE_CODE] flag if your vcenter manages multiple networks (similarly, it "
+107166107,14163,Creating kube-controller-manager pod fails when following steps in scratch.md,"I'm trying to create a kube-controller-manager pod according to the template ( https://github.com/kubernetes/kubernetes/blob/master/docs/getting-started-guides/scratch.md#controller-manager-template). I found if hostNetwork=true, with/without host specified localhost on livenessProbe, the pod is always in ContainerCreating status and logs ""specified host networking, but is disallowed"". If I set ""hostNetwork"" to false and didn't specify host, the pod is keeping restart. Then I added ""host"" : ""127.0.0.1"", the pod is running and health check 10252. So should be ""hostNetwork"": false meanwhile ""host"" : ""127.0.0.1""?
+
+[CODE_BLOCK]","```
+# cat kube-controller-manager.json
+{
+  ""kind"": ""Pod"",
+  ""apiVersion"": ""v1"",
+  ""metadata"": {
+    ""name"": ""kube-controller-manager""
+  },
+  ""spec"": {
+    ""hostNetwork"": true,
+    ""containers"": [
+      {
+        ""name"": ""kube-controller-manager"",
+        ""image"": ""gcr.io/google_containers/hyperkube:v1.0.3"",
+        ""command"": [
+          ""/hyperkube"",
+          ""controller-manager""
+        ],
+        ""volumeMounts"": [
+          {
+            ""name"": ""srvkube"",
+            ""mountPath"": ""/srv/kubernetes"",
+            ""readOnly"": true
+          },
+          {
+            ""name"": ""etcssl"",
+            ""mountPath"": ""/etc/ssl"",
+            ""readOnly"": true
+          }
+        ],
+        ""livenessProbe"": {
+          ""httpGet"": {
+            ""host"": ""127.0.0.1"",
+            ""path"": ""/healthz"",
+            ""port"": 10252
+          },
+          ""initialDelaySeconds"": 15,
+          ""timeoutSeconds"": 15
+        }
+      }
+    ],
+    ""volumes"": [
+      {
+        ""name"": ""srvkube"",
+        ""hostPath"": {
+          ""path"": ""/srv/kubernetes""
+        }
+      },
+      {
+        ""name"": ""etcssl"",
+        ""hostPath"": {
+          ""path"": ""/etc/ssl""
+        }
+      }
+    ]
+  }
+}
+
+# ./kubectl get pod
+NAME                        READY     STATUS              RESTARTS   AGE
+kube-controller-manager     0/1       ContainerCreating   0          5m
+
+# ./kubectl describe pod kube-controller-manager
+Name:               kube-controller-manager
+Namespace:          default
+Image(s):           gcr.io/google_containers/hyperkube:v1.0.3
+Node:               127.0.0.1/127.0.0.1
+Start Time:         Fri, 18 Sep 2015 07:14:37 +0000
+Labels:             <none>
+Status:             Pending
+Reason:             
+Message:            
+IP:             127.0.0.1
+Replication Controllers:    <none>
+Containers:
+  kube-controller-manager:
+    Container ID:   
+    Image:      gcr.io/google_containers/hyperkube:v1.0.3
+    Image ID:       
+    State:      Waiting
+      Reason:       ContainerCreating
+    Ready:      False
+    Restart Count:  0
+    Environment Variables:
+Conditions:
+  Type      Status
+  Ready     False 
+Volumes:
+  srvkube:
+    Type:   HostPath (bare host directory volume)
+    Path:   /srv/kubernetes
+  etcssl:
+    Type:   HostPath (bare host directory volume)
+    Path:   /etc/ssl
+  default-token-7l129:
+    Type:   Secret (a secret that should populate this volume)
+    SecretName: default-token-7l129
+Events:
+  FirstSeen LastSeen    Count   From            SubobjectPath   Reason      Message
+  ─────────   ────────    ───── ────            ───────────── ──────      ───────
+  46s       46s     1   {scheduler }                Scheduled   Successfully assigned kube-controller-manager to 127.0.0.1
+  43s       23s     3   {kubelet 127.0.0.1}         FailedSync  Error syncing pod, skipping: pod with UID ""e9fb0eb3-5dd4-11e5-bce0-22000b102286"" specified host networking, but is disallowed
+```","['area/controller-manager' 'sig/node' 'sig/cluster-lifecycle'
+ 'lifecycle/stale']",controller-manager,,,closed,2015-09-18 09:27:12+00:00,2017-12-15 00:13:10+00:00,19646.766111111112,qwang1,12,0,kubernetes/kubernetes,long,os/coreos,0.0829,controller-manager,0.057,cloudprovider,0.0502,13220,0.779,12740,0.7734,2930,0.769,k8s-long-controller-manager,pending,"I'm trying to create a kube-controller-manager pod according to the template ( https://github.com/kubernetes/kubernetes/blob/master/docs/getting-started-guides/scratch.md#controller-manager-template). I found if hostNetwork=true, with/without host specified localhost on livenessProbe, the pod is alw"
+102464405,13057,storage.Interface leaks error abstractions,"[INLINE_CODE] abstracts a key value store, but it does not transform the errors returned (which are needed by callers):
+
+[CODE_BLOCK]
+
+and 
+
+[CODE_BLOCK]
+
+are examples where lower level errors are converted to higher level conditions (because we Get before Deleting to check certain conditions).
+
+Callers still have to handle etcd errors today.
+### In general:
+
+Our higher level kv abstraction is really [INLINE_CODE], so [INLINE_CODE] is only useful in the context that it provides the primitives [INLINE_CODE] needs. Having [INLINE_CODE] support base KV primitives is great, but the granularity of the [INLINE_CODE] should be matched to [INLINE_CODE] (Or generickv). An example is guaranteed update - a store that has a built in patch primitive like mongodb or can do JS on the server side would be _better_ at implementing the genericetcd.Update logic than [INLINE_CODE] - so there is no point in having a lowest common denominator storage interface that makes a hypothetical generic KV impl slower than our generic etcd.
+
+/rant","```
+    if err := e.Storage.Create(key, obj, out, ttl); err != nil {
+        err = etcderr.InterpretCreateError(err, e.EndpointName, name)
+        err = rest.CheckGeneratedNameError(e.CreateStrategy, err, obj)
+        return nil, err
+    }
+```
+
+```
+    if err := e.Storage.Get(key, obj, false); err != nil {
+        return nil, etcderr.InterpretDeleteError(err, e.EndpointName, name)
+    }
+```",['priority/important-soon' 'area/etcd' 'sig/api-machinery'],etcd,,important-soon,closed,2015-08-21 21:21:41+00:00,2017-01-05 00:25:12+00:00,12051.058611111112,smarterclayton,6,1,kubernetes/kubernetes,long,provider/gcp,0.061,kubectl,0.0509,security,0.0471,9721,0.7711,4899,0.7653,5684,0.7624,k8s-long-etcd,pending,"[INLINE_CODE] abstracts a key value store, but it does not transform the errors returned (which are needed by callers):
+
+[CODE_BLOCK]
+
+and 
+
+[CODE_BLOCK]
+
+are examples where lower level errors are converted to higher level conditions (because we Get before Deleting to check certain conditions).
+
+Cal"
+106728089,14029,"collecting log using fluentd, run kubelet with --docker-root=XX not working","using centos6, docker 1.6...
+collecting log using fluentd, and trying to use this feature from 
+[INLINE_CODE]
+
+> watch changes to Docker log files that live in the directory /var/lib/docker/containers/ and are symbolically linked to from the /varlog directory using names that capture the pod name and container name.
+
+but from code, it seems that the manager get ""docker root"" from docker info.
+https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/dockertools/manager.go#L163
+
+[CODE_BLOCK]
+
+[CODE_BLOCK]","```
+docker info
+Containers: 143
+Images: 255
+Storage Driver: devicemapper
+ Pool Name: docker-252:7-2140163-pool
+ Pool Blocksize: 65.54 kB
+ Backing Filesystem: extfs
+ Data file: /dev/loop0
+ Metadata file: /dev/loop1
+ Data Space Used: 8.545 GB
+ Data Space Total: 107.4 GB
+ Data Space Available: 52.02 GB
+ Metadata Space Used: 20.59 MB
+ Metadata Space Total: 2.147 GB
+ Metadata Space Available: 2.127 GB
+ Udev Sync Supported: false
+ Data loop file: /home/q/docker/devicemapper/devicemapper/data
+ Metadata loop file: /home/q/docker/devicemapper/devicemapper/metadata
+ Library Version: 1.02.82-git (2013-10-04)
+Execution Driver: native-0.2
+Kernel Version: 3.18.17-1.el6.x86_64
+Operating System: <unknown>
+CPUs: 4
+Total Memory: 3.866 GiB
+Name: l-kubecluster1.ops.cn8
+ID: JKN2:X7IR:THCS:CNNU:WAQV:UFRQ:PEYC:4272:TWGK:4FTC:VMO5:STX3
+WARNING: No swap limit support
+```
+
+```
+docker -D info
+Containers: 143
+Images: 255
+Storage Driver: devicemapper
+ Pool Name: docker-252:7-2140163-pool
+ Pool Blocksize: 65.54 kB
+ Backing Filesystem: extfs
+ Data file: /dev/loop0
+ Metadata file: /dev/loop1
+ Data Space Used: 8.545 GB
+ Data Space Total: 107.4 GB
+ Data Space Available: 52.02 GB
+ Metadata Space Used: 20.59 MB
+ Metadata Space Total: 2.147 GB
+ Metadata Space Available: 2.127 GB
+ Udev Sync Supported: false
+ Data loop file: /home/q/docker/devicemapper/devicemapper/data
+ Metadata loop file: /home/q/docker/devicemapper/devicemapper/metadata
+ Library Version: 1.02.82-git (2013-10-04)
+Execution Driver: native-0.2
+Kernel Version: 3.18.17-1.el6.x86_64
+Operating System: <unknown>
+CPUs: 4
+Total Memory: 3.866 GiB
+Name: l-kubecluster1.ops.cn8
+ID: JKN2:X7IR:THCS:CNNU:WAQV:UFRQ:PEYC:4272:TWGK:4FTC:VMO5:STX3
+Debug mode (server): false
+Debug mode (client): true
+Fds: 85
+Goroutines: 180
+System Time: Wed Sep 16 15:44:26 CST 2015
+EventsListeners: 1
+Init SHA1: 7f9c6798b022e64f04d2aff8c75cbf38a2779493
+Init Path: /usr/bin/docker
+Docker Root Dir: /home/q/docker
+WARNING: No swap limit support
+```",['area/logging' 'sig/node' 'lifecycle/rotten'],logging,,,closed,2015-09-16 08:48:59+00:00,2018-02-12 07:20:09+00:00,21118.519444444446,nancykyo,9,0,kubernetes/kubernetes,long,kubelet,0.1151,logging,0.0844,docker,0.0768,12567,0.8439,2923,0.8347,13313,0.82,k8s-long-logging,pending,"using centos6, docker 1.6...
+collecting log using fluentd, and trying to use this feature from 
+[INLINE_CODE]
+
+> watch changes to Docker log files that live in the directory /var/lib/docker/containers/ and are symbolically linked to from the /varlog directory using names that capture the pod name an"
+109025731,14809,Keystone auth token used for openstack cloudprovider resources,"I am looking at the keystone experimental auth :
+
+https://github.com/kubernetes/kubernetes/blob/master/plugin/pkg/auth/authenticator/request/keystone/keystone.go#L36-L40
+
+and at how OpenStack provider is implemented :
+
+https://github.com/kubernetes/kubernetes/blob/master/pkg/cloudprovider/providers/openstack/openstack.go#L117-L130
+
+The two doesn't seem to be connected which mean the user auth to your keystone but that auth is not reused for creating openstack resources (when that token could be straight used for it).
+
+In other words being able to have the user authenticated via OpenStack Keystone in kube and have the OpenStack resources (i.e: cinder for the PV driver) used in Kube consumed from the authenticated user and not from a global user.",,['area/provider/openstack' 'lifecycle/rotten'],provider/openstack,,,closed,2015-09-30 06:41:31+00:00,2018-05-15 20:08:52+00:00,23005.455833333333,chmouel,12,0,kubernetes/kubernetes,long,cloudprovider,0.1365,security,0.0676,provider/gcp,0.0433,11626,0.7778,11798,0.7724,13556,0.7352,k8s-long-provider-openstack,pending,"I am looking at the keystone experimental auth :
+
+https://github.com/kubernetes/kubernetes/blob/master/plugin/pkg/auth/authenticator/request/keystone/keystone.go#L36-L40
+
+and at how OpenStack provider is implemented :
+
+https://github.com/kubernetes/kubernetes/blob/master/pkg/cloudprovider/providers/"
+102436843,13045,hack/cherry_pick_pull fails if upstream push url is set to a safety value,"My upstream push url was set to ""dont_push_to_upstream"", to prevent accidental pushing to upstream.
+
+hack/cherry_pick_pull.sh was failing with
+
+[CODE_BLOCK]
+
+Workaround:
+
+[CODE_BLOCK]","```
++++ Creating a pull request on github
+Aborted: the origin remote doesn't point to a GitHub repository.
+```
+
+```
+git remote set-url --push upstream http://github.com/GoogleCloudPlatform/kubernetes.git
+hack/cherry_pick_pull.sh ...
+git remote set-url --push upstream dont_push_to_upstream
+```","['priority/important-soon' 'area/release-eng' 'sig/release'
+ 'lifecycle/rotten']",release-eng,,important-soon,closed,2015-08-21 18:19:08+00:00,2018-02-24 21:15:50+00:00,22034.945,justinsb,11,0,kubernetes/kubernetes,long,build-release,0.0631,test,0.05,test-infra,0.0484,10965,0.7942,11116,0.7919,14933,0.7535,k8s-long-release-eng,pending,"My upstream push url was set to ""dont_push_to_upstream"", to prevent accidental pushing to upstream.
+
+hack/cherry_pick_pull.sh was failing with
+
+[CODE_BLOCK]
+
+Workaround:
+
+[CODE_BLOCK]"
+107240987,14190,ServicePort's API schema doesnt match actual response for TargetPort field,"The API schema for ServicePort says that the TargetPort field is a string, but the api actually returns an integer.
+
+This breaks clients generated from the schema for statically type languages. 
+
+Here is the relevant bit of api schema for ServicePort:
+
+[CODE_BLOCK]
+
+And here is an actual example response:
+
+[CODE_BLOCK]
+
+As you can see _targetPort_ is returned as an integer when the API schema declares that this it is a string.
+
+(For random reference, we're trying to generate go structs for the kubernetes model in this project: https://github.com/rancher/kubernetes-model)","```
+   ""v1.ServicePort"": {
+    ""id"": ""v1.ServicePort"",
+    ""required"": [
+     ""port"",
+     ""nodePort""
+    ],
+    ""properties"": {
+      ...
+     ""port"": {
+      ""type"": ""integer"",
+      ""format"": ""int32"",
+      ""description"": ""the port number that is exposed""
+     },
+     ""targetPort"": {
+      ""type"": ""string"",
+      ""description"": ""number or name of the port to access on the pods targeted by the service; defaults to the service port; number must be in the range 1 to 65535; name must be an IANA_SVC_NAME""
+     },
+    ...
+    }
+   },
+```
+
+```
+{
+  ""kind"": ""Service"",
+  ""apiVersion"": ""v1"",
+  ""metadata"": {
+    ""name"": ""kubernetes"",
+    ""namespace"": ""default"",
+    ""selfLink"": ""/api/v1/namespaces/default/services/kubernetes"",
+    ""uid"": ""511c1181-5e21-11e5-a63c-12548fd47124"",
+    ""resourceVersion"": ""6"",
+    ""creationTimestamp"": ""2015-09-18T16:21:29Z"",
+    ""labels"": {
+      ""component"": ""apiserver"",
+      ""provider"": ""kubernetes""
+    }
+  },
+  ""spec"": {
+    ""ports"": [
+      {
+        ""protocol"": ""TCP"",
+        ""port"": 443,
+        ""targetPort"": 443,
+        ""nodePort"": 0
+      }
+    ],
+    ""clusterIP"": ""10.0.0.1"",
+    ""type"": ""ClusterIP"",
+    ""sessionAffinity"": ""None""
+  },
+  ""status"": {
+    ""loadBalancer"": {}
+  }
+}
+```",['priority/backlog' 'sig/api-machinery' 'area/swagger'],swagger,,backlog,closed,2015-09-18 17:09:33+00:00,2017-04-10 21:34:07+00:00,13684.409444444444,cjellick,5,0,kubernetes/kubernetes,long,api,0.0682,swagger,0.063,kubectl,0.0476,2123,0.807,9656,0.801,9655,0.7618,k8s-long-swagger,pending,"The API schema for ServicePort says that the TargetPort field is a string, but the api actually returns an integer.
+
+This breaks clients generated from the schema for statically type languages. 
+
+Here is the relevant bit of api schema for ServicePort:
+
+[CODE_BLOCK]
+
+And here is an actual example res"
+103576257,13276,Web UI/Dashboard does not allow viewing in other than the default namespace (?),Perhaps I'm missing something. It seems like the k8s web UI doesn't expose any controls for viewing a namespace other than the default.,,['priority/important-soon' 'area/ui'],ui,,important-soon,closed,2015-08-27 19:17:26+00:00,2016-12-08 04:52:14+00:00,11241.58,amygdala,2,0,kubernetes/kubernetes,long,ui,0.6299,provider/gcp,0.0202,usability,0.0188,14389,0.8032,9311,0.7945,13160,0.765,k8s-long-ui,pending,Perhaps I'm missing something. It seems like the k8s web UI doesn't expose any controls for viewing a namespace other than the default.
+98553757,12123,`kubectl create -f` and `kubectl delete -f` are not glob friendly,"If I have a directory of YAML files, I'd love to be able to create and delete all of those easily.
+
+For example: [INLINE_CODE] However, this confuses the command line parsing. If I separate things with commas, I'm good to go, but that is difficult to do with bash. See http://stackoverflow.com/questions/3430569/globbing-pathname-expansion-with-colon-as-separator
+
+I'd have to do something like:
+
+[CODE_BLOCK]
+
+It would be great to have a smoother way to do this.","``` bash
+function join() {
+  local IFS=$1
+  shift
+  echo ""$*""
+}
+kubectl create -f $(join ',' *.yaml)
+```","['priority/backlog' 'area/usability' 'area/kubectl' 'help wanted'
+ 'sig/cli' 'lifecycle/frozen' 'triage/accepted']",usability,,backlog,closed,2015-08-01 18:11:53+00:00,2022-03-28 02:41:22+00:00,58328.49138888889,jbeda,25,1,kubernetes/kubernetes,long,kubectl,0.0992,usability,0.0702,app-lifecycle,0.0525,4343,0.8193,10853,0.7963,7152,0.7902,k8s-long-usability,pending,"If I have a directory of YAML files, I'd love to be able to create and delete all of those easily.
+
+For example: [INLINE_CODE] However, this confuses the command line parsing. If I separate things with commas, I'm good to go, but that is difficult to do with bash. See http://stackoverflow.com/questi"

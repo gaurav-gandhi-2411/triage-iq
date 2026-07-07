@@ -1,41 +1,62 @@
 {
-  "schema_version": "v1",
-  "eval_set_hash": "7834d8ad5b59306ac84ccd241e3cd6cfb926e8135023c8121bfc9638bb06e0d1",
-  "cassette_hash": "06f1bf79ed62b841547cdd313700b9a348cc7a2d59f4901e958b34fe4a0ad401",
+  "schema_version": "v2",
+  "eval_set_hash": "e37a69ea0cf1d26749d7f714d4f161ec6fd5f37d25a22156277551e00fd30138",
+  "cassette_hash": "c9966414f3c52df1af3f2df6624239fc61a2c65ed5d20341dae4f8e7c8d7484f",
+  "judge": {
+    "model": "qwen3:8b",
+    "provider": "ollama",
+    "note": "Local judge (ADR-0019) -- zero-cost, reproducible without a live key. Replaces llama-3.3-70b-versatile (Groq) used for the prior n=60 baseline. Means below are NOT comparable to that prior baseline: both the gold set (train-contamination removed, ADR-0018) and the judge model changed simultaneously -- this is a new baseline, not a corrected old one."
+  },
   "per_repo": {
     "microsoft/vscode": {
-      "n": 30,
-      "mean": 10.0333,
+      "n": 11,
+      "mean": 8.3636,
       "dimensions": {
-        "component_match": 1.5,
-        "similar_issues_relevance": 2.7666666666666666,
-        "resolution_estimate_reasonableness": 0.6666666666666666,
-        "priority_alignment": 0.43333333333333335,
-        "next_steps_actionability": 2.7333333333333334,
-        "overall_quality": 1.9333333333333333
+        "component_match": 0.7272727272727273,
+        "similar_issues_relevance": 2.272727272727273,
+        "resolution_estimate_reasonableness": 1.1818181818181819,
+        "priority_alignment": 0.2727272727272727,
+        "next_steps_actionability": 2.1818181818181817,
+        "overall_quality": 1.7272727272727273
       }
     },
     "kubernetes/kubernetes": {
-      "n": 30,
-      "mean": 10.8667,
+      "n": 54,
+      "mean": 10.5185,
       "dimensions": {
-        "component_match": 1.8333333333333333,
-        "similar_issues_relevance": 2.8333333333333335,
-        "resolution_estimate_reasonableness": 0.9,
-        "priority_alignment": 0.43333333333333335,
-        "next_steps_actionability": 2.8333333333333335,
-        "overall_quality": 2.033333333333333
+        "component_match": 1.4259259259259258,
+        "similar_issues_relevance": 2.611111111111111,
+        "resolution_estimate_reasonableness": 1.2962962962962963,
+        "priority_alignment": 0.4444444444444444,
+        "next_steps_actionability": 2.537037037037037,
+        "overall_quality": 2.2037037037037037
       }
     }
   },
   "overall": {
-    "n": 60,
-    "mean": 10.45
+    "n": 65,
+    "mean": 10.1538
   },
   "threshold": {
-    "absolute_drop": 0.0,
-    "epsilon": 0.0001,
-    "per_repo": true,
-    "note": "Gate fails if EITHER repo's mean drops below (baseline_mean - absolute_drop - epsilon)."
+    "method": "One-directional per-repo mean regression check: fires only if new_mean < baseline_mean - band. Improvements above the band never trip it.",
+    "measured_jitter": {
+      "source": "Two independent full local-judge re-recordings (attempt1 n=65, attempt2 n=57 before an unrelated Groq synthesis TPD stop), compared on 57 issues common to both.",
+      "std_per_issue_total_score": 0.748,
+      "note": "Empirically measured, not guessed -- see ADR-0019."
+    },
+    "per_repo_band": {
+      "microsoft/vscode": {
+        "band": 0.45,
+        "sem": 0.2255,
+        "n_used_for_sem": 11
+      },
+      "kubernetes/kubernetes": {
+        "band": 0.22,
+        "sem": 0.1103,
+        "n_used_for_sem": 46
+      }
+    },
+    "vscode_note": "microsoft/vscode's band (0.45) is wider than kubernetes/kubernetes's (0.22) because n=11 makes its mean statistically less stable -- this is the honest signal of the vscode data-ceiling finding (ADR-0017), not a fudged tolerance. Its gate is genuinely coarser.",
+    "derivation": "band = 2 x SEM = 2 x (measured_std / sqrt(n))"
   }
 }

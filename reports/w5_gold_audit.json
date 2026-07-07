@@ -1,0 +1,161 @@
+{
+  "current_gold": {
+    "total": 60,
+    "per_repo": {
+      "microsoft/vscode": 30,
+      "kubernetes/kubernetes": 30
+    },
+    "era_distribution": {
+      "2014": 4,
+      "2015": 33,
+      "2016": 20,
+      "2026": 3
+    },
+    "component_counts": {
+      "api": 9,
+      "test-infra": 8,
+      "ux": 4,
+      "debug": 4,
+      "error-telemetry": 3,
+      "javascript": 3,
+      "test": 3,
+      "tasks": 2,
+      "kubectl": 2,
+      "security": 2,
+      "css-less-scss": 2,
+      "typescript": 2,
+      "electron": 1,
+      "php": 1,
+      "editor-folding": 1,
+      "git": 1,
+      "monitoring": 1,
+      "app-lifecycle": 1,
+      "reliability": 1,
+      "json": 1,
+      "platform/vagrant": 1,
+      "build-release": 1,
+      "platform/gce": 1,
+      "example": 1,
+      "os/fedora": 1,
+      "os/coreos": 1,
+      "docker": 1,
+      "kubelet": 1
+    },
+    "res_bucket_counts": {
+      "weeks": 20,
+      "days": 12,
+      "long": 12,
+      "hours": 8,
+      "months": 8
+    },
+    "priority_counts": {
+      "low": 35,
+      "high": 19,
+      "medium": 6
+    },
+    "unique_components": 28,
+    "gaps": [
+      "95% issues from 2014-2016 \u2014 zero 2017-2025 representation",
+      "Resolution bucket '>30d' is too coarse \u2014 months (30-180d) has only 8 issues vs long (180d+) 12 issues",
+      "debug component is 13% of gold (8/60) \u2014 overrepresented vs corpus",
+      "medium priority only 10% (6/60) \u2014 inferred from resolution speed, not label",
+      "13 vscode components, 16 k8s components \u2014 many tail components absent"
+    ]
+  },
+  "candidate_pool": {
+    "total": 76,
+    "per_repo": {
+      "kubernetes/kubernetes": 59,
+      "microsoft/vscode": 17
+    },
+    "res_bucket_counts": {
+      "hours": 19,
+      "days": 16,
+      "long": 15,
+      "weeks": 13,
+      "months": 13
+    },
+    "component_counts": {
+      "error-telemetry": 5,
+      "test": 5,
+      "kubelet": 4,
+      "usability": 4,
+      "provider/openstack": 4,
+      "test-infra": 4,
+      "controller-manager": 3,
+      "cloudprovider": 3,
+      "terminal": 3,
+      "kube-proxy": 3,
+      "build-release": 3,
+      "scm": 2,
+      "apiserver": 2,
+      "kubectl": 2,
+      "os/coreos": 2,
+      "logging": 2,
+      "debug": 2,
+      "ui": 2,
+      "monitoring": 2,
+      "reliability": 2,
+      "perf": 1,
+      "accessibility": 1,
+      "editor-multicursor": 1,
+      "javascript": 1,
+      "search": 1,
+      "security": 1,
+      "system-requirement": 1,
+      "nodecontroller": 1,
+      "platform/mesos": 1,
+      "HA": 1,
+      "app-lifecycle": 1,
+      "admin": 1,
+      "cadvisor": 1,
+      "client-libraries": 1,
+      "etcd": 1,
+      "release-eng": 1,
+      "swagger": 1
+    },
+    "new_components_introduced": [
+      "HA",
+      "accessibility",
+      "admin",
+      "apiserver",
+      "cadvisor",
+      "client-libraries",
+      "cloudprovider",
+      "controller-manager",
+      "editor-multicursor",
+      "etcd",
+      "kube-proxy",
+      "logging",
+      "nodecontroller",
+      "perf",
+      "platform/mesos",
+      "provider/openstack",
+      "release-eng",
+      "scm",
+      "search",
+      "swagger",
+      "system-requirement",
+      "terminal",
+      "ui",
+      "usability"
+    ]
+  },
+  "pool_filter_stats": {
+    "microsoft/vscode": {
+      "dropped_already_in_current_gold": 28,
+      "dropped_retrieval_train_overlap": 22,
+      "dropped_classifier_train_overlap": 42,
+      "dropped_temporal_train_overlap": 320,
+      "dropped_training_union": 365
+    },
+    "kubernetes/kubernetes": {
+      "dropped_already_in_current_gold": 25,
+      "dropped_retrieval_train_overlap": 74,
+      "dropped_classifier_train_overlap": 500,
+      "dropped_temporal_train_overlap": 431,
+      "dropped_training_union": 931
+    }
+  },
+  "sampling_methodology": "Stratified 12-per-bucket \u00d7 5 buckets from held-out eval splits (temporal_val + temporal_test + classifier_val + classifier_test). Component diversity constraint: prefer underrepresented components, max 3 per component per bucket. Seed 42. Pool additionally excludes any issue number already in the current gold set, plus the union of three training-data issue-number sets: (1) data/w3_split.parquet's train split (query_number or original_number, per repo \u2014 retrieval-train disjointness), (2) data/processed/{repo}_classifier_train.parquet's number column (classifier-train disjointness), and (3) data/processed/{repo}_temporal_train.parquet's number column (temporal-train disjointness). Mirrors scripts/w5_ingest_labeled.py's assert_gold_disjoint_from_train three-way check."
+}

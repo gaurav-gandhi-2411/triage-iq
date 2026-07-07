@@ -54,10 +54,10 @@ REPO_MAP = {
 }
 
 SYNTHESIS_DELAY = 1.5  # seconds between synthesis calls (8B model: high TPM, 1.5s is safe)
-# 70B judge: Groq free tier is 6K TPM; ~1,053 tok/call → 12s ≈ 5 calls/min (5,265 tok/min) — under limit
-JUDGE_DELAY = 12.0
-JUDGE_MODEL = "llama-3.3-70b-versatile"
-JUDGE_PROVIDER = "groq"
+# Local judge (ADR-0019): no rate limit, no delay needed between judge calls.
+JUDGE_DELAY = 0.0
+JUDGE_MODEL = "qwen3:8b"
+JUDGE_PROVIDER = "ollama"
 
 
 def _is_tpd_error(exc: Exception) -> bool:
@@ -160,11 +160,22 @@ def main() -> None:
             sys.exit(1)
 
     judge = TriageJudge(
-        groq_api_key=groq_key,
         model=JUDGE_MODEL,
         provider=JUDGE_PROVIDER,
+        temperature=0.0,
+        ollama_seed=42,
         cache=cassette,
     )
+
+    # Throwaway warm-up call (ADR-0019): the first inference after a fresh Ollama model
+    # load produces different output than subsequent calls on the same loaded instance —
+    # each mode is independently reproducible, but they differ from each other. Absorbing
+    # that one-time cold-start here means every REAL judge call below (issue 1 through the
+    # last) is uniformly warm-mode, so a from-scratch re-run of this whole script
+    # reproduces the identical cassette. Not cached, not counted, discarded immediately.
+    logger.info("Ollama judge warm-up call (absorbing cold-start variance)...")
+    judge._ollama_completion([{"role": "user", "content": "Reply with just: OK"}])
+    logger.info("Warm-up done — judge is now in steady warm-mode for the rest of this run.")
 
     n_synthesis_recorded = 0
     n_judge_recorded = 0

@@ -56,10 +56,14 @@ def current_scores() -> dict:
 
 
 def _check_repo_quality(repo: str, current_scores: dict, baseline: dict) -> None:
-    """Assert that the current mean score for *repo* has not regressed below the baseline.
+    """Assert that the current per-repo mean has not regressed below baseline - band.
 
-    Computes drop = baseline_mean - current_mean and fails if drop exceeds
-    (absolute_drop + epsilon) from the baseline threshold block.
+    One-directional (ADR-0019): only fires if drop = baseline_mean - current_mean exceeds
+    the repo's tolerance band. An improvement (negative drop) never trips this — the band
+    only bounds regressions, not any movement. The band is a data-derived 2xSEM figure from
+    the measured re-record jitter (see threshold.per_repo_band in eval_baseline.json), not a
+    tuned-to-pass number — per-repo because vscode's n=11 genuinely has a wider band than
+    k8s's n=54, reflecting real statistical power, not a fudge.
     """
     baseline_repo = baseline["per_repo"][repo]
     current_repo = current_scores["per_repo"][repo]
@@ -68,9 +72,7 @@ def _check_repo_quality(repo: str, current_scores: dict, baseline: dict) -> None
     current_mean: float = current_repo["mean"]
     drop: float = baseline_mean - current_mean
 
-    threshold: float = (
-        baseline["threshold"]["absolute_drop"] + baseline["threshold"]["epsilon"]
-    )
+    threshold: float = baseline["threshold"]["per_repo_band"][repo]["band"]
 
     if drop > threshold:
         baseline_dims: dict[str, float] = baseline_repo.get("dimensions", {})
@@ -80,7 +82,7 @@ def _check_repo_quality(repo: str, current_scores: dict, baseline: dict) -> None
             f"Quality regression detected for {repo}",
             f"  baseline mean : {baseline_mean:.4f}/15",
             f"  current mean  : {current_mean:.4f}/15",
-            f"  drop          : {drop:.4f}  (threshold = {threshold:.4e})",
+            f"  drop          : {drop:.4f}  (band = {threshold:.4f})",
             "",
             "  Per-criterion breakdown:",
             f"  {'dimension':<40} {'baseline':>9} {'current':>9} {'delta':>9}",

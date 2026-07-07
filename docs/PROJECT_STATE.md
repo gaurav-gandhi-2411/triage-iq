@@ -45,7 +45,7 @@ Trained on ~22K real issues from `microsoft/vscode` and `kubernetes/kubernetes`.
 | W3-reframe | Task reframe: dup detection → similar-issue retrieval | DONE | Gold dataset reinterpreted; pipeline unchanged; corrects all downstream metrics | 0008 | main |
 | W3-finetune | BGE bi-encoder in-domain fine-tune | **PR #7 OPEN** | +13.16 pp R@5 k8s [+6.58, +19.74]; +13.33 pp vsc [+5.00, +23.33] — clean test split | 0010 (branch) | `feat/w3-finetune` |
 | W4 | Resolution predictor: fix split + remove leakage | DONE | closed_at → created_at; removed triage-time feature leakage. k8s +2.1% vs naive; vscode 0% | 0009 | main |
-| W5 | Gold eval set expansion: n=60 → n=150 | **PR #8 OPEN** | 120-candidate pool generated; ingestion + tests ready; awaiting GG labeling | 0011 (branch) | `feat/w5-eval-expansion` |
+| W5 | Gold eval set expansion: n=60 → n=150 | **PR #8 OPEN** | 120-candidate pool generated; ingestion + tests ready; awaiting GG labeling | 0017 (branch) | `feat/w5-eval-expansion` |
 
 ### PR #7 — `feat/w3-finetune`
 
@@ -57,7 +57,7 @@ Contains: fine-tuned model at `data/models/bge_finetuned_combined/`; loader pref
 
 **Blocked on:** GG labeling `data/gold_expansion_candidates.csv` (~2–3h; 120 candidates, target ~90 accepts).
 
-Contains: T1 gold audit (`reports/w5_gold_audit.json`); T2 stratification plan (9 × 5 resolution buckets); T3 candidate pool with TF-IDF + BGE pre-computed offline; T4 labeling protocol (`docs/eval/gold_labeling_protocol.md`); T5 ingestion script (`scripts/w5_ingest_labeled.py`, dry-run by default); 33 ingestion tests (102 tests on that branch); ADR-0011.
+Contains: T1 gold audit (`reports/w5_gold_audit.json`); T2 stratification plan (9 × 5 resolution buckets); T3 candidate pool with TF-IDF + BGE pre-computed offline; T4 labeling protocol (`docs/eval/gold_labeling_protocol.md`); T5 ingestion script (`scripts/w5_ingest_labeled.py`, dry-run by default); 33 ingestion tests (102 tests on that branch); ADR-0017 (renumbered from 0011 — collided with the eval-regression-gate ADR).
 
 ---
 
@@ -113,7 +113,7 @@ python scripts/11_evaluate_triage.py \
 - Hold or rise → merge PR #7 (W3 accepted). Record delta in ADR-0010.
 - Material drop → surface, investigate before merge.
 
-The same run's full scorecard becomes the n=150 baseline for all future workstreams. Update ADR-0011 before merging PR #8.
+The same run's full scorecard becomes the n=150 baseline for all future workstreams. Update ADR-0017 before merging PR #8.
 
 **Merge order:** PR #7 first (W3 retriever), then PR #8 (W5 eval infra).
 

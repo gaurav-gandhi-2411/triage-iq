@@ -87,12 +87,13 @@
     "isotonic_note": "Isotonic calibration tested (vscode test ECE 0.072, k8s 0.026) but not shipped — accuracy CIs overlapped zero and temperature scaling is simpler/more interpretable."
   },
   "judge": {
-    "production_judge_model": "llama-3.3-70b-versatile",
-    "production_judge_provider": "groq",
+    "production_judge_model": "qwen3:8b",
+    "production_judge_provider": "ollama",
     "cross_family_judge_model": "command-a-03-2025",
     "cross_family_judge_provider": "cohere",
-    "n_issues_evaluated": 60,
+    "n_issues_evaluated": 65,
     "cross_family_rationale": "Not one model grading its own homework — Cohere Command A is a different model family from the Groq/Meta LLaMA triage model.",
+    "baseline_history_note": "Re-baselined 2026-07-07 on the clean, train-decontaminated n=65 gold set with a local judge (ADR-0018, ADR-0019) — two changes at once (contamination removed AND judge switched llama-3.3-70b-versatile/Groq -> qwen3:8b/Ollama), not decomposed. The w1_1/w1_2/production_llama_score/cross_family_validation entries below are historical W1-era snapshots computed on the old n=60 set with the old judge — kept for the record, not comparable to the current dimensions block.",
     "w1_1_pre_calibration": {
       "judge": "command-a-03-2025",
       "score": 10.40,
@@ -122,21 +123,17 @@
       "gap_threshold_pp": 5.0,
       "decision": "Llama-70b retained as default judge — gap is -3.6pp, below the 5pp escalation threshold. High ranking agreement (r=0.729) confirms cross-family result is not an outlier."
     },
-    "known_issues": {
-      "train_contamination": {
-        "status": "under correction",
-        "adr": "docs/architecture/adr/0018-gold-set-train-contamination.md",
-        "affected_dimensions": ["component_match", "resolution_estimate_reasonableness"],
-        "note": "These two dimension means below were computed against a gold set later found to overlap classifier_train / temporal_train (see ADR-0018). component_match has been contaminated since the gold set's original 2026-04-29 curation (pre-existing curation-script gap, not caused by ADR-0009). resolution_estimate_reasonableness was contaminated starting 2026-06-19 as a direct side effect of the ADR-0009 split fix. Re-baseline on a verified-clean n=65 subset (54 kubernetes/kubernetes / 11 microsoft/vscode) is in progress. Not affected: similar_issues_relevance, priority_alignment, and the headline resolution 'beats naive' metric in reports/resolution_results.json."
-      }
-    },
     "dimensions": {
-      "component_match": {"max": 2, "production_mean": 1.55, "status": "under_correction"},
-      "similar_issues_relevance": {"max": 3, "production_mean": 2.717},
-      "resolution_estimate_reasonableness": {"max": 3, "production_mean": 1.283, "status": "under_correction"},
-      "priority_alignment": {"max": 1, "production_mean": 0.583},
-      "next_steps_actionability": {"max": 3, "production_mean": 2.65},
-      "overall_quality": {"max": 3, "production_mean": 2.15}
+      "component_match": {"max": 2, "production_mean": 1.308},
+      "similar_issues_relevance": {"max": 3, "production_mean": 2.554},
+      "resolution_estimate_reasonableness": {"max": 3, "production_mean": 1.277},
+      "priority_alignment": {"max": 1, "production_mean": 0.415},
+      "next_steps_actionability": {"max": 3, "production_mean": 2.477},
+      "overall_quality": {"max": 3, "production_mean": 2.123}
+    },
+    "per_repo": {
+      "kubernetes/kubernetes": {"n": 54, "mean": 10.5185},
+      "microsoft/vscode": {"n": 11, "mean": 8.3636, "note": "Data-limited secondary (ADR-0017) — n=11 gives this repo's mean a wider quality-regression tolerance band (0.45 vs k8s's 0.22). See reports/eval_baseline.json."}
     }
   },
   "reranker": {

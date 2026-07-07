@@ -41,8 +41,12 @@ REPO_MAP: dict[str, str] = {
     "kubernetes/kubernetes": "kubernetes_kubernetes",
 }
 
-JUDGE_MODEL = "llama-3.3-70b-versatile"
-JUDGE_PROVIDER = "groq"
+# Local judge (ADR-0019): zero-cost, reproducible without a live key. Cassette
+# replay never calls Ollama live -- CassettePlayer(strict=True) serves every
+# call from the committed cassette -- but the model/provider must match what
+# was recorded, since the cache key includes both.
+JUDGE_MODEL = "qwen3:8b"
+JUDGE_PROVIDER = "ollama"
 CI_API_KEY = "ci-replay-only"
 
 
@@ -125,6 +129,8 @@ def compute_scores(
         groq_api_key=CI_API_KEY,
         model=JUDGE_MODEL,
         provider=JUDGE_PROVIDER,
+        temperature=0.0,
+        ollama_seed=42,
         cache=cassette,
     )
 
@@ -148,16 +154,13 @@ def compute_scores(
 
         plan, _meta = assistant.triage_with_metadata(row)
 
-        # Exclude fields added to TriagePlan after the cassette was recorded (grounding,
-        # grounding_status — ADR-0015). The judge's cache key is a hash of the messages
-        # sent to it, which embed this JSON verbatim; any additive TriagePlan field
-        # changes that JSON and silently invalidates every cached judge entry even though
-        # the judge prompt template and cassette itself are unchanged. Excluding fields
-        # here keeps the judge's view of the plan identical to what was recorded, while
-        # production /triage responses (api/app.py) still return the new fields untouched.
-        plan_json = json.dumps(
-            plan.model_dump(exclude={"grounding", "grounding_status"}), ensure_ascii=False
-        )
+        # ADR-0019: the cassette was re-recorded from scratch against current TriagePlan
+        # (grounding + grounding_status included) — no exclusion needed here anymore.
+        # The old exclude={"grounding", "grounding_status"} workaround was specific to
+        # replaying the pre-ADR-0015 cassette without re-recording; that cassette no
+        # longer exists. record_cassettes.py's plan_json includes every field, so
+        # replay must match exactly or every judge cache key misses.
+        plan_json = json.dumps(plan.model_dump(), ensure_ascii=False)
         gold = {
             "component": issue["gold_component"],
             "priority": issue["gold_priority"],
@@ -203,23 +206,80 @@ def compute_scores(
     }
 
 
+# ADR-0019: byte-identical re-recording is not achievable with this project's inference
+# stack (Groq has replica-level nondeterminism even with an explicit seed; Ollama has
+# ~9% sequence-state divergence at full-run scale that survives strict decoding). Neither
+# is a config bug to fix -- both were tested directly. The cassette REPLAY invariant stays
+# exact (same committed bytes -> same score, always -- see test_cassette_hash_matches_baseline).
+# What moves to a tolerance band is the RE-RECORD-reproducibility comparison: per-repo MEAN
+# vs. baseline, banded by 2x the measured per-issue jitter's standard error.
+#
+# Measured directly, not guessed: two independent full local-judge (qwen3:8b) recordings
+# were compared on their 57 common issues. Per-issue total-score jitter: std=0.748 (on the
+# /15 scale), mean diff ~0 (symmetric noise, no systematic bias). SEM = std / sqrt(n),
+# using each repo's actual comparison sample size (k8s n=46, vscode n=11 from that
+# reproduction check). Band = 2 x SEM.
+_MEASURED_JITTER_STD = 0.748
+_JITTER_SEM_N = {"kubernetes/kubernetes": 46, "microsoft/vscode": 11}
+
+
+def _tolerance_band(repo: str) -> float:
+    """2x SEM band for `repo`, derived from the measured re-record jitter (ADR-0019)."""
+    n = _JITTER_SEM_N[repo]
+    sem = _MEASURED_JITTER_STD / (n ** 0.5)
+    return round(2 * sem, 2)
+
+
 def _write_baseline(scores: dict, path: Path = BASELINE_PATH) -> None:
     """Write scores to the baseline JSON file, adding threshold metadata."""
     path.parent.mkdir(parents=True, exist_ok=True)
+    per_repo_band = {repo: _tolerance_band(repo) for repo in scores["per_repo"]}
     payload = {
-        "schema_version": "v1",
+        "schema_version": "v2",
         "eval_set_hash": scores["eval_set_hash"],
         "cassette_hash": scores["cassette_hash"],
+        "judge": {
+            "model": JUDGE_MODEL,
+            "provider": JUDGE_PROVIDER,
+            "note": (
+                "Local judge (ADR-0019) -- zero-cost, reproducible without a live key. "
+                "Replaces llama-3.3-70b-versatile (Groq) used for the prior n=60 baseline. "
+                "Means below are NOT comparable to that prior baseline: both the gold set "
+                "(train-contamination removed, ADR-0018) and the judge model changed "
+                "simultaneously -- this is a new baseline, not a corrected old one."
+            ),
+        },
         "per_repo": scores["per_repo"],
         "overall": scores["overall"],
         "threshold": {
-            "absolute_drop": 0.0,
-            "epsilon": 1e-4,
-            "per_repo": True,
-            "note": (
-                "Gate fails if EITHER repo's mean drops below "
-                "(baseline_mean - absolute_drop - epsilon)."
+            "method": (
+                "One-directional per-repo mean regression check: fires only if "
+                "new_mean < baseline_mean - band. Improvements above the band never trip it."
             ),
+            "measured_jitter": {
+                "source": (
+                    "Two independent full local-judge re-recordings (attempt1 n=65, "
+                    "attempt2 n=57 before an unrelated Groq synthesis TPD stop), compared "
+                    "on 57 issues common to both."
+                ),
+                "std_per_issue_total_score": _MEASURED_JITTER_STD,
+                "note": "Empirically measured, not guessed -- see ADR-0019.",
+            },
+            "per_repo_band": {
+                repo: {
+                    "band": band,
+                    "sem": round(_MEASURED_JITTER_STD / (_JITTER_SEM_N[repo] ** 0.5), 4),
+                    "n_used_for_sem": _JITTER_SEM_N[repo],
+                }
+                for repo, band in per_repo_band.items()
+            },
+            "vscode_note": (
+                "microsoft/vscode's band (0.45) is wider than kubernetes/kubernetes's (0.22) "
+                "because n=11 makes its mean statistically less stable -- this is the honest "
+                "signal of the vscode data-ceiling finding (ADR-0017), not a fudged tolerance. "
+                "Its gate is genuinely coarser."
+            ),
+            "derivation": "band = 2 x SEM = 2 x (measured_std / sqrt(n))",
         },
     }
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")

@@ -30,28 +30,49 @@ _ECE_TOLERANCE = 0.15
 _COVERAGE_TOL = 0.05
 
 # Recorded grounding baseline — mirrors _RECORDED_ECE above. Produced by
-# scripts/measure_grounding.py against the CURRENT (unmodified) cassette over all 60 eval
-# issues. Structured per_repo (mirrors reports/eval_baseline.json) rather than pooled: a
-# pooled count on a 65.5% k8s-weighted gold set could mask a vscode-only regression going
-# 0 -> N ungrounded underneath k8s's volume. See ADR-0015.
+# scripts/measure_grounding.py against the CURRENT (unmodified) cassette over the clean,
+# train-decontaminated n=65 eval set (ADR-0018) with the local qwen3:8b judge (ADR-0019).
+# Structured per_repo (mirrors reports/eval_baseline.json) rather than pooled: a pooled
+# count on an 83%-k8s-weighted gold set could mask a vscode-only regression going 0 -> N
+# ungrounded underneath k8s's volume. See ADR-0015.
+#
+# No tolerance band here (unlike the judge-mean gate in test_quality_regression.py):
+# grounding is computed by replaying the FROZEN plan already committed in the cassette
+# (CassettePlayer(strict=True), zero live calls) — verify_plan_grounding() is pure Python
+# with no LLM call, confirmed deterministic given a fixed plan (checked directly: 39/39
+# issues with byte-identical plans across two independent recordings also had byte-identical
+# grounding_status, 0 exceptions — ADR-0019). The replay invariant applies here unchanged;
+# only the RE-RECORD comparison (a different cassette, e.g. a future re-record) would need
+# the plan-level version of this same jitter treatment, not this ratchet as implemented.
+#
+# Old baseline (pre-ADR-0018/0019, n=60, Groq-70B judge era) pinned issues #1678 and #13435
+# from the contaminated gold set. Both are gone from the clean n=65 set or no longer
+# ungrounded under the new local-judge recording — re-derived against the actual committed
+# cassette below, not carried forward.
 _GROUNDING_BASELINE = {
-    "eval_set_hash": "7834d8ad5b59306ac84ccd241e3cd6cfb926e8135023c8121bfc9638bb06e0d1",
+    "eval_set_hash": "e37a69ea0cf1d26749d7f714d4f161ec6fd5f37d25a22156277551e00fd30138",
     "per_repo": {
         "kubernetes/kubernetes": {
-            "ungrounded_count": 2,
-            "n": 30,
+            "ungrounded_count": 1,
+            "n": 54,
             "known_ungrounded_cases": {
-                1678: {"axis": "similar_issue", "detail": "ref 13632 not in retrieval"},
-                13435: {
+                13057: {
                     "axis": "component",
-                    "detail": "predicted_component 'cluster/bootstrap' not in classifier_top3",
+                    "detail": "predicted_component 'storage' not in classifier_top3 "
+                    "['provider/gcp', 'kubectl', 'security']",
                 },
             },
         },
         "microsoft/vscode": {
-            "ungrounded_count": 0,
-            "n": 30,
-            "known_ungrounded_cases": {},
+            "ungrounded_count": 1,
+            "n": 11,
+            "known_ungrounded_cases": {
+                311836: {
+                    "axis": "component",
+                    "detail": "predicted_component 'webview' not in classifier_top3 "
+                    "['suggest', 'accessibility', 'debug']",
+                },
+            },
         },
     },
 }
@@ -324,9 +345,13 @@ def test_retrieval_top_k() -> None:
     # 2 probe issues per repo — chosen for clear score gaps at rank 1.
     # vscode #311565 (zero-gap at rank 5/6) is intentionally excluded; its ordering
     # is unstable even within CPU float32 runs due to FAISS tie-breaking.
+    # Re-picked for the clean n=65 eval set (ADR-0018): the old probes (#2093, #4223
+    # vscode; #11079 k8s) were part of the train-contaminated original 60 and are no
+    # longer in eval_set.jsonl. #13257 (k8s) survived the contamination filter and is
+    # unchanged. Verified directly: all four replacements are 5/5 exact top-5 match.
     PROBES: dict[str, list[int]] = {
-        "microsoft/vscode": [2093, 4223],
-        "kubernetes/kubernetes": [11079, 13257],
+        "microsoft/vscode": [311284, 311836],
+        "kubernetes/kubernetes": [14054, 13257],
     }
 
     if not EVAL_SET.exists():
@@ -474,26 +499,34 @@ def test_grounding_ratchet_no_new_ungrounded_claims(grounding_reports: list[dict
 
 
 def test_grounding_known_cases_still_flagged(grounding_reports: list[dict]) -> None:
-    """The two known-bad cases (#1678, #13435) must still be individually caught by name.
+    """The two known-bad cases (#13057 k8s, #311836 vscode) must still be caught by name.
 
     This catches a verifier regressed to a no-op, which would otherwise trivially satisfy
-    the ratchet test at 0 <= 2 ungrounded. See ADR-0015.
+    the ratchet test at 0 <= 1 ungrounded per repo. See ADR-0015.
+
+    Re-derived against the clean n=65 set + local qwen3:8b judge (ADR-0018/0019). The old
+    pins (#1678 similar_issue-axis, #13435 component-axis, both from the contaminated n=60
+    set) are gone: #1678 isn't in the clean n=65 set, and no similar_issue-axis hallucination
+    exists in the current committed cassette to pin — both new pins are component-axis. This
+    is not a weaker test by design; it reflects what's actually in the committed recording.
     """
     current_hash = _eval_set_hash_guard()
     assert current_hash == _GROUNDING_BASELINE["eval_set_hash"], _HASH_DRIFT_MSG
 
     by_issue = {c["issue_number"]: c for c in grounding_reports}
 
-    case_1678 = by_issue.get(1678)
-    assert case_1678 is not None, "Issue #1678 not found in grounding reports"
-    assert 13632 in case_1678["ungrounded_refs"], (
-        f"Issue #1678: expected ref 13632 in ungrounded_refs, got {case_1678['ungrounded_refs']}"
+    case_13057 = by_issue.get(13057)
+    assert case_13057 is not None, "Issue #13057 not found in grounding reports"
+    assert case_13057["component_grounded"] is False, (
+        "Issue #13057: expected component_grounded is False "
+        f"(predicted_component={case_13057['predicted_component']!r}, "
+        f"classifier_top3_labels={case_13057['classifier_top3_labels']})"
     )
 
-    case_13435 = by_issue.get(13435)
-    assert case_13435 is not None, "Issue #13435 not found in grounding reports"
-    assert case_13435["component_grounded"] is False, (
-        "Issue #13435: expected component_grounded is False "
-        f"(predicted_component={case_13435['predicted_component']!r}, "
-        f"classifier_top3_labels={case_13435['classifier_top3_labels']})"
+    case_311836 = by_issue.get(311836)
+    assert case_311836 is not None, "Issue #311836 not found in grounding reports"
+    assert case_311836["component_grounded"] is False, (
+        "Issue #311836: expected component_grounded is False "
+        f"(predicted_component={case_311836['predicted_component']!r}, "
+        f"classifier_top3_labels={case_311836['classifier_top3_labels']})"
     )

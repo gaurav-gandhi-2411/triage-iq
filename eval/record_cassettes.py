@@ -71,6 +71,13 @@ def _is_rate_limit_error(exc: Exception) -> bool:
     return "rate_limit_exceeded" in str(exc).lower() or _is_tpd_error(exc)
 
 
+def _is_connection_error(exc: Exception) -> bool:
+    """True for network/connectivity failures that should PAUSE recording, not mark issues failed."""
+    msg = str(exc).lower()
+    return any(kw in msg for kw in ("connection error", "connection refused", "getaddrinfo",
+                                    "connecterror", "apiconnectionerror", "timed out", "timeout"))
+
+
 def load_checkpoint() -> dict:
     if CHECKPOINT_PATH.exists():
         data = json.loads(CHECKPOINT_PATH.read_text(encoding="utf-8"))
@@ -225,6 +232,18 @@ def main() -> None:
                 print(f"Judge recorded: {n_judge_recorded}")
                 print(f"Cassette entries: {cassette.stats()['entries']}")
                 sys.exit(0)
+            if _is_connection_error(exc):
+                logger.error(
+                    "STOP: connection lost after %d synthesis calls. "
+                    "Cassette has %d entries. Error: %s",
+                    n_synthesis_recorded, cassette.stats()["entries"], exc,
+                )
+                save_checkpoint({"done": checkpoint.get("done", {})})
+                print("\n=== CONNECTION LOST ===")
+                print(f"Synthesis recorded: {n_synthesis_recorded}")
+                print(f"Judge recorded: {n_judge_recorded}")
+                print(f"Cassette entries: {cassette.stats()['entries']}")
+                sys.exit(0)
             logger.warning("  synthesis FAILED: %s", exc)
             triage_error = str(exc)
 
@@ -266,6 +285,13 @@ def main() -> None:
                 if _is_tpd_error(exc):
                     _judge_exc = exc
                     break  # genuine daily limit — stop outer loop below
+                if _is_connection_error(exc):
+                    logger.error("STOP: connection lost during judging: %s", exc)
+                    save_checkpoint(checkpoint)
+                    print("\n=== CONNECTION LOST (during judge) ===")
+                    print(f"Synthesis recorded: {n_synthesis_recorded}")
+                    print(f"Judge recorded: {n_judge_recorded}")
+                    sys.exit(0)
                 if _is_rate_limit_error(exc):
                     _wait = 20 * (2 ** _attempt)
                     logger.warning(

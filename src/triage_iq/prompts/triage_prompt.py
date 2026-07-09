@@ -21,6 +21,11 @@ PRIORITY GUIDELINES:
 4. Resource-leak / memory-leak framing does NOT automatically imply high. Assign medium unless the leak also causes a crash or completely blocks usage.
 5. Empty or image-only body: assign priority based on the title alone. If the title is ambiguous and does not indicate a crash or data loss, default to medium.
 
+ATTRIBUTION RULES:
+1. predicted_component should normally be one of the classifier's top-3 predictions. If you deviate, you MUST set component_source to "model_override" and explain why in component_override_reason.
+2. Every issue number you cite anywhere in your plan MUST be one of the numbers listed in SYSTEM 2. Never invent issue numbers.
+3. In declared_attribution, cite ONLY the SYSTEM-2 issues that actually support the specific claim. Citing every retrieved issue indiscriminately is wrong. Empty lists are honest when no retrieved issue supports the claim.
+
 Schema:
 {
   "predicted_component": "string — the single best component label for this issue",
@@ -39,7 +44,13 @@ Schema:
   "priority_rationale": "string — 1–2 sentences explaining priority assignment",
   "suggested_assignee_class": "string — team or role best suited (e.g., 'core-runtime team', 'documentation team', 'first-time-contributor friendly')",
   "suggested_next_steps": ["string — ordered list of 2–4 actionable next steps"],
-  "triage_summary": "string — 2–3 sentence executive summary of the issue and recommended action"
+  "triage_summary": "string — 2–3 sentence executive summary of the issue and recommended action",
+  "declared_attribution": {
+    "component_source": "one of: classifier_top3 | model_override — whether predicted_component is taken from the classifier's top-3 list",
+    "component_override_reason": "string — required when component_source is model_override; empty string otherwise",
+    "summary_cited_issues": ["integer — issue numbers from SYSTEM 2 that directly support claims in triage_summary; [] if none"],
+    "next_steps_cited_issues": ["integer — issue numbers from SYSTEM 2 that informed suggested_next_steps; [] if none"]
+  }
 }
 """
 
@@ -180,7 +191,8 @@ Produce a triage plan as valid JSON matching the schema in the system prompt.
     "Check extension-host teardown path for explicit worker/process cleanup calls.",
     "Review whether #8821 is a duplicate; close if so."
   ],
-  "triage_summary": "Background workers from disabled extensions linger until VS Code exits on Linux. No persistent resource leak and no user-facing breakage — VS Code remains fully functional. Low priority; assign to extension-host team for lifecycle cleanup."
+  "triage_summary": "Background workers from disabled extensions linger until VS Code exits on Linux. No persistent resource leak and no user-facing breakage — VS Code remains fully functional. Low priority; assign to extension-host team for lifecycle cleanup.",
+  "declared_attribution": {"component_source": "classifier_top3", "component_override_reason": "", "summary_cited_issues": [8821, 7144], "next_steps_cited_issues": [8821]}
 }""",
         },
         # --- MEDIUM ---
@@ -233,7 +245,8 @@ Produce a triage plan as valid JSON matching the schema in the system prompt.
     "Check xterm.js animation state management when the terminal loses and regains focus.",
     "Add a regression test that switches tabs 5× and asserts cursor blink state."
   ],
-  "triage_summary": "Reproducible terminal cursor blink regression triggered by tab switching. Two closely related prior issues exist (#12345, #11902), suggesting a known weak point in terminal focus handling. Assign to terminal team; medium priority given the available workaround."
+  "triage_summary": "Reproducible terminal cursor blink regression triggered by tab switching. Two closely related prior issues exist (#12345, #11902), suggesting a known weak point in terminal focus handling. Assign to terminal team; medium priority given the available workaround.",
+  "declared_attribution": {"component_source": "classifier_top3", "component_override_reason": "", "summary_cited_issues": [12345, 11902], "next_steps_cited_issues": []}
 }""",
         },
         # --- HIGH ---
@@ -286,7 +299,8 @@ Produce a triage plan as valid JSON matching the schema in the system prompt.
     "Publish a hotfix release (1.85.1) or Insiders rollback patch.",
     "Add a smoke test that opens a repo folder on each supported platform in CI."
   ],
-  "triage_summary": "VS Code crashes on opening any folder with a .git directory after the 1.85.0 upgrade, affecting all users on both macOS and Windows with no workaround. Two highly similar prior reports confirm the regression. High priority; requires an immediate hotfix release."
+  "triage_summary": "VS Code crashes on opening any folder with a .git directory after the 1.85.0 upgrade, affecting all users on both macOS and Windows with no workaround. Two highly similar prior reports confirm the regression. High priority; requires an immediate hotfix release.",
+  "declared_attribution": {"component_source": "classifier_top3", "component_override_reason": "", "summary_cited_issues": [19201, 18877], "next_steps_cited_issues": []}
 }""",
         },
     ]

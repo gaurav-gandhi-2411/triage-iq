@@ -1,0 +1,139 @@
+{
+  "per_repo": {
+    "microsoft/vscode": {
+      "n": 11,
+      "compliant_count": 11,
+      "raw_status_counts": {
+        "absent": 0,
+        "malformed": 0,
+        "wellformed": 11,
+        "unparseable_raw": 0
+      },
+      "component_declaration_counts": {
+        "grounded_declared": 10,
+        "honest_override": 0,
+        "misattributed": 1,
+        "missing": 0
+      },
+      "plans_with_citations": 10,
+      "total_citation_count": 33,
+      "grounded_citation_count": 33,
+      "fabricated_citation_count": 0,
+      "grounded_citation_rate": 1.0,
+      "blanket_citation_count": 4,
+      "citations_per_plan_distribution": {
+        "min": 0,
+        "median": 3,
+        "max": 5
+      },
+      "llm_status_counts": {
+        "ok": 11
+      },
+      "continuity": {
+        "component_ungrounded_count": 1,
+        "similar_issue_ungrounded_count": 0,
+        "all_grounded_false_count": 1
+      }
+    },
+    "kubernetes/kubernetes": {
+      "n": 54,
+      "compliant_count": 54,
+      "raw_status_counts": {
+        "absent": 0,
+        "malformed": 0,
+        "wellformed": 54,
+        "unparseable_raw": 0
+      },
+      "component_declaration_counts": {
+        "grounded_declared": 53,
+        "honest_override": 0,
+        "misattributed": 1,
+        "missing": 0
+      },
+      "plans_with_citations": 54,
+      "total_citation_count": 216,
+      "grounded_citation_count": 214,
+      "fabricated_citation_count": 2,
+      "grounded_citation_rate": 0.9907,
+      "blanket_citation_count": 32,
+      "citations_per_plan_distribution": {
+        "min": 1,
+        "median": 5.0,
+        "max": 5
+      },
+      "llm_status_counts": {
+        "ok": 54
+      },
+      "continuity": {
+        "component_ungrounded_count": 1,
+        "similar_issue_ungrounded_count": 0,
+        "all_grounded_false_count": 1
+      }
+    }
+  },
+  "overall": {
+    "n": 65,
+    "compliant_count": 65,
+    "raw_status_counts": {
+      "absent": 0,
+      "malformed": 0,
+      "wellformed": 65,
+      "unparseable_raw": 0
+    },
+    "component_declaration_counts": {
+      "grounded_declared": 63,
+      "honest_override": 0,
+      "misattributed": 2,
+      "missing": 0
+    },
+    "plans_with_citations": 64,
+    "total_citation_count": 249,
+    "grounded_citation_count": 247,
+    "fabricated_citation_count": 2,
+    "grounded_citation_rate": 0.992,
+    "blanket_citation_count": 36,
+    "citations_per_plan_distribution": {
+      "min": 0,
+      "median": 5,
+      "max": 5
+    },
+    "llm_status_counts": {
+      "ok": 65
+    },
+    "continuity": {
+      "component_ungrounded_count": 2,
+      "similar_issue_ungrounded_count": 0,
+      "all_grounded_false_count": 2
+    }
+  },
+  "fabricated_citation_cases": [
+    {
+      "issue_number": 14557,
+      "repo": "kubernetes/kubernetes",
+      "fabricated": [
+        14263
+      ],
+      "retrieved_numbers": [
+        3270,
+        7743,
+        10057,
+        11091,
+        12694
+      ]
+    },
+    {
+      "issue_number": 12277,
+      "repo": "kubernetes/kubernetes",
+      "fabricated": [
+        11631
+      ],
+      "retrieved_numbers": [
+        3733,
+        12545,
+        12929,
+        13642,
+        14748
+      ]
+    }
+  ]
+}

@@ -74,6 +74,16 @@ class GroundingStatus(BaseModel):
     all_grounded: bool
 
 
+class DeclaredAttribution(BaseModel):
+    """LLM-emitted source attribution (elicited by the prompt — contrast GroundingAttribution,
+    a post-hoc reconstruction of the same plan; ADR-0015/ADR-0020)."""
+
+    component_source: Literal["classifier_top3", "model_override"]
+    component_override_reason: str = ""
+    summary_cited_issues: list[int] = Field(default_factory=list)
+    next_steps_cited_issues: list[int] = Field(default_factory=list)
+
+
 class TriagePlan(BaseModel):
     """Structured triage plan produced by the LLM assistant.
 
@@ -117,11 +127,27 @@ class TriagePlan(BaseModel):
     triage_summary: str
     grounding: GroundingAttribution | None = Field(default=None)
     grounding_status: GroundingStatus | None = Field(default=None)
+    declared_attribution: DeclaredAttribution | None = Field(
+        default=None,
+        description="LLM-declared source attribution (ADR-0020). None when the model omitted "
+                    "or malformed the block — counted as a compliance failure, never a request "
+                    "failure.",
+    )
 
     @field_validator("component_confidence", mode="before")
     @classmethod
     def clamp_confidence(cls, v):
         return max(0.0, min(1.0, float(v)))
+
+    @field_validator("declared_attribution", mode="before")
+    @classmethod
+    def tolerant_attribution(cls, v):
+        if v is None or isinstance(v, DeclaredAttribution):
+            return v
+        try:
+            return DeclaredAttribution.model_validate(v)
+        except Exception:
+            return None  # malformed attribution -> compliance failure, not a request failure
 
     @model_validator(mode="after")
     def upper_ge_lower(self):

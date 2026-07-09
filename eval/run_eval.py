@@ -155,12 +155,16 @@ def compute_scores(
         plan, _meta = assistant.triage_with_metadata(row)
 
         # ADR-0019: the cassette was re-recorded from scratch against current TriagePlan
-        # (grounding + grounding_status included) — no exclusion needed here anymore.
-        # The old exclude={"grounding", "grounding_status"} workaround was specific to
-        # replaying the pre-ADR-0015 cassette without re-recording; that cassette no
-        # longer exists. record_cassettes.py's plan_json includes every field, so
-        # replay must match exactly or every judge cache key misses.
-        plan_json = json.dumps(plan.model_dump(), ensure_ascii=False)
+        # (grounding + grounding_status included) — no exclusion needed for those anymore.
+        # ADR-0020 reintroduces the same problem for a new field: eval_cassette.json was
+        # restored to the pre-attribution recording (see ADR-0020 "Baseline decision" — the
+        # attribution prompt is opt-in and off here), but TriagePlan unconditionally gained
+        # declared_attribution regardless of the prompt flag, so plan.model_dump() now always
+        # emits it (as None) even on the legacy path. The old cassette's judge calls were
+        # recorded against plan_json that never had this key — exclude it here so the judge
+        # cache key matches, same workaround pattern as the original grounding/grounding_status
+        # exclusion this comment used to describe.
+        plan_json = json.dumps(plan.model_dump(exclude={"declared_attribution"}), ensure_ascii=False)
         gold = {
             "component": issue["gold_component"],
             "priority": issue["gold_priority"],

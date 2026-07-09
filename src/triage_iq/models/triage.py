@@ -74,6 +74,16 @@ class GroundingStatus(BaseModel):
     all_grounded: bool
 
 
+class DeclaredAttribution(BaseModel):
+    """LLM-emitted source attribution (elicited by the prompt — contrast GroundingAttribution,
+    a post-hoc reconstruction of the same plan; ADR-0015/ADR-0020)."""
+
+    component_source: Literal["classifier_top3", "model_override"]
+    component_override_reason: str = ""
+    summary_cited_issues: list[int] = Field(default_factory=list)
+    next_steps_cited_issues: list[int] = Field(default_factory=list)
+
+
 class TriagePlan(BaseModel):
     """Structured triage plan produced by the LLM assistant.
 
@@ -117,11 +127,27 @@ class TriagePlan(BaseModel):
     triage_summary: str
     grounding: GroundingAttribution | None = Field(default=None)
     grounding_status: GroundingStatus | None = Field(default=None)
+    declared_attribution: DeclaredAttribution | None = Field(
+        default=None,
+        description="LLM-declared source attribution (ADR-0020). None when the model omitted "
+                    "or malformed the block — counted as a compliance failure, never a request "
+                    "failure.",
+    )
 
     @field_validator("component_confidence", mode="before")
     @classmethod
     def clamp_confidence(cls, v):
         return max(0.0, min(1.0, float(v)))
+
+    @field_validator("declared_attribution", mode="before")
+    @classmethod
+    def tolerant_attribution(cls, v):
+        if v is None or isinstance(v, DeclaredAttribution):
+            return v
+        try:
+            return DeclaredAttribution.model_validate(v)
+        except Exception:
+            return None  # malformed attribution -> compliance failure, not a request failure
 
     @model_validator(mode="after")
     def upper_ge_lower(self):
@@ -407,10 +433,23 @@ class TriageAssistant:
 
     def _call_llm_verbose(self, signals: dict) -> tuple[TriagePlan, str, dict, str, bool]:
         """Return (plan, raw, usage, llm_status, cache_hit)."""
-        from triage_iq.prompts.triage_prompt import SYSTEM_PROMPT, build_few_shot_examples
+        from triage_iq.prompts.triage_prompt import (
+            SYSTEM_PROMPT,
+            SYSTEM_PROMPT_LEGACY,
+            build_few_shot_examples,
+            build_few_shot_examples_legacy,
+        )
 
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-        messages.extend(build_few_shot_examples())
+        # ADR-0020: attribution prompt is opt-in via TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1, off by
+        # default so eval/cassettes/eval_cassette.json (recorded pre-attribution) and
+        # reports/eval_baseline.json stay valid without re-baselining. See ADR-0020 "Baseline
+        # decision". Same env-var-gated pattern as TRIAGE_PROMPT_INCLUDE_BUCKET above.
+        _include_attribution = os.environ.get("TRIAGE_PROMPT_INCLUDE_ATTRIBUTION") == "1"
+        system_prompt = SYSTEM_PROMPT if _include_attribution else SYSTEM_PROMPT_LEGACY
+        few_shots = build_few_shot_examples() if _include_attribution else build_few_shot_examples_legacy()
+
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(few_shots)
         messages.append({"role": "user", "content": signals["prompt"]})
 
         cache = getattr(self, "_cache", None)

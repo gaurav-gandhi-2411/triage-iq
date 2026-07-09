@@ -1,9 +1,14 @@
 """Measure LLM-declared attribution fidelity against classifier_top3 and retrieval outputs.
 
-Replays the CURRENT (unmodified) synthesis pipeline against the CURRENT cassette
-(eval/cassettes/eval_cassette.json) over the full eval/eval_set.jsonl, using the
-same cassette-only replay machinery as eval/run_eval.py and
+Replays the attribution-prompt synthesis pipeline (TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1) against
+its own dedicated cassette (eval/cassettes/eval_cassette_attribution.json) over the full
+eval/eval_set.jsonl, using the same cassette-only replay machinery as eval/run_eval.py and
 scripts/measure_grounding.py (CassettePlayer(strict=True) — zero live API calls).
+
+ADR-0020: the attribution prompt is opt-in (TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1, set below) and
+off by default, so eval/run_eval.py and scripts/measure_grounding.py keep replaying the legacy
+prompt against eval/cassettes/eval_cassette.json unchanged — this script is the only one that
+turns attribution on, against its own separate cassette.
 
 For each issue, computes:
   - a GroundingReport (verify_plan_grounding) for continuity with scripts/measure_grounding.py
@@ -18,11 +23,16 @@ Usage:
 from __future__ import annotations
 
 import json
+import os
 import re
 import statistics
 import sys
 from pathlib import Path
 from typing import Any
+
+# ADR-0020: must be set before any TriageAssistant call builds its messages -- the flag is read
+# per-call via os.environ.get, so this only needs to land before compute_attribution_reports runs.
+os.environ["TRIAGE_PROMPT_INCLUDE_ATTRIBUTION"] = "1"
 
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "src"))
@@ -40,7 +50,7 @@ from triage_iq.models.triage import TriageAssistant, TriagePlan
 MODELS_DIR = ROOT / "data" / "models"
 PROCESSED_DIR = ROOT / "data" / "processed"
 EVAL_SET_PATH = ROOT / "eval" / "eval_set.jsonl"
-CASSETTE_PATH = ROOT / "eval" / "cassettes" / "eval_cassette.json"
+CASSETTE_PATH = ROOT / "eval" / "cassettes" / "eval_cassette_attribution.json"
 REPORT_PATH = ROOT / "reports" / "attribution_fidelity.json"
 
 REPO_MAP: dict[str, str] = {

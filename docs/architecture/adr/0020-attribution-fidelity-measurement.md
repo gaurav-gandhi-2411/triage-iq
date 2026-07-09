@@ -1,7 +1,7 @@
 # ADR-0020 — Attribution Fidelity Measurement
 
-**Status:** Proposed — measurement in progress; results section pending
-**Date:** 2026-07-07
+**Status:** Accepted — measured, gate-1 human decision: ship
+**Date:** 2026-07-07 (measured); decided 2026-07-09
 **Decider:** Gaurav Gandhi
 
 ## Context
@@ -133,44 +133,171 @@ This measurement is designed so both outcomes are actionable, not just the favor
 
 ## Results
 
-<!-- RESULTS PENDING: filled after recording -->
+n=65 (vscode 11, kubernetes/kubernetes 54), Groq `llama-3.1-8b-instant` synthesis, local
+qwen3:8b judge. Source: `scripts/measure_attribution_fidelity.py`, full output at
+`reports/attribution_fidelity.json`.
 
 ### Per-repo compliance
 
-<!-- RESULTS PENDING: filled after recording -->
+`declared_attribution` present and well-formed on every response — no `missing`, no
+`unparseable_raw`, no tolerant-parse fallback triggered.
+
+| Repo | n | compliant | absent | malformed | unparseable_raw |
+|---|---|---|---|---|---|
+| microsoft/vscode | 11 | 11/11 | 0 | 0 | 0 |
+| kubernetes/kubernetes | 54 | 54/54 | 0 | 0 | 0 |
+| **overall** | 65 | **65/65** | 0 | 0 | 0 |
 
 ### Per-repo grounded vs. fabricated citation counts and rate
 
-<!-- RESULTS PENDING: filled after recording -->
+| Repo | total citations | grounded | fabricated | grounded rate |
+|---|---|---|---|---|
+| microsoft/vscode | 33 | 33 | 0 | 100% |
+| kubernetes/kubernetes | 216 | 214 | 2 | 99.07% |
+| **overall** | 249 | 247 | 2 | **99.20%** |
+
+Both fabrications are on kubernetes/kubernetes:
+
+| Issue | Fabricated ref | Retrieved (real) set |
+|---|---|---|
+| #14557 | 14263 | 3270, 7743, 10057, 11091, 12694 |
+| #12277 | 11631 | 3733, 12545, 12929, 13642, 14748 |
+
+Both fabricated numbers are plausible near-misses (same order of magnitude as the real
+retrieved set, not wildly out of range) — consistent with the model attempting to cite and
+missing, not inventing an unrelated number.
 
 ### Component declaration classes (including misattributed)
 
-<!-- RESULTS PENDING: filled after recording -->
+| Repo | grounded_declared | honest_override | misattributed | missing |
+|---|---|---|---|---|
+| microsoft/vscode | 10 | 0 | 1 | 0 |
+| kubernetes/kubernetes | 53 | 0 | 1 | 0 |
+| **overall** | 63 | 0 | **2** | 0 |
+
+The two `misattributed` cases are **#13057** (kubernetes/kubernetes) and **#311836**
+(microsoft/vscode) — the identical two issues that were component-ungrounded in the prior,
+pre-attribution Groq-era recording under `verify_plan_grounding` (ADR-0015). Same underlying
+classifier miss, now additionally mis-declared rather than silently ungrounded. No new
+component-fabrication case was introduced by asking the model to declare attribution.
 
 ### Selectivity / blanket-citation metrics
 
-<!-- RESULTS PENDING: filled after recording -->
+- Plans with ≥1 citation: 64/65 (one vscode plan cited nothing).
+- Blanket citation (cites every retrieved issue with no selectivity): 36/65 overall
+  (k8s 32/54, vscode 4/11).
+- Citations-per-plan distribution: overall min 0 / median 5 / max 5 (retrieval always
+  surfaces 5 candidates; median-5 means most plans cite the full retrieved set).
+
+**Aptness caveat (validity threat #1, restated as a result, not just a risk):** a 55%
+blanket-citation rate means fidelity (99.2% grounded) is measuring "doesn't fabricate,"
+not "cites selectively and only what it used." The 8B model's default behavior leans toward
+citing everything offered rather than picking the subset it actually reasoned from. This is
+an honest limitation of the shipped feature, not hidden by the headline fidelity number.
 
 ### Parse / fallback counts
 
-<!-- RESULTS PENDING: filled after recording -->
+0/65 — no fallback path was exercised. Every response parsed as well-formed
+`DeclaredAttribution` on the first attempt.
 
 ### Judge per-repo means (side observation vs. Groq-era baseline, labeled)
 
-<!-- RESULTS PENDING: filled after recording -->
+Computed via `python eval/run_eval.py` (dry run, no `--update-baseline`) against the
+committed n=65 attribution cassette; compared against the currently-committed
+`reports/eval_baseline.json` (ADR-0019, pre-attribution prompt):
+
+| Repo | ADR-0019 baseline mean | this recording's mean | delta | one-directional band | tripped? |
+|---|---|---|---|---|---|
+| microsoft/vscode | 8.3636 | 8.7273 | +0.3636 | 0.45 | No (improvement) |
+| kubernetes/kubernetes | 10.5185 | 10.6852 | +0.1667 | 0.22 | No (improvement) |
+| overall | 10.1538 | 10.3538 | +0.2000 | n/a (per-repo gate only) | — |
+
+**Labeled explicitly, per validity threat #4:** this is a side observation, not a causal
+claim. The prompt changed (attribution rules + schema + exemplars added) between the two
+recordings, so a positive delta cannot be attributed to attribution improving quality — it
+is equally consistent with ordinary Groq replica jitter (ADR-0019 measured std=0.748/issue).
+Stated flat, in both directions: attribution did **not** improve judge means (no such claim
+is made), and it did **not** regress them either — both deltas land inside the tolerance
+band the gate itself defines as noise. Neither is hidden behind the other.
+
+### Baseline decision: do NOT re-baseline
+
+**Decision: `reports/eval_baseline.json` stays unchanged.** Three reasons:
+
+1. **The delta is inside the gate's own noise band.** +0.1667 (k8s, band 0.22) and +0.3636
+   (vscode, band 0.45) are both within the 2×SEM tolerance ADR-0019 derived specifically to
+   absorb re-record jitter. By the gate's own definition this is not a regression — there is
+   no quality justification to re-baseline on it.
+2. **Keep the eval reference separate from the shipped feature** — additive features should
+   not force a re-baseline every time, or every future additive feature does the same.
+3. **Separation of concerns**: the quality-regression gate keeps testing the pre-attribution
+   synthesis path; attribution fidelity is measured on its own terms (this ADR) via its own
+   cassette.
+
+**Finding, discovered while verifying this decision, then resolved (not worked around):**
+`ATTRIBUTION RULES` (prompt section, schema field, few-shot exemplars) had been added
+**unconditionally** to `src/triage_iq/prompts/triage_prompt.py` — no flag, every synthesis call
+sent the attribution prompt regardless. Verified directly: restoring
+`eval/cassettes/eval_cassette.json` to its pre-`ced5252` byte-exact state (hash `c9966414...`,
+equal to `reports/eval_baseline.json`'s `cassette_hash`) and re-running the suite produced
+`CassetteMissError` on every synthesis call — current code's request never matched the clean
+cassette, because that cassette was recorded under the old prompt.
+
+**Resolution: `TRIAGE_PROMPT_INCLUDE_ATTRIBUTION` feature flag**, same env-var-gated pattern as
+the existing `TRIAGE_PROMPT_INCLUDE_BUCKET` toggle in `triage.py`. Off by default.
+`SYSTEM_PROMPT_LEGACY` / `build_few_shot_examples_legacy()` are a frozen, byte-exact snapshot of
+the pre-attribution prompt (verified `c9966414...`); `SYSTEM_PROMPT` / `build_few_shot_examples()`
+(unchanged names, so `tests/test_attribution.py` and `tests/test_api.py` needed no edits) remain
+the attribution-augmented versions, used only when the flag is `"1"`.
+`eval/cassettes/eval_cassette.json` is restored to the clean recording;
+`eval/cassettes/eval_cassette_attribution.json` is a new file holding the attribution recording,
+read only by `scripts/measure_attribution_fidelity.py` (which sets the flag on and points at it).
+
+**Second-order finding, also resolved:** the prompt flag alone did not fully restore
+replayability — `TriagePlan` gained the `declared_attribution` field unconditionally too
+(independent of the prompt flag), so `plan.model_dump()` always emits it, changing the judge's
+input text vs. what the clean cassette's judge calls were recorded against.
+`eval/run_eval.py`'s `plan_json` construction now excludes it
+(`model_dump(exclude={"declared_attribution"})`) — the exact same workaround pattern the file
+already documents for ADR-0015's `grounding`/`grounding_status` fields.
+
+**Verified end-to-end:** `python eval/run_eval.py` (default, flag off) now reproduces
+`reports/eval_baseline.json` exactly — means 8.3636 / 10.5185 / 10.1538, cassette hash
+`c9966414...` matching the baseline's recorded hash. `python scripts/measure_attribution_fidelity.py`
+(flag on, dedicated cassette) reproduces `reports/attribution_fidelity.json` byte-for-byte. Full
+suite (`eval/test_quality_regression.py`, `eval/test_invariants.py`, `tests/test_attribution.py`,
+`tests/test_api.py`) — 63/63 pass, zero regressions, zero skips.
 
 ### Decision: ship / flag-gate / reject
 
-<!-- RESULTS PENDING: human decision, pending gate-1 review -->
+**Ship.** 100% of citations grounded-or-honestly-flagged as fabricated is 247/249 (99.2%),
+0 compliance failures, and the 2 misattributed cases are pre-existing classifier misses
+(ADR-0015) rather than new fabrication induced by the attribution prompt. `verify_declared_attribution`
+ships as an additive safety net (FLAG, not strip — same policy as ADR-0015) to catch the
+~0.8% fabrication rate at read time. The blanket-citation caveat is documented above and
+tracked as a follow-up (selectivity, not fidelity, is the next thing to measure) rather than
+a blocker — the ADR's stated goal was fabrication resistance, not citation aptness.
 
 ## Consequences
 
 - The additive `declared_attribution` field lands in `/triage` responses regardless of the ship
   decision above — it is `None`-safe and does not change existing response shape.
-- The eval cassette is re-recorded under the attributed prompt. This is a deliberate re-baseline,
-  pending human approval: per-repo judge means, the grounding ratchet, and the known-case pins
-  (ADR-0015, ADR-0019) all get re-derived against the new cassette, not silently compared to the
-  old one.
+- **Decided:** `reports/eval_baseline.json` is NOT re-derived (see "Baseline decision" above).
+  The grounding ratchet and known-case pins (`eval/test_invariants.py`) needed no change —
+  re-run against the attribution cassette, both pass unmodified (same two pre-existing cases,
+  #13057 k8s / #311836 vscode).
+- **Resolved:** the attribution prompt addition is now gated behind `TRIAGE_PROMPT_INCLUDE_ATTRIBUTION`
+  (off by default), so production behavior and the eval gate are unaffected until this env var is
+  explicitly set. `eval/cassettes/eval_cassette.json` is the clean recording again (matches
+  `reports/eval_baseline.json`'s `cassette_hash` exactly); `eval/cassettes/eval_cassette_attribution.json`
+  is the new dedicated attribution recording. `eval/run_eval.py`'s `plan_json` construction
+  excludes `declared_attribution` for the same reason ADR-0015 excluded `grounding`/
+  `grounding_status` before its own re-record. Full suite green (63/63) — see "Baseline decision"
+  above for the complete before/after.
+- **What reaches production:** nothing, until `TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1` is explicitly
+  set on the Cloud Run service (a separate, deliberate deploy decision, not part of this ADR).
+  Merging this branch to `main` changes no live behavior by itself — the flag defaults off in
+  every environment, including production, until that env var is set.
 - n=65 with vscode n=11 (ADR-0019's clean gold set) — all counts below are exact, not statistical
   estimates; no significance claims are made on subsets this small.
 - Generalization caveat: these numbers describe Groq `llama-3.1-8b-instant` on this exact prompt

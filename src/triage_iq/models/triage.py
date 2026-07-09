@@ -433,10 +433,23 @@ class TriageAssistant:
 
     def _call_llm_verbose(self, signals: dict) -> tuple[TriagePlan, str, dict, str, bool]:
         """Return (plan, raw, usage, llm_status, cache_hit)."""
-        from triage_iq.prompts.triage_prompt import SYSTEM_PROMPT, build_few_shot_examples
+        from triage_iq.prompts.triage_prompt import (
+            SYSTEM_PROMPT,
+            SYSTEM_PROMPT_LEGACY,
+            build_few_shot_examples,
+            build_few_shot_examples_legacy,
+        )
 
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-        messages.extend(build_few_shot_examples())
+        # ADR-0020: attribution prompt is opt-in via TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1, off by
+        # default so eval/cassettes/eval_cassette.json (recorded pre-attribution) and
+        # reports/eval_baseline.json stay valid without re-baselining. See ADR-0020 "Baseline
+        # decision". Same env-var-gated pattern as TRIAGE_PROMPT_INCLUDE_BUCKET above.
+        _include_attribution = os.environ.get("TRIAGE_PROMPT_INCLUDE_ATTRIBUTION") == "1"
+        system_prompt = SYSTEM_PROMPT if _include_attribution else SYSTEM_PROMPT_LEGACY
+        few_shots = build_few_shot_examples() if _include_attribution else build_few_shot_examples_legacy()
+
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(few_shots)
         messages.append({"role": "user", "content": signals["prompt"]})
 
         cache = getattr(self, "_cache", None)

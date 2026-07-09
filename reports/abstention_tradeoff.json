@@ -1,0 +1,936 @@
+{
+  "eval_set_hash": "e37a69ea0cf1d26749d7f714d4f161ec6fd5f37d25a22156277551e00fd30138",
+  "cassette_hash": "c9966414f3c52df1af3f2df6624239fc61a2c65ed5d20341dae4f8e7c8d7484f",
+  "component_stage": {
+    "microsoft/vscode": {
+      "n": 11,
+      "indicative_only": true,
+      "baseline_accuracy_no_abstention": 0.1818,
+      "curve": [
+        {
+          "confidence_threshold": 0.0,
+          "abstention_rate": 0.0909,
+          "n_answered": 10,
+          "n_abstained": 1,
+          "accuracy_on_answered": 0.2
+        },
+        {
+          "confidence_threshold": 0.19,
+          "abstention_rate": 0.0909,
+          "n_answered": 10,
+          "n_abstained": 1,
+          "accuracy_on_answered": 0.2
+        },
+        {
+          "confidence_threshold": 0.22,
+          "abstention_rate": 0.1818,
+          "n_answered": 9,
+          "n_abstained": 2,
+          "accuracy_on_answered": 0.2222
+        },
+        {
+          "confidence_threshold": 0.29,
+          "abstention_rate": 0.2727,
+          "n_answered": 8,
+          "n_abstained": 3,
+          "accuracy_on_answered": 0.25
+        },
+        {
+          "confidence_threshold": 0.33,
+          "abstention_rate": 0.3636,
+          "n_answered": 7,
+          "n_abstained": 4,
+          "accuracy_on_answered": 0.1429
+        },
+        {
+          "confidence_threshold": 0.42,
+          "abstention_rate": 0.4545,
+          "n_answered": 6,
+          "n_abstained": 5,
+          "accuracy_on_answered": 0.1667
+        },
+        {
+          "confidence_threshold": 0.55,
+          "abstention_rate": 0.5455,
+          "n_answered": 5,
+          "n_abstained": 6,
+          "accuracy_on_answered": 0.2
+        },
+        {
+          "confidence_threshold": 0.57,
+          "abstention_rate": 0.6364,
+          "n_answered": 4,
+          "n_abstained": 7,
+          "accuracy_on_answered": 0.0
+        },
+        {
+          "confidence_threshold": 0.66,
+          "abstention_rate": 0.7273,
+          "n_answered": 3,
+          "n_abstained": 8,
+          "accuracy_on_answered": 0.0
+        },
+        {
+          "confidence_threshold": 0.69,
+          "abstention_rate": 0.8182,
+          "n_answered": 2,
+          "n_abstained": 9,
+          "accuracy_on_answered": 0.0
+        },
+        {
+          "confidence_threshold": 0.998,
+          "abstention_rate": 0.9091,
+          "n_answered": 1,
+          "n_abstained": 10,
+          "accuracy_on_answered": 0.0
+        },
+        {
+          "confidence_threshold": 0.998,
+          "abstention_rate": 1.0,
+          "n_answered": 0,
+          "n_abstained": 11,
+          "accuracy_on_answered": null
+        }
+      ],
+      "proposed_default": {
+        "confidence_threshold": 0.29,
+        "abstention_rate": 0.2727,
+        "n_answered": 8,
+        "n_abstained": 3,
+        "accuracy_on_answered": 0.25
+      }
+    },
+    "kubernetes/kubernetes": {
+      "n": 54,
+      "indicative_only": false,
+      "baseline_accuracy_no_abstention": 0.5,
+      "curve": [
+        {
+          "confidence_threshold": 0.0,
+          "abstention_rate": 0.0185,
+          "n_answered": 53,
+          "n_abstained": 1,
+          "accuracy_on_answered": 0.5094
+        },
+        {
+          "confidence_threshold": 0.056,
+          "abstention_rate": 0.0185,
+          "n_answered": 53,
+          "n_abstained": 1,
+          "accuracy_on_answered": 0.5094
+        },
+        {
+          "confidence_threshold": 0.08,
+          "abstention_rate": 0.037,
+          "n_answered": 52,
+          "n_abstained": 2,
+          "accuracy_on_answered": 0.5192
+        },
+        {
+          "confidence_threshold": 0.09,
+          "abstention_rate": 0.0556,
+          "n_answered": 51,
+          "n_abstained": 3,
+          "accuracy_on_answered": 0.5294
+        },
+        {
+          "confidence_threshold": 0.098,
+          "abstention_rate": 0.0926,
+          "n_answered": 49,
+          "n_abstained": 5,
+          "accuracy_on_answered": 0.551
+        },
+        {
+          "confidence_threshold": 0.11,
+          "abstention_rate": 0.1111,
+          "n_answered": 48,
+          "n_abstained": 6,
+          "accuracy_on_answered": 0.5625
+        },
+        {
+          "confidence_threshold": 0.13,
+          "abstention_rate": 0.1296,
+          "n_answered": 47,
+          "n_abstained": 7,
+          "accuracy_on_answered": 0.5532
+        },
+        {
+          "confidence_threshold": 0.135,
+          "abstention_rate": 0.1667,
+          "n_answered": 45,
+          "n_abstained": 9,
+          "accuracy_on_answered": 0.5556
+        },
+        {
+          "confidence_threshold": 0.18,
+          "abstention_rate": 0.1852,
+          "n_answered": 44,
+          "n_abstained": 10,
+          "accuracy_on_answered": 0.5682
+        },
+        {
+          "confidence_threshold": 0.19,
+          "abstention_rate": 0.2222,
+          "n_answered": 42,
+          "n_abstained": 12,
+          "accuracy_on_answered": 0.5476
+        },
+        {
+          "confidence_threshold": 0.193,
+          "abstention_rate": 0.2407,
+          "n_answered": 41,
+          "n_abstained": 13,
+          "accuracy_on_answered": 0.561
+        },
+        {
+          "confidence_threshold": 0.21,
+          "abstention_rate": 0.2593,
+          "n_answered": 40,
+          "n_abstained": 14,
+          "accuracy_on_answered": 0.575
+        },
+        {
+          "confidence_threshold": 0.22,
+          "abstention_rate": 0.2778,
+          "n_answered": 39,
+          "n_abstained": 15,
+          "accuracy_on_answered": 0.5897
+        },
+        {
+          "confidence_threshold": 0.27,
+          "abstention_rate": 0.3148,
+          "n_answered": 37,
+          "n_abstained": 17,
+          "accuracy_on_answered": 0.5676
+        },
+        {
+          "confidence_threshold": 0.275,
+          "abstention_rate": 0.3333,
+          "n_answered": 36,
+          "n_abstained": 18,
+          "accuracy_on_answered": 0.5556
+        },
+        {
+          "confidence_threshold": 0.3,
+          "abstention_rate": 0.3519,
+          "n_answered": 35,
+          "n_abstained": 19,
+          "accuracy_on_answered": 0.5714
+        },
+        {
+          "confidence_threshold": 0.31,
+          "abstention_rate": 0.3704,
+          "n_answered": 34,
+          "n_abstained": 20,
+          "accuracy_on_answered": 0.5588
+        },
+        {
+          "confidence_threshold": 0.38,
+          "abstention_rate": 0.3889,
+          "n_answered": 33,
+          "n_abstained": 21,
+          "accuracy_on_answered": 0.5758
+        },
+        {
+          "confidence_threshold": 0.39,
+          "abstention_rate": 0.4074,
+          "n_answered": 32,
+          "n_abstained": 22,
+          "accuracy_on_answered": 0.5625
+        },
+        {
+          "confidence_threshold": 0.4,
+          "abstention_rate": 0.4259,
+          "n_answered": 31,
+          "n_abstained": 23,
+          "accuracy_on_answered": 0.5484
+        },
+        {
+          "confidence_threshold": 0.44,
+          "abstention_rate": 0.4444,
+          "n_answered": 30,
+          "n_abstained": 24,
+          "accuracy_on_answered": 0.5667
+        },
+        {
+          "confidence_threshold": 0.45,
+          "abstention_rate": 0.4815,
+          "n_answered": 28,
+          "n_abstained": 26,
+          "accuracy_on_answered": 0.6071
+        },
+        {
+          "confidence_threshold": 0.46,
+          "abstention_rate": 0.5,
+          "n_answered": 27,
+          "n_abstained": 27,
+          "accuracy_on_answered": 0.5926
+        },
+        {
+          "confidence_threshold": 0.47,
+          "abstention_rate": 0.5185,
+          "n_answered": 26,
+          "n_abstained": 28,
+          "accuracy_on_answered": 0.6154
+        },
+        {
+          "confidence_threshold": 0.48,
+          "abstention_rate": 0.537,
+          "n_answered": 25,
+          "n_abstained": 29,
+          "accuracy_on_answered": 0.6
+        },
+        {
+          "confidence_threshold": 0.5,
+          "abstention_rate": 0.5556,
+          "n_answered": 24,
+          "n_abstained": 30,
+          "accuracy_on_answered": 0.625
+        },
+        {
+          "confidence_threshold": 0.52,
+          "abstention_rate": 0.5741,
+          "n_answered": 23,
+          "n_abstained": 31,
+          "accuracy_on_answered": 0.6087
+        },
+        {
+          "confidence_threshold": 0.54,
+          "abstention_rate": 0.5926,
+          "n_answered": 22,
+          "n_abstained": 32,
+          "accuracy_on_answered": 0.5909
+        },
+        {
+          "confidence_threshold": 0.55,
+          "abstention_rate": 0.6111,
+          "n_answered": 21,
+          "n_abstained": 33,
+          "accuracy_on_answered": 0.5714
+        },
+        {
+          "confidence_threshold": 0.56,
+          "abstention_rate": 0.6481,
+          "n_answered": 19,
+          "n_abstained": 35,
+          "accuracy_on_answered": 0.5263
+        },
+        {
+          "confidence_threshold": 0.58,
+          "abstention_rate": 0.6667,
+          "n_answered": 18,
+          "n_abstained": 36,
+          "accuracy_on_answered": 0.5
+        },
+        {
+          "confidence_threshold": 0.64,
+          "abstention_rate": 0.7037,
+          "n_answered": 16,
+          "n_abstained": 38,
+          "accuracy_on_answered": 0.5
+        },
+        {
+          "confidence_threshold": 0.69,
+          "abstention_rate": 0.7222,
+          "n_answered": 15,
+          "n_abstained": 39,
+          "accuracy_on_answered": 0.5333
+        },
+        {
+          "confidence_threshold": 0.71,
+          "abstention_rate": 0.7407,
+          "n_answered": 14,
+          "n_abstained": 40,
+          "accuracy_on_answered": 0.5714
+        },
+        {
+          "confidence_threshold": 0.78,
+          "abstention_rate": 0.7593,
+          "n_answered": 13,
+          "n_abstained": 41,
+          "accuracy_on_answered": 0.6154
+        },
+        {
+          "confidence_threshold": 0.79,
+          "abstention_rate": 0.7778,
+          "n_answered": 12,
+          "n_abstained": 42,
+          "accuracy_on_answered": 0.6667
+        },
+        {
+          "confidence_threshold": 0.82,
+          "abstention_rate": 0.7963,
+          "n_answered": 11,
+          "n_abstained": 43,
+          "accuracy_on_answered": 0.7273
+        },
+        {
+          "confidence_threshold": 0.91,
+          "abstention_rate": 0.8148,
+          "n_answered": 10,
+          "n_abstained": 44,
+          "accuracy_on_answered": 0.8
+        },
+        {
+          "confidence_threshold": 0.93,
+          "abstention_rate": 0.8333,
+          "n_answered": 9,
+          "n_abstained": 45,
+          "accuracy_on_answered": 0.7778
+        },
+        {
+          "confidence_threshold": 0.94,
+          "abstention_rate": 0.8519,
+          "n_answered": 8,
+          "n_abstained": 46,
+          "accuracy_on_answered": 0.75
+        },
+        {
+          "confidence_threshold": 0.95,
+          "abstention_rate": 0.8704,
+          "n_answered": 7,
+          "n_abstained": 47,
+          "accuracy_on_answered": 0.7143
+        },
+        {
+          "confidence_threshold": 0.99,
+          "abstention_rate": 0.8889,
+          "n_answered": 6,
+          "n_abstained": 48,
+          "accuracy_on_answered": 0.6667
+        },
+        {
+          "confidence_threshold": 0.999,
+          "abstention_rate": 0.963,
+          "n_answered": 2,
+          "n_abstained": 52,
+          "accuracy_on_answered": 1.0
+        },
+        {
+          "confidence_threshold": 1.0,
+          "abstention_rate": 0.9815,
+          "n_answered": 1,
+          "n_abstained": 53,
+          "accuracy_on_answered": 1.0
+        },
+        {
+          "confidence_threshold": 1.0,
+          "abstention_rate": 1.0,
+          "n_answered": 0,
+          "n_abstained": 54,
+          "accuracy_on_answered": null
+        }
+      ],
+      "proposed_default": {
+        "confidence_threshold": 0.45,
+        "abstention_rate": 0.4815,
+        "n_answered": 28,
+        "n_abstained": 26,
+        "accuracy_on_answered": 0.6071
+      }
+    }
+  },
+  "resolution_stage": {
+    "microsoft/vscode": {
+      "n": 11,
+      "indicative_only": true,
+      "baseline_coverage_no_abstention": 0.6364,
+      "curve": [
+        {
+          "width_threshold_days": 147.0045,
+          "abstention_rate": 1.0,
+          "n_answered": 0,
+          "n_abstained": 11,
+          "coverage_on_answered": null
+        },
+        {
+          "width_threshold_days": 147.0045,
+          "abstention_rate": 0.9091,
+          "n_answered": 1,
+          "n_abstained": 10,
+          "coverage_on_answered": 1.0
+        },
+        {
+          "width_threshold_days": 155.0045,
+          "abstention_rate": 0.8182,
+          "n_answered": 2,
+          "n_abstained": 9,
+          "coverage_on_answered": 0.5
+        },
+        {
+          "width_threshold_days": 171.1045,
+          "abstention_rate": 0.7273,
+          "n_answered": 3,
+          "n_abstained": 8,
+          "coverage_on_answered": 0.6667
+        },
+        {
+          "width_threshold_days": 183.8045,
+          "abstention_rate": 0.6364,
+          "n_answered": 4,
+          "n_abstained": 7,
+          "coverage_on_answered": 0.75
+        },
+        {
+          "width_threshold_days": 188.8045,
+          "abstention_rate": 0.5455,
+          "n_answered": 5,
+          "n_abstained": 6,
+          "coverage_on_answered": 0.8
+        },
+        {
+          "width_threshold_days": 193.1045,
+          "abstention_rate": 0.4545,
+          "n_answered": 6,
+          "n_abstained": 5,
+          "coverage_on_answered": 0.6667
+        },
+        {
+          "width_threshold_days": 195.2045,
+          "abstention_rate": 0.3636,
+          "n_answered": 7,
+          "n_abstained": 4,
+          "coverage_on_answered": 0.7143
+        },
+        {
+          "width_threshold_days": 195.6045,
+          "abstention_rate": 0.2727,
+          "n_answered": 8,
+          "n_abstained": 3,
+          "coverage_on_answered": 0.625
+        },
+        {
+          "width_threshold_days": 229.1045,
+          "abstention_rate": 0.1818,
+          "n_answered": 9,
+          "n_abstained": 2,
+          "coverage_on_answered": 0.6667
+        },
+        {
+          "width_threshold_days": 229.2045,
+          "abstention_rate": 0.0909,
+          "n_answered": 10,
+          "n_abstained": 1,
+          "coverage_on_answered": 0.7
+        },
+        {
+          "width_threshold_days": 231.5045,
+          "abstention_rate": 0.0,
+          "n_answered": 11,
+          "n_abstained": 0,
+          "coverage_on_answered": 0.6364
+        },
+        {
+          "width_threshold_days": 231.5045,
+          "abstention_rate": 0.0,
+          "n_answered": 11,
+          "n_abstained": 0,
+          "coverage_on_answered": 0.6364
+        }
+      ],
+      "proposed_default": {
+        "width_threshold_days": 195.2045,
+        "abstention_rate": 0.3636,
+        "n_answered": 7,
+        "n_abstained": 4,
+        "coverage_on_answered": 0.7143
+      }
+    },
+    "kubernetes/kubernetes": {
+      "n": 54,
+      "indicative_only": false,
+      "baseline_coverage_no_abstention": 0.6667,
+      "curve": [
+        {
+          "width_threshold_days": 6.9118,
+          "abstention_rate": 1.0,
+          "n_answered": 0,
+          "n_abstained": 54,
+          "coverage_on_answered": null
+        },
+        {
+          "width_threshold_days": 6.9118,
+          "abstention_rate": 0.9815,
+          "n_answered": 1,
+          "n_abstained": 53,
+          "coverage_on_answered": 0.0
+        },
+        {
+          "width_threshold_days": 8.5118,
+          "abstention_rate": 0.963,
+          "n_answered": 2,
+          "n_abstained": 52,
+          "coverage_on_answered": 0.5
+        },
+        {
+          "width_threshold_days": 15.6236,
+          "abstention_rate": 0.9444,
+          "n_answered": 3,
+          "n_abstained": 51,
+          "coverage_on_answered": 0.6667
+        },
+        {
+          "width_threshold_days": 16.1236,
+          "abstention_rate": 0.9259,
+          "n_answered": 4,
+          "n_abstained": 50,
+          "coverage_on_answered": 0.75
+        },
+        {
+          "width_threshold_days": 16.7118,
+          "abstention_rate": 0.9074,
+          "n_answered": 5,
+          "n_abstained": 49,
+          "coverage_on_answered": 0.6
+        },
+        {
+          "width_threshold_days": 19.3236,
+          "abstention_rate": 0.8889,
+          "n_answered": 6,
+          "n_abstained": 48,
+          "coverage_on_answered": 0.5
+        },
+        {
+          "width_threshold_days": 22.0118,
+          "abstention_rate": 0.8704,
+          "n_answered": 7,
+          "n_abstained": 47,
+          "coverage_on_answered": 0.5714
+        },
+        {
+          "width_threshold_days": 27.8236,
+          "abstention_rate": 0.8519,
+          "n_answered": 8,
+          "n_abstained": 46,
+          "coverage_on_answered": 0.5
+        },
+        {
+          "width_threshold_days": 44.9236,
+          "abstention_rate": 0.8333,
+          "n_answered": 9,
+          "n_abstained": 45,
+          "coverage_on_answered": 0.5556
+        },
+        {
+          "width_threshold_days": 45.0236,
+          "abstention_rate": 0.8148,
+          "n_answered": 10,
+          "n_abstained": 44,
+          "coverage_on_answered": 0.6
+        },
+        {
+          "width_threshold_days": 53.5236,
+          "abstention_rate": 0.7963,
+          "n_answered": 11,
+          "n_abstained": 43,
+          "coverage_on_answered": 0.6364
+        },
+        {
+          "width_threshold_days": 60.4236,
+          "abstention_rate": 0.7778,
+          "n_answered": 12,
+          "n_abstained": 42,
+          "coverage_on_answered": 0.6667
+        },
+        {
+          "width_threshold_days": 69.6236,
+          "abstention_rate": 0.7593,
+          "n_answered": 13,
+          "n_abstained": 41,
+          "coverage_on_answered": 0.6923
+        },
+        {
+          "width_threshold_days": 73.6236,
+          "abstention_rate": 0.7407,
+          "n_answered": 14,
+          "n_abstained": 40,
+          "coverage_on_answered": 0.7143
+        },
+        {
+          "width_threshold_days": 73.7236,
+          "abstention_rate": 0.7222,
+          "n_answered": 15,
+          "n_abstained": 39,
+          "coverage_on_answered": 0.6667
+        },
+        {
+          "width_threshold_days": 74.3236,
+          "abstention_rate": 0.7037,
+          "n_answered": 16,
+          "n_abstained": 38,
+          "coverage_on_answered": 0.6875
+        },
+        {
+          "width_threshold_days": 74.9236,
+          "abstention_rate": 0.6852,
+          "n_answered": 17,
+          "n_abstained": 37,
+          "coverage_on_answered": 0.7059
+        },
+        {
+          "width_threshold_days": 77.1236,
+          "abstention_rate": 0.6667,
+          "n_answered": 18,
+          "n_abstained": 36,
+          "coverage_on_answered": 0.7222
+        },
+        {
+          "width_threshold_days": 77.6236,
+          "abstention_rate": 0.6481,
+          "n_answered": 19,
+          "n_abstained": 35,
+          "coverage_on_answered": 0.7368
+        },
+        {
+          "width_threshold_days": 78.3236,
+          "abstention_rate": 0.6296,
+          "n_answered": 20,
+          "n_abstained": 34,
+          "coverage_on_answered": 0.75
+        },
+        {
+          "width_threshold_days": 79.9236,
+          "abstention_rate": 0.6111,
+          "n_answered": 21,
+          "n_abstained": 33,
+          "coverage_on_answered": 0.7143
+        },
+        {
+          "width_threshold_days": 87.8236,
+          "abstention_rate": 0.5926,
+          "n_answered": 22,
+          "n_abstained": 32,
+          "coverage_on_answered": 0.7273
+        },
+        {
+          "width_threshold_days": 88.2236,
+          "abstention_rate": 0.5741,
+          "n_answered": 23,
+          "n_abstained": 31,
+          "coverage_on_answered": 0.7391
+        },
+        {
+          "width_threshold_days": 89.5236,
+          "abstention_rate": 0.5556,
+          "n_answered": 24,
+          "n_abstained": 30,
+          "coverage_on_answered": 0.75
+        },
+        {
+          "width_threshold_days": 90.9236,
+          "abstention_rate": 0.537,
+          "n_answered": 25,
+          "n_abstained": 29,
+          "coverage_on_answered": 0.76
+        },
+        {
+          "width_threshold_days": 91.2236,
+          "abstention_rate": 0.5185,
+          "n_answered": 26,
+          "n_abstained": 28,
+          "coverage_on_answered": 0.7692
+        },
+        {
+          "width_threshold_days": 91.4236,
+          "abstention_rate": 0.5,
+          "n_answered": 27,
+          "n_abstained": 27,
+          "coverage_on_answered": 0.7778
+        },
+        {
+          "width_threshold_days": 92.5236,
+          "abstention_rate": 0.4815,
+          "n_answered": 28,
+          "n_abstained": 26,
+          "coverage_on_answered": 0.75
+        },
+        {
+          "width_threshold_days": 94.5236,
+          "abstention_rate": 0.463,
+          "n_answered": 29,
+          "n_abstained": 25,
+          "coverage_on_answered": 0.7586
+        },
+        {
+          "width_threshold_days": 94.6236,
+          "abstention_rate": 0.4444,
+          "n_answered": 30,
+          "n_abstained": 24,
+          "coverage_on_answered": 0.7667
+        },
+        {
+          "width_threshold_days": 95.8236,
+          "abstention_rate": 0.4259,
+          "n_answered": 31,
+          "n_abstained": 23,
+          "coverage_on_answered": 0.7419
+        },
+        {
+          "width_threshold_days": 96.8236,
+          "abstention_rate": 0.4074,
+          "n_answered": 32,
+          "n_abstained": 22,
+          "coverage_on_answered": 0.7188
+        },
+        {
+          "width_threshold_days": 99.5236,
+          "abstention_rate": 0.3889,
+          "n_answered": 33,
+          "n_abstained": 21,
+          "coverage_on_answered": 0.7273
+        },
+        {
+          "width_threshold_days": 105.7236,
+          "abstention_rate": 0.3704,
+          "n_answered": 34,
+          "n_abstained": 20,
+          "coverage_on_answered": 0.7353
+        },
+        {
+          "width_threshold_days": 108.3236,
+          "abstention_rate": 0.3519,
+          "n_answered": 35,
+          "n_abstained": 19,
+          "coverage_on_answered": 0.7429
+        },
+        {
+          "width_threshold_days": 110.0236,
+          "abstention_rate": 0.3148,
+          "n_answered": 37,
+          "n_abstained": 17,
+          "coverage_on_answered": 0.7027
+        },
+        {
+          "width_threshold_days": 113.0236,
+          "abstention_rate": 0.2963,
+          "n_answered": 38,
+          "n_abstained": 16,
+          "coverage_on_answered": 0.6842
+        },
+        {
+          "width_threshold_days": 113.9236,
+          "abstention_rate": 0.2778,
+          "n_answered": 39,
+          "n_abstained": 15,
+          "coverage_on_answered": 0.6667
+        },
+        {
+          "width_threshold_days": 115.1236,
+          "abstention_rate": 0.2593,
+          "n_answered": 40,
+          "n_abstained": 14,
+          "coverage_on_answered": 0.65
+        },
+        {
+          "width_threshold_days": 118.2236,
+          "abstention_rate": 0.2407,
+          "n_answered": 41,
+          "n_abstained": 13,
+          "coverage_on_answered": 0.6585
+        },
+        {
+          "width_threshold_days": 120.9236,
+          "abstention_rate": 0.2222,
+          "n_answered": 42,
+          "n_abstained": 12,
+          "coverage_on_answered": 0.6667
+        },
+        {
+          "width_threshold_days": 125.5236,
+          "abstention_rate": 0.2037,
+          "n_answered": 43,
+          "n_abstained": 11,
+          "coverage_on_answered": 0.6744
+        },
+        {
+          "width_threshold_days": 132.1236,
+          "abstention_rate": 0.1852,
+          "n_answered": 44,
+          "n_abstained": 10,
+          "coverage_on_answered": 0.6591
+        },
+        {
+          "width_threshold_days": 133.4236,
+          "abstention_rate": 0.1667,
+          "n_answered": 45,
+          "n_abstained": 9,
+          "coverage_on_answered": 0.6444
+        },
+        {
+          "width_threshold_days": 144.2236,
+          "abstention_rate": 0.1481,
+          "n_answered": 46,
+          "n_abstained": 8,
+          "coverage_on_answered": 0.6522
+        },
+        {
+          "width_threshold_days": 149.1236,
+          "abstention_rate": 0.1296,
+          "n_answered": 47,
+          "n_abstained": 7,
+          "coverage_on_answered": 0.6596
+        },
+        {
+          "width_threshold_days": 149.7236,
+          "abstention_rate": 0.1111,
+          "n_answered": 48,
+          "n_abstained": 6,
+          "coverage_on_answered": 0.6458
+        },
+        {
+          "width_threshold_days": 150.4236,
+          "abstention_rate": 0.0926,
+          "n_answered": 49,
+          "n_abstained": 5,
+          "coverage_on_answered": 0.6531
+        },
+        {
+          "width_threshold_days": 151.1236,
+          "abstention_rate": 0.0741,
+          "n_answered": 50,
+          "n_abstained": 4,
+          "coverage_on_answered": 0.64
+        },
+        {
+          "width_threshold_days": 153.3236,
+          "abstention_rate": 0.0556,
+          "n_answered": 51,
+          "n_abstained": 3,
+          "coverage_on_answered": 0.6471
+        },
+        {
+          "width_threshold_days": 153.5236,
+          "abstention_rate": 0.0185,
+          "n_answered": 53,
+          "n_abstained": 1,
+          "coverage_on_answered": 0.6604
+        },
+        {
+          "width_threshold_days": 153.7236,
+          "abstention_rate": 0.0,
+          "n_answered": 54,
+          "n_abstained": 0,
+          "coverage_on_answered": 0.6667
+        },
+        {
+          "width_threshold_days": 153.7236,
+          "abstention_rate": 0.0,
+          "n_answered": 54,
+          "n_abstained": 0,
+          "coverage_on_answered": 0.6667
+        }
+      ],
+      "proposed_default": {
+        "width_threshold_days": 91.4236,
+        "abstention_rate": 0.5,
+        "n_answered": 27,
+        "n_abstained": 27,
+        "coverage_on_answered": 0.7778
+      }
+    }
+  },
+  "priority_stage": {
+    "status": "out_of_scope_v1",
+    "reason": "priority_guess has no calibrated confidence signal anywhere in the pipeline (unlike component_confidence or the CQR interval) -- inventing a proxy threshold with no measured basis would be a fabricated signal, not a data-derived one. Flagged, not gated, in this build. See ADR-0021."
+  }
+}

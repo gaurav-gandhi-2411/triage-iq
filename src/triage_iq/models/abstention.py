@@ -1,0 +1,70 @@
+"""Deterministic selective-prediction (abstention) gate over existing pipeline signals.
+
+ADR-0021: thresholds below are PROVISIONAL, derived from scripts/measure_abstention_tradeoff.py's
+coverage-vs-abstention sweep on the n=65 clean eval set — pending human confirmation of the
+default operating point before they are treated as final and deployed.
+
+Not a new model: component-stage abstention reads component_confidence (calibrated TF-IDF,
+ADR-0004) and grounding_status.component_grounded (ADR-0015); resolution-stage abstention reads
+the CQR-adjusted interval width (ADR-0010), computed the same way as the /triage handler's
+resolution_interval_conformal. Priority stage has no calibrated confidence signal anywhere in
+the pipeline and is intentionally not gated — see ADR-0021.
+"""
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from triage_iq.models.triage import AbstentionStatus, TriagePlan
+
+# PROVISIONAL defaults from the n=65 sweep (reports/abstention_tradeoff.json) — pending human
+# confirmation of the default operating point, see ADR-0021. Missing a repo key means that
+# repo's stage is never gated (fails open, same policy as resolution_interval_conformal).
+COMPONENT_CONFIDENCE_THRESHOLD: dict[str, float] = {
+    "kubernetes/kubernetes": 0.45,
+    "microsoft/vscode": 0.29,
+}
+RESOLUTION_WIDTH_THRESHOLD_DAYS: dict[str, float] = {
+    "kubernetes/kubernetes": 91.4236,
+    "microsoft/vscode": 195.2045,
+}
+
+
+def compute_abstention_status(
+    plan: "TriagePlan",
+    repo: str,
+    component_grounded: bool,
+    conformal_width_days: float | None,
+) -> "AbstentionStatus":
+    """Return the selective-prediction gate result for one triaged issue.
+
+    Args:
+        plan: The synthesized TriagePlan (reads component_confidence).
+        repo: Repository slug, used to look up the per-repo thresholds.
+        component_grounded: grounding_status.component_grounded for this plan (ADR-0015) —
+            a hard abstain trigger, not swept: a component the classifier's own top-3 doesn't
+            support abstains regardless of confidence.
+        conformal_width_days: upper_days - lower_days of the CQR-adjusted interval, or None
+            when conformal adjustments are unavailable for this repo.
+    """
+    from triage_iq.models.triage import AbstentionStatus, StageAbstention
+
+    conf_threshold = COMPONENT_CONFIDENCE_THRESHOLD.get(repo)
+    if not component_grounded:
+        component = StageAbstention(abstained=True, reason="ungrounded")
+    elif conf_threshold is not None and plan.component_confidence < conf_threshold:
+        component = StageAbstention(abstained=True, reason="low_confidence")
+    else:
+        component = StageAbstention(abstained=False, reason="")
+
+    width_threshold = RESOLUTION_WIDTH_THRESHOLD_DAYS.get(repo)
+    if (
+        conformal_width_days is not None
+        and width_threshold is not None
+        and conformal_width_days > width_threshold
+    ):
+        resolution = StageAbstention(abstained=True, reason="wide_interval")
+    else:
+        resolution = StageAbstention(abstained=False, reason="")
+
+    return AbstentionStatus(component=component, resolution=resolution)

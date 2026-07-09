@@ -25,6 +25,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from ..config import get_settings
+from ..models.abstention import compute_abstention_status
 from ..models.triage import ConformalIntervalResult, TriagePlan
 from .loader import ModelStore
 from .schemas import HealthResponse, ServiceInfoResponse, TriageRequest
@@ -324,6 +325,27 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     except Exception as _conf_err:
         logger.warning(
             "Conformal interval computation failed: %s — returning raw interval", _conf_err
+        )
+
+    # Selective-prediction gate (ADR-0021) — fail-safe (never blocks the response), same
+    # policy as the conformal-interval block above. Runs after it since it reads the
+    # conformal interval's width.
+    try:
+        conformal = plan.resolution_interval_conformal
+        width_days = (
+            conformal.upper_days - conformal.lower_days if conformal is not None else None
+        )
+        component_grounded = (
+            plan.grounding_status.component_grounded
+            if plan.grounding_status is not None
+            else True
+        )
+        plan.abstention_status = compute_abstention_status(
+            plan, body.repo, component_grounded, width_days
+        )
+    except Exception as _abstain_err:
+        logger.warning(
+            "Abstention gate computation failed: %s — abstention_status left None", _abstain_err
         )
 
     total_ms = round((time.perf_counter() - t_start) * 1000, 1)

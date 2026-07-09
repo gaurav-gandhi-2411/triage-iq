@@ -1,8 +1,10 @@
 # ADR-0021 — Selective Prediction / Abstention
 
-**Status:** Proposed — measured, gate-1 human review pending (tradeoff curves + default
-operating point)
-**Date:** 2026-07-09
+**Status:** Rejected — documented negative result for v1. Measured, escalated, and not shipped:
+component confidence is a real but marginal, noisy signal (flag-gated off, deferred as a
+product-value call); resolution interval width does not predict coverage failure and is
+rejected outright; priority was correctly never attempted.
+**Date:** 2026-07-09 (measured); decided 2026-07-10
 **Decider:** Gaurav Gandhi
 
 ## Context
@@ -23,8 +25,13 @@ exists for it anywhere in the pipeline.
 
 ## Decision
 
-Ship a deterministic, additive **selective-prediction gate** over these existing signals — not
-a new model, not a synthesis-prompt change. Three stage decisions, approved before building:
+**Build and measure, then reject shipping any live default for v1.** A deterministic, additive
+**selective-prediction gate** over existing signals — not a new model, not a synthesis-prompt
+change — was built, measured against the full coverage-vs-abstention curve, and the result did
+not clear a bar worth shipping as a live default. This follows the same honest-negative pattern
+as ADR-0006 (cross-encoder reranker) and the W3 fine-tuned-retriever rejection: measured,
+reported precisely, not shipped, kept in the codebase (flag-gated off) for a future revisit
+rather than deleted. Three stage decisions, approved before building:
 
 1. **Component stage:** abstain when `component_confidence` is below a per-repo threshold, OR
    `grounding_status.component_grounded is False` (hard trigger, not swept — a component the
@@ -100,43 +107,96 @@ the gap is ordinary sampling variation on a smaller subset, not a discrepancy).
 (width 195.20 days): 36.4% abstention, n=7 answered, 71.43% coverage (+7.79pp, one issue = ±14pp
 on the answered subset). Indicative only, same caveat as component stage.
 
-### How the proposed default was picked, and why it isn't the only reasonable choice
+### Why the curve alone wasn't enough to decide, and what settled it
 
-Rule: maximize accuracy/coverage-on-answered subject to abstention rate ≤ 50% (a ceiling — not
-derived from the data — chosen because abstaining on a majority of issues arguably stops being
-"selective" prediction), ties broken toward the lower abstention rate.
+The initial pick rule (maximize accuracy/coverage-on-answered subject to abstention rate ≤ 50%)
+landed at the edge of that ceiling on **both** k8s curves (48.1% and 50.0% abstention) — a red
+flag on its own: a "best" point sitting at the boundary of an arbitrary cap, on a curve that is
+visibly non-monotonic in the 30–50% range (e.g. component accuracy-on-answered *drops* from
+58.97% at 27.8% abstention to 57.14% at 35.2%, then rises again), is a symptom of a simple
+max-over-a-noisy-curve rule overfitting to sampling noise on n=54 binary outcomes, not
+necessarily a real effect concentrated at high abstention. That suspicion was checked directly
+against the per-issue data (not assumed) — see below.
 
-**Honest caveat:** on k8s, this rule landed at the edge of that ceiling for *both* stages (48.1%
-and 50.0% abstention). Both are real, data-derived improvements (+10.71pp / +11.11pp) — but the
-tables above show materially cheaper points already on the curve: 0.22 confidence threshold
-(27.8% abstention, +8.97pp — nearly as much accuracy gain for about half the abstention cost)
-and 108.32-day width threshold (35.2% abstention, +7.62pp). The full curve is in
-`reports/abstention_tradeoff.json`; the "proposed default" above is one candidate from a simple
-rule, not the only sensible operating point. **This is the escalation** — confirm which point to
-ship before it is treated as final.
+**Component stage — checked directly, signal confirmed real:** mean `component_confidence` for
+correctly-predicted issues is **0.548** vs **0.430** for incorrectly-predicted issues (k8s,
+n=27/27) — a genuine +0.118 gap, consistent with the classifier actually being calibrated
+(ADR-0004). The lower-abstention region of the curve (9–28% abstention, n_answered 39–49) shows
+real, modest gains (+5.1 to +8.97pp) before the curve gets noisy. **Verdict: real but marginal
+signal.** Shippable only as a deliberate product-value tradeoff (is a wrong component prediction
+costly enough to justify trading ~10–28% coverage for a 5–9pp accuracy lift?) — that call is
+deferred, not decided here. Kept flag-gated off; default is no abstention.
+
+**Resolution stage — checked directly, initial hypothesis rejected, correct diagnosis found:**
+the working hypothesis going in was that the conformal interval might be near-constant across
+issues (the CQR scalar `Q` is tiny — 0.0118 days for k8s, per `reports/eval_summary.json` — so
+if the base quantile-regression interval were also roughly fixed, there'd be nothing per-issue to
+threshold on). **This was tested directly and is false:** conformal interval width varies
+substantially per issue on k8s — min 6.91 days, max 153.72 days, mean 90.63, stdev 41.98
+(coefficient of variation 0.463). The base LightGBM quantile model **is** producing
+issue-adaptive intervals; `Q`'s near-zero contribution doesn't make the total width constant.
+
+**The actual reason resolution abstention doesn't work: width doesn't predict coverage
+failure.** Mean width for issues where the interval *did* cover the true value is **90.45
+days** (n=36); mean width for issues where it *missed* is **91.01 days** (n=18) — a 0.56-day gap
+against a ~42-day standard deviation, i.e. statistically indistinguishable. An interval's width
+carries no information about whether *that specific interval* is right. This is precisely why
+the sweep curve's apparent +7–11pp coverage gains at 35–50% abstention are not trustworthy: if
+width doesn't correlate with coverage failure, then abstaining on high-width issues is
+close to abstaining on a **random** subset, and the curve's rises and dips are the sampling
+noise of shrinking an already-small n=54, not a real effect. **Verdict: rejected outright** —
+not "the intervals aren't adaptive enough," but "the interval's own width is not a useful
+per-issue uncertainty signal for *this specific failure mode* (coverage)." A genuinely useful
+resolution-abstention signal needs a measure that actually correlates with getting the interval
+wrong — this one doesn't, and that is the finding, not an implementation gap to patch.
+
+**This is the interesting thread for any future resolution-abstention work:** the prerequisite
+isn't "make the interval per-issue-adaptive" (it already is, width-wise) — it's finding or
+building an uncertainty signal that is *discriminative of actual coverage failure*, which width
+is not. That is a separate, larger investigation (likely requires examining what covariates
+*do* predict coverage misses, or a fundamentally different uncertainty quantification approach),
+not a tweak to this build.
 
 ### Priority stage
 
 Out of scope for v1 — no calibrated confidence signal exists for `priority_guess` anywhere in
 the pipeline (unlike `component_confidence` or the CQR interval). Flagged as a gap, not gated
-with a fabricated proxy.
+with a fabricated proxy. Correctly not attempted.
+
+### Verdict
+
+**Rejected for v1.** Selective prediction via simple confidence/width thresholds does not clear
+a bar worth shipping: component is real-but-marginal (a deferred product-value call, not a
+technical win); resolution is not usable (width is non-discriminative of coverage failure,
+confirmed directly against the data); priority was never attempted for lack of any signal. No
+live default is shipped. The gate is implemented and tested but **flag-gated off**
+(`TRIAGE_ENABLE_ABSTENTION_GATE`, unset/off by default) in
+`src/triage_iq/api/app.py` — `abstention_status` stays `None` on every `/triage` response unless
+explicitly turned on.
 
 ## Consequences
 
-- `TriagePlan.abstention_status` lands additively on `/triage` responses — `None`-safe, no
-  existing field changes shape or meaning.
-- `reports/eval_baseline.json` and `eval/cassettes/eval_cassette.json` are unaffected — this is
-  a scoring-only, post-hoc gate, not a synthesis or judge-scoring change.
+- **Nothing ships live.** `TRIAGE_ENABLE_ABSTENTION_GATE` defaults off — `plan.abstention_status`
+  is `None` on every `/triage` response in every environment, including if this branch is merged
+  to `main`, until someone explicitly sets that env var. This is a deliberate consequence of the
+  rejection, not an oversight.
+- `TriagePlan.abstention_status` and `AbstentionStatus`/`StageAbstention` remain in the schema
+  additively (`None`-safe) — kept, not deleted, so `scripts/measure_abstention_tradeoff.py` and
+  `tests/test_abstention.py` continue to exercise real code, and any future revisit (per the
+  resolution-stage prerequisite above) has a working starting point instead of a rewrite.
+- `reports/eval_baseline.json` and `eval/cassettes/eval_cassette.json` are unaffected — this was
+  always a scoring-only, post-hoc gate, never a synthesis or judge-scoring change.
 - The thresholds in `src/triage_iq/models/abstention.py`
-  (`COMPONENT_CONFIDENCE_THRESHOLD`, `RESOLUTION_WIDTH_THRESHOLD_DAYS`) are **provisional** —
-  sourced from the proposed-default picks above, explicitly pending human confirmation before
-  being treated as the shipped default. Nothing deploys until that confirmation and a separate
-  deploy decision.
+  (`COMPONENT_CONFIDENCE_THRESHOLD`, `RESOLUTION_WIDTH_THRESHOLD_DAYS`) are retained as a record
+  of what was measured, not as a shipped default — component's threshold is a candidate for a
+  future product-value decision; resolution's threshold should not be reused without first
+  finding a width-independent, coverage-discriminative signal (see "the interesting thread"
+  above).
 - Generalization caveat: these numbers describe this exact prompt/model pair (Groq
-  `llama-3.1-8b-instant`, no attribution — TRIAGE_PROMPT_INCLUDE_ATTRIBUTION off) and this exact
-  gold set. A future prompt or model change requires re-measurement.
+  `llama-3.1-8b-instant`, no attribution — `TRIAGE_PROMPT_INCLUDE_ATTRIBUTION` off) and this
+  exact gold set. A future prompt or model change requires re-measurement.
 - vscode's n=11 curves (both stages) are reported as indicative-only per ADR-0017's data-ceiling
-  finding — not weighted equally with k8s's n=54 in any default-picking decision.
+  finding — not weighted equally with k8s's n=54 in the verdict above.
 
 ## Alternatives considered
 
@@ -146,3 +206,5 @@ with a fabricated proxy.
 | Gate priority with a proxy confidence (e.g. component-confidence agreement) | Would be a fabricated signal with no measured basis — inconsistent with this project's "no invented numbers" discipline (mirrors ADR-0006/ADR-0016's rejection of unmeasured hypotheses). Flagged as a gap instead. |
 | Pick threshold defaults without a sweep | Would repeat the exact mistake ADR-0019's mean-band gate was built to avoid — a threshold "that feels right" isn't a data-derived one. The full curve was computed and is reported so the human picks the actual number. |
 | Single overall threshold across repos | k8s and vscode have different baseline accuracy (50.0% vs 18.18%) and different curve shapes — a shared threshold would be tuned to whichever repo dominates by volume (k8s, 54/65), silently under- or over-abstaining on the other. Same per-repo discipline as the eval quality gate (ADR-0019). |
+| Ship the curve-max default as-is (component 0.45 / resolution 91.42 days) | Rejected on inspection, not just on principle: both curve-max points sit at the edge of the abstention-rate ceiling on a visibly non-monotonic curve, and the resolution one is explained away by a direct check — mean interval width is statistically indistinguishable between covered (90.45d) and uncovered (91.01d) issues, so the apparent gain is consistent with noise from shrinking n, not a real effect. |
+| "Intervals are near-constant, so nothing to threshold" (initial hypothesis) | Tested directly and rejected — k8s conformal width varies 6.91–153.72 days (CV=0.463), i.e. substantially per-issue. The real problem is that this variation doesn't predict coverage failure, a different and more specific diagnosis. |

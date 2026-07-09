@@ -327,26 +327,32 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
             "Conformal interval computation failed: %s — returning raw interval", _conf_err
         )
 
-    # Selective-prediction gate (ADR-0021) — fail-safe (never blocks the response), same
-    # policy as the conformal-interval block above. Runs after it since it reads the
-    # conformal interval's width.
-    try:
-        conformal = plan.resolution_interval_conformal
-        width_days = (
-            conformal.upper_days - conformal.lower_days if conformal is not None else None
-        )
-        component_grounded = (
-            plan.grounding_status.component_grounded
-            if plan.grounding_status is not None
-            else True
-        )
-        plan.abstention_status = compute_abstention_status(
-            plan, body.repo, component_grounded, width_days
-        )
-    except Exception as _abstain_err:
-        logger.warning(
-            "Abstention gate computation failed: %s — abstention_status left None", _abstain_err
-        )
+    # Selective-prediction gate (ADR-0021) — REJECTED for v1, off by default
+    # (TRIAGE_ENABLE_ABSTENTION_GATE=1 to enable). Component confidence carries a real but
+    # marginal, noisy signal; resolution interval width does not predict coverage failure
+    # (mean width is statistically indistinguishable between covered and uncovered issues on
+    # k8s — 90.45 vs 91.01 days). Code, schema, and measurement script are kept for a future
+    # revisit once resolution uncertainty is made discriminative, not deleted — but nothing
+    # here runs against live traffic unless explicitly turned on. See ADR-0021.
+    if os.environ.get("TRIAGE_ENABLE_ABSTENTION_GATE") == "1":
+        try:
+            conformal = plan.resolution_interval_conformal
+            width_days = (
+                conformal.upper_days - conformal.lower_days if conformal is not None else None
+            )
+            component_grounded = (
+                plan.grounding_status.component_grounded
+                if plan.grounding_status is not None
+                else True
+            )
+            plan.abstention_status = compute_abstention_status(
+                plan, body.repo, component_grounded, width_days
+            )
+        except Exception as _abstain_err:
+            logger.warning(
+                "Abstention gate computation failed: %s — abstention_status left None",
+                _abstain_err,
+            )
 
     total_ms = round((time.perf_counter() - t_start) * 1000, 1)
     llm_status = meta.get("llm_status", "ok")

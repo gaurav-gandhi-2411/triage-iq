@@ -1,8 +1,12 @@
 """Deterministic selective-prediction (abstention) gate over existing pipeline signals.
 
-ADR-0021: thresholds below are PROVISIONAL, derived from scripts/measure_abstention_tradeoff.py's
-coverage-vs-abstention sweep on the n=65 clean eval set — pending human confirmation of the
-default operating point before they are treated as final and deployed.
+ADR-0021: REJECTED for v1 as a live default -- gated off by default
+(TRIAGE_ENABLE_ABSTENTION_GATE in src/triage_iq/api/app.py). Component-stage confidence is a
+real but marginal, noisy signal (a deferred product-value call, not shipped). Resolution-stage
+interval width was checked directly against the data and does NOT predict coverage failure
+(mean width is statistically indistinguishable between covered and uncovered issues on k8s) --
+rejected outright, not just deferred. Kept here, not deleted, so a future revisit (once a
+coverage-discriminative uncertainty signal exists) has a working starting point.
 
 Not a new model: component-stage abstention reads component_confidence (calibrated TF-IDF,
 ADR-0004) and grounding_status.component_grounded (ADR-0015); resolution-stage abstention reads
@@ -17,9 +21,10 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from triage_iq.models.triage import AbstentionStatus, TriagePlan
 
-# PROVISIONAL defaults from the n=65 sweep (reports/abstention_tradeoff.json) — pending human
-# confirmation of the default operating point, see ADR-0021. Missing a repo key means that
-# repo's stage is never gated (fails open, same policy as resolution_interval_conformal).
+# Thresholds from the n=65 sweep (reports/abstention_tradeoff.json) -- retained as a record of
+# what was measured, not as a shipped default (ADR-0021 rejected shipping either stage for v1).
+# Missing a repo key means that repo's stage is never gated (fails open, same policy as
+# resolution_interval_conformal).
 COMPONENT_CONFIDENCE_THRESHOLD: dict[str, float] = {
     "kubernetes/kubernetes": 0.45,
     "microsoft/vscode": 0.29,

@@ -156,15 +156,19 @@ def compute_scores(
 
         # ADR-0019: the cassette was re-recorded from scratch against current TriagePlan
         # (grounding + grounding_status included) — no exclusion needed for those anymore.
-        # ADR-0020 reintroduces the same problem for a new field: eval_cassette.json was
-        # restored to the pre-attribution recording (see ADR-0020 "Baseline decision" — the
-        # attribution prompt is opt-in and off here), but TriagePlan unconditionally gained
-        # declared_attribution regardless of the prompt flag, so plan.model_dump() now always
-        # emits it (as None) even on the legacy path. The old cassette's judge calls were
-        # recorded against plan_json that never had this key — exclude it here so the judge
-        # cache key matches, same workaround pattern as the original grounding/grounding_status
-        # exclusion this comment used to describe.
-        plan_json = json.dumps(plan.model_dump(exclude={"declared_attribution"}), ensure_ascii=False)
+        # ADR-0020 reintroduced the same problem for declared_attribution: TriagePlan gained
+        # the field unconditionally regardless of the attribution prompt flag, so
+        # plan.model_dump() always emits it (as None) even on the legacy path, and the old
+        # cassette's judge calls were recorded against plan_json that never had this key.
+        # ADR-0021 does the same for abstention_status -- also unconditional on TriagePlan
+        # (computed in app.py, not here, but the field still exists and always serializes).
+        # Both excluded so the judge cache key keeps matching the clean cassette; this eval
+        # harness never populates either field anyway (run_eval.py calls
+        # triage_with_metadata() directly, bypassing app.py's post-processing).
+        plan_json = json.dumps(
+            plan.model_dump(exclude={"declared_attribution", "abstention_status"}),
+            ensure_ascii=False,
+        )
         gold = {
             "component": issue["gold_component"],
             "priority": issue["gold_priority"],

@@ -84,6 +84,31 @@ class DeclaredAttribution(BaseModel):
     next_steps_cited_issues: list[int] = Field(default_factory=list)
 
 
+class StageAbstention(BaseModel):
+    """Per-stage selective-prediction gate result (ADR-0021).
+
+    Deterministic threshold on an already-computed signal (component_confidence /
+    grounding_status / CQR interval width) — not a new model. `reason` is empty when
+    not abstained, else a short machine-readable code ("low_confidence", "ungrounded",
+    "wide_interval").
+    """
+
+    abstained: bool
+    reason: str = ""
+
+
+class AbstentionStatus(BaseModel):
+    """Selective-prediction gate over existing pipeline signals (ADR-0021).
+
+    Priority stage is intentionally absent: priority_guess has no calibrated confidence
+    signal anywhere in the pipeline to threshold, unlike component_confidence (ADR-0004)
+    or the CQR interval (ADR-0010). See ADR-0021 for why that gap is flagged, not gated.
+    """
+
+    component: StageAbstention
+    resolution: StageAbstention
+
+
 class TriagePlan(BaseModel):
     """Structured triage plan produced by the LLM assistant.
 
@@ -132,6 +157,12 @@ class TriagePlan(BaseModel):
         description="LLM-declared source attribution (ADR-0020). None when the model omitted "
                     "or malformed the block — counted as a compliance failure, never a request "
                     "failure.",
+    )
+    abstention_status: AbstentionStatus | None = Field(
+        default=None,
+        description="Selective-prediction gate (ADR-0021). None when conformal adjustments "
+                    "are unavailable for this repo (same fail-open policy as "
+                    "resolution_interval_conformal) — never blocks the response.",
     )
 
     @field_validator("component_confidence", mode="before")

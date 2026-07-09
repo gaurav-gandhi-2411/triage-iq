@@ -234,6 +234,17 @@ band the gate itself defines as noise. Neither is hidden behind the other.
    synthesis path; attribution fidelity is measured on its own terms (this ADR) via its own
    cassette.
 
+**This decision depends on the feature flag below — it is not self-standing.** Reasons 1–3
+assume attribution is something the gate can simply not exercise by default. That was not true
+until the `TRIAGE_PROMPT_INCLUDE_ATTRIBUTION` flag was added *in this session*, specifically
+because the initial wiring turned out to be unconditional (see the finding immediately below).
+Without that flag, attribution would have been a live change to what every synthesis call sends
+— a methodology change, not a pure additive-output change — and reason 2's premise would not
+hold: re-baselining would have been required, not optional. Read literally: **"no re-baseline"
+is correct because attribution is flag-gated off by default, not because additive features are
+inherently exempt from re-baselining.** Do not generalize reasons 1–3 to a future additive
+feature without first confirming it is similarly gated.
+
 **Finding, discovered while verifying this decision, then resolved (not worked around):**
 `ATTRIBUTION RULES` (prompt section, schema field, few-shot exemplars) had been added
 **unconditionally** to `src/triage_iq/prompts/triage_prompt.py` — no flag, every synthesis call

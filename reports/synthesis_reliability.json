@@ -1,0 +1,44 @@
+{
+  "eval_set_hash": "e37a69ea0cf1d26749d7f714d4f161ec6fd5f37d25a22156277551e00fd30138",
+  "cassette_hash": "c9966414f3c52df1af3f2df6624239fc61a2c65ed5d20341dae4f8e7c8d7484f",
+  "per_repo": {
+    "microsoft/vscode": {
+      "n": 11,
+      "counts": {
+        "ok": 11,
+        "parse_retry_succeeded": 0,
+        "parse_failure": 0
+      },
+      "malformed_count": 0,
+      "malformed_rate": 0.0,
+      "inconsistent_count": 0,
+      "inconsistent_rate": 0.0
+    },
+    "kubernetes/kubernetes": {
+      "n": 54,
+      "counts": {
+        "ok": 54,
+        "parse_retry_succeeded": 0,
+        "parse_failure": 0
+      },
+      "malformed_count": 0,
+      "malformed_rate": 0.0,
+      "inconsistent_count": 0,
+      "inconsistent_rate": 0.0
+    }
+  },
+  "overall": {
+    "n": 65,
+    "counts": {
+      "ok": 65,
+      "parse_retry_succeeded": 0,
+      "parse_failure": 0
+    },
+    "malformed_count": 0,
+    "malformed_rate": 0.0,
+    "inconsistent_count": 0,
+    "inconsistent_rate": 0.0
+  },
+  "non_ok_cases": [],
+  "inconsistent_cases": []
+}

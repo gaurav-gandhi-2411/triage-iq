@@ -17,6 +17,7 @@ import pandas as pd
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from triage_iq.models.grounding import verify_plan_grounding
+from triage_iq.models.plan_verify import verify_plan_consistency
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +110,20 @@ class AbstentionStatus(BaseModel):
     resolution: StageAbstention
 
 
+class ConsistencyStatus(BaseModel):
+    """Deterministic internal-consistency check result (ADR-0022).
+
+    See src/triage_iq/models/plan_verify.py:verify_plan_consistency. Checks the plan against
+    itself (not against upstream pipeline signals — that's GroundingStatus). Always computed,
+    same as GroundingStatus — not flag-gated, since it never changes synthesis or blocks the
+    response (FLAG-not-strip).
+    """
+
+    priority_resolution_consistent: bool
+    override_reason_consistent: bool
+    all_consistent: bool
+
+
 class TriagePlan(BaseModel):
     """Structured triage plan produced by the LLM assistant.
 
@@ -163,6 +178,11 @@ class TriagePlan(BaseModel):
         description="Selective-prediction gate (ADR-0021). None when conformal adjustments "
                     "are unavailable for this repo (same fail-open policy as "
                     "resolution_interval_conformal) — never blocks the response.",
+    )
+    consistency_status: ConsistencyStatus | None = Field(
+        default=None,
+        description="Deterministic internal-consistency check (ADR-0022). None only if "
+                    "computing it raised — never blocks the response (FLAG-not-strip).",
     )
 
     @field_validator("component_confidence", mode="before")
@@ -285,6 +305,16 @@ class TriageAssistant:
             similar_issue_refs=report.similar_issue_refs,
             ungrounded_refs=report.ungrounded_refs,
             all_grounded=report.all_grounded,
+        )
+
+        # Internal self-consistency check (ADR-0022) — checks the plan against itself, not
+        # against upstream signals (that's the grounding check above). Always computed, same
+        # as grounding_status: FLAG-not-strip, never blocks the response.
+        consistency = verify_plan_consistency(plan)
+        plan.consistency_status = ConsistencyStatus(
+            priority_resolution_consistent=consistency.priority_resolution_consistent,
+            override_reason_consistent=consistency.override_reason_consistent,
+            all_consistent=consistency.all_consistent,
         )
         elapsed = time.perf_counter() - t0
 

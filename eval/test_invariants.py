@@ -77,6 +77,21 @@ _GROUNDING_BASELINE = {
     },
 }
 
+# ADR-0022: measured against the same clean cassette (scripts/measure_synthesis_reliability.py)
+# -- 0/65 plans are internally inconsistent (both rules: priority/timeline contradiction,
+# missing model_override reason). Unlike the grounding baseline above, there is no naturally-
+# occurring inconsistent case to pin by issue number here -- the ratchet's teeth were proven
+# instead by manually injecting a synthetic inconsistent plan and confirming it flags (TEST THE
+# TEST, done once during development, not committed as a permanent fixture since it isn't real
+# eval-set data). See ADR-0022.
+_CONSISTENCY_BASELINE = {
+    "eval_set_hash": "e37a69ea0cf1d26749d7f714d4f161ec6fd5f37d25a22156277551e00fd30138",
+    "per_repo": {
+        "kubernetes/kubernetes": {"inconsistent_count": 0, "n": 54},
+        "microsoft/vscode": {"inconsistent_count": 0, "n": 11},
+    },
+}
+
 
 def _extract_q_hours(repo: str, repos_data: dict) -> float:
     """Extract q_adjustment_hours for a repo using the same fallback logic as loader.py."""
@@ -530,3 +545,44 @@ def test_grounding_known_cases_still_flagged(grounding_reports: list[dict]) -> N
         f"(predicted_component={case_311836['predicted_component']!r}, "
         f"classifier_top3_labels={case_311836['classifier_top3_labels']})"
     )
+
+
+@pytest.fixture(scope="module")
+def consistency_cases() -> list[dict]:
+    """Compute internal-consistency reports once for the module (ADR-0022).
+
+    Reuses the same cassette-replay pipeline as scripts/measure_synthesis_reliability.py
+    (zero live LLM calls — CassettePlayer(strict=True)), calling triage_with_metadata so
+    consistency_status is computed exactly as production would.
+    """
+    if not EVAL_SET.exists():
+        pytest.skip(reason="eval_set.jsonl not found — skipping consistency checks")
+
+    from measure_synthesis_reliability import compute_reliability_cases
+
+    return compute_reliability_cases()
+
+
+def test_consistency_ratchet_no_new_inconsistent_plans(consistency_cases: list[dict]) -> None:
+    """Inconsistent-plan count on the frozen eval set must not exceed the recorded baseline.
+
+    Checked per-repo (not pooled), same discipline as the grounding ratchet. Guards against a
+    future synthesis-prompt or model change silently introducing internally-contradictory
+    plans (e.g. "high" priority paired with a "months"/"long" resolution bucket) above the
+    measured 0/54 (k8s) + 0/11 (vscode) baseline. See ADR-0022.
+    """
+    current_hash = _eval_set_hash_guard()
+    assert current_hash == _CONSISTENCY_BASELINE["eval_set_hash"], _HASH_DRIFT_MSG
+
+    for repo, baseline in _CONSISTENCY_BASELINE["per_repo"].items():
+        repo_cases = [c for c in consistency_cases if c["repo"] == repo]
+        inconsistent_count = sum(1 for c in repo_cases if c["all_consistent"] is False)
+
+        assert len(repo_cases) == baseline["n"], (
+            f"{repo}: eval set size changed ({len(repo_cases)} vs baseline "
+            f"{baseline['n']}) despite matching top-level hash — investigate"
+        )
+        assert inconsistent_count <= baseline["inconsistent_count"], (
+            f"{repo}: inconsistent-plan count regressed: {inconsistent_count} > "
+            f"baseline {baseline['inconsistent_count']}"
+        )

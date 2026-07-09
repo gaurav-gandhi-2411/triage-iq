@@ -156,17 +156,20 @@ def compute_scores(
 
         # ADR-0019: the cassette was re-recorded from scratch against current TriagePlan
         # (grounding + grounding_status included) — no exclusion needed for those anymore.
-        # ADR-0020 reintroduced the same problem for declared_attribution: TriagePlan gained
-        # the field unconditionally regardless of the attribution prompt flag, so
-        # plan.model_dump() always emits it (as None) even on the legacy path, and the old
-        # cassette's judge calls were recorded against plan_json that never had this key.
-        # ADR-0021 does the same for abstention_status -- also unconditional on TriagePlan
-        # (computed in app.py, not here, but the field still exists and always serializes).
-        # Both excluded so the judge cache key keeps matching the clean cassette; this eval
-        # harness never populates either field anyway (run_eval.py calls
-        # triage_with_metadata() directly, bypassing app.py's post-processing).
+        # ADR-0020/0021/0022 each added a new field unconditionally to TriagePlan
+        # (declared_attribution, abstention_status, consistency_status), so
+        # plan.model_dump() always emits all three now, but the old cassette's judge calls
+        # were recorded against plan_json that never had any of these keys. All three
+        # excluded so the judge cache key keeps matching the clean cassette.
+        # consistency_status is the one exception that this harness DOES populate (unlike
+        # the other two, verify_plan_consistency runs unconditionally inside
+        # triage_with_metadata, same as grounding_status) — excluded anyway, since the
+        # baseline judge means must stay tied to the byte-for-byte plan_json they were
+        # originally computed from, not silently drift when a new always-on field lands.
         plan_json = json.dumps(
-            plan.model_dump(exclude={"declared_attribution", "abstention_status"}),
+            plan.model_dump(
+                exclude={"declared_attribution", "abstention_status", "consistency_status"}
+            ),
             ensure_ascii=False,
         )
         gold = {

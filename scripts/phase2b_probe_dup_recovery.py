@@ -101,12 +101,8 @@ def sample_bucket(s: requests.Session, year: str) -> list[dict]:
 
 
 def probe_issue(s: requests.Session, number: int) -> dict:
-    comments = _get(
-        s, f"{API}/repos/{REPO}/issues/{number}/comments", {"per_page": 100}
-    ).json()
-    timeline = _get(
-        s, f"{API}/repos/{REPO}/issues/{number}/timeline", {"per_page": 100}
-    ).json()
+    comments = _get(s, f"{API}/repos/{REPO}/issues/{number}/comments", {"per_page": 100}).json()
+    timeline = _get(s, f"{API}/repos/{REPO}/issues/{number}/timeline", {"per_page": 100}).json()
     time.sleep(0.2)
 
     strict_target = None
@@ -174,7 +170,12 @@ def main() -> None:
         }
         log.info(
             "[%s] n=%d strict=%.0f%% loose=%.0f%% marked_dup_evt=%.0f%% tl_target=%.0f%%",
-            year, n, 100 * strict / n, 100 * loose / n, 100 * marked / n, 100 * tl_target / n,
+            year,
+            n,
+            100 * strict / n,
+            100 * loose / n,
+            100 * marked / n,
+            100 * tl_target / n,
         )
 
     report = {
@@ -182,11 +183,9 @@ def main() -> None:
         "probed_at": "2026-07-11",
         "repo": REPO,
         "sampling": "per era bucket: 13 earliest + 13 latest dup-labeled issues by created_at "
-                    "(deterministic; within-year edges, not uniform — fine for an era trend)",
+        "(deterministic; within-year edges, not uniform — fine for an era trend)",
         "gate": "ADR-0026 vscode GO holds if strict/timeline recovery >= ~40% in modern eras",
-        "buckets": {
-            y: {k: v for k, v in b.items() if k != "issues"} for y, b in buckets.items()
-        },
+        "buckets": {y: {k: v for k, v in b.items() if k != "issues"} for y, b in buckets.items()},
         "per_issue": {y: b["issues"] for y, b in buckets.items()},
     }
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)

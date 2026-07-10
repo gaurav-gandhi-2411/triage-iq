@@ -165,6 +165,17 @@ def compute_scores(
         # Both excluded so the judge cache key keeps matching the clean cassette; this eval
         # harness never populates either field anyway (run_eval.py calls
         # triage_with_metadata() directly, bypassing app.py's post-processing).
+        #
+        # ADR-0025: resolution_bucket / resolution_confidence_pct are deliberately NOT
+        # excluded, unlike the three fields above. Those three never existed in the
+        # original recording, so excluding them restores an exact text match. These two
+        # DID exist at record time with real values -- excluding them now would change
+        # plan_json's text relative to the ORIGINAL recording for EVERY issue (not just
+        # microsoft/vscode), breaking kubernetes/kubernetes too even though its value is
+        # unchanged by BUCKET_CLASSIFIER_TRUSTED (confirmed directly: excluding these two
+        # caused a cache miss on the very first k8s issue). The correct fix is a targeted
+        # partial re-record of microsoft/vscode's judge entries only (its plan_json value
+        # for these fields genuinely changed), not an exclusion. See ADR-0025.
         plan_json = json.dumps(
             plan.model_dump(exclude={"declared_attribution", "abstention_status"}),
             ensure_ascii=False,

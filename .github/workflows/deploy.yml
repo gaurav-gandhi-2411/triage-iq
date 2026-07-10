@@ -87,12 +87,22 @@ jobs:
           docker push ${{ env.IMAGE }}:${{ github.sha }}
           docker push ${{ env.IMAGE }}:latest
 
-      - name: Deploy to Cloud Run
+      - name: Deploy to Cloud Run (candidate, no traffic)
         id: deploy
         run: |
           # Note: both secrets must exist in Secret Manager before first deploy:
           #   gcloud secrets create groq-api-key --replication-policy=automatic
           #   gcloud secrets create metrics-token --replication-policy=automatic
+          #
+          # --no-traffic --tag=candidate: deploy the new revision WITHOUT moving any live
+          # traffic to it. This is what makes the smoke test below meaningful -- it hits the
+          # candidate's own stable tagged URL, not the public service URL, so it always tests
+          # THIS deploy's code regardless of what the service's traffic split currently is.
+          # (Root cause this replaces: a prior deploy's rollback can pin the service's traffic
+          # to a specific named revision, silently disabling Cloud Run's default "auto-promote
+          # newest deploy" behavior for every deploy after it -- see issue #22. Under the old
+          # flow, a pinned service meant new revisions landed at 0% traffic while the smoke
+          # test still curled the public URL and passed against stale, already-live code.)
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image ${{ env.IMAGE }}:${{ github.sha }} \
             --region ${{ env.GCP_REGION }} \
@@ -108,17 +118,31 @@ jobs:
             --startup-probe="httpGet.path=/health,httpGet.port=8080,timeoutSeconds=30,periodSeconds=60,failureThreshold=3" \
             --update-secrets GROQ_API_KEY=groq-api-key:latest,METRICS_TOKEN=metrics-token:latest \
             --update-env-vars ENVIRONMENT=prod \
+            --no-traffic \
+            --tag=candidate \
             --quiet
-          echo "url=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+          REVISION=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
             --region ${{ env.GCP_REGION }} \
-            --format 'value(status.url)')" >> $GITHUB_OUTPUT
+            --format 'value(status.latestCreatedRevisionName)')
+          CANDIDATE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region ${{ env.GCP_REGION }} \
+            --format=json \
+            | python3 -c "import json,sys; d=json.load(sys.stdin); print(next(t['url'] for t in d['status']['traffic'] if t.get('tag') == 'candidate'))")
+          PUBLIC_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region ${{ env.GCP_REGION }} \
+            --format 'value(status.url)')
+          echo "Candidate revision: $REVISION"
+          echo "Candidate URL (not yet promoted, tests THIS deploy only): $CANDIDATE_URL"
+          echo "revision=$REVISION" >> $GITHUB_OUTPUT
+          echo "candidate_url=$CANDIDATE_URL" >> $GITHUB_OUTPUT
+          echo "url=$PUBLIC_URL" >> $GITHUB_OUTPUT
 
-      - name: Smoke test
+      - name: Smoke test (candidate revision, before it takes any traffic)
         id: smoke
         env:
           SMOKE_METRICS_TOKEN: ${{ secrets.SMOKE_TEST_METRICS_TOKEN }}
         run: |
-          URL="${{ steps.deploy.outputs.url }}"
+          URL="${{ steps.deploy.outputs.candidate_url }}"
 
           # 1. Health check — retry up to 5 times
           echo "=== /health ==="
@@ -167,20 +191,35 @@ jobs:
           fi
           echo "Triage check passed — predicted_component=$COMPONENT"
 
-      - name: Rollback on smoke test failure
-        if: failure() && steps.smoke.conclusion == 'failure'
+      - name: Promote candidate to live traffic
+        id: promote
+        if: success()
         run: |
-          PREV=$(gcloud run revisions list \
-            --service ${{ env.SERVICE_NAME }} \
-            --region ${{ env.GCP_REGION }} \
-            --format "value(REVISION)" \
-            --sort-by "~LAST_DEPLOYED_TIME" \
-            --limit 2 | tail -1)
-          echo "Rolling back to $PREV"
+          # --to-latest (not --to-revisions <name>=100): always re-asserts "traffic follows
+          # the newest ready revision" as the service's ongoing policy, rather than pinning to
+          # this one revision by name. This is what makes a successful deploy self-healing --
+          # even if a PRIOR deploy's failure had pinned traffic to some old revision by name
+          # (disabling auto-promotion), this step overwrites that pin on every green deploy,
+          # so the drift can no longer persist silently across deploys (issue #22).
           gcloud run services update-traffic ${{ env.SERVICE_NAME }} \
             --region ${{ env.GCP_REGION }} \
-            --to-revisions "$PREV=100"
+            --to-latest
+          echo "Promoted ${{ steps.deploy.outputs.revision }} to 100% live traffic."
+
+      - name: Report candidate smoke-test failure (no rollback needed)
+        if: failure() && steps.smoke.conclusion == 'failure'
+        run: |
+          # The candidate was deployed with --no-traffic, so it never received any live
+          # traffic -- whatever was serving before this run is still serving now, unaffected.
+          # No traffic rollback is needed by construction. This just surfaces the failure
+          # clearly rather than silently leaving the failed candidate revision around.
+          echo "Smoke test failed for candidate revision ${{ steps.deploy.outputs.revision }}."
+          echo "Live traffic was never moved to it -- the previously-live revision is still serving."
+          gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region ${{ env.GCP_REGION }} \
+            --format "value(status.traffic)"
+          exit 1
 
       - name: Print deployment URL
         if: success()
-        run: echo "Deployed to ${{ steps.deploy.outputs.url }}"
+        run: echo "Deployed to ${{ steps.deploy.outputs.url }} (revision ${{ steps.deploy.outputs.revision }})"

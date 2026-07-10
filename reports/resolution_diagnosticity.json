@@ -1,0 +1,518 @@
+{
+  "cassette_hash": "c9966414f3c52df1af3f2df6624239fc61a2c65ed5d20341dae4f8e7c8d7484f",
+  "eval_set_hash": "e37a69ea0cf1d26749d7f714d4f161ec6fd5f37d25a22156277551e00fd30138",
+  "multiple_comparison_correction": {
+    "bonferroni_alpha_threshold": 0.002273,
+    "family": "kubernetes/kubernetes only (powered repo) -- 11 signals x 2 targets = 22 tests",
+    "meaningful_effect_threshold": 0.3,
+    "method": "Benjamini-Hochberg FDR (primary, q=0.05) + Bonferroni (reported, alpha=0.05/n)",
+    "n_tests": 22,
+    "per_test": [
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.4454,
+        "p_uncorrected_significant": false,
+        "r": -0.106,
+        "signal": "classifier_confidence",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_coverage_failure"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.4014,
+        "p_uncorrected_significant": false,
+        "r": -0.1165,
+        "signal": "classifier_confidence",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_error_magnitude"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.5427,
+        "p_uncorrected_significant": false,
+        "r": -0.0847,
+        "signal": "retrieval_mean_similarity",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_coverage_failure"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.0346,
+        "p_uncorrected_significant": true,
+        "r": -0.2881,
+        "signal": "retrieval_mean_similarity",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_error_magnitude"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.3919,
+        "p_uncorrected_significant": false,
+        "r": -0.1189,
+        "signal": "retrieval_max_similarity",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_coverage_failure"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.0658,
+        "p_uncorrected_significant": false,
+        "r": -0.2522,
+        "signal": "retrieval_max_similarity",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_error_magnitude"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.5701,
+        "p_uncorrected_significant": false,
+        "r": -0.079,
+        "signal": "retrieval_similarity_spread",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_coverage_failure"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.9801,
+        "p_uncorrected_significant": false,
+        "r": -0.0035,
+        "signal": "retrieval_similarity_spread",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_error_magnitude"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.2418,
+        "p_uncorrected_significant": false,
+        "r": -0.162,
+        "signal": "title_length_chars",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_coverage_failure"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.7789,
+        "p_uncorrected_significant": false,
+        "r": -0.0391,
+        "signal": "title_length_chars",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_error_magnitude"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.9741,
+        "p_uncorrected_significant": false,
+        "r": -0.0045,
+        "signal": "body_length_chars",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_coverage_failure"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.0377,
+        "p_uncorrected_significant": true,
+        "r": 0.2836,
+        "signal": "body_length_chars",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_error_magnitude"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 1.0,
+        "p_uncorrected_significant": false,
+        "r": 0.0,
+        "signal": "code_block_present",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_coverage_failure"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 1.0,
+        "p_uncorrected_significant": false,
+        "r": 0.0,
+        "signal": "code_block_present",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_error_magnitude"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.8709,
+        "p_uncorrected_significant": false,
+        "r": 0.0226,
+        "signal": "raw_quantile_spread_days",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_coverage_failure"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.0456,
+        "p_uncorrected_significant": true,
+        "r": 0.2732,
+        "signal": "raw_quantile_spread_days",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_error_magnitude"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.1649,
+        "p_uncorrected_significant": false,
+        "r": -0.1917,
+        "signal": "resolution_bucket_rank",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_coverage_failure"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.6958,
+        "p_uncorrected_significant": false,
+        "r": -0.0544,
+        "signal": "resolution_bucket_rank",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_error_magnitude"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.1417,
+        "p_uncorrected_significant": false,
+        "r": -0.2026,
+        "signal": "component_grounded",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_coverage_failure"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.17,
+        "p_uncorrected_significant": false,
+        "r": -0.1895,
+        "signal": "component_grounded",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_error_magnitude"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.9088,
+        "p_uncorrected_significant": false,
+        "r": 0.016,
+        "signal": "quantile_asymmetry_days",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_coverage_failure"
+      },
+      {
+        "diagnostic": false,
+        "meaningful_effect_size": false,
+        "p_raw": 0.0443,
+        "p_uncorrected_significant": true,
+        "r": 0.2748,
+        "signal": "quantile_asymmetry_days",
+        "survives_bh_fdr_q05": false,
+        "survives_bonferroni": false,
+        "target": "vs_error_magnitude"
+      }
+    ]
+  },
+  "per_repo": {
+    "kubernetes/kubernetes": {
+      "component_identity_exploratory": {
+        "caveat": "EXPLORATORY ONLY -- excluded from the corrected family and the verdict. Median group size too small for reliable inference.",
+        "kruskal_wallis_h": 22.978133718133705,
+        "kruskal_wallis_p_uncorrected": 0.3451453923660195,
+        "median_group_size": 2.0,
+        "n_distinct_components": 22
+      },
+      "coverage_failure_count": 17,
+      "coverage_failure_rate": 0.3148,
+      "indicative_only": false,
+      "mean_error_magnitude_days": 140.9933,
+      "n": 54,
+      "signals": {
+        "body_length_chars": {
+          "vs_coverage_failure": {
+            "p": 0.9741362841350059,
+            "r": -0.004517632206950356
+          },
+          "vs_error_magnitude": {
+            "p": 0.03767240888821437,
+            "r": 0.2836341459281265
+          }
+        },
+        "classifier_confidence": {
+          "vs_coverage_failure": {
+            "p": 0.44535679502050096,
+            "r": -0.10604342569807508
+          },
+          "vs_error_magnitude": {
+            "p": 0.40141374485124015,
+            "r": -0.11652372784448255
+          }
+        },
+        "code_block_present": {
+          "vs_coverage_failure": {
+            "note": "zero variance in this repo",
+            "p": 1.0,
+            "r": 0.0
+          },
+          "vs_error_magnitude": {
+            "note": "zero variance in this repo",
+            "p": 1.0,
+            "r": 0.0
+          }
+        },
+        "component_grounded": {
+          "vs_coverage_failure": {
+            "p": 0.14167251595046776,
+            "r": -0.20264620104233963
+          },
+          "vs_error_magnitude": {
+            "p": 0.1699691657157959,
+            "r": -0.1894837052770499
+          }
+        },
+        "quantile_asymmetry_days": {
+          "vs_coverage_failure": {
+            "p": 0.908846002046339,
+            "r": 0.01595299251988124
+          },
+          "vs_error_magnitude": {
+            "p": 0.04433628537034464,
+            "r": 0.27478559176672385
+          }
+        },
+        "raw_quantile_spread_days": {
+          "vs_coverage_failure": {
+            "p": 0.870948789222812,
+            "r": 0.022633897630577746
+          },
+          "vs_error_magnitude": {
+            "p": 0.045639380828619576,
+            "r": 0.2731846769582618
+          }
+        },
+        "resolution_bucket_rank": {
+          "vs_coverage_failure": {
+            "p": 0.16489102080921536,
+            "r": -0.19172051730776424
+          },
+          "vs_error_magnitude": {
+            "p": 0.6957989594345673,
+            "r": -0.0544424413193384
+          }
+        },
+        "retrieval_max_similarity": {
+          "vs_coverage_failure": {
+            "p": 0.39192090518779876,
+            "r": -0.11887337080453231
+          },
+          "vs_error_magnitude": {
+            "p": 0.0657722808969561,
+            "r": -0.2522251234520109
+          }
+        },
+        "retrieval_mean_similarity": {
+          "vs_coverage_failure": {
+            "p": 0.5426651347991918,
+            "r": -0.0846778745098139
+          },
+          "vs_error_magnitude": {
+            "p": 0.03461969407671009,
+            "r": -0.28812654850390695
+          }
+        },
+        "retrieval_similarity_spread": {
+          "vs_coverage_failure": {
+            "p": 0.5700944151148633,
+            "r": -0.07901087694413764
+          },
+          "vs_error_magnitude": {
+            "p": 0.9801403911933041,
+            "r": -0.0034686487516676187
+          }
+        },
+        "title_length_chars": {
+          "vs_coverage_failure": {
+            "p": 0.2417971789446106,
+            "r": -0.16202181088794254
+          },
+          "vs_error_magnitude": {
+            "p": 0.7789345968488215,
+            "r": -0.039099763429362465
+          }
+        }
+      }
+    },
+    "microsoft/vscode": {
+      "component_identity_exploratory": {
+        "caveat": "EXPLORATORY ONLY -- excluded from the corrected family and the verdict. Median group size too small for reliable inference.",
+        "kruskal_wallis_h": 9.484848484848484,
+        "kruskal_wallis_p_uncorrected": 0.14809021579190323,
+        "median_group_size": 1.0,
+        "n_distinct_components": 7
+      },
+      "coverage_failure_count": 3,
+      "coverage_failure_rate": 0.2727,
+      "indicative_only": true,
+      "mean_error_magnitude_days": 206.2047,
+      "n": 11,
+      "signals": {
+        "body_length_chars": {
+          "vs_coverage_failure": {
+            "p": 0.17026026622245907,
+            "r": -0.4449634985325767
+          },
+          "vs_error_magnitude": {
+            "p": 0.5372209352113229,
+            "r": -0.20909090909090913
+          }
+        },
+        "classifier_confidence": {
+          "vs_coverage_failure": {
+            "p": 0.2589870378906887,
+            "r": 0.3726829319004775
+          },
+          "vs_error_magnitude": {
+            "p": 0.10973723224165641,
+            "r": 0.5090909090909091
+          }
+        },
+        "code_block_present": {
+          "vs_coverage_failure": {
+            "note": "zero variance in this repo",
+            "p": 1.0,
+            "r": 0.0
+          },
+          "vs_error_magnitude": {
+            "note": "zero variance in this repo",
+            "p": 1.0,
+            "r": 0.0
+          }
+        },
+        "component_grounded": {
+          "vs_coverage_failure": {
+            "p": 0.5683217589713186,
+            "r": 0.19364916731037082
+          },
+          "vs_error_magnitude": {
+            "p": 0.5554454421055854,
+            "r": 0.20000000000000004
+          }
+        },
+        "quantile_asymmetry_days": {
+          "vs_coverage_failure": {
+            "p": 0.4369653136314156,
+            "r": -0.2616921273757274
+          },
+          "vs_error_magnitude": {
+            "p": 0.72928477951978,
+            "r": 0.11818181818181818
+          }
+        },
+        "raw_quantile_spread_days": {
+          "vs_coverage_failure": {
+            "p": 0.4478939588678965,
+            "r": -0.25571019415033913
+          },
+          "vs_error_magnitude": {
+            "p": 0.65003396549758,
+            "r": 0.15454545454545454
+          }
+        },
+        "resolution_bucket_rank": {
+          "vs_coverage_failure": {
+            "p": 0.38928314247621165,
+            "r": -0.2886751345948128
+          },
+          "vs_error_magnitude": {
+            "p": 0.6087170316973569,
+            "r": -0.17407765595569782
+          }
+        },
+        "retrieval_max_similarity": {
+          "vs_coverage_failure": {
+            "p": 0.2306940868848062,
+            "r": -0.3938748616250883
+          },
+          "vs_error_magnitude": {
+            "p": 0.2115450103420961,
+            "r": -0.4090909090909091
+          }
+        },
+        "retrieval_mean_similarity": {
+          "vs_coverage_failure": {
+            "p": 0.9472500789409677,
+            "r": 0.02267045046515172
+          },
+          "vs_error_magnitude": {
+            "p": 0.8109903943000458,
+            "r": 0.08181818181818183
+          }
+        },
+        "retrieval_similarity_spread": {
+          "vs_coverage_failure": {
+            "p": 0.2424094515837429,
+            "r": -0.38492755358410946
+          },
+          "vs_error_magnitude": {
+            "p": 0.2115450103420961,
+            "r": -0.4090909090909091
+          }
+        },
+        "title_length_chars": {
+          "vs_coverage_failure": {
+            "p": 0.5217128623572007,
+            "r": -0.21692744004623812
+          },
+          "vs_error_magnitude": {
+            "p": 0.7698749998921366,
+            "r": 0.10000000000000002
+          }
+        }
+      }
+    }
+  },
+  "verdict": {
+    "diagnostic_signals": [],
+    "outcome": "NEGATIVE",
+    "summary": "0/22 k8s tests are diagnostic (raw p<0.05 AND survives BH-FDR q=0.05 AND |r|>=0.3)."
+  }
+}

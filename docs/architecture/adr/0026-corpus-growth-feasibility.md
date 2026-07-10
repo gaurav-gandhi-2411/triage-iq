@@ -119,3 +119,41 @@ ever ship k8s-only" outcome is not supported by the data.
 | k8s-only growth (write vscode off) | vscode's dup-label pool (29,111 × 49%) is the *largest* pair source in the project; writing it off would repeat the original scraping mistake. |
 | Raise the title-sim cap (8.8K/11.8K pairs available, zero scraping) | Weakest-confidence channel; floods gold with near-duplicate-text pairs and inflates R@5 with easy positives — a metric win by dataset dilution, not a model win. Usable only as a labeled, quality-reviewed supplement. |
 | Escalate k8s to n=300 on existing pairs | Already rejected by ADR-0016: asymmetric standards; vscode can't follow at current corpus. |
+
+---
+
+## Addendum — Phase 2b-probe result (2026-07-11): per-era recovery rate CONFIRMED, timeline API refuted
+
+GG gated the full scrape on probing the load-bearing 49% comment-recovery assumption across eras
+(it was measured on a 2015–16-skewed sample). Probe: 156 `*duplicate`-labeled vscode issues,
+26 per era bucket (13 earliest + 13 latest per year by created_at), ~320 API calls, analysis only.
+Reproduce: `python scripts/phase2b_probe_dup_recovery.py` → `reports/dup_recovery_probe.json`.
+
+| Era | n | strict regex (comparable to 49%) | union incl. `/duplicate <URL>` form | marked_as_duplicate event present | target in event payload |
+|---|---|---|---|---|---|
+| 2016 | 26 | 27% | 27% | 0% | 0% |
+| 2018 | 26 | 42% | 42% | 19% | 0% |
+| 2020 | 26 | 42% | **77%** | 15% | 0% |
+| 2022 | 26 | 31% | **54%** | 0% | 0% |
+| 2024 | 26 | 31% | **58%** | 12% | 0% |
+| 2026 | 26 | 38% | **81%** | 4% | 0% |
+
+- **Gate result: PASS.** Union recovery ≥42% in every modern bucket; modern pooled (2018–2026)
+  = 81/130 = **62%**. The rate did not collapse on modern issues — it *rises*, because modern
+  vscode triage uses the `/duplicate <full issue URL>` command, which the strict regex missed
+  (URL form) but which is high-precision (a team-member triage command naming exactly the
+  canonical target — verified by inspection on #87963→84271, #201667→166118, #285645→246204).
+- **Timeline API REFUTED as a channel** (correcting this ADR's earlier hope): the
+  `marked_as_duplicate` event appears on only 0–19% of dup-labeled issues and its payload
+  **never** exposes the canonical target (0% across all 156 issues). Phase 2b must drop the
+  timeline channel and rely on comment parsing — which the probe shows is sufficient.
+- The in-corpus 49% vs probe-2016 27%: the in-corpus measurement covered all 238 dup-labeled
+  issues (2015–16), the probe samples 26 year-edge issues from 2016 only — sampling difference,
+  and irrelevant now that modern eras are measured directly.
+- **Revised vscode yield**: 29,111 dup-labeled × 62% (modern pooled) ≈ **18,000 candidate
+  pairs**; even at the weakest modern bucket (42%) ≈ 12,200. Requirement: 2,023 (80% power) /
+  2,706 (90%). To *collect* ~2,000–2,800 pairs, scrape ~3,500–5,000 dup-labeled issues +
+  comments + their targets — smaller than the scope estimated pre-probe.
+- Hard carry-forwards into 2b (unchanged, per GG): (1) retry delta stands on its OWN CI, never
+  compared to W3's +10pp (dup pairs are easier targets); (2) all new pairs pass the ADR-0018
+  disjointness guards before any retrain; (3) filter PR targets out of the shared number space.

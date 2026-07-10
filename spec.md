@@ -1,265 +1,160 @@
-# Project Spec: TriageIQ — W6 Attribution Fidelity (single-condition measurement)
+# Project Spec: TriageIQ — Diagnostic Resolution Uncertainty (signal search)
 
 ## Goal
 
-Change the synthesis prompt ONCE to make the LLM attribute its claims — declare where
-`predicted_component` came from (classifier top-3 or its own override, with a reason) and cite
-which retrieved issues support its summary/next-steps — then measure, with the existing grounding
-verifier as the instrument, the FIDELITY of that attribution: of the citations the LLM produces,
-what fraction are verifiably grounded (cited issue actually retrieved; component actually in
-classifier_top3) vs FABRICATED. Per repo, exact counts.
+The resolution model produces per-issue conformal intervals whose WIDTH varies (6.91–153.72 days,
+CV=0.463) but does NOT correlate with whether the interval actually covers the true value: mean
+width on covered issues (90.45d) is statistically indistinguishable from mean width on missed
+issues (91.01d) — ADR-0021. So the model expresses uncertainty that is NOT DIAGNOSTIC of its own
+errors: a wide interval is no more likely to be wrong than a narrow one.
 
-This replaces the two-arm prompt-swap A/B, which died at the step-0 determinism gate for a
-design reason, not an infra reason: local qwen is byte-deterministic on FIXED input (probe 2/2)
-but PROMPT-SENSITIVE (near-tie tokens flip on trivial prompt changes), and Groq has proven
-replica-jitter. Since the A/B's treatment IS a prompt change, no stack can separate "attribution
-effect" from "the prompt bytes changed" — the cross-arm comparison is confounded at the root. Do
-NOT attempt to force determinism to rescue an A/B; the causal "attribution reduces ungrounded
-rate" claim is DROPPED.
-
-The single-condition design keeps the more useful product question — "when asked to attribute,
-does the LLM cite REAL sources or invent them?" — and the probe result actively supports it:
-fixed-input determinism means one prompt + one recording is EXACTLY reproducible. No second
-condition, no cross-condition confound.
-
-CAN'T-LOSE framing (the ADR captures either outcome as a finding):
-- High grounded-citation rate → attribution is a trustworthy feature; ship it with the verifier
-  as the safety net (FLAG-not-strip, ratchet extended to citations).
-- Low rate → documented finding that ATTRIBUTION INDUCES FABRICATED REFERENCES in issue triage;
-  it stays FLAG-gated or doesn't ship — a real negative result, ADR-0006/ADR-0016 style.
-
-ADR-0015 lineage: the existing `GroundingAttribution` field is a *reconstruction* ("not new
-attribution elicited from a prompt change"); this iteration is the elicitation it anticipated.
-
-## Known validity threats (designed-in mitigations — these are in scope, not optional)
-
-1. **Measurement stack = ship stack.** Fabrication rate is a property of model+prompt. This
-   iteration measures LOCAL qwen3:8b synthesis (zero-cost, deterministic, reproducible without a
-   key) — so a SHIP decision includes the synthesis-provider change from Groq-8B to local qwen.
-   That coupling is explicit; confirm it at the escalation checkpoint before recording. Measuring
-   qwen and shipping Groq would be measuring the wrong system.
-2. **Validity ≠ aptness (blanket-citation gaming).** "Cited number ∈ retrieved set" measures
-   fabrication, not whether the citation supports the claim. A model citing all 5 retrieved
-   issues everywhere scores 100% grounded while attributing nothing. MANDATORY companion
-   metrics: citations-per-claim distribution, % of plans citing all retrieved issues
-   (blanket rate), distinct-citation overlap between summary and next-steps. OPTIONAL secondary
-   (labeled subjective): local-judge aptness rating on a 10-plan sample.
-3. **Rate is conditional on compliance.** Plans omitting the attribution block contribute no
-   citations. Compliance rate (attribution present + well-formed) is CO-PRIMARY, per repo.
-4. **Result pinned to this exact prompt+model.** Prompt-sensitivity means any future prompt edit
-   invalidates the measured fidelity — re-measure on change (same discipline as the grounding
-   pins). Stated in the ADR.
-5. **No cross-recording comparisons as claims.** New-cassette ungrounded/judge numbers vs the
-   old Groq-era baseline (2/65, means 10.5185/8.3636) are condition-confounded — report only as
-   a labeled side observation (model-change effect), never as the finding.
+This iteration is an OPEN SEARCH for a signal — any available signal — that actually CORRELATES
+with resolution coverage failure, so the system could know when its resolution estimate is likely
+wrong (which would, in turn, make resolution abstention meaningful, reversing the ADR-0021
+rejection). This is a research build, not a feature build. **The honest outcome may be "no available
+signal correlates with resolution error" — that is a valid, documented result, not a failure.** The
+deliverable is the systematic search + the correlation findings (positive or negative), not a
+shipped feature.
 
 ## Current state (existing project)
 
-- Clean n=65 eval set (54 k8s / 11 vscode), frozen CPU similar_issues, local qwen3:8b judge,
-  committed Groq-era cassette + baseline live as the CI gate (ADR-0019 bands 0.22/0.45).
-- Determinism probe (this arc, recorded result): local qwen3:8b synthesis byte-identical 2/2 on
-  fixed input under warm-up + keep_alive=-1 + serial + fixed order; prompt-sensitive on trivial
-  prompt edits; Groq replica-jitter confirmed. Consequence: single-condition local recording is
-  exactly reproducible; cross-prompt comparisons are not clean on any stack.
-- Grounding verifier (`src/triage_iq/models/grounding.py:verify_plan_grounding`): pure Python,
-  deterministic given a fixed plan, FLAG-not-strip. Semantics FROZEN — it keeps measuring what
-  it measures (predicted_component vs top-3; similar_issues numbers vs retrieved set). New
-  citation fields get a NEW additive checker.
-- Synthesis today: Groq llama-3.1-8b-instant in `TriageAssistant` (temp 0, seed 42, 3 few-shots,
-  parse-retry + fallback). An ollama synthesis path may partially exist from the aborted W6 A/B
-  build — reuse/finish it (profile-switched, e.g. SYNTHESIS_PROVIDER=ollama; Groq path intact).
-- The committed CI gate stays untouched during measurement: the new recording is an experiment
-  cassette. Promotion to committed baseline happens ONLY on the human ship decision (full
-  ceremony: means, ratchet, pins re-derived, human-approved).
+- Resolution: LightGBM quantile + bucket + CQR conformal (de-leaked, ADR-0009/0010). Produces
+  `expected_resolution_lower/upper_days`, `resolution_interval_conformal` (with empirical_coverage),
+  `resolution_confidence_pct`, `resolution_bucket`.
+- Eval: clean n=65 (54 k8s / 11 vscode), local qwen3:8b judge, live rev 00061-4xk (+ pending
+  structured-verification merge). Baseline cassette_hash c9966414.
+- The resolution ground truth (actual close time) is known for the eval issues (that's how coverage
+  is measured). So "did the interval cover" is a computable label per issue — the target of the search.
+- ADR-0021 established: interval WIDTH is not diagnostic. This build searches OTHER signals.
 
 ## Scope
 
-### In scope (this iteration)
+### In scope
 
-**The prompt change — ONE change, applied once (ESCALATE exact diff before recording):**
-- SYSTEM_PROMPT: add an `"attribution"` object to the embedded JSON schema plus instruction
-  lines: (a) "predicted_component should come from the classifier top-3; if you deviate, you
-  MUST set component_source='model_override' and give component_override_reason"; (b) "every
-  issue number cited anywhere in the plan MUST be one listed in SYSTEM 2"; (c) cite which
-  SYSTEM-2 issues support the summary and next steps — cite ONLY issues that actually support
-  the specific claim; empty lists are allowed and honest.
-- Update all 3 few-shot assistant outputs with correct `attribution` blocks that model
-  SELECTIVE citation (not blanket) — the exemplars are the main lever against threat #2.
-- No other prompt edits. After recording, the prompt is PINNED: edits invalidate the measurement.
+**Define the target label (the thing signals must predict):**
+- Per issue, the binary "coverage failure" label: did the conformal interval FAIL to cover the true
+  resolution time? (miss = 1, cover = 0). This is computable from existing data. Also consider a
+  continuous target: the signed/absolute error magnitude (how far off the point estimate was).
 
-**The additive schema fields (ESCALATE exact shapes with the prompt diff):**
+**Candidate signals to test (systematic — test each, report each):**
+Search across signals ALREADY AVAILABLE per issue (no new models unless an ensemble is cheap):
+1. Classifier confidence / component_confidence on the issue.
+2. Retrieval quality: similarity scores of the nearest neighbors (mean/max/top-k spread) — does a
+   "no good neighbors" issue resolve less predictably?
+3. Issue text features: length, code-block presence, title/body length, token count.
+4. Component identity: does resolution error correlate with WHICH component (some components
+   resolve more predictably)?
+5. Raw quantile spread BEFORE conformal adjustment (the base LightGBM lower/upper spread).
+6. Resolution bucket itself (do "months"/"long" bucket issues miss more than "hours"?).
+7. Grounding status / similar-issue count.
+8. (If cheap) ensemble disagreement: if multiple resolution models or quantile levels disagree,
+   is that diagnostic? Only if it doesn't require retraining a heavy model.
 
-  ```python
-  class DeclaredAttribution(BaseModel):
-      """LLM-emitted source attribution (W6, elicited by the prompt — contrast
-      GroundingAttribution, a post-hoc reconstruction; ADR-0015/ADR-0020)."""
-      component_source: Literal["classifier_top3", "model_override"]
-      component_override_reason: str = ""   # required by prompt iff model_override
-      summary_cited_issues: list[int] = []     # SYSTEM-2 numbers supporting triage_summary
-      next_steps_cited_issues: list[int] = []  # SYSTEM-2 numbers informing suggested_next_steps
+**The search (honest statistics — this is the whole point):**
+- For each candidate signal, measure its correlation with the coverage-failure label AND with error
+  magnitude. Use appropriate stats: point-biserial / logistic-regression coefficient for the binary
+  label, Spearman/Pearson for continuous error, each with a confidence interval or p-value.
+- The bar (same discipline as ADR-0006's reranker rejection): a signal is DIAGNOSTIC only if its
+  correlation is real (CI excludes zero / p below a stated threshold) AND meaningful (effect size,
+  not just significance on a lucky sample). Report effect size, not just significance.
+- n matters: k8s n=54 is where the search is powered; vscode n=11 is INDICATIVE-ONLY (report but
+  don't claim). State per-repo, don't pool.
+- Multiple-comparisons honesty: testing ~8 signals means ~8 chances for a spurious hit. Apply a
+  correction (Bonferroni or FDR) or at minimum state that k signals were tested so a single p<0.05
+  isn't overread. This matters — with 8 signals, one crossing p<0.05 by chance is likely.
 
-  # TriagePlan (additive only):
-  declared_attribution: DeclaredAttribution | None = Field(default=None)
-  ```
-- `/triage` gains the field automatically. No existing field changes shape. Missing/malformed
-  attribution → None (tolerant parse), COUNTED as a compliance failure, never a request failure.
+**Outcome (either is valid, documented in the ADR):**
+- POSITIVE: one or more signals correlate with coverage failure (real + meaningful, survives
+  multiple-comparison correction). Then: propose (don't build yet) how it would enable resolution
+  abstention, and escalate whether to build v2 abstention on it.
+- NEGATIVE: no available signal correlates. Documented finding: "resolution error is not predictable
+  from available per-issue features on this data" — a genuine result that closes the ADR-0021 thread
+  honestly and tells you resolution abstention isn't achievable without new features/data.
 
-**The fidelity checker (additive; `verify_plan_grounding` UNTOUCHED):**
-- New `verify_declared_attribution(plan, classifier_top3, retrieved_numbers)` returning, per
-  plan: fabricated citations (cited ∉ retrieved, deduped, sorted — mirrors existing verifier
-  style), grounded-citation count/total, component declaration class
-  (GROUNDED_DECLARED = said top-3 and is | HONEST_OVERRIDE = declared override |
-  MISATTRIBUTED = said top-3 but ISN'T — the worst class), compliance flag, and the
-  selectivity stats feeding threat-#2 metrics.
+### Out of scope
 
-**The ONE recording (all local, zero-cost — wall-clock is the budget):**
-- n=65, attributed prompt, local qwen3:8b synthesis + local qwen3:8b judge, warm-up +
-  keep_alive=-1, temp 0, seed 42, serial, fixed issue order, checkpointed/resume-safe. New
-  experiment cassette (`eval/cassettes/w6_attribution.json`); committed cassette untouched.
-- Post-recording stability spot-check: re-run 10 issues, byte-compare against the cassette
-  (confirms determinism held across the recording window).
-- Self-judging caveat (qwen judges qwen): document in the ADR; judge means from this cassette
-  are a new-baseline candidate, not comparable to the Groq-era means (ADR-0019 precedent
-  language: "a new baseline, not a corrected old one").
-
-**The measurement (primary deliverable — `reports/w6_attribution_fidelity.json` + script):**
-- CO-PRIMARY, per repo, exact counts with denominators stated (vscode n=11 — counts, not
-  percentage theater): (1) compliance rate; (2) grounded-citation rate = grounded/total cited,
-  with the fabricated-citation list; (3) component declaration classes, especially
-  MISATTRIBUTED count.
-- Companion (mandatory): selectivity metrics (citations-per-claim distribution, blanket rate);
-  parse-failure/fallback counts; existing-verifier outputs on the new plans (component axis +
-  similar_issues axis) as the continuity view.
-- Secondary (optional, labeled subjective): judge aptness spot-check on 10 plans.
-- Side observation (labeled, not a claim): new-cassette judge means + ungrounded profile vs the
-  Groq-era committed baseline.
-- PRE-REGISTER the decision rubric at the escalation checkpoint (proposal, human may adjust):
-  trustworthy-feature bar = compliance ≥ 90% overall AND zero MISATTRIBUTED components AND
-  fabricated citations = 0 on k8s (n=54) with any vscode fabrications individually explained
-  (n=11 is too small for a rate bar). Below bar → the negative-result framing applies.
-
-**Docs:**
-- ADR-0020: the two design pivots and why (one-arm: condition-drift confound; two-arm: prompt-
-  sensitivity + replica-jitter make ANY cross-prompt A/B unclean — the determinism probe as
-  evidence), the single-condition design, the dropped causal claim (explicitly: this does NOT
-  show attribution reduces ungrounded rate vs no-attribution), validity threats + mitigations,
-  exact prompt diff, field shapes, the fidelity tables, decision (ship / FLAG-gated / no-ship)
-  recorded as human, ADR-0015 lineage.
-- If SHIP: separate approved step — promote the cassette to committed baseline (new per-repo
-  means human-approved, ratchet + pins re-derived, citation-fabrication ratchet ADDED alongside
-  the existing grounding ratchet, `eval_summary.json`/`/eval` updated, synthesis-provider change
-  Groq→local documented, deploy its own approval).
-
-### Out of scope (do not build)
-
-- Any second recording condition, any cross-prompt comparison, any attempt to force cross-prompt
-  determinism. The causal A/B claim is dropped — do not resurrect it in the report or ADR.
-- Any change to `verify_plan_grounding` semantics, the existing ratchet definition, or any band.
-- Changing eval_set.jsonl, the gold set, the judge model/params, or issue order.
-- Retrieval/classifier/resolution changes; structured-output migration; self-consistency (other
-  roadmap items). One variable enters the codebase: the attribution prompt + its additive fields.
-- Promoting the experiment cassette, changing prod synthesis, or deploying — human decisions
-  after the measurement is read.
+- No retraining the resolution model, no new heavy models (an ensemble is fine ONLY if it's cheap
+  quantile-level disagreement, not a new fit).
+- No building resolution abstention in THIS iteration — this SEARCHES for the signal; building v2
+  on a found signal is a separate escalated decision.
+- No change to the live pipeline or schema (this is analysis, scoring-only, no re-record).
+- No reopening closed eval-integrity work.
+- No claiming a vscode result at n=11 (indicative-only).
 
 ## Tech stack
 
-- Local ollama qwen3:8b (synthesis AND judge), existing cassette recorder/player + LLM cache
-  (provider="ollama" keys), pandas/pytest. No new deps, zero paid calls.
+- Existing Python + scipy/statsmodels for the correlation stats (numpy/scipy likely already present;
+  statsmodels if needed for logistic regression + CIs — escalate if a new dep). Analysis over the
+  existing n=65 cassette + resolution ground truth. No LLM, no re-record.
 
 ## Architecture
 
 ```
 triage-iq/
-  src/triage_iq/models/triage.py           # ollama synthesis path (profile-switched);
-                                           #   DeclaredAttribution; additive TriagePlan field;
-                                           #   tolerant attribution parse
-  src/triage_iq/prompts/triage_prompt.py   # attribution schema block + instructions + 3
-                                           #   few-shots modeling SELECTIVE citation
-  src/triage_iq/models/grounding.py        # UNCHANGED verify_plan_grounding; NEW additive
-                                           #   verify_declared_attribution
-  scripts/w6_record.py                     # checkpointed single-condition recorder
-  scripts/w6_fidelity_report.py            # compliance + grounded-vs-fabricated + selectivity
-  eval/cassettes/w6_attribution.json       # NEW experiment cassette (the one recording)
-  reports/w6_attribution_fidelity.json     # the measurement artifact
-  docs/architecture/adr/ADR-0020-*.md      # either-outcome finding, both pivots documented
-  # committed eval_cassette.json / eval_baseline.json / ratchet / pins: UNTOUCHED until ship
+  scripts/analyze_resolution_diagnosticity.py   # NEW — the signal search + stats
+  reports/resolution_diagnosticity.json          # NEW — per-signal correlation results
+  docs/architecture/adr/ADR-0023-*.md            # the search, per-signal findings, verdict
 ```
+(No src/ changes, no schema changes — this is analysis. If a signal is found and v2 abstention is
+later approved, THAT build touches src/.)
+
+## Autonomy & escalation (CC runs autonomously — escalate ONLY these)
+
+CC decides + executes: the exact candidate-signal list (may add signals beyond the 8 if sensible),
+the statistical methods, the multiple-comparison correction, the analysis, the ADR.
+Escalate ONLY:
+1. **The search results** — the per-signal correlation table + the positive/negative verdict.
+   Report before writing the final verdict, so the ship/build-v2/close-as-negative decision is
+   human-made.
+2. A new dependency (statsmodels etc.) if needed.
+(No prod deploy in this build — it's analysis. If a signal is found, building v2 abstention is a
+separate future spec with its own escalations.)
+
+## Hard rules
+
+- Honest statistics: report effect size + CI/p, apply multiple-comparison correction for ~8 signals,
+  state n per repo, vscode n=11 is indicative-only. A single uncorrected p<0.05 out of 8 tests is
+  NOT a finding — say so.
+- The NEGATIVE outcome (no signal correlates) is a VALID, publishable result — frame it as a finding,
+  not a failure. Do not fish for a spurious positive to avoid a negative.
+- No retraining, no heavy new models, no schema/pipeline change (analysis only).
+- Zero-cost (no LLM, no re-record — pure analysis on existing data). Branch only, I merge.
+  Claude Max — never ANTHROPIC_API_KEY. Don't touch aetherart-497918.
 
 ## Verification commands
 
 ```yaml
-- name: eval-gate
-  cmd: pytest eval/ -v
-  required: true
 - name: api-tests
   cmd: pytest -v
   required: true
+- name: eval-gate
+  cmd: pytest eval/ -v
+  required: true
+```
+(The analysis script has its own reproducibility check: re-running produces byte-identical
+resolution_diagnosticity.json.)
+
+## Success criteria (CC verifies before reporting)
+
+- Coverage-failure label + error-magnitude target computed per issue from existing data.
+- Every candidate signal tested; per-signal correlation (effect size + CI/p) reported, per repo.
+- Multiple-comparison correction applied and stated; vscode marked indicative-only (n=11).
+- Verdict: which signal(s) if any are diagnostic (real + meaningful + survives correction), or the
+  honest negative (none are).
+- `resolution_diagnosticity.json` reproduces byte-identically on re-run.
+- ADR-0023 written with the full per-signal table and the verdict framed as a finding either way.
+- Staged on branch; nothing prod-facing (analysis only).
+
+## Build order (CC autonomous)
+
+1. Compute the coverage-failure label + error-magnitude target per issue (k8s n=54, vscode n=11).
+2. Extract each candidate signal per issue from the existing cassette / pipeline outputs.
+3. Run the correlation analysis per signal per repo: effect size + CI/p, multiple-comparison
+   correction across the signal set.
+4. ESCALATE: report the per-signal correlation table + the positive/negative verdict before
+   finalizing.
+5. ADR-0023 with the findings. If POSITIVE, note (don't build) how it would enable resolution
+   abstention v2 as a separate future decision. If NEGATIVE, close the ADR-0021 thread: resolution
+   error not predictable from available features on this data.
 ```
 
-## Subagent usage rules
-
-- `executor` writes/edits; `verifier` runs checks. Orchestrator delegates, never codes.
-
-## Escalation rules (orchestrator must ask before doing)
-
-- **ESCALATE before recording, as one checkpoint:** the exact prompt diff, the
-  DeclaredAttribution shape, confirmation of the measurement-stack-=-ship-stack coupling
-  (local qwen synthesis is what a ship decision ships), and the pre-registered decision rubric
-  numbers. WAIT for approval.
-- Report the recording plan + wall-clock estimate before starting (single arm, n=65,
-  synthesis + judge, checkpointed — scope as a real multi-hour operation).
-- If the post-recording 10-issue stability spot-check finds ANY byte mismatch, STOP and report —
-  the exact-reproducibility premise of the design is then wrong and that is itself a finding.
-- Report the full fidelity tables BEFORE writing the ADR decision section — ship / FLAG-gated /
-  no-ship is human.
-- Cassette promotion, baseline ceremony, prod synthesis change, deploy: each ONLY on explicit
-  instruction.
-
-## Hard rules (existing project)
-
-- Committed cassette, baseline, ratchet, pins, bands: FROZEN during measurement. Suite green
-  throughout.
-- `verify_plan_grounding` semantics frozen. Additive-only on `/triage`.
-- One recording condition; the prompt is pinned after recording; exact counts with n stated
-  everywhere; the dropped causal claim stays dropped.
-- Branch only; nothing deploys. Claude Max — never set ANTHROPIC_API_KEY. Zero-cost: everything
-  local. Don't touch aetherart-497918.
-- Run full suite after every executor pass; escalate on any pre-existing failure.
-
-## Budget
-
-- Soft target: 2 CC sessions (session 1: build + escalation checkpoint; session 2: recording
-  [multi-hour, checkpointed] + fidelity report + ADR). Hard cap: escalate after 20 executor
-  invocations.
-- `/cost` at midpoint.
-
-## Success criteria (orchestrator verifies ALL before declaring done)
-
-- Prompt diff + field shapes + stack coupling + decision rubric human-approved BEFORE recording.
-- `DeclaredAttribution` additive; tolerant parse; ollama synthesis path profile-switched with
-  Groq path intact; `verify_declared_attribution` additive; full suite green; committed gate
-  untouched (verified, not assumed).
-- One cassette recorded (n=65, local qwen synthesis + judge, solved discipline), post-recording
-  10-issue byte-stability spot-check PASSED.
-- `reports/w6_attribution_fidelity.json` complete: per-repo compliance, grounded-vs-fabricated
-  counts + fabricated-citation list, component declaration classes incl. MISATTRIBUTED,
-  selectivity/blanket metrics, parse counts, continuity view, labeled side observation.
-- ADR-0020 written: both design pivots with the determinism-probe evidence, dropped causal claim
-  stated, validity threats + mitigations, fidelity results, human decision recorded
-  (ship / FLAG-gated / no-ship).
-- All staged on a branch; nothing deployed; no baseline ceremony performed (unless separately
-  instructed after the decision).
-
-## Build order (recommended)
-
-1. Fresh branch off current main (`git add spec.md` so the spec is versioned with the work).
-   Reuse/finish the ollama synthesis path from the aborted A/B build if present.
-2. Draft the prompt diff + DeclaredAttribution + rubric → ESCALATE (one checkpoint). WAIT.
-3. Implement: schema field + tolerant parse → prompt + few-shots (selective-citation exemplars)
-   → verify_declared_attribution → w6_record.py / w6_fidelity_report.py. Full suite green.
-4. Report recording plan + estimate → record (checkpointed) → 10-issue stability spot-check
-   (STOP on any mismatch).
-5. w6_fidelity_report → REPORT full tables against the pre-registered rubric. WAIT for human
-   decision.
-6. ADR-0020 (either-outcome finding; decision recorded as human). Stage on branch, report.
-   Promotion/ship steps only on explicit follow-up instruction.

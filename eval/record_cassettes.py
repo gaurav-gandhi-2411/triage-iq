@@ -88,7 +88,11 @@ def load_checkpoint() -> dict:
 
 def save_checkpoint(data: dict) -> None:
     CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    CHECKPOINT_PATH.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    # newline="\n": eval/cassettes/*.json is declared `text eol=lf` in .gitattributes (same
+    # reasoning as CassettePlayer._save() in cassette.py -- see ADR-0025).
+    CHECKPOINT_PATH.write_text(
+        json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8", newline="\n"
+    )
 
 
 def load_eval_set() -> list[dict]:

@@ -393,7 +393,7 @@ class ResolutionTimePredictor:
         """
         trusted = BUCKET_CLASSIFIER_TRUSTED.get(self.repo, True)
         if self.model_bucket is not None and trusted:
-            proba  = self.model_bucket.predict(X)  # shape (n, 5)
+            proba  = np.asarray(self.model_bucket.predict(X))  # shape (n, 5)
             idx    = proba.argmax(axis=1)
             labels = [BUCKET_LABELS[i] for i in idx]
             confs  = proba[np.arange(len(idx)), idx]

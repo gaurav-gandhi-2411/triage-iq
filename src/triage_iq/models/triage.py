@@ -529,18 +529,18 @@ class TriageAssistant:
             )
             retry_messages = self._build_retry_messages(messages, raw)
             # Check cache for retry call too
-            retry_key: str | None = None
+            parse_retry_key: str | None = None
             if cache is not None:
-                retry_key = cache.compute_key(
+                parse_retry_key = cache.compute_key(
                     "groq", self.model, retry_messages, self.temperature, self.max_tokens,
                 )
-                cached2 = cache.get(retry_key)
+                cached2 = cache.get(parse_retry_key)
                 if cached2 is not None:
                     raw2 = cached2["content"]
                     usage = cached2.get("usage", {})
                 else:
                     raw2, usage = self._groq_completion(retry_messages)
-                    cache.set(retry_key, "groq", self.model, retry_messages, {"content": raw2, "usage": usage})
+                    cache.set(parse_retry_key, "groq", self.model, retry_messages, {"content": raw2, "usage": usage})
             else:
                 raw2, usage = self._groq_completion(retry_messages)
             try:

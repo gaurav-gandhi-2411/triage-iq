@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import cast
 
 import faiss
 import joblib
@@ -124,6 +125,7 @@ class SimilarIssueRetriever:
     # ------------------------------------------------------------------
 
     def save(self, out_dir: str) -> None:
+        assert self.index is not None, "Call build_index first"
         p = Path(out_dir)
         p.mkdir(parents=True, exist_ok=True)
         faiss.write_index(self.index, str(p / "index.faiss"))
@@ -140,7 +142,9 @@ class SimilarIssueRetriever:
         p = Path(out_dir)
         meta = joblib.load(str(p / "meta.pkl"))
         obj = cls(repo=meta["repo"], model_key=meta["model_key"])
-        obj.index = faiss.read_index(str(p / "index.faiss"))
+        # faiss.read_index()'s return type is the generic Index base class, but save()
+        # only ever writes an IndexFlatIP -- narrowing here matches the actual contract.
+        obj.index = cast(faiss.IndexFlatIP, faiss.read_index(str(p / "index.faiss")))
         obj.issue_numbers = meta["issue_numbers"]
         obj.texts = meta["texts"]
         return obj

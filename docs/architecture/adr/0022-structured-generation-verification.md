@@ -109,10 +109,45 @@ of a fabricated priority-confidence proxy). Two precise rules beat five fragile 
 ### Measured inconsistency rate
 
 Same replay, same n=65: **0/65 inconsistent** on both rules, both repos (see
-`reports/synthesis_reliability.json`). Consistent with the honest-either-outcome framing: the
-verifier finding nothing on this sample doesn't mean it's not worth having — it's a regression
-gate for future prompt/model changes, same as `grounding_status` mostly returning
-`all_grounded=True` in production while still being the thing that would catch a regression.
+`reports/synthesis_reliability.json`).
+
+### Firing-opportunity qualification — the 0% needs a denominator, not just a numerator
+
+**This 0% is not evenly meaningful across the two rules.** Checked directly (not assumed) how
+often each rule's *eligibility condition* even occurs in the 65 — i.e., how many issues could
+possibly have been flagged, before asking how many actually were:
+
+| Rule | Eligible (condition could apply) | Flagged (actually inconsistent) |
+|---|---|---|
+| `priority_resolution_consistent` | **1/65** (`priority_guess=="high"`, 1 vscode issue; bucket=`hours`) | 0/1 |
+| `override_reason_consistent` | **0/65** — `declared_attribution` is `None` on every single issue | 0/0 |
+
+**Rule 2 has zero opportunity to fire in this measurement, by construction, not by good
+behavior.** This replay uses the shipped-default legacy prompt (`TRIAGE_PROMPT_INCLUDE_ATTRIBUTION`
+off, ADR-0020) — the LLM is never asked to produce `declared_attribution` at all on this path, so
+the field is `None` on all 65 plans. `override_reason_consistent` is *vacuously* true 65/65
+times; it says nothing about whether the rule works, only that it never had a chance to run. It
+would only ever be exercised with the attribution flag on — which itself has its own separate
+measured fidelity (ADR-0020, 99.2% grounded), not re-derived here.
+
+**Rule 1 fired on essentially the smallest possible non-zero denominator.** Only one issue in
+the entire clean n=65 set is `priority_guess=="high"` — the overall bucket distribution is
+`{hours: 58, months: 4, days: 2, long: 1}`, so 5/65 issues *do* have a "slow" bucket, but none of
+those 5 happen to be the one `high`-priority issue. The rule is correctly implemented and
+correctly returned `False` on zero cases and `True` on the rest — but "0/1 flagged" is a
+single-issue result, not a stress test. `tests/test_plan_verify.py` covers the actual
+contradiction case synthetically (`test_high_priority_months_bucket_is_inconsistent` etc.)
+precisely because the real eval set doesn't exercise it meaningfully.
+
+**Honest framing, not "synthesis is provably consistent":** the correct reading of "0/65
+inconsistent" is *"consistent on the few cases these two rules had the chance to check, plus
+zero cases where the check couldn't even apply."* It is not evidence that synthesis is
+inconsistency-free in general, only that neither rule found a contradiction in the narrow slice
+of the data where it was structurally possible to. The verifier still ships as a regression
+gate — a future prompt or model change that starts producing more high-priority or
+model-override plans would immediately give these rules real denominators to prove themselves
+against, same as `grounding_status` mostly returning `all_grounded=True` in production while
+still being the thing that would catch a regression.
 
 ### TEST THE TEST — the ratchet demonstrably has teeth, not a vacuous assertion
 
@@ -154,9 +189,20 @@ drifting when a new always-on field lands.
   changes to one of the `openai/gpt-oss-*` models, or a future measurement shows a non-zero
   malformed rate, this decision should be revisited from scratch (a model change already forces
   a cassette re-record regardless).
-- `consistency_status` is additive and always computed (like `grounding_status`) — no env var
-  gates whether it's populated; nothing about it can change synthesis behavior or block a
-  response (FLAG-not-strip).
+- `consistency_status` is additive and `None`-safe: a new optional key on the `/triage` JSON
+  response, never a change to any existing field's shape or meaning, and it can never raise or
+  block a response (FLAG-not-strip). Existing consumers that parse the response generically are
+  unaffected; the risk class is the same as every previous additive field (`grounding_status`,
+  `declared_attribution`, `abstention_status`).
+- **Unlike `declared_attribution` (ADR-0020) and `abstention_status` (ADR-0021), this field is
+  NOT flag-gated off.** Those two stay `None` in production until an env var is explicitly set;
+  `consistency_status` is computed unconditionally (same as `grounding_status`, its direct
+  precedent) because it can never change synthesis behavior — there's no "off" state to default
+  to. **Practical consequence: merging this branch to `main` and letting the next deploy run
+  WILL change the live `/triage` response shape** — `consistency_status` will be populated with
+  real `true`/`false` values on every request, not stay `None`. This is the "any prod deploy"
+  escalation item from this build's autonomy rules: confirm before merging, since (unlike the
+  attribution/abstention branches) there is no flag to hold this back once it ships.
 - The consistency invariant (`eval/test_invariants.py::test_consistency_ratchet_no_new_inconsistent_plans`)
   guards against future regressions using a data-derived baseline (0/65), tied to
   `eval_set_hash` like the grounding ratchet — will loudly demand re-derivation if the eval set

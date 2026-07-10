@@ -1,0 +1,152 @@
+{
+  "repos": {
+    "microsoft_vscode": {
+      "repo": "microsoft_vscode",
+      "n_test": 616,
+      "point_regression": {
+        "model_mae_days": 6.02,
+        "naive_mae_days": 3.53,
+        "oracle_bucket_mae_days": 0.18,
+        "oracle_recovers_pct_of_naive_error": 94.9,
+        "model_recovers_pct_of_naive_error": -70.5
+      },
+      "per_bucket_residuals": {
+        "hours": {
+          "n": 563,
+          "mean_bias_days": 5.99,
+          "std_days": 5.64,
+          "mae_days": 5.99,
+          "mean_bias_log": 3.6875,
+          "std_log": 1.0217,
+          "actual_median_days": 0.04,
+          "actual_p10_days": 0.0,
+          "actual_p90_days": 0.45
+        },
+        "days": {
+          "n": 53,
+          "mean_bias_days": 6.16,
+          "std_days": 5.29,
+          "mae_days": 6.37,
+          "mean_bias_log": 1.189,
+          "std_log": 0.7935,
+          "actual_median_days": 1.87,
+          "actual_p10_days": 1.13,
+          "actual_p90_days": 3.64
+        },
+        "weeks": {
+          "n": 0
+        },
+        "months": {
+          "n": 0
+        },
+        "long": {
+          "n": 0
+        }
+      },
+      "bucket_classifier_vs_naive": {
+        "n": 616,
+        "trained_accuracy": 0.6932,
+        "naive_accuracy": 0.914,
+        "accuracy_delta_bootstrap": {
+          "mean": -0.22077922077922077,
+          "ci95_lower": -0.25811688311688313,
+          "ci95_upper": -0.18019480519480519
+        },
+        "trained_obo": 0.9075,
+        "naive_obo": 1.0,
+        "obo_delta_bootstrap": {
+          "mean": -0.09253246753246754,
+          "ci95_lower": -0.11688311688311688,
+          "ci95_upper": -0.0698051948051948
+        },
+        "naive_majority_bucket": "hours"
+      }
+    },
+    "kubernetes_kubernetes": {
+      "repo": "kubernetes_kubernetes",
+      "n_test": 1498,
+      "point_regression": {
+        "model_mae_days": 104.05,
+        "naive_mae_days": 106.29,
+        "oracle_bucket_mae_days": 43.91,
+        "oracle_recovers_pct_of_naive_error": 58.7,
+        "model_recovers_pct_of_naive_error": 2.1
+      },
+      "per_bucket_residuals": {
+        "hours": {
+          "n": 449,
+          "mean_bias_days": 2.46,
+          "std_days": 5.92,
+          "mae_days": 2.58,
+          "mean_bias_log": 1.4212,
+          "std_log": 1.6064,
+          "actual_median_days": 0.19,
+          "actual_p10_days": 0.01,
+          "actual_p90_days": 0.81
+        },
+        "days": {
+          "n": 448,
+          "mean_bias_days": 0.66,
+          "std_days": 7.29,
+          "mae_days": 3.8,
+          "mean_bias_log": -0.5969,
+          "std_log": 1.4053,
+          "actual_median_days": 2.93,
+          "actual_p10_days": 1.2,
+          "actual_p90_days": 5.91
+        },
+        "weeks": {
+          "n": 247,
+          "mean_bias_days": -7.99,
+          "std_days": 12.56,
+          "mae_days": 11.83,
+          "mean_bias_log": -1.5406,
+          "std_log": 1.377,
+          "actual_median_days": 13.29,
+          "actual_p10_days": 7.86,
+          "actual_p90_days": 24.27
+        },
+        "months": {
+          "n": 153,
+          "mean_bias_days": -76.87,
+          "std_days": 44.7,
+          "mae_days": 77.06,
+          "mean_bias_log": -2.8509,
+          "std_log": 1.3997,
+          "actual_median_days": 72.83,
+          "actual_p10_days": 34.05,
+          "actual_p90_days": 159.24
+        },
+        "long": {
+          "n": 201,
+          "mean_bias_days": -688.01,
+          "std_days": 425.23,
+          "mae_days": 688.01,
+          "mean_bias_log": -4.1869,
+          "std_log": 1.2767,
+          "actual_median_days": 636.68,
+          "actual_p10_days": 233.32,
+          "actual_p90_days": 957.73
+        }
+      },
+      "bucket_classifier_vs_naive": {
+        "n": 1498,
+        "trained_accuracy": 0.3324,
+        "naive_accuracy": 0.2997,
+        "accuracy_delta_bootstrap": {
+          "mean": 0.03271028037383177,
+          "ci95_lower": 0.018024032042723633,
+          "ci95_upper": 0.04739652870493992
+        },
+        "trained_obo": 0.6682,
+        "naive_obo": 0.5988,
+        "obo_delta_bootstrap": {
+          "mean": 0.06942590120160214,
+          "ci95_lower": 0.050066755674232306,
+          "ci95_upper": 0.08878504672897196
+        },
+        "naive_majority_bucket": "hours"
+      }
+    }
+  }
+}

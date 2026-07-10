@@ -36,11 +36,11 @@ RESOLUTION_WIDTH_THRESHOLD_DAYS: dict[str, float] = {
 
 
 def compute_abstention_status(
-    plan: "TriagePlan",
+    plan: TriagePlan,
     repo: str,
     component_grounded: bool,
     conformal_width_days: float | None,
-) -> "AbstentionStatus":
+) -> AbstentionStatus:
     """Return the selective-prediction gate result for one triaged issue.
 
     Args:

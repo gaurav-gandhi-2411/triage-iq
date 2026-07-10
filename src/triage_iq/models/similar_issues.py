@@ -49,7 +49,7 @@ class SimilarIssueRetriever:
     # Index construction
     # ------------------------------------------------------------------
 
-    def build_index(self, df: pd.DataFrame) -> "SimilarIssueRetriever":
+    def build_index(self, df: pd.DataFrame) -> SimilarIssueRetriever:
         """Embed all issues and build inner-product (cosine) FAISS index.
 
         Embeddings are L2-normalised so inner product == cosine similarity.
@@ -136,7 +136,7 @@ class SimilarIssueRetriever:
         logger.info("Saved index to %s", out_dir)
 
     @classmethod
-    def load(cls, out_dir: str) -> "SimilarIssueRetriever":
+    def load(cls, out_dir: str) -> SimilarIssueRetriever:
         p = Path(out_dir)
         meta = joblib.load(str(p / "meta.pkl"))
         obj = cls(repo=meta["repo"], model_key=meta["model_key"])

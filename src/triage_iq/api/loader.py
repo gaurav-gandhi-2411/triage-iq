@@ -1,9 +1,9 @@
-from __future__ import annotations
 """Model loading for the triage API.
 
 Loads all per-repo models once at startup and caches them as app state.
 Models are intentionally not reloaded between requests.
 """
+from __future__ import annotations
 
 import logging
 import os
@@ -115,7 +115,7 @@ class ModelStore:
         data_dir: Path | None = None,
         groq_api_key: str | None = None,
         cache=None,
-    ) -> "ModelStore":
+    ) -> ModelStore:
         import time
 
         from triage_iq.models.triage import TriageAssistant

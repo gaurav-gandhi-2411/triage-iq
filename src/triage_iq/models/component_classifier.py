@@ -70,7 +70,7 @@ class TFIDFComponentClassifier:
         y_train: pd.Series,
         X_val: pd.Series | None = None,
         y_val: pd.Series | None = None,
-    ) -> "TFIDFComponentClassifier":
+    ) -> TFIDFComponentClassifier:
         self.label_encoder = LabelEncoder()
         y_enc = self.label_encoder.fit_transform(y_train)
 
@@ -150,7 +150,7 @@ class TFIDFComponentClassifier:
         logger.info("Saved model to %s", path)
 
     @classmethod
-    def load(cls, path: str) -> "TFIDFComponentClassifier":
+    def load(cls, path: str) -> TFIDFComponentClassifier:
         data = joblib.load(path)
         obj = cls(repo=data["repo"], max_features=data["max_features"],
                   ngram_range=data["ngram_range"])

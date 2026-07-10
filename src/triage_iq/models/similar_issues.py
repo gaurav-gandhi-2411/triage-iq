@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import cast
 
 import faiss
 import joblib
@@ -49,7 +50,7 @@ class SimilarIssueRetriever:
     # Index construction
     # ------------------------------------------------------------------
 
-    def build_index(self, df: pd.DataFrame) -> "SimilarIssueRetriever":
+    def build_index(self, df: pd.DataFrame) -> SimilarIssueRetriever:
         """Embed all issues and build inner-product (cosine) FAISS index.
 
         Embeddings are L2-normalised so inner product == cosine similarity.
@@ -124,6 +125,7 @@ class SimilarIssueRetriever:
     # ------------------------------------------------------------------
 
     def save(self, out_dir: str) -> None:
+        assert self.index is not None, "Call build_index first"
         p = Path(out_dir)
         p.mkdir(parents=True, exist_ok=True)
         faiss.write_index(self.index, str(p / "index.faiss"))
@@ -136,11 +138,13 @@ class SimilarIssueRetriever:
         logger.info("Saved index to %s", out_dir)
 
     @classmethod
-    def load(cls, out_dir: str) -> "SimilarIssueRetriever":
+    def load(cls, out_dir: str) -> SimilarIssueRetriever:
         p = Path(out_dir)
         meta = joblib.load(str(p / "meta.pkl"))
         obj = cls(repo=meta["repo"], model_key=meta["model_key"])
-        obj.index = faiss.read_index(str(p / "index.faiss"))
+        # faiss.read_index()'s return type is the generic Index base class, but save()
+        # only ever writes an IndexFlatIP -- narrowing here matches the actual contract.
+        obj.index = cast(faiss.IndexFlatIP, faiss.read_index(str(p / "index.faiss")))
         obj.issue_numbers = meta["issue_numbers"]
         obj.texts = meta["texts"]
         return obj

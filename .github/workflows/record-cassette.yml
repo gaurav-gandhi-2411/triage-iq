@@ -78,24 +78,9 @@ jobs:
 
       - name: Clear cassette and checkpoint
         run: |
-          python - <<'EOF'
-import json
-payload = {
-    "schema_version": "v1",
-    "description": (
-        "Recorded LLM interactions for eval/test_quality_regression.py. "
-        "DO NOT EDIT manually. Re-record via eval/record_cassettes.py."
-    ),
-    "entries": {}
-}
-open("eval/cassettes/eval_cassette.json", "w").write(
-    json.dumps(payload, indent=2, ensure_ascii=False)
-)
-open("eval/cassettes/recording_checkpoint.json", "w").write(
-    json.dumps({"done": {}}, indent=2, ensure_ascii=False)
-)
-print("Cassette cleared (0 entries), checkpoint reset")
-EOF
+          python3 -c "import json; json.dump({'schema_version': 'v1', 'description': 'Recorded LLM interactions for eval/test_quality_regression.py. DO NOT EDIT manually. Re-record via eval/record_cassettes.py.', 'entries': {}}, open('eval/cassettes/eval_cassette.json', 'w'), indent=2, ensure_ascii=False)"
+          python3 -c "import json; json.dump({'done': {}}, open('eval/cassettes/recording_checkpoint.json', 'w'), indent=2, ensure_ascii=False)"
+          echo "Cassette cleared (0 entries), checkpoint reset"
 
       - name: Record cassette (live Groq API calls ~20 min)
         run: python eval/record_cassettes.py

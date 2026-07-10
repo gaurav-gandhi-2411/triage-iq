@@ -9,7 +9,11 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from triage_iq.models.resolution import BUCKET_CLASSIFIER_TRUSTED, BUCKET_LABELS, ResolutionTimePredictor
+from triage_iq.models.resolution import (
+    BUCKET_CLASSIFIER_TRUSTED,
+    BUCKET_LABELS,
+    ResolutionTimePredictor,
+)
 
 
 class _StubBucketModel:

@@ -17,7 +17,6 @@ import pandas as pd
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from triage_iq.models.grounding import verify_plan_grounding
-from triage_iq.models.plan_verify import verify_plan_consistency
 
 logger = logging.getLogger(__name__)
 
@@ -114,9 +113,13 @@ class ConsistencyStatus(BaseModel):
     """Deterministic internal-consistency check result (ADR-0022).
 
     See src/triage_iq/models/plan_verify.py:verify_plan_consistency. Checks the plan against
-    itself (not against upstream pipeline signals — that's GroundingStatus). Always computed,
-    same as GroundingStatus — not flag-gated, since it never changes synthesis or blocks the
-    response (FLAG-not-strip).
+    itself (not against upstream pipeline signals — that's GroundingStatus). Unlike
+    GroundingStatus, NOT always computed on live /triage: flag-gated off by default
+    (TRIAGE_ENABLE_CONSISTENCY_STATUS, src/triage_iq/api/app.py) because measured firing
+    opportunity on current data is ~0 (ADR-0022) — an always-on field would be an
+    uninformative always-true response key. Always computed in the eval-gate regression
+    ratchet regardless (scripts/measure_synthesis_reliability.py calls
+    verify_plan_consistency() directly).
     """
 
     priority_resolution_consistent: bool
@@ -181,8 +184,9 @@ class TriagePlan(BaseModel):
     )
     consistency_status: ConsistencyStatus | None = Field(
         default=None,
-        description="Deterministic internal-consistency check (ADR-0022). None only if "
-                    "computing it raised — never blocks the response (FLAG-not-strip).",
+        description="Deterministic internal-consistency check (ADR-0022). None by default -- "
+                    "flag-gated off (TRIAGE_ENABLE_CONSISTENCY_STATUS); computed unconditionally "
+                    "in the eval-gate ratchet regardless. Never blocks the response.",
     )
 
     @field_validator("component_confidence", mode="before")
@@ -306,16 +310,13 @@ class TriageAssistant:
             ungrounded_refs=report.ungrounded_refs,
             all_grounded=report.all_grounded,
         )
-
-        # Internal self-consistency check (ADR-0022) — checks the plan against itself, not
-        # against upstream signals (that's the grounding check above). Always computed, same
-        # as grounding_status: FLAG-not-strip, never blocks the response.
-        consistency = verify_plan_consistency(plan)
-        plan.consistency_status = ConsistencyStatus(
-            priority_resolution_consistent=consistency.priority_resolution_consistent,
-            override_reason_consistent=consistency.override_reason_consistent,
-            all_consistent=consistency.all_consistent,
-        )
+        # consistency_status (ADR-0022) is deliberately NOT computed here -- unlike
+        # grounding_status, it's flag-gated off by default on live /triage
+        # (TRIAGE_ENABLE_CONSISTENCY_STATUS, app.py) because measured firing opportunity on
+        # current data is ~0 (see ADR-0022): an always-on field here would be an
+        # uninformative always-true response key. The eval-gate ratchet still runs it
+        # unconditionally via scripts/measure_synthesis_reliability.py, which calls
+        # verify_plan_consistency() directly rather than reading this attribute.
         elapsed = time.perf_counter() - t0
 
         t_llm = max(

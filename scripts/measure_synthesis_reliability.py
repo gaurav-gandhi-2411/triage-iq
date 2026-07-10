@@ -38,6 +38,7 @@ import pandas as pd
 from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
 from triage_iq.models.component_classifier import TFIDFComponentClassifier
+from triage_iq.models.plan_verify import verify_plan_consistency
 from triage_iq.models.resolution import ResolutionTimePredictor
 from triage_iq.models.triage import TriageAssistant
 
@@ -124,20 +125,20 @@ def compute_reliability_cases(
         })
 
         plan, meta = assistant.triage_with_metadata(row)
-        consistency = plan.consistency_status
+        # ADR-0022: consistency_status is flag-gated off on live /triage (TRIAGE_ENABLE_
+        # CONSISTENCY_STATUS, app.py) so triage_with_metadata never sets it -- this
+        # measurement/ratchet calls verify_plan_consistency() directly instead, same pattern
+        # scripts/measure_grounding.py already uses for verify_plan_grounding.
+        consistency = verify_plan_consistency(plan)
 
         cases.append({
             "issue_number": issue["number"],
             "repo": repo,
             "llm_status": meta["llm_status"],
             "predicted_component": plan.predicted_component,
-            "all_consistent": consistency.all_consistent if consistency is not None else None,
-            "priority_resolution_consistent": (
-                consistency.priority_resolution_consistent if consistency is not None else None
-            ),
-            "override_reason_consistent": (
-                consistency.override_reason_consistent if consistency is not None else None
-            ),
+            "all_consistent": consistency.all_consistent,
+            "priority_resolution_consistent": consistency.priority_resolution_consistent,
+            "override_reason_consistent": consistency.override_reason_consistent,
         })
 
     return cases

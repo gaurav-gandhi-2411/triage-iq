@@ -26,7 +26,8 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from ..config import get_settings
 from ..models.abstention import compute_abstention_status
-from ..models.triage import ConformalIntervalResult, TriagePlan
+from ..models.plan_verify import verify_plan_consistency
+from ..models.triage import ConformalIntervalResult, ConsistencyStatus, TriagePlan
 from .loader import ModelStore
 from .schemas import HealthResponse, ServiceInfoResponse, TriageRequest
 
@@ -352,6 +353,27 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
             logger.warning(
                 "Abstention gate computation failed: %s — abstention_status left None",
                 _abstain_err,
+            )
+
+    # Internal consistency check (ADR-0022) — off by default on live /triage
+    # (TRIAGE_ENABLE_CONSISTENCY_STATUS=1 to enable). Measured firing opportunity on current
+    # data is ~0 (see ADR-0022): rule 2 never fires with the attribution flag off, rule 1 fired
+    # on 1/65 issues. An always-on field here would be an uninformative always-true response
+    # key today. Kept as a regression guard in the eval-gate ratchet (always computed there via
+    # scripts/measure_synthesis_reliability.py) — can be enabled live if future synthesis drift
+    # makes it informative.
+    if os.environ.get("TRIAGE_ENABLE_CONSISTENCY_STATUS") == "1":
+        try:
+            consistency = verify_plan_consistency(plan)
+            plan.consistency_status = ConsistencyStatus(
+                priority_resolution_consistent=consistency.priority_resolution_consistent,
+                override_reason_consistent=consistency.override_reason_consistent,
+                all_consistent=consistency.all_consistent,
+            )
+        except Exception as _consistency_err:
+            logger.warning(
+                "Consistency check failed: %s — consistency_status left None",
+                _consistency_err,
             )
 
     total_ms = round((time.perf_counter() - t_start) * 1000, 1)

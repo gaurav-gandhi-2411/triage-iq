@@ -1,9 +1,12 @@
 # ADR-0022 — Structured Generation + Semantic Verification
 
-**Status:** Accepted (verifier) / Not built (structured generation) — measure-first gate found
+**Status:** Accepted (verifier, as an eval-gate regression guard) / Not built (structured
+generation) / Not surfaced live (consistency_status flag-gated off). Measure-first gate found
 nothing for structured generation to fix, and the current synthesis model doesn't support it
-anyway. The deterministic semantic verifier ships regardless — valuable independent of the rate,
-per the spec.
+anyway. The deterministic semantic verifier ships as a regression guard in the eval gate — but,
+after gate-1 review of its near-zero firing opportunity on current data, does *not* run
+unconditionally on live `/triage` the way `grounding_status` does; it's flag-gated off
+(`TRIAGE_ENABLE_CONSISTENCY_STATUS`), same as `declared_attribution`/`abstention_status`.
 **Date:** 2026-07-10
 **Decider:** Gaurav Gandhi
 
@@ -72,14 +75,27 @@ This is the honest either-outcome the spec asked for: **"malformed rate is alrea
 valid, reportable finding, not a failure to find something to build.** Scoped down to
 verifier-only, per the spec's own pre-authorized fallback.
 
-## Decision: the semantic verifier ships (built regardless of the rate)
+## Decision: the semantic verifier ships as a regression guard, NOT a live signal
 
 `src/triage_iq/models/plan_verify.py` — `verify_plan_consistency(plan) -> ConsistencyReport`.
 Deterministic, pure Python, no LLM, no external signals (contrast `grounding.py`, which checks
 the plan against upstream pipeline signals — this checks the plan **against itself**).
-FLAG-not-strip: never raises on well-formed input, never mutates the plan. Wired into
-`TriageAssistant.triage_with_metadata`, unconditionally — same as `grounding_status`, not
-flag-gated, since it can never change synthesis output or block a response.
+FLAG-not-strip: never raises on well-formed input, never mutates the plan.
+
+**Revised after gate-1 review, based on the firing-opportunity finding below:**
+`grounding_status` earned its always-on live surface because it *fires* — 3.3% ungrounded on
+the same eval set (ADR-0015), a signal that carries real information on every request.
+`consistency_status` does not clear that bar on current data (see "Firing-opportunity
+qualification" below: ~0 real firing opportunity) — an always-on field here would be an
+always-`true` response key carrying almost no information. So unlike `grounding_status`,
+**`consistency_status` is flag-gated off by default** (`TRIAGE_ENABLE_CONSISTENCY_STATUS`,
+`src/triage_iq/api/app.py`, same pattern as `declared_attribution`/`abstention_status`) — it does
+**not** run inside `TriageAssistant.triage_with_metadata`. The eval-gate regression ratchet
+still runs it unconditionally, independent of the live flag: `scripts/measure_synthesis_reliability.py`
+calls `verify_plan_consistency()` directly on the replayed plan, the same pattern
+`scripts/measure_grounding.py` already used for `verify_plan_grounding`. This is where the
+verifier earns its keep — as the thing that would catch a *future* synthesis/prompt/model
+change that starts producing these contradictions, not as a live signal today.
 
 ### Consistency rules (kept deliberately narrow — 2 rules, both on structured fields only)
 
@@ -169,12 +185,12 @@ verification, mirroring how ADR-0019's jitter measurement was a direct one-time 
 ### Additive schema
 
 `ConsistencyStatus` (`priority_resolution_consistent: bool`, `override_reason_consistent: bool`,
-`all_consistent: bool`) lands as `TriagePlan.consistency_status`, `None`-safe. Excluded from the
-judge's `plan_json` in `eval/run_eval.py` (same pattern as `declared_attribution`/
-`abstention_status`) — this harness *does* populate the field (unlike those two, this check runs
-unconditionally inside `triage_with_metadata`), but excluding it keeps the judge cache key tied
-to the byte-for-byte `plan_json` the baseline means were computed from, rather than silently
-drifting when a new always-on field lands.
+`all_consistent: bool`) lands as `TriagePlan.consistency_status`, `None`-safe, flag-gated off by
+default (`TRIAGE_ENABLE_CONSISTENCY_STATUS`) — same as `declared_attribution`/`abstention_status`,
+unlike `grounding_status`. Excluded from the judge's `plan_json` in `eval/run_eval.py` regardless
+(same pattern as those two fields) — the field always serializes on `TriagePlan.model_dump()`
+once it exists in the schema, even as `None`, so the judge cache key still needs the exclusion
+to keep matching the byte-for-byte `plan_json` the baseline means were computed from.
 
 ## Consequences
 
@@ -189,24 +205,23 @@ drifting when a new always-on field lands.
   changes to one of the `openai/gpt-oss-*` models, or a future measurement shows a non-zero
   malformed rate, this decision should be revisited from scratch (a model change already forces
   a cassette re-record regardless).
-- `consistency_status` is additive and `None`-safe: a new optional key on the `/triage` JSON
-  response, never a change to any existing field's shape or meaning, and it can never raise or
-  block a response (FLAG-not-strip). Existing consumers that parse the response generically are
-  unaffected; the risk class is the same as every previous additive field (`grounding_status`,
-  `declared_attribution`, `abstention_status`).
-- **Unlike `declared_attribution` (ADR-0020) and `abstention_status` (ADR-0021), this field is
-  NOT flag-gated off.** Those two stay `None` in production until an env var is explicitly set;
-  `consistency_status` is computed unconditionally (same as `grounding_status`, its direct
-  precedent) because it can never change synthesis behavior — there's no "off" state to default
-  to. **Practical consequence: merging this branch to `main` and letting the next deploy run
-  WILL change the live `/triage` response shape** — `consistency_status` will be populated with
-  real `true`/`false` values on every request, not stay `None`. This is the "any prod deploy"
-  escalation item from this build's autonomy rules: confirm before merging, since (unlike the
-  attribution/abstention branches) there is no flag to hold this back once it ships.
+- **Nothing ships live from this merge.** `TRIAGE_ENABLE_CONSISTENCY_STATUS` defaults off —
+  `plan.consistency_status` stays `None` on every `/triage` response in every environment,
+  including if this branch is merged and deployed, until someone explicitly sets that env var.
+  Same zero-live-impact guarantee as `declared_attribution` (ADR-0020) and `abstention_status`
+  (ADR-0021) — this was a deliberate correction after the initial build wired it unconditionally
+  like `grounding_status`; the firing-opportunity finding below is why that was the wrong call
+  for a live signal, even though it's still exactly right for the eval-gate regression guard.
 - The consistency invariant (`eval/test_invariants.py::test_consistency_ratchet_no_new_inconsistent_plans`)
   guards against future regressions using a data-derived baseline (0/65), tied to
   `eval_set_hash` like the grounding ratchet — will loudly demand re-derivation if the eval set
-  changes.
+  changes. It runs independently of the live flag: `scripts/measure_synthesis_reliability.py`
+  calls `verify_plan_consistency()` directly on the replayed plan rather than reading
+  `plan.consistency_status`, so the regression guard stays fully active while the live surface
+  stays dormant.
+- `consistency_status` remains additive and `None`-safe even when enabled — a new optional key
+  on the `/triage` JSON response, never a change to any existing field's shape or meaning, and
+  it can never raise or block a response (FLAG-not-strip).
 - Generalization caveat: the 0% rates above describe this exact prompt/model pair and this exact
   gold set. They are not a claim that malformed JSON or inconsistent plans can never happen in
   production — only that they didn't occur in this n=65 recorded sample. The retry-cache path

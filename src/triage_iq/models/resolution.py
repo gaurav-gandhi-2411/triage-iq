@@ -29,6 +29,22 @@ BUCKET_BREAKS_DAYS: list[float] = [1.0, 7.0, 30.0, 180.0]
 BUCKET_LABELS: list[str] = ["hours", "days", "weeks", "months", "long"]
 ResolutionBucket = Literal["hours", "days", "weeks", "months", "long"]
 
+# Per-repo bucket-classifier trust decision (ADR-0025). Ships only where the trained
+# classifier beats a naive majority-class baseline with a bootstrapped 95% CI (2000
+# resamples, held-out temporal test set) that excludes zero -- see
+# scripts/w6_diagnose_resolution.py / reports/w6_resolution_diagnosis.json. Replaces
+# ADR-0009's original arbitrary obo>=60% threshold with this rigorous criterion.
+# Repos not listed here default to trusted (unmeasured, not proven untrustworthy) --
+# see predict_bucket()'s use of this dict.
+BUCKET_CLASSIFIER_TRUSTED: dict[str, bool] = {
+    # accuracy delta vs naive: +3.27pp, 95% CI [+1.80pp, +4.74pp] -- excludes zero, positive.
+    "kubernetes_kubernetes": True,
+    # accuracy delta vs naive: -22.08pp, 95% CI [-25.81pp, -18.02pp] -- excludes zero, WRONG
+    # direction. The trained classifier is significantly WORSE than guessing the majority
+    # class (train/test distribution shift, ADR-0009 T1.5 -- not a feature gap, see ADR-0025).
+    "microsoft_vscode": False,
+}
+
 
 def hours_to_bucket(hours: np.ndarray | float) -> np.ndarray:
     """Map resolution_hours to integer bucket index 0–4."""
@@ -369,9 +385,14 @@ class ResolutionTimePredictor:
         bucket_labels: list of strings from BUCKET_LABELS (hours/days/weeks/months/long).
         confidences: float array in [0, 1], the model's probability for the predicted bucket.
 
-        If model_bucket is not trained, falls back to the training-distribution prior.
+        Falls back to the naive majority-class prior when EITHER model_bucket was never
+        trained OR this repo's classifier is not trusted (ADR-0025:
+        BUCKET_CLASSIFIER_TRUSTED) -- i.e. it's been measured to lose to that same naive
+        prior with a CI that excludes zero. A repo whose classifier is proven worse than
+        guessing must not be served in preference to guessing.
         """
-        if self.model_bucket is not None:
+        trusted = BUCKET_CLASSIFIER_TRUSTED.get(self.repo, True)
+        if self.model_bucket is not None and trusted:
             proba  = self.model_bucket.predict(X)  # shape (n, 5)
             idx    = proba.argmax(axis=1)
             labels = [BUCKET_LABELS[i] for i in idx]

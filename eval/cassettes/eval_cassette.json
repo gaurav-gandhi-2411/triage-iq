@@ -654,6 +654,39 @@
     },
     "47143152d61c7ff0847a85b88e69ee29d1a9d22cb5797e3271360b08fc2ec1df": {
       "content": "{\n  \"component_match\": 1,\n  \"similar_issues_relevance\": 2,\n  \"resolution_estimate_reasonableness\": 1,\n  \"priority_alignment\": 1,\n  \"next_steps_actionability\": 2,\n  \"overall_quality\": 2,\n  \"judge_rationale\": \"The triage plan is solid and actionable, with relevant similar issues and a reasonable resolution estimate, though the resolution estimate is imprecise and the component match is plausible but not exact.\"\n}"
+    },
+    "07292f6311347467647ff231a537ff5762bf5b3a4b80ddf9c9a1ee76737a4012": {
+      "content": "{\n  \"component_match\": 1,\n  \"similar_issues_relevance\": 3,\n  \"resolution_estimate_reasonableness\": 2,\n  \"priority_alignment\": 0,\n  \"next_steps_actionability\": 3,\n  \"overall_quality\": 2,\n  \"judge_rationale\": \"The triage plan is solid but has a misaligned priority. The component and similar issues are correctly identified, resolution estimate is reasonable, and next steps are actionable. However, the priority is incorrectly labeled as low, which mismatches the high-severity nature of the memory leak fix.\"\n}"
+    },
+    "16afe4959634d822e426b07445e5b0661584f998b37dd4fdf37dd2fba8a8ed9f": {
+      "content": "{\n  \"component_match\": 1,\n  \"similar_issues_relevance\": 3,\n  \"resolution_estimate_reasonableness\": 1,\n  \"priority_alignment\": 0,\n  \"next_steps_actionability\": 2,\n  \"overall_quality\": 2,\n  \"judge_rationale\": \"The triage plan has actionable next steps and relevant similar issues, but the priority is misaligned with the gold standard (high vs. low).\"\n}"
+    },
+    "67bec5a24eca727f719b26e5c82a0cf8b260c3884105000be7fce83870b3558c": {
+      "content": "{\n  \"component_match\": 0,\n  \"similar_issues_relevance\": 1,\n  \"resolution_estimate_reasonableness\": 1,\n  \"priority_alignment\": 0,\n  \"next_steps_actionability\": 2,\n  \"overall_quality\": 1,\n  \"judge_rationale\": \"The triage plan has actionable next steps but fails to align with the gold standard on component, priority, and resolution estimate, resulting in a marginally useful plan.\"\n}"
+    },
+    "45cd5c81474986c0e8c0153ea1e30fec44d3a628a81b9b29b8b2e884827e6e34": {
+      "content": "{\n  \"component_match\": 0,\n  \"similar_issues_relevance\": 3,\n  \"resolution_estimate_reasonableness\": 1,\n  \"priority_alignment\": 0,\n  \"next_steps_actionability\": 2,\n  \"overall_quality\": 1,\n  \"judge_rationale\": \"The triage plan has highly relevant similar issues but incorrectly identifies the component as 'api' instead of 'terminal', which is the gold standard. The resolution estimate is off by an order of magnitude, and the priority is misaligned with the high severity of the issue.\"\n}"
+    },
+    "27257d444427acecf24a1782972b599f301f73ed6963705eed9a475c20aebf34": {
+      "content": "{\n  \"component_match\": 2,\n  \"similar_issues_relevance\": 3,\n  \"resolution_estimate_reasonableness\": 1,\n  \"priority_alignment\": 0,\n  \"next_steps_actionability\": 2,\n  \"overall_quality\": 2,\n  \"judge_rationale\": \"The triage plan is solid but has significant gaps, particularly in priority alignment and resolution estimate reasonableness. The component and similar issues are well-aligned, and next steps are actionable.\"\n}"
+    },
+    "f70a51bb2d69b8aa12122907fd453fd3af2aca83959676d5195eeac94ffbc47b": {
+      "content": "{\n  \"component_match\": 0,\n  \"similar_issues_relevance\": 3,\n  \"resolution_estimate_reasonableness\": 1,\n  \"priority_alignment\": 0,\n  \"next_steps_actionability\": 2,\n  \"overall_quality\": 1,\n  \"judge_rationale\": \"The triage plan has a wrong component label (predicted 'electron' vs gold 'terminal'), which significantly impacts the overall quality. However, the similar issues are highly relevant and the next steps are actionable, though the priority and resolution estimate are misaligned with the gold standard.\"\n}"
+    },
+    "9eac7ceda336b605f8dcc073d18dacd3c0fa0a7b445865288ecd4a7e7ae68e7c": {
+      "content": "{\n  \"component_match\": 1,\n  \"similar_issues_relevance\": 2,\n  \"resolution_estimate_reasonableness\": 1,\n  \"priority_alignment\": 0,\n  \"next_steps_actionability\": 2,\n  \"overall_quality\": 2,\n  \"judge_rationale\": \"The triage plan is solid but has some gaps. The component is plausible but not the gold label, the similar issues are mostly relevant, the resolution estimate is order-of-magnitude correct but imprecise, the priority is misaligned, and the next steps are concrete but could be more specific.\"\n}"
+    },
+    "a02a70a18d17df964f12b6a8c8b2731b1d9a2c87574b8302eeb0409e662c80aa": {
+      "content": "{\n  \"component_match\": 1,\n  \"similar_issues_relevance\": 2,\n  \"resolution_estimate_reasonableness\": 1,\n  \"priority_alignment\": 1,\n  \"next_steps_actionability\": 2,\n  \"overall_quality\": 2,\n  \"judge_rationale\": \"The triage plan is solid but could use minor edits. The component is plausible but not the gold label, similar issues are mostly relevant, the resolution estimate is order-of-magnitude correct but imprecise, priority aligns with the gold standard, and next steps are concrete but could be more specific.\"\n}"
+    },
+    "d4c3b6e6cd3f8c5ba6a4eef13cdd3ceb869becec7759baed76360f85cd0e2f9b": {
+      "content": "{\n  \"component_match\": 0,\n  \"similar_issues_relevance\": 1,\n  \"resolution_estimate_reasonableness\": 1,\n  \"priority_alignment\": 1,\n  \"next_steps_actionability\": 2,\n  \"overall_quality\": 2,\n  \"judge_rationale\": \"The triage plan has actionable next steps and aligns with the priority, but the component is incorrectly labeled as 'suggest' instead of 'search', which significantly impacts the overall quality.\"\n}"
+    },
+    "76583b8f8d92bfcf9bf9e0048c06e77d9168e921ba41faee6e1cec7fcd0158a5": {
+      "content": "{\n  \"component_match\": 2,\n  \"similar_issues_relevance\": 3,\n  \"resolution_estimate_reasonableness\": 2,\n  \"priority_alignment\": 1,\n  \"next_steps_actionability\": 3,\n  \"overall_quality\": 3,\n  \"judge_rationale\": \"The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, correct priority, actionable next steps, and a clear, well-structured summary.\"\n}"
+    },
+    "6e644932b17e70a83db8ede5d592251bb67e8f31d5533a0a0d0339ade65d6f6b": {
+      "content": "{\n  \"component_match\": 0,\n  \"similar_issues_relevance\": 1,\n  \"resolution_estimate_reasonableness\": 1,\n  \"priority_alignment\": 0,\n  \"next_steps_actionability\": 2,\n  \"overall_quality\": 1,\n  \"judge_rationale\": \"The triage plan has significant issues with component matching, priority alignment, and resolution estimate reasonableness, leading to an overall low quality score.\"\n}"
     }
   }
 }

@@ -115,6 +115,10 @@ class CassettePlayer:
             ),
             "entries": self._entries,
         }
+        # newline="\n" pins LF regardless of platform -- eval_cassette.json is declared
+        # `text eol=lf` in .gitattributes, and Path.write_text's default newline translation
+        # (CRLF on Windows) would otherwise write bytes that differ from what git actually
+        # commits, silently invalidating any cassette_hash computed from this file pre-commit.
         self._path.write_text(
-            json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"
+            json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8", newline="\n"
         )

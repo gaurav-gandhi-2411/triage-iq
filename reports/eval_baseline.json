@@ -1,7 +1,7 @@
 {
   "schema_version": "v2",
   "eval_set_hash": "e37a69ea0cf1d26749d7f714d4f161ec6fd5f37d25a22156277551e00fd30138",
-  "cassette_hash": "c9966414f3c52df1af3f2df6624239fc61a2c65ed5d20341dae4f8e7c8d7484f",
+  "cassette_hash": "f86e93f5590fbd6a036698a88f5bfa8c3eebdad6efe831ff7d235043f149fdf6",
   "judge": {
     "model": "qwen3:8b",
     "provider": "ollama",

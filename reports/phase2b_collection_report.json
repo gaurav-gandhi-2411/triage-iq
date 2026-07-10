@@ -1,0 +1,238 @@
+{
+  "generated_by": "scripts/phase2b_build_candidates.py",
+  "existing_gold": {
+    "kubernetes_kubernetes": {
+      "body_ref": 3,
+      "body_related": 898,
+      "title_sim": 123
+    },
+    "microsoft_vscode": {
+      "body_ref": 1,
+      "body_related": 112,
+      "title_sim": 298
+    }
+  },
+  "existing_k8s_gold_pr_composition": {
+    "n_pairs": 1024,
+    "query_is_pr": 923,
+    "target_is_pr": 123,
+    "note": "existing gold was built without PR awareness (ADR-0008 framing); reported for transparency \u2014 new candidates apply the target-must-be-issue filter."
+  },
+  "k8s_extended_mine": {
+    "target_is_pr_dropped": 84,
+    "query_is_pr_kept": 589
+  },
+  "vscode_scrape": {
+    "dup_issues_scraped": 4700,
+    "dup_target_parsed": 2631,
+    "target_missing_404": 2,
+    "target_is_pr_dropped": 5,
+    "target_newer_dropped": 337,
+    "body_too_short_dropped": 18,
+    "already_in_gold": 0
+  },
+  "disjointness_adr0018": {
+    "dropped_touching_judge_eval": 34
+  },
+  "disjointness_dropped_detail": [
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 140,
+      "target": 97
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 140,
+      "target": 66
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 140,
+      "target": 137
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 140,
+      "target": 139
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 140,
+      "target": 127
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 5763,
+      "target": 3481
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 7785,
+      "target": 5634
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 11081,
+      "target": 11079
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 12122,
+      "target": 11979
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 12477,
+      "target": 10475
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 12894,
+      "target": 12615
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 13981,
+      "target": 12737
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 14425,
+      "target": 14424
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 14472,
+      "target": 14424
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 14488,
+      "target": 14477
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 14756,
+      "target": 12429
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 3137,
+      "target": 2496
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 239864,
+      "target": 239838
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 239870,
+      "target": 239838
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 239896,
+      "target": 239838
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 239923,
+      "target": 239838
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 239942,
+      "target": 239838
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 239990,
+      "target": 239838
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 240006,
+      "target": 239838
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 240021,
+      "target": 239838
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 240032,
+      "target": 239838
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 240047,
+      "target": 239838
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 240058,
+      "target": 239838
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 240064,
+      "target": 239838
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 240119,
+      "target": 239838
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 240123,
+      "target": 239838
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 240132,
+      "target": 239838
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 240152,
+      "target": 239838
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query": 240154,
+      "target": 239838
+    }
+  ],
+  "split_overlap_informational": {
+    "kubernetes_kubernetes": {
+      "candidate_issues": 1259,
+      "overlap_classifier_train": 318,
+      "overlap_temporal_train": 950
+    },
+    "microsoft_vscode": {
+      "candidate_issues": 4024,
+      "overlap_classifier_train": 79,
+      "overlap_temporal_train": 178
+    }
+  },
+  "candidates_by_repo_source": {
+    "kubernetes_kubernetes": {
+      "body_related": 20,
+      "body_related_ext": 759,
+      "dup_comment": 0
+    },
+    "microsoft_vscode": {
+      "body_related": 11,
+      "body_related_ext": 206,
+      "dup_comment": 2242
+    }
+  },
+  "totals": {
+    "candidates": 3238,
+    "existing_gold": 1435,
+    "combined_if_merged": 4673
+  }
+}

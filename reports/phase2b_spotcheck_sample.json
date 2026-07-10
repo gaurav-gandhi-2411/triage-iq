@@ -1,0 +1,242 @@
+[
+  {
+    "query": 68102,
+    "target": 68008,
+    "query_title": "Cannot install new VSCode version 1.31.0-1549443364",
+    "target_title": "[1.31] .deb package is not working",
+    "pattern": "dup_cmd",
+    "snippet": "/duplicate of #68008 "
+  },
+  {
+    "query": 88847,
+    "target": 84154,
+    "query_title": "Font rendering degradation | High Contrast Issue after 1.39.2 [macOS Mojave]",
+    "target_title": "[meta issue] 1.40 update: Font/Color rendering degradation (macOS, Linux, Windows)",
+    "pattern": "dup_text",
+    "snippet": "ak1556 From what I can tell, this issue really looks like a duplicate of https://github.com/microsoft/vscode/issues/84154\r \r @bpasero What is the outcome of #84154 ? Users need to c"
+  },
+  {
+    "query": 143037,
+    "target": 140571,
+    "query_title": "Timeout: Quick Open: \"before all\" hook for \"quick open search produces correct result\"",
+    "target_title": "Remote smoke tests on Linux can stall when restarting VS Code",
+    "pattern": "dup_cmd",
+    "snippet": "/duplicate https://github.com/microsoft/vscode/issues/140571"
+  },
+  {
+    "query": 19139,
+    "target": 17195,
+    "query_title": "Inserting language sepcific setting uses unusal formatting",
+    "target_title": "Keypair settings misaligned with dictionary settings when using Copy to Settings",
+    "pattern": "dup_text",
+    "snippet": "Duplicate of #17195"
+  },
+  {
+    "query": 67472,
+    "target": 29126,
+    "query_title": "Monaco API Request: Settable display length of the Suggestions list",
+    "target_title": "feature-request: possibility to change the size of description popup",
+    "pattern": "dup_cmd",
+    "snippet": "/duplicate of #29126"
+  },
+  {
+    "query": 142962,
+    "target": 130497,
+    "query_title": "Issue Reporter: no taskbar entry",
+    "target_title": "Issue report can not be activated/focused once hidden",
+    "pattern": "dup_cmd",
+    "snippet": "/duplicate of #130497"
+  },
+  {
+    "query": 43031,
+    "target": 19439,
+    "query_title": "[Feature Request] Renaming a folder/file should be mirrored in code",
+    "target_title": "TypeScript Rename File Refactoring",
+    "pattern": "dup_text",
+    "snippet": "Duplicate of #19439"
+  },
+  {
+    "query": 67175,
+    "target": 7570,
+    "query_title": "VS Code is not starting",
+    "target_title": "VS Code fails to start/open  when offline",
+    "pattern": "dup_text",
+    "snippet": "Possible duplicate of #7570"
+  },
+  {
+    "query": 170571,
+    "target": 168804,
+    "query_title": "Error creating second terminal panel on a CWD with non-ascii characters",
+    "target_title": "Splitting terminal in directory with ë character fails",
+    "pattern": "dup_cmd",
+    "snippet": "/duplicate #168804"
+  },
+  {
+    "query": 90835,
+    "target": 78967,
+    "query_title": "Word Wrap Not Working on PowerShell Integrated Terminal",
+    "target_title": "PowerShell ArgumentOutOfRangeException in terminal",
+    "pattern": "dup_cmd",
+    "snippet": "studio.com/items?itemName=ms-vscode.PowerShell-Preview).\r \r /duplicate https://github.com/microsoft/vscode/issues/78967"
+  },
+  {
+    "query": 143168,
+    "target": 143122,
+    "query_title": "Incorrect display after switching Portuguese.",
+    "target_title": "\"No Folder Open\" section of the file explorer translation issues (pt-br)",
+    "pattern": "dup_cmd",
+    "snippet": "/duplicate #143122\r \r this is already fixed in the latest insiders"
+  },
+  {
+    "query": 89737,
+    "target": 40233,
+    "query_title": "Option to disable workspace overriding of specific settings.json entries",
+    "target_title": "[Feature] Local Workspace settings",
+    "pattern": "dup_cmd",
+    "snippet": "/duplicate\r \r https://github.com/Microsoft/vscode/issues/40233"
+  },
+  {
+    "query": 7158,
+    "target": 915,
+    "query_title": "support sharing of launch config attributes between request types",
+    "target_title": "configurationAttributes: allow for attributes to be shared between 'launch' and 'attach' requests",
+    "pattern": "dup_text",
+    "snippet": "duplicate of #915 "
+  },
+  {
+    "query": 205185,
+    "target": 204606,
+    "query_title": "Move to File Focus Problem",
+    "target_title": "\"Move to file\" looses focus",
+    "pattern": "dup_text",
+    "snippet": "closing since this is duplicate of https://github.com/microsoft/vscode/issues/204606"
+  },
+  {
+    "query": 144161,
+    "target": 141577,
+    "query_title": "Links to other md cells in jupyter notebook are broken",
+    "target_title": "Markdown heading link doesn't seem to scroll the heading correctly on screen",
+    "pattern": "dup_text",
+    "snippet": "Duplicate of #141577 I believe\r \r Give this a try in the next VS Code insiders b"
+  },
+  {
+    "query": 173290,
+    "target": 173244,
+    "query_title": "After I updated today, the code prompt of golang is abnormal",
+    "target_title": "Snippets gone from IntelliSense",
+    "pattern": "dup_cmd",
+    "snippet": "/duplicate of https://github.com/microsoft/vscode/issues/173244"
+  },
+  {
+    "query": 90099,
+    "target": 81464,
+    "query_title": "Debug Console hangs after many lines are printed out",
+    "target_title": "Debug: Console feels janky on high frequency output",
+    "pattern": "dup_text",
+    "snippet": "Dup of https://github.com/microsoft/vscode/issues/81464\r You can find all the details in that issue, thanks!"
+  },
+  {
+    "query": 173951,
+    "target": 173590,
+    "query_title": "Content in Notebook Cells Intermittenly Fails to Display",
+    "target_title": "Sometimes Interactive Window doesn't display the input code.",
+    "pattern": "dup_cmd",
+    "snippet": "Thanks for reporting. /duplicate of https://github.com/microsoft/vscode/issues/173590, it's fixed in latest Insiders and will be fixed in the Rec"
+  },
+  {
+    "query": 90541,
+    "target": 45693,
+    "query_title": "Open Terminal Window",
+    "target_title": "Windows terminal issues caused by winpty",
+    "pattern": "dup_cmd",
+    "snippet": "m/Microsoft/vscode/issues/57803#issuecomment-449495423).\r \r /duplicate https://github.com/Microsoft/vscode/issues/45693"
+  },
+  {
+    "query": 116610,
+    "target": 45693,
+    "query_title": "Console prompt is not displayed after opening the terminal",
+    "target_title": "Windows terminal issues caused by winpty",
+    "pattern": "dup_cmd",
+    "snippet": "m/Microsoft/vscode/issues/57803#issuecomment-449495423).\r \r /duplicate https://github.com/Microsoft/vscode/issues/45693"
+  },
+  {
+    "query": 206324,
+    "target": 204591,
+    "query_title": "Terminal line height cutting off the bottom of characters with Nerd Fonts",
+    "target_title": "Terminal font alignment regression when GPU acceleration used",
+    "pattern": "dup_cmd",
+    "snippet": "/duplicate https://github.com/microsoft/vscode/issues/204591"
+  },
+  {
+    "query": 69358,
+    "target": 69327,
+    "query_title": "Double error decorations",
+    "target_title": "Hover: toolbar should not be replicated when there are multiple errors ",
+    "pattern": "dup_text",
+    "snippet": "Duplicate of https://github.com/Microsoft/vscode/issues/69327"
+  },
+  {
+    "query": 173248,
+    "target": 173244,
+    "query_title": "Code snippet function is not available",
+    "target_title": "Snippets gone from IntelliSense",
+    "pattern": "dup_text",
+    "snippet": "Duplicate of #173244"
+  },
+  {
+    "query": 20169,
+    "target": 19813,
+    "query_title": "Code formatting (\"Format Document\") got broken in  1.9.0",
+    "target_title": "[html] embedded Javascript gets corrupted on format",
+    "pattern": "dup_text",
+    "snippet": "I believe this is a duplicate of  #19813\r \r @aeschli Has a fix checked in to master and we plan on r"
+  },
+  {
+    "query": 91111,
+    "target": 48321,
+    "query_title": "Incorrect underline when moving text",
+    "target_title": "Traces of deleted links showing in editor when deleting",
+    "pattern": "dup_cmd",
+    "snippet": "com/microsoft/vscode/issues/48321 . Lets track it there.\r \r /duplicate https://github.com/microsoft/vscode/issues/48321"
+  },
+  {
+    "query": 116628,
+    "target": 95062,
+    "query_title": "VS codes cannot access Microphone on macOS mojave",
+    "target_title": "VSCode terminal doesn't allow/request permissions to access media devices",
+    "pattern": "dup_cmd",
+    "snippet": "/duplicate https://github.com/microsoft/vscode/issues/95062"
+  },
+  {
+    "query": 66633,
+    "target": 12058,
+    "query_title": "Session state is not persisted if VS Code does not cleanly exit",
+    "target_title": "Save UI state periodically to prevent loss on shutdown",
+    "pattern": "dup_text",
+    "snippet": "Possible duplicate of #12058"
+  },
+  {
+    "query": 18693,
+    "target": 18645,
+    "query_title": "Go to Bracket should reveal new cursor position",
+    "target_title": "Bracket match does not scroll screen",
+    "pattern": "dup_text",
+    "snippet": "Dup of #18645"
+  },
+  {
+    "query": 68005,
+    "target": 67999,
+    "query_title": "live-sever extension crashing",
+    "target_title": "All extensions stopped working after 02-06 update",
+    "pattern": "dup_cmd",
+    "snippet": "/duplicate of #67999"
+  },
+  {
+    "query": 115587,
+    "target": 82524,
+    "query_title": "Buffer() Deprecation Warning, when installing a  extension manually on code insiders",
+    "target_title": "install-extension command throws Buffer deprecated warning",
+    "pattern": "dup_cmd",
+    "snippet": "/duplicate\r \r #82524"
+  }
+]

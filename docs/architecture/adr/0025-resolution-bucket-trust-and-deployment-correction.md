@@ -50,7 +50,7 @@ bar every other improvement in this project is held to:
 
 | | k8s | vscode |
 |---|---|---|
-| Trained accuracy vs. naive | 37.6% vs 34.3% | 33.6% vs 55.7% |
+| Trained accuracy vs. naive | 33.24% vs 29.97% | 69.32% vs 91.40% |
 | **Accuracy delta, bootstrapped 95% CI** | **+3.27pp [+1.80, +4.74]** — excludes zero, positive | **-22.08pp [-25.81, -18.02]** — excludes zero, wrong direction |
 | Trained obo vs. naive | — | — |
 | **Obo delta, bootstrapped 95% CI** | **+6.94pp [+5.01, +8.88]** — excludes zero, positive | — |
@@ -142,3 +142,21 @@ above — requires its own escalation before investment, per this iteration's sc
 - New creation-time features or target reframing (deferred, requires separate escalation).
 - Any change to k8s's served `/triage` output (formalization only).
 - A model retrain, GCS artifact republish, or manifest change for either repo.
+
+## Addendum (2026-07-11, ADR-0028 Phase B4)
+
+Two doc/tooling bugs found by the per-model audit, both fixed, neither changes this ADR's
+decision:
+
+- The "Trained accuracy vs. naive" row above had a transcription error (37.6%/34.3% for
+  k8s, 33.6%/55.7% for vscode) that didn't match `reports/w6_resolution_diagnosis.json`.
+  Corrected to the actual figures (33.24%/29.97% k8s, 69.32%/91.40% vscode). The delta row
+  and CIs below it were already correct and unaffected — the ship decision was never wrong.
+- `scripts/w6_diagnose_resolution.py` called `predictor.predict_bucket()` to evaluate the
+  trained classifier — but that method applies the `BUCKET_CLASSIFIER_TRUSTED` gate this
+  very ADR introduced. For vscode (untrusted), re-running the script today would measure
+  the naive fallback against itself (a tautological 0.0pp delta), making it impossible to
+  ever re-verify the decision this ADR makes. Fixed to call `predictor.model_bucket.predict()`
+  directly, bypassing the gate — confirmed the fix reproduces the exact figures already
+  committed in `reports/w6_resolution_diagnosis.json` (byte-identical), so no prior number
+  was ever wrong; only a *future* re-run would have silently regressed.

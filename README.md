@@ -86,13 +86,13 @@ suggested_next_steps, triage_summary
 | Similar issue retriever | vscode | Recall@10 / @20 (product-task) | 43.7% / 71.3% |
 | Similar issue retriever | kubernetes | Recall@5 (product-task, live index) | **unmeasurable** — 0 test pairs land in the deployed corpus; needs new gold (see note) |
 | Similar issue retriever | vscode | Index size (BGE) | 24.3 MB |
-| Resolution predictor | kubernetes | MAE (within-window, de-leaked) | 104.8 days |
-| Resolution predictor | kubernetes | Improvement vs naive | +1.4% |
-| Resolution predictor | kubernetes | Q10–Q90 CI coverage | 77.5% |
+| Resolution predictor | kubernetes | Point estimate: MAE vs naive (served) | 104.05d vs 106.29d naive (+2.1%) |
+| Resolution predictor | kubernetes | Bucket classifier: accuracy vs naive (served) | 33.24% vs 29.97% naive (+3.27pp [+1.80, +4.74]) |
+| Resolution predictor | kubernetes | CQR conformal coverage (target 80%) | 76.2% [73.5, 78.6] |
 | Resolution predictor | kubernetes | Inference latency p50 | 1.5ms |
-| Resolution predictor | vscode | MAE (within-window, de-leaked) | 116.1 days |
-| Resolution predictor | vscode | Improvement vs naive | 0.0% |
-| Resolution predictor | vscode | Q10–Q90 CI coverage | 76.5% |
+| Resolution predictor | vscode | Point estimate: MAE vs naive (served — see note) | 6.02d vs 3.53d naive (**−70.5%, worse than naive**) |
+| Resolution predictor | vscode | Bucket classifier: served output (see note) | **naive-prior fallback** (~33% conf) — raw classifier loses to naive by −22.08pp [−25.81, −18.02] |
+| Resolution predictor | vscode | CQR conformal coverage (target 80%) | 74.6% [69.9, 78.8] |
 | Resolution predictor | vscode | Inference latency p50 | 1.4ms |
 | LLM synthesis (judge, /15) | kubernetes | Mean-band score (regression detector only) | 10.51/15 (70.1%) |
 | LLM synthesis (judge, /15) | vscode | Mean-band score (regression detector only) | 8.36/15 (55.8%) |
@@ -146,6 +146,23 @@ suggested_next_steps, triage_summary
 > named quality signal — currently reported informationally
 > (`eval/test_quality_regression.py`'s CI job is non-blocking) pending an observation
 > window before any promotion to a hard gate. The mean-band gate itself is unchanged.
+>
+> **Resolution reporting correction (2026-07-11).** This is the one model where the
+> hard modeling/gating work (ADR-0009/0010/0021/0023/0025) was already rigorous and
+> live-correct — the numbers above were stale (a 2026-05-30-era snapshot) and the
+> table conflated the point-estimate and bucket-classifier outputs, which are two
+> separate signals with separate gates. k8s: both the point estimate and the bucket
+> classifier genuinely beat naive, CIs excluding zero. vscode: the point estimate
+> (MAE) is served as-is despite losing to naive (−70.5%) — there's no fallback gate for
+> the point/interval, only a transparency badge; the bucket classifier's raw output
+> *does* have a trust gate (`BUCKET_CLASSIFIER_TRUSTED`, ADR-0025) and, because it loses
+> to naive by −22.08pp, is not served — vscode's `resolution_bucket` field is the naive
+> majority-class prior, honestly labeled low-confidence. Both losing numbers were
+> already correctly reported internally (`reports/w6_resolution_diagnosis.json`); they
+> just never reached this README, and a transcription error in ADR-0025's own table
+> and a proxy-conflated prose note in `reports/eval_summary.json` (citing the point
+> estimate's −70.5% while describing the bucket classifier's rejection reason) are also
+> fixed alongside this.
 
 Full evaluation reports: [`reports/`](reports/)
 

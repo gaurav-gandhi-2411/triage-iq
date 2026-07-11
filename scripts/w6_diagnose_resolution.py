@@ -85,6 +85,44 @@ def _bootstrap_ci(values: np.ndarray, n_boot: int = N_BOOTSTRAP, seed: int = SEE
     return {"mean": float(values.mean()), "ci95_lower": float(lo), "ci95_upper": float(hi)}
 
 
+def raw_bucket_accuracy_vs_naive(
+    predictor: ResolutionTimePredictor, X_test: pd.DataFrame, true_bucket_idx: np.ndarray
+) -> dict:
+    """Evaluate the RAW trained bucket classifier against the naive majority-class prior.
+
+    Deliberately calls predictor.model_bucket.predict(X) directly, NOT
+    predictor.predict_bucket() -- that method applies the BUCKET_CLASSIFIER_TRUSTED gate
+    ADR-0025 itself introduced. For an untrusted repo (e.g. vscode), predict_bucket()
+    already returns the naive fallback, so calling it here would measure the naive
+    prediction against itself (a tautological 0.0pp delta) and this diagnostic could
+    never again re-verify the classifier the trust decision depends on.
+    """
+    assert predictor.model_bucket is not None, f"{predictor.repo}: no trained bucket classifier to diagnose"
+    raw_proba = np.asarray(predictor.model_bucket.predict(X_test))  # shape (n, 5)
+    pred_bucket_idx = raw_proba.argmax(axis=1)
+    correct = (pred_bucket_idx == true_bucket_idx).astype(float)
+    obo_correct = (np.abs(pred_bucket_idx - true_bucket_idx) <= 1).astype(float)
+
+    majority_bucket = max(predictor.bucket_train_distribution, key=predictor.bucket_train_distribution.get)
+    majority_idx = BUCKET_LABELS.index(majority_bucket)
+    naive_correct = (true_bucket_idx == majority_idx).astype(float)
+    naive_obo_correct = (np.abs(majority_idx - true_bucket_idx) <= 1).astype(float)
+
+    acc_delta = correct - naive_correct  # paired per-issue delta -> bootstrap this directly
+    obo_delta = obo_correct - naive_obo_correct
+
+    return {
+        "n": len(true_bucket_idx),
+        "trained_accuracy": round(float(correct.mean()), 4),
+        "naive_accuracy": round(float(naive_correct.mean()), 4),
+        "accuracy_delta_bootstrap": _bootstrap_ci(acc_delta),
+        "trained_obo": round(float(obo_correct.mean()), 4),
+        "naive_obo": round(float(naive_obo_correct.mean()), 4),
+        "obo_delta_bootstrap": _bootstrap_ci(obo_delta),
+        "naive_majority_bucket": majority_bucket,
+    }
+
+
 def diagnose_repo(repo: str) -> dict:
     predictor = ResolutionTimePredictor.load(str(MODELS_DIR / f"resolution_predictor_{repo}.pkl"))
 
@@ -147,30 +185,7 @@ def diagnose_repo(repo: str) -> dict:
     naive_pred_days = float(np.median(train["resolution_hours"].values) / 24.0)
     naive_mae_days = float(np.mean(np.abs(naive_pred_days - y_true_days)))
 
-    # ── Bucket classifier vs naive-majority-class baseline, bootstrapped ──
-    pred_bucket_labels, _conf = predictor.predict_bucket(X_test)
-    pred_bucket_idx = np.array([BUCKET_LABELS.index(lbl) for lbl in pred_bucket_labels])
-    correct = (pred_bucket_idx == true_bucket_idx).astype(float)
-    obo_correct = (np.abs(pred_bucket_idx - true_bucket_idx) <= 1).astype(float)
-
-    majority_bucket = max(predictor.bucket_train_distribution, key=predictor.bucket_train_distribution.get)
-    majority_idx = BUCKET_LABELS.index(majority_bucket)
-    naive_correct = (true_bucket_idx == majority_idx).astype(float)
-    naive_obo_correct = (np.abs(majority_idx - true_bucket_idx) <= 1).astype(float)
-
-    acc_delta = correct - naive_correct  # paired per-issue delta -> bootstrap this directly
-    obo_delta = obo_correct - naive_obo_correct
-
-    bucket_eval = {
-        "n": len(test),
-        "trained_accuracy": round(float(correct.mean()), 4),
-        "naive_accuracy": round(float(naive_correct.mean()), 4),
-        "accuracy_delta_bootstrap": _bootstrap_ci(acc_delta),
-        "trained_obo": round(float(obo_correct.mean()), 4),
-        "naive_obo": round(float(naive_obo_correct.mean()), 4),
-        "obo_delta_bootstrap": _bootstrap_ci(obo_delta),
-        "naive_majority_bucket": majority_bucket,
-    }
+    bucket_eval = raw_bucket_accuracy_vs_naive(predictor, X_test, true_bucket_idx)
 
     return {
         "repo": repo,

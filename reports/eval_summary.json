@@ -29,7 +29,7 @@
         "naive_mae_days": 3.53,
         "improvement_pct": "-70.5%",
         "ci_coverage": 0.4156,
-        "note": "LightGBM underperforms naive on vscode because there is no creation-time signal that predicts resolution time for this repo. The system detects this at the repo level (bucket model improvement −70.5% vs naive) and surfaces a badge to the user rather than presenting a prediction that is worse than the baseline. See /eval for full methodology."
+        "note": "LightGBM underperforms naive on vscode because there is no creation-time signal that predicts resolution time for this repo. The system detects this at the repo level (bucket classifier accuracy −22.08pp vs naive, 95% CI [−25.81, −18.02] — ADR-0025; the −70.5% figure above is the separate POINT-regression MAE degradation, not the bucket model's) and surfaces a badge to the user rather than presenting a prediction that is worse than the baseline. See /eval for full methodology."
       }
     },
     "deployment": {

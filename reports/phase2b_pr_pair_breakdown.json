@@ -1,0 +1,173 @@
+{
+  "generated_by": "scripts/phase2b_pr_pair_breakdown.py",
+  "kubernetes_kubernetes": {
+    "existing_gold_overall": {
+      "issue->issue": 78,
+      "PR->issue": 823,
+      "issue->PR": 23,
+      "PR->PR": 100,
+      "unknown": 0,
+      "n": 1024,
+      "product_task_pct": 7.6
+    },
+    "existing_gold_by_source": {
+      "body_ref": {
+        "issue->issue": 2,
+        "PR->issue": 0,
+        "issue->PR": 0,
+        "PR->PR": 1,
+        "unknown": 0,
+        "n": 3,
+        "product_task_pct": 66.7
+      },
+      "body_related": {
+        "issue->issue": 38,
+        "PR->issue": 818,
+        "issue->PR": 22,
+        "PR->PR": 20,
+        "unknown": 0,
+        "n": 898,
+        "product_task_pct": 4.2
+      },
+      "title_sim": {
+        "issue->issue": 38,
+        "PR->issue": 5,
+        "issue->PR": 1,
+        "PR->PR": 79,
+        "unknown": 0,
+        "n": 123,
+        "product_task_pct": 30.9
+      }
+    },
+    "w3_train_split": {
+      "issue->issue": 65,
+      "PR->issue": 562,
+      "issue->PR": 15,
+      "PR->PR": 62,
+      "unknown": 0,
+      "n": 704,
+      "product_task_pct": 9.2
+    },
+    "w3_test_split": {
+      "issue->issue": 3,
+      "PR->issue": 129,
+      "issue->PR": 4,
+      "PR->PR": 16,
+      "unknown": 0,
+      "n": 152,
+      "product_task_pct": 2.0
+    },
+    "phase2b_candidates_overall": {
+      "issue->issue": 699,
+      "PR->issue": 2325,
+      "issue->PR": 0,
+      "PR->PR": 0,
+      "unknown": 0,
+      "n": 3024,
+      "product_task_pct": 23.1
+    },
+    "phase2b_candidates_k8s_extended_mine": {
+      "issue->issue": 200,
+      "PR->issue": 579,
+      "issue->PR": 0,
+      "PR->PR": 0,
+      "unknown": 0,
+      "n": 779,
+      "product_task_pct": 25.7
+    },
+    "phase2b_candidates_k8s_forward_scrape": {
+      "issue->issue": 499,
+      "PR->issue": 1746,
+      "issue->PR": 0,
+      "PR->PR": 0,
+      "unknown": 0,
+      "n": 2245,
+      "product_task_pct": 22.2
+    }
+  },
+  "microsoft_vscode": {
+    "existing_gold_overall": {
+      "issue->issue": 304,
+      "PR->issue": 102,
+      "issue->PR": 0,
+      "PR->PR": 5,
+      "unknown": 0,
+      "n": 411,
+      "product_task_pct": 74.0
+    },
+    "existing_gold_by_source": {
+      "body_ref": {
+        "issue->issue": 1,
+        "PR->issue": 0,
+        "issue->PR": 0,
+        "PR->PR": 0,
+        "unknown": 0,
+        "n": 1,
+        "product_task_pct": 100.0
+      },
+      "body_related": {
+        "issue->issue": 10,
+        "PR->issue": 102,
+        "issue->PR": 0,
+        "PR->PR": 0,
+        "unknown": 0,
+        "n": 112,
+        "product_task_pct": 8.9
+      },
+      "title_sim": {
+        "issue->issue": 293,
+        "PR->issue": 0,
+        "issue->PR": 0,
+        "PR->PR": 5,
+        "unknown": 0,
+        "n": 298,
+        "product_task_pct": 98.3
+      }
+    },
+    "w3_train_split": {
+      "issue->issue": 277,
+      "PR->issue": 46,
+      "issue->PR": 0,
+      "PR->PR": 1,
+      "unknown": 0,
+      "n": 324,
+      "product_task_pct": 85.5
+    },
+    "w3_test_split": {
+      "issue->issue": 21,
+      "PR->issue": 36,
+      "issue->PR": 0,
+      "PR->PR": 3,
+      "unknown": 0,
+      "n": 60,
+      "product_task_pct": 35.0
+    },
+    "phase2b_candidates_overall": {
+      "issue->issue": 2459,
+      "PR->issue": 0,
+      "issue->PR": 0,
+      "PR->PR": 0,
+      "unknown": 0,
+      "n": 2459,
+      "product_task_pct": 100.0
+    },
+    "phase2b_candidates_vscode_body_refs": {
+      "issue->issue": 217,
+      "PR->issue": 0,
+      "issue->PR": 0,
+      "PR->PR": 0,
+      "unknown": 0,
+      "n": 217,
+      "product_task_pct": 100.0
+    },
+    "phase2b_candidates_vscode_dup_scrape": {
+      "issue->issue": 2242,
+      "PR->issue": 0,
+      "issue->PR": 0,
+      "PR->PR": 0,
+      "unknown": 0,
+      "n": 2242,
+      "product_task_pct": 100.0
+    }
+  }
+}

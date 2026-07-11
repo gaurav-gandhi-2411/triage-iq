@@ -22,6 +22,12 @@
     "target_is_pr_dropped": 84,
     "query_is_pr_kept": 589
   },
+  "k8s_forward_mine": {
+    "new_slice_records": 14994,
+    "target_is_pr_dropped": 234,
+    "query_is_pr_kept": 1754,
+    "cross_era_pairs": 361
+  },
   "vscode_scrape": {
     "dup_issues_scraped": 4700,
     "dup_target_parsed": 2631,
@@ -32,7 +38,7 @@
     "already_in_gold": 0
   },
   "disjointness_adr0018": {
-    "dropped_touching_judge_eval": 34
+    "dropped_touching_judge_eval": 45
   },
   "disjointness_dropped_detail": [
     {
@@ -114,6 +120,61 @@
       "repo": "kubernetes_kubernetes",
       "query": 14756,
       "target": 12429
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 15086,
+      "target": 14078
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 15087,
+      "target": 14935
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 15176,
+      "target": 14781
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 15394,
+      "target": 14598
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 15586,
+      "target": 14781
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 15922,
+      "target": 12122
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 16140,
+      "target": 14781
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 16287,
+      "target": 14781
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 17202,
+      "target": 12818
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 24829,
+      "target": 12784
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query": 25716,
+      "target": 14190
     },
     {
       "repo": "microsoft_vscode",
@@ -208,9 +269,9 @@
   ],
   "split_overlap_informational": {
     "kubernetes_kubernetes": {
-      "candidate_issues": 1259,
-      "overlap_classifier_train": 318,
-      "overlap_temporal_train": 950
+      "candidate_issues": 4892,
+      "overlap_classifier_train": 402,
+      "overlap_temporal_train": 1079
     },
     "microsoft_vscode": {
       "candidate_issues": 4024,
@@ -220,8 +281,8 @@
   },
   "candidates_by_repo_source": {
     "kubernetes_kubernetes": {
-      "body_related": 20,
-      "body_related_ext": 759,
+      "body_related": 929,
+      "body_related_ext": 2095,
       "dup_comment": 0
     },
     "microsoft_vscode": {
@@ -231,8 +292,8 @@
     }
   },
   "totals": {
-    "candidates": 3238,
+    "candidates": 5483,
     "existing_gold": 1435,
-    "combined_if_merged": 4673
+    "combined_if_merged": 6918
   }
 }

@@ -278,6 +278,100 @@ def apply_disjointness(pairs: list[dict]) -> tuple[list[dict], dict]:
     return kept, {"dropped_touching_judge_eval": len(dropped), "detail": detail}
 
 
+def mine_k8s_forward(gold: pd.DataFrame, already: set[frozenset]) -> tuple[list[dict], dict]:
+    """Mine pairs from the forward-scraped slice (#15,003-30,000, GraphQL, body channel).
+    Queries are new-slice records; targets may be anywhere in #1-30,000. Same guards."""
+    repo = "kubernetes_kubernetes"
+    old = pd.read_parquet(PROCESSED_DIR / f"issues_{repo}.parquet")
+    old["created_at"] = pd.to_datetime(old["created_at"], utc=True)
+    lookup: dict[int, dict] = {
+        int(r["number"]): {
+            "title": r["title"],
+            "body": str(r["body_clean"]),
+            "created_at": r["created_at"].isoformat(),
+            "is_pr": None,
+        }
+        for _, r in old.iterrows()
+    }
+    pr_cache: dict[int, bool] = {}
+    new_slice: dict[int, dict] = {}
+    for f in sorted(RAW_K8S.glob("*.json"), key=lambda p: int(p.stem)):
+        n = int(f.stem)
+        if n <= 15_002 or n > 30_000:
+            continue
+        d = json.loads(f.read_text(encoding="utf-8"))
+        body, _ = clean_text(str(d.get("body") or ""))
+        rec = {
+            "title": d.get("title"),
+            "body": body,
+            "created_at": str(d.get("created_at") or ""),
+            "is_pr": "pull_request" in d,
+        }
+        new_slice[n] = rec
+        lookup[n] = rec
+
+    def target_is_pr(t: int) -> bool:
+        if lookup[t]["is_pr"] is not None:
+            return bool(lookup[t]["is_pr"])
+        return _is_pr_k8s(t, pr_cache)  # old-slice records: flag lives in the raw JSON
+
+    g = gold[gold["repo"] == repo]
+    gold_keys = {
+        frozenset((int(q), int(o)))
+        for q, o in zip(g["query_number"], g["original_number"], strict=True)
+    }
+    pairs: list[dict] = []
+    stats = {
+        "new_slice_records": len(new_slice),
+        "target_is_pr_dropped": 0,
+        "query_is_pr_kept": 0,
+        "cross_era_pairs": 0,
+    }
+
+    for q, qrec in new_slice.items():
+        combined = str(qrec["title"] or "") + " " + qrec["body"]
+        cur = _findall(combined, K8S_CURRENT_PATTERNS)
+        ext = _findall(combined, K8S_EXTENDED_PATTERNS) - cur
+        for refs, source in ((cur, "body_related"), (ext, "body_related_ext")):
+            for t in refs:
+                key = frozenset((q, t))
+                if t == q or t not in lookup or key in gold_keys or key in already:
+                    continue
+                trec = lookup[t]
+                if str(trec["created_at"]) > str(qrec["created_at"]):
+                    continue
+                if (
+                    len(qrec["body"].strip()) <= MIN_BODY_CHARS
+                    or len(trec["body"].strip()) <= MIN_BODY_CHARS
+                ):
+                    continue
+                if target_is_pr(t):
+                    stats["target_is_pr_dropped"] += 1
+                    continue
+                if qrec["is_pr"]:
+                    stats["query_is_pr_kept"] += 1
+                if t <= 15_002:
+                    stats["cross_era_pairs"] += 1
+                already.add(key)
+                pairs.append(
+                    {
+                        "repo": repo,
+                        "query_number": q,
+                        "original_number": t,
+                        "query_title": qrec["title"],
+                        "original_title": trec["title"],
+                        "query_body": qrec["body"],
+                        "original_body": trec["body"],
+                        "source": source,
+                        "confidence": "medium",
+                        "query_is_pr": bool(qrec["is_pr"]),
+                        "channel": "k8s_forward_scrape",
+                    }
+                )
+    log.info("[k8s] forward mine: %d pairs (%s)", len(pairs), stats)
+    return pairs, stats
+
+
 def report_split_overlap(pairs: list[dict]) -> dict:
     """Informational: overlap of candidate issues with classifier/temporal train splits."""
     out: dict = {}
@@ -306,12 +400,15 @@ def main() -> None:
     k8s_pairs, k8s_stats = mine_k8s_extended(gold)
     existing_pr = measure_existing_gold_pr_rate(gold)
 
+    seen_keys = {frozenset((p["query_number"], p["original_number"])) for p in k8s_pairs}
+    k8s_fwd_pairs, k8s_fwd_stats = mine_k8s_forward(gold, seen_keys)
+
     vsc_pairs: list[dict] = []
     vsc_stats: dict = {"skipped": True}
     if not args.skip_vscode:
         vsc_pairs, vsc_stats = build_vscode_pairs(gold)
 
-    all_pairs, disjoint = apply_disjointness(k8s_pairs + vsc_pairs)
+    all_pairs, disjoint = apply_disjointness(k8s_pairs + k8s_fwd_pairs + vsc_pairs)
     overlap = report_split_overlap(all_pairs)
 
     df = pd.DataFrame(all_pairs)
@@ -347,6 +444,7 @@ def main() -> None:
         .to_dict("index"),
         "existing_k8s_gold_pr_composition": existing_pr,
         "k8s_extended_mine": k8s_stats,
+        "k8s_forward_mine": k8s_fwd_stats,
         "vscode_scrape": vsc_stats,
         "disjointness_adr0018": {k: v for k, v in disjoint.items() if k != "detail"},
         "disjointness_dropped_detail": disjoint["detail"],

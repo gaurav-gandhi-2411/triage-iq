@@ -22,9 +22,13 @@ All other columns are read-only context; do not modify them.
 
 Before any merge, every accepted row is checked for THREE-WAY disjointness from
 training data (classifier_train, temporal_train, retrieval-train from w3_split.parquet)
-— mirrors scripts/w3_t5_eval.py's assert_eval_disjoint_from_train pattern. A gold issue
-that leaks into training data would silently inflate every downstream metric, so this
-hard-fails (raises, non-zero exit) rather than warning.
+— mirrors scripts/w3_t5_eval.py's assert_eval_disjoint_from_train pattern — PLUS a
+BGE-embedding near-duplicate check (cosine >= 0.90) against the union of those three
+sets, so a re-filed near-identical bug that survives exact-ID matching also hard-fails
+(see docs/investigations/gold-set-leakage.md — gold #14398 vs classifier_train #14399,
+cosine 0.907, is exactly the case this closes). A gold issue that leaks into training
+data would silently inflate every downstream metric, so this hard-fails (raises,
+non-zero exit) rather than warning.
 
 Each accepted row also gets a `related_issue_numbers` ground-truth column, extracted
 using ONLY the body_ref pattern strategy from scripts/07_extract_related_pairs.py
@@ -201,9 +205,96 @@ def load_repo_train_numbers(repo: str) -> tuple[set[int], set[int], set[int]]:
     return classifier_train, temporal_train, retrieval_train
 
 
+NEAR_DUP_THRESHOLD = 0.90  # matches scripts/verify_gold_train_overlap.py's lower audit threshold
+
+
+def load_repo_bge_vectors(repo: str) -> tuple[np.ndarray, np.ndarray] | None:
+    """Reconstruct BGE vectors + issue numbers from the saved FAISS dup-index.
+
+    Mirrors scripts/verify_gold_train_overlap.py::load_bge_vectors (vectors are
+    L2-normalized at build time, so inner product == cosine similarity). Returns None
+    (not raises) when the index is absent — the near-dup check degrades to vacuous with
+    a warning, same tolerance-of-missing-artifact pattern as retrieval_train below.
+    """
+    import faiss
+    import joblib
+
+    repo_slug = repo.replace("/", "_")
+    idx_dir = ROOT / "data" / "models" / f"dup_index_{repo_slug}_bge"
+    if not (idx_dir / "index.faiss").exists():
+        logger.warning(
+            "BGE dup-index not found for %s at %s — near-duplicate check will be "
+            "vacuous for this repo (ID-based disjointness checks still apply)",
+            repo, idx_dir,
+        )
+        return None
+    meta = joblib.load(str(idx_dir / "meta.pkl"))
+    index = faiss.read_index(str(idx_dir / "index.faiss"))
+    vecs = index.reconstruct_n(0, index.ntotal)
+    numbers = np.asarray(meta["issue_numbers"], dtype=np.int64)
+    return vecs, numbers
+
+
+def check_near_duplicates(
+    accepted: pd.DataFrame,
+    train_numbers_by_repo: dict[str, tuple[set[int], set[int], set[int]]],
+    bge_vectors_by_repo: dict[str, tuple[np.ndarray, np.ndarray] | None] | None = None,
+    threshold: float = NEAR_DUP_THRESHOLD,
+) -> list[dict]:
+    """Embedding-similarity near-dup check across classifier/temporal/retrieval train.
+
+    Closes the ADR-0018 gap: exact-ID disjointness alone missed gold #14398 (k8s), which
+    is 0.907 cosine to classifier_train #14399 — the same bug re-filed under a new
+    issue number. ``bge_vectors_by_repo`` allows callers (e.g. tests) to inject
+    {repo: (vecs, numbers) | None} directly instead of reading the FAISS index from disk.
+    Returns a list of violation dicts (empty if none, or if no index is available).
+    """
+    violations: list[dict] = []
+    for repo in accepted["repo"].unique():
+        clf_train, temp_train, retr_train = train_numbers_by_repo[repo]
+        train_numbers = clf_train | temp_train | retr_train
+        if not train_numbers:
+            continue
+
+        if bge_vectors_by_repo is not None:
+            loaded = bge_vectors_by_repo.get(repo)
+        else:
+            loaded = load_repo_bge_vectors(repo)
+        if loaded is None:
+            continue
+        vecs, vec_numbers = loaded
+
+        num_to_row = {int(n): i for i, n in enumerate(vec_numbers)}
+        train_rows = [num_to_row[n] for n in train_numbers if n in num_to_row]
+        if not train_rows:
+            continue
+        train_vecs = vecs[train_rows]
+        train_nums = vec_numbers[train_rows]
+
+        for _, row in accepted[accepted["repo"] == repo].iterrows():
+            gnum = int(row["number"])
+            grow = num_to_row.get(gnum)
+            if grow is None:
+                continue  # candidate not embedded yet — cannot near-dup check it
+            sims = train_vecs @ vecs[grow]
+            sims = np.where(train_nums == gnum, -1.0, sims)  # exclude self-number match
+            max_idx = int(sims.argmax())
+            max_sim = float(sims[max_idx])
+            if max_sim >= threshold:
+                violations.append({
+                    "repo": repo,
+                    "gold_number": gnum,
+                    "nearest_train_number": int(train_nums[max_idx]),
+                    "cosine": round(max_sim, 4),
+                })
+    return violations
+
+
 def assert_gold_disjoint_from_train(
     accepted: pd.DataFrame,
     train_numbers_by_repo: dict[str, tuple[set[int], set[int], set[int]]] | None = None,
+    bge_vectors_by_repo: dict[str, tuple[np.ndarray, np.ndarray] | None] | None = None,
+    near_dup_threshold: float = NEAR_DUP_THRESHOLD,
 ) -> None:
     """Assert accepted (repo, number) pairs are disjoint from all 3 training sources.
 
@@ -217,10 +308,14 @@ def assert_gold_disjoint_from_train(
       1. Not in data/processed/{repo_slug}_classifier_train.parquet["number"]
       2. Not in data/processed/{repo_slug}_temporal_train.parquet["number"]
       3. Not in the retrieval-train issue-number set from data/w3_split.parquet
+      4. Not >= near_dup_threshold BGE cosine similarity to any issue in 1-3 (catches a
+         re-filed near-duplicate that survives exact-ID matching — the gold #14398 gap)
 
     ``train_numbers_by_repo`` allows callers (e.g. tests) to inject
     {repo: (classifier_train, temporal_train, retrieval_train)} directly instead of
     reading from disk; defaults to loading via load_repo_train_numbers per repo.
+    ``bge_vectors_by_repo`` similarly allows injecting {repo: (vecs, numbers) | None}
+    for check 4; defaults to loading the FAISS dup-index from disk per repo.
     """
     accepted_keys = frozenset(zip(accepted["repo"], accepted["number"].astype(int)))
 
@@ -229,17 +324,19 @@ def assert_gold_disjoint_from_train(
         "temporal_train": set(),
         "retrieval_train": set(),
     }
+    resolved_train_numbers: dict[str, tuple[set[int], set[int], set[int]]] = {}
     for repo in accepted["repo"].unique():
         if train_numbers_by_repo is not None:
             clf_train, temp_train, retr_train = train_numbers_by_repo[repo]
         else:
             clf_train, temp_train, retr_train = load_repo_train_numbers(repo)
+        resolved_train_numbers[repo] = (clf_train, temp_train, retr_train)
         check_keys["classifier_train"] |= {(repo, n) for n in clf_train}
         check_keys["temporal_train"] |= {(repo, n) for n in temp_train}
         check_keys["retrieval_train"] |= {(repo, n) for n in retr_train}
 
     print("\n=== Disjointness checks (accepted gold vs training data) ===")
-    violations: dict[str, list[tuple[str, int]]] = {}
+    violations: dict[str, list] = {}
     for name, train_keys in check_keys.items():
         overlap = accepted_keys & frozenset(train_keys)
         status = "PASS" if not overlap else "FAIL"
@@ -247,17 +344,34 @@ def assert_gold_disjoint_from_train(
         if overlap:
             violations[name] = sorted(overlap)[:5]
 
+    near_dup_violations = check_near_duplicates(
+        accepted, resolved_train_numbers, bge_vectors_by_repo, near_dup_threshold
+    )
+    status = "PASS" if not near_dup_violations else "FAIL"
+    print(f"  {'near_duplicate':20s}: {status}  (overlap={len(near_dup_violations)})")
+    if near_dup_violations:
+        violations["near_duplicate"] = near_dup_violations[:5]
+
     if violations:
-        parts = [f"{name}: {len(check_keys[name] & accepted_keys)} overlap, first 5={sample}"
-                 for name, sample in violations.items()]
+        parts = []
+        for name, sample in violations.items():
+            if name == "near_duplicate":
+                parts.append(f"near_duplicate: {len(sample)} overlap, first 5={sample}")
+            else:
+                parts.append(
+                    f"{name}: {len(check_keys[name] & accepted_keys)} overlap, first 5={sample}"
+                )
         raise AssertionError(
             "GOLD/TRAIN LEAK: accepted gold issues found in training data. "
             + " | ".join(parts)
-            + ". Gold issues MUST be disjoint from classifier, temporal, and retrieval "
-            "training data (see spec.md hard rules / scripts/w3_t5_eval.py "
-            "assert_eval_disjoint_from_train)."
+            + ". Gold issues MUST be disjoint (exact-ID and near-duplicate) from "
+            "classifier, temporal, and retrieval training data (see spec.md hard rules / "
+            "scripts/w3_t5_eval.py assert_eval_disjoint_from_train)."
         )
-    logger.info("Disjointness checks PASSED: 0 overlap across all 3 training sources.")
+    logger.info(
+        "Disjointness checks PASSED: 0 overlap across all 3 training sources, "
+        "0 near-duplicates >= %.2f cosine.", near_dup_threshold
+    )
 
 
 def load_issue_created_at_map(repo: str) -> dict[int, pd.Timestamp]:

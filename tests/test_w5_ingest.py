@@ -24,6 +24,7 @@ from w5_ingest_labeled import (  # noqa: E402
     _days_to_bucket,
     assert_gold_disjoint_from_train,
     build_gold_rows,
+    check_near_duplicates,
     extract_related_issue_numbers,
     infer_priority,
     validate_accepted_rows,
@@ -356,6 +357,80 @@ class TestAssertGoldDisjointFromTrain:
             "microsoft/vscode": (set(), set(), set()),
         }
         assert_gold_disjoint_from_train(accepted, train_numbers_by_repo=train_numbers)  # no raise
+
+
+# ---------------------------------------------------------------------------
+# check_near_duplicates / near-dup wiring in assert_gold_disjoint_from_train
+# ---------------------------------------------------------------------------
+
+def _unit_vecs_at_cosine(cosine: float) -> tuple[np.ndarray, np.ndarray]:
+    """Two 2D unit vectors (a, b) with a @ b == cosine exactly."""
+    a = np.array([1.0, 0.0])
+    b = np.array([cosine, (1.0 - cosine**2) ** 0.5])
+    return a, b
+
+
+class TestCheckNearDuplicates:
+
+    def test_no_violation_below_threshold(self):
+        gold_vec, train_vec = _unit_vecs_at_cosine(0.80)
+        vecs = np.stack([gold_vec, train_vec])  # row 0 = gold #9001, row 1 = train #100
+        numbers = np.array([9001, 100])
+        accepted = pd.DataFrame([_make_candidate(number=9001, repo="microsoft/vscode")])
+        train_numbers = {"microsoft/vscode": ({100}, set(), set())}
+        violations = check_near_duplicates(
+            accepted, train_numbers, bge_vectors_by_repo={"microsoft/vscode": (vecs, numbers)}
+        )
+        assert violations == []
+
+    def test_violation_at_or_above_threshold(self):
+        gold_vec, train_vec = _unit_vecs_at_cosine(0.95)
+        vecs = np.stack([gold_vec, train_vec])
+        numbers = np.array([14398, 14399])
+        accepted = pd.DataFrame([_make_candidate(number=14398, repo="kubernetes/kubernetes")])
+        train_numbers = {"kubernetes/kubernetes": ({14399}, set(), set())}
+        violations = check_near_duplicates(
+            accepted, train_numbers,
+            bge_vectors_by_repo={"kubernetes/kubernetes": (vecs, numbers)},
+        )
+        assert len(violations) == 1
+        assert violations[0]["gold_number"] == 14398
+        assert violations[0]["nearest_train_number"] == 14399
+        assert violations[0]["cosine"] == pytest.approx(0.95)
+
+    def test_missing_index_is_vacuous_not_fatal(self):
+        accepted = pd.DataFrame([_make_candidate(number=9001, repo="microsoft/vscode")])
+        train_numbers = {"microsoft/vscode": ({100}, set(), set())}
+        violations = check_near_duplicates(
+            accepted, train_numbers, bge_vectors_by_repo={"microsoft/vscode": None}
+        )
+        assert violations == []
+
+    def test_assert_gold_disjoint_raises_on_near_dup(self):
+        gold_vec, train_vec = _unit_vecs_at_cosine(0.95)
+        vecs = np.stack([gold_vec, train_vec])
+        numbers = np.array([14398, 14399])
+        accepted = pd.DataFrame([_make_candidate(number=14398, repo="kubernetes/kubernetes")])
+        train_numbers = {"kubernetes/kubernetes": ({14399}, set(), set())}
+        with pytest.raises(AssertionError, match="near_duplicate"):
+            assert_gold_disjoint_from_train(
+                accepted,
+                train_numbers_by_repo=train_numbers,
+                bge_vectors_by_repo={"kubernetes/kubernetes": (vecs, numbers)},
+            )
+
+    def test_assert_gold_disjoint_passes_with_no_bge_index(self):
+        # Backward-compat: callers (and CI, where the FAISS index isn't checked in)
+        # that don't inject bge_vectors_by_repo must not be forced to hit real disk —
+        # load_repo_bge_vectors returns None for a missing index and the check no-ops
+        # even though there IS a non-empty train set to (would-be) scan against.
+        accepted = pd.DataFrame([_make_candidate(number=9001, repo="microsoft/vscode")])
+        train_numbers = {"microsoft/vscode": ({100}, set(), set())}
+        assert_gold_disjoint_from_train(
+            accepted,
+            train_numbers_by_repo=train_numbers,
+            bge_vectors_by_repo={"microsoft/vscode": None},
+        )  # no raise
 
 
 # ---------------------------------------------------------------------------

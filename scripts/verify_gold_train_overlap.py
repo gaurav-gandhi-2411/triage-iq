@@ -87,12 +87,18 @@ def load_retrieval_train_numbers(repo_slug: str) -> set[int]:
     return set(train["query_number"].astype(int)) | set(train["original_number"].astype(int))
 
 
-def load_cqr_calibration_numbers(repo_slug: str, cal_frac: float = 0.30) -> set[int]:
-    """Reproduce scripts/10_calibrate_cqr.py's calibration slice.
+def load_cqr_calibration_numbers(
+    repo_slug: str, eval_numbers: set[int] | None = None, cal_frac: float = 0.30
+) -> set[int]:
+    """Reproduce scripts/10_calibrate_cqr.py's calibration slice (post-fix).
 
-    cal = first int(cal_frac * n) rows of temporal_test, resolution_hours > 0,
-    sorted by created_at ascending. Deployed config uses cal_frac=0.30 for both
-    repos (data/models/cqr_conformal_adjustments.json).
+    cal = first int(cal_frac * n) ELIGIBLE (non-eval-set) rows of temporal_test,
+    resolution_hours > 0, sorted by created_at ascending — mirrors
+    scripts/10_calibrate_cqr.py::split_cal_true_test, which excludes eval-set issues
+    from cal candidacy (backfilling from the next chronologically-eligible row) so an
+    eval issue's resolution outcome can never contribute to Q and then get re-scored on
+    interval containment as part of the same eval. Deployed config uses cal_frac=0.30
+    for both repos (data/models/cqr_conformal_adjustments.json).
     """
     path = ROOT / "data" / "processed" / f"{repo_slug}_temporal_test.parquet"
     if not path.exists():
@@ -100,7 +106,10 @@ def load_cqr_calibration_numbers(repo_slug: str, cal_frac: float = 0.30) -> set[
     test = pd.read_parquet(path)
     test = test[test["resolution_hours"] > 0].sort_values("created_at").reset_index(drop=True)
     n_cal = int(len(test) * cal_frac)
-    return set(test.iloc[:n_cal]["number"].astype(int))
+    eval_numbers = eval_numbers or set()
+    is_eval = test["number"].astype(int).isin(eval_numbers)
+    eligible_idx = test.index[~is_eval]
+    return set(test.loc[eligible_idx[:n_cal], "number"].astype(int))
 
 
 def load_train_texts(repo_slug: str, numbers: set[int]) -> pd.DataFrame:
@@ -184,10 +193,14 @@ def near_dup_scan(
     vecs: np.ndarray,
     vec_numbers: np.ndarray,
     thresholds: list[float],
+    eval_numbers: set[int] | None = None,
 ) -> dict[str, Any]:
     """Max cosine similarity of each gold issue vs all training issues (BGE vectors).
 
     Same-number pairs are excluded — those are ID overlap, counted separately.
+    `eval_numbers`, when given, flags which over-threshold pairs involve an issue that
+    is in the ACTIVE n=65 eval set (eval/eval_set.jsonl) rather than only the broader
+    n=119 gold pool — that's the subset that actually contaminates current measurements.
     """
     num_to_row = {int(n): i for i, n in enumerate(vec_numbers)}
 
@@ -222,12 +235,14 @@ def near_dup_scan(
     max_idx = sims.argmax(axis=1)
     max_sim = sims.max(axis=1)
 
+    eval_numbers = eval_numbers or set()
     per_gold = [
         {
             "gold_number": int(gnum),
             "cohort": str(gold_repo.iloc[gi]["cohort"]),
             "max_train_cosine": round(float(max_sim[gi]), 4),
             "nearest_train_number": int(train_nums[max_idx[gi]]),
+            "in_eval_set": int(gnum) in eval_numbers,
         }
         for gi, gnum in enumerate(gold_nums)
     ]
@@ -238,6 +253,9 @@ def near_dup_scan(
             "by_cohort": pd.Series([p["cohort"] for p in per_gold if p["max_train_cosine"] >= t])
             .value_counts()
             .to_dict(),
+            "n_eval_set_over_threshold": sum(
+                1 for p in per_gold if p["max_train_cosine"] >= t and p["in_eval_set"]
+            ),
         }
         for t in thresholds
     }
@@ -260,16 +278,23 @@ def near_dup_scan(
     }
 
 
-def check_eval_set_matches_gold(gold: pd.DataFrame) -> dict[str, Any]:
-    """Confirm eval/eval_set.jsonl rows are exactly the gold parquet rows."""
+def load_eval_set_keys() -> set[tuple[str, int]]:
+    """(repo, number) keys of the ACTIVE n=65 eval/eval_set.jsonl rows."""
     if not EVAL_SET_PATH.exists():
-        return {"checked": False, "reason": "eval_set.jsonl missing"}
+        return set()
     eval_keys = set()
     with open(EVAL_SET_PATH, encoding="utf-8") as f:
         for line in f:
             if line.strip():
                 rec = json.loads(line)
                 eval_keys.add((rec.get("repo"), int(rec.get("number", -1))))
+    return eval_keys
+
+
+def check_eval_set_matches_gold(gold: pd.DataFrame, eval_keys: set[tuple[str, int]]) -> dict[str, Any]:
+    """Confirm eval/eval_set.jsonl rows are exactly the gold parquet rows."""
+    if not EVAL_SET_PATH.exists():
+        return {"checked": False, "reason": "eval_set.jsonl missing"}
     gold_keys = set(zip(gold["repo"], gold["number"].astype(int), strict=True))
     return {
         "checked": True,
@@ -297,10 +322,12 @@ def main() -> None:
         gold["repo"].value_counts().to_dict(),
     )
 
+    eval_keys = load_eval_set_keys()
+
     report: dict[str, Any] = {
         "gold_total": int(len(gold)),
         "cohort_counts": gold["cohort"].value_counts().to_dict(),
-        "eval_set_vs_gold": check_eval_set_matches_gold(gold),
+        "eval_set_vs_gold": check_eval_set_matches_gold(gold, eval_keys),
         "near_dup_thresholds": thresholds,
         "repos": {},
     }
@@ -308,6 +335,7 @@ def main() -> None:
     for repo, slug in REPOS.items():
         logger.info("=== %s ===", repo)
         gold_repo = gold[gold["repo"] == repo].reset_index(drop=True)
+        eval_numbers_repo = {num for r, num in eval_keys if r == repo}
 
         train_sets = {
             "classifier_train": load_split_numbers(slug, "classifier_train"),
@@ -316,22 +344,36 @@ def main() -> None:
             # Secondary: calibration/model-selection sets, reported for completeness
             "classifier_val": load_split_numbers(slug, "classifier_val"),
             "temporal_val": load_split_numbers(slug, "temporal_val"),
-            "cqr_calibration_slice": load_cqr_calibration_numbers(slug),
+            "cqr_calibration_slice": load_cqr_calibration_numbers(slug, eval_numbers_repo),
         }
         for name, s in train_sets.items():
             logger.info("  %s: n=%d", name, len(s))
 
         ids = id_overlap(gold_repo, train_sets)
 
+        # All train-like sets the gold/eval set must stay disjoint from — not just the
+        # two ADR-0018 originally covered. retrieval_train_w3 and cqr_calibration_slice
+        # feed model artifacts (W3 retrieval fine-tune, CQR Q adjustment) just as directly
+        # as classifier_train/temporal_train do, so a near-dup leak there is the same class
+        # of exchangeability violation.
+        NEAR_DUP_SETS = (
+            "classifier_train",
+            "temporal_train",
+            "retrieval_train_w3",
+            "cqr_calibration_slice",
+        )
+
         hashes = {}
-        for name in ("classifier_train", "temporal_train"):
+        for name in NEAR_DUP_SETS:
             train_texts = load_train_texts(slug, train_sets[name])
             hashes[name] = hash_overlap(gold_repo, train_texts, name)
 
         vecs, vec_numbers = load_bge_vectors(repo)
         near_dups = {
-            name: near_dup_scan(gold_repo, train_sets[name], vecs, vec_numbers, thresholds)
-            for name in ("classifier_train", "temporal_train")
+            name: near_dup_scan(
+                gold_repo, train_sets[name], vecs, vec_numbers, thresholds, eval_numbers_repo
+            )
+            for name in NEAR_DUP_SETS
         }
 
         report["repos"][repo] = {
@@ -373,11 +415,15 @@ def main() -> None:
             )
         for name, nd in r["near_dup"].items():
             counts = {t: c["n_gold_over_threshold"] for t, c in nd["threshold_counts"].items()}
+            eval_counts = {
+                t: c["n_eval_set_over_threshold"] for t, c in nd["threshold_counts"].items()
+            }
+            eval_tag = " <-- IN ACTIVE EVAL SET" if any(eval_counts.values()) else ""
             print(
                 f"  Near-dup vs {name:24s}: scanned={nd['n_gold_scanned']}, "
                 f"max-cos dist p50/p90/max = {nd['max_cosine_distribution']['p50']}/"
                 f"{nd['max_cosine_distribution']['p90']}/{nd['max_cosine_distribution']['max']}, "
-                f"over-threshold={counts}"
+                f"over-threshold={counts}, in-eval-set={eval_counts}{eval_tag}"
             )
     print()
 

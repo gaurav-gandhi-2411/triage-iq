@@ -1,0 +1,258 @@
+{
+  "generated_by": "scripts/phase2a_corpus_feasibility.py",
+  "github_live_totals": {
+    "queried_at": "2026-07-10",
+    "kubernetes_kubernetes": {
+      "total_issues_ever": 49266,
+      "duplicate_labeled": 52,
+      "dup_label_query": "label:triage/duplicate"
+    },
+    "microsoft_vscode": {
+      "total_issues_ever": 247856,
+      "duplicate_labeled": 29111,
+      "dup_label_query": "label:*duplicate"
+    }
+  },
+  "repos": {
+    "kubernetes_kubernetes": {
+      "power": {
+        "observed": {
+          "n_test": 152,
+          "delta": 0.11842105263157898,
+          "ci_lo": 0.0,
+          "ci_hi": 0.22384868421052545
+        },
+        "se_per_obs": 0.704,
+        "implied_discordance_rate": 0.5097,
+        "n_test_needed": {
+          "significance_boundary_50pct_power": 136,
+          "power_80pct": 278,
+          "power_90pct": 372
+        },
+        "test_fraction_at_70_15_15": 0.1511,
+        "total_pairs_needed": {
+          "power_80pct": 1840,
+          "power_90pct": 2463
+        },
+        "current_total_pairs": 1024,
+        "sensitivity_if_true_effect_half": {
+          "n_test_80pct_power": 1110
+        },
+        "point_estimate_near_zero_flag": false
+      },
+      "ceiling": {
+        "corpus_rows": 15000,
+        "scraped_number_windows": [
+          [
+            1,
+            15002
+          ]
+        ],
+        "created_at_range": [
+          "2014-06-06 23:52:50+00:00",
+          "2015-10-02 18:52:08+00:00"
+        ],
+        "gold_pairs_current": 1024,
+        "gold_by_source": {
+          "body_ref": 3,
+          "body_related": 898,
+          "title_sim": 123
+        },
+        "mining_headroom": {
+          "in_corpus_new_pairs_current_patterns": 22,
+          "in_corpus_new_pairs_extended_patterns": 857,
+          "note": "current_patterns = pairs the existing miner misses only because it takes the FIRST reference per issue; same confidence class as existing gold."
+        },
+        "scraping_recoverable": {
+          "out_of_corpus_refs_current_patterns": 1,
+          "out_of_corpus_refs_extended_patterns": 7,
+          "distinct_missing_target_issues": 1,
+          "note": "each ref becomes a candidate pair if its target issue is fetched; targets may include PRs (numbers are shared) \u2014 treat as upper bound."
+        }
+      },
+      "title_sim_headroom": {
+        "pairs_above_threshold_uncapped": 8839,
+        "by_similarity_band": {
+          "0.45-0.60": 6134,
+          "0.60-0.80": 2180,
+          ">=0.80": 525
+        },
+        "current_cap_per_repo": 300,
+        "note": "title_sim pairs are the weakest-confidence channel (near-duplicate text); raising the cap grows n but skews gold toward easy retrieval targets."
+      }
+    },
+    "microsoft_vscode": {
+      "power": {
+        "observed": {
+          "n_test": 60,
+          "delta": 0.09999999999999998,
+          "ci_lo": -0.06666666666666665,
+          "ci_hi": 0.25
+        },
+        "se_per_obs": 0.6257,
+        "implied_discordance_rate": 0.4016,
+        "n_test_needed": {
+          "significance_boundary_50pct_power": 151,
+          "power_80pct": 308,
+          "power_90pct": 412
+        },
+        "test_fraction_at_70_15_15": 0.1523,
+        "total_pairs_needed": {
+          "power_80pct": 2023,
+          "power_90pct": 2706
+        },
+        "current_total_pairs": 411,
+        "sensitivity_if_true_effect_half": {
+          "n_test_80pct_power": 1230
+        },
+        "point_estimate_near_zero_flag": false
+      },
+      "ceiling": {
+        "corpus_rows": 7028,
+        "scraped_number_windows": [
+          [
+            1,
+            5008
+          ],
+          [
+            142341,
+            142341
+          ],
+          [
+            149616,
+            149616
+          ],
+          [
+            239838,
+            239862
+          ],
+          [
+            252647,
+            252647
+          ],
+          [
+            257903,
+            257903
+          ],
+          [
+            260389,
+            260389
+          ],
+          [
+            266324,
+            266324
+          ],
+          [
+            275289,
+            275289
+          ],
+          [
+            277422,
+            278113
+          ],
+          [
+            283017,
+            283242
+          ],
+          [
+            286776,
+            286776
+          ],
+          [
+            287800,
+            287800
+          ],
+          [
+            292006,
+            292006
+          ],
+          [
+            293826,
+            295264
+          ],
+          [
+            297484,
+            297484
+          ],
+          [
+            299424,
+            300041
+          ],
+          [
+            303174,
+            303174
+          ],
+          [
+            304314,
+            304425
+          ],
+          [
+            306133,
+            306133
+          ],
+          [
+            307192,
+            312885
+          ]
+        ],
+        "created_at_range": [
+          "2015-10-13 23:37:50+00:00",
+          "2026-04-27 19:33:37+00:00"
+        ],
+        "gold_pairs_current": 411,
+        "gold_by_source": {
+          "body_ref": 1,
+          "body_related": 112,
+          "title_sim": 298
+        },
+        "mining_headroom": {
+          "in_corpus_new_pairs_current_patterns": 0,
+          "in_corpus_new_pairs_extended_patterns": 344,
+          "note": "current_patterns = pairs the existing miner misses only because it takes the FIRST reference per issue; same confidence class as existing gold."
+        },
+        "scraping_recoverable": {
+          "out_of_corpus_refs_current_patterns": 83,
+          "out_of_corpus_refs_extended_patterns": 106,
+          "distinct_missing_target_issues": 69,
+          "note": "each ref becomes a candidate pair if its target issue is fetched; targets may include PRs (numbers are shared) \u2014 treat as upper bound."
+        }
+      },
+      "title_sim_headroom": {
+        "pairs_above_threshold_uncapped": 11838,
+        "by_similarity_band": {
+          "0.45-0.60": 6415,
+          "0.60-0.80": 3920,
+          ">=0.80": 1503
+        },
+        "current_cap_per_repo": 300,
+        "note": "title_sim pairs are the weakest-confidence channel (near-duplicate text); raising the cap grows n but skews gold toward easy retrieval targets."
+      },
+      "dup_comment_channel": {
+        "dup_labeled_in_corpus": 238,
+        "target_ref_in_comments": 116,
+        "target_ref_in_body": 0,
+        "comment_recovery_rate": 0.487,
+        "repo_wide_dup_labeled": 29111,
+        "estimated_candidate_pairs_repo_wide": 14188,
+        "note": "comment-regex recovery is the FLOOR; the GitHub timeline API (marked_as_duplicate events) is structured and should recover more. Requires label-targeted scraping + comment/timeline extraction (Phase 2b)."
+      }
+    }
+  },
+  "verdict": {
+    "kubernetes_kubernetes": {
+      "go": true,
+      "ceiling_type": "scraping-ceiling (mining saturated: only 22 new in-corpus pairs at current patterns; 0-1 out-of-corpus refs because the corpus is a strict number prefix)",
+      "path": "extended-pattern re-mine of existing corpus (+857 candidates, review pass) and/or forward-scrape ~15K numbers (#15003-30000) at the historical yield of ~6 ref-pairs per 100 numbers"
+    },
+    "microsoft_vscode": {
+      "go": true,
+      "ceiling_type": "scraping-ceiling + mining-channel mismatch (corpus covers 2.8% of the repo; dup targets live in comments \u2014 49% recovery \u2014 not bodies \u2014 0 hits)",
+      "path": "label-targeted scrape of *duplicate issues + comment/timeline target extraction; candidate ceiling ~14188 pairs vs 2023 needed at 80% power",
+      "caveats": [
+        "conditions on the observed +10pp being real \u2014 the W3 vscode CI includes zero, so this is unproven, not demonstrated",
+        "dup-channel pairs are near-identical issues \u2014 easier retrieval targets than the current gold mix; the retry eval stands on the new corpus's own CI, not on comparability with W3's +10pp"
+      ]
+    },
+    "overall": "GO (both repos) \u2014 vscode is scraping-ceilinged, not structurally ceilinged; its 411-pair constraint was an artifact of scraping the wrong slice and mining the wrong channel."
+  }
+}

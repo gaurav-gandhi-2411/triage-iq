@@ -1,0 +1,1761 @@
+{
+  "generated_by": "scripts/phase2b_probe_dup_recovery.py",
+  "probed_at": "2026-07-11",
+  "repo": "microsoft/vscode",
+  "sampling": "per era bucket: 13 earliest + 13 latest dup-labeled issues by created_at (deterministic; within-year edges, not uniform \u2014 fine for an era trend)",
+  "gate": "ADR-0026 vscode GO holds if strict/timeline recovery >= ~40% in modern eras",
+  "buckets": {
+    "2016": {
+      "n": 26,
+      "strict_comment_rate": 0.269,
+      "loose_comment_rate": 0.231,
+      "marked_as_duplicate_event_rate": 0.0,
+      "timeline_target_recovery_rate": 0.0,
+      "strict_or_timeline_rate": 0.269
+    },
+    "2018": {
+      "n": 26,
+      "strict_comment_rate": 0.423,
+      "loose_comment_rate": 0.423,
+      "marked_as_duplicate_event_rate": 0.192,
+      "timeline_target_recovery_rate": 0.0,
+      "strict_or_timeline_rate": 0.423
+    },
+    "2020": {
+      "n": 26,
+      "strict_comment_rate": 0.423,
+      "loose_comment_rate": 0.769,
+      "marked_as_duplicate_event_rate": 0.154,
+      "timeline_target_recovery_rate": 0.0,
+      "strict_or_timeline_rate": 0.423
+    },
+    "2022": {
+      "n": 26,
+      "strict_comment_rate": 0.308,
+      "loose_comment_rate": 0.5,
+      "marked_as_duplicate_event_rate": 0.0,
+      "timeline_target_recovery_rate": 0.0,
+      "strict_or_timeline_rate": 0.308
+    },
+    "2024": {
+      "n": 26,
+      "strict_comment_rate": 0.308,
+      "loose_comment_rate": 0.577,
+      "marked_as_duplicate_event_rate": 0.115,
+      "timeline_target_recovery_rate": 0.0,
+      "strict_or_timeline_rate": 0.308
+    },
+    "2026": {
+      "n": 26,
+      "strict_comment_rate": 0.385,
+      "loose_comment_rate": 0.808,
+      "marked_as_duplicate_event_rate": 0.038,
+      "timeline_target_recovery_rate": 0.0,
+      "strict_or_timeline_rate": 0.385
+    }
+  },
+  "per_issue": {
+    "2016": [
+      {
+        "number": 1773,
+        "n_comments": 8,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 1775,
+        "n_comments": 1,
+        "strict_comment_target": 1431,
+        "loose_comment_target": 1431,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 1779,
+        "n_comments": 13,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 1782,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 1823,
+        "n_comments": 4,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 1862,
+        "n_comments": 7,
+        "strict_comment_target": 11702,
+        "loose_comment_target": 11702,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 1940,
+        "n_comments": 19,
+        "strict_comment_target": 1796,
+        "loose_comment_target": 1796,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 1946,
+        "n_comments": 3,
+        "strict_comment_target": 1308,
+        "loose_comment_target": 1308,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 1947,
+        "n_comments": 8,
+        "strict_comment_target": 8102,
+        "loose_comment_target": 8102,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 1959,
+        "n_comments": 4,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 1967,
+        "n_comments": 15,
+        "strict_comment_target": 585,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 6
+      },
+      {
+        "number": 1970,
+        "n_comments": 1,
+        "strict_comment_target": 2343,
+        "loose_comment_target": 2343,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 1974,
+        "n_comments": 37,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 2
+      },
+      {
+        "number": 17972,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 17967,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 17966,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 17958,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 17957,
+        "n_comments": 4,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 17944,
+        "n_comments": 4,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 17943,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 17938,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 17936,
+        "n_comments": 3,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 17930,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 17927,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 17920,
+        "n_comments": 25,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 5
+      },
+      {
+        "number": 17917,
+        "n_comments": 8,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 3
+      }
+    ],
+    "2018": [
+      {
+        "number": 40999,
+        "n_comments": 1,
+        "strict_comment_target": 10082,
+        "loose_comment_target": 10082,
+        "n_marked_as_duplicate_events": 1,
+        "timeline_event_keys": [
+          "actor",
+          "commit_id",
+          "commit_url",
+          "created_at",
+          "event",
+          "id",
+          "node_id",
+          "performed_via_github_app",
+          "url"
+        ],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 41010,
+        "n_comments": 4,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 1,
+        "timeline_event_keys": [
+          "actor",
+          "commit_id",
+          "commit_url",
+          "created_at",
+          "event",
+          "id",
+          "node_id",
+          "performed_via_github_app",
+          "url"
+        ],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 41013,
+        "n_comments": 1,
+        "strict_comment_target": 12033,
+        "loose_comment_target": 12033,
+        "n_marked_as_duplicate_events": 1,
+        "timeline_event_keys": [
+          "actor",
+          "commit_id",
+          "commit_url",
+          "created_at",
+          "event",
+          "id",
+          "node_id",
+          "performed_via_github_app",
+          "url"
+        ],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 41029,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 41032,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 41053,
+        "n_comments": 4,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 41056,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 41068,
+        "n_comments": 2,
+        "strict_comment_target": 37114,
+        "loose_comment_target": 37114,
+        "n_marked_as_duplicate_events": 1,
+        "timeline_event_keys": [
+          "actor",
+          "commit_id",
+          "commit_url",
+          "created_at",
+          "event",
+          "id",
+          "node_id",
+          "performed_via_github_app",
+          "url"
+        ],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 41073,
+        "n_comments": 2,
+        "strict_comment_target": 40262,
+        "loose_comment_target": 40262,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 41075,
+        "n_comments": 2,
+        "strict_comment_target": 40722,
+        "loose_comment_target": 40722,
+        "n_marked_as_duplicate_events": 1,
+        "timeline_event_keys": [
+          "actor",
+          "commit_id",
+          "commit_url",
+          "created_at",
+          "event",
+          "id",
+          "node_id",
+          "performed_via_github_app",
+          "url"
+        ],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 41082,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 41086,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 41093,
+        "n_comments": 12,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 65873,
+        "n_comments": 3,
+        "strict_comment_target": 7570,
+        "loose_comment_target": 7570,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 65865,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 65861,
+        "n_comments": 2,
+        "strict_comment_target": 7570,
+        "loose_comment_target": 7570,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 65856,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 65852,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 65838,
+        "n_comments": 6,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 65832,
+        "n_comments": 1,
+        "strict_comment_target": 66763,
+        "loose_comment_target": 66763,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 65830,
+        "n_comments": 4,
+        "strict_comment_target": 7570,
+        "loose_comment_target": 7570,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 65829,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 65825,
+        "n_comments": 6,
+        "strict_comment_target": 15178,
+        "loose_comment_target": 15178,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 65824,
+        "n_comments": 4,
+        "strict_comment_target": 10121,
+        "loose_comment_target": 10121,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 65820,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 65813,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      }
+    ],
+    "2020": [
+      {
+        "number": 87959,
+        "n_comments": 6,
+        "strict_comment_target": 87067,
+        "loose_comment_target": 87067,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 87961,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 87963,
+        "n_comments": 4,
+        "strict_comment_target": null,
+        "loose_comment_target": 84271,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 87967,
+        "n_comments": 9,
+        "strict_comment_target": 87700,
+        "loose_comment_target": 87700,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 87976,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": 29499,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 87977,
+        "n_comments": 2,
+        "strict_comment_target": 85452,
+        "loose_comment_target": 85452,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 87982,
+        "n_comments": 3,
+        "strict_comment_target": 79130,
+        "loose_comment_target": 79130,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 87984,
+        "n_comments": 0,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 87986,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 87989,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": 3884,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 87990,
+        "n_comments": 2,
+        "strict_comment_target": 75241,
+        "loose_comment_target": 75241,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 87998,
+        "n_comments": 2,
+        "strict_comment_target": 74782,
+        "loose_comment_target": 74782,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 88003,
+        "n_comments": 3,
+        "strict_comment_target": null,
+        "loose_comment_target": 76548,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 113635,
+        "n_comments": 1,
+        "strict_comment_target": 47816,
+        "loose_comment_target": 47816,
+        "n_marked_as_duplicate_events": 1,
+        "timeline_event_keys": [
+          "actor",
+          "commit_id",
+          "commit_url",
+          "created_at",
+          "event",
+          "id",
+          "node_id",
+          "performed_via_github_app",
+          "url"
+        ],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 113631,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 113617,
+        "n_comments": 2,
+        "strict_comment_target": 113527,
+        "loose_comment_target": 2718,
+        "n_marked_as_duplicate_events": 1,
+        "timeline_event_keys": [
+          "actor",
+          "commit_id",
+          "commit_url",
+          "created_at",
+          "event",
+          "id",
+          "node_id",
+          "performed_via_github_app",
+          "url"
+        ],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 113613,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": 2151,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 113608,
+        "n_comments": 3,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 113591,
+        "n_comments": 2,
+        "strict_comment_target": 113590,
+        "loose_comment_target": 113590,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 113584,
+        "n_comments": 3,
+        "strict_comment_target": null,
+        "loose_comment_target": 54950,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 113569,
+        "n_comments": 2,
+        "strict_comment_target": 112621,
+        "loose_comment_target": 112621,
+        "n_marked_as_duplicate_events": 1,
+        "timeline_event_keys": [
+          "actor",
+          "commit_id",
+          "commit_url",
+          "created_at",
+          "event",
+          "id",
+          "node_id",
+          "performed_via_github_app",
+          "url"
+        ],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 113565,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": 10546,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 113553,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": 107016,
+        "n_marked_as_duplicate_events": 1,
+        "timeline_event_keys": [
+          "actor",
+          "commit_id",
+          "commit_url",
+          "created_at",
+          "event",
+          "id",
+          "node_id",
+          "performed_via_github_app",
+          "url"
+        ],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 113552,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": 112808,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 113543,
+        "n_comments": 0,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 113537,
+        "n_comments": 2,
+        "strict_comment_target": 106351,
+        "loose_comment_target": 106351,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      }
+    ],
+    "2022": [
+      {
+        "number": 139973,
+        "n_comments": 1,
+        "strict_comment_target": 131507,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 139975,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 140024,
+        "n_comments": 2,
+        "strict_comment_target": 8226,
+        "loose_comment_target": 8226,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 140057,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 140060,
+        "n_comments": 44,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 140070,
+        "n_comments": 1,
+        "strict_comment_target": 139923,
+        "loose_comment_target": 139923,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 140071,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 140072,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 140077,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 140100,
+        "n_comments": 2,
+        "strict_comment_target": 111022,
+        "loose_comment_target": 111022,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 140124,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 140125,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": 140111,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 140145,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": 135888,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 170340,
+        "n_comments": 4,
+        "strict_comment_target": null,
+        "loose_comment_target": 157096,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 170330,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 170308,
+        "n_comments": 2,
+        "strict_comment_target": 165416,
+        "loose_comment_target": 165416,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 170283,
+        "n_comments": 2,
+        "strict_comment_target": 170281,
+        "loose_comment_target": 170281,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 170282,
+        "n_comments": 2,
+        "strict_comment_target": 170281,
+        "loose_comment_target": 170281,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 170279,
+        "n_comments": 1,
+        "strict_comment_target": 165416,
+        "loose_comment_target": 165416,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 170276,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 170210,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 170198,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 170192,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": 157437,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 170187,
+        "n_comments": 4,
+        "strict_comment_target": null,
+        "loose_comment_target": 157496,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 170155,
+        "n_comments": 4,
+        "strict_comment_target": null,
+        "loose_comment_target": 75141,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 170152,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      }
+    ],
+    "2024": [
+      {
+        "number": 201652,
+        "n_comments": 3,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 201667,
+        "n_comments": 4,
+        "strict_comment_target": null,
+        "loose_comment_target": 166118,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 201702,
+        "n_comments": 6,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 4
+      },
+      {
+        "number": 201729,
+        "n_comments": 6,
+        "strict_comment_target": null,
+        "loose_comment_target": 190645,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 201750,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": 111580,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 201785,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 201797,
+        "n_comments": 8,
+        "strict_comment_target": null,
+        "loose_comment_target": 200636,
+        "n_marked_as_duplicate_events": 1,
+        "timeline_event_keys": [
+          "actor",
+          "commit_id",
+          "commit_url",
+          "created_at",
+          "event",
+          "id",
+          "node_id",
+          "performed_via_github_app",
+          "url"
+        ],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 201814,
+        "n_comments": 3,
+        "strict_comment_target": 205089,
+        "loose_comment_target": 205089,
+        "n_marked_as_duplicate_events": 1,
+        "timeline_event_keys": [
+          "actor",
+          "commit_id",
+          "commit_url",
+          "created_at",
+          "event",
+          "id",
+          "node_id",
+          "performed_via_github_app",
+          "url"
+        ],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 201818,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 201824,
+        "n_comments": 2,
+        "strict_comment_target": 205089,
+        "loose_comment_target": 205089,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 201849,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 201893,
+        "n_comments": 3,
+        "strict_comment_target": null,
+        "loose_comment_target": 195887,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 201929,
+        "n_comments": 5,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 237122,
+        "n_comments": 2,
+        "strict_comment_target": 237121,
+        "loose_comment_target": 237121,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 237115,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 237099,
+        "n_comments": 2,
+        "strict_comment_target": 235979,
+        "loose_comment_target": 235979,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 237097,
+        "n_comments": 2,
+        "strict_comment_target": 237098,
+        "loose_comment_target": 237098,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 237083,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": 229826,
+        "n_marked_as_duplicate_events": 1,
+        "timeline_event_keys": [
+          "actor",
+          "commit_id",
+          "commit_url",
+          "created_at",
+          "event",
+          "id",
+          "node_id",
+          "performed_via_github_app",
+          "url"
+        ],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 237082,
+        "n_comments": 2,
+        "strict_comment_target": 237081,
+        "loose_comment_target": 237081,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 237081,
+        "n_comments": 2,
+        "strict_comment_target": 237082,
+        "loose_comment_target": 237082,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 237059,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 237027,
+        "n_comments": 4,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 236982,
+        "n_comments": 3,
+        "strict_comment_target": null,
+        "loose_comment_target": 174350,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 236977,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 236931,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 236907,
+        "n_comments": 2,
+        "strict_comment_target": 236906,
+        "loose_comment_target": 236906,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      }
+    ],
+    "2026": [
+      {
+        "number": 285642,
+        "n_comments": 1,
+        "strict_comment_target": 249896,
+        "loose_comment_target": 249896,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 285645,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": 246204,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 285650,
+        "n_comments": 3,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 285693,
+        "n_comments": 3,
+        "strict_comment_target": null,
+        "loose_comment_target": 286929,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 285722,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": 285714,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 285725,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 285755,
+        "n_comments": 3,
+        "strict_comment_target": 285063,
+        "loose_comment_target": 285063,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 285763,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 285777,
+        "n_comments": 3,
+        "strict_comment_target": null,
+        "loose_comment_target": 187338,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 285783,
+        "n_comments": 3,
+        "strict_comment_target": 285782,
+        "loose_comment_target": 285782,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 285787,
+        "n_comments": 3,
+        "strict_comment_target": null,
+        "loose_comment_target": 275655,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 285798,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 285802,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": 274550,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 325096,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": 240700,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 325093,
+        "n_comments": 3,
+        "strict_comment_target": 325086,
+        "loose_comment_target": 325086,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 325087,
+        "n_comments": 3,
+        "strict_comment_target": 325086,
+        "loose_comment_target": 325086,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 324162,
+        "n_comments": 4,
+        "strict_comment_target": 324161,
+        "loose_comment_target": 324161,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 323800,
+        "n_comments": 3,
+        "strict_comment_target": 323798,
+        "loose_comment_target": 323798,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 323799,
+        "n_comments": 4,
+        "strict_comment_target": 323798,
+        "loose_comment_target": 323798,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 323676,
+        "n_comments": 3,
+        "strict_comment_target": 323674,
+        "loose_comment_target": 323674,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 323675,
+        "n_comments": 3,
+        "strict_comment_target": 323674,
+        "loose_comment_target": 323674,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 323572,
+        "n_comments": 4,
+        "strict_comment_target": null,
+        "loose_comment_target": 313396,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 1
+      },
+      {
+        "number": 323557,
+        "n_comments": 1,
+        "strict_comment_target": null,
+        "loose_comment_target": 323565,
+        "n_marked_as_duplicate_events": 1,
+        "timeline_event_keys": [
+          "actor",
+          "commit_id",
+          "commit_url",
+          "created_at",
+          "event",
+          "id",
+          "node_id",
+          "performed_via_github_app",
+          "url"
+        ],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 323397,
+        "n_comments": 4,
+        "strict_comment_target": null,
+        "loose_comment_target": null,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 323060,
+        "n_comments": 2,
+        "strict_comment_target": null,
+        "loose_comment_target": 318553,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      },
+      {
+        "number": 322706,
+        "n_comments": 4,
+        "strict_comment_target": null,
+        "loose_comment_target": 312290,
+        "n_marked_as_duplicate_events": 0,
+        "timeline_event_keys": [],
+        "timeline_target": null,
+        "n_cross_referenced_events": 0
+      }
+    ]
+  }
+}

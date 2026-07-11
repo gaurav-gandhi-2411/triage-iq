@@ -1,152 +1,113 @@
-# Project Spec: TriageIQ — Resolution Model Improvement (Phase 1: model performance)
+# Project Spec: TriageIQ — Phase 2a: Corpus-Growth Feasibility (investigate before scraping)
 
 ## Goal
 
-The resolution stage is the pipeline's weakest: it LOSES to a naive prior on vscode (~-70%),
-barely beats it on k8s (~+2%), and ADR-0021/0023 proved its uncertainty is non-diagnostic and its
-errors are unpredictable from currently-extracted features. That last finding is the KEY INSIGHT:
-resolution error being unpredictable from current features strongly suggests the current feature
-set UNDER-DETERMINES resolution time — the model doesn't have the inputs it needs. This iteration
-attacks that directly: engineer better resolution features and/or reframe the resolution task to
-what's actually predictable, to genuinely reduce error (not to abstain on it — that's proven
-impossible).
+The W3 retrieval fine-tune was rejected (ADR-0016) because recall@k improvement had a bootstrap CI
+that crossed zero at available n — a DATA problem (too few gold_related pairs), not a method problem.
+Phase 2 would retry the fine-tune on a grown corpus. But before committing to scraping (real effort),
+this investigation answers: **CAN the corpus realistically grow enough to clear the ADR-0006 CI bar
+(CI excludes zero on BOTH repos), and is that growth achievable — especially for vscode, the binding
+data constraint at every prior turn?**
 
-**This is real modeling work with a real chance of an honest negative** (maybe resolution time on
-software issues genuinely isn't more predictable from available data — which would itself be a
-strong finding, proven rigorously). The bar is ADR-0006's: an improvement ships only if it beats
-the current model with a CI that excludes zero on the powered repo (k8s). No p-hacking, no
-shipping a marginal gain as a win.
+This is analysis-only, no scraping, no fine-tuning. The deliverable is a go/no-go with NUMBERS:
+either "yes, growing to N pairs plausibly clears the bar, here's the scraping scope" (→ Phase 2b
+scraping build) or "no, the data ceiling is structural, fine-tune retry isn't viable" (→ honest
+finding, skip to Phase 3). Do NOT foregone-conclude either direction.
 
-## Current state (existing project)
+## Current state
 
-- Resolution model: LightGBM quantile + bucket classifier + CQR conformal, de-leaked (ADR-0009:
-  created_at temporal split, has_priority and other post-creation features dropped). Current
-  performance: k8s ~+2% over naive (MAE), vscode ~-70% (loses to naive), conformal coverage
-  k8s 76.6% / vscode 74.1%.
-- Feature set: currently creation-time features only (post-leak-fix). The de-leaking correctly
-  removed post-creation signal — but may have left the model with too few creation-time features
-  to predict well. That's the tension to explore: MORE creation-time features (not post-creation).
-- Ground truth: actual resolution time (created_at → closed_at) known for gold + training issues.
-- Eval: clean n=65, local qwen3:8b judge, mean-band gate. Resolution metrics via
-  resolution_results.json (separate held-out pathway from the judge eval — the honest "beats naive"
-  number).
-- vscode is data-starved (n=11 eval, 411 pairs) — its resolution result is indicative; k8s (n=54)
-  is where improvement is measured with power.
+- gold_related.parquet: ~1,435 pairs (1,024 k8s / 411 vscode). Sources: body_related=1010,
+  title_sim=421, body_ref=4. (body_ref is the strict "duplicate of #N" pattern — only 4 in the
+  entire corpus, ADR-0007.)
+- W3 rejected: re-established fine-tune gave +11.84pp k8s CI[0.00,+22.38], +10pp vscode
+  CI[-6.67,+25.00] (ADR-0016) — neither excludes zero, both need more n.
+- vscode is the binding constraint everywhere: 411 pairs, couldn't reach n=300 test for W3, 17
+  clean issues for W5, 11 clean for the eval baseline. 92% split-overlap by base rate.
+- Corpus: k8s ~15,000 issues, vscode ~7,028 issues (the scraped issue bodies, not just pairs).
+- Retrieval fine-tune trains on gold_related PAIRS; the eval needs enough disjoint TEST pairs for a
+  bootstrap CI that can exclude zero.
 
 ## Scope
 
-### In scope
+### In scope (analysis only)
 
-**Diagnose WHY resolution is hard (before building — informs the approach):**
-- Given ADR-0023 (no feature predicts error), first characterize: is the error high-variance
-  (irreducible noise — issues genuinely resolve unpredictably) or high-bias (the model is
-  systematically wrong in a fixable way)? Plot predicted vs actual, residual distribution, per
-  bucket. This decides whether MORE FEATURES help (bias) or whether resolution is fundamentally
-  noisy (variance — in which case the honest move is task reframing, not feature engineering).
+**1. Quantify how many MORE pairs would clear the bar (power analysis):**
+- From the W3 result (effect sizes + CIs at current n), estimate: at what test-set n would the k8s
+  CI plausibly exclude zero? At what n for vscode? This is a power calculation from the observed
+  effect size and variance — how many disjoint test pairs does each repo need for the CI to exclude
+  zero if the true effect is ~the observed point estimate?
+- Be honest about the assumption: this assumes the effect is real at the point estimate. If the
+  point estimate itself is near-zero (vscode's +10pp with a wide CI), no n saves it — flag that.
 
-**Feature engineering (creation-time only — do NOT reintroduce leakage):**
-- Engineer additional CREATION-TIME features that could carry resolution signal without leaking:
-  issue text embeddings (semantic content → resolution signal), title/body length + complexity,
-  code-block/stacktrace presence, reporter history IF available at creation time (careful: must be
-  known at creation, not after), label-at-creation, component, cross-reference count at creation.
-- HARD LEAKAGE GUARD: every new feature must be verifiable as known at issue CREATION time. Assert
-  disjointness/no-leakage the same way ADR-0009 established. A feature that sneaks in post-creation
-  signal would inflate the result — the exact bug this project has caught repeatedly. Each new
-  feature gets an explicit "known at creation?" justification.
+**2. Quantify how many pairs the corpus COULD yield (ceiling analysis):**
+- The current pairs come from body_related (1010), title_sim (421), body_ref (4). How many MORE
+  genuine issue-to-issue related pairs could be extracted from the EXISTING scraped corpus (15K k8s
+  / 7K vscode issues) that aren't already in gold_related? I.e. is the corpus under-mined, or is
+  1,435 close to what's extractable?
+- And: how many more ISSUES could realistically be scraped (are there unscraped issues in these
+  repos — closed issues, older issues, that weren't pulled)? Estimate the addressable pool.
+- The KEY question for vscode: is vscode's 411 a mining ceiling (all extractable pairs already
+  found) or a scraping ceiling (more issues exist, unscraped)? These have very different scraping
+  implications.
 
-**Task reframing (if point-estimation is fundamentally hard):**
-- If diagnosis shows resolution TIME is high-variance/unpredictable, test whether a COARSER target
-  is predictable: bucket classification (hours/days/months/long) may be achievable where
-  point-days aren't. Or ordinal (faster/slower than median). A well-calibrated bucket classifier
-  that beats naive is more useful than a point estimate that loses to naive. Measure this as an
-  alternative framing.
+**3. The vscode-specific verdict (this is the crux):**
+- vscode has been the binding constraint at every turn. Determine honestly: is there a realistic
+  path to enough vscode disjoint test pairs to clear the CI bar, or is vscode structurally
+  data-limited such that the fine-tune can only ever ship k8s-only?
+- If vscode can't reach the bar even with maximal realistic scraping → the honest finding is "the
+  fine-tune is a k8s-only prospect; vscode retrieval stays on the baseline BGE" — which is a valid
+  outcome (k8s-only improvement) but must be stated, not hidden.
 
-**Honest evaluation (the whole point):**
-- Retrain the resolution model with the new features / reframed target. Measure vs the CURRENT
-  model on the held-out pathway (resolution_results.json), per repo. Improvement ships ONLY if the
-  CI on the improvement excludes zero on k8s (ADR-0006 bar). Report effect size + CI.
-- vscode: report but indicative-only (n=11); don't claim, don't pool.
-- If retrained model changes /triage outputs → it's a model artifact change → GCS upload + manifest
-  update + re-record + re-baseline (the full deliberate cutover with drift guard — this is a REAL
-  model change, treat it like the bucket-retrain cutover).
+**4. Go/no-go recommendation with the scraping scope:**
+- If GO: how many issues to scrape per repo, expected pair yield, whether it clears the bar on
+  k8s / vscode / both, and the rough effort. This becomes the Phase 2b scraping spec.
+- If NO-GO: which repo(s) are structurally ceilinged, why, and the recommendation to skip to Phase 3.
+- MIXED (likely): "k8s is growable and worth it, vscode is ceilinged" — the honest split verdict.
 
 ### Out of scope
 
-- No reintroducing post-creation features (ADR-0009 leakage — the hard line).
-- No resolution abstention (ADR-0021/0023 proved it unbuildable — this reduces error instead).
-- No change to classifier/retriever/synthesis (resolution stage only).
-- No shipping a marginal gain that doesn't clear the ADR-0006 CI-excludes-zero bar.
-- No reopening closed eval-integrity work.
+- No scraping (this decides WHETHER to scrape).
+- No fine-tuning (W3 is rejected until the corpus grows; this is the feasibility gate).
+- No new labeling (that's Phase 2b if GO).
+- No model/pipeline/eval changes.
 
 ## Tech stack
 
-- Existing LightGBM + Python. Embeddings via the existing BGE model (already loaded) if text
-  features are used. scipy/statsmodels for the significance test. No new heavy deps without escalation.
-
-## Architecture
-
-```
-triage-iq/
-  scripts/w6_diagnose_resolution.py       # NEW — bias/variance characterization
-  scripts/w6_resolution_features.py       # NEW — creation-time feature engineering + leakage guard
-  scripts/w6_train_resolution.py          # retrain w/ new features or reframed target
-  reports/w6_resolution_results.json      # NEW — new vs current, CI, per repo
-  data/models/resolution_predictor_*.pkl  # RETRAINED artifacts (cutover if it ships)
-  data/models/MANIFEST.sha256             # updated if artifacts change
-  docs/architecture/adr/ADR-0024-*.md     # diagnosis, approach, result, ship/reject decision
-```
+- Existing Python + the scraped corpus + gold_related.parquet. scipy for the power calc. No LLM,
+  no new deps.
 
 ## Autonomy & escalation
 
-CC runs diagnosis + feature engineering + retraining + evaluation autonomously. Escalate ONLY:
-1. **The diagnosis result** (bias vs variance) — because it decides the approach (feature eng vs
-   task reframe). Report before committing to one.
-2. **The improvement result** (new vs current, CI per repo) — before any ship/cutover decision. The
-   ship decision (does it clear the ADR-0006 bar) is human-confirmed.
-3. **The model cutover** (GCS upload + manifest + re-record + re-baseline + deploy) — the full
-   deliberate cutover, escalated, if the improvement ships.
-4. Any new leakage-risk feature where "known at creation?" is ambiguous — escalate rather than assume.
+CC runs the full analysis autonomously. Escalate ONLY:
+1. The go/no-go recommendation + the numbers behind it (the power calc + ceiling estimate + vscode
+   verdict) — this is a strategic decision, report it for the human to make the scrape/skip call.
 
 ## Hard rules
 
-- LEAKAGE: every new feature verifiably known at issue CREATION time; assert it; escalate ambiguity.
-  This is the ADR-0009 line — do not cross it. A post-creation feature inflating the result is THE
-  failure mode this project exists to catch.
-- Ship only on ADR-0006 bar (CI excludes zero on k8s). A negative (no feature/reframe beats current)
-  is a VALID finding — document it, don't force a positive.
-- vscode n=11 indicative-only; k8s n=54 is the powered measurement; don't pool.
-- A model artifact change = full deliberate cutover (backup, GCS upload, manifest, re-record,
-  re-baseline, drift guard, rollback anchor, live verify) — treat like the bucket-retrain.
-- Branch only (`feat/w6-resolution-improvement`); I merge. Zero-cost (local for any eval judge
-  re-record). Claude Max — never ANTHROPIC_API_KEY. Don't touch aetherart-497918.
-
-## Verification commands
-
-```yaml
-- name: api-tests
-  cmd: pytest -v
-  required: true
-- name: eval-gate
-  cmd: pytest eval/ -v
-  required: true
-```
+- Honest numbers, no foregone conclusion. If the power calc says vscode's point estimate is too
+  near-zero for any n to help, SAY SO — don't recommend scraping to chase a null effect.
+- vscode indicative caveats apply; be explicit about what's structural vs addressable.
+- Analysis only — no scraping, no fine-tuning, no data changes.
+- Branch only (`analysis/corpus-feasibility`); I merge. Zero-cost, no LLM. Claude Max — never
+  ANTHROPIC_API_KEY. Don't touch aetherart-497918.
 
 ## Success criteria
 
-- Diagnosis (bias vs variance) reported; approach chosen from it.
-- New features are all creation-time (leakage-asserted) OR a reframed target is tested.
-- Retrained model measured vs current on held-out pathway, per repo, with CI + effect size.
-- Ship/reject decision on the ADR-0006 bar (CI excludes zero on k8s), human-confirmed.
-- If shipped: full cutover (artifacts + manifest + re-record + re-baseline + deploy + live verify).
-- If not: honest negative documented (resolution not improvable from available data — a real finding).
-- ADR-0024 with diagnosis, approach, result, decision.
+- Power analysis: test-set n needed per repo for the CI to exclude zero (given observed effect).
+- Ceiling analysis: extractable additional pairs from existing corpus + addressable unscraped issues,
+  per repo — mining-ceiling vs scraping-ceiling distinguished.
+- vscode verdict: realistic path to the bar, or structurally ceilinged (k8s-only prospect).
+- Go/no-go recommendation with scraping scope (if go) or skip rationale (if no-go), escalated.
+- reports/corpus_feasibility.json + a short ADR-0026 documenting the analysis + recommendation.
 
 ## Build order (CC autonomous)
 
-1. Diagnose: bias vs variance, residual analysis, per-bucket. ESCALATE the diagnosis (it picks the path).
-2. Per the diagnosis: creation-time feature engineering (leakage-guarded) AND/OR task reframe (bucket).
-3. Retrain; measure vs current per repo with CI. ESCALATE the result before ship decision.
-4. On approval: cutover if it ships (full deliberate artifact cutover) OR document the negative.
-5. ADR-0024.
+1. Power calc: from W3's effect sizes + CIs, the test-n needed per repo to exclude zero. Flag if
+   any repo's point estimate is too near-zero for n to help.
+2. Ceiling: mine the existing corpus for additional extractable pairs (not already in gold_related);
+   estimate unscraped-issue pool per repo. Distinguish mining-ceiling from scraping-ceiling.
+3. vscode verdict: realistic-path vs structurally-ceilinged.
+4. ESCALATE the go/no-go + numbers + scraping scope.
+5. ADR-0026 + corpus_feasibility.json.
 ```
 

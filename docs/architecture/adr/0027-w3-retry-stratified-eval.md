@@ -86,6 +86,17 @@ ADR-0026 (GO) + the era probe + the Phase 2b collection grew the corpus and gold
   slice (`comments_skipped: true`) — comments can be backfilled if a future channel needs
   them.
 
+## Design-stage split correction (2026-07-12, before any training — part of pre-registration)
+
+The first T3 run on v2 used the ADR-0016 quota (state-machine thresholds on cumulative TOTAL
+pairs). Because dup pairs chain to old canonical issues, gate-carrying components get early
+dates and sort into train: vscode's gate stratum landed only **76** test pairs vs the ~308
+the pre-registered power target requires (product got 260 — inverted). Fixed by thresholding
+the same chronological component walk on cumulative **GATE-stratum** pairs per repo; other
+strata ride along with their components. No model had been trained and no result existed
+when this changed. Resulting test strata: k8s gate 441 / product 57; vscode gate 308 /
+product 281. Issue-level leakage check passes unchanged.
+
 ## Alternatives considered
 
 | Alternative | Reason rejected |

@@ -88,13 +88,21 @@ def split_repo(
     repo_gold = repo_gold.copy()
     repo_gold["component_id"] = repo_gold["query_number"].astype(int).map(comp_id_map)
 
-    # Count pairs per component (sorted chronologically by cid)
-    pairs_per_comp = (
-        repo_gold.groupby("component_id").size().reindex(range(len(comp_nodes)), fill_value=0)
+    # Quota on GATE-stratum pairs (ADR-0027 design-stage fix, applied BEFORE any training):
+    # dup pairs chain to old canonical issues, so components carrying the gate stratum get
+    # early dates and a total-pairs quota starves the gate stratum out of test (vscode gate
+    # test fell to 76 of the ~308 the pre-registered power target needs). Thresholding the
+    # same chronological state machine on cumulative GATE pairs guarantees ~15% of the
+    # CI-gated stratum lands in test; other strata ride along with their component.
+    gate_per_comp = (
+        repo_gold[repo_gold["stratum"] == "gate"]
+        .groupby("component_id")
+        .size()
+        .reindex(range(len(comp_nodes)), fill_value=0)
     )
-    total_pairs = pairs_per_comp.sum()
-    train_target = int(TRAIN_FRAC * total_pairs)
-    val_target = int(VAL_FRAC * total_pairs)
+    total_gate = gate_per_comp.sum()
+    train_target = int(TRAIN_FRAC * total_gate)
+    val_target = int(VAL_FRAC * total_gate)
 
     # Greedy assignment using a state machine: assign component to current state,
     # then transition after cumulative crosses each threshold. This guarantees val
@@ -103,7 +111,7 @@ def split_repo(
     cumulative = 0
     state = "train"
     for cid in range(len(comp_nodes)):
-        n = pairs_per_comp[cid]
+        n = gate_per_comp[cid]
         split_by_comp[cid] = state
         cumulative += n
         if state == "train" and cumulative >= train_target:

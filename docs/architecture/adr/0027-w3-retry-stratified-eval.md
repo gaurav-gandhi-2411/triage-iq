@@ -1,6 +1,6 @@
 # ADR-0027 — W3 Retry on the Grown Corpus: Stratified Eval Design + Product-Task Disclosure
 
-**Status:** Accepted (design pre-registered 2026-07-12, committed BEFORE training ran; results recorded below — ship decision pending, GG's call)
+**Status:** Accepted — **HOLD, no cutover** (GG decision 2026-07-12; results and reasoning below). The fine-tune is banked as a foundation, pending product-task gating data — a held-pending-data result, not a rejection.
 **Date:** 2026-07-12
 **Decider:** Gaurav Gandhi (design approved explicitly; execution by CC)
 
@@ -124,6 +124,38 @@ Notes recorded with the results:
 - T4 variant selection kept the inherited global-max rule: per-repo models won (vsc val
   0.767 > combined 0.703 pooled). The pooled-val comparison is noisy across variants (known
   ADR-0016 caveat); the test-split gates above are the meaningful measurements.
+
+## Ship decision (GG, 2026-07-12): HOLD — no cutover on proxy-task gates
+
+**Reasoning (locked):**
+
+1. The gates that PASS measure **proxy tasks** (k8s PR→issue, vscode dup→canonical), not the
+   product task a user performs (issue→related-issues). Shipping to improve a task users
+   don't perform, on the hope it transfers to the product task — which crosses zero on both
+   repos — is "hope it transfers", not a ship criterion.
+2. This is **not "the fine-tune failed."** It is a promising result underpowered on the task
+   that matters: proxy +14.29pp (k8s, method-robust) / +4.55pp (vscode, method-dependent);
+   product-task +3.51pp / +3.20pp, both directionally positive, both crossing zero (vscode
+   by 0.36pp). Framing: *fine-tune shows real proxy gains and directional product-task
+   gains; not shipped because the product task isn't yet powered to gate.*
+3. **The work is banked, not discarded**: the v2 corpus (30K k8s / 13.3K vscode records),
+   gold_related_v2 (6,879 stratified pairs), the fine-tuned per-repo models + v2 indexes
+   (local, regenerable via committed scripts), and the stratified eval harness are the
+   foundation the product-task gate builds on once the data exists.
+
+**The concrete unblock for a future ship decision:** gating the product task needs
+~700 vscode product test pairs (≈4,700 issue→issue pairs total vs 505 now) for 80% power at
+the observed effect — and the dup-scrape channel cannot provide them (dup pairs are the gate
+stratum by definition); it requires **related-pair mining at scale** (e.g. comment-channel
+"see/related" references across the unscraped vscode middle era, cross-reference timeline
+events, or labeled expansion). k8s product (57 test pairs of 776 total) has the same shape:
+more issue→issue pairs, then re-gate. A future "should this fine-tune ship" starts from that
+data target, not from re-running this eval on the same pairs.
+
+**Verified at decision time:** no cutover, no deploy, no index flip occurred. The serving
+loader references only the v1 baseline index path (`dup_index_{slug}_bge`); all v2 artifacts
+are differently-named, gitignored, and referenced by no serving code. No commits touch
+`deploy/`, `.github/`, or `docker/` on this branch stack. Production revision untouched.
 
 ## Alternatives considered
 

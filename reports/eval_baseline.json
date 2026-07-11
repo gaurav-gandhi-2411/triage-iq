@@ -18,7 +18,9 @@
         "priority_alignment": 0.2727272727272727,
         "next_steps_actionability": 2.1818181818181817,
         "overall_quality": 1.7272727272727273
-      }
+      },
+      "floor_fail_rate": 0.4545,
+      "fabrication_rate": 0.0909
     },
     "kubernetes/kubernetes": {
       "n": 53,
@@ -30,7 +32,9 @@
         "priority_alignment": 0.4339622641509434,
         "next_steps_actionability": 2.547169811320755,
         "overall_quality": 2.207547169811321
-      }
+      },
+      "floor_fail_rate": 0.0943,
+      "fabrication_rate": 0.0189
     }
   },
   "overall": {
@@ -58,5 +62,16 @@
     },
     "vscode_note": "microsoft/vscode's band (0.45) is wider than kubernetes/kubernetes's (0.22) because n=11 makes its mean statistically less stable -- this is the honest signal of the vscode data-ceiling finding (ADR-0017), not a fudged tolerance. Its gate is genuinely coarser.",
     "derivation": "band = 2 x SEM = 2 x (measured_std / sqrt(n))"
+  },
+  "synthesis_quality_floor": {
+    "note": "ADR-0028 Phase B3: the mean-band gate above is a REGRESSION detector, not a quality floor -- it cannot catch fabrication (the judge never sees classifier_top3/retrieved_numbers) and averages away a correctness-critical floor-fail rate. per_repo[repo].fabrication_rate and .floor_fail_rate are additive first-class metrics, computed with zero new LLM calls (reused from plan.grounding_status and the judge dimension scores already produced).",
+    "fabrication_rate": {
+      "definition": "fraction of plans where plan.grounding_status.all_grounded is False (predicted_component not in classifier_top3, or any cited similar-issue number not in the retrieved set for that request).",
+      "gate": "INFORMATIONAL ONLY (GG decision, 2026-07-11): eval/test_quality_regression.py asserts fabrication_rate == 0 per repo, but that file's CI job is continue-on-error:true -- visible, non-blocking, pending a real-world observation window before promoting to a hard gate."
+    },
+    "floor_fail_rate": {
+      "definition": "fraction of plans where component_match==0 OR similar_issues_relevance==0 (the judge's own worst-band signal).",
+      "gate": "REPORT ONLY, no gate (GG decision, 2026-07-11): vscode's n=11 gives a [21,72]% CI on this proportion -- too underpowered to gate reliably. Surfaced here and in README for visibility instead."
+    }
   }
 }

@@ -94,6 +94,12 @@ suggested_next_steps, triage_summary
 | Resolution predictor | vscode | Improvement vs naive | 0.0% |
 | Resolution predictor | vscode | Q10–Q90 CI coverage | 76.5% |
 | Resolution predictor | vscode | Inference latency p50 | 1.4ms |
+| LLM synthesis (judge, /15) | kubernetes | Mean-band score (regression detector only) | 10.51/15 (70.1%) |
+| LLM synthesis (judge, /15) | vscode | Mean-band score (regression detector only) | 8.36/15 (55.8%) |
+| LLM synthesis | kubernetes | **Floor-fail rate (see note)** | **9.4%** [4.0, 19.9] |
+| LLM synthesis | vscode | **Floor-fail rate (see note)** | **45.5%** [21.3, 72.0] |
+| LLM synthesis | kubernetes | Fabrication rate (grounding-verified, see note) | 1.9% |
+| LLM synthesis | vscode | Fabrication rate (grounding-verified, see note) | 9.1% |
 
 95% Wilson CIs shown in brackets where computed on a held-out test split.
 
@@ -123,6 +129,23 @@ suggested_next_steps, triage_summary
 > product-task gains were directionally positive and underpowered on both repos (k8s
 > +3.5pp, vscode +3.2pp, both CIs cross zero) — held, not shipped, pending ~700 more
 > product-task pairs for 80% power.
+>
+> **Synthesis quality metric redesign (2026-07-11).** The mean-band score is a
+> *regression detector* (fails only if it drops below its own prior baseline by more
+> than measured noise) — it was never a quality floor, and it structurally cannot catch
+> fabrication: the judge scores the final `TriagePlan` JSON but never sees
+> `classifier_top3` or the retrieved-issue set. Direct proof: a known hallucinated
+> component (vscode issue #311836) scored 9/15 — *above* its own repo's 8.36/15 mean.
+> Two new metrics close this gap, both computed with zero additional LLM calls
+> (reused from signals the pipeline already produces): **floor-fail rate** (fraction of
+> plans hitting the judge's own worst band — `component_match==0` or
+> `similar_issues_relevance==0`) is reported here *alongside* the mean rather than
+> averaged away — vscode's 45.5% floor-fail rate is invisible behind its
+> passable-looking 55.8% mean. **Fabrication rate** promotes the existing deterministic
+> grounding check (`grounding.py::verify_plan_grounding`) from informational-only to a
+> named quality signal — currently reported informationally
+> (`eval/test_quality_regression.py`'s CI job is non-blocking) pending an observation
+> window before any promotion to a hard gate. The mean-band gate itself is unchanged.
 
 Full evaluation reports: [`reports/`](reports/)
 

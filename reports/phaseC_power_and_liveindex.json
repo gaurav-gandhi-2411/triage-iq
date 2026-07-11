@@ -1,0 +1,83 @@
+{
+  "generated_by": "scripts/phaseC_power_and_liveindex.py",
+  "repos": {
+    "kubernetes_kubernetes": {
+      "finetune_gate_power": {
+        "observed": {
+          "n_test": 57,
+          "delta": 0.03508771929824561,
+          "ci_lo": -0.03508771929824561,
+          "ci_hi": 0.10526315789473684
+        },
+        "n_split_kept_current": 743,
+        "se_per_obs": 0.2703,
+        "implied_discordance_rate": 0.0743,
+        "n_test_needed": {
+          "power_80pct": 466,
+          "power_90pct": 624
+        },
+        "test_fraction_observed": 0.0767,
+        "total_pairs_needed_at_observed_test_frac": {
+          "power_80pct": 6075,
+          "power_90pct": 8134
+        },
+        "sensitivity_if_true_effect_half": {
+          "n_test_80pct_power": 1864
+        },
+        "point_estimate_near_zero_flag": false,
+        "caveat": "test_fraction_observed is NOT a fixed design ratio -- ADR-0027's split correction lets product pairs 'ride along' with the gate-stratum chronological walk, so k8s's 7.7% and vscode's 60.7% test fractions are algorithm artifacts, not targets. Projecting total-pairs-needed by dividing through this ratio assumes future mining splits the same way -- flagged, not assumed silently."
+      },
+      "live_index_measurability_now": {
+        "product_stratum_total": 776,
+        "usable_now_against_live_index": 277,
+        "note": "the live-serving index is an off-the-shelf pretrained embedder (BAAI/bge-base-en-v1.5, src/triage_iq/models/similar_issues.py), never trained on gold pairs -- the w3-retry train/val/test split (which exists to prevent leakage for the FINE-TUNED variant's training) carries zero leakage risk here. Every in-range product pair is usable for measurement regardless of its split label."
+      },
+      "live_index_size": 15000,
+      "measure_live_recall_power": {
+        "target_ci_halfwidth": 0.05,
+        "n_needed_by_prior_p": {
+          "p=0.25": 289,
+          "p=0.30": 323,
+          "p=0.50": 385
+        },
+        "n_available_now": 277,
+        "gap_at_p0.30": 46,
+        "gap_at_p0.50_conservative": 108,
+        "note": "k8s ADR-0028 flagged this UNMEASURABLE (0 test-split pairs). It is in fact near-measurable NOW: 277 product pairs already fall in the live index's number range and carry no leakage risk (see live_index_measurability_now). p priors are informed by the v2-index product baseline R@5 (0.228, a smaller/easier live index plausibly measures somewhat higher per ADR-0027's index-size note) -- true live p is exactly what's unmeasured, hence a range."
+      }
+    },
+    "microsoft_vscode": {
+      "finetune_gate_power": {
+        "observed": {
+          "n_test": 281,
+          "delta": 0.03202846975088966,
+          "ci_lo": -0.0035587188612099642,
+          "ci_hi": 0.06761565836298933
+        },
+        "n_split_kept_current": 463,
+        "se_per_obs": 0.3044,
+        "implied_discordance_rate": 0.0937,
+        "n_test_needed": {
+          "power_80pct": 709,
+          "power_90pct": 949
+        },
+        "test_fraction_observed": 0.6069,
+        "total_pairs_needed_at_observed_test_frac": {
+          "power_80pct": 1169,
+          "power_90pct": 1564
+        },
+        "sensitivity_if_true_effect_half": {
+          "n_test_80pct_power": 2836
+        },
+        "point_estimate_near_zero_flag": false,
+        "caveat": "test_fraction_observed is NOT a fixed design ratio -- ADR-0027's split correction lets product pairs 'ride along' with the gate-stratum chronological walk, so k8s's 7.7% and vscode's 60.7% test fractions are algorithm artifacts, not targets. Projecting total-pairs-needed by dividing through this ratio assumes future mining splits the same way -- flagged, not assumed silently."
+      },
+      "live_index_measurability_now": {
+        "product_stratum_total": 505,
+        "usable_now_against_live_index": 292,
+        "note": "the live-serving index is an off-the-shelf pretrained embedder (BAAI/bge-base-en-v1.5, src/triage_iq/models/similar_issues.py), never trained on gold pairs -- the w3-retry train/val/test split (which exists to prevent leakage for the FINE-TUNED variant's training) carries zero leakage risk here. Every in-range product pair is usable for measurement regardless of its split label."
+      },
+      "live_index_size": 7028
+    }
+  }
+}

@@ -1,0 +1,1084 @@
+{
+  "generated_by": "scripts/phaseC_channel_mining.py",
+  "repos": {
+    "kubernetes_kubernetes": {
+      "channel_A_extended_body": {
+        "channel": "A_extended_body_patterns",
+        "candidate_count_issue_to_issue": 9,
+        "in_live_index_range": 6,
+        "sample_for_precision_review": [
+          {
+            "query_number": 140,
+            "original_number": 97,
+            "query_title": "PreStart and PostStop event hooks",
+            "original_title": "Support multiple different types of volumes",
+            "query_body_excerpt": "Many systems support event hooks for extensions. A few examples:\nhttps://developers.google.com/appengine/docs/java/javadoc/com/google/appengine/api/LifecycleManager\nhttp://developer.android.com/guide/components/activities.html\nhttp://upstart.ubuntu.com/cookbook/#event\nhttps://coreos.com/docs/launchi",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 140,
+            "original_number": 66,
+            "query_title": "PreStart and PostStop event hooks",
+            "original_title": "Add extended health checking of pods/containers",
+            "query_body_excerpt": "Many systems support event hooks for extensions. A few examples:\nhttps://developers.google.com/appengine/docs/java/javadoc/com/google/appengine/api/LifecycleManager\nhttp://developer.android.com/guide/components/activities.html\nhttp://upstart.ubuntu.com/cookbook/#event\nhttps://coreos.com/docs/launchi",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 140,
+            "original_number": 137,
+            "query_title": "PreStart and PostStop event hooks",
+            "original_title": "More comprehensive reporting of termination reasons",
+            "query_body_excerpt": "Many systems support event hooks for extensions. A few examples:\nhttps://developers.google.com/appengine/docs/java/javadoc/com/google/appengine/api/LifecycleManager\nhttp://developer.android.com/guide/components/activities.html\nhttp://upstart.ubuntu.com/cookbook/#event\nhttps://coreos.com/docs/launchi",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 140,
+            "original_number": 139,
+            "query_title": "PreStart and PostStop event hooks",
+            "original_title": "Capture application termination messages/output",
+            "query_body_excerpt": "Many systems support event hooks for extensions. A few examples:\nhttps://developers.google.com/appengine/docs/java/javadoc/com/google/appengine/api/LifecycleManager\nhttp://developer.android.com/guide/components/activities.html\nhttp://upstart.ubuntu.com/cookbook/#event\nhttps://coreos.com/docs/launchi",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 140,
+            "original_number": 127,
+            "query_title": "PreStart and PostStop event hooks",
+            "original_title": "Configurable restart behavior",
+            "query_body_excerpt": "Many systems support event hooks for extensions. A few examples:\nhttps://developers.google.com/appengine/docs/java/javadoc/com/google/appengine/api/LifecycleManager\nhttp://developer.android.com/guide/components/activities.html\nhttp://upstart.ubuntu.com/cookbook/#event\nhttps://coreos.com/docs/launchi",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 12122,
+            "original_number": 11979,
+            "query_title": "AWS: We should have a way to log AWS API calls",
+            "original_title": "AWS Request limit exceeded",
+            "query_body_excerpt": "@iterion suggested in https://github.com/GoogleCloudPlatform/kubernetes/issues/11979#issuecomment-126422608:\n\n> ...considering adding some logging at a higher log level for future debugging.\n\nWe've had a few bugs where we were making too many AWS API calls, often in loops. If we logged all our AWS A",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 15176,
+            "original_number": 14781,
+            "query_title": "cleanup: use ioutil.TempDir in unit tests",
+            "original_title": "Containerize verification checks, unit tests, and integration test",
+            "query_body_excerpt": "As discussed in https://github.com/kubernetes/kubernetes/issues/14781#issuecomment-145720272, there are a number of unit tests which appear to be using a static temporary directory for test files, which can cause failures if tests are run in parallel on the same machine.\n\n[CODE_BLOCK]\n\nEach of these",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 24829,
+            "original_number": 12784,
+            "query_title": "kube2sky: the server has asked for the client to provide credentials",
+            "original_title": "kube2sky not able to connect to the kubernetes api-server",
+            "query_body_excerpt": "I was running v10 and it had its hickups, but somehow after restarting it a few time it would work...\n\nI saw there has been some updates so I wanted to try.\nI am using this version:\nhttps://github.com/kubernetes/kubernetes/blob/78dc9c77167f7017af37f3c2df012a5698aedc36/cluster/addons/dns/skydns-rc.ya",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 25716,
+            "original_number": 14190,
+            "query_title": "Umbrella issue for various swagger related improvements",
+            "original_title": "ServicePort's API schema doesnt match actual response for TargetPort field",
+            "query_body_excerpt": "Summarizing all our swagger related issues here:\r\n\r\nImproving the spec:\r\n- [ ] Represent Enum types: right now, we represent them as strings and put the possible values in comments. Want to represent them as enum types and use the list of valid values for validation: https://github.com/kubernetes/ku",
+            "target_in_live_index": false
+          }
+        ]
+      },
+      "channel_E_label_cluster": {
+        "channel": "E_label_cluster_weak_related",
+        "window_days": 14,
+        "candidate_count_issue_to_issue": 11793,
+        "in_live_index_range": 5576,
+        "sample_for_precision_review": [
+          {
+            "query_number": 13338,
+            "original_number": 13096,
+            "component": "api",
+            "gap_days": 4.3,
+            "query_title": "Can we simplify cloud PersistentVolume creation?",
+            "original_title": "Inconsistency in the API with persistentVolumes and persistentVolumeClaims",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 14828,
+            "original_number": 14573,
+            "component": "api",
+            "gap_days": 4.8,
+            "query_title": "Proposal to add service description information as standard Service Annotations.",
+            "original_title": "Restrict/prefer what pods schedule on particular nodes",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 16095,
+            "original_number": 15960,
+            "component": "api",
+            "gap_days": 1.7,
+            "query_title": "Improve API documentation of pod subresources",
+            "original_title": "Mirror pods in a delete create loop in version skewed cluster (1.1 master, 1.0 node)",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 1698,
+            "original_number": 1697,
+            "component": "app-lifecycle",
+            "gap_days": 0.0,
+            "query_title": "Name+label+selector scoping for configuration composition",
+            "original_title": "Image name/tag resolution preprocessing pass",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 5599,
+            "original_number": 5539,
+            "component": "build-release",
+            "gap_days": 1.2,
+            "query_title": "Permission denied errors building master",
+            "original_title": "etcd not accept connection during make release execution",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 19849,
+            "original_number": 19683,
+            "component": "build-release",
+            "gap_days": 4.8,
+            "query_title": "Tooling/Infrastructure changes for branching at a X.Y.Z version (for zero-day and other emergency releases)",
+            "original_title": "addon image always get pulled when make release",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 22837,
+            "original_number": 22836,
+            "component": "kubectl",
+            "gap_days": 0.0,
+            "query_title": "kubectl get ingress should print consistently formatted columns",
+            "original_title": "default `kubectl run` with kubectl 1.2 is not backwards compatible with 1.1 master",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 28491,
+            "original_number": 28452,
+            "component": "kubectl",
+            "gap_days": 1.0,
+            "query_title": "Garbage collection doesn't delete images tagged with multiple repositories",
+            "original_title": "Cannot deploy more than one pod per node with custom metrics",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 3018,
+            "original_number": 3003,
+            "component": "kubelet",
+            "gap_days": 0.3,
+            "query_title": "Unnecessary stacktrace in kubelet log when code is 301",
+            "original_title": "Track Docker Version in /validate",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 5384,
+            "original_number": 5107,
+            "component": "kubelet",
+            "gap_days": 6.8,
+            "query_title": "Remaining cleanups for BoundPods",
+            "original_title": "Unhealthy Kubelet should be restarted",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 7406,
+            "original_number": 7042,
+            "component": "kubelet",
+            "gap_days": 7.6,
+            "query_title": "The Kubelet should accept YAML pod specifications",
+            "original_title": "fixed path for safe_format_and_mount in kubelet break coreos on gce",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 13476,
+            "original_number": 13364,
+            "component": "kubelet",
+            "gap_days": 2.1,
+            "query_title": "Kubelet lists all nodes instead of Get'ing node",
+            "original_title": "Endpoint watchers cannot assume Ready pods are \"Ready\" in the presence of process restarts",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 26427,
+            "original_number": 25988,
+            "component": "os/coreos",
+            "gap_days": 6.7,
+            "query_title": "Container runtime Conformance Test container runtime conformance blackbox test when start a container that exits failure it should run with the expected status [Conformance] {E2eNode Suite}",
+            "original_title": "rkt: Init container support",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 27656,
+            "original_number": 26989,
+            "component": "platform/gce",
+            "gap_days": 10.3,
+            "query_title": "The multizone setting in gce.conf is ignored by PersistentVolumeLabel",
+            "original_title": "docker pull from gcr.io blocked via storage.googleapis.com",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 18502,
+            "original_number": 18307,
+            "component": "provider/gcp",
+            "gap_days": 2.5,
+            "query_title": "Lots of error events concerning loadbalancers on GKE",
+            "original_title": "Nodes lose labels after GKE cluster upgrade",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 25823,
+            "original_number": 25588,
+            "component": "release-eng",
+            "gap_days": 4.9,
+            "query_title": "release-1.2 build package dependence error",
+            "original_title": "Documentation Link Broken",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 9349,
+            "original_number": 9345,
+            "component": "test",
+            "gap_days": 0.0,
+            "query_title": "Reboot e2e test timeout because of slow docker startup",
+            "original_title": "e2e networking test schedule a pod to a NotReady node",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 12219,
+            "original_number": 11901,
+            "component": "test",
+            "gap_days": 7.9,
+            "query_title": "submit queue looks at first labelling, not latest labelling",
+            "original_title": "Flaky: TestPlugin_LifeCycle",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 18050,
+            "original_number": 17998,
+            "component": "test",
+            "gap_days": 1.1,
+            "query_title": "integration flake: integration.TestPersistentVolumeRecycler test flaky (timed out after 5 minutes)",
+            "original_title": "TestTranslateTimestamp shouldn't use time.Now when testing for days in months",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 19997,
+            "original_number": 19960,
+            "component": "test",
+            "gap_days": 0.8,
+            "query_title": "e2e flake: Kubectl client Simple pod [It] should support exec through an HTTP proxy",
+            "original_title": "Harden kubelet against TCP connection problems?",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 21862,
+            "original_number": 21775,
+            "component": "test",
+            "gap_days": 0.6,
+            "query_title": "e2e flake, \"Unable to connect to the server: dial tcp xxx: i/o timeout\"",
+            "original_title": "Surface quota issues better in loadbalancer e2es",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 25031,
+            "original_number": 24985,
+            "component": "test",
+            "gap_days": 2.3,
+            "query_title": "Presubmit for sed -> jinja translators",
+            "original_title": "RFC: Adding test cases to e2e/volumes.go",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 26219,
+            "original_number": 26216,
+            "component": "test",
+            "gap_days": 0.0,
+            "query_title": "Node e2e dump namespace debug info on failed tests",
+            "original_title": "Node e2e processes for updating images from outside google",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 27631,
+            "original_number": 27498,
+            "component": "test",
+            "gap_days": 1.7,
+            "query_title": "Using kubernetes to build kubernetes",
+            "original_title": "unregister_netdevice kernel race on coreos image",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 29155,
+            "original_number": 29039,
+            "component": "test",
+            "gap_days": 3.0,
+            "query_title": "E2E & Node E2E: Add image white list",
+            "original_title": "Host ports are not mapped when kubenet is enabled in e2e-node-test",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 10670,
+            "original_number": 10622,
+            "component": "test-infra",
+            "gap_days": 0.9,
+            "query_title": "test logs should print the current time",
+            "original_title": "Pull request builder flaking on DNS / Probing container",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 14421,
+            "original_number": 14370,
+            "component": "test-infra",
+            "gap_days": 0.8,
+            "query_title": "runSchedulerNoPhantomPodsTest integration flake",
+            "original_title": "Document how to write good tests",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 18642,
+            "original_number": 18432,
+            "component": "test-infra",
+            "gap_days": 4.9,
+            "query_title": "getDebugInfo from e2e/metrics_util.go does not work",
+            "original_title": "Save logs from nodes added during e2e tests (resize, autoscaling, reboot, etc.)",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 27578,
+            "original_number": 27521,
+            "component": "test-infra",
+            "gap_days": 0.8,
+            "query_title": "Test Flake Exit Criteria: Presubmit test requirements",
+            "original_title": "e2e test failure: Kubectl apply should apply a new configuration to an existing RC",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 7793,
+            "original_number": 7598,
+            "component": "usability",
+            "gap_days": 4.9,
+            "query_title": "Kubectl lists resources in all namespaces with *",
+            "original_title": "kubectl --validate flag doesn't complain about unknown fields",
+            "target_in_live_index": true
+          }
+        ]
+      },
+      "channel_B_comments": {
+        "channel": "B_comments_related_k8s",
+        "note": "k8s has ZERO comments_data locally (neither the original #1-15,002 scrape nor the #15,003-30,000 forward-scrape fetched comments) -- not locally mineable. See reports/phaseC_live_probe.json for a small live-API feasibility probe.",
+        "candidate_count_issue_to_issue": null
+      }
+    },
+    "microsoft_vscode": {
+      "channel_A_extended_body": {
+        "channel": "A_extended_body_patterns",
+        "candidate_count_issue_to_issue": 405,
+        "in_live_index_range": 242,
+        "sample_for_precision_review": [
+          {
+            "query_number": 1899,
+            "original_number": 9,
+            "query_title": "Display warning when extension node version constraint is not met",
+            "original_title": "Extension development: null and undefined values not printed to debug repl",
+            "query_body_excerpt": "I've had [several issues](https://github.com/felixfbecker/vscode-php-debug/issues/9) where people reported my debug adapter was not working and the reason was they had an old Node version installed. I have therefor added a [INLINE_CODE] version constraint to my package.json, but testing this with so",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 1916,
+            "original_number": 8,
+            "query_title": "VSCodeDebugProtocol returns lowercase breakpoint paths",
+            "original_title": "Flash between opening of workspaces, reload",
+            "query_body_excerpt": "VSCode 0.10.6 on Mac OSX 10.11.1\nUsing [vscode-php-debug](https://github.com/felixfbecker/vscode-php-debug) (XDebug adapter for PHP debugging)\n\n---\n\n[INLINE_CODE] returns lowercase paths for breakpoints. \n\nXDebug expects to see a path like [INLINE_CODE] but we're setting a breakpoint for [INLINE_COD",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 1956,
+            "original_number": 24,
+            "query_title": "Cannot convert object to primitive value in applicationinsights code",
+            "original_title": "TypeScript: Error: Promise did not implement oncancel(\u2026)",
+            "query_body_excerpt": "I see the following exception in the console. I believe it has to do with the exception thrown by the tslint extension (see https://github.com/Microsoft/vscode-tslint/issues/24)\n- install ts lint extension (version 0.5.4)\n- open a type script file, on the error dialog (tslint not installed) press ca",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 2480,
+            "original_number": 414,
+            "query_title": "Contributors cannot edit the wiki (or it's unclear how to)",
+            "original_title": "Wiki Documentation Issue",
+            "query_body_excerpt": "I can clone the wiki, as far as I'm aware though [GitHub does not support PRs for wiki repos](http://stackoverflow.com/a/11481887/1156119).\n\nRelated https://github.com/Microsoft/vscode/issues/414, https://github.com/Microsoft/vscode/issues/556",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 3029,
+            "original_number": 60,
+            "query_title": "Document how to use OSS build as a daily driver",
+            "original_title": "Menu license links to non Open Source license",
+            "query_body_excerpt": "Need to document how to get an OSS build into working condition as a daily driver.\n\nHaving this process documented in a central location would also be useful for package maintainers. (For example, if Ubuntu were to decide to start shipping vscode.)\n\nCompared to the 0.10.8 (January) release of vscode",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 3225,
+            "original_number": 269,
+            "query_title": "Documentation should be updated for Typings now that TSD is deprecated.",
+            "original_title": "Shell script to install vs code in Unix systems",
+            "query_body_excerpt": "The VS Code documentation still contains instructions for TSD: https://code.visualstudio.com/Docs/runtimes/nodejs\n\nTSD is now deprecated and listed as such (warning on install) on npm: https://github.com/DefinitelyTyped/tsd/issues/269\n\nTypings is the replacement.\n\nVS Code's documentation probably sh",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4128,
+            "original_number": 3926,
+            "query_title": "Output scheduler needs to check condition within to prevent race condition",
+            "original_title": "Output handling improvements",
+            "query_body_excerpt": "We now have a nice scheduler to prevent spam on the output panel, but I think at the time the scheduler executes we need to test again on all the conditions that you check before you schedule it because there is a chance that the output channel switches or the panel gets hidden after the scheduler h",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4160,
+            "original_number": 4024,
+            "query_title": "Extension errors should be aggregated",
+            "original_title": "Test extensions status bar widget",
+            "query_body_excerpt": "Related to #4024\n\nSteps to Reproduce:\n1. Install an extension, create errors in it's [INLINE_CODE]\n2. Click on the extensions widget in the status bar, notice you get multiple error notifications\n3. It would be cool if all the error notifications are aggreagted per extension, that way the user would",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4177,
+            "original_number": 4019,
+            "query_title": "'Auto detecting the task system failed' can be more user friendly",
+            "original_title": "Test new tasks.json creation",
+            "query_body_excerpt": "Related to #4019\n\nSteps to Reproduce:\n1. have a broken [INLINE_CODE]\n2. generate task runner > choose gulp\n3. Notice the error\n4. This should be a warning, not an error\n5. There should be an action to open the output service, task channel to make it easier for the user to locate the error\n\n![screen ",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4181,
+            "original_number": 4019,
+            "query_title": "Configuring a gulp task runner takes more than 3s sometimes",
+            "original_title": "Test new tasks.json creation",
+            "query_body_excerpt": "Related to #4019\n- VSCode Version: 18ebb4a4f5491af7b16e91e42fc36410bbb2e4d7\n- OS Version: El Capitan\n\nSteps to Reproduce:\n1. open vscode repo, delete [INLINE_CODE]\n2. Configure Tasks Runner > gulp\n3. [INLINE_CODE] is generated only after 3 seconds, I would expect it is instantanious",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4324,
+            "original_number": 156,
+            "query_title": "Single quote in JSX breaks vscode code formatting",
+            "original_title": "Find symbols, find references, format code does not work on Ubuntu 15.04",
+            "query_body_excerpt": "- VSCode Version: 0.10.11\n- OS Version: Win 7, Mac OS 10.11.3\n\nSteps to Reproduce:\n\nIf there is a single quote inside JSX, code formatting does not work for the entire file. Furthermore, if such a file is opened and tried code formatting, it breaks for all other files until a vscode restart.\n\nSample",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4396,
+            "original_number": 3769,
+            "query_title": "cannot move focus between buttons on message bar with keyboard",
+            "original_title": "Focus with keyboard to message bar Hard to see",
+            "query_body_excerpt": "Related to #3769 \n\nI was able to get focus to the message bar on Windows (didn't try OSX yet) but i can't move between the buttons. Tab moves me off the message bar, left and right arrow don't do anything.\n\n![image](https://cloud.githubusercontent.com/assets/1487073/13865009/e91e06b0-ec63-11e5-8105-",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4718,
+            "original_number": 2157,
+            "query_title": "Breakpoints unreliable with .ts files",
+            "original_title": "Breakpoints set in promises in .ts files are not hit",
+            "query_body_excerpt": "- VSCode Version: 0.10.11\n- OS Version: OS X 10.10.5\n- Typescript: 1.8.9\n- Node: 5.9.0\n\nPossibly related to #2157, #1384\n\nAfter upgrading typescript from 1.6 to 1.8.9, and node from 0.12 to 5.9.0, I noticed breakpoints no longer working and other strange behavior.\n- Debugger fails to stop at breakpo",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4802,
+            "original_number": 40,
+            "query_title": "TextDocument.insert unintentionally moves cursor to end of file when ...",
+            "original_title": "Expected treatment of threads in debug viewlet UI?",
+            "query_body_excerpt": "- VSCode Version: 0.10.11\n- OS Version: Windows 10\n\nSteps to Reproduce:\n\nSee: https://github.com/editorconfig/editorconfig-vscode/issues/40 for more info and a screenshot\n1. Install editorconfig extension and create a .editorconfig file\n2. set insert_final_newline = true\n3. enable auto-save in vscod",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4829,
+            "original_number": 14,
+            "query_title": "[DebugAdapter] Return Object instead of plain string in evaluateRequest",
+            "original_title": "C#: Line/Block comment does not work",
+            "query_body_excerpt": "- VSCode Version: 0.10.11\n- OS Version: Mac OS\n\nWhen we implement our own debug adapter, we need to override [INLINE_CODE] functionality. For now the return result is simply a string per definition\n\n[CODE_BLOCK]\n\nHowever if we inspect objects when we debug TypeScript project, we can get a TRUE objec",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 7742,
+            "original_number": 443,
+            "query_title": "Intellisense dialogue for signature help is smaller then the text",
+            "original_title": "Find and replace all open/pinned files in current session",
+            "query_body_excerpt": "- VSCode Version: 1.2.1\n- OS Version: Win 10 x64\n\nintellisense dialogue is smaller then the text and isn't scrollable so you can't see the text i.e arguments and options\n\n![Proof](http://i.imgur.com/9628D34.png)\n\nI guess this is the right place for this issue\nhttps://github.com/OmniSharp/omnisharp-v",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 22740,
+            "original_number": 12448,
+            "query_title": "Prevent wrongly cased file paths to enter the workbench",
+            "original_title": "Issues with not case/fragment-normalizing file paths (macOS, Windows)",
+            "query_body_excerpt": "Follow up from https://github.com/Microsoft/vscode/issues/12448. We now no longer open 2 different files when using different casing for a file path (macOS, Windows) but we can do better and prevent wrongly-cased paths altogether. \r\n\r\nWe should identify the places where paths are coming in that we c",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 39278,
+            "original_number": 1134,
+            "query_title": "Support hyperlink ansi escapes in the integrated terminal",
+            "original_title": "Intellisense UX",
+            "query_body_excerpt": "Cross-posting from xterm.js for discovery. Hope that's ok.\r\n\r\n> Terminal emulators are [starting to support hyperlinks](https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda). While many terminals have long detected URL's and linkified them, allowing you to Command-Click or Control-Clic",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 43532,
+            "original_number": 212,
+            "query_title": "docker-compose fails when running in integrated terminal",
+            "original_title": "Is possible to have it on Lumia 950 in near feature with .NET SDK ?",
+            "query_body_excerpt": "from: https://github.com/Microsoft/vscode-docker/issues/212, see https://github.com/Microsoft/vscode-docker/issues/212#issuecomment-364928473 specifically.\r\n\r\nWindows\r\nInsiders: 1.21.0\r\nDocker, Docker Compose versions:\r\n\r\n![image](https://user-images.githubusercontent.com/1487073/36116234-6809b4b4-0",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 65286,
+            "original_number": 17563,
+            "query_title": "Allow to disable incremental search",
+            "original_title": "Entering text in find widget should not clear the selection",
+            "query_body_excerpt": "Like Atom, it'd be great if we could disable incremental search for buffer search (Find [INLINE_CODE]). Right now, when you want to e.g. simply check number of matches within a file, without losing cursor position, it's not possible.\r\n\r\nThe **current behavior** is to automatically scroll to first ma",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 67234,
+            "original_number": 66741,
+            "query_title": "Test vscode.env.open",
+            "original_title": "Make `vscode.open`-command real API",
+            "query_body_excerpt": "Refs: https://github.com/Microsoft/vscode/issues/66741\r\n\r\n- [x] mac @bpasero \r\n- [x] win @stevencl\r\n- [x] linux @mjbvz\r\n\r\nComplexity: 2\r\n\r\nThere is new API to open an external item, e.g http-links, mailto-links, or app-links like [INLINE_CODE]. Make sure this works as documented.",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 68186,
+            "original_number": 152,
+            "query_title": "Blocked access to certain local files from webview after 1.31 update",
+            "original_title": "Global Typings?",
+            "query_body_excerpt": "Issue Type: <b>Bug</b>\r\n\r\n1. Install the [glTF Tools](https://marketplace.visualstudio.com/items?itemName=cesium.gltf-vscode) extension.\r\n2. Load any glTF model with textures (e.g. download [BoxTextured](https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/BoxTextured/glTF))\r\n3. Open t",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 74620,
+            "original_number": 71966,
+            "query_title": "Create a node-pty host process with flow control and event batching",
+            "original_title": "Often getting full window hangs",
+            "query_body_excerpt": "As of around a year ago node-pty is launched directly from the renderer process, while this does mean ctrl+c is responsive it has several downsides:\r\n\r\n- node-pty crashes will take down the entire window (https://github.com/microsoft/vscode/issues/71966, https://github.com/microsoft/vscode/issues/71",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 88483,
+            "original_number": 1295,
+            "query_title": "Custom ViewZones for extension API",
+            "original_title": "search.fuzzyFilePicker might not be a good name",
+            "query_body_excerpt": "**Requested feature:**\r\nAdd the possibility to insert [ViewZones](https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.iviewzone.html) in the editor by an extension.\r\n\r\n**Motivation:**\r\nI have started to experiment to write an extension for a 3-way conflict merge tool, as this is t",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 89363,
+            "original_number": 1582,
+            "query_title": "Docker extension cannot be installed remotely (Remote-SSH) when it is installed locally",
+            "original_title": "Add Breakpoint Conditions",
+            "query_body_excerpt": "- VSCode Version: 1.41.\r\n- OS Version: Windows 10 Enterprise 1909 build 18363.592\r\n\r\nSteps to Reproduce:\r\n\r\n1. Install Microsoft VS Code Docker extension version 0.9.0 (current as of 1/27/2020) or newer\r\n2. Use [INLINE_CODE] to connect to a remote machine with Docker installed (used Ubuntu 18.04 LTS",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 114517,
+            "original_number": 1331,
+            "query_title": "I got stuck when i use Gitlens to commit my change",
+            "original_title": "Typescript intellisense looks broken after dot completion",
+            "query_body_excerpt": "- VSCode Version: 1.52.1\r\n- OS Version: 11.2 Beta\r\n\r\nSteps to Reproduce:\r\n\r\n1. change something\r\n2. click Gitlens and input something like: [INLINE_CODE]\r\n3. you may get stuck after doing steps above all, and then Gitlens would run like image below\r\n4.if you doing steps above, but not get stuck, try",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 116072,
+            "original_number": 6209,
+            "query_title": "Enable Go to Implementation in VSCode for Typescript",
+            "original_title": "isWatching/background task as preLaunchTask in launch.json",
+            "query_body_excerpt": "Highly upvoted issue here: [https://github.com/microsoft/TypeScript/issues/6209](https://github.com/microsoft/TypeScript/issues/6209)\r\n\r\nNote sure if it can be solved on the vscode side of things, but this is making a lot of devs (myself included) switch to Webstorm (love everything about VSCode, th",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 116350,
+            "original_number": 4736,
+            "query_title": "Native Notebooks - Diffing",
+            "original_title": "Editor jumps around when collapsing a folding section",
+            "query_body_excerpt": "Forwarding customer bug: https://github.com/microsoft/vscode-jupyter/issues/4736\r\n\r\n## Expected behaviour\r\nWhen viewing diffs of a notebook, when the outputs are the same, the diff viewer should not show that output has changed.\r\n\r\n## Actual behaviour\r\nEven when output of the notebook versions is th",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 210302,
+            "original_number": 3260,
+            "query_title": "Feature request for integrated terminal: Add support for OSC 52 ANSI to allow clipboard synchronization.",
+            "original_title": "Add ability to clear recently opened files from open file dialog",
+            "query_body_excerpt": "https://github.com/microsoft/vscode/issues/122083#issue-866642125\r\nAccording to this issue, I found that xterm.js has already supported the feature, I hope vscode can evaluate the need.\r\nRef:\r\n- https://github.com/xtermjs/xterm.js/issues/3260\r\n- https://github.com/aymanbagabas/xterm.js/commit/db5bfc",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 311383,
+            "original_number": 311105,
+            "query_title": "Agent host via tunnel: Files view is empty",
+            "original_title": "Agent Host self-hosting: basic scenarios",
+            "query_body_excerpt": "Testing https://github.com/microsoft/vscode/issues/311105\n\n- opens the Agents window, connect to a dev tunnel, pick a folder on the tunnel\n- open a terminal, it opens on the remote folder, I can list files\n- open the [INLINE_CODE] tab, its empty",
+            "target_in_live_index": true
+          }
+        ]
+      },
+      "channel_E_label_cluster": {
+        "channel": "E_label_cluster_weak_related",
+        "window_days": 14,
+        "candidate_count_issue_to_issue": 8409,
+        "in_live_index_range": 4983,
+        "sample_for_precision_review": [
+          {
+            "query_number": 20281,
+            "original_number": 20239,
+            "component": "api",
+            "gap_days": 0.5,
+            "query_title": "Add support for showing an indicator of lint errors beside file names in the sidebar",
+            "original_title": "Allow extensions to define the editor layout",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 54285,
+            "original_number": 54272,
+            "component": "api",
+            "gap_days": 0.2,
+            "query_title": "Contributed webview context menu actions",
+            "original_title": "Allow diagnostics messages to have markdown (or formatted text) content",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 19618,
+            "original_number": 19130,
+            "component": "config",
+            "gap_days": 7.0,
+            "query_title": "IntelliSense for languages in configuration overrides",
+            "original_title": "Launches are not shown",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 1153,
+            "original_number": 1149,
+            "component": "debug",
+            "gap_days": 0.2,
+            "query_title": "Uncaught SyntaxError: Unexpected end of input",
+            "original_title": "Debugger requires path to program be correct casing for breakpoints to get hit",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 2715,
+            "original_number": 2682,
+            "component": "debug",
+            "gap_days": 0.8,
+            "query_title": "Breakpoints don't work in remote attach",
+            "original_title": "console output doesn't appear on separate lines in Windows",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 3274,
+            "original_number": 3250,
+            "component": "debug",
+            "gap_days": 0.9,
+            "query_title": "Horizontal panel header colour conflicts with colour for indicating focus",
+            "original_title": "Move \"Debug: Add to Watch\" action to end of context menu",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 144093,
+            "original_number": 144091,
+            "component": "error-telemetry",
+            "gap_days": 0.0,
+            "query_title": "<semantic> TypeScript Server Error (4.5.5) Debug Failure. False expression. Error: Debug Failure. False expression. at",
+            "original_title": "Cannot read property 'toLowerCase' of undefined",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 311586,
+            "original_number": 311583,
+            "component": "error-telemetry",
+            "gap_days": 0.0,
+            "query_title": "[Error Telemetry] Suppress UNC host access errors from Agents error reporting",
+            "original_title": "[Error Telemetry] Suppress spawn git ENOENT from Agents error reporting",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 20599,
+            "original_number": 19753,
+            "component": "extensions",
+            "gap_days": 11.7,
+            "query_title": "Create Categories/Groups for extensions.",
+            "original_title": "Extensions not loading",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 67124,
+            "original_number": 66551,
+            "component": "extensions",
+            "gap_days": 10.0,
+            "query_title": "Question - paste keyboard shortcut in polacode extension",
+            "original_title": "Extension \"Contributions\" view displays placeholder strings when package.nls.json is used",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 68584,
+            "original_number": 68369,
+            "component": "extensions",
+            "gap_days": 2.4,
+            "query_title": "The second installed extension doesn't auto display in 'Installed Extension' view till reloading VS Code",
+            "original_title": "Extension folder should be deleted when an extension is uninstalled",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 173684,
+            "original_number": 173327,
+            "component": "extensions",
+            "gap_days": 3.9,
+            "query_title": "VS Code extensions suddenly won't load or update/install",
+            "original_title": "Extension installation fails to verify signature on REMOTE release",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 112503,
+            "original_number": 111652,
+            "component": "file-explorer",
+            "gap_days": 13.1,
+            "query_title": "File explorer commits file names to disk before I've finished typing the name",
+            "original_title": "Action in explorer is interrupted shortly after creating a folder",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 1984,
+            "original_number": 1965,
+            "component": "git",
+            "gap_days": 0.6,
+            "query_title": "When I push from to Github directly from Code I get an error",
+            "original_title": "Github extension fails to push (invalid password) with 35 length password",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 66296,
+            "original_number": 66234,
+            "component": "git",
+            "gap_days": 0.8,
+            "query_title": "git.promptToSaveFilesBeforeCommit should not warn on unstaged files.",
+            "original_title": "Add option to delete remote branch, after merging GitHub PR",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 4409,
+            "original_number": 4101,
+            "component": "html",
+            "gap_days": 4.1,
+            "query_title": "[html] formatting puts <a> and <button> tags on one line",
+            "original_title": "[html] Why editor.action.smartSelect is not working in html file?",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 173354,
+            "original_number": 173289,
+            "component": "keybindings",
+            "gap_days": 0.3,
+            "query_title": "Can't assign [CMD + \"] to 'Toggle Terminal' Action",
+            "original_title": "Broken shortcuts since 1.75 (mac)",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 4589,
+            "original_number": 4583,
+            "component": "l10n-platform",
+            "gap_days": 0.1,
+            "query_title": "--locale switch incorrect for Simplified Chinese, should be zh-cn not zh-ch",
+            "original_title": "Read VSCODE_NLS_CONFIG form userEnv as early as possible",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4379,
+            "original_number": 3771,
+            "component": "markdown",
+            "gap_days": 10.3,
+            "query_title": "Markdown internal links within the page in preview mode are dead",
+            "original_title": "Markdown: Support to follow local links",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 88285,
+            "original_number": 88165,
+            "component": "search",
+            "gap_days": 1.7,
+            "query_title": "Regex Replace does not allow to use expression",
+            "original_title": "Search tab no longer shows at the bottom of the screen when updated to v1.42.0",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 554,
+            "original_number": 452,
+            "component": "tasks",
+            "gap_days": 2.0,
+            "query_title": "add perl task didn't output anything",
+            "original_title": "Problem matcher severity handles \"Note\" and \"Hint\" as errors",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4363,
+            "original_number": 4358,
+            "component": "tasks",
+            "gap_days": 0.1,
+            "query_title": "Add auto detection of task to npm",
+            "original_title": "Output Window is removing new lines",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 67322,
+            "original_number": 67321,
+            "component": "tasks",
+            "gap_days": 0.0,
+            "query_title": "Access to task output",
+            "original_title": "Not all presentationoptions are honored on task api",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 7357,
+            "original_number": 7344,
+            "component": "terminal",
+            "gap_days": 0.1,
+            "query_title": "Invoking the terminal sometimes yields an error \"Cannot set property 'innerHTML' of undefined\"",
+            "original_title": "terminal.integrated.shell.windows setting Doesn't support environment variables",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 7911,
+            "original_number": 7868,
+            "component": "terminal",
+            "gap_days": 1.9,
+            "query_title": "Terminal lines appears to have margin",
+            "original_title": "\u4e2d\u6587\u51fa\u73b0\u4e71\u7801\u4e86",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 66690,
+            "original_number": 66391,
+            "component": "terminal",
+            "gap_days": 6.6,
+            "query_title": "Latest Windows 10 Update Causes Bad Colors In VSCode Terminal",
+            "original_title": "Hyperlinks in console are not correctly highlighted when the link contains accented characters",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 68680,
+            "original_number": 68608,
+            "component": "terminal",
+            "gap_days": 0.9,
+            "query_title": "Missing terminal Location change icon",
+            "original_title": "terminal font problem with 1.31.0-1549443494 release",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 88400,
+            "original_number": 88271,
+            "component": "terminal",
+            "gap_days": 1.8,
+            "query_title": "Paste goes into HTML selected tags and closing tag",
+            "original_title": "On closing terminal window, VSCode hangs and requires a reopening",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 4638,
+            "original_number": 4468,
+            "component": "typescript",
+            "gap_days": 4.1,
+            "query_title": "NPE when point typescript.tsdk to incorrect location",
+            "original_title": "New line always starts at the beginning of line (Col 1)",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4054,
+            "original_number": 4012,
+            "component": "ux",
+            "gap_days": 0.5,
+            "query_title": "workbench.files.action.closeFile closes all split editors, not just the active file",
+            "original_title": "Configure Excludes minor UI polish",
+            "target_in_live_index": true
+          }
+        ]
+      },
+      "channel_B_comments": {
+        "channel": "B_comments_related_vscode",
+        "local_comment_coverage": "10284/13313 issues have comments_data locally",
+        "candidate_count_issue_to_issue": 94,
+        "in_live_index_range": 67,
+        "sample_for_precision_review": [
+          {
+            "query_number": 519,
+            "original_number": 291,
+            "comment_excerpt": "pls see #291 for the zooming issue (in general pls do not create combo issues :smile: )\n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 584,
+            "original_number": 10,
+            "comment_excerpt": "_From @jrieken on October 14, 2015 12:50_\n\nsomehow related to #10, at least my previous comment...\n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 986,
+            "original_number": 985,
+            "comment_excerpt": "Posting snafu, please see #985.\n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 1084,
+            "original_number": 1019,
+            "comment_excerpt": "@hashhar here are the **static links** that always point to the latest VS Code distribution.  We are also going to add these links to download confirmation pages so people can restart their downloads ",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 1096,
+            "original_number": 713,
+            "comment_excerpt": "## line/page scrolling\n- [x] win @aeschli\n- [x] mac @isidorn \n- [x] linux @aeschli\n- not platform specific\n- win/linux: <kbd>Ctrl</kbd>+<kbd>Up</kbd>, <kbd>Ctrl</kbd>+<kbd>Down</kbd>, <kbd>Ctrl</kbd>+",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 1833,
+            "original_number": 459,
+            "comment_excerpt": "Related #459\n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 1965,
+            "original_number": 1138,
+            "comment_excerpt": "I think this bug related #1138 \n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 2373,
+            "original_number": 2145,
+            "comment_excerpt": "Related to #2145\n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 2467,
+            "original_number": 2280,
+            "comment_excerpt": "Related to #2280 \n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 2511,
+            "original_number": 2490,
+            "comment_excerpt": "related to #2490 \n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 2726,
+            "original_number": 2263,
+            "comment_excerpt": "@egamma yes, it makes sense to run anything (including npm scripts) as a `preLaunchTask`. This is on our [February 2016](#2616) plan (see #2263).\n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 2793,
+            "original_number": 2000,
+            "comment_excerpt": "See #2000 and all linked issues.\n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 2845,
+            "original_number": 2829,
+            "comment_excerpt": "@mbroadst probably related to #2829 \n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 3434,
+            "original_number": 3417,
+            "comment_excerpt": "related to #3417?\n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 3443,
+            "original_number": 2829,
+            "comment_excerpt": "@tacho87 Are you using OS X? Seems to be a duplicate of #3071. Related to #2829.\n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4185,
+            "original_number": 4007,
+            "comment_excerpt": "related to #4007 \n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4254,
+            "original_number": 4185,
+            "comment_excerpt": "related to #4185\n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4380,
+            "original_number": 3008,
+            "comment_excerpt": "Broken link? Possibly related to #3008 (see also #4386).\n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4439,
+            "original_number": 4434,
+            "comment_excerpt": "It might be related to problem I'm seeing in linux x64: see #4434.  The 'Code' executable was renamed to 'code'.\n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 4848,
+            "original_number": 597,
+            "comment_excerpt": "Related to #597 #3495\n",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 20564,
+            "original_number": 20555,
+            "comment_excerpt": "@joaomoreno pls see #20555 and #20587 \r\n",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 41215,
+            "original_number": 851,
+            "comment_excerpt": "Seems related to #851",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 88587,
+            "original_number": 74782,
+            "comment_excerpt": "/duplicate - see #74782",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 89304,
+            "original_number": 74782,
+            "comment_excerpt": "/duplicate see #74782 for steps on how to fix this (you can right-click and open)",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 90152,
+            "original_number": 74782,
+            "comment_excerpt": "/duplicate see #74782",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 140683,
+            "original_number": 18386,
+            "comment_excerpt": "/duplicate - see #18386 and #40239",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 142215,
+            "original_number": 141094,
+            "comment_excerpt": "@SJLennon your initial request is related to #141094. Probably even duplicate.\r\n\r\n@larouxn as you've mentioned - that's separate issue and should be discussed in #141569",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 206194,
+            "original_number": 204696,
+            "comment_excerpt": "/duplicate\r\n\r\nSee #204696 ",
+            "target_in_live_index": false
+          },
+          {
+            "query_number": 312610,
+            "original_number": 311898,
+            "comment_excerpt": "Could this be related to #311898? I'm just grasping at straws here. I don't know how I can emphasize this more. **I just lost an entire session.**",
+            "target_in_live_index": true
+          },
+          {
+            "query_number": 312699,
+            "original_number": 312680,
+            "comment_excerpt": "See #312680",
+            "target_in_live_index": true
+          }
+        ]
+      }
+    }
+  }
+}

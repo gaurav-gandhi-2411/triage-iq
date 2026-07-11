@@ -1,113 +1,128 @@
-# Project Spec: TriageIQ — Phase 2a: Corpus-Growth Feasibility (investigate before scraping)
+# Project Spec: TriageIQ — Per-Model Evaluation Audit + Performance Diagnosis
 
 ## Goal
 
-The W3 retrieval fine-tune was rejected (ADR-0016) because recall@k improvement had a bootstrap CI
-that crossed zero at available n — a DATA problem (too few gold_related pairs), not a method problem.
-Phase 2 would retry the fine-tune on a grown corpus. But before committing to scraping (real effort),
-this investigation answers: **CAN the corpus realistically grow enough to clear the ADR-0006 CI bar
-(CI excludes zero on BOTH repos), and is that growth achievable — especially for vscode, the binding
-data constraint at every prior turn?**
+Across this project, metric-appropriateness problems have surfaced ACCIDENTALLY, one model at a
+time: retrieval's k8s metric measured a PROXY task (PR→issue, not the product issue→issue);
+resolution's intervals were non-diagnostic and vscode served a worse-than-naive classifier;
+component_match had gold contamination. Never a DELIBERATE, systematic audit of "is each model
+evaluated on a metric suited to what it actually does, and is it actually good on the right metric."
 
-This is analysis-only, no scraping, no fine-tuning. The deliverable is a go/no-go with NUMBERS:
-either "yes, growing to N pairs plausibly clears the bar, here's the scraping scope" (→ Phase 2b
-scraping build) or "no, the data ceiling is structural, fine-tune retry isn't viable" (→ honest
-finding, skip to Phase 3). Do NOT foregone-conclude either direction.
+This iteration does that audit — for ALL FOUR models (component classifier, similar-issue retriever,
+resolution estimator, LLM synthesis) — then, where the corrected metric reveals a real performance
+gap, diagnoses and (in gated follow-on phases) fixes it. Audit FIRST: you cannot fix performance
+until you're measuring the right thing, and wrong-metric problems hide under apparently-fine numbers.
 
-## Current state
+The deliverable of Phase A (this spec) is the AUDIT: per model, what task it does, what metric it's
+currently evaluated on, whether that metric is SUITABLE, what the performance is on the CORRECT
+metric, and a triage — {metric-wrong → fix eval}, {metric-right-but-weak → diagnose+fix model},
+{genuinely fine}. Fix phases (B+) are separate, gated on the audit findings.
 
-- gold_related.parquet: ~1,435 pairs (1,024 k8s / 411 vscode). Sources: body_related=1010,
-  title_sim=421, body_ref=4. (body_ref is the strict "duplicate of #N" pattern — only 4 in the
-  entire corpus, ADR-0007.)
-- W3 rejected: re-established fine-tune gave +11.84pp k8s CI[0.00,+22.38], +10pp vscode
-  CI[-6.67,+25.00] (ADR-0016) — neither excludes zero, both need more n.
-- vscode is the binding constraint everywhere: 411 pairs, couldn't reach n=300 test for W3, 17
-  clean issues for W5, 11 clean for the eval baseline. 92% split-overlap by base rate.
-- Corpus: k8s ~15,000 issues, vscode ~7,028 issues (the scraped issue bodies, not just pairs).
-- Retrieval fine-tune trains on gold_related PAIRS; the eval needs enough disjoint TEST pairs for a
-  bootstrap CI that can exclude zero.
+## Current state (the 4 models + their current evals)
+
+- **Component classifier** (TF-IDF + LR, temp-calibrated): multi-label-ish component prediction.
+  Current eval: accuracy, calibration (ECE), component_match judge dimension. Known: gold
+  contamination was fixed (load_eval_splits cross-check); calibration was corrected (ADR-0004).
+- **Similar-issue retriever** (BGE + FAISS): find related issues. Current eval: recall@k on
+  gold_related. Known: k8s gold is 92% PR-query (measures PR→issue, not product issue→issue);
+  vscode corpus grown (v2, Phase 2). Fine-tune held pending product-task power.
+- **Resolution estimator** (LightGBM quantile + bucket + CQR): predict resolution time/bucket.
+  Current eval: MAE, coverage, bucket accuracy vs naive. Known: intervals non-diagnostic
+  (ADR-0021/0023); k8s bucket beats naive (CI), vscode on naive fallback (Phase 1).
+- **LLM synthesis** (Groq llama-3.1-8b): generate the triage plan. Current eval: local qwen3:8b
+  judge, 6 dimensions, mean-band gate. Known: attribution 100% grounded; grounding verifier live.
 
 ## Scope
 
-### In scope (analysis only)
+### Phase A — the audit (this iteration; the rest gated on it)
 
-**1. Quantify how many MORE pairs would clear the bar (power analysis):**
-- From the W3 result (effect sizes + CIs at current n), estimate: at what test-set n would the k8s
-  CI plausibly exclude zero? At what n for vscode? This is a power calculation from the observed
-  effect size and variance — how many disjoint test pairs does each repo need for the CI to exclude
-  zero if the true effect is ~the observed point estimate?
-- Be honest about the assumption: this assumes the effect is real at the point estimate. If the
-  point estimate itself is near-zero (vscode's +10pp with a wide CI), no n saves it — flag that.
+**For EACH of the 4 models, produce:**
+1. **Task statement**: what does this model actually do, and what's the PRODUCT use case (what does
+   a user actually need from it)?
+2. **Current metric**: what metric(s) is it evaluated on today, on what data.
+3. **Metric-suitability verdict**: is the current metric SUITABLE for the task + product use case?
+   Specifically check the failure modes this project has already hit:
+   - Does the metric measure the PRODUCT task or a PROXY? (retrieval's PR→issue lesson — check ALL
+     models for this, not just retrieval.)
+   - Is the eval data disjoint / uncontaminated? (the gold-contamination lesson.)
+   - Is the metric appropriate to the model's OUTPUT type? (e.g. exact-accuracy for a classifier
+     where adjacent labels are near-correct may understate it — is top-k or hierarchical accuracy
+     more suitable? A point-MAE for resolution when buckets are what's used?)
+   - Is the eval powered (n) on the task that matters, per repo? (the vscode underpowering lesson.)
+4. **Performance on the CORRECT metric**: re-evaluate on the suitable metric (if different from
+   current). Report the honest number, per repo, with CI where it's a comparison.
+5. **Triage verdict** per model, one of:
+   - METRIC-WRONG → the eval needs fixing (measure the right thing); performance may look different.
+   - METRIC-RIGHT-BUT-WEAK → real performance gap; needs diagnose+fix (a gated follow-on phase).
+   - GENUINELY-FINE → measured right, performs adequately, no action.
 
-**2. Quantify how many pairs the corpus COULD yield (ceiling analysis):**
-- The current pairs come from body_related (1010), title_sim (421), body_ref (4). How many MORE
-  genuine issue-to-issue related pairs could be extracted from the EXISTING scraped corpus (15K k8s
-  / 7K vscode issues) that aren't already in gold_related? I.e. is the corpus under-mined, or is
-  1,435 close to what's extractable?
-- And: how many more ISSUES could realistically be scraped (are there unscraped issues in these
-  repos — closed issues, older issues, that weren't pulled)? Estimate the addressable pool.
-- The KEY question for vscode: is vscode's 411 a mining ceiling (all extractable pairs already
-  found) or a scraping ceiling (more issues exist, unscraped)? These have very different scraping
-  implications.
+**Cross-model synthesis**: rank the 4 by "how much does fixing this improve the actual product,"
+and recommend which model(s) get a deep diagnose+fix phase next, with the expected leverage.
 
-**3. The vscode-specific verdict (this is the crux):**
-- vscode has been the binding constraint at every turn. Determine honestly: is there a realistic
-  path to enough vscode disjoint test pairs to clear the CI bar, or is vscode structurally
-  data-limited such that the fine-tune can only ever ship k8s-only?
-- If vscode can't reach the bar even with maximal realistic scraping → the honest finding is "the
-  fine-tune is a k8s-only prospect; vscode retrieval stays on the baseline BGE" — which is a valid
-  outcome (k8s-only improvement) but must be stated, not hidden.
+### Phases B+ (gated on the audit — NOT this iteration)
 
-**4. Go/no-go recommendation with the scraping scope:**
-- If GO: how many issues to scrape per repo, expected pair yield, whether it clears the bar on
-  k8s / vscode / both, and the rough effort. This becomes the Phase 2b scraping spec.
-- If NO-GO: which repo(s) are structurally ceilinged, why, and the recommendation to skip to Phase 3.
-- MIXED (likely): "k8s is growable and worth it, vscode is ceilinged" — the honest split verdict.
+Per the audit's triage, follow-on phases (each its own spec, escalated): fix a wrong metric,
+or diagnose+fix a weak model. Sequenced by the audit's leverage ranking. Do NOT start these until
+the audit is reviewed and the human picks the order.
 
-### Out of scope
+### Out of scope (this iteration)
 
-- No scraping (this decides WHETHER to scrape).
-- No fine-tuning (W3 is rejected until the corpus grows; this is the feasibility gate).
-- No new labeling (that's Phase 2b if GO).
-- No model/pipeline/eval changes.
+- No model retraining or fixing yet (audit FIRST — Phase A is diagnosis, not treatment).
+- No shipping the held Phase 2 fine-tune (separate decision, its own data gate).
+- No new features / no live cutover.
+- No reopening the closed eval-integrity mechanics (the gate infra is sound; this audits the
+  MODELS' metrics, not the gate).
 
 ## Tech stack
 
-- Existing Python + the scraped corpus + gold_related.parquet. scipy for the power calc. No LLM,
-  no new deps.
+- Existing Python + the existing eval harness + committed eval data. Re-evaluation on corrected
+  metrics uses existing artifacts (no retraining). scipy for CIs. Local judge if synthesis re-eval
+  needs it (zero-cost). No new deps without escalation.
 
 ## Autonomy & escalation
 
-CC runs the full analysis autonomously. Escalate ONLY:
-1. The go/no-go recommendation + the numbers behind it (the power calc + ceiling estimate + vscode
-   verdict) — this is a strategic decision, report it for the human to make the scrape/skip call.
+CC runs the full audit autonomously. Escalate ONLY:
+1. **The completed audit** — the per-model table (task / current metric / suitability / corrected
+   performance / triage verdict) + the cross-model leverage ranking + which model(s) to fix first.
+   This is the strategic output; the human picks the fix order from it.
+2. Any point where re-evaluating on a "corrected" metric requires new data/labeling (flag it, don't
+   silently proceed on insufficient data — that's the vscode-underpowering trap).
 
 ## Hard rules
 
-- Honest numbers, no foregone conclusion. If the power calc says vscode's point estimate is too
-  near-zero for any n to help, SAY SO — don't recommend scraping to chase a null effect.
-- vscode indicative caveats apply; be explicit about what's structural vs addressable.
-- Analysis only — no scraping, no fine-tuning, no data changes.
-- Branch only (`analysis/corpus-feasibility`); I merge. Zero-cost, no LLM. Claude Max — never
-  ANTHROPIC_API_KEY. Don't touch aetherart-497918.
+- Audit is HONEST: if a model looks fine only because it's measured on a proxy/easy metric, SAY SO
+  (the retrieval PR→issue lesson — apply it to every model). A flattering number on the wrong
+  metric is the failure mode this audit exists to catch.
+- Per-repo, powered, disjoint — the same discipline: don't claim on underpowered/contaminated evals;
+  vscode indicative where n is small.
+- Corrected metrics stand on their own; if a corrected metric changes the story vs the current one,
+  that's a finding to disclose (like the k8s-retrieval relabel), not to hide.
+- No fixing in this phase — audit and triage only. Branch only (`analysis/model-eval-audit`);
+  I merge. Zero-cost, local judge if needed. Claude Max — never ANTHROPIC_API_KEY. Don't touch
+  aetherart-497918.
 
 ## Success criteria
 
-- Power analysis: test-set n needed per repo for the CI to exclude zero (given observed effect).
-- Ceiling analysis: extractable additional pairs from existing corpus + addressable unscraped issues,
-  per repo — mining-ceiling vs scraping-ceiling distinguished.
-- vscode verdict: realistic path to the bar, or structurally ceilinged (k8s-only prospect).
-- Go/no-go recommendation with scraping scope (if go) or skip rationale (if no-go), escalated.
-- reports/corpus_feasibility.json + a short ADR-0026 documenting the analysis + recommendation.
+- All 4 models audited: task, current metric, suitability verdict, corrected-metric performance,
+  triage verdict — in one comparable table.
+- Every model checked against the 4 known failure modes (proxy-vs-product, contamination, output-type
+  appropriateness, powered-per-repo).
+- Cross-model leverage ranking + recommended fix order.
+- reports/model_eval_audit.json + ADR-0028 documenting the audit + recommendations.
+- Escalated for the human to pick the fix sequence (Phases B+).
 
 ## Build order (CC autonomous)
 
-1. Power calc: from W3's effect sizes + CIs, the test-n needed per repo to exclude zero. Flag if
-   any repo's point estimate is too near-zero for n to help.
-2. Ceiling: mine the existing corpus for additional extractable pairs (not already in gold_related);
-   estimate unscraped-issue pool per repo. Distinguish mining-ceiling from scraping-ceiling.
-3. vscode verdict: realistic-path vs structurally-ceilinged.
-4. ESCALATE the go/no-go + numbers + scraping scope.
-5. ADR-0026 + corpus_feasibility.json.
+1. Component classifier: task, current metric (accuracy/ECE/component_match), suitability (is exact
+   accuracy right, or does hierarchical/top-k fit better? is the eval disjoint post-contamination-fix?),
+   corrected performance, verdict.
+2. Retriever: task, current metric (recall@k), suitability (PR→issue proxy already known — quantify
+   product-task performance honestly per repo), corrected performance, verdict.
+3. Resolution: task, current metric (MAE/coverage/bucket), suitability (is point-MAE right when
+   buckets are used? is bucket-accuracy-vs-naive the product metric?), corrected performance, verdict.
+4. Synthesis: task, current metric (judge dimensions), suitability (do the 6 dimensions measure what
+   synthesis is for? is the judge a suitable evaluator?), corrected performance, verdict.
+5. Cross-model synthesis: leverage ranking, recommended fix order.
+6. ESCALATE the audit. ADR-0028.
 ```
 

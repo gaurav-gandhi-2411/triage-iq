@@ -1,0 +1,174 @@
+{
+  "generated_by": "spec.md Phase A — per-model evaluation audit (analysis/model-eval-audit)",
+  "generated_at": "2026-07-13",
+  "method": "4 parallel research subagents, one per model, read-only re-analysis against existing trained artifacts and existing eval/gold data. No retraining. No LLM API calls (all judge-dimension recomputation replayed from committed cassettes / checkpoint files). No model or config changes.",
+  "failure_modes_checked_per_model": [
+    "proxy_vs_product",
+    "contamination",
+    "output_type_appropriateness",
+    "powered_per_repo"
+  ],
+  "models": {
+    "component_classifier": {
+      "task": "TF-IDF + LogisticRegression, temperature-calibrated, per-repo multi-class component-label prediction.",
+      "product_use_case": "The classifier never surfaces a single label to the product. src/triage_iq/models/triage.py:361-369 exposes top-3 (classifier_top3), and src/triage_iq/models/grounding.py:27-61 (verify_plan_grounding) defines a correct component prediction as top-3 membership, not top-1 equality. The product's own definition of 'right' is already top-3.",
+      "current_metric": {
+        "metrics": ["top-1 accuracy", "macro F1", "weighted F1", "ECE"],
+        "source": "src/triage_iq/evaluation/classifier_eval.py:12-53 (accuracy_score on exact match only), reports/classifier_results.json, reports/calibration_results.json",
+        "values": {
+          "kubernetes_kubernetes": {"n_test": 286, "top1_accuracy": 0.5140, "macro_f1": 0.466, "weighted_f1": 0.542, "ece": 0.1558},
+          "microsoft_vscode": {"n_test": 187, "top1_accuracy": 0.6898, "macro_f1": 0.585, "weighted_f1": 0.711, "ece": 0.1381}
+        }
+      },
+      "suitability": {
+        "proxy_vs_product": "MISMATCH, confirmed. Product already treats top-3 containment as correct (grounding.py); the classifier's own eval reports only top-1, materially understating real-world usefulness. Additionally 30.4% of k8s test set (87/286) and 8.0% of vscode test set (15/187) have multiple true labels collapsed to one at preprocessing (src/triage_iq/data/preprocess.py:149-170, first-match-wins); 16.5% of k8s 'errors' are actually valid alternate true labels.",
+        "contamination": "CLEAN. Independently re-verified by loading {repo}_classifier_{train,val,test}.parquet directly and checking issue-number overlap: 0 overlap across all 3 splits, both repos. Distinct from the ADR-0018 (component_match judge-dimension) contamination, which is a different data path already remediated.",
+        "output_type_appropriateness": "WRONG. 28-35 classes with exact top-1 match substantially understates a probabilistic multi-class classifier feeding a top-3-consuming downstream check.",
+        "powered_per_repo": "ADEQUATE for the headline number. k8s Wilson 95% CI [0.456, 0.571] (n=286); vscode [0.620, 0.752] (n=187). Per-class breakdowns remain underpowered (already honestly flagged in reports/03_classifier_baseline.md)."
+      },
+      "corrected_performance": {
+        "kubernetes_kubernetes": {"n_test": 286, "top1_accuracy": [0.5140, 0.456, 0.571], "top3_accuracy": [0.8252, 0.777, 0.865], "delta_top3_minus_top1_pp": 31.1, "multi_label_credit_accuracy": [0.5944, 0.537, 0.650]},
+        "microsoft_vscode": {"n_test": 187, "top1_accuracy": [0.6898, 0.620, 0.752], "top3_accuracy": [0.9037, 0.853, 0.938], "delta_top3_minus_top1_pp": 21.4, "multi_label_credit_accuracy": [0.7166, 0.648, 0.776]},
+        "ci_format": "[point_estimate, ci_lo, ci_hi], 95% Wilson",
+        "note": "Top-3 CIs do not overlap top-1 CIs on either repo -- a real, statistically supported effect, and it is the metric the product itself already relies on."
+      },
+      "triage_verdict": "METRIC-WRONG",
+      "verdict_rationale": "Headline metric (top-1) is not what the deployed grounding check treats as correct (top-3). Re-computed top-3 accuracy is 21-31pp higher with non-overlapping CIs on the existing model + existing test split -- no retraining needed to fix the report."
+    },
+    "similar_issue_retriever": {
+      "task": "BGE-base-en-v1.5 embeddings + FAISS IndexFlatIP, per-repo similar-issue retrieval. Live model is the un-fine-tuned baseline checkpoint (W3-retry fine-tune held, ADR-0027, no cutover).",
+      "product_use_case": "src/triage_iq/models/triage.py:376 retrieves with the NEW ISSUE's own text as query, k=5, exclude_number=self -- unambiguously issue-to-issue. Exactly 5 results are surfaced downstream (triage_prompt.py:100).",
+      "current_metric": {
+        "metrics": ["MRR", "Recall@5", "Recall@10"],
+        "source": "README.md:82-84, traced to scripts/08_build_similar_issue_index.py:40-41 (GOLD_PATH = data/gold_related.parquet, the ORIGINAL v1 non-stratified gold set) -> reports/related_issue_results.json",
+        "values": {
+          "microsoft_vscode": {"n_pairs": 411, "mrr": 0.294, "recall_at_5": 0.367, "recall_at_10": 0.521},
+          "kubernetes_kubernetes": "ABSENT from README entirely -- no retriever row exists for k8s in the currently-advertised table."
+        }
+      },
+      "suitability": {
+        "proxy_vs_product": "STILL CONTAMINATED in what's advertised. gold_related.parquet (v1) is only 74.0% issue->issue for vscode (304/411) and 7.6% for k8s (78/1024) per reports/phase2b_pr_pair_breakdown.json. The advertised vscode R@5=36.7% (Wilson CI [32.2%,41.5%]) does not overlap the honest product-task-only CI (upper bound 28.0%) computed this session -- roughly a 12-14pp inflation, not noise. The corrected, stratified numbers already exist internally (reports/w3_t5_eval_results_v2.json / ADR-0027) but were never ported to README, despite ADR-0027's own Consequences section promising this relabeling.",
+        "contamination": "MOOT for the live model, confirmed not assumed. src/triage_iq/api/loader.py:175-180 loads the raw public BAAI/bge-base-en-v1.5 checkpoint, no fine-tuned artifact in the serving path -- train/test leakage doesn't apply to what's deployed.",
+        "output_type_appropriateness": "k=5 is the CORRECT, code-verified value (triage.py:376, triage_prompt.py:100 both hard-code/slice to 5) -- recall@5 is the right primary metric, not an arbitrary standard. README currently leads with MRR, which somewhat overweights rank-within-top-5 versus recall@5, the more decision-relevant number when a full list of 5 is shown.",
+        "powered_per_repo": "k8s: UNMEASURABLE against the live index. Of the 57 product-task (issue->issue) test pairs in the v2 stratified split, ZERO have both query and target present in the live v1 production FAISS index (all 57 come from the Phase 2b forward-scrape range #15,003-30,000, not in the deployed corpus). Across all splits, only 72 legacy_gold_v1 k8s product pairs exist total and the w3-retry split algorithm put all 72 into train, none into val/test. There is currently NO test data that can measure the live k8s retriever's product-task recall@5. vscode: 254/281 product-task pairs ARE evaluable against the live index; n=254 gives a workable +/-5pp CI half-width."
+      },
+      "corrected_performance": {
+        "microsoft_vscode": {"index": "live v1 (7028 records, actually deployed)", "n": 254, "recall_at_5": 0.2244, "ci_95": [0.1774, 0.2796], "recall_at_1": 0.0748, "recall_at_10": 0.4370, "recall_at_20": 0.7126},
+        "microsoft_vscode_v2_index_triangulation": {"index": "v2 grown index (13315 records, NOT live)", "n": 281, "recall_at_5": 0.2491, "ci_95": [0.2022, 0.3028], "note": "harder/larger haystack, not what's deployed -- included only to triangulate that the ADR-0027 number is a reasonable stand-in for vscode."},
+        "kubernetes_kubernetes": {"index": "live v1 (15000 records, actually deployed)", "n": 0, "recall_at_5": null, "status": "UNMEASURABLE -- no product-task test pairs exist against the live corpus. Needs new data (see escalations)."},
+        "kubernetes_kubernetes_v2_index_only": {"index": "v2 grown index (29994 records, NOT live)", "n": 57, "recall_at_5": 0.2281, "ci_95": [0.1384, 0.3521], "note": "characterizes a corpus that doesn't exist in production."},
+        "advertised_vs_honest": {"advertised_vscode_recall_at_5": 0.3674, "advertised_ci_95": [0.3222, 0.4150], "honest_vscode_recall_at_5": 0.2244, "honest_ci_95": [0.1774, 0.2796], "inflation_pp": "~12-14, CIs do not overlap"}
+      },
+      "triage_verdict": "METRIC-WRONG",
+      "verdict_rationale": "The internal engineering (ADR-0026/0027) already did the hard diagnostic work; none of it reached the surface. README still advertises a proxy-contaminated vscode number (~14pp inflated) and omits k8s. Even the internal 'honest' k8s number characterizes a non-deployed corpus -- the live k8s retriever's real-world product-task performance is currently unknown, a hard data gap (escalated, not fixed in this phase)."
+    },
+    "resolution_estimator": {
+      "task": "LightGBM: point regression (log1p hours) + Q10/Q90 quantile interval + CQR conformal post-hoc calibration + 5-class ordinal bucket classifier, per repo.",
+      "product_use_case": "No separate frontend exists; the /triage API JSON response is the product surface. It returns ALL THREE simultaneously: (a) the point/interval, which is what feeds the LLM narrative (bucket is explicitly excluded from the LLM prompt per ADR-0009 T2.8, since bucket-only prompting regressed judge quality -0.532); (b) the CQR conformal interval, supplemental; (c) the bucket + confidence, a secondary categorical field gated per-repo by BUCKET_CLASSIFIER_TRUSTED (resolution.py:39-46); (d) a resolution_model_beats_naive badge driven by point-MAE.",
+      "current_metric": {
+        "metrics": ["point MAE vs naive", "bucket accuracy vs naive", "CQR empirical coverage"],
+        "source": "reports/resolution_results.json, reports/w6_resolution_diagnosis.json (ADR-0025), reports/eval_summary.json (ADR-0010)",
+        "values": {
+          "kubernetes_kubernetes": {"n": 1498, "point_mae_days": 104.05, "naive_mae_days": 106.29, "mae_improvement_pct": 2.1, "bucket_accuracy": 0.3324, "naive_bucket_accuracy": 0.2997, "bucket_delta_pp": [3.27, 1.80, 4.74], "cqr_coverage": 0.766, "cqr_coverage_ci": [0.740, 0.791]},
+          "microsoft_vscode": {"n": 616, "point_mae_days": 6.02, "naive_mae_days": 3.53, "mae_improvement_pct": -70.5, "bucket_accuracy": 0.6932, "naive_bucket_accuracy": 0.914, "bucket_delta_pp": [-22.08, -25.81, -18.02], "cqr_coverage": 0.741, "cqr_coverage_ci": [0.694, 0.783]}
+        },
+        "readme_status": "STALE. README.md:85-92 shows superseded 2026-05-30-era numbers (MAE 104.8d/116.1d, CI 77.5%/76.5%), predates the 2026-07-04 deployment-corrected metrics and the 2026-07-10 ADR-0025 bucket-accuracy correction, and omits the vs-naive comparison and the vscode naive-fallback disclosure entirely."
+      },
+      "suitability": {
+        "proxy_vs_product": "Point/interval legitimately gated by point-MAE (feeds the narrative); bucket legitimately gated by bucket-accuracy-vs-naive (ADR-0025). BUT reports/eval_summary.json's own prose (leakage.honest_metrics.vscode.note) mislabels the BUCKET classifier's rejection reason using the POINT-regression's -70.5% MAE number, not the bucket classifier's own -22.08pp delta -- a real proxy conflation, currently harmless only because both gates happen to agree in sign for these two repos.",
+        "contamination": "CLEAN, independently re-verified. train/val/test issue-number overlap = 0 for both repos; train.created_at.max() < test.created_at.min() holds for both; PCA fit on train only, reused not refit. time_based_split() is mechanically leak-proof by construction.",
+        "output_type_appropriateness": "MISMATCHED in one place, found by direct re-run. scripts/w6_diagnose_resolution.py -- the diagnostic script ADR-0025 is built on -- now calls predict_bucket(), which as of ADR-0025's own shipped fix applies the BUCKET_CLASSIFIER_TRUSTED gate internally. Since vscode is gated False, re-running the script today measures the naive fallback against itself (tautological 0.0pp delta), not the trained classifier's real 0.6932 accuracy that the committed report and ADR-0025 cite. The script can no longer re-verify the decision it was used to justify. Separately: ADR-0025's prose table has a transcription error (raw accuracy figures don't match reports/w6_resolution_diagnosis.json; the deltas and CIs match exactly, so the ship decision is unaffected).",
+        "powered_per_repo": "ADEQUATE, both directions confirmed current. n=1498 (k8s) / n=616 (vscode), bootstrap 2000 seed=42, both CIs exclude zero cleanly (not borderline). vscode's naive-fallback status is confirmed still current and live (resolution.py:39-46, predict_bucket() lines 382-409)."
+      },
+      "corrected_performance": {
+        "kubernetes_kubernetes": {"bucket_delta_pp": [3.27, 1.80, 4.74], "point_mae_improvement_pct": 2.1, "one_off_bucket_delta_pp": [6.94, 5.01, 8.88], "interval_width_diagnostic": "No -- ADR-0021 finding re-confirmed still holds, no code change since (width statistically indistinguishable between covered and missed cases)"},
+        "microsoft_vscode": {"raw_bucket_accuracy": 0.6932, "served_bucket_accuracy_fallback": 0.914, "bucket_delta_pp_raw_vs_naive": [-22.08, -25.81, -18.02], "point_mae_improvement_pct": -70.5, "served_output": "naive-prior fallback (BUCKET_CLASSIFIER_TRUSTED=False), honestly labeled low (~33%) confidence though it happens to score 91.4% on this 7-day distribution-shifted test window -- a test-set skew artifact, not classifier competence.", "adr0023_signal_search": "11 signals x 2 targets, BH-FDR + Bonferroni, k8s-only n=54 powered subset -- zero diagnostic interval-width signals found, unretracted current state."}
+      },
+      "triage_verdict": {
+        "kubernetes_kubernetes": "METRIC-RIGHT-BUT-WEAK, genuinely fine -- both point-MAE and bucket-accuracy are correct product-relevant metrics, both honestly reported, both real (CI excludes zero) modest wins.",
+        "microsoft_vscode": "METRIC-RIGHT as served (the naive-fallback gating correctly protects the product from a genuinely losing model on both point and bucket outputs) but the DOCUMENTATION of why is METRIC-WRONG: stale README, a proxy-conflated prose note, and a diagnostic script with a tautological self-reference bug introduced by the very fix it justifies."
+      },
+      "verdict_rationale": "This is the one model where the hard modeling/gating work (ADR-0009/0010/0021/0023/0025) was already done rigorously and is currently live-correct. The residual gap is documentation/tooling lag, not model or gate correctness."
+    },
+    "llm_synthesis": {
+      "task": "Groq llama-3.1-8b-instant (T=0, 3-shot) synthesizes classifier + retriever + resolution signals into a Pydantic-validated TriagePlan (component, similar issues, resolution summary/interval/bucket, priority, next steps, summary).",
+      "product_use_case": "A triage engineer reads this to decide routing and urgency in seconds. Priority of needs: (1) claims are NOT fabricated -- a cited similar-issue or component that doesn't trace to what upstream models actually produced actively misleads a human who trusts the tool; (2) actionable next steps; (3) directionally correct priority/resolution framing. Fabrication is qualitatively worse than a soft miss and should not be interchangeable in the quality metric.",
+      "current_metric": {
+        "metrics": ["6 LLM-judge dimensions (component_match/2, similar_issues_relevance/3, resolution_estimate_reasonableness/3, priority_alignment/1, next_steps_actionability/3, overall_quality/3), max 15", "mean-band CI regression gate (not an absolute quality bar)", "deterministic grounding check (separate)", "attribution fidelity (separate, flag-gated off in production)"],
+        "source": "src/triage_iq/evaluation/triage_eval.py:23-75, eval/run_eval.py:245-249, reports/eval_baseline.json, ADR-0015/0019/0020",
+        "gate_logic": "drop = baseline_mean - current_mean; fails only if drop > band (2xSEM from measured jitter: k8s band 0.22, vscode band 0.45). This is a regression detector, not a quality floor.",
+        "values": {
+          "kubernetes_kubernetes": {"n": 54, "mean_band_total": 10.52, "mean_band_pct": 0.701, "ungrounded": 1, "ungrounded_pct": 0.019},
+          "microsoft_vscode": {"n": 11, "mean_band_total": 8.36, "mean_band_pct": 0.558, "ungrounded": 1, "ungrounded_pct": 0.091}
+        }
+      },
+      "suitability": {
+        "proxy_vs_product": "CONFIRMED, and structurally worse than 'averaging masks a bad dimension': the judge never sees classifier_top3 or the retrieved-issue set, only the final TriagePlan JSON + gold -- it cannot detect fabrication in principle. Direct replay of the two known-ungrounded cases: vscode issue #311836 (hallucinated component) scores 9/15 (60%), ABOVE its own repo's mean (55.8%). Grounding/attribution feed nothing into the mean-band gate and gate nothing themselves.",
+        "contamination": "PARTIALLY remediated, two NEW leaks found this audit that ADR-0018 does not cover. (1) Near-duplicate leak surviving ID-based filtering: k8s gold issue #14398 (currently in the n=65 eval set, passed the 'clean' ingest check) has BGE cosine similarity 0.9069 to classifier_train issue #14399 -- almost certainly the same bug re-filed. (2) CQR calibration-set leak, not addressed by ADR-0018 at all (which only covers classifier_train/temporal_train): 4 currently-in-eval gold issues (vscode #311836, #311878; k8s #13508, #13784) had their resolution outcomes contribute to the CQR interval-width correction Q, then get re-scored on interval containment -- a real exchangeability violation, small effect size (~1/n leverage, n=246-449) but undisclosed anywhere.",
+        "output_type_appropriateness": "WRONG for this claim mix. Floor-based recomputation from existing cassette replay (judge's own worst-band semantics: component_match=0 or similar_issues_relevance=0) gives k8s 5/54 (9.3%, CI [4.0,19.9]%) vs vscode 5/11 (45.5%, CI [21.3,72.0]%) floor-fail rate -- nearly half of vscode's plans hit a correctness-critical worst-band, invisible behind a passable-looking 55.8% mean, because the gate is regression-only with no absolute bar. priority_alignment (binary/1) is 0 in 55.6%/72.7% of cases and dilutes the 15-point total.",
+        "powered_per_repo": "NO. vscode n=11 gives +/-25-50pp Wilson CIs on any proportion (the 45.5% floor-fail rate spans [21%,72%]) -- cannot distinguish occasional miss from majority-fabrication. Cross-family judge-disagreement checking (a stated project practice) is STALE: reports/judge_comparison.md is dated 2026-05-19, pooled (not per-repo) n=60, against the now-contaminated pre-ADR-0018 set and a judge model (llama-3.3-70b) superseded by qwen3:8b since ADR-0019 -- no disagreement check has been run against what's actually gating today."
+      },
+      "corrected_performance": {
+        "kubernetes_kubernetes": {"n": 54, "mean_band_pct": 0.701, "component_match_zero_rate": [0.093, 0.040, 0.199], "floor_fail_rate": [0.093, 0.040, 0.199], "ungrounded_rate": 0.019, "attribution_fabrication_rate": 0.0093},
+        "microsoft_vscode": {"n": 11, "mean_band_pct": 0.558, "component_match_zero_rate": [0.455, 0.213, 0.720], "floor_fail_rate": [0.455, 0.213, 0.720], "ungrounded_rate": 0.091, "attribution_fabrication_rate": 0.0},
+        "note": "Reproduced byte-exact against reports/eval_baseline.json via cassette replay (zero live LLM calls). reports/triage_results*.json and reports/06_triage_assistant.md are stale pre-ADR-0018/19 artifacts (n=60, contaminated, different judge) -- not representative of the current gate."
+      },
+      "triage_verdict": "METRIC-WRONG",
+      "verdict_rationale": "The mean-band gate is architecturally incapable of catching what the product most needs it to catch (fabrication): judge-blind to provenance, a known hallucination case scores above its repo's mean, and the one rubric signal that does speak to correctness is diluted 6-to-1 into a mean that hides a 45.5% vscode floor-fail rate. Two new, real contamination leaks (near-duplicate, CQR calibration overlap) were found that no prior ADR checked for. This is a metric/aggregation fix, not a model retrain -- the same judge scores support a floor-based gate today."
+    }
+  },
+  "cross_model_leverage_ranking": [
+    {
+      "rank": 1,
+      "model": "llm_synthesis",
+      "why": "Highest product leverage: this is the capstone, user-facing output a triage engineer directly reads and trusts. The current gate is structurally blind to the exact failure mode (fabrication) that would most damage trust in the tool -- demonstrated concretely (a known hallucination scores above its repo's mean; 45.5% vscode floor-fail rate hidden behind a passable mean). Fix is a metric/aggregation change over EXISTING judge data (floor-based gate, weight grounding into the pass/fail decision) plus purging 2 newly-found contamination leaks -- no retraining, no new data required. Highest impact per unit of effort.",
+      "fix_type": "metric fix (aggregation rule + contamination purge), no new data needed",
+      "blocked_on_data": false
+    },
+    {
+      "rank": 2,
+      "model": "similar_issue_retriever",
+      "why": "Second-highest leverage: retrieval is live and user-facing (5 similar issues shown per triage plan) and the currently-advertised number is inflated ~14pp on vscode by proxy contamination that the project's own ADR-0027 already diagnosed but never surfaced. k8s is worse: the live retriever's real-world product-task performance is completely UNMEASURED (0 disjoint test pairs against the live index) -- a core feature is being shipped with zero visibility into whether it works for its actual job on one of the product's two repos. The vscode fix is immediate (port the already-computed honest number into README); the k8s fix is blocked on new data (escalated below, not resolved this phase).",
+      "fix_type": "vscode: metric fix (surface existing honest number). k8s: BLOCKED, needs new held-out product-task gold pairs mined from the live corpus.",
+      "blocked_on_data": true
+    },
+    {
+      "rank": 3,
+      "model": "component_classifier",
+      "why": "Metric-wrong (top-1 vs the product's actual top-3 criterion) but lower urgency than synthesis/retriever because there is no live user-facing harm today -- the downstream grounding check already correctly uses top-3 internally, so the product's actual behavior is unaffected by the classifier's own eval under-reporting itself. The fix is a pure reporting correction (re-baseline the headline to top-3, already computed) plus a separately-flagged data-quality issue (label-collapse in preprocessing) worth fixing at the source in a later phase.",
+      "fix_type": "metric fix (re-baseline headline to top-3, already computed on existing model + existing test split)",
+      "blocked_on_data": false
+    },
+    {
+      "rank": 4,
+      "model": "resolution_estimator",
+      "why": "Lowest leverage for a dedicated fix phase: the model and gating logic are already sound and self-protecting in production (k8s wins narrowly and honestly; vscode correctly falls back to a naive prior rather than serving a losing model). The gaps found are documentation lag (stale README table), a latent proxy-conflation sentence in an internal report, and a diagnostic script with a self-referential blind spot -- real hygiene issues, but none currently causes the product to serve a bad or mismeasured output.",
+      "fix_type": "hygiene (refresh README, fix w6_diagnose_resolution.py's self-reference bug, correct ADR-0025 transcription numbers)",
+      "blocked_on_data": false
+    }
+  ],
+  "recommended_fix_order": [
+    "1. llm_synthesis -- Phase B1: replace mean-band aggregation with a floor/weighted gate that cannot pass while a correctness-critical dimension (component_match, similar_issues_relevance) or grounding is at its worst band; purge the 2 newly-found contamination leaks (near-duplicate #14398/#14399, CQR calibration overlap on 4 issues) from the eval set. Uses existing judge_scores_checkpoint*.jsonl data -- no new judge calls, no retraining.",
+    "2. similar_issue_retriever (vscode half only) -- Phase B2: port reports/w3_t5_eval_results_v2.json's baseline product-stratum number into README with explicit product-task (issue->issue) labeling, replacing the MRR-led, proxy-contaminated table. No new data needed.",
+    "3. component_classifier -- Phase B3: re-baseline the headline metric to top-3 accuracy (already computed); separately flag the preprocess.py label-collapse (first-match-wins) as a data-quality fix candidate for a later phase.",
+    "4. resolution_estimator -- Phase B4: refresh README's resolution table to current numbers (including the vs-naive comparison and vscode naive-fallback disclosure), fix w6_diagnose_resolution.py to bypass BUCKET_CLASSIFIER_TRUSTED for its own diagnostic re-verification purpose, correct ADR-0025's prose transcription error.",
+    "5. similar_issue_retriever (k8s half) -- Phase C, GATED ON NEW DATA (see escalations): mine a held-out product-task (issue->issue) gold sample from the live k8s corpus (#1-15,000), disjoint from train, before k8s retrieval quality can be honestly measured or improved at all."
+  ],
+  "escalations_new_data_required": [
+    {
+      "model": "similar_issue_retriever",
+      "repo": "kubernetes_kubernetes",
+      "issue": "Zero product-task (issue->issue) test pairs exist against the LIVE deployed index. All 57 product-stratum test pairs in gold_related_v2 come from the Phase 2b forward-scrape range (#15,003-30,000), which is not in the deployed corpus (#1-15,000). Of the 72 legacy_gold_v1 k8s product pairs that DO fall in the live corpus, the w3-retry split algorithm assigned all 72 to train and none to val/test.",
+      "action_needed": "Mine a new held-out, train-disjoint sample of issue->issue related pairs from the live #1-15,000 k8s corpus before the live retriever's product-task recall@5 can be measured at all. This is a hard blocker, not a nice-to-have -- flagging per the vscode-underpowering-trap rule rather than proceeding on zero data.",
+      "not_actioned_this_phase": true
+    },
+    {
+      "model": "llm_synthesis",
+      "repo": "microsoft_vscode",
+      "issue": "gold_triage_plans n=11 for vscode gives +/-25-50pp Wilson CIs on any proportion (e.g. the 45.5% floor-fail point estimate spans [21.3%,72.0%]) -- too wide to distinguish 'occasional miss' from 'majority of plans have a fabricated/wrong claim'.",
+      "action_needed": "More vscode gold triage plans needed for a confident absolute floor-fail rate; this does not block shipping the floor-gate MECHANISM (which is a metric fix usable today at current n), only confident claims about vscode's precise rate.",
+      "not_actioned_this_phase": false,
+      "note": "Not a hard blocker to the Phase B1 metric fix -- the floor gate can and should ship at current n; this is a note for future gold-set growth prioritization, consistent with the project's existing vscode data-ceiling finding (ADR-0017)."
+    }
+  ]
+}

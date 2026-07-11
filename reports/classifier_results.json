@@ -6,23 +6,40 @@
     "test_size": 187,
     "n_classes": 28,
     "accuracy": 0.6898395721925134,
+    "top1_accuracy": 0.6898395721925134,
+    "top1_accuracy_ci95": [
+      0.6202793372330875,
+      0.7517569483566371
+    ],
+    "top3_accuracy": 0.9037433155080213,
+    "top3_accuracy_ci95": [
+      0.8529877832083337,
+      0.9382443171303765
+    ],
+    "multi_label_credit_accuracy": 0.7165775401069518,
+    "multi_label_credit_accuracy_ci95": [
+      0.6481300650302929,
+      0.7763056974030548
+    ],
+    "n_multi_label_test_rows": 15,
+    "multi_label_test_row_rate": 0.08021390374331551,
     "macro_f1": 0.5845975522516059,
     "weighted_f1": 0.7114721926493363,
-    "train_time_s": 27.2,
-    "eval_time_s": 0.17,
+    "train_time_s": 0.0,
+    "eval_time_s": 0.14,
     "latency_single": {
-      "p50_ms": 4.911199997877702,
-      "p95_ms": 10.860120000506859,
-      "p99_ms": 26.62129699761862,
-      "mean_ms": 5.966387499975099,
-      "predict_per_sec": 167.6056072462899
+      "p50_ms": 4.125899984501302,
+      "p95_ms": 5.448999995132906,
+      "p99_ms": 7.076667947694655,
+      "mean_ms": 4.12038549897261,
+      "predict_per_sec": 242.6957381170629
     },
     "latency_batch": {
       "batch_size": 100,
-      "batch_p50_ms": 36.67755000424222,
-      "batch_p95_ms": 51.620470000852926,
-      "per_sample_ms": 0.37006650001421804,
-      "samples_per_sec": 2702.217033861697
+      "batch_p50_ms": 34.6185999806039,
+      "batch_p95_ms": 37.2008049802389,
+      "per_sample_ms": 0.3439000997459516,
+      "samples_per_sec": 2907.8211978965037
     },
     "calibration": {
       "ece": 0.4957510953082865,
@@ -194,23 +211,40 @@
     "test_size": 286,
     "n_classes": 35,
     "accuracy": 0.513986013986014,
+    "top1_accuracy": 0.513986013986014,
+    "top1_accuracy_ci95": [
+      0.45625956262130885,
+      0.5713417202863207
+    ],
+    "top3_accuracy": 0.8251748251748252,
+    "top3_accuracy_ci95": [
+      0.7769259257419561,
+      0.864803901860431
+    ],
+    "multi_label_credit_accuracy": 0.5944055944055944,
+    "multi_label_credit_accuracy_ci95": [
+      0.5366125461613166,
+      0.6496961134651827
+    ],
+    "n_multi_label_test_rows": 87,
+    "multi_label_test_row_rate": 0.3041958041958042,
     "macro_f1": 0.46596167621138074,
     "weighted_f1": 0.541925973905203,
-    "train_time_s": 47.8,
-    "eval_time_s": 0.19,
+    "train_time_s": 0.0,
+    "eval_time_s": 0.18,
     "latency_single": {
-      "p50_ms": 5.573200000071665,
-      "p95_ms": 15.09207499802869,
-      "p99_ms": 20.046041998721165,
-      "mean_ms": 7.0235705001687165,
-      "predict_per_sec": 142.37772653894177
+      "p50_ms": 5.408950033597648,
+      "p95_ms": 6.962620024569332,
+      "p99_ms": 7.868481924524499,
+      "mean_ms": 5.1621339994017035,
+      "predict_per_sec": 193.7183343392289
     },
     "latency_batch": {
       "batch_size": 100,
-      "batch_p50_ms": 35.664200004248414,
-      "batch_p95_ms": 48.88693000066268,
-      "per_sample_ms": 0.3636543000175152,
-      "samples_per_sec": 2749.8643628078526
+      "batch_p50_ms": 28.668199956882745,
+      "batch_p95_ms": 32.765440037474036,
+      "per_sample_ms": 0.28222900012042373,
+      "samples_per_sec": 3543.2219919757076
     },
     "calibration": {
       "ece": 0.39557584824882963,

@@ -39,14 +39,14 @@ POST /triage {repo, title, body}
 ┌───────────────────────────────────────┐
 │ System 1: TF-IDF Component Classifier  │  ~5ms p50
 │ Logistic Regression, 28–35 classes    │
-│ vscode: 69.0% acc, 0.585 macro-F1    │
+│ vscode: 90.4% top-3 acc (69.0% top-1) │
 └──────────────────┬────────────────────┘
                    │ top-3 component candidates + confidence
                    ▼
 ┌───────────────────────────────────────┐
 │ System 2: Similar Issue Retriever      │  ~27ms p50
 │ BGE-base-en-v1.5 + FAISS cosine       │
-│ vscode MRR 0.294, Recall@5 36.7%     │
+│ vscode R@5 22.4% (product-task, live) │
 └──────────────────┬────────────────────┘
                    │ top-5 similar issues + similarity scores
                    ▼
@@ -75,12 +75,16 @@ suggested_next_steps, triage_summary
 
 | System | Repo | Metric | Value |
 |---|---|---|---|
-| Component classifier | vscode | Top-1 accuracy (28 classes) | 69.0% |
-| Component classifier | kubernetes | Top-1 accuracy (35 classes) | 51.4% |
-| Component classifier | vscode | Macro F1 | 0.585 |
+| Component classifier | vscode | **Top-3 accuracy (primary — see note)** | **90.4%** [85.3, 93.8] |
+| Component classifier | vscode | Top-1 accuracy (secondary) | 69.0% [62.0, 75.2] |
+| Component classifier | kubernetes | **Top-3 accuracy (primary — see note)** | **82.5%** [77.7, 86.5] |
+| Component classifier | kubernetes | Top-1 accuracy (secondary) | 51.4% [45.6, 57.1] |
+| Component classifier | vscode | Macro F1 (top-1) | 0.585 |
+| Component classifier | kubernetes | Macro F1 (top-1) | 0.466 |
 | Component classifier | vscode | Inference latency p50 | 4.9ms |
-| Similar issue retriever | vscode | MRR | 0.294 |
-| Similar issue retriever | vscode | Recall@5 / @10 | 36.7% / 52.1% |
+| Similar issue retriever | vscode | **Recall@5 (product-task, live index — see note)** | **22.4%** [17.7, 28.0] |
+| Similar issue retriever | vscode | Recall@10 / @20 (product-task) | 43.7% / 71.3% |
+| Similar issue retriever | kubernetes | Recall@5 (product-task, live index) | **unmeasurable** — 0 test pairs land in the deployed corpus; needs new gold (see note) |
 | Similar issue retriever | vscode | Index size (BGE) | 24.3 MB |
 | Resolution predictor | kubernetes | MAE (within-window, de-leaked) | 104.8 days |
 | Resolution predictor | kubernetes | Improvement vs naive | +1.4% |
@@ -90,6 +94,35 @@ suggested_next_steps, triage_summary
 | Resolution predictor | vscode | Improvement vs naive | 0.0% |
 | Resolution predictor | vscode | Q10–Q90 CI coverage | 76.5% |
 | Resolution predictor | vscode | Inference latency p50 | 1.4ms |
+
+95% Wilson CIs shown in brackets where computed on a held-out test split.
+
+> **Classifier metric correction (2026-07-11).** The product never surfaces a single
+> label — `triage.py` builds `classifier_top3` and `grounding.py::verify_plan_grounding`
+> defines a correct prediction as top-3 membership, not top-1 equality. Reporting only
+> top-1 materially understated the classifier's real-world usefulness (a 21–31pp gap,
+> non-overlapping CIs, same model + test split — no retraining involved). Additionally,
+> 30.4% of the kubernetes test set and 8.0% of vscode's have more than one valid
+> component label that gets collapsed to one at preprocessing time; crediting a
+> prediction that hits any valid label (not just the collapsed one) raises accuracy
+> further to 59.4% (k8s) / 71.7% (vscode) top-1. Full methodology:
+> [`reports/model_eval_audit.json`](reports/model_eval_audit.json) → `component_classifier`.
+>
+> **Retriever metric correction (2026-07-11).** The advertised vscode Recall@5 (36.7%)
+> was measured against `data/gold_related.parquet` (v1), which is only 74.0% genuine
+> issue→issue pairs — the rest are PR→issue or duplicate-comment pairs, an easier proxy
+> task the product doesn't perform. The honest product-task-only number, measured
+> against the actually-deployed live index, is 22.4% [17.7, 28.0] — a ~12–14pp
+> inflation, CIs do not overlap. kubernetes has no retriever row above because its
+> live-index product-task recall is currently unmeasurable: of the stratified product-task
+> test pairs, zero land in the deployed corpus (all come from a later scrape range not
+> yet indexed in production) — this is a data gap, not a model failure, and needs new
+> gold to close (tracked, not silently omitted). A W3 fine-tune was evaluated against
+> both a proxy gate task and the product task (`docs/architecture/adr/0027-w3-retry-stratified-eval.md`):
+> proxy-task gains were real and significant (k8s +14.3pp, vscode +4.6pp), but
+> product-task gains were directionally positive and underpowered on both repos (k8s
+> +3.5pp, vscode +3.2pp, both CIs cross zero) — held, not shipped, pending ~700 more
+> product-task pairs for 80% power.
 
 Full evaluation reports: [`reports/`](reports/)
 

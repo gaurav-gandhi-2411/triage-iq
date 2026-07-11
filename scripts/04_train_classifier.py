@@ -40,7 +40,7 @@ MODELS_DIR = Path("data/models")
 CHARTS_DIR = Path("reports/charts")
 
 
-def run_repo(repo: str) -> dict:
+def run_repo(repo: str, eval_only: bool = False) -> dict:
     log.info("=" * 60)
     log.info("Repo: %s", repo)
 
@@ -62,24 +62,44 @@ def run_repo(repo: str) -> dict:
         len(train), len(val), len(test), y_train.nunique(),
     )
 
-    # ── Train ─────────────────────────────────────────────────────
-    clf = TFIDFComponentClassifier(repo=repo)
-    t_train = time.perf_counter()
-    clf.fit(X_train, y_train, X_val=X_val, y_val=y_val)
-    train_time = time.perf_counter() - t_train
-
-    # ── Save model ────────────────────────────────────────────────
     model_path = MODELS_DIR / f"component_classifier_{repo}.pkl"
-    clf.save(str(model_path))
+
+    if eval_only:
+        # LogisticRegression(solver="saga") has no fixed random_state, so re-fitting
+        # is NOT reproducible -- it silently swaps the shipped model for a different
+        # one. --eval-only loads the existing artifact instead, for report/metric
+        # regeneration that must not touch the deployed model.
+        log.info("--eval-only: loading existing model from %s (not retraining)", model_path)
+        clf = TFIDFComponentClassifier.load(str(model_path))
+        train_time = 0.0
+    else:
+        # ── Train ─────────────────────────────────────────────────
+        clf = TFIDFComponentClassifier(repo=repo)
+        t_train = time.perf_counter()
+        clf.fit(X_train, y_train, X_val=X_val, y_val=y_val)
+        train_time = time.perf_counter() - t_train
+
+        # ── Save model ────────────────────────────────────────────
+        clf.save(str(model_path))
 
     # ── Evaluate on test ──────────────────────────────────────────
+    # repo/labels_raw enable top-3 (the product's own definition of "correct" — see
+    # grounding.py::verify_plan_grounding) and multi-label credit accuracy, alongside
+    # top-1.
     t_eval = time.perf_counter()
-    results = evaluate_classifier(clf, X_test, y_test)
+    results = evaluate_classifier(clf, X_test, y_test, repo=repo, labels_raw=test["labels_raw"])
     eval_time = time.perf_counter() - t_eval
 
     log.info(
-        "Test — accuracy=%.3f  macro_f1=%.3f  weighted_f1=%.3f",
-        results["accuracy"], results["macro_f1"], results["weighted_f1"],
+        "Test — top1=%.3f %s  top3=%.3f %s  macro_f1=%.3f  weighted_f1=%.3f",
+        results["top1_accuracy"], results["top1_accuracy_ci95"],
+        results["top3_accuracy"], results["top3_accuracy_ci95"],
+        results["macro_f1"], results["weighted_f1"],
+    )
+    log.info(
+        "Multi-label credit=%.3f %s  (%d/%d test rows have >1 valid component label)",
+        results["multi_label_credit_accuracy"], results["multi_label_credit_accuracy_ci95"],
+        results["n_multi_label_test_rows"], len(test),
     )
 
     # ── Latency benchmarks ────────────────────────────────────────
@@ -133,7 +153,15 @@ def run_repo(repo: str) -> dict:
         "val_size": len(val),
         "test_size": len(test),
         "n_classes": y_train.nunique(),
-        "accuracy": results["accuracy"],
+        "accuracy": results["accuracy"],  # deprecated alias for top1_accuracy — kept for callers
+        "top1_accuracy": results["top1_accuracy"],
+        "top1_accuracy_ci95": results["top1_accuracy_ci95"],
+        "top3_accuracy": results["top3_accuracy"],
+        "top3_accuracy_ci95": results["top3_accuracy_ci95"],
+        "multi_label_credit_accuracy": results["multi_label_credit_accuracy"],
+        "multi_label_credit_accuracy_ci95": results["multi_label_credit_accuracy_ci95"],
+        "n_multi_label_test_rows": results["n_multi_label_test_rows"],
+        "multi_label_test_row_rate": results["multi_label_test_row_rate"],
         "macro_f1": results["macro_f1"],
         "weighted_f1": results["weighted_f1"],
         "train_time_s": round(train_time, 1),
@@ -151,6 +179,14 @@ def run_repo(repo: str) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repos", nargs="+", default=None)
+    parser.add_argument(
+        "--eval-only", action="store_true",
+        help="Load the existing shipped model and re-run evaluation only -- does not "
+             "retrain or overwrite data/models/component_classifier_{repo}.pkl. Use this "
+             "for regenerating reports/classifier_results.json (LogisticRegression's saga "
+             "solver has no fixed seed, so a plain re-run is NOT reproducible and would "
+             "silently swap the deployed model).",
+    )
     args = parser.parse_args()
 
     repos = args.repos or DEFAULT_REPOS
@@ -161,7 +197,7 @@ def main() -> None:
         if not (PROCESSED_DIR / f"{repo}_classifier_train.parquet").exists():
             log.warning("Skipping %s — classifier splits not found", repo)
             continue
-        all_results[repo] = run_repo(repo)
+        all_results[repo] = run_repo(repo, eval_only=args.eval_only)
 
     total_elapsed = time.perf_counter() - total_t
 
@@ -174,11 +210,14 @@ def main() -> None:
     # ── Summary ───────────────────────────────────────────────────
     log.info("=" * 60)
     log.info("SUMMARY")
-    log.info("%-30s  %8s  %8s  %8s  %10s", "Repo", "Accuracy", "MacroF1", "WtdF1", "p50 (ms)")
+    log.info(
+        "%-30s  %8s  %8s  %8s  %8s  %10s",
+        "Repo", "Top1", "Top3", "MacroF1", "WtdF1", "p50 (ms)",
+    )
     for repo, r in all_results.items():
         log.info(
-            "%-30s  %8.3f  %8.3f  %8.3f  %10.2f",
-            repo, r["accuracy"], r["macro_f1"], r["weighted_f1"],
+            "%-30s  %8.3f  %8.3f  %8.3f  %8.3f  %10.2f",
+            repo, r["top1_accuracy"], r["top3_accuracy"], r["macro_f1"], r["weighted_f1"],
             r["latency_single"]["p50_ms"],
         )
     log.info("Total time: %.1fs", total_elapsed)

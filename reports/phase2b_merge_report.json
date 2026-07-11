@@ -1,0 +1,40 @@
+{
+  "generated_by": "scripts/phase2b_merge_gold_v2.py",
+  "totals": {
+    "v1": 1435,
+    "candidates": 5483,
+    "merged": 6879
+  },
+  "judge_eval_dropped": {
+    "total": 39,
+    "legacy_v1": 39
+  },
+  "strata_by_repo": {
+    "kubernetes_kubernetes": {
+      "gate": 3132,
+      "product": 776,
+      "train_only": 122
+    },
+    "microsoft_vscode": {
+      "gate": 2242,
+      "product": 505,
+      "train_only": 102
+    }
+  },
+  "by_repo_channel": {
+    "kubernetes_kubernetes": {
+      "k8s_extended_mine": 779,
+      "k8s_forward_scrape": 2245,
+      "legacy_gold_v1": 1006,
+      "vscode_body_refs": 0,
+      "vscode_dup_scrape": 0
+    },
+    "microsoft_vscode": {
+      "k8s_extended_mine": 0,
+      "k8s_forward_scrape": 0,
+      "legacy_gold_v1": 390,
+      "vscode_body_refs": 217,
+      "vscode_dup_scrape": 2242
+    }
+  }
+}

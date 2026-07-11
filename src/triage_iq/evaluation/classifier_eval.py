@@ -1,6 +1,7 @@
 """Evaluation utilities for the component classifier."""
 
 import logging
+import re
 import time
 
 import numpy as np
@@ -9,8 +10,76 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def evaluate_classifier(model, X_test: pd.Series, y_test: pd.Series) -> dict:
-    """Comprehensive classifier evaluation."""
+def wilson_ci(p: float, n: int, z: float = 1.96) -> tuple[float, float]:
+    """Return (lower, upper) 95% Wilson confidence interval for a proportion."""
+    if n == 0:
+        return (0.0, 0.0)
+    center = (p + z**2 / (2 * n)) / (1 + z**2 / n)
+    half = z * np.sqrt(p * (1 - p) / n + z**2 / (4 * n**2)) / (1 + z**2 / n)
+    return float(center - half), float(center + half)
+
+
+def top_k_accuracy(y_test: pd.Series, y_proba: np.ndarray, classes: np.ndarray, k: int) -> float:
+    """Fraction of test rows where the true label is among the top-k predicted classes."""
+    top_k_idx = np.argsort(-y_proba, axis=1)[:, :k]
+    top_k_labels = classes[top_k_idx]
+    y_test_arr = np.asarray(y_test)
+    hits = [y_test_arr[i] in top_k_labels[i] for i in range(len(y_test_arr))]
+    return float(np.mean(hits))
+
+
+def all_matching_component_labels(repo: str, labels_raw) -> set[str]:
+    """All component labels a raw GitHub label list matches for `repo`.
+
+    Mirrors src/triage_iq/data/preprocess.py::normalize_labels' component-facet
+    matching, but collects every match instead of first-match-wins. An issue with
+    genuinely more than one applicable component label gets collapsed to a single
+    `gold_component` at preprocessing time (see docs/investigations — 30.4% of the
+    k8s test set, 8.0% of vscode's); this recovers the full set so a prediction that
+    hits any valid label can be credited, not just the one the collapse happened to
+    keep.
+    """
+    from triage_iq.data.preprocess import LABEL_FACET_PATTERNS
+
+    repo_key = repo.replace("_", "/", 1)
+    pattern = LABEL_FACET_PATTERNS.get(repo_key, {}).get("component")
+    if pattern is None:
+        return set()
+
+    matches: set[str] = set()
+    if isinstance(pattern, list):
+        known = {p.lower() for p in pattern}
+        for label in labels_raw:
+            if label.lower() in known:
+                matches.add(label)
+    else:
+        for label in labels_raw:
+            m = re.match(pattern, label, re.IGNORECASE)
+            if m:
+                matches.add(m.group(1) if m.lastindex else m.group(0))
+    return matches
+
+
+def evaluate_classifier(
+    model,
+    X_test: pd.Series,
+    y_test: pd.Series,
+    repo: str | None = None,
+    labels_raw: pd.Series | None = None,
+) -> dict:
+    """Comprehensive classifier evaluation.
+
+    Top-3 accuracy is the PRIMARY reported metric (not top-1): the product never
+    surfaces a single label — src/triage_iq/models/triage.py builds classifier_top3,
+    and src/triage_iq/models/grounding.py::verify_plan_grounding defines a correct
+    component prediction as top-3 membership. Reporting only top-1 materially
+    understates real-world usefulness (see docs/investigations/gold-set-leakage.md
+    Sec 5 sibling finding, reports/model_eval_audit.json component_classifier).
+
+    ``repo`` and ``labels_raw`` (the test split's raw GitHub label lists) are optional
+    — when omitted, multi-label credit is skipped (top-1/top-3 are unaffected, since
+    they only need y_proba/classes).
+    """
     from sklearn.metrics import (
         accuracy_score,
         classification_report,
@@ -40,8 +109,16 @@ def evaluate_classifier(model, X_test: pd.Series, y_test: pd.Series) -> dict:
 
     report = classification_report(y_test, y_pred, output_dict=True, zero_division=0)
 
-    return {
-        "accuracy": accuracy_score(y_test, y_pred),
+    n_test = len(y_test)
+    top1_acc = accuracy_score(y_test, y_pred)
+    top3_acc = top_k_accuracy(y_test, y_proba, classes, k=3)
+
+    result = {
+        "accuracy": top1_acc,
+        "top1_accuracy": top1_acc,
+        "top1_accuracy_ci95": wilson_ci(top1_acc, n_test),
+        "top3_accuracy": top3_acc,
+        "top3_accuracy_ci95": wilson_ci(top3_acc, n_test),
         "macro_f1": f1_score(y_test, y_pred, average="macro", zero_division=0),
         "weighted_f1": f1_score(y_test, y_pred, average="weighted", zero_division=0),
         "per_class_metrics": report,
@@ -51,6 +128,29 @@ def evaluate_classifier(model, X_test: pd.Series, y_test: pd.Series) -> dict:
         "y_pred": y_pred,
         "y_proba": y_proba,
     }
+
+    if repo is not None and labels_raw is not None:
+        all_labels = [all_matching_component_labels(repo, lbls) for lbls in labels_raw]
+        y_test_arr = np.asarray(y_test)
+        # Fall back to the single collapsed gold label if the facet pattern found no
+        # match at all (should not happen — the gold label itself came from one of
+        # these matches — but never silently drop a row from the credit computation).
+        all_labels = [
+            labels if labels else {gold}
+            for labels, gold in zip(all_labels, y_test_arr, strict=True)
+        ]
+        n_multi_label = sum(1 for labels in all_labels if len(labels) > 1)
+        credit_hits = [pred in labels for pred, labels in zip(y_pred, all_labels, strict=True)]
+        credit_acc = float(np.mean(credit_hits))
+
+        result.update({
+            "multi_label_credit_accuracy": credit_acc,
+            "multi_label_credit_accuracy_ci95": wilson_ci(credit_acc, n_test),
+            "n_multi_label_test_rows": n_multi_label,
+            "multi_label_test_row_rate": n_multi_label / n_test if n_test else 0.0,
+        })
+
+    return result
 
 
 def latency_benchmark(model, X_sample: pd.Series, n_iters: int = 200) -> dict:

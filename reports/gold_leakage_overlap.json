@@ -6,7 +6,7 @@
   },
   "eval_set_vs_gold": {
     "checked": true,
-    "n_eval_set": 65,
+    "n_eval_set": 64,
     "n_gold": 119,
     "eval_minus_gold": [],
     "gold_minus_eval": [
@@ -19,6 +19,7 @@
       "('kubernetes/kubernetes', 140)",
       "('kubernetes/kubernetes', 14228)",
       "('kubernetes/kubernetes', 14284)",
+      "('kubernetes/kubernetes', 14398)",
       "('kubernetes/kubernetes', 14598)",
       "('kubernetes/kubernetes', 14669)",
       "('kubernetes/kubernetes', 14743)",
@@ -186,14 +187,9 @@
           ]
         },
         "cqr_calibration_slice": {
-          "n_overlap": 2,
-          "by_cohort": {
-            "w5_added": 2
-          },
-          "numbers": [
-            311836,
-            311878
-          ]
+          "n_overlap": 0,
+          "by_cohort": {},
+          "numbers": []
         }
       },
       "hash_overlap": {
@@ -239,6 +235,54 @@
           "n_same_number": 27,
           "n_cross_number": 0,
           "cross_number_pairs": []
+        },
+        "retrieval_train_w3": {
+          "train_set": "retrieval_train_w3",
+          "n_same_number": 2,
+          "n_cross_number": 7,
+          "cross_number_pairs": [
+            {
+              "gold_number": 311565,
+              "train_number": 311562,
+              "cohort": "original_60"
+            },
+            {
+              "gold_number": 311565,
+              "train_number": 311563,
+              "cohort": "original_60"
+            },
+            {
+              "gold_number": 311565,
+              "train_number": 311564,
+              "cohort": "original_60"
+            },
+            {
+              "gold_number": 311565,
+              "train_number": 311566,
+              "cohort": "original_60"
+            },
+            {
+              "gold_number": 311543,
+              "train_number": 311544,
+              "cohort": "original_60"
+            },
+            {
+              "gold_number": 311543,
+              "train_number": 311545,
+              "cohort": "original_60"
+            },
+            {
+              "gold_number": 311543,
+              "train_number": 311546,
+              "cohort": "original_60"
+            }
+          ]
+        },
+        "cqr_calibration_slice": {
+          "train_set": "cqr_calibration_slice",
+          "n_same_number": 0,
+          "n_cross_number": 0,
+          "cross_number_pairs": []
         }
       },
       "near_dup": {
@@ -257,13 +301,15 @@
               "n_gold_over_threshold": 2,
               "by_cohort": {
                 "original_60": 2
-              }
+              },
+              "n_eval_set_over_threshold": 0
             },
             "0.95": {
               "n_gold_over_threshold": 2,
               "by_cohort": {
                 "original_60": 2
-              }
+              },
+              "n_eval_set_over_threshold": 0
             }
           },
           "pairs_over_lowest_threshold": [
@@ -271,13 +317,15 @@
               "gold_number": 311565,
               "cohort": "original_60",
               "max_train_cosine": 1.0,
-              "nearest_train_number": 311562
+              "nearest_train_number": 311562,
+              "in_eval_set": false
             },
             {
               "gold_number": 311543,
               "cohort": "original_60",
               "max_train_cosine": 1.0,
-              "nearest_train_number": 311544
+              "nearest_train_number": 311544,
+              "in_eval_set": false
             }
           ]
         },
@@ -294,14 +342,100 @@
           "threshold_counts": {
             "0.9": {
               "n_gold_over_threshold": 0,
-              "by_cohort": {}
+              "by_cohort": {},
+              "n_eval_set_over_threshold": 0
             },
             "0.95": {
               "n_gold_over_threshold": 0,
-              "by_cohort": {}
+              "by_cohort": {},
+              "n_eval_set_over_threshold": 0
             }
           },
           "pairs_over_lowest_threshold": []
+        },
+        "retrieval_train_w3": {
+          "n_gold_scanned": 41,
+          "n_gold_missing_from_index": 0,
+          "n_train_vectors": 193,
+          "n_train_missing_from_index": 0,
+          "max_cosine_distribution": {
+            "p50": 0.7273,
+            "p90": 0.8089,
+            "max": 1.0
+          },
+          "threshold_counts": {
+            "0.9": {
+              "n_gold_over_threshold": 2,
+              "by_cohort": {
+                "original_60": 2
+              },
+              "n_eval_set_over_threshold": 0
+            },
+            "0.95": {
+              "n_gold_over_threshold": 2,
+              "by_cohort": {
+                "original_60": 2
+              },
+              "n_eval_set_over_threshold": 0
+            }
+          },
+          "pairs_over_lowest_threshold": [
+            {
+              "gold_number": 311565,
+              "cohort": "original_60",
+              "max_train_cosine": 1.0,
+              "nearest_train_number": 311555,
+              "in_eval_set": false
+            },
+            {
+              "gold_number": 311543,
+              "cohort": "original_60",
+              "max_train_cosine": 1.0,
+              "nearest_train_number": 311544,
+              "in_eval_set": false
+            }
+          ]
+        },
+        "cqr_calibration_slice": {
+          "n_gold_scanned": 41,
+          "n_gold_missing_from_index": 0,
+          "n_train_vectors": 184,
+          "n_train_missing_from_index": 0,
+          "max_cosine_distribution": {
+            "p50": 0.6926,
+            "p90": 0.7833,
+            "max": 0.9431
+          },
+          "threshold_counts": {
+            "0.9": {
+              "n_gold_over_threshold": 2,
+              "by_cohort": {
+                "original_60": 2
+              },
+              "n_eval_set_over_threshold": 0
+            },
+            "0.95": {
+              "n_gold_over_threshold": 0,
+              "by_cohort": {},
+              "n_eval_set_over_threshold": 0
+            }
+          },
+          "pairs_over_lowest_threshold": [
+            {
+              "gold_number": 311543,
+              "cohort": "original_60",
+              "max_train_cosine": 0.9431,
+              "nearest_train_number": 311923,
+              "in_eval_set": false
+            },
+            {
+              "gold_number": 311565,
+              "cohort": "original_60",
+              "max_train_cosine": 0.9409,
+              "nearest_train_number": 311923,
+              "in_eval_set": false
+            }
+          ]
         }
       }
     },
@@ -452,14 +586,11 @@
           ]
         },
         "cqr_calibration_slice": {
-          "n_overlap": 4,
+          "n_overlap": 2,
           "by_cohort": {
-            "original_60": 2,
-            "w5_added": 2
+            "original_60": 2
           },
           "numbers": [
-            13508,
-            13784,
             13878,
             13890
           ]
@@ -475,6 +606,18 @@
         "temporal_train": {
           "train_set": "temporal_train",
           "n_same_number": 14,
+          "n_cross_number": 0,
+          "cross_number_pairs": []
+        },
+        "retrieval_train_w3": {
+          "train_set": "retrieval_train_w3",
+          "n_same_number": 3,
+          "n_cross_number": 0,
+          "cross_number_pairs": []
+        },
+        "cqr_calibration_slice": {
+          "train_set": "cqr_calibration_slice",
+          "n_same_number": 2,
           "n_cross_number": 0,
           "cross_number_pairs": []
         }
@@ -495,11 +638,13 @@
               "n_gold_over_threshold": 1,
               "by_cohort": {
                 "w5_added": 1
-              }
+              },
+              "n_eval_set_over_threshold": 0
             },
             "0.95": {
               "n_gold_over_threshold": 0,
-              "by_cohort": {}
+              "by_cohort": {},
+              "n_eval_set_over_threshold": 0
             }
           },
           "pairs_over_lowest_threshold": [
@@ -507,7 +652,8 @@
               "gold_number": 14398,
               "cohort": "w5_added",
               "max_train_cosine": 0.9069,
-              "nearest_train_number": 14399
+              "nearest_train_number": 14399,
+              "in_eval_set": false
             }
           ]
         },
@@ -526,11 +672,13 @@
               "n_gold_over_threshold": 1,
               "by_cohort": {
                 "original_60": 1
-              }
+              },
+              "n_eval_set_over_threshold": 0
             },
             "0.95": {
               "n_gold_over_threshold": 0,
-              "by_cohort": {}
+              "by_cohort": {},
+              "n_eval_set_over_threshold": 0
             }
           },
           "pairs_over_lowest_threshold": [
@@ -538,9 +686,68 @@
               "gold_number": 14598,
               "cohort": "original_60",
               "max_train_cosine": 0.9202,
-              "nearest_train_number": 8943
+              "nearest_train_number": 8943,
+              "in_eval_set": false
             }
           ]
+        },
+        "retrieval_train_w3": {
+          "n_gold_scanned": 78,
+          "n_gold_missing_from_index": 0,
+          "n_train_vectors": 1300,
+          "n_train_missing_from_index": 0,
+          "max_cosine_distribution": {
+            "p50": 0.7632,
+            "p90": 0.8202,
+            "max": 0.9202
+          },
+          "threshold_counts": {
+            "0.9": {
+              "n_gold_over_threshold": 1,
+              "by_cohort": {
+                "original_60": 1
+              },
+              "n_eval_set_over_threshold": 0
+            },
+            "0.95": {
+              "n_gold_over_threshold": 0,
+              "by_cohort": {},
+              "n_eval_set_over_threshold": 0
+            }
+          },
+          "pairs_over_lowest_threshold": [
+            {
+              "gold_number": 14598,
+              "cohort": "original_60",
+              "max_train_cosine": 0.9202,
+              "nearest_train_number": 8943,
+              "in_eval_set": false
+            }
+          ]
+        },
+        "cqr_calibration_slice": {
+          "n_gold_scanned": 78,
+          "n_gold_missing_from_index": 0,
+          "n_train_vectors": 449,
+          "n_train_missing_from_index": 0,
+          "max_cosine_distribution": {
+            "p50": 0.7469,
+            "p90": 0.7971,
+            "max": 0.8897
+          },
+          "threshold_counts": {
+            "0.9": {
+              "n_gold_over_threshold": 0,
+              "by_cohort": {},
+              "n_eval_set_over_threshold": 0
+            },
+            "0.95": {
+              "n_gold_over_threshold": 0,
+              "by_cohort": {},
+              "n_eval_set_over_threshold": 0
+            }
+          },
+          "pairs_over_lowest_threshold": []
         }
       }
     }

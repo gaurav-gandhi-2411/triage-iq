@@ -41,6 +41,29 @@ log = logging.getLogger(__name__)
 PROCESSED_DIR = Path("data/processed")
 MODELS_DIR = Path("data/models")
 OUTPUT_PATH = MODELS_DIR / "cqr_conformal_adjustments.json"
+EVAL_SET_PATH = Path("eval/eval_set.jsonl")
+
+
+def load_eval_numbers_by_repo() -> dict[str, set[int]]:
+    """{repo_slug: {numbers}} of eval/eval_set.jsonl issues.
+
+    These must never enter the CQR calibration set: an eval issue whose resolution
+    outcome contributes to the Q adjustment, then gets re-scored for interval
+    containment as part of the same eval, violates conformal exchangeability
+    (docs/investigations/gold-set-leakage.md — the CQR calibration-set leak, not
+    covered by ADR-0018's classifier/temporal-train disjointness guard at all).
+    """
+    if not EVAL_SET_PATH.exists():
+        log.warning("%s missing — eval-set exclusion is vacuous", EVAL_SET_PATH)
+        return {}
+    by_repo: dict[str, set[int]] = {}
+    with open(EVAL_SET_PATH, encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                rec = json.loads(line)
+                slug = rec["repo"].replace("/", "_")
+                by_repo.setdefault(slug, set()).add(int(rec["number"]))
+    return by_repo
 
 
 # ---------------------------------------------------------------------------
@@ -163,6 +186,34 @@ def calibrate_one(
     }
 
 
+def split_cal_true_test(
+    test_df: pd.DataFrame, is_eval: pd.Series, cal_frac: float
+) -> tuple[pd.DataFrame, pd.DataFrame, list[int]]:
+    """Chronological cal/true_test split that excludes eval-set rows from cal.
+
+    ``test_df`` must already be sorted by created_at ascending with a reset (0..n-1)
+    index; ``is_eval`` is a same-indexed boolean mask. Calibration size targets the
+    same cal_frac of the FULL test pool as before (not just the non-eval pool), so an
+    excluded eval row's slot is backfilled by the next chronologically-eligible
+    (non-eval) row — true_test absorbs the excluded eval rows plus everything after the
+    (now slightly later) cal/true_test boundary, same as it always absorbed everything
+    the cal window didn't claim.
+
+    Returns (cal_df, true_test_df, excluded_numbers) — excluded_numbers is the eval
+    issue numbers that would have landed in the OLD (unguarded) cal window, for
+    disclosure.
+    """
+    n_cal = int(len(test_df) * cal_frac)
+    eligible_idx = test_df.index[~is_eval]
+    cal_idx = eligible_idx[:n_cal]
+    cal_df = test_df.loc[cal_idx]
+    true_test_df = test_df.drop(index=cal_idx)
+    excluded_numbers = sorted(
+        test_df.loc[is_eval & (test_df.index < n_cal), "number"].astype(int).tolist()
+    )
+    return cal_df, true_test_df, excluded_numbers
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -178,6 +229,8 @@ def main() -> None:
         ("microsoft_vscode", [0.30, 0.40]),
     ]
 
+    eval_numbers_by_repo = load_eval_numbers_by_repo()
+
     for repo, split_ratios in repo_configs:
         log.info("=" * 60)
         log.info("Repo: %s", repo)
@@ -192,6 +245,15 @@ def main() -> None:
         # Sort test set by created_at ascending (preserve temporal ordering)
         test_df = test_df.sort_values("created_at").reset_index(drop=True)
 
+        # Eval-set issues must never enter the CALIBRATION slice — an eval issue whose
+        # resolution outcome contributes to Q, then gets re-scored on interval
+        # containment as part of the same eval, violates conformal exchangeability.
+        # They're still eligible for true_test (which measures held-out coverage only,
+        # never feeds Q) — this mirrors ADR-0018's existing train/eval disjointness
+        # scope (calibration IS a training-like source; true_test is not).
+        eval_numbers = eval_numbers_by_repo.get(repo, set())
+        is_eval = test_df["number"].astype(int).isin(eval_numbers)
+
         log.info("[%s] train=%d  test=%d", repo, len(train_df), len(test_df))
 
         predictor = ResolutionTimePredictor.load(
@@ -203,9 +265,13 @@ def main() -> None:
         if len(split_ratios) == 1:
             # Single split — store metrics directly under repo key
             cal_frac = split_ratios[0]
-            n_cal = int(len(test_df) * cal_frac)
-            cal_df = test_df.iloc[:n_cal]
-            true_test_df = test_df.iloc[n_cal:]
+            cal_df, true_test_df, excluded = split_cal_true_test(test_df, is_eval, cal_frac)
+            if excluded:
+                log.warning(
+                    "[%s] Excluded %d eval-set issue(s) from the cal window "
+                    "(backfilled from the next eligible rows): %s",
+                    repo, len(excluded), excluded,
+                )
 
             log.info(
                 "[%s] Split %.0f/%.0f  cal=%d  true_test=%d",
@@ -219,9 +285,13 @@ def main() -> None:
             # Multiple splits — store under nested split keys
             results[repo_display] = {}
             for cal_frac in split_ratios:
-                n_cal = int(len(test_df) * cal_frac)
-                cal_df = test_df.iloc[:n_cal]
-                true_test_df = test_df.iloc[n_cal:]
+                cal_df, true_test_df, excluded = split_cal_true_test(test_df, is_eval, cal_frac)
+                if excluded:
+                    log.warning(
+                        "[%s] Split %.0f/%.0f: excluded %d eval-set issue(s) from the "
+                        "cal window (backfilled from the next eligible rows): %s",
+                        repo, cal_frac * 100, (1 - cal_frac) * 100, len(excluded), excluded,
+                    )
 
                 log.info(
                     "[%s] Split %.0f/%.0f  cal=%d  true_test=%d",

@@ -1,8 +1,11 @@
 # Investigation: gold-set train-data leakage
 
-**Date:** 2026-07-06
+**Date:** 2026-07-06 (remediation executed 2026-07-11, see §5)
 **Status:** CONFIRMED — 54/119 gold rows (45.4%) overlap training data; 54/60 rows (90%) of
-the frozen CI-baseline eval set are contaminated.
+the frozen CI-baseline eval set are contaminated. §5 near-dup and CQR-calibration leaks
+against the ACTIVE n=65 eval set are now fixed at the code level; the two resulting
+re-baselines are AWAITING HUMAN APPROVAL (not yet written to reports/eval_baseline.json or
+treated as the deployed CQR artifact).
 **Scope:** triage gold set (`data/gold_triage_plans.parquet`, n=119) and every metric derived
 from it. Reproduce all numbers: `python scripts/verify_gold_train_overlap.py`
 (writes `reports/gold_leakage_overlap.json`).
@@ -200,6 +203,104 @@ the gold set is rebuilt. No production/deploy action needed (revision
 - README classifier / retrieval / resolution metrics (clean, per §3).
 - No model retraining, no redeploy — the training pipeline and artifacts are sound; the
   defect is entirely in evaluation-set construction.
+
+---
+
+## 5. B1 remediation executed (2026-07-11)
+
+Driven by ADR-0028's per-model audit (Phase B1: contamination fixes before any
+re-measurement). Two gaps this doc's original disjointness checks did not close, both
+confirmed to touch the **ACTIVE n=65 eval set** (not just the broader n=119 gold pool):
+
+### 5.1 Near-duplicate gate — now wired at ingest, not just audited
+
+§2's near-dup scan (`scripts/verify_gold_train_overlap.py`) was read-only and only
+compared gold against `classifier_train`/`temporal_train`. Extended it to also cover
+`retrieval_train_w3` and `cqr_calibration_slice`, and to flag which over-threshold pairs
+touch the active eval set (`in_eval_set` field, `reports/gold_leakage_overlap.json`).
+Full re-scan result across all 4 train-like sets, both repos:
+
+| Gold issue | Train set | Cosine | In active eval set (n=65)? |
+|---|---|---|---|
+| k8s **#14398** | classifier_train #14399 | 0.9069 | **YES** |
+| k8s #14598 | temporal_train #8943 | 0.9202 | no (gold-pool only) |
+| k8s #14598 | retrieval_train_w3 #8943 | 0.9202 | no (gold-pool only) |
+| vsc #311565 | classifier_train #311562 | 1.0000 | no (gold-pool only) |
+| vsc #311543 | classifier_train #311544 | 1.0000 | no (gold-pool only) |
+| vsc #311565 | retrieval_train_w3 #311555 | 1.0000 | no (gold-pool only) |
+| vsc #311543 | retrieval_train_w3 #311544 | 1.0000 | no (gold-pool only) |
+| vsc #311543 | cqr_calibration_slice #311923 | 0.9431 | no (gold-pool only) |
+| vsc #311565 | cqr_calibration_slice #311923 | 0.9409 | no (gold-pool only) |
+
+Only **k8s #14398** contaminates current measurements; the other 8 pairs sit in the
+n=119 gold pool but were never sampled into `eval_set.jsonl` — flagged here for future
+hygiene (they'd need re-checking if the eval set is ever backfilled from this gold
+pool) but not acted on in this pass.
+
+Fix, permanent: `scripts/w5_ingest_labeled.py::assert_gold_disjoint_from_train` now runs
+a 4th check — BGE cosine similarity (threshold 0.90) of every accepted candidate against
+the union of classifier_train/temporal_train/retrieval_train, hard-failing the same way
+the existing 3 ID checks do. Degrades to vacuous (warns, does not block) only when the
+BGE dup-index is absent from disk, matching the existing tolerance pattern for a missing
+`w3_split.parquet`. Covered by 5 new tests in `tests/test_w5_ingest.py`.
+
+Action taken: k8s **#14398** removed from `eval/eval_set.jsonl` (65 → 64 rows). Its
+`similar_issues` ground-truth field also listed #14399 (cosine 0.907) as the top
+retrieved match — the same contamination reached the retrieval-relevance judge
+dimension too, not just the classifier/resolution dimensions.
+
+### 5.2 CQR calibration-set leak — eval issues excluded from cal candidacy
+
+Not covered by ADR-0018 at all: `scripts/10_calibrate_cqr.py` had zero disjointness
+checks. Confirmed exchangeability violation — an eval issue's resolution outcome
+contributed to the Q adjustment, then the same issue is re-scored on interval
+containment as part of eval/run_eval.py's per-issue synthesis scoring:
+
+| Repo | Issues in old (unguarded) cal window | In active eval set? |
+|---|---|---|
+| k8s | #13508, #13784, #13878, #13890 | #13508/#13784 yes; #13878/#13890 gold-pool only |
+| vscode | #311836, #311878 | both yes |
+
+Fix: `scripts/10_calibrate_cqr.py::split_cal_true_test` excludes eval-set issues from
+cal candidacy, backfilling from the next chronologically-eligible row (true_test still
+absorbs the excluded rows — only cal contribution to Q is guarded against, since that's
+the actual exchangeability violation; true_test never feeds Q). `verify_gold_train_overlap.py`'s
+`load_cqr_calibration_numbers` updated to match, so future audits don't keep flagging an
+already-fixed leak. Covered by 7 new tests in `tests/test_calibrate_cqr_split.py`.
+Confirmed post-fix: k8s cal window now excludes #13508/#13784 (0 ID overlap vs eval);
+vscode excludes #311836/#311878 (0 ID overlap vs eval). #13878/#13890 remain in k8s's
+cal window — they're gold-pool-only, not eval-set members, so not a current
+exchangeability violation; flagged for the same future-hygiene reason as §5.1's
+gold-pool-only near-dups.
+
+### 5.3 Re-baseline deltas (both AWAITING APPROVAL — not written/deployed)
+
+**Eval judge baseline** (`reports/eval_baseline.json`, n=65 → n=64, k8s #14398 dropped):
+
+| | vscode | k8s | overall |
+|---|---|---|---|
+| n | 11 → 11 (unchanged) | 54 → 53 | 65 → 64 |
+| mean | 8.3636 → 8.3636 (unchanged) | 10.5185 → 10.5094 (Δ −0.0091) | 10.1538 → 10.1406 (Δ −0.0132) |
+
+Both deltas are far inside the existing regression band (k8s band 0.22, vscode 0.45) —
+noise-level movement, not a real quality change. `--update-baseline` has NOT been run;
+`reports/eval_baseline.json` on disk is still the pre-fix (contaminated-by-#14398)
+baseline pending approval.
+
+**CQR conformal artifact** (`data/models/cqr_conformal_adjustments.json`, gitignored —
+regenerated locally to obtain honest numbers, NOT itself a deploy):
+
+| | k8s 30/70 | vscode 30/70 | vscode 40/60 |
+|---|---|---|---|
+| Q adjustment (hours) | 0.2835 → 0.2835 (Δ 0.0000) | 1.0614 → 1.0614 (Δ 0.0000) | 1.2542 → 1.2655 (Δ +0.0113) |
+| Empirical coverage | 76.64% → 76.17% (Δ −0.47pp) | 68.29% → 68.29% (Δ 0.00pp) | 74.05% → 74.59% (Δ +0.54pp) |
+| Median conformal width | 87.66d → 89.44d (+1.78d) | 117.10d → 117.85d (+0.75d) | 117.12d → 117.91d (+0.79d) |
+
+All deltas are small and within the CI width already reported for empirical coverage.
+The regenerated artifact is gitignored (`data/models/**`) so it was never at risk of
+landing in this PR's diff — but if any deploy step packages `data/models/` from this
+checkout, that step must not run against the regenerated artifact until this delta is
+reviewed and approved.
 
 ---
 

@@ -12,27 +12,27 @@
       "all_grounded_false_pct": 9.09
     },
     "kubernetes/kubernetes": {
-      "n": 54,
+      "n": 53,
       "component_ungrounded_count": 1,
-      "component_ungrounded_pct": 1.85,
+      "component_ungrounded_pct": 1.89,
       "component_ungrounded_ci_recoverable_count": 0,
       "component_ungrounded_ci_recoverable_pct_of_ungrounded": 0.0,
       "similar_issue_ungrounded_count": 0,
       "similar_issue_ungrounded_pct": 0.0,
       "all_grounded_false_count": 1,
-      "all_grounded_false_pct": 1.85
+      "all_grounded_false_pct": 1.89
     }
   },
   "overall": {
-    "n": 65,
+    "n": 64,
     "component_ungrounded_count": 2,
-    "component_ungrounded_pct": 3.08,
+    "component_ungrounded_pct": 3.12,
     "component_ungrounded_ci_recoverable_count": 0,
     "component_ungrounded_ci_recoverable_pct_of_ungrounded": 0.0,
     "similar_issue_ungrounded_count": 0,
     "similar_issue_ungrounded_pct": 0.0,
     "all_grounded_false_count": 2,
-    "all_grounded_false_pct": 3.08
+    "all_grounded_false_pct": 3.12
   },
   "ungrounded_cases": [
     {

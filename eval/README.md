@@ -7,8 +7,9 @@
 | `eval_set.jsonl` | 64-issue frozen eval set (11 vscode + 53 k8s), stratified by resolution bucket |
 | `cassette.py` | JSON-backed cassette player for offline LLM replay in CI |
 | `cassettes/eval_cassette.json` | Recorded LLM interactions (synthesis + judge) for replay |
-| `test_invariants.py` | 5 deterministic structural invariants (no LLM) — runs in CI |
-| `test_quality_regression.py` | Cassette-replayed judge vs baseline — **not yet shipped** |
+| `test_invariants.py` | 7 deterministic structural invariants (no LLM) — runs in CI, informational |
+| `test_fabrication_gate.py` | Deterministic grounding ratchet (no LLM) — **HARD, BLOCKING** (ADR-0029) |
+| `test_quality_regression.py` | Cassette-replayed judge vs baseline — runs in CI, informational |
 | `record_cassettes.py` | One-time recording script (run locally with live creds; never in CI) |
 | `run_eval.py` | Compute current scores from cassettes; used to refresh baseline |
 
@@ -56,11 +57,19 @@ model tier, etc.).
 
 ## CI behavior
 
-The eval gate (`eval-gate.yml`) is currently **non-blocking** (`continue-on-error: true`).
-It will be promoted to a required status check after one confirmed green cycle on `main`.
+`structural-invariants` and `quality-regression` are **non-blocking**
+(`continue-on-error: true`). They will be promoted to required status checks after one
+confirmed green cycle on `main`.
 
-The gate runs zero live LLM calls. A cassette miss = hard fail (the request changed without
-a cassette update). Fix: re-record + commit the new cassette.
+`fabrication-gate` (ADR-0029) is **hard-blocking** (no `continue-on-error`) — a
+fabricated component or similar-issue claim beyond the pinned, measured baseline in
+`eval/test_fabrication_gate.py` fails the workflow. It was promoted directly to
+blocking, skipping the informational stage the other two jobs are still in, because it
+gates a specific, precisely-measured, near-zero-rate correctness failure mode (see
+ADR-0029), not because the general promotion criterion above changed.
+
+Every job runs zero live LLM calls. A cassette miss = hard fail (the request changed
+without a cassette update). Fix: re-record + commit the new cassette.
 
 ## Known limitation
 

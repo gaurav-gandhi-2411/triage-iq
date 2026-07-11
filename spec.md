@@ -1,128 +1,105 @@
-# Project Spec: TriageIQ — Per-Model Evaluation Audit + Performance Diagnosis
+# Project Spec: TriageIQ — Elevate Fabrication Metric to a Hard Gate
 
 ## Goal
 
-Across this project, metric-appropriateness problems have surfaced ACCIDENTALLY, one model at a
-time: retrieval's k8s metric measured a PROXY task (PR→issue, not the product issue→issue);
-resolution's intervals were non-diagnostic and vscode served a worse-than-naive classifier;
-component_match had gold contamination. Never a DELIBERATE, systematic audit of "is each model
-evaluated on a metric suited to what it actually does, and is it actually good on the right metric."
+The eval audit (ADR-0028) found the synthesis quality metric was structurally blind to fabrication:
+the LLM judge never sees the upstream signals (classifier_top3, retrieved-issue set), so it cannot
+detect when synthesis cites a component or similar-issue that upstream never produced — a known
+hallucination (#311836) scored ABOVE its repo mean. B3 added a deterministic fabrication check
+(reusing the grounding verifier) but wired it INFORMATIONAL-ONLY: it's surfaced but gates nothing,
+so a fabricating plan still passes.
 
-This iteration does that audit — for ALL FOUR models (component classifier, similar-issue retriever,
-resolution estimator, LLM synthesis) — then, where the corrected metric reveals a real performance
-gap, diagnoses and (in gated follow-on phases) fixes it. Audit FIRST: you cannot fix performance
-until you're measuring the right thing, and wrong-metric problems hide under apparently-fine numbers.
+This iteration elevates fabrication from informational to a HARD GATE — a plan that cites a
+component not in classifier_top3, or a similar-issue not in the retrieved set, is a FAIL, not a
+judge-averaged soft miss. Fabrication is the failure mode that most misleads a human triager (a
+confidently-cited nonexistent source actively harms someone who trusts the tool), so it should
+block, not just inform.
 
-The deliverable of Phase A (this spec) is the AUDIT: per model, what task it does, what metric it's
-currently evaluated on, whether that metric is SUITABLE, what the performance is on the CORRECT
-metric, and a triage — {metric-wrong → fix eval}, {metric-right-but-weak → diagnose+fix model},
-{genuinely fine}. Fix phases (B+) are separate, gated on the audit findings.
+**But gate elevation is gated on MEASUREMENT** (the reason it was informational-only first): confirm
+the current fabrication rate is low enough that a hard gate won't false-fail legitimate plans. If the
+rate is near-zero, elevate safely. If it's higher than expected, understand why before elevating.
 
-## Current state (the 4 models + their current evals)
+## Current state
 
-- **Component classifier** (TF-IDF + LR, temp-calibrated): multi-label-ish component prediction.
-  Current eval: accuracy, calibration (ECE), component_match judge dimension. Known: gold
-  contamination was fixed (load_eval_splits cross-check); calibration was corrected (ADR-0004).
-- **Similar-issue retriever** (BGE + FAISS): find related issues. Current eval: recall@k on
-  gold_related. Known: k8s gold is 92% PR-query (measures PR→issue, not product issue→issue);
-  vscode corpus grown (v2, Phase 2). Fine-tune held pending product-task power.
-- **Resolution estimator** (LightGBM quantile + bucket + CQR): predict resolution time/bucket.
-  Current eval: MAE, coverage, bucket accuracy vs naive. Known: intervals non-diagnostic
-  (ADR-0021/0023); k8s bucket beats naive (CI), vscode on naive fallback (Phase 1).
-- **LLM synthesis** (Groq llama-3.1-8b): generate the triage plan. Current eval: local qwen3:8b
-  judge, 6 dimensions, mean-band gate. Known: attribution 100% grounded; grounding verifier live.
+- Grounding verifier (`grounding.py`): deterministic, checks plan claims vs `signals`
+  (classifier_top3, retrieved similar-issue numbers). Already live, FLAG-not-strip.
+- B3 (ADR-0028): fabrication_rate computed and surfaced, INFORMATIONAL-ONLY — gates nothing.
+  Floor-rate metric also added (report-only). Mean-band judge gate unchanged (regression detector).
+- Eval: clean n=64 (post-B1 quarantine), local qwen3:8b judge, per-repo.
+- Known: grounding fires ~1.9% k8s / 9.1% vscode ungrounded (from the synthesis audit / attribution
+  work) — but that's the ungrounded RATE, which the gate design needs to reason about precisely.
 
 ## Scope
 
-### Phase A — the audit (this iteration; the rest gated on it)
+### In scope
 
-**For EACH of the 4 models, produce:**
-1. **Task statement**: what does this model actually do, and what's the PRODUCT use case (what does
-   a user actually need from it)?
-2. **Current metric**: what metric(s) is it evaluated on today, on what data.
-3. **Metric-suitability verdict**: is the current metric SUITABLE for the task + product use case?
-   Specifically check the failure modes this project has already hit:
-   - Does the metric measure the PRODUCT task or a PROXY? (retrieval's PR→issue lesson — check ALL
-     models for this, not just retrieval.)
-   - Is the eval data disjoint / uncontaminated? (the gold-contamination lesson.)
-   - Is the metric appropriate to the model's OUTPUT type? (e.g. exact-accuracy for a classifier
-     where adjacent labels are near-correct may understate it — is top-k or hierarchical accuracy
-     more suitable? A point-MAE for resolution when buckets are what's used?)
-   - Is the eval powered (n) on the task that matters, per repo? (the vscode underpowering lesson.)
-4. **Performance on the CORRECT metric**: re-evaluate on the suitable metric (if different from
-   current). Report the honest number, per repo, with CI where it's a comparison.
-5. **Triage verdict** per model, one of:
-   - METRIC-WRONG → the eval needs fixing (measure the right thing); performance may look different.
-   - METRIC-RIGHT-BUT-WEAK → real performance gap; needs diagnose+fix (a gated follow-on phase).
-   - GENUINELY-FINE → measured right, performs adequately, no action.
+**1. MEASURE the fabrication rate precisely (before elevating — the gate on the gate):**
+- Over the clean eval set, per repo: what fraction of plans contain a fabricated claim (component
+  not in classifier_top3, OR similar-issue ref not in retrieved set)? Break down by fabrication
+  TYPE (component vs similar-issue) and severity.
+- This is the number that decides whether a hard gate is safe. Report it.
 
-**Cross-model synthesis**: rank the 4 by "how much does fixing this improve the actual product,"
-and recommend which model(s) get a deep diagnose+fix phase next, with the expected leverage.
+**2. Decide the gate POLICY based on the measured rate (escalate the decision):**
+- If fabrication rate is near-zero (e.g. the 1-2 known cases): a hard gate is safe — it'll pass all
+  legitimate plans and fail only genuine fabrications. Elevate to hard fail.
+- If the rate is meaningfully non-zero: understand WHY first. Are the "fabrications" real (the LLM
+  genuinely invents sources) or artifacts (e.g. the LLM cites a valid component that's in top-5 but
+  not top-3 — arguably not fabrication)? The gate threshold (top-3 vs top-5 vs label-space) matters
+  here. Propose the precise fabrication DEFINITION for the gate, escalate it.
+- Decide: does the gate BLOCK (hard fail in CI) or does it fail the plan at SERVE time (reject/flag
+  the fabricated claim in the live response)? These are different — CI-gate catches regressions;
+  serve-time catches live fabrications. Propose which (or both).
 
-### Phases B+ (gated on the audit — NOT this iteration)
+**3. Wire the hard gate (once policy is set):**
+- CI eval-gate: a fabricated claim in the eval set → the gate FAILS (not continue-on-error
+  informational). Tie to eval_set_hash like the other ratchets. TEST THE TEST: inject a fabricated
+  plan → gate fails → revert → passes.
+- Consider serve-time: should live /triage reject/flag a fabricated claim before returning? (The
+  grounding verifier already computes this; elevating means acting on it, not just reporting.)
+  Escalate whether to make this live (prod-facing) or keep it CI-only this iteration.
 
-Per the audit's triage, follow-on phases (each its own spec, escalated): fix a wrong metric,
-or diagnose+fix a weak model. Sequenced by the audit's leverage ranking. Do NOT start these until
-the audit is reviewed and the human picks the order.
+**4. Baseline + disclosure:**
+- If the gate changes what passes, re-establish the relevant baseline (human-approved).
+- ADR-0029: the measured fabrication rate, the gate definition, block-vs-serve-time decision, and
+  the elevation from informational → hard gate, framed as closing the ADR-0028 finding.
 
-### Out of scope (this iteration)
+### Out of scope
 
-- No model retraining or fixing yet (audit FIRST — Phase A is diagnosis, not treatment).
-- No shipping the held Phase 2 fine-tune (separate decision, its own data gate).
-- No new features / no live cutover.
-- No reopening the closed eval-integrity mechanics (the gate infra is sound; this audits the
-  MODELS' metrics, not the gate).
-
-## Tech stack
-
-- Existing Python + the existing eval harness + committed eval data. Re-evaluation on corrected
-  metrics uses existing artifacts (no retraining). scipy for CIs. Local judge if synthesis re-eval
-  needs it (zero-cost). No new deps without escalation.
+- No change to the mean-band judge gate (stays a regression detector — this ADDS a fabrication gate).
+- No retraining any model (this gates on existing outputs).
+- No change to the grounding verifier LOGIC (it's correct; this elevates how its output is USED).
 
 ## Autonomy & escalation
 
-CC runs the full audit autonomously. Escalate ONLY:
-1. **The completed audit** — the per-model table (task / current metric / suitability / corrected
-   performance / triage verdict) + the cross-model leverage ranking + which model(s) to fix first.
-   This is the strategic output; the human picks the fix order from it.
-2. Any point where re-evaluating on a "corrected" metric requires new data/labeling (flag it, don't
-   silently proceed on insufficient data — that's the vscode-underpowering trap).
+CC measures + wires autonomously. Escalate ONLY:
+1. **The measured fabrication rate + the gate-policy decision** (fabrication definition, block-vs-
+   serve-time, hard-fail-vs-flag) — this is a policy call, human-decided from the measured rate.
+2. Any baseline re-establishment (if the gate changes what passes).
+3. Any prod deploy (if serve-time rejection goes live).
 
 ## Hard rules
 
-- Audit is HONEST: if a model looks fine only because it's measured on a proxy/easy metric, SAY SO
-  (the retrieval PR→issue lesson — apply it to every model). A flattering number on the wrong
-  metric is the failure mode this audit exists to catch.
-- Per-repo, powered, disjoint — the same discipline: don't claim on underpowered/contaminated evals;
-  vscode indicative where n is small.
-- Corrected metrics stand on their own; if a corrected metric changes the story vs the current one,
-  that's a finding to disclose (like the k8s-retrieval relabel), not to hide.
-- No fixing in this phase — audit and triage only. Branch only (`analysis/model-eval-audit`);
-  I merge. Zero-cost, local judge if needed. Claude Max — never ANTHROPIC_API_KEY. Don't touch
-  aetherart-497918.
+- MEASURE before elevating — don't hard-gate a rate you haven't confirmed is low enough to not
+  false-fail legitimate plans (that's the reason it was informational-first).
+- The fabrication DEFINITION must be precise and defensible (top-3 membership is the current product
+  definition per grounding.py — if the gate uses a different threshold, justify it).
+- TEST THE TEST for the hard gate (inject fabrication → fail → revert → pass).
+- Human-approve any baseline change + any prod deploy. Branch only (`feat/fabrication-gate`);
+  I merge. Zero-cost, local judge. Claude Max — never ANTHROPIC_API_KEY. Don't touch aetherart-497918.
 
 ## Success criteria
 
-- All 4 models audited: task, current metric, suitability verdict, corrected-metric performance,
-  triage verdict — in one comparable table.
-- Every model checked against the 4 known failure modes (proxy-vs-product, contamination, output-type
-  appropriateness, powered-per-repo).
-- Cross-model leverage ranking + recommended fix order.
-- reports/model_eval_audit.json + ADR-0028 documenting the audit + recommendations.
-- Escalated for the human to pick the fix sequence (Phases B+).
+- Fabrication rate measured per repo, by type — reported.
+- Gate policy decided (definition, block-vs-serve, hard-vs-flag) from the measured rate — escalated.
+- Hard gate wired; TEST THE TEST demonstrated (inject → fail → revert → pass).
+- Baseline re-established if needed (approved); ADR-0029 documents the elevation.
+- Staged on branch; prod-facing only if serve-time rejection is approved.
 
 ## Build order (CC autonomous)
 
-1. Component classifier: task, current metric (accuracy/ECE/component_match), suitability (is exact
-   accuracy right, or does hierarchical/top-k fit better? is the eval disjoint post-contamination-fix?),
-   corrected performance, verdict.
-2. Retriever: task, current metric (recall@k), suitability (PR→issue proxy already known — quantify
-   product-task performance honestly per repo), corrected performance, verdict.
-3. Resolution: task, current metric (MAE/coverage/bucket), suitability (is point-MAE right when
-   buckets are used? is bucket-accuracy-vs-naive the product metric?), corrected performance, verdict.
-4. Synthesis: task, current metric (judge dimensions), suitability (do the 6 dimensions measure what
-   synthesis is for? is the judge a suitable evaluator?), corrected performance, verdict.
-5. Cross-model synthesis: leverage ranking, recommended fix order.
-6. ESCALATE the audit. ADR-0028.
+1. Measure the fabrication rate per repo, by type. ESCALATE it + the gate-policy proposal.
+2. On approval: wire the hard gate per the decided policy (CI-gate ± serve-time).
+3. TEST THE TEST. Baseline re-establish if needed (escalate).
+4. ADR-0029. Stage on branch.
 ```
 

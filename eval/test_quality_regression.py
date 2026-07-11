@@ -5,6 +5,11 @@ from __future__ import annotations
 Requires reports/eval_baseline.json to exist (written by run_eval.py --update-baseline).
 All LLM calls are served from the cassette — no live API calls in CI.
 
+The fabrication hard gate lives in eval/test_fabrication_gate.py, not here (ADR-0029):
+it's a deterministic, judge-free check (no LLM calls at all) promoted to its own
+always-blocking CI job, separate from this file's judge-mean regression check, which
+stays a soft, continue-on-error regression detector (unchanged by ADR-0029).
+
 Run with:
     pytest eval/test_quality_regression.py -v
 """
@@ -107,36 +112,6 @@ def test_vscode_quality_regression(current_scores: dict, baseline: dict) -> None
 def test_k8s_quality_regression(current_scores: dict, baseline: dict) -> None:
     """kubernetes/kubernetes mean score must not drop below baseline."""
     _check_repo_quality("kubernetes/kubernetes", current_scores, baseline)
-
-
-def _check_no_fabrication(repo: str, current_scores: dict) -> None:
-    """Assert zero fabricated claims for `repo` (ADR-0028 Phase B3).
-
-    A fabricated component/similar-issue claim is qualitatively worse than a soft
-    quality miss and the mean-band gate above cannot detect it at all (the judge never
-    sees classifier_top3/retrieved_numbers). INFORMATIONAL ONLY (GG decision,
-    2026-07-11): this file's CI job is continue-on-error:true, so this assertion is
-    visible without blocking merges -- there's a known pre-existing case (vscode
-    #311836) this would currently fail on, and the intent is to observe the real-world
-    rate before promoting to a hard, blocking gate.
-    """
-    rate = current_scores["per_repo"][repo]["fabrication_rate"]
-    n = current_scores["per_repo"][repo]["n"]
-    assert rate == 0.0, (
-        f"Fabrication detected for {repo}: fabrication_rate={rate:.4f} (n={n}). "
-        "A fabricated component/similar-issue claim is a hard-fail correctness issue, "
-        "not a soft quality miss -- see plan.grounding_status for the offending plan(s)."
-    )
-
-
-def test_vscode_no_fabrication(current_scores: dict) -> None:
-    """microsoft/vscode must have zero grounding-verified fabricated claims."""
-    _check_no_fabrication("microsoft/vscode", current_scores)
-
-
-def test_k8s_no_fabrication(current_scores: dict) -> None:
-    """kubernetes/kubernetes must have zero grounding-verified fabricated claims."""
-    _check_no_fabrication("kubernetes/kubernetes", current_scores)
 
 
 def test_cassette_hash_matches_baseline(baseline: dict) -> None:

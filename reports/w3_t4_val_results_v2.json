@@ -1,0 +1,22 @@
+{
+  "val_r5_by_variant": {
+    "combined": 0.7028301886792453,
+    "k8s": 0.6768060836501901,
+    "vsc": 0.7670807453416149
+  },
+  "winner": "vsc",
+  "winner_model_dirs": {
+    "k8s": "data/models/bge_finetuned_k8s_v2",
+    "vsc": "data/models/bge_finetuned_vsc_v2"
+  },
+  "hyperparams": {
+    "base_model": "BAAI/bge-base-en-v1.5",
+    "lr": 2e-05,
+    "batch_size": 16,
+    "epochs": 5,
+    "warmup_ratio": 0.1,
+    "temperature": 0.05,
+    "max_len": 128,
+    "seed": 42
+  }
+}

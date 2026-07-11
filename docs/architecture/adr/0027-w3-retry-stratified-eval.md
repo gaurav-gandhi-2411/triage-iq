@@ -1,6 +1,6 @@
 # ADR-0027 — W3 Retry on the Grown Corpus: Stratified Eval Design + Product-Task Disclosure
 
-**Status:** Accepted (design pre-registered 2026-07-12, committed BEFORE training ran; results pending)
+**Status:** Accepted (design pre-registered 2026-07-12, committed BEFORE training ran; results recorded below — ship decision pending, GG's call)
 **Date:** 2026-07-12
 **Decider:** Gaurav Gandhi (design approved explicitly; execution by CC)
 
@@ -96,6 +96,34 @@ the same chronological component walk on cumulative **GATE-stratum** pairs per r
 strata ride along with their components. No model had been trained and no result existed
 when this changed. Resulting test strata: k8s gate 441 / product 57; vscode gate 308 /
 product 281. Issue-level leakage check passes unchanged.
+
+## Results (2026-07-12, `reports/w3_t5_eval_results_v2.json` — evaluated exactly as pre-registered)
+
+| Repo | Stratum | n | Base R@5 | FT R@5 | Δ | Paired CI95 | Legacy unpaired CI95 | Verdict |
+|---|---|---|---|---|---|---|---|---|
+| k8s | gate (PR→issue) | 441 | 0.2925 | 0.4354 | **+14.29pp** | [+10.66, +18.37] | [+8.16, +20.63] | **PASS** |
+| k8s | product (issue→issue) | 57 | 0.2281 | 0.2632 | +3.51pp | [−3.51, +10.53] | [−12.28, +19.30] | DIRECTIONAL_POSITIVE |
+| vscode | gate (dup) | 308 | 0.5682 | 0.6136 | **+4.55pp** | [+0.97, +8.12] | [−2.92, +12.34] | **PASS** |
+| vscode | product (issue→issue) | 281 | 0.2491 | 0.2811 | +3.20pp | [−0.36, +6.76] | [−3.91, +10.32] | DIRECTIONAL_POSITIVE |
+
+**Headline (per the locked rule): reference/dup retrieval improved on both repos;
+PRODUCT-TASK retrieval is directionally positive on both (+3.5pp / +3.2pp) but unproven at
+current data.** This is the pre-registered acceptable outcome, reported as such.
+
+Notes recorded with the results:
+- **The vscode gate PASS is method-dependent**: under the legacy (unpaired) bootstrap the CI
+  is [−2.92, +12.34] and the verdict would be NOT_DEMONSTRATED. The paired bootstrap was
+  pre-registered as primary before any result existed, but this sensitivity is disclosed,
+  not buried. k8s's gate PASS holds under both methods.
+- vscode product missed zero-exclusion by 0.36pp at n=281. At the observed effect and
+  variance, ~700 product test pairs (≈4,700 issue→issue pairs total) would give 80% power —
+  the pre-registered "product-task eval needs more issue→issue pairs" outcome, now with a
+  number attached.
+- v2 baselines are far below ADR-0016's (k8s gate 0.29 vs 0.53) — the grown index (30K/13.3K
+  vs 15K/7K records) makes retrieval harder; pre-registered as non-comparable.
+- T4 variant selection kept the inherited global-max rule: per-repo models won (vsc val
+  0.767 > combined 0.703 pooled). The pooled-val comparison is noisy across variants (known
+  ADR-0016 caveat); the test-split gates above are the meaningful measurements.
 
 ## Alternatives considered
 

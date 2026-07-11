@@ -1,0 +1,131 @@
+{
+  "winner": "vsc",
+  "design": "ADR-0027 pre-registered strata",
+  "repos": {
+    "kubernetes_kubernetes": {
+      "strata": {
+        "gate": {
+          "n_pairs": 441,
+          "baseline": {
+            "n_pairs": 441,
+            "recall_at_1": 0.18594104308390022,
+            "recall_at_5": 0.2925170068027211,
+            "recall_at_10": 0.35374149659863946,
+            "recall_at_20": 0.40589569160997735
+          },
+          "finetuned": {
+            "n_pairs": 441,
+            "recall_at_1": 0.2698412698412698,
+            "recall_at_5": 0.43537414965986393,
+            "recall_at_10": 0.5079365079365079,
+            "recall_at_20": 0.5804988662131519
+          },
+          "delta_r5": 0.14285714285714285,
+          "paired_ci95": [
+            0.10657596371882086,
+            0.1836734693877551
+          ],
+          "legacy_unpaired_ci95": [
+            0.08163265306122447,
+            0.20634920634920634
+          ],
+          "role": "CI-GATED",
+          "verdict": "PASS"
+        },
+        "product": {
+          "n_pairs": 57,
+          "baseline": {
+            "n_pairs": 57,
+            "recall_at_1": 0.08771929824561403,
+            "recall_at_5": 0.22807017543859648,
+            "recall_at_10": 0.2631578947368421,
+            "recall_at_20": 0.3157894736842105
+          },
+          "finetuned": {
+            "n_pairs": 57,
+            "recall_at_1": 0.10526315789473684,
+            "recall_at_5": 0.2631578947368421,
+            "recall_at_10": 0.3157894736842105,
+            "recall_at_20": 0.38596491228070173
+          },
+          "delta_r5": 0.03508771929824561,
+          "paired_ci95": [
+            -0.03508771929824561,
+            0.10526315789473684
+          ],
+          "legacy_unpaired_ci95": [
+            -0.12280701754385964,
+            0.19298245614035087
+          ],
+          "role": "DIRECTIONAL (never gated)",
+          "verdict": "DIRECTIONAL_POSITIVE"
+        }
+      }
+    },
+    "microsoft_vscode": {
+      "strata": {
+        "gate": {
+          "n_pairs": 308,
+          "baseline": {
+            "n_pairs": 308,
+            "recall_at_1": 0.3538961038961039,
+            "recall_at_5": 0.5681818181818182,
+            "recall_at_10": 0.6201298701298701,
+            "recall_at_20": 0.6623376623376623
+          },
+          "finetuned": {
+            "n_pairs": 308,
+            "recall_at_1": 0.39935064935064934,
+            "recall_at_5": 0.6136363636363636,
+            "recall_at_10": 0.6883116883116883,
+            "recall_at_20": 0.7824675324675324
+          },
+          "delta_r5": 0.045454545454545414,
+          "paired_ci95": [
+            0.00974025974025974,
+            0.08116883116883117
+          ],
+          "legacy_unpaired_ci95": [
+            -0.02922077922077926,
+            0.12337662337662336
+          ],
+          "role": "CI-GATED",
+          "verdict": "PASS"
+        },
+        "product": {
+          "n_pairs": 281,
+          "baseline": {
+            "n_pairs": 281,
+            "recall_at_1": 0.08185053380782918,
+            "recall_at_5": 0.2491103202846975,
+            "recall_at_10": 0.4483985765124555,
+            "recall_at_20": 0.701067615658363
+          },
+          "finetuned": {
+            "n_pairs": 281,
+            "recall_at_1": 0.08896797153024912,
+            "recall_at_5": 0.28113879003558717,
+            "recall_at_10": 0.4875444839857651,
+            "recall_at_20": 0.7402135231316725
+          },
+          "delta_r5": 0.03202846975088966,
+          "paired_ci95": [
+            -0.0035587188612099642,
+            0.06761565836298933
+          ],
+          "legacy_unpaired_ci95": [
+            -0.03914590747330962,
+            0.10320284697508897
+          ],
+          "role": "DIRECTIONAL (never gated)",
+          "verdict": "DIRECTIONAL_POSITIVE"
+        }
+      }
+    }
+  },
+  "gate_verdicts": {
+    "kubernetes_kubernetes": "PASS",
+    "microsoft_vscode": "PASS"
+  },
+  "headline_rule": "Headline = product-task directional deltas on BOTH repos alongside gated proxy CIs. 'Proxy improved, product-task unproven' is the honest framing if product strata do not clear; never report as 'retrieval improved +X pp'."
+}

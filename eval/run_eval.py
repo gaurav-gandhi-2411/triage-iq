@@ -136,6 +136,12 @@ def compute_scores(
 
     dim_keys = list(DIMENSION_MAX.keys())
     repo_scores: dict[str, list[dict]] = {repo: [] for repo in REPO_MAP}
+    # ADR-0028 Phase B3: the judge never sees classifier_top3 / retrieved_numbers, so it
+    # cannot detect fabrication in principle (a known hallucination scored ABOVE its
+    # repo's mean). plan.grounding_status is already computed deterministically inside
+    # triage_with_metadata -- reading it off here adds zero LLM calls. floor_fail_rate
+    # similarly reuses dimension scores the judge already produced.
+    repo_grounded: dict[str, list[bool]] = {repo: [] for repo in REPO_MAP}
 
     for issue in issues:
         repo = issue["repo"]
@@ -153,6 +159,7 @@ def compute_scores(
         })
 
         plan, _meta = assistant.triage_with_metadata(row)
+        repo_grounded[repo].append(plan.grounding_status.all_grounded)
 
         # ADR-0019: the cassette was re-recorded from scratch against current TriagePlan
         # (grounding + grounding_status included) — no exclusion needed for those anymore.
@@ -206,10 +213,21 @@ def compute_scores(
         for key in dim_keys:
             dim_means[key] = float(np.mean([getattr(s, key) for s in judge_scores]))
 
+        # Floor-fail: judge's own worst-band semantics (component_match==0 or
+        # similar_issues_relevance==0) -- a correctness-critical miss that a passable
+        # mean can hide (see docs/investigations/gold-set-leakage.md Sec 5, ADR-0028).
+        floor_fails = [
+            s.component_match == 0 or s.similar_issues_relevance == 0 for s in judge_scores
+        ]
+        n = len(totals)
+        fabrication_rate = float(np.mean([not g for g in repo_grounded[repo]])) if n else 0.0
+
         per_repo[repo] = {
-            "n": len(totals),
+            "n": n,
             "mean": round(float(np.mean(totals)), 4),
             "dimensions": dim_means,
+            "floor_fail_rate": round(float(np.mean(floor_fails)), 4) if n else 0.0,
+            "fabrication_rate": round(fabrication_rate, 4),
         }
 
     overall: dict[str, Any] = {
@@ -300,6 +318,32 @@ def _write_baseline(scores: dict, path: Path = BASELINE_PATH) -> None:
             ),
             "derivation": "band = 2 x SEM = 2 x (measured_std / sqrt(n))",
         },
+        "synthesis_quality_floor": {
+            "note": (
+                "ADR-0028 Phase B3: the mean-band gate above is a REGRESSION detector, not a "
+                "quality floor -- it cannot catch fabrication (the judge never sees "
+                "classifier_top3/retrieved_numbers) and averages away a correctness-critical "
+                "floor-fail rate. per_repo[repo].fabrication_rate and .floor_fail_rate are "
+                "additive first-class metrics, computed with zero new LLM calls (reused from "
+                "plan.grounding_status and the judge dimension scores already produced)."
+            ),
+            "fabrication_rate": {
+                "definition": "fraction of plans where plan.grounding_status.all_grounded is False "
+                "(predicted_component not in classifier_top3, or any cited similar-issue number "
+                "not in the retrieved set for that request).",
+                "gate": "INFORMATIONAL ONLY (GG decision, 2026-07-11): eval/test_quality_regression.py "
+                "asserts fabrication_rate == 0 per repo, but that file's CI job is "
+                "continue-on-error:true -- visible, non-blocking, pending a real-world "
+                "observation window before promoting to a hard gate.",
+            },
+            "floor_fail_rate": {
+                "definition": "fraction of plans where component_match==0 OR "
+                "similar_issues_relevance==0 (the judge's own worst-band signal).",
+                "gate": "REPORT ONLY, no gate (GG decision, 2026-07-11): vscode's n=11 gives a "
+                "[21,72]% CI on this proportion -- too underpowered to gate reliably. Surfaced "
+                "here and in README for visibility instead.",
+            },
+        },
     }
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
@@ -326,6 +370,10 @@ def main() -> None:
         print(f"  {repo}: n={data['n']}, mean={data['mean']:.4f}/15")
         for dim, val in data["dimensions"].items():
             print(f"    {dim}: {val:.4f}")
+        print(
+            f"    floor_fail_rate: {data['floor_fail_rate']:.4f}   "
+            f"fabrication_rate: {data['fabrication_rate']:.4f}"
+        )
     print()
     print(f"  overall: n={scores['overall']['n']}, mean={scores['overall']['mean']:.4f}/15")
 

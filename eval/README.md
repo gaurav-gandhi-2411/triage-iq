@@ -4,7 +4,7 @@
 
 | File | Purpose |
 |------|---------|
-| `eval_set.jsonl` | 60-issue frozen eval set (30 vscode + 30 k8s), stratified by resolution bucket |
+| `eval_set.jsonl` | 64-issue frozen eval set (11 vscode + 53 k8s), stratified by resolution bucket |
 | `cassette.py` | JSON-backed cassette player for offline LLM replay in CI |
 | `cassettes/eval_cassette.json` | Recorded LLM interactions (synthesis + judge) for replay |
 | `test_invariants.py` | 5 deterministic structural invariants (no LLM) — runs in CI |

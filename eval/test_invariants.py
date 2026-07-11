@@ -49,12 +49,19 @@ _COVERAGE_TOL = 0.05
 # from the contaminated gold set. Both are gone from the clean n=65 set or no longer
 # ungrounded under the new local-judge recording — re-derived against the actual committed
 # cassette below, not carried forward.
+#
+# Re-derived 2026-07-11 (ADR-0028 Phase B1): k8s #14398 quarantined from eval_set.jsonl
+# (a near-duplicate leak, cosine 0.907 vs classifier_train #14399 — unrelated to
+# grounding), changing the file's hash and k8s's n from 54 to 53. #14398 itself was
+# grounded, so this is purely a denominator/hash change — the same two known-bad cases
+# (#13057 k8s, #311836 vscode) persist unchanged; re-confirmed directly via
+# measure_grounding.compute_grounding_reports() against the current committed cassette.
 _GROUNDING_BASELINE = {
-    "eval_set_hash": "e37a69ea0cf1d26749d7f714d4f161ec6fd5f37d25a22156277551e00fd30138",
+    "eval_set_hash": "86c1df0a066c9dce5ece19ff9da4b3298563b8a59c2d6f8d807e4658e43260a4",
     "per_repo": {
         "kubernetes/kubernetes": {
             "ungrounded_count": 1,
-            "n": 54,
+            "n": 53,
             "known_ungrounded_cases": {
                 13057: {
                     "axis": "component",

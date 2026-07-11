@@ -1,6 +1,6 @@
 {
   "schema_version": "v2",
-  "eval_set_hash": "e37a69ea0cf1d26749d7f714d4f161ec6fd5f37d25a22156277551e00fd30138",
+  "eval_set_hash": "86c1df0a066c9dce5ece19ff9da4b3298563b8a59c2d6f8d807e4658e43260a4",
   "cassette_hash": "f86e93f5590fbd6a036698a88f5bfa8c3eebdad6efe831ff7d235043f149fdf6",
   "judge": {
     "model": "qwen3:8b",
@@ -21,21 +21,21 @@
       }
     },
     "kubernetes/kubernetes": {
-      "n": 54,
-      "mean": 10.5185,
+      "n": 53,
+      "mean": 10.5094,
       "dimensions": {
-        "component_match": 1.4259259259259258,
-        "similar_issues_relevance": 2.611111111111111,
-        "resolution_estimate_reasonableness": 1.2962962962962963,
-        "priority_alignment": 0.4444444444444444,
-        "next_steps_actionability": 2.537037037037037,
-        "overall_quality": 2.2037037037037037
+        "component_match": 1.4150943396226414,
+        "similar_issues_relevance": 2.6037735849056602,
+        "resolution_estimate_reasonableness": 1.3018867924528301,
+        "priority_alignment": 0.4339622641509434,
+        "next_steps_actionability": 2.547169811320755,
+        "overall_quality": 2.207547169811321
       }
     }
   },
   "overall": {
-    "n": 65,
-    "mean": 10.1538
+    "n": 64,
+    "mean": 10.1406
   },
   "threshold": {
     "method": "One-directional per-repo mean regression check: fires only if new_mean < baseline_mean - band. Improvements above the band never trip it.",

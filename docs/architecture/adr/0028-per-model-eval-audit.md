@@ -103,6 +103,31 @@ data collection:
   including for the two models (resolution, and the classifier's underlying model quality) that
   turned out to be substantively fine once measured correctly.
 
+## Decision record (2026-07-11, GG) — Phase B1-B4 executed, Phase C banked
+
+B1 (`fix/b1-contamination-leaks`, PR #29), B2 (`fix/b2-honest-reporting`, PR #30), B3
+(`fix/b3-synthesis-quality-metrics`, PR #31), and B4 (this ADR's own resolution hygiene items)
+have been executed, in that order, per this ADR's recommended fix order. Details in each PR and
+in `docs/investigations/gold-set-leakage.md` Sec 5 (B1) / `reports/eval_baseline.json`'s
+`synthesis_quality_floor` (B3).
+
+**Phase C (retriever, k8s half) is explicitly BANKED, not actioned:** k8s's live retriever
+product-task performance is unmeasurable without new held-out product-task (issue→issue) gold —
+the same related-pair-mining gap that held the Phase 2 W3-retry fine-tune (ADR-0027). This is a
+data-collection **decision**, not a task with a fix order: there is nothing to execute against
+zero data. Revisit alongside the Phase 2 fine-tune data question (ADR-0027's "concrete unblock" —
+~700 more product-task pairs, needing related-pair mining at scale beyond the dup-comment
+channel) rather than as a standalone eval-audit follow-up.
+
+**Tracked for later, not acted on now:** B3's `fabrication_rate` is informational-only by
+deliberate GG decision (2026-07-11) — the right conservative start. This ADR's own core finding
+is that fabrication is the failure mode that most misleads a human triage engineer, and it
+currently scores *above* the mean (vscode #311836). The eventual direction is promoting
+`fabrication_rate` from informational to a hard, blocking gate once real-world rate has been
+observed for a while — the same path the grounding check itself took (informational in ADR-0015,
+still informational here, promotion criteria not yet defined). Not a decision to make yet;
+revisit once there's an observation window.
+
 ## Alternatives considered
 
 | Alternative | Reason rejected |

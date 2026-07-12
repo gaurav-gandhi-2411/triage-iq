@@ -76,3 +76,26 @@ jobs:
           name: coverage-report
           path: .coverage
           if-no-files-found: warn
+
+  pip-audit:
+    name: Dependency vulnerability audit (informational)
+    runs-on: ubuntu-latest
+    # NON-BLOCKING: informational only — not a required status check. Only `test`
+    # is required for merge. Findings here are a signal for future triage, not a gate.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements-dev.txt
+
+      - name: pip-audit (installed environment)
+        run: pip-audit

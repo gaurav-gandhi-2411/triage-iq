@@ -1,0 +1,84 @@
+{
+  "generated_by": "manual review (CC) of reports/phaseC_channel_mining.json and reports/phaseC_live_probe.json samples, per spec.md's 'sample-and-measure, don't assume' rule",
+  "method": "Each candidate pair judged by reading query/target titles (and body/comment excerpt where available) against GitHub directly for target titles not already in the sample. Judged genuine-relatedness (would a triager reviewing the query issue actually want to see the target issue as related). 'strict' counts only clear matches; 'lenient' additionally counts thematically-adjacent/borderline matches.",
+  "channels": {
+    "A_extended_body_patterns": {
+      "kubernetes_kubernetes": {
+        "n_sampled": 9,
+        "n_total_candidates": 9,
+        "strict_related": 7,
+        "borderline": 2,
+        "clear_unrelated": 1,
+        "precision_strict": 0.78,
+        "precision_lenient": 0.89,
+        "note": "Same candidate class as the already-mined 'k8s_extended_mine' gold channel (779 pairs) -- precision is genuinely high, but the corpus is mined out at this pattern set: only 9 new candidates remain (6 in live index), confirming phase2a's 'mined out' finding still holds post-Phase-2b."
+      },
+      "microsoft_vscode": {
+        "n_sampled": 30,
+        "n_total_candidates": 405,
+        "strict_related": 9,
+        "borderline": 4,
+        "clear_unrelated": 17,
+        "precision_strict": 0.30,
+        "precision_lenient": 0.43,
+        "note": "Materially lower precision than k8s's sample or than vscode's existing narrower-pattern channels (vscode_body_refs, dup_scrape). The broader EXTENDED_PATTERNS regex ('refs #N', 'similar to #N', raw issue URLs) picks up administrative/incidental references (shared milestone, sarcastic 'similar to', unrelated co-mention) at meaningfully higher noise than the duplicate/see-also/closes patterns already in production. NOT recommended for unreviewed bulk mining; would need a review pass (as phase2a itself flagged: 'review-grade')."
+      }
+    },
+    "B_comments_related": {
+      "microsoft_vscode": {
+        "n_sampled": 25,
+        "n_total_candidates": 94,
+        "n_in_live_index": 67,
+        "strict_related": 19,
+        "dup_contaminated": 6,
+        "precision_strict_excl_dup": 0.76,
+        "precision_incl_dup_as_wrong_stratum": 0.635,
+        "note": "Highest-precision channel found. Comment text with explicit 'related to/see also #N' phrasing is an intentional, human-written relatedness signal, not an incidental mention -- close to unambiguous in nearly every sampled case. Correction: ~20% of raw regex hits are actually '/duplicate see #N' triage-bot comments, which are DUPLICATE-stratum, not general-related -- these must be excluded (or reclassified) before merging into a product-task gold pool, not counted as this channel's yield. Net usable yield ~75 pairs (94 x 0.8), all locally available NOW with zero new scraping (vscode's dup-scrape and early-issue batches already fetched comments_data for 10,284/13,313 corpus issues)."
+      },
+      "kubernetes_kubernetes": {
+        "note": "Not locally mineable -- k8s has 0% comments_data coverage in the local corpus (see reports/phaseC_channel_mining.json). Live probe (25 issues, reports/phaseC_live_probe.json) found related-comment hits on 2/25 sampled issues (8%). See reports/phaseC_comment_scrape_estimate.json for the repo-wide extrapolation once comment-count coverage is measured.",
+        "feasibility": "requires new scraping investment (comments were never fetched for any k8s issue); the probe suggests real but modest yield, not proven at scale without the scrape."
+      }
+    },
+    "C_native_linked_issues": {
+      "kubernetes_kubernetes": {"n_sampled": 25, "issues_with_connected_event": 0, "rate": 0.0},
+      "microsoft_vscode": {"n_sampled": 25, "issues_with_connected_event": 0, "rate": 0.0},
+      "verdict": "DEAD CHANNEL. 0/25 for both repos. Consistent with ADR-0026's addendum finding that GitHub's structured timeline link events (there: marked_as_duplicate) are largely unused by these projects' triage workflows -- the manual 'link issue' UI feature is evidently not used by either community at meaningful volume. NOT viable as a mining channel; no further investment recommended."
+    },
+    "D_timeline_cross_referenced": {
+      "kubernetes_kubernetes": {
+        "n_sampled": 25,
+        "issues_with_issue_sourced_cross_ref": 11,
+        "rate_issue_sourced": 0.44,
+        "sample_pairs_judged": 15,
+        "strict_related": 7,
+        "borderline": 4,
+        "clear_unrelated": 4,
+        "precision_strict_excl_hub": 0.47,
+        "precision_lenient_excl_hub": 0.73,
+        "hub_artifact": "36 of 51 raw pairs in the probe sample (71%) target issue #1 ('Unit test coverage in Kubelet is lousy'), a generic long-lived meta-tracking issue that accumulates incidental cross-references from completely unrelated work touching kubelet tests. Including the hub, naive precision collapses to ~14% (7/51). This is exactly the 'incidental mention, not a real relationship' failure mode the spec warned about -- the channel is NOT usable without a hub-exclusion filter (e.g. cap fan-out per target, exclude very-low-numbered issues, or exclude targets referenced by >N% of a sample).",
+        "note": "GitHub REST timeline API 'cross-referenced' event fires on ANY mention of the issue number anywhere (PR or issue), so query/target here means 'source issue mentioned target issue', not 'source issue is about the same topic as target'. Even after excluding the #1 hub, precision is moderate (47-73%), not high-confidence -- worth a filtered pilot, not a straight bulk mine."
+      },
+      "microsoft_vscode": {
+        "n_sampled": 25,
+        "issues_with_issue_sourced_cross_ref": 12,
+        "rate_issue_sourced": 0.48,
+        "hub_artifacts": "issue #1 ('Open Source VS Code') is the same generic-meta-issue noise magnet as k8s's #1 (dominates the raw sample). BUT #98479 ('Allow to modify hardcoded quick open keybinding shortcuts') is a GENUINE hub: 14 sources almost entirely about the same specific feature gap (Shift+Tab / Quick Open keybinding conflicts) -- a legitimate cluster of related-but-not-identical feature requests, i.e. real positive signal, not noise.",
+        "note": "Hub issues are BIMODAL, not uniformly bad: generic/meta issues (repo's #1) are pure noise; narrow long-standing feature-request issues (#98479) are a genuine related-issue cluster. A usable filter needs to distinguish these -- e.g. exclude the lowest-numbered handful of issues per repo (near-certain meta/root issues) rather than capping fan-out uniformly, since capping fan-out would also suppress #98479's legitimate cluster."
+      }
+    },
+    "E_label_cluster_weak_related": {
+      "kubernetes_kubernetes": {
+        "n_sampled": 30,
+        "n_total_candidates": 11793,
+        "strict_related": 1,
+        "borderline": 8,
+        "clear_unrelated": 21,
+        "precision_strict": 0.03,
+        "precision_lenient": 0.30,
+        "note": "Confirms the spec's expectation exactly: shared fine-grained component label + 14-day temporal proximity is a WEAK signal. The overwhelming majority of sampled pairs (e.g. two different 'kubelet'-component bugs filed a day apart) share nothing beyond the broad topic area -- not a real triager-relevant relationship. High raw yield (11,793 k8s / 8,409 vscode) is noise volume, not usable gold; NOT recommended as a standalone channel at this precision. Would need combination with a text-similarity secondary filter (e.g. AND title_sim >= 0.3) to be usable, which was not evaluated here (out of scope: would require re-running as a new, reviewed channel, not assumed)."
+      }
+    }
+  },
+  "cross_channel_conclusion": "Only ONE new channel clears a precision bar usable without heavy additional filtering: B (comments 'related to/see also'), and it is immediately available for vscode (no scraping) but requires a new scrape investment for k8s (feasible per the probe, not proven at scale). Channel A (extended body patterns) is mined-out for k8s and low-precision for vscode. Channels C and E are not viable as designed. Channel D (cross-referenced) has real signal but needs a hub-exclusion filter before it's minable at acceptable precision -- a scoped follow-on, not ready to bulk-mine today."
+}

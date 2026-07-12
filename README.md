@@ -47,6 +47,7 @@ POST /triage {repo, title, body}
 │ System 2: Similar Issue Retriever      │  ~27ms p50
 │ BGE-base-en-v1.5 + FAISS cosine       │
 │ vscode R@5 22.4% (product-task, live) │
+│ k8s R@5 23.5% (product-task, live)    │
 └──────────────────┬────────────────────┘
                    │ top-5 similar issues + similarity scores
                    ▼
@@ -84,7 +85,8 @@ suggested_next_steps, triage_summary
 | Component classifier | vscode | Inference latency p50 | 4.9ms |
 | Similar issue retriever | vscode | **Recall@5 (product-task, live index — see note)** | **22.4%** [17.7, 28.0] |
 | Similar issue retriever | vscode | Recall@10 / @20 (product-task) | 43.7% / 71.3% |
-| Similar issue retriever | kubernetes | Recall@5 (product-task, live index) | **unmeasurable** — 0 test pairs land in the deployed corpus; needs new gold (see note) |
+| Similar issue retriever | kubernetes | **Recall@5 (product-task, live index — see note)** | **23.5%** [18.4, 28.5] |
+| Similar issue retriever | kubernetes | Recall@10 / @20 (product-task) | 30.3% / 36.5% |
 | Similar issue retriever | vscode | Index size (BGE) | 24.3 MB |
 | Resolution predictor | kubernetes | Point estimate: MAE vs naive (served) | 104.05d vs 106.29d naive (+2.1%) |
 | Resolution predictor | kubernetes | Bucket classifier: accuracy vs naive (served) | 33.24% vs 29.97% naive (+3.27pp [+1.80, +4.74]) |
@@ -103,6 +105,19 @@ suggested_next_steps, triage_summary
 
 95% Wilson CIs shown in brackets where computed on a held-out test split.
 
+> **Headline finding (2026-07-12): product-task retrieval is the weakest model in this
+> pipeline.** The first honest, apples-to-apples measurement of Recall@5 on the actual
+> product task ("given a new issue, find related issues"), against the actually-deployed
+> live index, on both repos: **k8s 23.5% [18.4, 28.5]** (n=277), **vscode 22.4% [17.7,
+> 28.0]** (n=254) — statistically indistinguishable. The retriever finds the
+> genuinely-related issue in the top-5 roughly a quarter of the time, on both repos — the
+> lowest absolute score of any model in this system's per-model audit (classifier top-3
+> 82.5%/90.4%, resolution's real k8s bucket gains, synthesis's floor-fail rates). It was
+> invisible until now because neither repo had ever been measured this way: k8s was
+> measured on a PR→issue proxy, vscode on a proxy-inflated duplicate-comment number (both
+> corrected below). Full reasoning:
+> [`docs/architecture/adr/0030-phaseC-product-task-feasibility.md`](docs/architecture/adr/0030-phaseC-product-task-feasibility.md).
+>
 > **Classifier metric correction (2026-07-11).** The product never surfaces a single
 > label — `triage.py` builds `classifier_top3` and `grounding.py::verify_plan_grounding`
 > defines a correct prediction as top-3 membership, not top-1 equality. Reporting only
@@ -119,16 +134,34 @@ suggested_next_steps, triage_summary
 > issue→issue pairs — the rest are PR→issue or duplicate-comment pairs, an easier proxy
 > task the product doesn't perform. The honest product-task-only number, measured
 > against the actually-deployed live index, is 22.4% [17.7, 28.0] — a ~12–14pp
-> inflation, CIs do not overlap. kubernetes has no retriever row above because its
-> live-index product-task recall is currently unmeasurable: of the stratified product-task
-> test pairs, zero land in the deployed corpus (all come from a later scrape range not
-> yet indexed in production) — this is a data gap, not a model failure, and needs new
-> gold to close (tracked, not silently omitted). A W3 fine-tune was evaluated against
-> both a proxy gate task and the product task (`docs/architecture/adr/0027-w3-retry-stratified-eval.md`):
-> proxy-task gains were real and significant (k8s +14.3pp, vscode +4.6pp), but
-> product-task gains were directionally positive and underpowered on both repos (k8s
-> +3.5pp, vscode +3.2pp, both CIs cross zero) — held, not shipped, pending ~700 more
-> product-task pairs for 80% power.
+> inflation, CIs do not overlap.
+>
+> **k8s retriever re-eval (2026-07-12, ADR-0030).** kubernetes was first reported as
+> "unmeasurable" (zero product-task pairs land in the *test-split* of the live corpus).
+> That framing was wrong: the live-serving retriever is an off-the-shelf pretrained
+> `BAAI/bge-base-en-v1.5` checkpoint, never trained on any gold pair — only a separate,
+> unshipped fine-tuned artifact is — so the train/val/test split (built to prevent
+> leakage for *that* fine-tune) carries zero leakage risk for the live model. Every
+> product-task pair whose query and target both fall in the live index's number range
+> is usable for measurement regardless of split label: 277 of 776 pairs, evaluated with
+> the same method and bootstrap CI as vscode's number above
+> (`scripts/phaseC_k8s_live_product_eval.py`) — see the headline finding above for the
+> result. A W3 fine-tune was evaluated against both a proxy gate task and the product task
+> (`docs/architecture/adr/0027-w3-retry-stratified-eval.md`): proxy-task gains were real
+> and significant (k8s +14.3pp, vscode +4.6pp), but product-task gains were directionally
+> positive and underpowered on both repos (k8s +3.5pp, vscode +3.2pp, both CIs cross
+> zero) — **held, and stays held on both repos, per
+> `docs/architecture/adr/0030-phaseC-product-task-feasibility.md`: NO-GO on mining more
+> product-task pairs to gate either fine-tune, decided on value, not feasibility.** k8s's
+> data ask was disproportionate anyway (~6,075 pairs, ~8x the current stratum), but
+> that's not the operative reason — proving a ~3.5pp lift on top of a 23.5% base rate
+> would still ship a retriever that misses the related issue 3 times out of 4. vscode's
+> data gap is smaller and closeable (~664 more pairs), but closing it would only prove a
+> +3.2pp lift against a 22.4% base rate — the same weak-baseline problem, just with an
+> easier data path. Neither fine-tune is a near-miss awaiting data; both are marginal
+> against a weak baseline. Whether retrieval quality itself needs work (hybrid
+> BM25+dense, reranking, a stronger base embedder) is a real, separate decision —
+> deliberately not started here.
 >
 > **Synthesis quality metric redesign (2026-07-11).** The mean-band score is a
 > *regression detector* (fails only if it drops below its own prior baseline by more

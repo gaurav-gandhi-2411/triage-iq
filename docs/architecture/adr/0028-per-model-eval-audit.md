@@ -33,7 +33,7 @@ cassettes/checkpoint files only). Full detail: `reports/model_eval_audit.json`.
 | Model | Current headline metric | Suitability finding | Corrected metric (honest, per repo) | Triage verdict |
 |---|---|---|---|---|
 | **Component classifier** | top-1 exact-match accuracy (k8s 51.4%, vscode 69.0%) | Product already treats top-3 containment as correct (`grounding.py::verify_plan_grounding`); classifier's own eval reports only top-1. ~30%/8% of test-set ground truth is a collapsed multi-label artifact. | top-3 accuracy: **k8s 82.5% CI[77.7,86.5]**, **vscode 90.4% CI[85.3,93.8]** — CIs don't overlap top-1 | **METRIC-WRONG** |
-| **Similar-issue retriever** | MRR + R@5/R@10 on `gold_related.parquet` v1 (vscode only; k8s absent from README) | Advertised vscode R@5=36.7% is proxy-contaminated (v1 gold is 74% product-task for vscode, 7.6% for k8s); the already-diagnosed-internally correction (ADR-0027) never reached README. | Live-index, product-task-only R@5: **vscode 22.4% CI[17.7,28.0]** (advertised CI doesn't overlap — ~14pp inflation); **k8s UNMEASURABLE** (0 test pairs against the live corpus) | **METRIC-WRONG** (vscode fixable now; k8s blocked on new data) |
+| **Similar-issue retriever** | MRR + R@5/R@10 on `gold_related.parquet` v1 (vscode only; k8s absent from README) | Advertised vscode R@5=36.7% is proxy-contaminated (v1 gold is 74% product-task for vscode, 7.6% for k8s); the already-diagnosed-internally correction (ADR-0027) never reached README. | Live-index, product-task-only R@5: **vscode 22.4% CI[17.7,28.0]** (n=254; advertised CI doesn't overlap — ~14pp inflation); **k8s 23.5% CI[18.4,28.5]** (n=277; corrected 2026-07-12, see below — originally called UNMEASURABLE, that framing was wrong) | **METRIC-WRONG** (both repos fixed now, no new data needed) |
 | **Resolution estimator** | point MAE + bucket accuracy vs naive + CQR coverage | k8s: metric and model both fine. vscode: model correctly self-protects (naive fallback, `BUCKET_CLASSIFIER_TRUSTED=False`) but the *documentation* is stale/conflated, and the diagnostic script that justifies the vscode decision can no longer re-verify it (tautological self-reference bug introduced by its own fix). | k8s bucket **+3.27pp CI[1.80,4.74]**, MAE **+2.1%** — both real, both honestly reported. vscode raw bucket **−22.08pp CI[−25.81,−18.02]**, MAE **−70.5%** — correctly not served. | k8s: **GENUINELY-FINE**. vscode: **METRIC-RIGHT-AS-SERVED, docs METRIC-WRONG** |
 | **LLM synthesis** | 6-dimension local-judge mean, CI-regression gate (not an absolute bar) | Judge never sees provenance — structurally can't detect fabrication. A known hallucination case (vscode #311836) scores *above* its repo's mean. Floor-fail rate (worst-band on a correctness-critical dimension) is hidden by averaging. 2 new contamination leaks found (near-duplicate, CQR-calibration overlap) that ADR-0018 doesn't cover. | Floor-fail rate: **k8s 9.3% CI[4.0,19.9]**, **vscode 45.5% CI[21.3,72.0]** — nearly half of vscode's plans hit a correctness-critical worst-band behind a passable 55.8% mean | **METRIC-WRONG** |
 
@@ -51,11 +51,16 @@ data collection:
    tool, demonstrated concretely, not hypothetically. Fix is a metric/aggregation change (floor
    gate + weight grounding into pass/fail) plus a contamination purge — both over existing data,
    no retraining.
-2. **Similar-issue retriever** — second-highest. Live, user-facing (5 similar issues shown per
-   plan); the advertised number is inflated ~14pp on vscode, and k8s's real-world product-task
-   performance is completely unmeasured, a visibility gap on a core feature of one of the
-   product's two repos. vscode half fixable immediately (surface the number that already exists);
-   k8s half is blocked on new data.
+2. **Similar-issue retriever** — second-highest at the time this ranking was written. Live,
+   user-facing (5 similar issues shown per plan); the advertised number was inflated ~14pp on
+   vscode, and k8s's real-world product-task performance was completely unmeasured, a visibility
+   gap on a core feature of one of the product's two repos. Both halves have since been fixed
+   with no new data needed (2026-07-12 correction below): vscode's honest number was surfaced,
+   and k8s's turned out to be measurable now, not blocked. With both numbers in, this model's
+   *leverage ranking* (as scored here — reporting-fix cost) turns out to understate its actual
+   priority: the corrected numbers show it is the weakest-performing model in the pipeline in
+   absolute terms (~23% R@5, both repos) — a product-quality finding this ranking axis wasn't
+   designed to surface.
 3. **Component classifier** — metric-wrong but lower urgency: the product's actual behavior is
    unaffected today because the downstream grounding check already correctly uses top-3
    internally. Pure reporting correction, already computed.
@@ -118,6 +123,35 @@ data-collection **decision**, not a task with a fix order: there is nothing to e
 zero data. Revisit alongside the Phase 2 fine-tune data question (ADR-0027's "concrete unblock" —
 ~700 more product-task pairs, needing related-pair mining at scale beyond the dup-comment
 channel) rather than as a standalone eval-audit follow-up.
+
+**Correction (2026-07-12, ADR-0030) — the "unmeasurable" framing above was wrong, not the
+underlying gap.** ADR-0030's feasibility analysis found that the "zero product-task test pairs"
+claim conflated two different things: the w3-retry train/val/test split (which exists to prevent
+leakage for the *separate, unshipped* fine-tuned embedder) was being applied to gate what's
+measurable against the *live* index — but the live-serving retriever
+(`dup_index_kubernetes_kubernetes_bge`, off-the-shelf `BAAI/bge-base-en-v1.5`, never trained on
+any gold pair) carries zero leakage risk from that split. Every product-stratum pair whose query
+and target both fall in the live index's number range (#1–15,002) is usable for measurement
+regardless of its split label — 277 of 776, not the 0 the split-label framing implied. Re-run
+(`scripts/phaseC_k8s_live_product_eval.py`, same method and bootstrap as the vscode number
+above): **k8s live product-task R@5 = 23.5% CI[18.4,28.5]**, n=277 — statistically indistinguishable
+from vscode's 22.4% CI[17.7,28.0] (n=254; CIs almost entirely overlap). This is now a real,
+measured performance number, not a data gap: the live retriever finds the genuinely-related issue
+in the top-5 roughly a quarter of the time on **both** repos — **the single lowest absolute score
+of any model in this audit, and product-task retrieval is now confirmed the weakest model in this
+pipeline**, invisible until this correction because neither repo had ever been measured on the
+actual product task against the actual live index before. Read as a performance signal rather
+than a reporting gap: ADR-0030 settles the Phase 2 fine-tune (ADR-0027, product-task deltas
++3.5pp k8s / +3.2pp vscode, both CIs crossing zero) as **NO-GO on both repos, decided on value —
+not data-availability.** k8s's mining ask was disproportionate anyway, but that's not the
+operative reason; a successful gate on either repo would still ship a retriever missing the
+related issue roughly 3 times out of 4 — neither fine-tune is a near-miss awaiting data, both are
+marginal against a weak baseline. The open question is not "close the data gap" (there wasn't
+one, or wasn't one worth closing) but whether retrieval quality itself needs work (hybrid
+BM25+dense, reranking, a stronger base embedder) rather than a few points of fine-tune gain — not
+actioned this ADR or ADR-0030, deliberately flagged for a future, separate retrieval-quality
+phase. Full detail: `docs/architecture/adr/0030-phaseC-product-task-feasibility.md`,
+`reports/phaseC_k8s_live_product_eval.json`.
 
 **Tracked for later, not acted on now:** B3's `fabrication_rate` is informational-only by
 deliberate GG decision (2026-07-11) — the right conservative start. This ADR's own core finding

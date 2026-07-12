@@ -1,0 +1,776 @@
+{
+  "generated_by": "scripts/assemble_retrieval_quality_report.py",
+  "spec": "spec.md (Retrieval Quality Improvement)",
+  "adr": "docs/architecture/adr/0031-retrieval-quality-improvement.md",
+  "bar": "product-task Recall@5 per repo vs live v1 baseline, paired bootstrap CI (2000 resamples, seed=42). Ships only if CI excludes zero on k8s (n=277, primary gate); vscode (n~=290) also reported. Magnitude reported alongside significance -- a lift that clears CI but is ~3pp on a ~23-27% base is practically marginal, not automatically shipped.",
+  "0_baseline": {
+    "note": "k8s reproduces byte-identically against ADR-0030. vscode's previously-reported 22.4%/n=254 (ADR-0028) does not reproduce from committed code+data -- provenance unrecoverable (denominator 281 doesn't match the 505-row product stratum via any channel/confidence/dedup filter tried). Adopted n=292/26.71% as the working vscode baseline going forward: script-reproducible via scripts/phaseC_vscode_live_product_eval.py, same method as k8s.",
+    "k8s": {
+      "n": 277,
+      "recall_at_5": 0.23465703971119134,
+      "ci95": [
+        0.1841,
+        0.2852
+      ]
+    },
+    "vscode": {
+      "n": 292,
+      "recall_at_5": 0.2671232876712329,
+      "ci95": [
+        0.2158,
+        0.3185
+      ],
+      "superseded_number_adr0028": {
+        "n": 254,
+        "denominator": 281,
+        "recall_at_5": 0.2244,
+        "ci95": [
+          0.1774,
+          0.2796
+        ]
+      }
+    }
+  },
+  "1_lever1_hybrid_bm25_rrf": {
+    "results": [
+      {
+        "repo": "kubernetes_kubernetes",
+        "n_pairs": 277,
+        "dense_only": {
+          "recall_at_1": 0.10469314079422383,
+          "recall_at_5": 0.23465703971119134,
+          "recall_at_10": 0.30324909747292417,
+          "recall_at_20": 0.36462093862815886
+        },
+        "hybrid_rrf": {
+          "recall_at_1": 0.10469314079422383,
+          "recall_at_5": 0.24187725631768953,
+          "recall_at_10": 0.30324909747292417,
+          "recall_at_20": 0.36101083032490977
+        },
+        "hybrid_weighted": {
+          "recall_at_1": 0.10830324909747292,
+          "recall_at_5": 0.26714801444043323,
+          "recall_at_10": 0.3212996389891697,
+          "recall_at_20": 0.3862815884476534
+        },
+        "rrf_vs_dense_r5_delta_pp": 0.72,
+        "rrf_vs_dense_r5_ci95_pp": [
+          -2.89,
+          4.69
+        ],
+        "rrf_ships": false,
+        "weighted_vs_dense_r5_delta_pp": 3.25,
+        "weighted_vs_dense_r5_ci95_pp": [
+          0.35,
+          6.5
+        ],
+        "weighted_ships": true,
+        "bootstrap": {
+          "n_resamples": 2000,
+          "seed": 42,
+          "method": "paired percentile"
+        },
+        "rrf_k": 60,
+        "candidate_pool": 100,
+        "tuning_provenance": "RRF k=60 is the untuned standard default. No held-out tuning slice was carved out of the product-task pairs -- doing so would either shrink this repo's already-thin powered eval set or require tuning on the test pairs themselves (the leak spec.md explicitly rules out). Nothing was tuned on the test pairs.",
+        "latency_s": {
+          "dense_retrieve_mean": 0.0527603711183973,
+          "bm25_score_mean": 0.26689389169960875,
+          "fuse_mean": 0.0002646584808490229,
+          "bm25_index_build_total": 0.39160159998573363,
+          "added_per_query_mean": 0.26715855018045775
+        },
+        "diagnostic_bm25_recovers_dense_misses": {
+          "n_cases": 15,
+          "n_cases_pct_of_pairs": 5.42,
+          "examples": [
+            {
+              "query_number": 7648,
+              "target_number": 7647,
+              "query_title": "Put Root CA Cert for cluster into all(ish) pods",
+              "target_title": "Generate kubeconfig as well as tokens for service accounts",
+              "dense_rank_of_target": 7,
+              "bm25_rank_of_target": 1,
+              "shared_high_idf_terms": [
+                "tokencontroller",
+                "serviceaccount",
+                "accounts",
+                "kubeconfig",
+                "well"
+              ]
+            },
+            {
+              "query_number": 8957,
+              "target_number": 5799,
+              "query_title": "Help needed to update the examples in getting-started-guides/mesos.md",
+              "target_title": "\"Getting started\" guides should point to 'examples/' rather than have their own individual examples",
+              "dense_rank_of_target": 7,
+              "bm25_rank_of_target": 1,
+              "shared_high_idf_terms": [
+                "individual",
+                "own",
+                "guestbook",
+                "point",
+                "guides"
+              ]
+            },
+            {
+              "query_number": 4676,
+              "target_number": 1066,
+              "query_title": "TestPortForward is flaky",
+              "target_title": "kubelet TestReadFromFile is flaky",
+              "dense_rank_of_target": 13,
+              "bm25_rank_of_target": 3,
+              "shared_high_idf_terms": [
+                "flaky",
+                "block",
+                "code",
+                "is"
+              ]
+            },
+            {
+              "query_number": 12377,
+              "target_number": 1066,
+              "query_title": "TestReflector_resyncChan is flaky",
+              "target_title": "kubelet TestReadFromFile is flaky",
+              "dense_rank_of_target": 8,
+              "bm25_rank_of_target": 4,
+              "shared_high_idf_terms": [
+                "flaky",
+                "block",
+                "code",
+                "is"
+              ]
+            },
+            {
+              "query_number": 14059,
+              "target_number": 1066,
+              "query_title": "TestWatch is flaky",
+              "target_title": "kubelet TestReadFromFile is flaky",
+              "dense_rank_of_target": 8,
+              "bm25_rank_of_target": 4,
+              "shared_high_idf_terms": [
+                "flaky",
+                "block",
+                "code",
+                "is"
+              ]
+            },
+            {
+              "query_number": 14531,
+              "target_number": 1066,
+              "query_title": "runSchedulerNoPhantomPodsTest is flaky",
+              "target_title": "kubelet TestReadFromFile is flaky",
+              "dense_rank_of_target": 12,
+              "bm25_rank_of_target": 5,
+              "shared_high_idf_terms": [
+                "flaky",
+                "block",
+                "code",
+                "is"
+              ]
+            },
+            {
+              "query_number": 13891,
+              "target_number": 13478,
+              "query_title": "kubernetes-e2e-gce-parallel is occasionally timing out after 2 hours",
+              "target_title": "E2e: Services should be able to up and down services",
+              "dense_rank_of_target": 22,
+              "bm25_rank_of_target": 3,
+              "shared_high_idf_terms": [
+                "20builds",
+                "critical",
+                "kubekins",
+                "dls",
+                "corp"
+              ]
+            },
+            {
+              "query_number": 3253,
+              "target_number": 1521,
+              "query_title": "Proposal: In-container command execution & port forwarding",
+              "target_title": "Support attach",
+              "dense_rank_of_target": 7,
+              "bm25_rank_of_target": 5,
+              "shared_high_idf_terms": [
+                "1513",
+                "stdin",
+                "stdout",
+                "attach",
+                "ssh"
+              ]
+            },
+            {
+              "query_number": 3861,
+              "target_number": 3681,
+              "query_title": "Configure bind-to addresses for each daemon based on --bind-to config rather than an IP.",
+              "target_title": "Master components should probably bind to 0 by default",
+              "dense_rank_of_target": 17,
+              "bm25_rank_of_target": 14,
+              "shared_high_idf_terms": [
+                "nic",
+                "bind",
+                "public",
+                "ip",
+                "currently"
+              ]
+            },
+            {
+              "query_number": 4301,
+              "target_number": 3948,
+              "query_title": "Scheduler input should be taken when reducing replicas",
+              "target_title": "Kubernetes killing running pods instead of unassigned when reducing replicas",
+              "dense_rank_of_target": 11,
+              "bm25_rank_of_target": 16,
+              "shared_high_idf_terms": [
+                "reducing",
+                "assigned",
+                "replicas",
+                "pods",
+                "1"
+              ]
+            },
+            {
+              "query_number": 5136,
+              "target_number": 5084,
+              "query_title": "Add e2e test coverage of kubectl proxy",
+              "target_title": "kubectl proxy fails during kubectl e2e test",
+              "dense_rank_of_target": 7,
+              "bm25_rank_of_target": 2,
+              "shared_high_idf_terms": [
+                "proxy",
+                "tests",
+                "running",
+                "was",
+                "kubectl"
+              ]
+            },
+            {
+              "query_number": 6583,
+              "target_number": 5475,
+              "query_title": "v1beta1->v1beta3 storage translation tool",
+              "target_title": "Flip to v1beta3",
+              "dense_rank_of_target": 7,
+              "bm25_rank_of_target": 3,
+              "shared_high_idf_terms": [
+                "their",
+                "v1beta3",
+                "googlecloudplatform",
+                "to",
+                "can"
+              ]
+            },
+            {
+              "query_number": 8702,
+              "target_number": 7203,
+              "query_title": "Generalize container image representation",
+              "target_title": "Support OCI images in API",
+              "dense_rank_of_target": 7,
+              "bm25_rank_of_target": 2,
+              "shared_high_idf_terms": [
+                "future",
+                "images",
+                "image",
+                "support",
+                "other"
+              ]
+            },
+            {
+              "query_number": 13412,
+              "target_number": 13398,
+              "query_title": "We should handle flaky cloud provider APIs more gracefully",
+              "target_title": "Gracefully handle cloud provider api downtime",
+              "dense_rank_of_target": 19,
+              "bm25_rank_of_target": 15,
+              "shared_high_idf_terms": [
+                "gracefully",
+                "handle",
+                "provider",
+                "cloud",
+                "node"
+              ]
+            },
+            {
+              "query_number": 14023,
+              "target_number": 3185,
+              "query_title": "Pods hang in pending state indefinitely",
+              "target_title": "pods not starting - pending status",
+              "dense_rank_of_target": 9,
+              "bm25_rank_of_target": 37,
+              "shared_high_idf_terms": [
+                "pending",
+                "they",
+                "then",
+                "at",
+                "pods"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "repo": "microsoft_vscode",
+        "n_pairs": 292,
+        "dense_only": {
+          "recall_at_1": 0.1095890410958904,
+          "recall_at_5": 0.2671232876712329,
+          "recall_at_10": 0.4554794520547945,
+          "recall_at_20": 0.6986301369863014
+        },
+        "hybrid_rrf": {
+          "recall_at_1": 0.11301369863013698,
+          "recall_at_5": 0.2876712328767123,
+          "recall_at_10": 0.5136986301369864,
+          "recall_at_20": 0.7602739726027398
+        },
+        "hybrid_weighted": {
+          "recall_at_1": 0.11301369863013698,
+          "recall_at_5": 0.3082191780821918,
+          "recall_at_10": 0.4965753424657534,
+          "recall_at_20": 0.7636986301369864
+        },
+        "rrf_vs_dense_r5_delta_pp": 2.05,
+        "rrf_vs_dense_r5_ci95_pp": [
+          -1.37,
+          5.82
+        ],
+        "rrf_ships": false,
+        "weighted_vs_dense_r5_delta_pp": 4.11,
+        "weighted_vs_dense_r5_ci95_pp": [
+          1.03,
+          7.19
+        ],
+        "weighted_ships": true,
+        "bootstrap": {
+          "n_resamples": 2000,
+          "seed": 42,
+          "method": "paired percentile"
+        },
+        "rrf_k": 60,
+        "candidate_pool": 100,
+        "tuning_provenance": "RRF k=60 is the untuned standard default. No held-out tuning slice was carved out of the product-task pairs -- doing so would either shrink this repo's already-thin powered eval set or require tuning on the test pairs themselves (the leak spec.md explicitly rules out). Nothing was tuned on the test pairs.",
+        "latency_s": {
+          "dense_retrieve_mean": 0.04672384417850256,
+          "bm25_score_mean": 0.07205287465460483,
+          "fuse_mean": 0.0002368349324407898,
+          "bm25_index_build_total": 0.25804049998987466,
+          "added_per_query_mean": 0.07228970958704563
+        },
+        "diagnostic_bm25_recovers_dense_misses": {
+          "n_cases": 19,
+          "n_cases_pct_of_pairs": 6.51,
+          "examples": [
+            {
+              "query_number": 2743,
+              "target_number": 2741,
+              "query_title": "Provide support to synchronize settings across machines",
+              "target_title": "[ExtensionDev] Expose API to get at file system locations",
+              "dense_rank_of_target": 80,
+              "bm25_rank_of_target": 1,
+              "shared_high_idf_terms": [
+                "exposed",
+                "paths",
+                "hard",
+                "those",
+                "them"
+              ]
+            },
+            {
+              "query_number": 311224,
+              "target_number": 311141,
+              "query_title": "Ehh",
+              "target_title": "11",
+              "dense_rank_of_target": 6,
+              "bm25_rank_of_target": 12,
+              "shared_high_idf_terms": [
+                "yes",
+                "occur",
+                "disabled",
+                "extensions",
+                "reproduce"
+              ]
+            },
+            {
+              "query_number": 312560,
+              "target_number": 312558,
+              "query_title": "workerman",
+              "target_title": "Bugs",
+              "dense_rank_of_target": 6,
+              "bm25_rank_of_target": 5,
+              "shared_high_idf_terms": [
+                "sonnet",
+                "gpt",
+                "logs",
+                "ask",
+                "claude"
+              ]
+            },
+            {
+              "query_number": 311923,
+              "target_number": 311566,
+              "query_title": "[Error] unhandlederror-potential listener LEAK detected, popular \u2014 chat/chatEditingServiceImpl / chatModel",
+              "target_title": "[Error] unhandlederror-potential listener LEAK detected, popular",
+              "dense_rank_of_target": 6,
+              "bm25_rank_of_target": 8,
+              "shared_high_idf_terms": [
+                "1263",
+                "l1263",
+                "1062",
+                "l1062",
+                "popular"
+              ]
+            },
+            {
+              "query_number": 4854,
+              "target_number": 4853,
+              "query_title": "Cannot read property 'unshift' of null",
+              "target_title": "Cannot read property 'onTokensChanged' of undefined",
+              "dense_rank_of_target": 13,
+              "bm25_rank_of_target": 1,
+              "shared_high_idf_terms": [
+                "43ff6af3d4564f59196caa9be4897fc33c15f24c",
+                "ef2a1fcaa553d14d7731b284a5ac5e4a55c42936",
+                "18",
+                "typeerror",
+                "29"
+              ]
+            },
+            {
+              "query_number": 312533,
+              "target_number": 312274,
+              "query_title": "sss",
+              "target_title": "Agent",
+              "dense_rank_of_target": 6,
+              "bm25_rank_of_target": 1,
+              "shared_high_idf_terms": [
+                "sonnet",
+                "gpt",
+                "logs",
+                "ask",
+                "claude"
+              ]
+            },
+            {
+              "query_number": 311708,
+              "target_number": 311022,
+              "query_title": "[Error] unhandlederror-potential listener LEAK detected, popular \u2014 textModel / chatEditingModifiedNotebookEntry",
+              "target_title": "[Error] unhandlederror-potential listener LEAK detected, popular",
+              "dense_rank_of_target": 16,
+              "bm25_rank_of_target": 1,
+              "shared_high_idf_terms": [
+                "1262",
+                "l1262",
+                "ondidchange",
+                "1062",
+                "l1062"
+              ]
+            },
+            {
+              "query_number": 312333,
+              "target_number": 311161,
+              "query_title": "bu found",
+              "target_title": ".",
+              "dense_rank_of_target": 11,
+              "bm25_rank_of_target": 8,
+              "shared_high_idf_terms": [
+                "yes",
+                "occur",
+                "disabled",
+                "extensions",
+                "reproduce"
+              ]
+            },
+            {
+              "query_number": 312066,
+              "target_number": 311482,
+              "query_title": "issue",
+              "target_title": "\u0627",
+              "dense_rank_of_target": 15,
+              "bm25_rank_of_target": 4,
+              "shared_high_idf_terms": [
+                "yes",
+                "occur",
+                "disabled",
+                "extensions",
+                "reproduce"
+              ]
+            },
+            {
+              "query_number": 312177,
+              "target_number": 311482,
+              "query_title": "We have this issue",
+              "target_title": "\u0627",
+              "dense_rank_of_target": 8,
+              "bm25_rank_of_target": 7,
+              "shared_high_idf_terms": [
+                "yes",
+                "occur",
+                "disabled",
+                "extensions",
+                "reproduce"
+              ]
+            },
+            {
+              "query_number": 312184,
+              "target_number": 311482,
+              "query_title": "issue",
+              "target_title": "\u0627",
+              "dense_rank_of_target": 15,
+              "bm25_rank_of_target": 4,
+              "shared_high_idf_terms": [
+                "yes",
+                "occur",
+                "disabled",
+                "extensions",
+                "reproduce"
+              ]
+            },
+            {
+              "query_number": 312282,
+              "target_number": 312066,
+              "query_title": "Timestamp",
+              "target_title": "issue",
+              "dense_rank_of_target": 11,
+              "bm25_rank_of_target": 3,
+              "shared_high_idf_terms": [
+                "yes",
+                "occur",
+                "disabled",
+                "extensions",
+                "reproduce"
+              ]
+            },
+            {
+              "query_number": 312282,
+              "target_number": 312184,
+              "query_title": "Timestamp",
+              "target_title": "issue",
+              "dense_rank_of_target": 10,
+              "bm25_rank_of_target": 2,
+              "shared_high_idf_terms": [
+                "yes",
+                "occur",
+                "disabled",
+                "extensions",
+                "reproduce"
+              ]
+            },
+            {
+              "query_number": 312335,
+              "target_number": 312066,
+              "query_title": "\ubb38\uc81c\ubc84\uadf8 \ub77c\uace0 \ud558\ub124\uc694",
+              "target_title": "issue",
+              "dense_rank_of_target": 9,
+              "bm25_rank_of_target": 2,
+              "shared_high_idf_terms": [
+                "yes",
+                "occur",
+                "disabled",
+                "extensions",
+                "reproduce"
+              ]
+            },
+            {
+              "query_number": 312335,
+              "target_number": 312184,
+              "query_title": "\ubb38\uc81c\ubc84\uadf8 \ub77c\uace0 \ud558\ub124\uc694",
+              "target_title": "issue",
+              "dense_rank_of_target": 8,
+              "bm25_rank_of_target": 3,
+              "shared_high_idf_terms": [
+                "yes",
+                "occur",
+                "disabled",
+                "extensions",
+                "reproduce"
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "2_lever2_reranker": {
+    "results": [
+      {
+        "repo": "kubernetes_kubernetes",
+        "n_pairs": 277,
+        "model_id": "BAAI/bge-reranker-v2-m3",
+        "rerank_pool": 30,
+        "dense_only": {
+          "recall_at_1": 0.10469314079422383,
+          "recall_at_5": 0.23465703971119134,
+          "recall_at_10": 0.30324909747292417,
+          "recall_at_20": 0.36462093862815886
+        },
+        "reranked": {
+          "recall_at_1": 0.07581227436823104,
+          "recall_at_5": 0.21299638989169675,
+          "recall_at_10": 0.296028880866426,
+          "recall_at_20": 0.36462093862815886
+        },
+        "r5_delta_pp": -2.17,
+        "r5_ci95_pp": [
+          -6.14,
+          1.81
+        ],
+        "ships": false,
+        "bootstrap": {
+          "n_resamples": 2000,
+          "seed": 42,
+          "method": "paired percentile"
+        },
+        "latency_cpu_subsample": {
+          "repo": "kubernetes_kubernetes",
+          "n_sample": 30,
+          "seed": 42,
+          "device": "cpu",
+          "dense_retrieve_mean_s": 0.057376693344364564,
+          "ce_rerank_mean_s": 17.969438423336637,
+          "ce_rerank_p50_s": 18.055862649984192,
+          "ce_rerank_p95_s": 22.937601649953283,
+          "total_dense_only_mean_s": 0.057376693344364564,
+          "total_with_rerank_mean_s": 18.026815116681,
+          "added_latency_pct": 31318.4
+        }
+      },
+      {
+        "repo": "microsoft_vscode",
+        "n_pairs": 292,
+        "model_id": "BAAI/bge-reranker-v2-m3",
+        "rerank_pool": 30,
+        "dense_only": {
+          "recall_at_1": 0.1095890410958904,
+          "recall_at_5": 0.2671232876712329,
+          "recall_at_10": 0.4554794520547945,
+          "recall_at_20": 0.6986301369863014
+        },
+        "reranked": {
+          "recall_at_1": 0.0684931506849315,
+          "recall_at_5": 0.22945205479452055,
+          "recall_at_10": 0.4794520547945205,
+          "recall_at_20": 0.821917808219178
+        },
+        "r5_delta_pp": -3.77,
+        "r5_ci95_pp": [
+          -9.25,
+          1.71
+        ],
+        "ships": false,
+        "bootstrap": {
+          "n_resamples": 2000,
+          "seed": 42,
+          "method": "paired percentile"
+        },
+        "latency_cpu_subsample": {
+          "repo": "microsoft_vscode",
+          "n_sample": 30,
+          "seed": 42,
+          "device": "cpu",
+          "dense_retrieve_mean_s": 0.32249071333790197,
+          "ce_rerank_mean_s": 60.81713796998762,
+          "ce_rerank_p50_s": 26.022816899989266,
+          "ce_rerank_p95_s": 237.88992885997848,
+          "total_dense_only_mean_s": 0.32249071333790197,
+          "total_with_rerank_mean_s": 61.13962868332552,
+          "added_latency_pct": 18858.6
+        }
+      }
+    ]
+  },
+  "3_lever3_stronger_embedder": {
+    "results": [
+      {
+        "repo": "kubernetes_kubernetes",
+        "n_pairs": 277,
+        "baseline_bge_base": {
+          "recall_at_1": 0.10469314079422383,
+          "recall_at_5": 0.23465703971119134,
+          "recall_at_10": 0.30324909747292417,
+          "recall_at_20": 0.36462093862815886
+        },
+        "candidate_bge_large": {
+          "recall_at_1": 0.09747292418772563,
+          "recall_at_5": 0.24548736462093862,
+          "recall_at_10": 0.2996389891696751,
+          "recall_at_20": 0.37545126353790614
+        },
+        "r5_delta_pp": 1.08,
+        "r5_ci95_pp": [
+          -2.17,
+          4.33
+        ],
+        "ships": false,
+        "bootstrap": {
+          "n_resamples": 2000,
+          "seed": 42,
+          "method": "paired percentile"
+        },
+        "cost": {
+          "model_id": "BAAI/bge-large-en-v1.5",
+          "embedding_dim": 1024,
+          "n_docs": 15000,
+          "index_bytes_float32": 61440000,
+          "index_mb_float32": 58.6,
+          "corpus_embed_build_s": 129.4105137999868
+        },
+        "latency_cpu_subsample": {
+          "n_sample": 30,
+          "seed": 42,
+          "device": "cpu",
+          "baseline_query_encode_mean_s": 0.03663072333826373,
+          "candidate_query_encode_mean_s": 0.06407005999935791,
+          "added_latency_pct": 74.9
+        }
+      },
+      {
+        "repo": "microsoft_vscode",
+        "n_pairs": 292,
+        "baseline_bge_base": {
+          "recall_at_1": 0.1095890410958904,
+          "recall_at_5": 0.2671232876712329,
+          "recall_at_10": 0.4554794520547945,
+          "recall_at_20": 0.6986301369863014
+        },
+        "candidate_bge_large": {
+          "recall_at_1": 0.11301369863013698,
+          "recall_at_5": 0.3047945205479452,
+          "recall_at_10": 0.5,
+          "recall_at_20": 0.7363013698630136
+        },
+        "r5_delta_pp": 3.77,
+        "r5_ci95_pp": [
+          -0.34,
+          7.88
+        ],
+        "ships": false,
+        "bootstrap": {
+          "n_resamples": 2000,
+          "seed": 42,
+          "method": "paired percentile"
+        },
+        "cost": {
+          "model_id": "BAAI/bge-large-en-v1.5",
+          "embedding_dim": 1024,
+          "n_docs": 7028,
+          "index_bytes_float32": 28786688,
+          "index_mb_float32": 27.5,
+          "corpus_embed_build_s": 108.17872440000065
+        },
+        "latency_cpu_subsample": {
+          "n_sample": 30,
+          "seed": 42,
+          "device": "cpu",
+          "baseline_query_encode_mean_s": 0.027467976654103648,
+          "candidate_query_encode_mean_s": 0.04774500667117536,
+          "added_latency_pct": 73.8
+        }
+      }
+    ]
+  },
+  "headline": {
+    "verdict": "NO LEVER SHIPS",
+    "summary": "Three untried, high-headroom levers (hybrid BM25+RRF, pretrained cross-encoder reranker, stronger pretrained embedder) were each measured against the identical bar (paired bootstrap CI on product-task R@5, k8s primary gate). None clears it. RRF (Lever 1 primary) and the stronger embedder (Lever 3) both leave the k8s CI crossing zero. The reranker (Lever 2) regresses quality on both repos and adds 190-330x latency. The one variant that technically clears CI on both repos -- Lever 1's weighted score-fusion, +3.25pp k8s / +4.11pp vscode -- has a k8s CI lower bound of only 0.35pp and matches the magnitude of the already-NO-GO'd W3 fine-tune; judged not worth shipping for the same reason. The ~23-27% product-task base rate does not move with any pretrained, zero-training lever tried here. Retrieval quality remains the weakest model in the pipeline; closing the gap likely requires either in-domain fine-tuning (reopening the leakage question ADR-0030 deliberately avoided) or a different mining/labeling strategy, not a pretrained-component swap."
+  }
+}

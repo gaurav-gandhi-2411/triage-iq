@@ -1,0 +1,88 @@
+{
+  "results": [
+    {
+      "repo": "kubernetes_kubernetes",
+      "n_pairs": 277,
+      "model_id": "BAAI/bge-reranker-v2-m3",
+      "rerank_pool": 30,
+      "dense_only": {
+        "recall_at_1": 0.10469314079422383,
+        "recall_at_5": 0.23465703971119134,
+        "recall_at_10": 0.30324909747292417,
+        "recall_at_20": 0.36462093862815886
+      },
+      "reranked": {
+        "recall_at_1": 0.07581227436823104,
+        "recall_at_5": 0.21299638989169675,
+        "recall_at_10": 0.296028880866426,
+        "recall_at_20": 0.36462093862815886
+      },
+      "r5_delta_pp": -2.17,
+      "r5_ci95_pp": [
+        -6.14,
+        1.81
+      ],
+      "ships": false,
+      "bootstrap": {
+        "n_resamples": 2000,
+        "seed": 42,
+        "method": "paired percentile"
+      },
+      "latency_cpu_subsample": {
+        "repo": "kubernetes_kubernetes",
+        "n_sample": 30,
+        "seed": 42,
+        "device": "cpu",
+        "dense_retrieve_mean_s": 0.057376693344364564,
+        "ce_rerank_mean_s": 17.969438423336637,
+        "ce_rerank_p50_s": 18.055862649984192,
+        "ce_rerank_p95_s": 22.937601649953283,
+        "total_dense_only_mean_s": 0.057376693344364564,
+        "total_with_rerank_mean_s": 18.026815116681,
+        "added_latency_pct": 31318.4
+      }
+    },
+    {
+      "repo": "microsoft_vscode",
+      "n_pairs": 292,
+      "model_id": "BAAI/bge-reranker-v2-m3",
+      "rerank_pool": 30,
+      "dense_only": {
+        "recall_at_1": 0.1095890410958904,
+        "recall_at_5": 0.2671232876712329,
+        "recall_at_10": 0.4554794520547945,
+        "recall_at_20": 0.6986301369863014
+      },
+      "reranked": {
+        "recall_at_1": 0.0684931506849315,
+        "recall_at_5": 0.22945205479452055,
+        "recall_at_10": 0.4794520547945205,
+        "recall_at_20": 0.821917808219178
+      },
+      "r5_delta_pp": -3.77,
+      "r5_ci95_pp": [
+        -9.25,
+        1.71
+      ],
+      "ships": false,
+      "bootstrap": {
+        "n_resamples": 2000,
+        "seed": 42,
+        "method": "paired percentile"
+      },
+      "latency_cpu_subsample": {
+        "repo": "microsoft_vscode",
+        "n_sample": 30,
+        "seed": 42,
+        "device": "cpu",
+        "dense_retrieve_mean_s": 0.32249071333790197,
+        "ce_rerank_mean_s": 60.81713796998762,
+        "ce_rerank_p50_s": 26.022816899989266,
+        "ce_rerank_p95_s": 237.88992885997848,
+        "total_dense_only_mean_s": 0.32249071333790197,
+        "total_with_rerank_mean_s": 61.13962868332552,
+        "added_latency_pct": 18858.6
+      }
+    }
+  ]
+}

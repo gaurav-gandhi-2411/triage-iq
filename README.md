@@ -46,7 +46,7 @@ POST /triage {repo, title, body}
 ┌───────────────────────────────────────┐
 │ System 2: Similar Issue Retriever      │  ~27ms p50
 │ BGE-base-en-v1.5 + FAISS cosine       │
-│ vscode R@5 22.4% (product-task, live) │
+│ vscode R@5 26.7% (product-task, live) │
 │ k8s R@5 23.5% (product-task, live)    │
 └──────────────────┬────────────────────┘
                    │ top-5 similar issues + similarity scores
@@ -83,8 +83,8 @@ suggested_next_steps, triage_summary
 | Component classifier | vscode | Macro F1 (top-1) | 0.585 |
 | Component classifier | kubernetes | Macro F1 (top-1) | 0.466 |
 | Component classifier | vscode | Inference latency p50 | 4.9ms |
-| Similar issue retriever | vscode | **Recall@5 (product-task, live index — see note)** | **22.4%** [17.7, 28.0] |
-| Similar issue retriever | vscode | Recall@10 / @20 (product-task) | 43.7% / 71.3% |
+| Similar issue retriever | vscode | **Recall@5 (product-task, live index — see note)** | **26.7%** [21.6, 31.9] |
+| Similar issue retriever | vscode | Recall@10 / @20 (product-task) | 45.5% / 69.9% |
 | Similar issue retriever | kubernetes | **Recall@5 (product-task, live index — see note)** | **23.5%** [18.4, 28.5] |
 | Similar issue retriever | kubernetes | Recall@10 / @20 (product-task) | 30.3% / 36.5% |
 | Similar issue retriever | vscode | Index size (BGE) | 24.3 MB |
@@ -106,17 +106,27 @@ suggested_next_steps, triage_summary
 95% Wilson CIs shown in brackets where computed on a held-out test split.
 
 > **Headline finding (2026-07-12): product-task retrieval is the weakest model in this
-> pipeline.** The first honest, apples-to-apples measurement of Recall@5 on the actual
-> product task ("given a new issue, find related issues"), against the actually-deployed
-> live index, on both repos: **k8s 23.5% [18.4, 28.5]** (n=277), **vscode 22.4% [17.7,
-> 28.0]** (n=254) — statistically indistinguishable. The retriever finds the
-> genuinely-related issue in the top-5 roughly a quarter of the time, on both repos — the
-> lowest absolute score of any model in this system's per-model audit (classifier top-3
-> 82.5%/90.4%, resolution's real k8s bucket gains, synthesis's floor-fail rates). It was
-> invisible until now because neither repo had ever been measured this way: k8s was
-> measured on a PR→issue proxy, vscode on a proxy-inflated duplicate-comment number (both
-> corrected below). Full reasoning:
-> [`docs/architecture/adr/0030-phaseC-product-task-feasibility.md`](docs/architecture/adr/0030-phaseC-product-task-feasibility.md).
+> pipeline, and three untried improvement levers don't move it (ADR-0031).** The first
+> honest, apples-to-apples measurement of Recall@5 on the actual product task ("given a
+> new issue, find related issues"), against the actually-deployed live index, on both
+> repos: **k8s 23.5% [18.4, 28.5]** (n=277), **vscode 26.7% [21.6, 31.9]** (n=292) —
+> statistically indistinguishable. The retriever finds the genuinely-related issue in the
+> top-5 roughly a quarter of the time, on both repos — the lowest absolute score of any
+> model in this system's per-model audit (classifier top-3 82.5%/90.4%, resolution's real
+> k8s bucket gains, synthesis's floor-fail rates). It was invisible until now because
+> neither repo had ever been measured this way: k8s was measured on a PR→issue proxy,
+> vscode on a proxy-inflated duplicate-comment number (both corrected below). A follow-up
+> pass (ADR-0031) tried three untried, zero-training levers against this corrected metric
+> — hybrid BM25+dense fusion, a pretrained cross-encoder reranker (the ADR-0006 retry),
+> and a stronger pretrained embedder — gated on a paired-bootstrap CI that must exclude
+> zero on k8s. **None ships**: RRF and the stronger embedder both leave the k8s CI
+> crossing zero; the reranker regresses quality on both repos and adds 190-330x latency;
+> the one variant that technically clears CI (weighted score-fusion, +3-4pp) matches the
+> magnitude of the already-NO-GO'd W3 fine-tune and was rejected on that basis. The
+> ~23-27% base rate is unmoved by any pretrained-component swap tried so far. Full
+> reasoning:
+> [`docs/architecture/adr/0030-phaseC-product-task-feasibility.md`](docs/architecture/adr/0030-phaseC-product-task-feasibility.md),
+> [`docs/architecture/adr/0031-retrieval-quality-improvement.md`](docs/architecture/adr/0031-retrieval-quality-improvement.md).
 >
 > **Classifier metric correction (2026-07-11).** The product never surfaces a single
 > label — `triage.py` builds `classifier_top3` and `grounding.py::verify_plan_grounding`
@@ -133,8 +143,11 @@ suggested_next_steps, triage_summary
 > was measured against `data/gold_related.parquet` (v1), which is only 74.0% genuine
 > issue→issue pairs — the rest are PR→issue or duplicate-comment pairs, an easier proxy
 > task the product doesn't perform. The honest product-task-only number, measured
-> against the actually-deployed live index, is 22.4% [17.7, 28.0] — a ~12–14pp
-> inflation, CIs do not overlap.
+> against the actually-deployed live index, is 26.7% [21.6, 31.9] — a ~10pp inflation,
+> CIs do not overlap. (This superseded ADR-0028's originally-reported 22.4% [17.7, 28.0]
+> — n=254, ADR-0031 (2026-07-12) found no committed script ever reproduced that number
+> and its denominator didn't match the full product stratum; 26.7%/n=292 is the
+> byte-reproducible number via `scripts/phaseC_vscode_live_product_eval.py`.)
 >
 > **k8s retriever re-eval (2026-07-12, ADR-0030).** kubernetes was first reported as
 > "unmeasurable" (zero product-task pairs land in the *test-split* of the live corpus).
@@ -157,11 +170,19 @@ suggested_next_steps, triage_summary
 > that's not the operative reason — proving a ~3.5pp lift on top of a 23.5% base rate
 > would still ship a retriever that misses the related issue 3 times out of 4. vscode's
 > data gap is smaller and closeable (~664 more pairs), but closing it would only prove a
-> +3.2pp lift against a 22.4% base rate — the same weak-baseline problem, just with an
+> +3.2pp lift against a ~23-27% base rate — the same weak-baseline problem, just with an
 > easier data path. Neither fine-tune is a near-miss awaiting data; both are marginal
-> against a weak baseline. Whether retrieval quality itself needs work (hybrid
-> BM25+dense, reranking, a stronger base embedder) is a real, separate decision —
-> deliberately not started here.
+> against a weak baseline.
+>
+> **Retrieval-quality-lever pass (2026-07-12, ADR-0031).** Hybrid BM25+dense fusion, a
+> pretrained cross-encoder reranker (the ADR-0006 retry against the corrected metric), and
+> a stronger pretrained embedder were each tried against the product-task R@5 bar. All
+> three rejected — see the headline finding above and
+> [`docs/architecture/adr/0031-retrieval-quality-improvement.md`](docs/architecture/adr/0031-retrieval-quality-improvement.md)
+> for full per-lever results. The two remaining paths (in-domain fine-tuning, which
+> reopens the leakage question ADR-0030 deliberately kept closed; or new related-pair
+> mining, already NO-GO'd on value grounds) are both harder and were explicitly deferred,
+> not attempted here.
 >
 > **Synthesis quality metric redesign (2026-07-11).** The mean-band score is a
 > *regression detector* (fails only if it drops below its own prior baseline by more

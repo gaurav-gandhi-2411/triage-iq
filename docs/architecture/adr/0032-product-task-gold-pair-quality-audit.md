@@ -108,7 +108,11 @@ said regardless of what that number would turn out to be at scale: **the pair se
 produce vscode's 26.7% headline number is, by this hand sample, only ~20% precise.** The
 ADR-0030/0031 framing that k8s and vscode are "statistically indistinguishable, both ~23-27%"
 compares a mostly-genuine measurement (k8s) to a mostly-incidental one (vscode) — the two
-numbers are not measuring the same thing, even though they happen to land in the same range.
+numbers were never measuring the same thing, even though they happened to land in the same
+range. Conclusion: **vscode's 26.7% is retired as a reported number.** vscode product-task
+retrieval quality is **unmeasured** — not "roughly 23-27% like k8s," not "probably better
+once you clean the noise" — genuinely unknown until a clean pair set exists to measure it
+against.
 
 ## Finding 3 — genuine misses are not a vocabulary-orphaned ceiling
 
@@ -127,6 +131,41 @@ hand-verified genuine-relation ground truth to, ADR-0031 Lever 1's own diagnosti
 recovers a subset of dense's misses via exact-term matches (dense embeddings blur distinctive
 vocabulary — API names, error strings, stack-frame identifiers — that lexical methods catch
 directly).
+
+## Finding 4 — `title_sim` contamination reaches beyond the retrieval eval, into the (held) fine-tune's training data
+
+This audit only hand-checked the *retrieval eval* pairs. `title_sim` (the ~20%-precise
+channel identified in Finding 1) is not scoped to eval — it's a general-purpose mining
+channel in `scripts/07_extract_related_pairs.py` (TF-IDF title cosine ≥0.45, capped at 300
+pairs/repo), and every downstream consumer of `gold_related_v2.parquet` inherits its
+pairs unless explicitly filtered. Traced by reading each consumer script directly (not
+re-sampled — this is a code-path check, not a second hand audit):
+
+| Consumer | Filters out `title_sim`? | What it's used for |
+|---|---|---|
+| `scripts/phaseC_{k8s,vscode}_live_product_eval.py` (`stratum == "product"`) | **No** | The product-task R@5 headline number — audited above (Findings 1-3). |
+| `scripts/w3_t2_mine_negatives.py` (`mine_repo`) | **No** — `repo_gold = gold[gold["repo"] == repo]`, no stratum/channel filter | Hard-negative mining for the W3 fine-tune. Every `title_sim` "positive" pair, including incidental ones, gets hard negatives mined against it in `data/w3_hard_negatives_v2.parquet`. |
+| `scripts/w3_t3_split.py` (`assign_stratum` + component split) | **No** — `title_sim` pairs land in `product` stratum (confirmed: 38/277 k8s, 277/292 vscode of the live-eval set are exactly this), and `product`-stratum components "ride along" with whichever train/val/test bucket the **gate**-stratum quota state machine assigns their connected component to | Some `title_sim` pairs land in the **train** split, not just held out for eval. |
+| `scripts/w3_t4_train.py::load_triplets(..., "train", ...)` | **No** — `rows = split_df[split_df["split"] == "train"]`, no stratum filter | The actual anchor/positive/negative triplets used to fine-tune the (HELD, unshipped) `bge_finetuned_*_v2` model. `title_sim`-sourced positives that land in train are used as real training signal, not just measured. |
+| `scripts/w3_t4_train.py::eval_val_r5` | Excludes only `stratum == "train_only"` — **includes** `gate` + `product` | Val-time R@5 monitored during training (checkpointing signal) mixes `title_sim` noise into `product`, alongside the clean `gate` stratum. |
+| `scripts/w3_t5_eval.py` (test-time, ADR-0027) | **No** for the `product` stratum (`DIRECTIONAL (never gated)`) | ADR-0027's own reported "+3.2pp product-task gain, CI crosses zero" for vscode is measured against this same `title_sim`-heavy `product` stratum — the same contamination this ADR found in the live-index eval, reappearing in the fine-tune's own held-out test report. |
+
+**What's *not* contaminated:** the **gate** stratum — the PRIMARY, CI-gated metric ADR-0027
+based its "proxy-task gains real and significant, k8s +14.3pp, vscode +4.6pp" conclusion on
+— is sourced from PR-query pairs (k8s) and `dup_comment`-labeled pairs (vscode) exclusively
+(`assign_stratum`, `scripts/phase2b_merge_gold_v2.py`), never from `title_sim`. ADR-0027's
+primary gate-stratum conclusion is unaffected by this finding.
+
+**Caution for future work (not acted on here — the fine-tune is HELD/unshipped per
+ADR-0027/ADR-0030, so nothing currently shipped is affected):** if the W3 fine-tune thread
+is ever revived, retraining should either exclude `title_sim`-sourced pairs from the
+positive-pair pool (`w3_t2`/`w3_t4`) or re-run the split/negative-mining after a
+`title_sim` precision pass — the model would otherwise be trained, in part, on the same
+class of incidental "positive" pairs (boilerplate-template collisions, generic-title-bucket
+collisions) this audit found in the eval set. `data/w3_hard_negatives_v2.parquet` (an
+untracked local artifact from the last `w3_t2` run, never committed) and
+`data/w3_split_v2.parquet` both predate this finding and should be regenerated, not
+reused, if that thread restarts.
 
 ## Interpretation — which of the three pre-registered hypotheses is true
 
@@ -147,30 +186,47 @@ directly).
 **No mining or fine-tune action reopened here** — that question was already closed on
 value grounds (ADR-0030: even a much better retrieval number wouldn't justify the mining
 cost given the current corpus scale) and this ADR doesn't revisit it. What this ADR does
-change: **vscode's product-task R@5 should not be cited as corroborating k8s's finding, or
-compared to it as "statistically indistinguishable," without the caveat that vscode's
-measurement is against a pair set this audit finds only ~20% precise.** k8s's finding
-stands unqualified.
+change:
+- **vscode's product-task R@5 is not a valid measurement, full stop** — not "corroborating
+  k8s's finding" with a caveat, not "statistically indistinguishable" with an asterisk.
+  It's measured against a pair set this audit finds ~80% incidental. vscode product-task
+  retrieval quality is **unmeasured** pending a clean pair set. k8s's finding stands
+  unqualified — it is the only one of the two repos with a hand-verified honest number.
+- **The `title_sim` channel is flagged wherever it appears** (Finding 4) — not just in the
+  eval this ADR sampled, but in the fine-tune's hard-negative mining, train/val split, and
+  the fine-tune's own training and val-monitoring data. The fine-tune is HELD/unshipped, so
+  nothing currently shipped changes, but any future revival of that thread inherits this
+  caution.
 
 **Recommended next step (not executed here, scoped like ADR-0030's channel actions):** a
-full-scale precision audit of vscode's `title_sim`/`legacy_gold_v1` product-stratum pairs
-(505 rows, or at minimum the 292 in the live index), with the same per-channel rigor
-ADR-0030 applied to channels A-E — this is a **measurement-integrity fix on an existing
-gold set**, categorically cheaper than the mining-at-scale asks ADR-0030 already NO-GO'd
-(no new scraping, no new API calls — just judging pairs that already exist). Pruning or
-re-weighting the confirmed-incidental pairs would let a future re-measurement report a
-trustworthy vscode product-task R@5 for the first time.
+full-scale precision audit of **`title_sim` as a channel**, not just the retrieval-eval
+subset of it — it feeds `product`-stratum pairs into hard-negative mining, the train/val
+split, and the fine-tune's own training and val-monitoring data (Finding 4), so a channel-
+level audit is worth more than an eval-only one. Same rigor ADR-0030 applied to channels
+A-E (505 vscode rows, or at minimum the 292 in the live index) — a **measurement-integrity
+fix on an existing gold set**, categorically cheaper than the mining-at-scale asks ADR-0030
+already NO-GO'd (no new scraping, no new API calls — just judging pairs that already
+exist). Pruning or re-weighting the confirmed-incidental pairs would let a future
+re-measurement report a trustworthy vscode product-task R@5, and a future fine-tune
+attempt train on a clean positive-pair pool, for the first time.
 
 ## Consequences
 
-- **What changes:** README.md's headline finding gets a caveat on the vscode number's
-  pair-set precision (see diff). ADR-0030/0031 are not edited — their k8s-side conclusions
-  are unaffected and this ADR's finding is additive context, not a correction to either.
+- **What changes:** README.md's headline finding is rewritten, not just caveated — vscode's
+  26.7% is removed everywhere it was reported as a metric and replaced with an explicit
+  "unmeasured" status (see diff). k8s's ~23% stands as the honest, hand-verified headline:
+  retrieval is genuinely the weakest model in the pipeline, and three standard levers
+  genuinely failed to move it. ADR-0030/0031 documents are not edited in place — their
+  k8s-side conclusions are unaffected and this ADR's finding is additive context, not a
+  correction to either.
 - **What becomes easier:** any future retrieval-quality work on vscode now has a concrete,
   hand-verified list of the specific noise classes to filter (boilerplate-template pairs,
-  generic-title-bucket collisions) before re-measuring.
+  generic-title-bucket collisions) before re-measuring, and a specific list of consumers
+  (Finding 4) to re-run once that channel is cleaned.
 - **What becomes harder:** nothing new — the recommended full-scale audit is optional future
-  work, not a blocker on anything currently shipped.
+  work, not a blocker on anything currently shipped. The HELD fine-tune's training artifacts
+  (`data/w3_hard_negatives_v2.parquet`, `data/w3_split_v2.parquet`) are flagged as
+  stale-if-revived, not deleted or blocked today.
 - Every precision and R@5 number above has its provenance in
   `reports/phaseC_pair_quality_audit.json` and `reports/phaseC_pair_quality_review.json`
   (per-pair verdicts + reasons), reproducible via `scripts/phaseC_pair_quality_audit.py`.

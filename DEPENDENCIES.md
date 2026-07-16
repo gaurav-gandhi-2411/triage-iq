@@ -88,3 +88,52 @@ either. No reachable surface.
 **Revisit trigger:** No fix version is currently published upstream — nothing to upgrade
 to. Re-check when PyTorch ships a patched release, or if this codebase ever adds
 TorchScript-based model export/optimization (it does not today).
+
+### PYSEC-2026-2290 — transformers LightGlue model-loading path RCE via `trust_remote_code` override
+
+- **Suppressed since:** 2026-07-16
+- **Affected package:** `transformers==4.57.6`
+- **Fix version:** none published for the 4.x line (same constraint as the other open
+  transformers findings above)
+
+**Why suppressed:**
+The vulnerability is in the LightGlue model's loading path: `LightGlueConfig` reads
+`trust_remote_code` from an untrusted `config.json` and propagates it into nested
+`AutoConfig.from_pretrained()` calls, overriding a caller's explicit
+`trust_remote_code=False`. Checked directly: TriageIQ never loads a LightGlue model, and
+the only raw `AutoModel.from_pretrained()` call anywhere in the codebase
+(`scripts/w3_t4_train.py:317`) loads a single hardcoded, project-controlled model ID
+(`BAAI/bge-base-en-v1.5`, the same constant used by the production retriever in
+`src/triage_iq/models/similar_issues.py`) — never a dynamic or attacker-suppliable repo
+ID. No reachable surface: no LightGlue model, no untrusted config source.
+
+**Why not fixed immediately:** Same triple-major-version-bump blocker as the other open
+transformers findings (`transformers>=5.x` requires `sentence-transformers>=5.x`).
+
+**Revisit trigger:** Same as the other transformers findings above — bundled into the
+same future major-version dependency refresh.
+
+### PYSEC-2026-3447 — setuptools `FileList` MANIFEST.in exclude-pattern Unicode-normalization bypass
+
+- **Suppressed since:** 2026-07-16
+- **Affected package:** `setuptools` (version varies by CI runner image — not a pinned
+  dependency in `requirements.lock`; TriageIQ never lists setuptools as a runtime or
+  build requirement, it's incidental to the Python environment)
+- **Fix version:** `setuptools>=83.0.0`
+
+**Why suppressed:**
+The vulnerability requires building a source distribution (`sdist`) with a `MANIFEST.in`
+containing `exclude`/`global-exclude`/`recursive-exclude`/`prune` directives, on a
+filesystem with Unicode NFD/NFC normalization behavior (macOS APFS/HFS+). Checked
+directly: this repo has no `MANIFEST.in`, no `setup.py`/`setup.cfg` (packaging config is
+`pyproject.toml`, tool-config only per this project's conventions) — it is never built as
+a distributable sdist. CI and production both run on Linux (`ubuntu-latest` /
+`Dockerfile.prod`'s Linux base image), not macOS, so the filesystem precondition is also
+absent. Both preconditions for exploitation are unmet.
+
+**Why not fixed immediately:** Not a pinned dependency — there is no `requirements.lock`
+line to bump. The version pip-audit reports varies by whichever setuptools ships with
+the runner's Python installation.
+
+**Revisit trigger:** If this repo ever starts building/publishing an sdist (it does not
+today), pin `setuptools>=83.0.0` explicitly as a build dependency at that time.

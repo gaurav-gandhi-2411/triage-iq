@@ -27,11 +27,13 @@ jobs:
 
       - name: Security audit
         run: |
-          # All 4 suppressions below are justified in DEPENDENCIES.md (unreachable code
+          # All 6 suppressions below are justified in DEPENDENCIES.md (unreachable code
           # paths, verified directly against this codebase's actual usage — not blanket
           # ignores). 22 other CVEs (aiohttp/idna/starlette/pydantic-settings) were FIXED
-          # via a surgical requirements.lock bump in the 2026-07-10 hygiene pass, not
-          # suppressed — see DEPENDENCIES.md and the hygiene-pass ADR for the full triage.
+          # via a surgical requirements.lock bump in the 2026-07-10 hygiene pass, and 8
+          # pillow CVEs were FIXED via a pillow 12.2.0->12.3.0 bump in the 2026-07-16
+          # pass — not suppressed. See DEPENDENCIES.md and the hygiene-pass ADR for the
+          # full triage.
           #
           # CVE-2026-1839: unsafe torch.load() in Trainer._load_rng_state()
           # (transformers/trainer.py) — training-checkpoint-restoration path. TriageIQ never
@@ -48,15 +50,27 @@ jobs:
           # CVE-2025-3000: torch.jit.script memory corruption on scripted classes with list
           # attributes. TriageIQ never calls torch.jit.script/trace/compile anywhere.
           #
-          # All four: fix requires transformers>=5.0.0rc3 (needs sentence-transformers>=5.x,
-          # a triple major bump) or, for CVE-2025-3000, no fix version is published at all.
-          # Revisit when a planned dependency refresh is scheduled (not bundled into an
-          # unrelated PR) — see DEPENDENCIES.md for each entry's specific revisit trigger.
+          # PYSEC-2026-2290: transformers LightGlue model-loading `trust_remote_code`
+          # override RCE. TriageIQ never loads a LightGlue model; the only raw
+          # AutoModel.from_pretrained() call (scripts/w3_t4_train.py) uses a hardcoded,
+          # fixed model ID, never an attacker-suppliable one.
+          #
+          # PYSEC-2026-3447: setuptools MANIFEST.in exclude-pattern Unicode-normalization
+          # bypass — requires building an sdist on macOS APFS/HFS+. This repo has no
+          # MANIFEST.in/setup.py, never builds an sdist, and runs on Linux everywhere.
+          #
+          # Transformers findings (all but PYSEC-2026-3447): fix requires
+          # transformers>=5.0.0rc3 (needs sentence-transformers>=5.x, a triple major bump)
+          # or, for CVE-2025-3000, no fix version is published at all. Revisit when a
+          # planned dependency refresh is scheduled (not bundled into an unrelated PR) —
+          # see DEPENDENCIES.md for each entry's specific revisit trigger.
           pip-audit -r requirements.lock --skip-editable \
             --ignore-vuln CVE-2026-1839 \
             --ignore-vuln PYSEC-2025-217 \
             --ignore-vuln CVE-2026-4372 \
-            --ignore-vuln CVE-2025-3000
+            --ignore-vuln CVE-2025-3000 \
+            --ignore-vuln PYSEC-2026-2290 \
+            --ignore-vuln PYSEC-2026-3447
 
       - name: Lint (ruff)
         run: ruff check src/ tests/

@@ -184,6 +184,25 @@ suggested_next_steps, triage_summary
 > mining, already NO-GO'd on value grounds) are both harder and were explicitly deferred,
 > not attempted here.
 >
+> **Gold pair quality audit (2026-07-16, ADR-0032) — the k8s and vscode numbers above are
+> not measuring the same thing.** Before accepting ~23-27% as a ceiling, a hand-judged
+> 50-pair sample (25/repo, fixed seed) checked whether the gold pairs behind these R@5
+> numbers are genuinely related. **k8s: 72.0% precision [52.4, 85.7]** — the pair set is
+> 86% reference-mined ("See #N"/"Forked from #N"), and pulling incidental pairs out doesn't
+> move R@5 outside its own CI (27.8% genuine-only vs. 23.5% full-set) — **the k8s finding
+> holds up as real.** **vscode: 20.0% precision [8.9, 39.1]** — 94.9% of its live-evaluated
+> pairs come from `title_sim` (title-text similarity), a channel never precision-audited
+> before, and the sample is dominated by boilerplate-template collisions ("Bayou"↔"11",
+> both blank issue forms) and generic auto-bucket title matches on different actual bugs.
+> **vscode's 26.7% should not be cited as corroborating k8s's ~23%** — it's measured
+> against a pair set this audit finds ~80% incidental; no properly-powered clean
+> re-measurement exists yet (the genuine-only subsample, n=5, is too small to read).
+> Separately: of the genuinely-related pairs the retriever misses, 0/17 have zero shared
+> vocabulary with their target (overlap up to 90 shared tokens on near-duplicate crash
+> reports) — misses are lexically findable in principle, not an unfindable-by-any-method
+> ceiling. Full methodology and every pair's judgment:
+> [`docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md`](docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md).
+>
 > **Synthesis quality metric redesign (2026-07-11).** The mean-band score is a
 > *regression detector* (fails only if it drops below its own prior baseline by more
 > than measured noise) — it was never a quality floor, and it structurally cannot catch

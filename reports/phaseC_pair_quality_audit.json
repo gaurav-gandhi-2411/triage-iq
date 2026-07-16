@@ -1,0 +1,352 @@
+{
+  "n_sampled": 50,
+  "precision_overall": 0.46,
+  "precision_overall_wilson95": [
+    0.3297,
+    0.596
+  ],
+  "precision_by_repo": {
+    "kubernetes_kubernetes": 0.72,
+    "microsoft_vscode": 0.2
+  },
+  "precision_by_repo_wilson95": {
+    "kubernetes_kubernetes": [
+      0.5242,
+      0.8572
+    ],
+    "microsoft_vscode": [
+      0.0886,
+      0.3913
+    ]
+  },
+  "sample_composition": {
+    "kubernetes_kubernetes": 25,
+    "microsoft_vscode": 25
+  },
+  "clean_subset_recall_at_5": {
+    "kubernetes_kubernetes": {
+      "n_genuine_sampled": 18,
+      "recall_at_5_on_genuine_subset": 0.2778,
+      "ci95_note": "small-n sample CI, illustrative only",
+      "ci95": [
+        0.1111,
+        0.5
+      ]
+    },
+    "microsoft_vscode": {
+      "n_genuine_sampled": 5,
+      "recall_at_5_on_genuine_subset": 0.2,
+      "ci95_note": "small-n sample CI, illustrative only",
+      "ci95": [
+        0.0,
+        0.6
+      ]
+    }
+  },
+  "genuine_misses_vocab_overlap": [
+    {
+      "repo": "kubernetes_kubernetes",
+      "query_number": 7395,
+      "original_number": 4007,
+      "shared_token_count": 11,
+      "shared_tokens_sample": [
+        "443",
+        "apiserver",
+        "aws",
+        "bearer",
+        "having",
+        "kube",
+        "nginx",
+        "port",
+        "sits",
+        "support",
+        "tokens"
+      ]
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query_number": 7397,
+      "original_number": 4007,
+      "shared_token_count": 10,
+      "shared_tokens_sample": [
+        "443",
+        "apiserver",
+        "bearer",
+        "having",
+        "kube",
+        "nginx",
+        "port",
+        "sits",
+        "support",
+        "tokens"
+      ]
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query_number": 8989,
+      "original_number": 8871,
+      "shared_token_count": 10,
+      "shared_tokens_sample": [
+        "add",
+        "addresses",
+        "apiserver",
+        "cluster",
+        "default",
+        "dns",
+        "interact",
+        "local",
+        "localhost",
+        "proxy"
+      ]
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query_number": 3253,
+      "original_number": 1521,
+      "shared_token_count": 13,
+      "shared_tokens_sample": [
+        "1513",
+        "api",
+        "attach",
+        "container",
+        "containers",
+        "docker",
+        "exec",
+        "more",
+        "required",
+        "ssh",
+        "stdin",
+        "stdout",
+        "support"
+      ]
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query_number": 3710,
+      "original_number": 3667,
+      "shared_token_count": 5,
+      "shared_tokens_sample": [
+        "client",
+        "exceeded",
+        "fail",
+        "limits",
+        "rate"
+      ]
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query_number": 3861,
+      "original_number": 3681,
+      "shared_token_count": 5,
+      "shared_tokens_sample": [
+        "bind",
+        "config",
+        "currently",
+        "kubernetes",
+        "nic"
+      ]
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query_number": 5548,
+      "original_number": 4817,
+      "shared_token_count": 6,
+      "shared_tokens_sample": [
+        "api",
+        "googlecloudplatform",
+        "kubernetes",
+        "label",
+        "labels",
+        "uid"
+      ]
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query_number": 5654,
+      "original_number": 3952,
+      "shared_token_count": 5,
+      "shared_tokens_sample": [
+        "following",
+        "googlecloudplatform",
+        "killing",
+        "kubernetes",
+        "pod"
+      ]
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query_number": 8876,
+      "original_number": 8448,
+      "shared_token_count": 4,
+      "shared_tokens_sample": [
+        "commands",
+        "exec",
+        "inline_code",
+        "kubectl"
+      ]
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query_number": 9453,
+      "original_number": 8087,
+      "shared_token_count": 2,
+      "shared_tokens_sample": [
+        "kubernetes",
+        "v1beta1"
+      ]
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query_number": 9788,
+      "original_number": 7815,
+      "shared_token_count": 4,
+      "shared_tokens_sample": [
+        "code_block",
+        "kubelet",
+        "logs",
+        "node"
+      ]
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query_number": 11089,
+      "original_number": 8448,
+      "shared_token_count": 2,
+      "shared_tokens_sample": [
+        "exec",
+        "kubectl"
+      ]
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "query_number": 11658,
+      "original_number": 10548,
+      "shared_token_count": 3,
+      "shared_tokens_sample": [
+        "being",
+        "run",
+        "tests"
+      ]
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query_number": 4854,
+      "original_number": 4853,
+      "shared_token_count": 16,
+      "shared_tokens_sample": [
+        "43ff6af3d4564f59196caa9be4897fc33c15f24c",
+        "_stack_",
+        "_versions_",
+        "base",
+        "blob",
+        "cannot",
+        "common",
+        "editor",
+        "ef2a1fcaa553d14d7731b284a5ac5e4a55c42936",
+        "insider",
+        "microsoft",
+        "property",
+        "read",
+        "src",
+        "typeerror"
+      ]
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query_number": 311555,
+      "original_number": 311022,
+      "shared_token_count": 90,
+      "shared_tokens_sample": [
+        "0000",
+        "1062",
+        "1165",
+        "128",
+        "162",
+        "2026",
+        "437",
+        "922",
+        "931",
+        "_createinstance",
+        "_deliver",
+        "_event",
+        "actions",
+        "anonymous",
+        "apr"
+      ]
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query_number": 311545,
+      "original_number": 311022,
+      "shared_token_count": 67,
+      "shared_tokens_sample": [
+        "0000",
+        "1062",
+        "128",
+        "162",
+        "2026",
+        "_createinstance",
+        "_deliver",
+        "_event",
+        "apr",
+        "automatically",
+        "base",
+        "blob",
+        "browser",
+        "bucket",
+        "code_block"
+      ]
+    },
+    {
+      "repo": "microsoft_vscode",
+      "query_number": 311546,
+      "original_number": 311022,
+      "shared_token_count": 67,
+      "shared_tokens_sample": [
+        "0000",
+        "1062",
+        "128",
+        "162",
+        "2026",
+        "_createinstance",
+        "_deliver",
+        "_event",
+        "apr",
+        "automatically",
+        "base",
+        "blob",
+        "browser",
+        "bucket",
+        "code_block"
+      ]
+    }
+  ],
+  "genuine_misses_zero_overlap_count": 0,
+  "genuine_misses_total": 17,
+  "channel_composition_of_live_product_sets": {
+    "kubernetes_kubernetes": {
+      "n": 277,
+      "by_channel": {
+        "k8s_extended_mine": 200,
+        "legacy_gold_v1": 77
+      },
+      "by_source_within_legacy_gold_v1": {
+        "title_sim": 38,
+        "body_related": 37,
+        "body_ref": 2
+      }
+    },
+    "microsoft_vscode": {
+      "n": 292,
+      "by_channel": {
+        "legacy_gold_v1": 288,
+        "vscode_body_refs": 4
+      },
+      "by_source_within_legacy_gold_v1": {
+        "title_sim": 277,
+        "body_related": 10,
+        "body_ref": 1
+      }
+    }
+  }
+}

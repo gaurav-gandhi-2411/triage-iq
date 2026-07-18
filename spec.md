@@ -1,146 +1,111 @@
-# Project Spec: TriageIQ — Retrieval Quality Improvement (attack the ~23% base rate)
+# Project Spec: TriageIQ — Phase D1: Clean Retrieval Data + Trustworthy Eval Foundation
 
 ## Goal
 
-Product-task retrieval (issue → genuinely-related issue) is the **weakest model in the pipeline**:
-honest Recall@5 is **k8s 23.5% [18.4, 28.5], vscode 22.4% [17.7, 28.0]** — statistically
-indistinguishable, both ~23%. The retriever surfaces the related issue in the top-5 roughly one time
-in four. This was invisible until ADR-0028/0030 because k8s was measured on a PR→issue proxy and
-vscode on a proxy-inflated number.
+Before ANY GPU training of a better retrieval model, the data and eval must be clean — otherwise
+GPU training produces a model trained on noise, evaluated on noise, giving a fake improvement (the
+worst possible outcome for a project whose value is honest measurement). This phase builds that
+foundation:
 
-Everything previously tried on retrieval aimed at the wrong target: the W3 fine-tune (+3.5pp,
-marginal, HELD), corpus growth (grew the *duplicate* stratum, not related pairs), and a cross-encoder
-reranker (ADR-0006 — **rejected on the PROXY metric**, which is now known to be the wrong task).
+1. **Clean retrieval TRAINING pairs** per repo — genuinely-related issue→issue pairs, replacing the
+   ~80%-noise title_sim channel (ADR-0032 found title_sim is ~20% precision; it currently feeds
+   hard-negative mining + the train split).
+2. **A hand-verified, leakage-safe, held-out EVAL set** per repo that stays valid AFTER training
+   (disjoint from all training pairs) — the trustworthy scoreboard D2's GPU training will be judged
+   on. Without this, GPU training is unmeasurable.
 
-The techniques with real headroom on **technical corpora** are untried. This iteration tries them,
-in leverage order, each measured honestly and gated on the same bar.
+D1 is mostly CPU/analysis + a bounded hand-verification effort. It gates D2 (GPU training). It is
+also independently valuable: it fixes the contaminated retrieval eval that ADR-0032 exposed.
 
-## The bar (identical for every lever — no exceptions)
+## Current state (the mess D1 cleans)
 
-- Metric: **product-task Recall@5** on the honest product-task pairs, per repo, vs the current live
-  v1 baseline (k8s 23.5% / vscode 22.4%).
-- Also report R@1 and R@10 for shape, but **R@5 is the gate** (it's what the product surfaces).
-- **Bootstrap CI (paired, same method as ADR-0027/phaseC)**. A lever SHIPS only if its CI on the
-  improvement **excludes zero** — on **k8s** (n=277, powered) as the primary gate. vscode (n=254) is
-  also powered here — report it; if a lever clears **both**, that's a strong ship. If it clears k8s
-  only, that's a k8s-conditional ship (state it honestly, like the resolution bucket decision).
-- A lever that doesn't clear the bar is **rejected and documented** — same as the reranker, the W3
-  fine-tune, selective prediction. A negative is a valid outcome. **Do not p-hack, do not lower the
-  bar, do not ship a marginal gain.**
-- **Magnitude matters too**: at a ~23% base, a +2-3pp lift is polish (that's the reason the W3
-  fine-tune was NO-GO'd). State the effect size, not just significance. A lever that clears the CI
-  but only adds ~3pp should be reported as *statistically real but practically marginal* — the human
-  decides if it's worth shipping.
+- `gold_related_v2.parquet`: pairs from multiple channels — reference-mined ("See #N", 78-89%
+  precision, GOOD), dup_comment (/duplicate, high precision, but DUPLICATES not general-related),
+  PR-query (proxy, wrong task), and **title_sim (~20% precision, NOISE)**.
+- title_sim feeds `w3_t2_mine_negatives.py` (hard negatives), `w3_t3_split.py` (train split),
+  `w3_t4_train.py` (triplet training) — so the held W3 fine-tune trained partly on noise.
+- Honest eval today: k8s ~23.5% [18.4,28.5] (n=277, ~72% precision — usable but not clean),
+  vscode UNMEASURED (~20% precision gold — unusable).
+- Zero-leakage reasoning (ADR-0030) holds ONLY for the untrained index. **Once we train (D2),
+  eval MUST be disjoint from training data.** D1 must produce that disjoint split.
 
-## Eval data (already exists — no new mining)
+## Scope (D1 — data + eval only, NO training)
 
-- k8s: **277** in-live-index product-task pairs (`scripts/phaseC_k8s_live_product_eval.py` produces
-  the baseline; reuse its pair-selection exactly).
-- vscode: **254** product-task pairs (the honest set from ADR-0028's correction).
-- Zero-leakage reasoning (ADR-0030): these evaluate an **untrained pretrained** embedder, so
-  train/test split labels don't apply. **This reasoning holds ONLY for untrained models.** If a lever
-  **trains** anything (reranker fine-tune, embedder fine-tune), the leakage question **returns** —
-  a trained model MUST be evaluated on pairs disjoint from its training data. **Escalate before
-  training anything on these pairs.**
+### 1. Characterize + clean the pair channels
+- Per channel per repo: precision (hand-sample where not already known — reference-mined and
+  title_sim are known; audit dup_comment and any others), and product-task relevance (is it
+  issue→related-issue, the product task, or a proxy?).
+- Build a CLEAN pair pool: keep genuinely-related, product-task, high-precision pairs. Drop title_sim
+  noise. For each kept channel, state the precision and why it's included.
+- **k8s**: reference-mined is the clean backbone (~78-89%). Quantify the clean pool size.
+- **vscode**: the hard case — its clean channels are thin (ADR-0032). Determine honestly: is there a
+  clean vscode pair pool large enough to train + eval on, or does vscode need the comment-mining
+  channel (Phase 2b found /duplicate comments at 62% modern recovery — but those are DUPLICATES,
+  a related-but-distinct stratum)? **Report vscode's realistic clean pool per stratum.** If vscode
+  can't reach a trainable+evaluable clean set, say so — vscode may be train-on-k8s / eval-only, or
+  deferred.
 
-## Levers (in this order — each gated before proceeding)
+### 2. Hand-verify the held-out EVAL set (the scoreboard)
+- Carve a HELD-OUT eval set per repo from the clean pool — hand-verified genuine (like the ADR-0032
+  audit, but larger: target enough for a powered recall@k CI, ~150-300 pairs per repo if the clean
+  pool supports it; report what's achievable).
+- **This eval set is DISJOINT from the training pool by construction** — no eval issue appears in any
+  training pair. Assert it (the ADR-0018 / disjointness discipline — this is the leakage guard that
+  makes D2's trained-model numbers valid).
+- Hand-verify a sample to confirm precision is high (target ≥90% genuine — this is the scoreboard, it
+  must be clean). Report the verified precision.
+- Freeze it with provenance (which channel, which issues, verification date) so D2 evaluates on a
+  fixed, trustworthy target.
 
-### Lever 1 — Hybrid BM25 + dense (highest value, lowest risk, no training)
+### 3. Re-establish the honest CURRENT baseline on the clean eval
+- Re-run the current live (untrained) retriever's recall@5 (+R@1/R@10) on the new CLEAN held-out
+  eval set, per repo, with bootstrap CI. This is the honest "before" number D2 must beat.
+- Expect it to differ from the ~23.5% (that was measured on the 72%-precision set) — report the
+  clean-eval baseline as the real current performance.
 
-**Hypothesis**: dense embeddings (BGE) systematically miss **exact-term matches** — error codes
-(`ImagePullBackOff`, `CrashLoopBackOff`), stack traces, API names, file paths, CLI flags — which is
-exactly what GitHub issue text is made of. BM25 catches lexical overlap that dense retrieval blurs
-away. Hybrid fusion routinely gives large gains on technical corpora.
+### 4. Best eval PARAMS (the "best eval params" ask)
+- Determine the right eval configuration: which k for recall@k (what does the product surface —
+  top-5? top-10?), whether MRR/nDCG add signal over recall@k, the right CI method. Recommend the
+  eval-param set D2 will use, justified by the product use case.
 
-- Build BM25 over the same corpus the dense index covers (per repo, same document text).
-- Fuse: **Reciprocal Rank Fusion (RRF)** as the default (robust, no score-normalization pitfalls).
-  Optionally also try weighted score-fusion (normalized) and report both — RRF is the primary.
-- **Tune the fusion parameter (k / weight) on a held-out slice, NOT on the test pairs** — tuning on
-  the eval set is the classic leak. Split the product pairs into tune/test, or tune on a separate
-  slice; **state exactly what was tuned on what**. If there's no clean tuning slice, use RRF's
-  standard k=60 untuned and say so.
-- Measure product-task R@5 (+R@1/R@10) per repo vs baseline, with paired bootstrap CI.
-- **Diagnostic (do this regardless of outcome)**: on the pairs BM25 gets right that dense misses,
-  what characterizes them? (Exact error codes? Rare API names?) This tells you *why* dense fails and
-  informs everything downstream. Report examples.
-
-### Lever 2 — Reranker on the PRODUCT task (the ADR-0006 retry — different metric this time)
-
-**Only if Lever 1 is done and reported** (hybrid may change the candidate set the reranker sees —
-rerank the *best available* first-stage).
-
-- ADR-0006 rejected a cross-encoder reranker — **but on the PROXY metric** (PR→issue), which is now
-  known to be the wrong task. Retry it against **product-task R@5**, over the best first-stage
-  (hybrid if Lever 1 ships, else dense).
-- Use an **off-the-shelf pretrained cross-encoder** (no training → the zero-leakage reasoning still
-  holds, no escalation needed). If a *trained* reranker is proposed, **STOP and escalate** (leakage
-  question returns).
-- Rerank top-k (k=20-50) candidates → measure R@5 with paired bootstrap CI.
-- **Report latency**: a reranker adds inference cost per query. State the added latency; a lever that
-  doubles response time for +3pp is a bad trade. The human decides on the quality/latency curve.
-
-### Lever 3 — Stronger base embedder (cheapest experiment, do if 1-2 underdeliver)
-
-- Swap BGE for a stronger modern retrieval embedder, **pretrained, no fine-tuning** (keeps the
-  zero-leakage reasoning). Re-embed the corpus, re-measure product-task R@5.
-- Report: does the base rate move materially, and at what index-build/storage cost?
-- Zero-cost constraint: use a model that runs locally / is freely available. No paid APIs.
-
-## Scope
-
-### In scope
-- Levers 1-3 as above, each measured + gated + documented.
-- The Lever-1 diagnostic (why does dense fail — what does BM25 recover?).
-- If a lever ships: full deliberate index/model cutover (artifacts + MANIFEST + drift guard +
-  rollback anchor + live verify) — a retrieval change alters `similar_issues` → it changes the frozen
-  eval-set retrieval → **re-record + re-baseline** (escalate; this is the ADR-0010/Option-C path).
-- ADR-0031: hypothesis, per-lever result (effect + CI + latency), ship/reject decision per lever,
-  and the honest headline (did we move the ~23% base rate, and by how much).
-
-### Out of scope
-- **No training/fine-tuning of anything on the product-task pairs without escalation** (leakage).
-- No new data mining (Phase C is NO-GO'd — this uses existing pairs).
-- No reviving the held W3 fine-tune (it's marginal; that decision stands).
-- No paid APIs / no ANTHROPIC_API_KEY (zero-cost).
-- No changing the product-task metric to make a lever look better.
+### Out of scope (D1)
+- NO training (that's D2). NO GPU (D1 is CPU/analysis + hand-verification).
+- No shipping/cutover (D1 produces data + eval, not a model).
+- No new large-scale mining unless a channel is needed for a minimum viable clean pool (escalate if
+  vscode requires it).
 
 ## Autonomy & escalation
-
-CC runs each lever autonomously. **Escalate ONLY:**
-1. **Each lever's result** (effect size + CI + latency where relevant) **before proceeding to the
-   next lever** — so the human can stop early if a lever wins big or all are duds.
-2. **Any proposal to TRAIN a model on the product pairs** (leakage question returns — do not proceed).
-3. **The cutover** if a lever ships (index change → re-record + re-baseline + deploy).
+CC runs the analysis + clean-pool construction autonomously. Hand-verification is bounded labeling.
+Escalate ONLY:
+1. **The clean-pool sizes + vscode's realistic verdict** (can vscode be trained+evaluated cleanly, or
+   is it deferred/k8s-only?) — before finalizing, since it shapes D2.
+2. **The held-out eval set + its verified precision + the clean-eval baseline numbers** — before D2
+   uses them as the scoreboard.
+3. Any need for new large-scale mining to reach a minimum clean pool.
 
 ## Hard rules
-
-- **Ship only on CI-excludes-zero (k8s primary), and state the effect size** — at a ~23% base, a
-  +3pp "significant" lift is *practically marginal*; report it as such and let the human decide.
-- **Never tune on the test pairs.** State exactly what was tuned on what.
-- **No training on the eval pairs without escalation** — the zero-leakage reasoning holds only for
-  untrained models (ADR-0030).
-- A rejected lever is a **valid, documented finding** (ADR-0006 / W3 / selective-prediction pattern).
-- Report **latency** for any lever that adds inference cost.
-- Branch only (`feat/retrieval-quality`); human merges. Zero-cost, local only.
-  Claude Max — never ANTHROPIC_API_KEY. Don't touch aetherart-497918.
+- The held-out eval set is DISJOINT from all training pairs by construction — asserted. This is the
+  leakage guard for D2; without it, D2's trained numbers are contaminated (the exact bug class this
+  project has caught 4×).
+- Clean pool = genuinely-related product-task pairs only. title_sim NOISE is dropped, not included.
+- Eval set precision hand-verified ≥90% (it's the scoreboard).
+- Honest vscode verdict — if it can't be cleanly trained+evaluated, SAY SO; don't force it.
+- No training, no GPU, no cutover in D1. Branch `feat/retrieval-clean-data`; human merges.
+  Zero-cost (D1 is CPU). Claude Max — never ANTHROPIC_API_KEY. Don't touch aetherart-497918.
 
 ## Success criteria
+- Clean pair pool per repo, per channel, with precision stated; title_sim dropped.
+- Held-out eval set per repo: hand-verified ≥90% precision, disjoint-from-training asserted, frozen
+  with provenance.
+- Clean-eval baseline (current untrained retriever) per repo with CI — the honest "before".
+- vscode verdict: trainable+evaluable clean, or deferred/k8s-only — stated.
+- Recommended eval params (k, metrics, CI) for D2.
+- ADR-0033 + `reports/retrieval_clean_data.json`.
 
-- Baseline reproduced (k8s 23.5% / vscode 22.4%) before any lever — confirm the harness agrees.
-- Each lever: product-task R@5 (+R@1/R@10) per repo, paired bootstrap CI vs baseline, effect size,
-  latency where relevant. Tuning provenance stated.
-- Lever-1 diagnostic: what BM25 recovers that dense misses (with examples) — the *why*.
-- Ship/reject per lever on the stated bar; rejections documented as findings.
-- ADR-0031 + `reports/retrieval_quality.json` (reproducible byte-identically).
-- If shipping: full cutover plan (escalated) incl. re-record + re-baseline.
-
-## Build order (CC autonomous, escalate at each lever's result)
-
-1. Reproduce the baseline on the existing harness (sanity: k8s 23.5% / vscode 22.4%).
-2. **Lever 1 — Hybrid BM25 + RRF.** Measure, CI, diagnostic. **ESCALATE the result.**
-3. **Lever 2 — Pretrained cross-encoder reranker on product task** (over the best first-stage).
-   Measure, CI, latency. **ESCALATE.**
-4. **Lever 3 — Stronger pretrained embedder.** Measure, CI, cost. **ESCALATE.**
-5. ADR-0031 + the cutover plan for whatever ships (escalate the cutover).
+## Build order (CC autonomous, escalate at the gates)
+1. Channel precision + product-task audit → clean pool per repo. ESCALATE the pool sizes + vscode verdict.
+2. Carve + hand-verify the held-out eval set (≥90%, disjoint-asserted, frozen). ESCALATE it + precision.
+3. Re-baseline the current untrained retriever on the clean eval (CI). Report.
+4. Recommend eval params. ADR-0033.
 ```
 

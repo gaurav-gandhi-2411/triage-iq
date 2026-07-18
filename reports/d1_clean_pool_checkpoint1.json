@@ -1,0 +1,232 @@
+{
+  "channel_decisions": [
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "k8s_forward_scrape",
+      "source": "body_related",
+      "stratum": "product",
+      "pool_size": 45,
+      "decision": "KEEP",
+      "precision_evidence": {
+        "n_judged": 45,
+        "n_genuine": 38,
+        "precision": 0.8444,
+        "wilson95": [
+          0.7122,
+          0.9225
+        ],
+        "sample_note": "full_census",
+        "provenance": "D1 fresh full census, this phase"
+      },
+      "note": ""
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "k8s_forward_scrape",
+      "source": "body_related_ext",
+      "stratum": "product",
+      "pool_size": 454,
+      "decision": "KEEP",
+      "precision_evidence": {
+        "n_judged": 30,
+        "n_genuine": 25,
+        "precision": 0.8333,
+        "wilson95": [
+          0.6644,
+          0.9266
+        ],
+        "sample_note": "sample_30_of_454",
+        "provenance": "D1 fresh sample n=30 of 454, this phase"
+      },
+      "note": ""
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "k8s_extended_mine",
+      "source": "body_related_ext",
+      "stratum": "product",
+      "pool_size": 200,
+      "decision": "KEEP",
+      "precision_evidence": {
+        "n_judged": 20,
+        "n_genuine": 13,
+        "precision": 0.65,
+        "wilson95": [
+          0.4329,
+          0.8188
+        ],
+        "provenance": "ADR-0032 review, resliced by source"
+      },
+      "note": "lowest-precision kept k8s channel (65% vs ~83-84% siblings) -- flagged for GG"
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "legacy_gold_v1",
+      "source": "body_related",
+      "stratum": "product",
+      "pool_size": 37,
+      "decision": "KEEP",
+      "precision_evidence": {
+        "n_judged": 3,
+        "n_genuine": 3,
+        "precision": 1.0,
+        "wilson95": [
+          0.4385,
+          1.0
+        ],
+        "provenance": "ADR-0032 review, resliced by source"
+      },
+      "note": "thin sample (n=3 of 37) -- consistent with sibling channels, not independently powered"
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "legacy_gold_v1",
+      "source": "body_ref",
+      "stratum": "product",
+      "pool_size": 2,
+      "decision": "DROP",
+      "precision_evidence": {
+        "n_judged": 2,
+        "n_genuine": 0,
+        "precision": 0.0,
+        "wilson95": [
+          0.0,
+          0.6576
+        ],
+        "sample_note": "full_census"
+      },
+      "note": "full census n=2, both incidental (self-disclaimed 'maybe/probably not the same') -- negligible size either way"
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "*",
+      "source": "title_sim",
+      "stratum": "*",
+      "pool_size": 0,
+      "decision": "DROP",
+      "precision_evidence": null,
+      "note": "hard rule (ADR-0032, spec.md) -- title_sim dropped unconditionally, not re-litigated per repo"
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "vscode_dup_scrape",
+      "source": "dup_comment",
+      "stratum": "gate",
+      "pool_size": 2242,
+      "decision": "KEEP (duplicate stratum)",
+      "precision_evidence": {
+        "n_judged": 40,
+        "n_genuine": 34,
+        "precision": 0.85,
+        "wilson95": [
+          0.7093,
+          0.9294
+        ],
+        "sample_note": "sample_40_of_2242",
+        "provenance": "D1 fresh sample n=40 of 2242, this phase"
+      },
+      "note": "vscode's largest channel by far and the deciding factor for its verdict"
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "legacy_gold_v1",
+      "source": "body_ref",
+      "stratum": "product",
+      "pool_size": 1,
+      "decision": "KEEP (related stratum)",
+      "precision_evidence": {
+        "n_judged": 1,
+        "n_genuine": 1,
+        "precision": 1.0,
+        "wilson95": [
+          0.2065,
+          1.0
+        ],
+        "sample_note": "full_census",
+        "provenance": "D1 fresh full census, this phase"
+      },
+      "note": ""
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "legacy_gold_v1",
+      "source": "body_related",
+      "stratum": "product",
+      "pool_size": 10,
+      "decision": "KEEP (related stratum)",
+      "precision_evidence": {
+        "n_judged": 10,
+        "n_genuine": 8,
+        "precision": 0.8,
+        "wilson95": [
+          0.4902,
+          0.9433
+        ],
+        "sample_note": "full_census",
+        "provenance": "D1 fresh full census, this phase"
+      },
+      "note": ""
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "vscode_body_refs",
+      "source": "body_related",
+      "stratum": "product",
+      "pool_size": 11,
+      "decision": "KEEP (related stratum)",
+      "precision_evidence": {
+        "n_judged": 11,
+        "n_genuine": 10,
+        "precision": 0.9091,
+        "wilson95": [
+          0.6226,
+          0.9838
+        ],
+        "sample_note": "full_census",
+        "provenance": "D1 fresh full census, this phase"
+      },
+      "note": ""
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "vscode_body_refs",
+      "source": "body_related_ext",
+      "stratum": "product",
+      "pool_size": 206,
+      "decision": "DROP",
+      "precision_evidence": {
+        "precision_range": [
+          0.3,
+          0.43
+        ],
+        "n": 30,
+        "provenance": "ADR-0030 Channel A table, cited not re-derived"
+      },
+      "note": "noisy, same tier as title_sim -- non-title_sim alone is NOT sufficient for 'clean'"
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "*",
+      "source": "title_sim",
+      "stratum": "*",
+      "pool_size": 0,
+      "decision": "DROP",
+      "precision_evidence": null,
+      "note": "hard rule (ADR-0032, spec.md) -- title_sim dropped unconditionally"
+    }
+  ],
+  "summary": {
+    "kubernetes_kubernetes": {
+      "clean_pool_size": 736,
+      "weighted_precision": 0.7925
+    },
+    "microsoft_vscode": {
+      "duplicate_stratum_size": 2242,
+      "duplicate_stratum_precision": 0.85,
+      "related_stratum_size": 22,
+      "related_stratum_precision": 0.8636,
+      "combined_clean_pool_size": 2264,
+      "combined_weighted_precision": 0.8501
+    }
+  }
+}

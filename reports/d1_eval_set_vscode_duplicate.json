@@ -1,0 +1,2002 @@
+[
+  {
+    "repo":"microsoft_vscode",
+    "query_number":18140,
+    "original_number":12463,
+    "query_title":"Feature-Request: Support specifying alternative tsconfig.json in workspace settings",
+    "original_title":"Allow to specify the tsconfig.json filename explicitly ",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":18238,
+    "original_number":5047,
+    "query_title":"Markdown preview view",
+    "original_title":"Support to scroll markdown preview with source scrolling",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":18412,
+    "original_number":4557,
+    "query_title":"Keybinding for opening files when navigating sidebar?",
+    "original_title":"Make explorer keybindings configurable",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":18480,
+    "original_number":17343,
+    "query_title":"Cannot list all the extensions currently installed in cmd",
+    "original_title":"code --list-extensions doesn't list all extensions",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":19949,
+    "original_number":1837,
+    "query_title":"[Markdown Syntax] Splitting lines causes formatting to not work",
+    "original_title":"Italics break in Markdown mode when there's linebreak",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":42382,
+    "original_number":11853,
+    "query_title":"Preserve the text case when doing case-insensitive search and replace",
+    "original_title":"Search: Replace, match previous case",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":66523,
+    "original_number":7570,
+    "query_title":"no me abre",
+    "original_title":"VS Code fails to start\/open  when offline",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":69236,
+    "original_number":43151,
+    "query_title":"Allow merging in external `tasks.json` files (and other workspace configuration)",
+    "original_title":"Ability to override location of tasks.json",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":88630,
+    "original_number":77696,
+    "query_title":"Existing Keybindings Preview",
+    "original_title":"Tooltip on hover for \"existing commands have this keybinding\"",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":89319,
+    "original_number":89318,
+    "query_title":"Ctrl+tab stopped working",
+    "original_title":"Ctrl + Tab no longer works in editor. Keybinding is missing.",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":89577,
+    "original_number":88127,
+    "query_title":"Manually adding cursors in html tags can interfere with mirrorCursorOnMatchingTag",
+    "original_title":"[html] [rename on type] does not work properly with multicursor",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":90265,
+    "original_number":88531,
+    "query_title":"Title bar title shifted at startup",
+    "original_title":"Titlebar display issue",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":90331,
+    "original_number":40262,
+    "query_title":"Contextual \"Manage\" menu initially partially hidden",
+    "original_title":"Bottom left \"action\" (gear icon) menu not scrolling (MacOS)",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":114057,
+    "original_number":101136,
+    "query_title":"Terminal: ^[[D cheese when opt-click on link",
+    "original_title":"Terminal filled with ^[[D^[[D^[[D^[[D when alt-clicking a link",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":114545,
+    "original_number":99270,
+    "query_title":"Show (deleted) indicator in custom editors",
+    "original_title":"Custom editor is not tagged deleted if file is deleted",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":115716,
+    "original_number":111652,
+    "query_title":"Renaming is cancelled if a new file is created in the workspace",
+    "original_title":"Action in explorer is interrupted shortly after creating a folder",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":116028,
+    "original_number":30874,
+    "query_title":"Freeze when typing some regex",
+    "original_title":"Regex Find can cause VS Code to Freeze",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":140323,
+    "original_number":140322,
+    "query_title":"Perl 5 Support + Feedback on C++ with VS Code",
+    "original_title":"Perl 5 Support + Feedback on C++ with VS Code",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":140736,
+    "original_number":135559,
+    "query_title":"`vscode.dev` it doesn't remember my open folders\/files",
+    "original_title":"Local file system: Restore opened folders and files",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":140984,
+    "original_number":140856,
+    "query_title":"Layer breaker in `contextScopedHistoryWidget.ts`",
+    "original_title":"Layer breaker in  browser\/contextScopedHistoryWidget.ts#L14",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":142962,
+    "original_number":130497,
+    "query_title":"Issue Reporter: no taskbar entry",
+    "original_title":"Issue report can not be activated\/focused once hidden",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":143791,
+    "original_number":143703,
+    "query_title":"Confusing 'Show Command Actions...' text in command decoration hover",
+    "original_title":"Terminal: Dropdown popup doesn't always work",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":144407,
+    "original_number":144339,
+    "query_title":"Shell integration messes up with my PATH",
+    "original_title":"${env:PATH} not detected on terminal",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":171347,
+    "original_number":169141,
+    "query_title":"Characters are being inserted into middle of word when using Intellisense to import package",
+    "original_title":"TS\/JS missing import messing up",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":173367,
+    "original_number":173244,
+    "query_title":"PHP Language Basics snippets does not work after update for 1.75",
+    "original_title":"Snippets gone from IntelliSense",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":173397,
+    "original_number":173244,
+    "query_title":"1.75.0  react snippet work error",
+    "original_title":"Snippets gone from IntelliSense",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":174546,
+    "original_number":154417,
+    "query_title":"Display exception after updating to 1.17.1",
+    "original_title":"update the language pack and then click reload then the shown language is changed to English",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":174804,
+    "original_number":17268,
+    "query_title":"Quick Open Position",
+    "original_title":"Make quick pick position configurable",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":175017,
+    "original_number":156838,
+    "query_title":"Multiple gutter badges shown for multi-line diff",
+    "original_title":"Multiple comment decorations rendered when word wrap is turned on",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":176007,
+    "original_number":54272,
+    "query_title":"Syntax highlighting and formatting for TypeScript problems",
+    "original_title":"Allow diagnostics messages to have markdown (or formatted text) content",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":202186,
+    "original_number":201269,
+    "query_title":"Copilot Issue: Hitting a down arrow removes the typed text ",
+    "original_title":"Copilot chat: pressing arrow down on last line in prompt box clears content.",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":204110,
+    "original_number":204073,
+    "query_title":"The following argument was not exepted: \/C Run with --help for more information",
+    "original_title":"externalConsole cant be opend anymore",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":206602,
+    "original_number":206486,
+    "query_title":"Highlighting works improperly on version 1.87.0",
+    "original_title":"Occurrence highlighting stuck",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":210240,
+    "original_number":210046,
+    "query_title":"Multiple node selection - no way to specify in package.json if command is part of multiple node selection ",
+    "original_title":"multiple node selection of treeView , does not show commands which are supported by all selected nodes",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":2056,
+    "original_number":2054,
+    "query_title":"No intellisense for Javascript projects",
+    "original_title":"NONE of the code features work in ES6 projects for language type: Javascript",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":3456,
+    "original_number":850,
+    "query_title":"mark extention as installed",
+    "original_title":"'install extension' should be more clear which extensions are already installed",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":3632,
+    "original_number":871,
+    "query_title":"Request keyboard binding configurable to execute multiple actions",
+    "original_title":"Macro like keybindings",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":4437,
+    "original_number":821,
+    "query_title":"Context menu in wrong location after increasing font size",
+    "original_title":"Context menu is positioned wrongly when zoomed in",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":5391,
+    "original_number":1796,
+    "query_title":"Git push doesn't ask for authentication",
+    "original_title":"HTTPS Authentication not working on Linux",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":6069,
+    "original_number":6044,
+    "query_title":"Unable to read long message in debug console.",
+    "original_title":"Word wrap broken in debug repl",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":6218,
+    "original_number":5838,
+    "query_title":"Git output doesn't contain sanity checking errors anymore",
+    "original_title":"I am sometimes loosing output for git in the output panel",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":6503,
+    "original_number":6192,
+    "query_title":"No apparent way to know whether an output channel is shown",
+    "original_title":"Improve OutputChannel API (discovery, appending, etc)",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":7801,
+    "original_number":7740,
+    "query_title":"Abort on running script on intregrated terminal does not respond.",
+    "original_title":"ctr+c isn't working in command prompt opend in VSCode",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":7917,
+    "original_number":2330,
+    "query_title":"Editor hover is easily lost in editor content",
+    "original_title":"Rendering of documentation in Intellisense and hover inconsistent",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":8257,
+    "original_number":8251,
+    "query_title":"Extension UI: introduce a small margin around the  ",
+    "original_title":"Add margin\/padding to webview hosting extension readme",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":8290,
+    "original_number":8258,
+    "query_title":"Extensions: styling is bad for links in markdown preview",
+    "original_title":"Links look bad in dark theme in extension README",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":18224,
+    "original_number":17068,
+    "query_title":"Disable specific code languages from appearing in the Language Mode menu",
+    "original_title":"Allow disabling built in extensions",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":18706,
+    "original_number":3518,
+    "query_title":"Can't copy code to Microsoft Word with style",
+    "original_title":"Add ability to copy formatted code to clipboard",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":19361,
+    "original_number":19212,
+    "query_title":"inline values: debugger UI holds onto some state which confuses future debug sessions",
+    "original_title":"Inline values are not shown when adding variables and refreshing the debugger",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":19396,
+    "original_number":10979,
+    "query_title":"Feature request: commandline argument to autoexecute debugger with given configuration name",
+    "original_title":"Suggestion: Start VSCode debugger from the command-line",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":19745,
+    "original_number":5745,
+    "query_title":"Markdown preview doesn't fill editor ",
+    "original_title":"Webview: apply window.zoomLevel too",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":19862,
+    "original_number":19743,
+    "query_title":"Tasks won't run if User Settings file has no settings after updating to 1.9.0",
+    "original_title":"No tasks found (gulp file autodetect no longer works)",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":19910,
+    "original_number":15125,
+    "query_title":"\"Find in the selection\" not activatable on find and replace",
+    "original_title":"Can't find in selection when selection is a single line",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":20066,
+    "original_number":19875,
+    "query_title":"Bug: View: Toggle Word Wrap stopped working 1.9.0",
+    "original_title":"Word wrap is broken with introduction of v1.9",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":20124,
+    "original_number":19813,
+    "query_title":"Autoformat sometimes breaks javascript code in html files",
+    "original_title":"[html] embedded Javascript gets corrupted on format",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":20484,
+    "original_number":16037,
+    "query_title":"Trying to insert a snippet using multiple cursors only inserts at first created cursor",
+    "original_title":"multi-cursor can't work when type using snippets with placeholders",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":20533,
+    "original_number":11387,
+    "query_title":"Word wrap doesn't work in Git diffs",
+    "original_title":"Support word wrap in the diff editor",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":41068,
+    "original_number":37114,
+    "query_title":"The bug with \u201cBS\u201d code when edit markdown",
+    "original_title":"Using IME with markdown preview enabled, press ESC\/BACKSPACE leads in control characters",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":41112,
+    "original_number":3429,
+    "query_title":"Markdown code block should have a background",
+    "original_title":"[themes] Themes don't support background styling",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":41178,
+    "original_number":16826,
+    "query_title":"This pane is too large ",
+    "original_title":"Regroup view menu",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":41180,
+    "original_number":39125,
+    "query_title":"UI state lost when updating ",
+    "original_title":"macOS: updating to a newer version often means UI state is lost",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":41444,
+    "original_number":6929,
+    "query_title":"Extensions per OS Platform",
+    "original_title":"Provide way for extensions to download and install native dependencies",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":41842,
+    "original_number":32524,
+    "query_title":"Text entries on extension \"contributions\" page should be copyable",
+    "original_title":"Allow copy\/paste to work in Extensions: Contributions",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":42261,
+    "original_number":30292,
+    "query_title":"Minimap glitch after system suspend.",
+    "original_title":"Minimap visually broken after suspending Linux",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":42468,
+    "original_number":21090,
+    "query_title":"Open editors content menu should offer rename and delete",
+    "original_title":"Allow file modification commands when focus is in opened editors view",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":42543,
+    "original_number":30859,
+    "query_title":"Strange cut and paste behavior",
+    "original_title":"Autoindent: Wrong automatic indent with multiple line expression\/string",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":43135,
+    "original_number":22289,
+    "query_title":"Add a setting for `problems.exclude`",
+    "original_title":"Ignore folders\/files in Problems view",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":43224,
+    "original_number":36991,
+    "query_title":"Powershell Syntax Highlighting breaks on Regex in Parentheses",
+    "original_title":"[powershell] A specific regex breaks code colours",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":43405,
+    "original_number":2037,
+    "query_title":"Autocomplete \/ suggestions of files and folders in workspace",
+    "original_title":"[html] completions for src, link, href...",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":43793,
+    "original_number":7426,
+    "query_title":"Upgrade on MacOS not working",
+    "original_title":"Code won't update on macOS",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":44103,
+    "original_number":12448,
+    "query_title":"Weird Path Issues with vscode, showing 2 version of the same file",
+    "original_title":"Issues with not case\/fragment-normalizing file paths (macOS, Windows)",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":44161,
+    "original_number":33752,
+    "query_title":"Customizable Tooltip Position",
+    "original_title":"Create an option to position the intellisense parameter info top or bottom.",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":65882,
+    "original_number":57803,
+    "query_title":"Terminal Window is Blank Until Return is Pressed",
+    "original_title":"Terminal not in a good state initially on Windows Insider builds",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":66204,
+    "original_number":7570,
+    "query_title":"vscode cannot start offline under win10 1809",
+    "original_title":"VS Code fails to start\/open  when offline",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":66268,
+    "original_number":44268,
+    "query_title":"Separated color themes for different windows?",
+    "original_title":"Different themes per window instance",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":66295,
+    "original_number":50140,
+    "query_title":"Custom typedefs not highlighting.",
+    "original_title":"Support syntax highlighting with tree-sitter",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":66412,
+    "original_number":53666,
+    "query_title":"Add block cursor in the rename symbol input.",
+    "original_title":"Use code editor for rename input box",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":66429,
+    "original_number":15442,
+    "query_title":"Support project specific extensions configuration with 'extensions.json' file in the '.vscode' folder",
+    "original_title":"Persist an extensions manifest file",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":66527,
+    "original_number":57803,
+    "query_title":"Powershell terminal - Cursor not visible",
+    "original_title":"Terminal not in a good state initially on Windows Insider builds",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":66544,
+    "original_number":66296,
+    "query_title":"Suggests to save files unrelated to current commit",
+    "original_title":"git.promptToSaveFilesBeforeCommit should not warn on unstaged files.",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":66633,
+    "original_number":12058,
+    "query_title":"Session state is not persisted if VS Code does not cleanly exit",
+    "original_title":"Save UI state periodically to prevent loss on shutdown",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":66725,
+    "original_number":57158,
+    "query_title":"Git source control's commit message window need the custom scroll bar",
+    "original_title":"Git commit message box in SCM view uses native scrollbar",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":67379,
+    "original_number":23690,
+    "query_title":"Shortcuts not working when switching input source language",
+    "original_title":"Keyboard layout changes are not detected on Linux",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":67429,
+    "original_number":57548,
+    "query_title":"Disable\/enable extensions automatically",
+    "original_title":"Multiple environment profiles (either per-session or per-window)",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":67521,
+    "original_number":67041,
+    "query_title":"Odd duplicate phantom editor in tree",
+    "original_title":"Open Editors: weird list changes when opening file in preview",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":67945,
+    "original_number":54097,
+    "query_title":"DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed",
+    "original_title":"Can not play video in webview",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":67982,
+    "original_number":53816,
+    "query_title":"Can't paste \u201e\u2262\u201c (U+2262)",
+    "original_title":"Unicode character U+2262 (\"not identical to\") is not drawn correctly",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":68532,
+    "original_number":68077,
+    "query_title":"There are task errors.Failed to create terminal for task compile.",
+    "original_title":"Failed to create terminal for task clean",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":68747,
+    "original_number":68597,
+    "query_title":"Opening tab does not redirect to folder in explorer",
+    "original_title":"New explorer: does not reveal active file if no file was opened",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":68761,
+    "original_number":68132,
+    "query_title":"Ctrl+0 (Focus into Side Bar) opens file just closed",
+    "original_title":"Closing the last open file, then hiding and showing the explorer reopens the file",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":68832,
+    "original_number":5280,
+    "query_title":"Double Tap Commands",
+    "original_title":"How to detect shift shift key in VSCode?",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":68851,
+    "original_number":65294,
+    "query_title":"Cursor stuck on pointer",
+    "original_title":"Inconsistent mouse cursor when hovering text in 1.30.0",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":68898,
+    "original_number":68505,
+    "query_title":"File -> \"recent projects\" items become available only when VSCode is loaded completely",
+    "original_title":"Open Recent menu is sometimes empty",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":68914,
+    "original_number":68204,
+    "query_title":"Recent files created doesn't show in folder  #68204 persists",
+    "original_title":"New file doesn't show in explorer after creating from path like 'folder\/subfolder\/file.txt'",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":69047,
+    "original_number":10144,
+    "query_title":"Honour system UI font in Ubuntu 18.10 \/ GNOME 3",
+    "original_title":"Use system-ui as font on Linux",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":88036,
+    "original_number":76542,
+    "query_title":"after set `terminal.integrated.inheritEnv` to false, vscode could not start an integrated terminal",
+    "original_title":"terminal.integrated.inheritEnv breaks integrated terminal",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":88165,
+    "original_number":88132,
+    "query_title":"Search tab no longer shows at the bottom of the screen when updated to v1.42.0",
+    "original_title":"Find in files (workbench.view.search) command opens terminal if Search: Location is set to panel",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":88247,
+    "original_number":59247,
+    "query_title":"Scroll via CTRL+Up\/Down should clamp caret position",
+    "original_title":"Clip ctrl+up\/down cursor to bottom\/top of moving window",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":88276,
+    "original_number":51229,
+    "query_title":"drag drop from zip files doesnt work",
+    "original_title":"Better support drag and drop from external application into Code that deletes files on drop",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":88326,
+    "original_number":56023,
+    "query_title":"Plugin Download Bar\/Percentage ",
+    "original_title":"Better indicator for long extension installations",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":88470,
+    "original_number":9526,
+    "query_title":"Go back jumps crossing different views if i already opened the same file in another view",
+    "original_title":"Make history navigation aware of editor groups",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":88582,
+    "original_number":88580,
+    "query_title":"Clicking in area just in front of end of line annotation remaps click to front of line",
+    "original_title":"Clicking between test and EOL annotation sends the cursor to the beginning of the line",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":88708,
+    "original_number":85898,
+    "query_title":"File Explorer popups do not use current display's scaling setting",
+    "original_title":"Incorrect scaling of native file picker",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":88882,
+    "original_number":74782,
+    "query_title":"Can not be install in Mac",
+    "original_title":"Investigate: macOS notarization",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":89042,
+    "original_number":76642,
+    "query_title":"Theme underline blinking in Insiders",
+    "original_title":"Link underlines blink",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":89089,
+    "original_number":55585,
+    "query_title":"VSCodeInsider_VS-DeleteEnvironment_ScreenReader:VoiceOver does not announces the information about the pop up  as soon as pop up activated.",
+    "original_title":"Accessibility - Voiceover can not read messages in dialog boxes [macOS]",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":89455,
+    "original_number":56525,
+    "query_title":"Make hover inspector window resizable",
+    "original_title":"Allow hover to be resized",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":89529,
+    "original_number":27317,
+    "query_title":"Better fuzzy search",
+    "original_title":"Improve ranking of elements in quick open",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":90099,
+    "original_number":81464,
+    "query_title":"Debug Console hangs after many lines are printed out",
+    "original_title":"Debug: Console feels janky on high frequency output",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":90168,
+    "original_number":51275,
+    "query_title":"Undo can fail to restore previous text",
+    "original_title":"cursorWordStartLeft etc. do not manage undo history properly",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":91401,
+    "original_number":66132,
+    "query_title":"Improve Markdown preview panel behavior",
+    "original_title":"autoclosing markdown preview when closing md file",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":91724,
+    "original_number":74338,
+    "query_title":"Change keys",
+    "original_title":"I'd like to be able to alias shortcut key to another key",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":91880,
+    "original_number":12622,
+    "query_title":"Locking a tabview",
+    "original_title":"Add option to pin tabs similar to Visual Studio",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":91914,
+    "original_number":71315,
+    "query_title":"Focus after delete",
+    "original_title":"Should maintain row focus after deleting a file",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":92106,
+    "original_number":21839,
+    "query_title":"Allow download extensions from different sources\/marketplace",
+    "original_title":"Feature Request: Support for private marketplace\/gallery",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":92370,
+    "original_number":92357,
+    "query_title":"Allow sync storage locations other than web",
+    "original_title":"Settings Sync : Allow for custom backend service end points",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":92391,
+    "original_number":91901,
+    "query_title":"Search project bug",
+    "original_title":"Smarten workspace search from selection logic",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":92435,
+    "original_number":23099,
+    "query_title":"Add recent search strings to Search",
+    "original_title":"Add dropdown for search input history",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":113820,
+    "original_number":76548,
+    "query_title":"WindowsEnableConcepty causes the VS Code to become unresponsive.",
+    "original_title":"Closing a conpty terminal can hang the window",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":113887,
+    "original_number":112481,
+    "query_title":"single git branch related to remote not showing in checkout options",
+    "original_title":"VSCode 1.52 - Git branch missing",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":114240,
+    "original_number":114231,
+    "query_title":"Settings Sync failed (microsoft)",
+    "original_title":"Settings sync stopped working after latest update Request ... failed because of Unauthorized (401)",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":114486,
+    "original_number":114096,
+    "query_title":"File name displayed on the tab is automatically changed when saving file changes",
+    "original_title":"File name in editor tab reverts casing on save",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":114840,
+    "original_number":85898,
+    "query_title":"Windows Explorer pop-up resolution does not update if screen resolution has changed",
+    "original_title":"Incorrect scaling of native file picker",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":114897,
+    "original_number":45444,
+    "query_title":"Context menu of terminal options on \"new terminal\"",
+    "original_title":"Provide a lightweight shell selector without changing default (ie. terminal profiles)",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":115363,
+    "original_number":93356,
+    "query_title":"Screen pixels",
+    "original_title":"Sidebar bug",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":115792,
+    "original_number":20652,
+    "query_title":"Would love to be able to change the color of editor tabs",
+    "original_title":"[themes] different themes for different filetypes",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":115844,
+    "original_number":100517,
+    "query_title":"Let users know what extension is requesting permissions",
+    "original_title":"Helper tool popup is not informative",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":115851,
+    "original_number":115784,
+    "query_title":"VSCode requires CXXABI 1.3.9 which is not available in CentOS 7",
+    "original_title":"Update rpm dependencies file for newer CXXABI requirement",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":115916,
+    "original_number":115876,
+    "query_title":"Latest VS Code (1.53.0) breaks debug configs",
+    "original_title":"tasks.json npm script does not work with arguments since 1.53",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":116128,
+    "original_number":109030,
+    "query_title":"View title actions not shown when hovering over view on webview views",
+    "original_title":"Webview views do not persist view actions on hover",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":116145,
+    "original_number":113801,
+    "query_title":"Don't allow tabs to expand when using editor.wrapTabs",
+    "original_title":"Tab wrap - tab should not fill all spare space when wrap to new line",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":116242,
+    "original_number":95199,
+    "query_title":"Webviews can't use the builtin icons",
+    "original_title":"Support codicons in webview",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":116307,
+    "original_number":115874,
+    "query_title":"creating a debug file on all the working folders",
+    "original_title":"v1.53 creates debug.log automatically",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":116455,
+    "original_number":116219,
+    "query_title":"TS Server fatal error:  Cannot read property 'indexOf' of undefined",
+    "original_title":"TS Server fatal error:  Cannot read property 'indexOf' of undefined",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":116456,
+    "original_number":116219,
+    "query_title":"TS Server fatal error:  Cannot read property 'indexOf' of undefined",
+    "original_title":"TS Server fatal error:  Cannot read property 'indexOf' of undefined",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":116475,
+    "original_number":116219,
+    "query_title":"TS Server fatal error:  Cannot read property 'indexOf' of undefined",
+    "original_title":"TS Server fatal error:  Cannot read property 'indexOf' of undefined",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":116579,
+    "original_number":115874,
+    "query_title":"\"debug.log\" files in project",
+    "original_title":"v1.53 creates debug.log automatically",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":117009,
+    "original_number":91011,
+    "query_title":"Is \"user tasks\" added in \"setting sync\"?",
+    "original_title":"Settings sync should support user tasks",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":117024,
+    "original_number":115814,
+    "query_title":"maybe some input methods typing chinese in terminal tab don't work",
+    "original_title":"Unable to type in Chinese in integrated terminal",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":117091,
+    "original_number":115922,
+    "query_title":"Up\/down keys no longer respect \"filtering\" for files in Folders pane (file explorer)",
+    "original_title":"cursor keys not working for filtering in File Explorer",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":117453,
+    "original_number":117385,
+    "query_title":"Focus border when adding a port",
+    "original_title":"Input box is not highlighted completely",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":117505,
+    "original_number":32592,
+    "query_title":"Ability to reorder nodes in a treeview",
+    "original_title":"Add drag and drop for contributed tree views",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":139973,
+    "original_number":131507,
+    "query_title":"Space in search matches erroneous characters",
+    "original_title":"Ctrl+Shift+F with regex show wrong results",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":140100,
+    "original_number":111022,
+    "query_title":"Undo delete of a folder in explorer only restores folder, not files",
+    "original_title":"Undo of folder deletion brings back empty folder",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":140145,
+    "original_number":135888,
+    "query_title":"Renaming file on disk does is not reflected in window title or editor tab",
+    "original_title":"Detect file renames across windows",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":140553,
+    "original_number":139151,
+    "query_title":"Change Language prompts on new windows",
+    "original_title":"Occasional prompts to switch display language",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":141034,
+    "original_number":47284,
+    "query_title":"Collect data only UPON user agreement",
+    "original_title":"Make telemetry Data opt-in",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":141196,
+    "original_number":53405,
+    "query_title":"Filter Extension Search Results by Most Recently Updated",
+    "original_title":"Sort extensions by extension update date",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":141637,
+    "original_number":22436,
+    "query_title":"Linting in copied files shows incorrect errors.",
+    "original_title":"Cannot redeclare block-scoped variable 'name'",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":141699,
+    "original_number":133122,
+    "query_title":"GUI for tasks.json and launch.json",
+    "original_title":"Provide a UI editor for tasks.json and launch.json similar to the settings.json UI editor",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":141852,
+    "original_number":138704,
+    "query_title":"\u65e5\u672c\u8a9e\u5165\u529b\u306e\u672a\u78ba\u5b9a\u72b6\u614b\u3067\u6587\u5b57\u5217\u304c\u6b63\u3057\u304f\u8868\u793a\u3055\u308c\u306a\u3044",
+    "original_title":"Japanese IME doesn't work well on macOS and Linux",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":142226,
+    "original_number":141349,
+    "query_title":"New side panel feature breaks previously possible window layout of: code editor | terminal | side bar",
+    "original_title":"How can we move the new side panel to the right?",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":142277,
+    "original_number":11770,
+    "query_title":"\u267f\u2757Breaking Issue - RTL Support\u2757\ud83d\ude91",
+    "original_title":"Support for RTL languages",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":142376,
+    "original_number":141725,
+    "query_title":"Chinese imput panel will flash when editing",
+    "original_title":"input Chinese comment flash when enable semantic highlighting",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":142764,
+    "original_number":137872,
+    "query_title":"unable to exclude all files using `files.watcherExclude`",
+    "original_title":"Allow glob patterns for native file watcher excludes",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":142819,
+    "original_number":142742,
+    "query_title":"Allow moving the side-panel next to the explorer panel",
+    "original_title":"how can we lay side-bar and side panel at the same side",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":143454,
+    "original_number":129473,
+    "query_title":"Todo checkbox is rendered as list in extension view",
+    "original_title":"Checkboxes do not render in an Extension's README",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":143702,
+    "original_number":142669,
+    "query_title":"Terminal: sometimes first command is not recorded in history",
+    "original_title":"decorations don't get drawn on reload and don't work for the first command entered",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":144359,
+    "original_number":9526,
+    "query_title":"navigation (Alt + \u2190) back to wrong tab when I split same file into two editor",
+    "original_title":"Make history navigation aware of editor groups",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":144395,
+    "original_number":131733,
+    "query_title":"Add a setting to exclude an extension from auto-update",
+    "original_title":"Exclusion list for Extensions: Auto Update",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":144427,
+    "original_number":144297,
+    "query_title":"Smart Select no longer works in some languages\/file types",
+    "original_title":"`editor.action.smartSelect.expand` doesn't work if only basic language features are available",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":144445,
+    "original_number":137602,
+    "query_title":" VsCode does not open after changing MACOS user folder.",
+    "original_title":"VSCode on Mac OS does not launch when user's home directory is on ExFAT filesystem",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":144482,
+    "original_number":144481,
+    "query_title":"MULTIPLE CRASH",
+    "original_title":"MULTIPLE CRASH",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":171052,
+    "original_number":75141,
+    "query_title":"`Terminal: Clear` Keyboard Shortcut Malfunction w\/ Integrated PowerShell Terminal",
+    "original_title":"\"Terminal: Clear\" not working as desired",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":171569,
+    "original_number":169006,
+    "query_title":"Portable VS Code Extensions do not Transfer to Other Computers",
+    "original_title":"Extensions in portable mode are broken",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":171622,
+    "original_number":171621,
+    "query_title":"Default indent setting doesn't work",
+    "original_title":"Default indent setting doesn't work",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":171693,
+    "original_number":130320,
+    "query_title":"pty-host process cannot start",
+    "original_title":"Connection to terminal's pty host process is becoming unresponsive",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":171695,
+    "original_number":171694,
+    "query_title":"Network error in VS Code",
+    "original_title":"Network error in VS Code",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":172408,
+    "original_number":172344,
+    "query_title":"Terminal accessibility help should have top\/bottom padding",
+    "original_title":"Terminal Accessibility Help dialog stretches from bottom of terminal panel",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":172590,
+    "original_number":172419,
+    "query_title":"Asterisk in completions is being added to the editor",
+    "original_title":"Intellisense adding star character to text",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":172774,
+    "original_number":168154,
+    "query_title":"No registered selector for ID: ms-vscode.npm-command",
+    "original_title":"Error: No registered selector for ID: ms-vscode.npm-command",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":172783,
+    "original_number":170081,
+    "query_title":"No file system provider found for resource 'vscode-remote:\/\/ssh-remote%<REDACTED: user-file-path>'",
+    "original_title":"No file system provider found for resource 'vscode-remote:\/\/ssh-remote%<REDACTED: user-file-path>'",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":173041,
+    "original_number":168955,
+    "query_title":"Quick Fix menu isn't scrollable",
+    "original_title":"Quick Fix menu not scrollable",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":173401,
+    "original_number":173244,
+    "query_title":"Can't properly use snippets in JSX file, can not find snippet by prefix",
+    "original_title":"Snippets gone from IntelliSense",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":173542,
+    "original_number":173325,
+    "query_title":"Broken keybinding: CTRL + :",
+    "original_title":"keyboard shortcuts: wrong interpretations of special keys (e.g. `[Equal]` is mistaken for `V`)",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":173579,
+    "original_number":171155,
+    "query_title":"Circle to the left in terminal",
+    "original_title":"Terminal decorations don't disappear",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":173772,
+    "original_number":173771,
+    "query_title":"Keyboard Shortcuts Are Wrong",
+    "original_title":"Keyboard Shortcuts Are Wrong",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":173859,
+    "original_number":122951,
+    "query_title":"All kind of preview fail to load when VSCode is executed as administrator",
+    "original_title":"Unable to run sandboxed process when run as elevated under applocker",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":173875,
+    "original_number":158996,
+    "query_title":"Markdown follow image link text isn't a link",
+    "original_title":"\"Follow link\" hover is not linkified on markdown links",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":173895,
+    "original_number":173475,
+    "query_title":"dark+ v2 theme bug",
+    "original_title":"Visual rendering glitch in terminal with V2 themes",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":173910,
+    "original_number":160979,
+    "query_title":"vscode under wsl following link accidentally to windows directory",
+    "original_title":"Relative paths in tsconfig.json are resolved from devcontainer to Windows host",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":174003,
+    "original_number":148634,
+    "query_title":"Go to previous\/ next error, warning, problem does not read the content to the screen reader",
+    "original_title":"screenreader reading of inline errors",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":174316,
+    "original_number":173684,
+    "query_title":"Salesforce Extension pack",
+    "original_title":"VS Code extensions suddenly won't load or update\/install",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":174526,
+    "original_number":174525,
+    "query_title":"mac os cantilina loading issue",
+    "original_title":"mac os cantilina loading issue",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":174752,
+    "original_number":166437,
+    "query_title":"Replacement variables is incorrect in search files, while is correct in single file",
+    "original_title":"Replace in files is buggy when multiple changes are made on same line of code",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":174772,
+    "original_number":158923,
+    "query_title":"`terminal.integrated.smoothScrolling` doesn't work with most commands",
+    "original_title":"Terminal smooth scrolling - page up\/page down, search results",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":174904,
+    "original_number":173835,
+    "query_title":"Moving explorer restores NPM script view",
+    "original_title":"Dragging view container with hidden views into another view container makes all visible",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":176032,
+    "original_number":73307,
+    "query_title":"just because u gave 257 characters to wrote in happy experience. and 270 characters to wrote in sad reaction experience.I just Want to Know WHY?",
+    "original_title":"Feedback Systen",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":176369,
+    "original_number":176051,
+    "query_title":"Discard Changes Not Works",
+    "original_title":"VScode git revert line multiplies reverted changes in the file",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":202334,
+    "original_number":202333,
+    "query_title":"My codespace said configuration error and it's in recovery mode? How can I do with that. I need to do final project for Cs50.",
+    "original_title":"My codespace said configuration error and it's in recovery mode? How can I do with that. I need to do final project for Cs50.\\",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":202438,
+    "original_number":202138,
+    "query_title":"View got cut off on a large file",
+    "original_title":"Json breaks for large files after roughly 50000 lines",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":202516,
+    "original_number":202204,
+    "query_title":"Debugger toolbar disappears when resizing window",
+    "original_title":"Debug toolbar can be hidden by window resize",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":203146,
+    "original_number":197466,
+    "query_title":"Show the action to reopen closed repositories in Source Control Repositories view",
+    "original_title":"SCM - add visual indication for closed repositories",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":203263,
+    "original_number":201901,
+    "query_title":"Audio queue for when voice is listening",
+    "original_title":"add accessibility signal for speech to text in progress",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":203298,
+    "original_number":203189,
+    "query_title":"Hold for speech - releasing keys resets streaming",
+    "original_title":"speech recording stops after log pause in audio",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":204098,
+    "original_number":203375,
+    "query_title":"need new version remote support for centos7",
+    "original_title":"Workaround for machines that do not have `glibc` >= 2.28",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":204442,
+    "original_number":204037,
+    "query_title":"TypeScript auto import adds extra curly at the end of line",
+    "original_title":"TypeScript import is adding extra } character at the end of the statement",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":205622,
+    "original_number":204728,
+    "query_title":"How to hide the info \"You are connected to an OS version that is unsupported by Visual Studio Code\" on top of vscode",
+    "original_title":"Unsupported OS warning banner will not go away",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":205937,
+    "original_number":205417,
+    "query_title":"Copying (ctrl + c) and undoing (ctrl + z) functions do not operate in an external terminal when it is initiated by pressing ctrl + shift + c.",
+    "original_title":"Launching External Terminal Changes Ctrl+C Handling Of Programs",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":205982,
+    "original_number":146422,
+    "query_title":"FILE > OPEN : open window in the background (again!)",
+    "original_title":"[Linux] Open file or Open folder creates dialog behind active window",
+    "channel":"vscode_dup_scrape",
+    "source":"dup_comment",
+    "stratum":"gate"
+  }
+]

@@ -1,0 +1,192 @@
+[
+  {
+    "repo":"microsoft_vscode",
+    "query_number":4316,
+    "original_number":909,
+    "query_title":"Typescript errors remain when running in watch mode",
+    "original_title":"Errors remain even when fixed when running in watch mode",
+    "channel":"legacy_gold_v1",
+    "source":"body_ref",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":872,
+    "original_number":810,
+    "query_title":"Improve error message when no command is bound to a command contribution",
+    "original_title":"Extension commands are displayed to user before extension is activated",
+    "channel":"legacy_gold_v1",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":907,
+    "original_number":150,
+    "query_title":"Add a pull with rebase action to the git viewlet",
+    "original_title":"Feature request: more complete git integration",
+    "channel":"legacy_gold_v1",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":1751,
+    "original_number":1361,
+    "query_title":"Universal Language Injections",
+    "original_title":"[php] highlighting  for mysql in php file",
+    "channel":"legacy_gold_v1",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":2250,
+    "original_number":1168,
+    "query_title":"Editor input",
+    "original_title":"Can't write Vietnamese text in editor with UniKey software",
+    "channel":"legacy_gold_v1",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":2668,
+    "original_number":2083,
+    "query_title":"remove mono-debug from VS Code and move it to market place",
+    "original_title":"after removing mono-debug from VSCode help users to install from the marketplace",
+    "channel":"legacy_gold_v1",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":2743,
+    "original_number":2741,
+    "query_title":"Provide support to synchronize settings across machines",
+    "original_title":"[ExtensionDev] Expose API to get at file system locations",
+    "channel":"legacy_gold_v1",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":3783,
+    "original_number":3428,
+    "query_title":"VSCode should flag errors on tsconfig.json",
+    "original_title":"--allowUnreachableCode in tsconfig.json breaks in editor",
+    "channel":"legacy_gold_v1",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":3905,
+    "original_number":3904,
+    "query_title":"In 'Run without debugging' mode the Stop button must terminate the extension host",
+    "original_title":"Support to terminate extension host through IPC",
+    "channel":"legacy_gold_v1",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":41958,
+    "original_number":1636,
+    "query_title":"Support borders in editor decorations",
+    "original_title":"Selection and selection matches highlight color",
+    "channel":"vscode_body_refs",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":42156,
+    "original_number":34534,
+    "query_title":"Add a setting making `Delete Permanently` the default",
+    "original_title":"Add setting to delete without sending to trash",
+    "channel":"vscode_body_refs",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":90006,
+    "original_number":74921,
+    "query_title":"Make problems\/errors more visible (red icon in statusbar) - REOPENING",
+    "original_title":"Theme error\/warning\/info icons",
+    "channel":"vscode_body_refs",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":91674,
+    "original_number":26046,
+    "query_title":"Better handle first-time opening of workspaces with explicit typescript.tsdk specified",
+    "original_title":"typescript.tsdk doesn't work as workspace setting",
+    "channel":"vscode_body_refs",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":115725,
+    "original_number":111652,
+    "query_title":"Re: Action in explorer is interrupted shortly after creating a folder (#111652)",
+    "original_title":"Action in explorer is interrupted shortly after creating a folder",
+    "channel":"vscode_body_refs",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":115972,
+    "original_number":111407,
+    "query_title":"After changing case of a file, the filename appears twice in search results and replaces are currupt in that file",
+    "original_title":"After changing case of a file, the filename appears twice in search results and replaces are currupt in that file",
+    "channel":"vscode_body_refs",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":170455,
+    "original_number":104429,
+    "query_title":"Open URL links with custom protocol schema",
+    "original_title":"VS Code doesn't open links with custom URL schema",
+    "channel":"vscode_body_refs",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":174169,
+    "original_number":171904,
+    "query_title":"Settings Sync signs out of my Microsoft account every time VS Code restarts or reloads window",
+    "original_title":"Settings Sync prompts for login every time VSCode restarts",
+    "channel":"vscode_body_refs",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":175734,
+    "original_number":175605,
+    "query_title":"Stop 'Smart\/Expand Selection' from selecting the surrounding quotes immediately",
+    "original_title":"Stop 'Smart\/Expand Selection' from selecting the surrounding quotes immediately",
+    "channel":"vscode_body_refs",
+    "source":"body_related",
+    "stratum":"product"
+  },
+  {
+    "repo":"microsoft_vscode",
+    "query_number":209403,
+    "original_number":9899,
+    "query_title":"Highlighting of common keywords like TODO (maybe)",
+    "original_title":"add highlighting of common keywords like TODO",
+    "channel":"vscode_body_refs",
+    "source":"body_related",
+    "stratum":"product"
+  }
+]

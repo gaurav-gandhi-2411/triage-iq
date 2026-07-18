@@ -46,8 +46,8 @@ POST /triage {repo, title, body}
 ┌───────────────────────────────────────┐
 │ System 2: Similar Issue Retriever      │  ~27ms p50
 │ BGE-base-en-v1.5 + FAISS cosine       │
-│ k8s R@5 23.5% (hand-verified, weak)   │
-│ vscode: UNMEASURED (gold ~80% noise)  │
+│ k8s related R@5 9.3% (clean, weak)    │
+│ vscode dup R@5 43.5% (clean)          │
 └──────────────────┬────────────────────┘
                    │ top-5 similar issues + similarity scores
                    ▼
@@ -83,10 +83,11 @@ suggested_next_steps, triage_summary
 | Component classifier | vscode | Macro F1 (top-1) | 0.585 |
 | Component classifier | kubernetes | Macro F1 (top-1) | 0.466 |
 | Component classifier | vscode | Inference latency p50 | 4.9ms |
-| Similar issue retriever | kubernetes | **Recall@5 (product-task, hand-verified — see note)** | **23.5%** [18.4, 28.5] |
-| Similar issue retriever | kubernetes | Recall@10 / @20 (product-task) | 30.3% / 36.5% |
-| Similar issue retriever | vscode | **Recall@5 (product-task) — see note** | **UNMEASURED** — gold set ~80% incidental (ADR-0032) |
-| Similar issue retriever | vscode | Recall@10 / @20 (product-task) | not reported — same gold-set caveat |
+| Similar issue retriever | kubernetes | **Recall@5, related task (clean eval — see note)** | **9.3%** [5.3, 14.0] |
+| Similar issue retriever | kubernetes | Recall@1 / @10 (related task, clean eval) | 3.3% / 12.0% |
+| Similar issue retriever | vscode | **Recall@5, duplicate task (clean eval — see note)** | **43.5%** [37.0, 50.5] |
+| Similar issue retriever | vscode | Recall@1 / @10 (duplicate task, clean eval) | 22.5% / 47.5% |
+| Similar issue retriever | vscode | Recall@5, related task (directional, n=19 — see note) | 57.9% [36.8, 78.9] |
 | Similar issue retriever | vscode | Index size (BGE) | 24.3 MB |
 | Resolution predictor | kubernetes | Point estimate: MAE vs naive (served) | 104.05d vs 106.29d naive (+2.1%) |
 | Resolution predictor | kubernetes | Bucket classifier: accuracy vs naive (served) | 33.24% vs 29.97% naive (+3.27pp [+1.80, +4.74]) |
@@ -105,11 +106,28 @@ suggested_next_steps, triage_summary
 
 95% Wilson CIs shown in brackets where computed on a held-out test split.
 
-> **Headline finding (2026-07-16, final framing per ADR-0030/0031/0032): k8s product-task
-> retrieval is genuinely weak, hand-verified; vscode product-task retrieval is currently
-> UNMEASURED.** k8s Recall@5 on the actual product task ("given a new issue, find related
-> issues"), against the actually-deployed live index: **23.5% [18.4, 28.5]** (n=277) — the
-> lowest absolute score of any model in this system's per-model audit (classifier top-3
+> **Headline finding (2026-07-19, final framing per ADR-0033, supersedes the 2026-07-16
+> framing below): retrieval quality is now measured on a clean, hand-verified, disjoint
+> eval set — and it's honestly weaker than previously reported, not better.** k8s's clean
+> product-task R@5 (issue → related issue, its only available task — vscode has a
+> duplicate-comment channel k8s never had) is **9.3% [5.3, 14.0]** (n=150,
+> hand-verified genuine by construction) — down from the previously-reported 23.5%, which
+> was itself measured on a gold set later found to be title_sim-contaminated (ADR-0032).
+> Two factors plausibly explain the drop, not fully disentangled: cleaner (harder, less
+> lexically-inflated) pairs, and a ~2x larger candidate corpus (30,000 vs. the old index's
+> 15,000) that mechanically lowers recall. **vscode reverses its "unmeasured" status**:
+> its `dup_comment` channel — never precision-audited before ADR-0033 — turned out to be
+> vscode's largest, cleanest channel (85% precision, n=2,242), giving a properly powered
+> duplicate-task R@5 of **43.5% [37.0, 50.5]** (n=200). vscode's separate related-issue
+> task (non-duplicate) stays underpowered (n=19, directional only, reported but never
+> gated) — vscode is genuinely two different tasks, reported separately, never blended.
+> Full reasoning: [`docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md`](docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md).
+>
+> **Prior framing (2026-07-16, ADR-0030/0031/0032 — historical, superseded above): k8s
+> product-task retrieval is genuinely weak, hand-verified; vscode product-task retrieval is
+> currently UNMEASURED.** k8s Recall@5 on the actual product task ("given a new issue, find
+> related issues"), against the actually-deployed live index: **23.5% [18.4, 28.5]** (n=277) —
+> the lowest absolute score of any model in this system's per-model audit (classifier top-3
 > 82.5%/90.4%, resolution's real k8s bucket gains, synthesis's floor-fail rates). A
 > hand-judged precision audit (ADR-0032) confirms this number is real, not eval noise: 72%
 > of the underlying gold pairs are genuinely related, and pulling the incidental 28% out
@@ -117,15 +135,11 @@ suggested_next_steps, triage_summary
 > zero-training improvement levers were then tried against it and **all three failed to
 > clear the bar** (ADR-0031): hybrid BM25+dense fusion (CI crosses zero), a pretrained
 > cross-encoder reranker (quality regresses on both repos, +190-330x latency), and a
-> stronger pretrained embedder (CI crosses zero). k8s's retrieval weakness is a real,
-> currently-unresolved product gap — not an artifact of a bad metric or an easy fix. The
-> earlier "vscode is statistically indistinguishable from k8s, both ~23-27%" framing is
-> **retired**: the same precision audit (ADR-0032) found vscode's gold pairs are only 20%
-> genuinely related (94.9% sourced from an unaudited title-similarity channel, dominated
-> by blank-template and generic-crash-title collisions) — vscode's number was measuring
-> mostly noise, not retrieval quality, and is not reported as a metric here. **vscode
-> product-task retrieval quality is unmeasured, pending a clean gold pair set.** Full
-> reasoning:
+> stronger pretrained embedder (CI crosses zero). The earlier "vscode is statistically
+> indistinguishable from k8s, both ~23-27%" framing was retired: the same precision audit
+> (ADR-0032) found vscode's gold pairs were only 20% genuinely related (94.9% sourced from
+> an unaudited title-similarity channel, dominated by blank-template and
+> generic-crash-title collisions). Full reasoning:
 > [`docs/architecture/adr/0030-phaseC-product-task-feasibility.md`](docs/architecture/adr/0030-phaseC-product-task-feasibility.md),
 > [`docs/architecture/adr/0031-retrieval-quality-improvement.md`](docs/architecture/adr/0031-retrieval-quality-improvement.md),
 > [`docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md`](docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md).

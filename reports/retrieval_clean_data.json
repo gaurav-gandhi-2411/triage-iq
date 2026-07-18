@@ -1,0 +1,389 @@
+{
+  "phase": "D1 -- clean retrieval data + trustworthy eval foundation",
+  "adr": "ADR-0033",
+  "clean_training_pool": {
+    "kubernetes_kubernetes": {
+      "task": "related (no duplicate/comment channel exists -- 0% comment coverage, ADR-0030)",
+      "clean_pool_size": 536,
+      "weighted_precision": 0.8457,
+      "powered_gateable": "TBD at eval-carve step (task 6/7) -- ADR-0030 estimated ~289-385 test pairs needed for a tight measurement CI; 536 total must cover train+eval"
+    },
+    "microsoft_vscode": {
+      "duplicate_task": {
+        "pool_size": 2242,
+        "weighted_precision": 0.85,
+        "status": "powered/gateable -- large enough for a proper train/eval split"
+      },
+      "related_task": {
+        "pool_size": 22,
+        "weighted_precision": 0.8636,
+        "status": "directional-only, eval-only diagnostic (n=22) -- NOT trained on, NOT gated, NOT blended with the duplicate number"
+      },
+      "note": "duplicate and related are reported as two separate tasks, never combined into one 'vscode retrieval' number"
+    }
+  },
+  "clean_training_pool_channel_decisions": [
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "k8s_forward_scrape",
+      "source": "body_related",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 45,
+      "decision": "KEEP",
+      "precision_evidence": {
+        "n_judged": 45,
+        "n_genuine": 38,
+        "precision": 0.8444,
+        "wilson95": [
+          0.7122,
+          0.9225
+        ],
+        "sample_note": "full_census",
+        "provenance": "D1 fresh full census, this phase"
+      },
+      "note": ""
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "k8s_forward_scrape",
+      "source": "body_related_ext",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 454,
+      "decision": "KEEP",
+      "precision_evidence": {
+        "n_judged": 30,
+        "n_genuine": 25,
+        "precision": 0.8333,
+        "wilson95": [
+          0.6644,
+          0.9266
+        ],
+        "sample_note": "sample_30_of_454",
+        "provenance": "D1 fresh sample n=30 of 454, this phase"
+      },
+      "note": ""
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "legacy_gold_v1",
+      "source": "body_related",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 37,
+      "decision": "KEEP",
+      "precision_evidence": {
+        "n_judged": 3,
+        "n_genuine": 3,
+        "precision": 1.0,
+        "wilson95": [
+          0.4385,
+          1.0
+        ],
+        "provenance": "ADR-0032 review, resliced by source"
+      },
+      "note": "thin sample (n=3 of 37) -- consistent with sibling channels, not independently powered"
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "k8s_extended_mine",
+      "source": "body_related_ext",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 200,
+      "decision": "DROP",
+      "precision_evidence": {
+        "n_judged": 20,
+        "n_genuine": 13,
+        "precision": 0.65,
+        "wilson95": [
+          0.4329,
+          0.8188
+        ],
+        "provenance": "ADR-0032 review, resliced by source"
+      },
+      "note": "GG decision: 65% meaningfully below sibling channels (~83-84%) -- traded size for precision"
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "legacy_gold_v1",
+      "source": "body_ref",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 2,
+      "decision": "DROP",
+      "precision_evidence": {
+        "n_judged": 2,
+        "n_genuine": 0,
+        "precision": 0.0,
+        "wilson95": [
+          0.0,
+          0.6576
+        ],
+        "sample_note": "full_census"
+      },
+      "note": "full census n=2, both incidental (self-disclaimed 'maybe/probably not the same')"
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "*",
+      "source": "title_sim",
+      "stratum": "*",
+      "task": "related",
+      "pool_size": 0,
+      "decision": "DROP",
+      "precision_evidence": null,
+      "note": "hard rule -- title_sim dropped unconditionally"
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "vscode_dup_scrape",
+      "source": "dup_comment",
+      "stratum": "gate",
+      "task": "duplicate",
+      "pool_size": 2242,
+      "decision": "KEEP",
+      "precision_evidence": {
+        "n_judged": 40,
+        "n_genuine": 34,
+        "precision": 0.85,
+        "wilson95": [
+          0.7093,
+          0.9294
+        ],
+        "sample_note": "sample_40_of_2242",
+        "provenance": "D1 fresh sample n=40 of 2242, this phase"
+      },
+      "note": "powered/gateable -- vscode's largest channel by far"
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "legacy_gold_v1",
+      "source": "body_ref",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 1,
+      "decision": "KEEP (eval-only, directional)",
+      "precision_evidence": {
+        "n_judged": 1,
+        "n_genuine": 1,
+        "precision": 1.0,
+        "wilson95": [
+          0.2065,
+          1.0
+        ],
+        "sample_note": "full_census",
+        "provenance": "D1 fresh full census, this phase"
+      },
+      "note": ""
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "legacy_gold_v1",
+      "source": "body_related",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 10,
+      "decision": "KEEP (eval-only, directional)",
+      "precision_evidence": {
+        "n_judged": 10,
+        "n_genuine": 8,
+        "precision": 0.8,
+        "wilson95": [
+          0.4902,
+          0.9433
+        ],
+        "sample_note": "full_census",
+        "provenance": "D1 fresh full census, this phase"
+      },
+      "note": ""
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "vscode_body_refs",
+      "source": "body_related",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 11,
+      "decision": "KEEP (eval-only, directional)",
+      "precision_evidence": {
+        "n_judged": 11,
+        "n_genuine": 10,
+        "precision": 0.9091,
+        "wilson95": [
+          0.6226,
+          0.9838
+        ],
+        "sample_note": "full_census",
+        "provenance": "D1 fresh full census, this phase"
+      },
+      "note": "GG decision: too small to power (n=22) -- held out entirely as eval-only diagnostic, never trained on, never gated"
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "vscode_body_refs",
+      "source": "body_related_ext",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 206,
+      "decision": "DROP",
+      "precision_evidence": {
+        "precision_range": [
+          0.3,
+          0.43
+        ],
+        "n": 30,
+        "provenance": "ADR-0030 Channel A table, cited not re-derived"
+      },
+      "note": "noisy, same tier as title_sim -- non-title_sim alone is NOT sufficient for 'clean'"
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "*",
+      "source": "title_sim",
+      "stratum": "*",
+      "task": "related",
+      "pool_size": 0,
+      "decision": "DROP",
+      "precision_evidence": null,
+      "note": "hard rule -- title_sim dropped unconditionally"
+    }
+  ],
+  "held_out_eval_sets": {
+    "k8s_related": {
+      "label": "k8s_related",
+      "target": 150,
+      "available_genuine": 167,
+      "eval_set_size": 150,
+      "achieved_target": true,
+      "train_pool_size": 264,
+      "eval_issues_dropped_from_train": 247
+    },
+    "vscode_duplicate": {
+      "label": "vscode_duplicate",
+      "target": 200,
+      "available_genuine": 224,
+      "eval_set_size": 200,
+      "achieved_target": true,
+      "train_pool_size": 1734,
+      "eval_issues_dropped_from_train": 472
+    },
+    "vscode_related": {
+      "label": "vscode_related",
+      "eval_set_size": 19,
+      "status": "eval-only diagnostic, NOT trained on, NOT gated, NOT blended with duplicate task"
+    }
+  },
+  "eval_set_disjointness": "asserted programmatically (issue-level) for both gateable eval sets -- scripts/d1_build_eval_set.py::main",
+  "eval_set_precision": "100% by construction -- every eval pair was individually hand-verified genuine (not a channel-precision sample); clears the >=90% hard rule trivially. See reports/d1_pair_quality_review.json + reports/d1_eval_carve_review_{k8s,vscode}.json for every verdict + reason.",
+  "clean_eval_baseline": [
+    {
+      "label": "k8s_related",
+      "repo": "kubernetes_kubernetes",
+      "n_eval_pairs_total": 150,
+      "n_missing_from_index": 0,
+      "n_evaluated": 150,
+      "index": "d1_full_corpus_index_kubernetes_kubernetes_bge (29994 records)",
+      "recall_at_1": 0.03333333333333333,
+      "recall_at_5": 0.09333333333333334,
+      "recall_at_10": 0.12,
+      "recall_at_20": 0.15333333333333332,
+      "recall_at_1_ci95": [
+        0.0067,
+        0.0667
+      ],
+      "recall_at_5_ci95": [
+        0.0533,
+        0.14
+      ],
+      "recall_at_10_ci95": [
+        0.0733,
+        0.1733
+      ],
+      "mrr": 0.05926252723311547,
+      "mrr_ci95": [
+        0.0313,
+        0.0934
+      ],
+      "ci_note": null
+    },
+    {
+      "label": "vscode_duplicate",
+      "repo": "microsoft_vscode",
+      "n_eval_pairs_total": 200,
+      "n_missing_from_index": 0,
+      "n_evaluated": 200,
+      "index": "d1_full_corpus_index_microsoft_vscode_bge (13315 records)",
+      "recall_at_1": 0.225,
+      "recall_at_5": 0.435,
+      "recall_at_10": 0.475,
+      "recall_at_20": 0.555,
+      "recall_at_1_ci95": [
+        0.165,
+        0.285
+      ],
+      "recall_at_5_ci95": [
+        0.3699,
+        0.505
+      ],
+      "recall_at_10_ci95": [
+        0.405,
+        0.545
+      ],
+      "mrr": 0.3178551556587548,
+      "mrr_ci95": [
+        0.2627,
+        0.3736
+      ],
+      "ci_note": null
+    },
+    {
+      "label": "vscode_related",
+      "repo": "microsoft_vscode",
+      "n_eval_pairs_total": 19,
+      "n_missing_from_index": 0,
+      "n_evaluated": 19,
+      "index": "d1_full_corpus_index_microsoft_vscode_bge (13315 records)",
+      "recall_at_1": 0.3684210526315789,
+      "recall_at_5": 0.5789473684210527,
+      "recall_at_10": 0.631578947368421,
+      "recall_at_20": 0.6842105263157895,
+      "recall_at_1_ci95": [
+        0.1579,
+        0.5789
+      ],
+      "recall_at_5_ci95": [
+        0.3684,
+        0.7895
+      ],
+      "recall_at_10_ci95": [
+        0.4211,
+        0.8421
+      ],
+      "mrr": 0.4449088407292742,
+      "mrr_ci95": [
+        0.2505,
+        0.6559
+      ],
+      "ci_note": "small-n, illustrative CI only -- directional, not a gate"
+    }
+  ],
+  "baseline_caveats": [
+    "k8s_related's honest R@5 (9.3% [5.3,14.0], n=150) is far below the previously reported 23.5% (ADR-0030) -- that number was measured on a noisier gold set including title_sim contamination (ADR-0032). Two factors both contribute to the drop, not disentangled at D1's power: (1) genuinely harder/cleaner pairs -- title_sim pairs had trivially high lexical overlap that inflated recall on incidental matches; (2) a ~2x larger candidate corpus (30,000 vs the old live index's 15,000) mechanically lowers recall by adding distractors, independent of pair quality. Only 16 of the 150 k8s eval pairs fall within the old 15k-issue range -- too few (n=16) to cleanly separate the two effects. Recommendation: D2 should treat 9.3% as the real, current, honest baseline to beat -- it reflects the actual corpus scale the product should be benchmarked against, not an artifact worth re-litigating.",
+    "vscode_duplicate (43.5% [37.0,50.5], n=200) and vscode_related (57.9% [36.8,78.9], n=19, directional-only) are NOT comparable to each other or to k8s -- three different tasks, three different corpora, reported separately by design."
+  ],
+  "recommended_eval_params_for_d2": {
+    "primary_gate_metric": "Recall@5 (matches the product surface: top-5 similar issues shown to the triager)",
+    "secondary_metrics": "Recall@1, Recall@10 for shape; MRR for rank-position signal beyond hit/miss (already computed here, not a gate)",
+    "ci_method": "percentile bootstrap, 2000 resamples, seed=42 for single-arm numbers (this report); TRUE PAIRED bootstrap (same resample indices for both arms, per scripts/_retrieval_eval_common.py::paired_bootstrap_ci, ADR-0027's corrected method) for any D2 trained-vs-baseline delta -- a lever/model ships only if the paired CI on the improvement excludes zero, per this project's established bar",
+    "gateable_tasks": [
+      "k8s_related",
+      "vscode_duplicate"
+    ],
+    "directional_only_tasks": [
+      "vscode_related (n=19, underpowered by construction, never gated, never blended with vscode_duplicate)"
+    ],
+    "corpus_consistency": "D2 must evaluate against the CURRENT full-corpus index (this report's d1_full_corpus_index_*, or its successor), never a stale subset -- corpus size directly affects recall, so baseline and trained-model numbers must share the same candidate pool to be comparable"
+  }
+}

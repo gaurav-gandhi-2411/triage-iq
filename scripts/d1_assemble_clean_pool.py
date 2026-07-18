@@ -1,4 +1,4 @@
-"""D1 checkpoint 1: assemble the clean product-task training pool from all precision evidence.
+"""D1 checkpoint 1 (final, post-GG decision): clean product-task pool, per repo, per TASK stratum.
 
 Combines three evidence sources, all cited with provenance (rule 65b):
   1. Fresh hand-judged samples this phase (reports/d1_pair_quality_review.json ->
@@ -6,18 +6,27 @@ Combines three evidence sources, all cited with provenance (rule 65b):
      the tiny legacy body_ref/body_related full-census pools, vscode dup_comment.
   2. ADR-0032's existing 50-pair review, resliced by `source` (not previously reported
      at this granularity) -- k8s_extended_mine/body_related_ext (n=20), legacy body_related
-     (n=3), legacy title_sim (n=2, too small to trust, superseded by rule 3).
+     (n=3).
   3. ADR-0030's channel table (already measured, cited not re-derived) -- vscode's
      "Channel A" (body_related_ext / `vscode_body_refs`) at 30-43% precision (n=30) is
      NOISY, same tier as title_sim -- excluded despite being non-title_sim.
 
 Hard rule (spec.md): title_sim is dropped everywhere, unconditionally, regardless of any
-per-repo sample precision -- this is a project-wide decision from ADR-0032, not re-litigated
-per repo here.
+per-repo sample precision.
 
-Inclusion bar: precision comfortably above the noise tier (title_sim ~20%, vscode Channel A
-30-43%). All included channels clear ~65%+; most are 80-91%. Every included channel's
-precision is stated, not just a pass/fail label (spec.md success criteria).
+GG decisions (checkpoint 1, this phase):
+  - k8s_extended_mine/body_related_ext (200 pairs, 65.0% precision) DROPPED -- meaningfully
+    below its sibling channels (~83-84%); pool trades size for precision (536 vs 736).
+  - vscode's two strata are reported SEPARATELY, never blended into one number: DUPLICATE
+    (dup_comment, 2242 @ 85.0%, powered/gateable) vs RELATED (narrow reference channels, 22
+    @ 86.4%, too small to power -- reported directional-only, held out entirely as an
+    eval-only diagnostic, never trained on, never gated). Blending them would hide that the
+    product-valuable RELATED task remains effectively unmeasured -- the exact
+    proxy-vs-product trap this project has caught 4 times.
+  - Same lens applied to k8s: does it have a DUPLICATE stratum distinct from RELATED?
+    NO -- k8s has zero `dup_comment` rows anywhere in gold_related_v2.parquet (ADR-0030:
+    "k8s has 0% comments_data coverage -- neither scrape fetched comments"). k8s's entire
+    clean pool is the RELATED task only; there is no k8s duplicate stratum to split out.
 
 Reads:  data/gold_related_v2.parquet
         reports/d1_channel_precision_audit.json  (this phase's fresh samples)
@@ -50,12 +59,11 @@ def wilson_ci(x: int, n: int, z: float = 1.96) -> tuple[float, float]:
 
 def reslice_adr0032(gold: pd.DataFrame) -> pd.DataFrame:
     review = pd.DataFrame(json.loads(ADR0032_REVIEW.read_text(encoding="utf-8")))
-    m = review.merge(
+    return review.merge(
         gold[["repo", "query_number", "original_number", "source", "channel", "stratum"]],
         on=["repo", "query_number", "original_number"],
         suffixes=("_rev", ""),
     )
-    return m
 
 
 def main() -> None:
@@ -86,30 +94,30 @@ def main() -> None:
             "provenance": "ADR-0032 review, resliced by source",
         }
 
-    # (repo, channel, source, stratum, decision, precision_evidence, note)
-    rows = []
+    rows: list[dict] = []
 
-    def add(repo, channel, source, stratum, decision, evidence, note=""):
-        n_pool = pop_size(repo, channel, source, stratum)
+    def add(repo, channel, source, stratum, task, decision, evidence, note=""):
         rows.append(
             {
                 "repo": repo,
                 "channel": channel,
                 "source": source,
                 "stratum": stratum,
-                "pool_size": n_pool,
+                "task": task,
+                "pool_size": pop_size(repo, channel, source, stratum),
                 "decision": decision,
                 "precision_evidence": evidence,
                 "note": note,
             }
         )
 
-    # ---- k8s ----
+    # ---- k8s: RELATED task only -- no duplicate/comment channel exists (0% comment coverage) ----
     add(
         "kubernetes_kubernetes",
         "k8s_forward_scrape",
         "body_related",
         "product",
+        "related",
         "KEEP",
         fresh["kubernetes_kubernetes::k8s_forward_scrape::body_related::product"]
         | {"provenance": "D1 fresh full census, this phase"},
@@ -119,64 +127,71 @@ def main() -> None:
         "k8s_forward_scrape",
         "body_related_ext",
         "product",
+        "related",
         "KEEP",
         fresh["kubernetes_kubernetes::k8s_forward_scrape::body_related_ext::product"]
         | {"provenance": "D1 fresh sample n=30 of 454, this phase"},
     )
     add(
         "kubernetes_kubernetes",
-        "k8s_extended_mine",
-        "body_related_ext",
-        "product",
-        "KEEP",
-        resliced_precision("kubernetes_kubernetes", "k8s_extended_mine", "body_related_ext"),
-        note="lowest-precision kept k8s channel (65% vs ~83-84% siblings) -- flagged for GG",
-    )
-    add(
-        "kubernetes_kubernetes",
         "legacy_gold_v1",
         "body_related",
         "product",
+        "related",
         "KEEP",
         resliced_precision("kubernetes_kubernetes", "legacy_gold_v1", "body_related"),
         note="thin sample (n=3 of 37) -- consistent with sibling channels, not independently powered",
     )
     add(
         "kubernetes_kubernetes",
+        "k8s_extended_mine",
+        "body_related_ext",
+        "product",
+        "related",
+        "DROP",
+        resliced_precision("kubernetes_kubernetes", "k8s_extended_mine", "body_related_ext"),
+        note="GG decision: 65% meaningfully below sibling channels (~83-84%) -- traded size for precision",
+    )
+    add(
+        "kubernetes_kubernetes",
         "legacy_gold_v1",
         "body_ref",
         "product",
+        "related",
         "DROP",
         fresh["kubernetes_kubernetes::legacy_gold_v1::body_ref::product"],
-        note="full census n=2, both incidental (self-disclaimed 'maybe/probably not the same') -- negligible size either way",
+        note="full census n=2, both incidental (self-disclaimed 'maybe/probably not the same')",
     )
     add(
         "kubernetes_kubernetes",
         "*",
         "title_sim",
         "*",
+        "related",
         "DROP",
         None,
-        note="hard rule (ADR-0032, spec.md) -- title_sim dropped unconditionally, not re-litigated per repo",
+        note="hard rule -- title_sim dropped unconditionally",
     )
 
-    # ---- vscode ----
+    # ---- vscode: TWO separate tasks, never blended ----
     add(
         "microsoft_vscode",
         "vscode_dup_scrape",
         "dup_comment",
         "gate",
-        "KEEP (duplicate stratum)",
+        "duplicate",
+        "KEEP",
         fresh["microsoft_vscode::vscode_dup_scrape::dup_comment::gate"]
         | {"provenance": "D1 fresh sample n=40 of 2242, this phase"},
-        note="vscode's largest channel by far and the deciding factor for its verdict",
+        note="powered/gateable -- vscode's largest channel by far",
     )
     add(
         "microsoft_vscode",
         "legacy_gold_v1",
         "body_ref",
         "product",
-        "KEEP (related stratum)",
+        "related",
+        "KEEP (eval-only, directional)",
         fresh["microsoft_vscode::legacy_gold_v1::body_ref::product"]
         | {"provenance": "D1 fresh full census, this phase"},
     )
@@ -185,7 +200,8 @@ def main() -> None:
         "legacy_gold_v1",
         "body_related",
         "product",
-        "KEEP (related stratum)",
+        "related",
+        "KEEP (eval-only, directional)",
         fresh["microsoft_vscode::legacy_gold_v1::body_related::product"]
         | {"provenance": "D1 fresh full census, this phase"},
     )
@@ -194,15 +210,18 @@ def main() -> None:
         "vscode_body_refs",
         "body_related",
         "product",
-        "KEEP (related stratum)",
+        "related",
+        "KEEP (eval-only, directional)",
         fresh["microsoft_vscode::vscode_body_refs::body_related::product"]
         | {"provenance": "D1 fresh full census, this phase"},
+        note="GG decision: too small to power (n=22) -- held out entirely as eval-only diagnostic, never trained on, never gated",
     )
     add(
         "microsoft_vscode",
         "vscode_body_refs",
         "body_related_ext",
         "product",
+        "related",
         "DROP",
         {
             "precision_range": [0.30, 0.43],
@@ -216,40 +235,55 @@ def main() -> None:
         "*",
         "title_sim",
         "*",
+        "related",
         "DROP",
         None,
-        note="hard rule (ADR-0032, spec.md) -- title_sim dropped unconditionally",
+        note="hard rule -- title_sim dropped unconditionally",
     )
-
-    kept = [r for r in rows if r["decision"].startswith("KEEP")]
-    k8s_kept = [r for r in kept if r["repo"] == "kubernetes_kubernetes"]
-    vsc_kept = [r for r in kept if r["repo"] == "microsoft_vscode"]
 
     def weighted_precision(group: list[dict]) -> float | None:
         num = sum(r["pool_size"] * r["precision_evidence"]["precision"] for r in group)
         den = sum(r["pool_size"] for r in group)
         return round(num / den, 4) if den else None
 
+    k8s_kept = [
+        r for r in rows if r["repo"] == "kubernetes_kubernetes" and r["decision"].startswith("KEEP")
+    ]
+    vsc_dup_kept = [
+        r
+        for r in rows
+        if r["repo"] == "microsoft_vscode" and r["task"] == "duplicate" and r["decision"] == "KEEP"
+    ]
+    vsc_rel_kept = [
+        r
+        for r in rows
+        if r["repo"] == "microsoft_vscode"
+        and r["task"] == "related"
+        and r["decision"].startswith("KEEP")
+    ]
+
     summary = {
         "kubernetes_kubernetes": {
+            "task": "related (no duplicate/comment channel exists -- 0% comment coverage, ADR-0030)",
             "clean_pool_size": sum(r["pool_size"] for r in k8s_kept),
             "weighted_precision": weighted_precision(k8s_kept),
+            "powered_gateable": "TBD at eval-carve step (task 6/7) -- ADR-0030 estimated ~289-385 test "
+            "pairs needed for a tight measurement CI; 536 total must cover train+eval",
         },
         "microsoft_vscode": {
-            "duplicate_stratum_size": pop_size(
-                "microsoft_vscode", "vscode_dup_scrape", "dup_comment", "gate"
-            ),
-            "duplicate_stratum_precision": fresh[
-                "microsoft_vscode::vscode_dup_scrape::dup_comment::gate"
-            ]["precision"],
-            "related_stratum_size": sum(
-                r["pool_size"] for r in vsc_kept if "related" in r["decision"]
-            ),
-            "related_stratum_precision": weighted_precision(
-                [r for r in vsc_kept if "related" in r["decision"]]
-            ),
-            "combined_clean_pool_size": sum(r["pool_size"] for r in vsc_kept),
-            "combined_weighted_precision": weighted_precision(vsc_kept),
+            "duplicate_task": {
+                "pool_size": sum(r["pool_size"] for r in vsc_dup_kept),
+                "weighted_precision": weighted_precision(vsc_dup_kept),
+                "status": "powered/gateable -- large enough for a proper train/eval split",
+            },
+            "related_task": {
+                "pool_size": sum(r["pool_size"] for r in vsc_rel_kept),
+                "weighted_precision": weighted_precision(vsc_rel_kept),
+                "status": "directional-only, eval-only diagnostic (n=22) -- NOT trained on, NOT gated, "
+                "NOT blended with the duplicate number",
+            },
+            "note": "duplicate and related are reported as two separate tasks, never combined into "
+            "one 'vscode retrieval' number",
         },
     }
 

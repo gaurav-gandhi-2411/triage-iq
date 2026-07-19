@@ -3,9 +3,11 @@
 ## Goal
 
 D1 produced clean, hand-verified, disjoint-asserted training pools + held-out eval sets, and the
-honest baselines: retrieval is genuinely weak on the tasks the data supports. D2 uses GCP GPU credits
-to fine-tune the embedder on the CLEAN data and find the best model — measured on D1's trustworthy
-held-out eval, with leakage impossible by construction.
+honest baselines: retrieval is genuinely weak on the tasks the data supports. D2 fine-tunes the
+embedder LOCALLY on GG's RTX 3070 (8GB VRAM) on the CLEAN data and finds the best model — measured
+on D1's trustworthy held-out eval, with leakage impossible by construction. $0 cost (GCP was
+evaluated and ruled out — the billing account's free tier structurally bans GPU instances; local
+compute is both cheaper and simpler for a job this size).
 
 Two trainable tasks (asymmetric — different tasks, different data volumes):
 - **vscode-DUPLICATE (PRIMARY)**: 2,242 clean pairs @ 85%, held-out eval n=200 (gateable),
@@ -18,19 +20,18 @@ Two trainable tasks (asymmetric — different tasks, different data volumes):
 
 **Measure-first**: before any hyperparameter sweep, ONE default fine-tune run on vscode-duplicate.
 If it doesn't move 43.5% meaningfully, no sweep will — stop and report. Only sweep if the single run
-shows real signal. Spend credits in proportion to demonstrated signal.
+shows real signal.
 
-## GPU environment (GCP GPU VM — CC provides commands, GG runs them)
+## Local GPU environment (RTX 3070 laptop GPU, 8GB VRAM, Windows/CUDA)
 
-- CC CANNOT provision GCP. CC produces the exact runnable setup: create a GPU VM (e.g. a single
-  T4/L4/A100 as the job needs — recommend the cheapest GPU that fits the model + batch), install
-  deps, pull the training data + code, run training, pull artifacts back, TEAR DOWN the VM.
-- The workflow: GG runs CC's provided commands to stand up the VM; training runs there; artifacts
-  (fine-tuned embedder) come back; VM is destroyed to stop billing. CC gives the full command
-  sequence in chat (per GG's standing rule — CC kickoff/commands pasted in chat, not just files).
-- Zero paid APIs (GPU compute is the only spend, on GG's free credits). Never ANTHROPIC_API_KEY.
-- Budget-aware: recommend spot/preemptible if the job is checkpoint-restartable; estimate the
-  credit cost of the single run + the sweep BEFORE running, so GG approves spend with eyes open.
+- No cloud, no VM, no staging. Training data (corpus parquet, D1 full-corpus indices, mined hard
+  negatives) is already local — GG runs the scripts directly, no provisioning step.
+- The 3070 is shared with GG's AetherArt work. **Don't touch the AetherArt process** (don't kill it,
+  don't assume its VRAM is free) — GG runs D2 once AetherArt's job releases the GPU, not before.
+- BGE-base (109M params) at the scripts' default batch size (16) fits comfortably in 8GB; note in
+  the escalation report if a run needs a smaller batch size to fit alongside anything else resident.
+- CC gives the exact local run sequence in chat (per GG's standing rule — commands pasted in chat,
+  not just files). Never ANTHROPIC_API_KEY.
 
 ## The leakage guard (NON-NEGOTIABLE — the whole reason D1 existed)
 
@@ -76,22 +77,20 @@ shows real signal. Spend credits in proportion to demonstrated signal.
 - vscode-related (n=22) and any task without a clean trainable pool — not trained (directional-only).
 
 ## Autonomy & escalation
-CC prepares the training code + the GPU VM command sequence autonomously. Escalate:
-1. **The estimated GPU credit cost** (single run + sweep) BEFORE GG runs anything — spend approval.
-2. **The measure-first single-run result** (vscode-dup) — before any sweep.
-3. **The final per-task results** (fine-tune vs baseline, CI, effect size) — before any cutover or
+CC prepares the training code + the local run sequence autonomously. Escalate:
+1. **The measure-first single-run result** (vscode-dup) — before any sweep.
+2. **The final per-task results** (fine-tune vs baseline, CI, effect size) — before any cutover or
    HF decision.
-4. **Any leakage-guard question** — if the disjointness assertion is ambiguous, STOP.
-5. The cutover (if a model ships to prod) and the HF push (D3) — separate decisions.
+3. **Any leakage-guard question** — if the disjointness assertion is ambiguous, STOP.
+4. The cutover (if a model ships to prod) and the HF push (D3) — separate decisions.
 
 ## Hard rules
 - Leakage guard asserted before train AND before eval — fail hard on violation. Non-negotiable.
 - Ship bar = meaningful lift, CI clearly excludes zero, effect size stated. Marginal = documented
   negative, not shipped.
-- Measure-first: single run before sweep; spend credits in proportion to demonstrated signal.
-- CC provides GPU VM commands for GG to run (CC can't provision GCP); tear down the VM after to stop
-  billing; estimate cost before spending.
-- Branch `feat/retrieval-gpu-finetune`; human merges. Never ANTHROPIC_API_KEY (GPU credits only).
+- Measure-first: single run before sweep.
+- Local run only (RTX 3070); don't touch the AetherArt process sharing the GPU.
+- Branch `feat/retrieval-gpu-finetune`; human merges. Never ANTHROPIC_API_KEY.
   Don't touch aetherart-497918.
 
 ## Success criteria
@@ -99,16 +98,14 @@ CC prepares the training code + the GPU VM command sequence autonomously. Escala
 - vscode-duplicate: measure-first single run reported; sweep only if signal; best model by held-out R@5.
 - k8s-related: thin-data attempt reported honestly (incl. a valid negative).
 - Per-task fine-tune vs baseline: R@5 + CI + effect size, on D1's held-out eval.
-- GPU cost estimated + reported; VM torn down.
 - ADR-0034: the training, per-task results, ship/reject per task, and (if shipping) the USP
   assessment feeding the D3 HF decision.
 
 ## Build order
-1. Prepare training code + re-assert leakage disjointness. Estimate GPU cost. ESCALATE cost for approval.
-2. GG stands up the GPU VM (CC's commands). Run the vscode-duplicate MEASURE-FIRST single run.
-   ESCALATE the result.
+1. Prepare training code + re-assert leakage disjointness.
+2. GG runs the vscode-duplicate MEASURE-FIRST single run locally. ESCALATE the result.
 3. If signal → bounded sweep, pick best by held-out R@5. Then the k8s-related thin-data attempt.
-4. ESCALATE final per-task results (vs baseline, CI, effect size). Tear down VM.
+4. ESCALATE final per-task results (vs baseline, CI, effect size).
 5. ADR-0034 + USP assessment for the D3 HF decision.
 
 ---

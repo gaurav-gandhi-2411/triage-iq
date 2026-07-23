@@ -123,6 +123,28 @@ suggested_next_steps, triage_summary
 > gated) — vscode is genuinely two different tasks, reported separately, never blended.
 > Full reasoning: [`docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md`](docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md).
 >
+> **D2 fine-tune result (2026-07-23, ADR-0034) — confirmed regression, BGE-base off-the-shelf
+> stays the shipped retriever.** D1's clean, disjoint vscode_duplicate data (1,734 training pairs,
+> leakage guard PASSED 0-overlap on every run) was fine-tuned locally (BGE-base, MNRL loss,
+> measure-first single run: 5 epochs, lr=2e-5). Result: **R@5 38.5% vs. the 43.5% baseline
+> (−5.0pp, CI [−11.0, +0.5])** — every metric moved backward. A diagnostic leg then tested the
+> leading alternative explanation (overfitting) directly: 2 epochs, lr=1e-5 — the textbook
+> anti-overfit fix, ending training at a 5.7× higher, far-less-memorized loss (0.255 vs. 0.045).
+> If overfitting were the cause, this should have recovered some of the gap. Instead **R@5 dropped
+> further to 33.5% (−10.0pp, CI [−16.0, −4.5], excludes zero)** — a statistically confirmed
+> regression, worse than the first run. Overfitting is ruled out, not just unaddressed; the leading
+> remaining (untested) hypothesis is a train/eval candidate-distribution mismatch — trained
+> against ~5 mined hard negatives per pair, evaluated against the full 13,315-issue corpus. No HF
+> release, no cutover; declined on evidence. k8s_related (264 pairs, thinner than vscode's pool) is
+> now explicitly NO-GO by the same mechanism, not merely unattempted. **BGE-base off-the-shelf
+> remains the shipped retriever, unbeaten across FIVE independently-tried levers**: hybrid
+> BM25+RRF fusion (rejected, CI crosses zero), a pretrained cross-encoder reranker (regressed,
+> +190–330× latency), a stronger pretrained embedder (rejected, CI crosses zero), the W3 in-domain
+> fine-tune on noisy pairs (held, marginal +3.5pp/+3.2pp, CIs cross zero), and this D2 in-domain
+> fine-tune on clean, leakage-asserted pairs (confirmed regression). This is a characterized limit
+> of the current data/approach combination, not a failure to try. Full reasoning:
+> [`docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md`](docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md).
+>
 > **Prior framing (2026-07-16, ADR-0030/0031/0032 — historical, superseded above): k8s
 > product-task retrieval is genuinely weak, hand-verified; vscode product-task retrieval is
 > currently UNMEASURED.** k8s Recall@5 on the actual product task ("given a new issue, find

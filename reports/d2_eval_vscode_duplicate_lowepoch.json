@@ -1,0 +1,63 @@
+{
+  "task": "vscode_duplicate",
+  "repo": "microsoft_vscode",
+  "model_dir": "data/models/d2_finetuned_vscode_duplicate_lowepoch",
+  "n_eval_pairs": 200,
+  "n_evaluated": 200,
+  "recall_at_1": {
+    "baseline": 0.225,
+    "baseline_ci95": [
+      0.165,
+      0.285
+    ],
+    "trained": 0.21,
+    "trained_ci95": [
+      0.155,
+      0.27
+    ],
+    "delta": -0.015,
+    "delta_ci95_paired": [
+      -0.0601,
+      0.035
+    ],
+    "excludes_zero": false
+  },
+  "recall_at_5": {
+    "baseline": 0.435,
+    "baseline_ci95": [
+      0.3699,
+      0.505
+    ],
+    "trained": 0.335,
+    "trained_ci95": [
+      0.27,
+      0.4001
+    ],
+    "delta": -0.1,
+    "delta_ci95_paired": [
+      -0.16,
+      -0.045
+    ],
+    "excludes_zero": true
+  },
+  "recall_at_10": {
+    "baseline": 0.475,
+    "baseline_ci95": [
+      0.405,
+      0.545
+    ],
+    "trained": 0.435,
+    "trained_ci95": [
+      0.37,
+      0.505
+    ],
+    "delta": -0.04,
+    "delta_ci95_paired": [
+      -0.095,
+      0.01
+    ],
+    "excludes_zero": false
+  },
+  "mrr_baseline": 0.31299007936507933,
+  "mrr_trained": 0.2658015873015873
+}

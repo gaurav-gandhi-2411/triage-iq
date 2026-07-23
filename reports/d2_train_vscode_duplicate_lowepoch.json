@@ -1,0 +1,21 @@
+{
+  "task": "vscode_duplicate",
+  "base_model": "BAAI/bge-base-en-v1.5",
+  "n_triplets": 8660,
+  "hyperparams": {
+    "lr": 1e-05,
+    "epochs": 2,
+    "batch_size": 16,
+    "weight_decay": 0.01,
+    "temperature": 0.05,
+    "max_len": 128,
+    "seed": 42
+  },
+  "loss_by_epoch": [
+    0.7417208543425337,
+    0.25460403092975326
+  ],
+  "train_seconds": 3144.714859800006,
+  "device": "cuda",
+  "out_dir": "data\\models\\d2_finetuned_vscode_duplicate_lowepoch"
+}

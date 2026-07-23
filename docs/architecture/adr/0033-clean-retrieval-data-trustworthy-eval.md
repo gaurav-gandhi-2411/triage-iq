@@ -1,6 +1,13 @@
 # ADR-0033 — Clean Retrieval Data + Trustworthy Eval Foundation (Phase D1)
 
-**Status:** Accepted (data + eval foundation; no training, no cutover)
+**Status:** Baselines SUPERSEDED by [ADR-0035](0035-retrieval-harness-correction.md) (2026-07-24)
+— the R@5 numbers below (k8s 9.3%, vscode 43.5%) were measured with title-only queries; production
+embeds title+body untruncated. Corrected, prod-matching canonical baselines: **k8s 18.0%
+[12.0, 24.0], vscode 50.5% [43.0, 57.5]**. D1's actual contribution (clean, hand-verified,
+issue-level-disjoint pairs; the eval-set/train-pool construction; the leakage guard) is unaffected
+and still the foundation everything downstream relies on — only the query-construction bug in the
+baseline measurement is corrected.
+**Original status:** Accepted (data + eval foundation; no training, no cutover)
 **Date:** 2026-07-19
 **Decider:** Gaurav Gandhi (analysis + bounded hand-verification by CC, autonomous, per spec.md)
 

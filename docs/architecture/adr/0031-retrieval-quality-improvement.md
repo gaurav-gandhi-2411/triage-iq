@@ -1,6 +1,11 @@
 # ADR-0031 — Retrieval Quality Improvement (three levers, none ship)
 
-**Status:** Rejected (all three levers)
+**Status:** SUPERSEDED by [ADR-0035](0035-retrieval-harness-correction.md) (2026-07-24) — the
+numbers below were measured with title-only queries against an unaudited (72%/20% genuine),
+pre-D1 pair population. All three levers are still rejected on the corrected harness, but
+**weighted fusion flipped sign** (was reported below as marginally shipping; on the corrected
+harness it's a significant vscode regression). Kept for provenance, not as current numbers.
+**Original status:** Rejected (all three levers)
 **Date:** 2026-07-12
 **Decider:** Gaurav Gandhi
 

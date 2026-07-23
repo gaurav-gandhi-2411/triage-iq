@@ -79,7 +79,10 @@ def hit_vectors(retriever: SimilarIssueRetriever, pairs: list[dict]) -> dict[str
     k_max = max(K_VALUES)
     hit_lists: list[list[bool]] = []
     for row in usable:
-        query_text = f"{row['query_title']}. {row.get('query_body', '')[:MAX_BODY]}"
+        # Byte-identical to production (triage.py::_collect_signals): f"{title}. {body}",
+        # UNTRUNCATED. Matches the d1_baseline_eval.py fix; see the ADR correcting
+        # ADR-0031/0033/0034. Corpus-side truncation (_build_text, MAX_BODY) is untouched.
+        query_text = f"{row['query_title']}. {row.get('query_body', '')}"
         results = retriever.retrieve(query_text, k=k_max, exclude_number=int(row["query_number"]))
         retrieved = [r["number"] for r in results]
         pos = int(row["original_number"])

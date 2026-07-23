@@ -8,10 +8,15 @@ Leakage guard: re-asserts train/eval issue-level disjointness (scripts/d2_assert
 as a hard pre-flight gate before training starts -- non-negotiable, fails hard on violation.
 
 Training method: direct HuggingFace loop (not sentence-transformers .fit()) with
-MultipleNegativesRankingLoss, mean pooling + L2-normalize, saved in sentence-transformers format
-so scripts/d2_eval_finetuned.py / SimilarIssueRetriever can load it directly. Same method as the
-held W3 fine-tune (scripts/w3_t4_train.py) -- W3 was held for DATA quality (title_sim noise), not
-methodology; this reuses the training mechanics on D1's clean data instead.
+MultipleNegativesRankingLoss, CLS-token pooling (matching BGE's native config) + L2-normalize,
+saved in sentence-transformers format so scripts/d2_eval_finetuned.py / SimilarIssueRetriever
+can load it directly.
+
+CORRECTED (see the ADR superseding ADR-0031/0033/0034): the first D2 run used mean pooling
+(w3_t4_train.py's method) and max_seq_length=128, both of which diverge from
+BAAI/bge-base-en-v1.5's own config (CLS pooling, 512 max length) -- two mechanistic confounds
+that alone could explain the regression that run measured, independent of data/approach. Both
+fixed here: CLS pooling (cls_pool(), matching the saved 1_Pooling/config.json) and MAX_LEN=512.
 
 Anchor/positive text is looked up from the processed corpus (title + body_clean[:512]) by issue
 number, NOT from the train-pool JSON's title-only columns -- this matches exactly how
@@ -53,9 +58,19 @@ logger = logging.getLogger(__name__)
 
 SEED = 42
 BASE_MODEL = "BAAI/bge-base-en-v1.5"
-MAX_LEN = 128
+# Corrected (see the ADR superseding ADR-0031/0033/0034): was 128, a train/inference length
+# mismatch -- the original run truncated 65.73% of anchor/positive/negative examples at 128
+# tokens. Measured the real BGE-tokenizer length distribution over vscode_duplicate's training
+# triplets (25,980 texts): p50=146, p90=217, p95=230, p99=272, max=314. 512 (BGE-base's native
+# max) round-trips through O(L^2) attention on mostly-padding for no benefit -- at seq_len=512
+# with batch=16 the RTX 3070 (8GB) sat at 92% VRAM and epoch 1 alone took 3h25m (~47x slower per
+# step than the original run), a VRAM-pressure/paging effect, not pure compute scaling. 256 is
+# the smallest power of 2 covering p95, truncating only 2.26% (586/25980) of examples -- prod/eval
+# still embed at BGE's own default (untouched), this only bounds what TRAINING pads/truncates to.
+MAX_LEN = 256
 MAX_BODY = 512
 TEMPERATURE = 0.05  # standard for bge MNRL fine-tunes (matches w3_t4_train.py)
+GRAD_ACCUM_STEPS = 2  # per-device batch = batch_size // GRAD_ACCUM_STEPS, same effective batch
 
 REPO_BY_TASK = {
     "vscode_duplicate": "microsoft_vscode",
@@ -159,9 +174,12 @@ def load_triplets(task: str) -> tuple[list[str], list[str], list[str]]:
     return anchors, positives, negatives
 
 
-def mean_pool(hidden: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
-    mask = attention_mask.unsqueeze(-1).float()
-    return (hidden * mask).sum(1) / mask.sum(1).clamp(min=1e-9)
+def cls_pool(hidden: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:  # noqa: ARG001
+    # BGE's native pooling (BAAI/bge-base-en-v1.5's own 1_Pooling/config.json:
+    # pooling_mode_cls_token=true, pooling_mode_mean_tokens=false) -- corrected from the prior
+    # mean_pool(), which trained against the grain of what the checkpoint was pretrained with.
+    # See the ADR superseding ADR-0031/0033/0034.
+    return hidden[:, 0, :]
 
 
 def _save_st_model(model: AutoModel, tokenizer: AutoTokenizer, out_dir: Path) -> None:
@@ -170,7 +188,13 @@ def _save_st_model(model: AutoModel, tokenizer: AutoTokenizer, out_dir: Path) ->
     model.save_pretrained(str(transformer_dir))
     tokenizer.save_pretrained(str(transformer_dir))
     word_embedding_model = st_models.Transformer(str(transformer_dir), max_seq_length=MAX_LEN).cpu()
-    pooling_model = st_models.Pooling(word_embedding_model.get_word_embedding_dimension())
+    # CLS-token pooling to match BGE's native config -- must agree with cls_pool() above and
+    # with the base model's own 1_Pooling/config.json (asserted before training, see verify step).
+    pooling_model = st_models.Pooling(
+        word_embedding_model.get_word_embedding_dimension(),
+        pooling_mode_cls_token=True,
+        pooling_mode_mean_tokens=False,
+    )
     normalize_model = st_models.Normalize()
     st = SentenceTransformer(modules=[word_embedding_model, pooling_model, normalize_model])
     st.save(str(out_dir))
@@ -192,50 +216,77 @@ def train(task: str, lr: float, epochs: int, batch_size: int, weight_decay: floa
 
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
     dataset = TripletDataset(anchors, positives, negatives, tokenizer)
+    # Gradient accumulation to hold the spec's effective batch under VRAM constraints (the
+    # original max_seq_length=512 run sat at 92% VRAM and epoch 1 alone took 3h25m -- a
+    # paging/memory-pressure effect, not pure compute scaling; see the ADR superseding
+    # ADR-0031/0033/0034). NOTE: MNRL's loss uses IN-BATCH negatives, so this is NOT strictly
+    # gradient-identical to one true batch of `batch_size` -- each per-device micro-batch only
+    # sees its own (smaller) in-batch candidate pool (2x per_device_batch candidates, not
+    # 2x batch_size). Standard practice for VRAM-constrained contrastive fine-tuning, but
+    # documented precisely rather than claimed as exactly equivalent.
+    per_device_batch = max(1, batch_size // GRAD_ACCUM_STEPS)
     loader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=(device.type == "cuda")
+        dataset, batch_size=per_device_batch, shuffle=True, num_workers=0, pin_memory=(device.type == "cuda")
     )
 
     model = AutoModel.from_pretrained(BASE_MODEL).to(device)
-    total_steps = len(loader) * epochs
+    optimizer_steps_per_epoch = -(-len(loader) // GRAD_ACCUM_STEPS)  # ceil division
+    total_steps = optimizer_steps_per_epoch * epochs
     warmup_steps = int(0.10 * total_steps)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = get_linear_schedule_with_warmup(optimizer, warmup_steps, max(total_steps, 1))
 
     logger.info(
-        "[%s] %d triplets, batch=%d, epochs=%d, steps/epoch=%d, total_steps=%d, lr=%g, wd=%g",
-        task, len(anchors), batch_size, epochs, len(loader), total_steps, lr, weight_decay,
+        "[%s] %d triplets, effective_batch=%d, per_device_batch=%d, grad_accum=%d, epochs=%d, "
+        "micro_batches/epoch=%d, optimizer_steps/epoch=%d, total_optimizer_steps=%d, lr=%g, wd=%g",
+        task, len(anchors), batch_size, per_device_batch, GRAD_ACCUM_STEPS, epochs,
+        len(loader), optimizer_steps_per_epoch, total_steps, lr, weight_decay,
     )
 
     loss_history: list[float] = []
     t0 = time.perf_counter()
+    step_t0 = t0
     for epoch in range(epochs):
         model.train()
-        epoch_loss, epoch_steps = 0.0, 0
-        for batch in loader:
+        epoch_loss, epoch_micro_steps = 0.0, 0
+        optimizer.zero_grad()
+        for i, batch in enumerate(loader):
             a_ids, a_mask = batch["a_input_ids"].to(device), batch["a_attention_mask"].to(device)
             p_ids, p_mask = batch["p_input_ids"].to(device), batch["p_attention_mask"].to(device)
             n_ids, n_mask = batch["n_input_ids"].to(device), batch["n_attention_mask"].to(device)
 
-            emb_a = F.normalize(mean_pool(model(a_ids, a_mask).last_hidden_state, a_mask), p=2, dim=1)
-            emb_p = F.normalize(mean_pool(model(p_ids, p_mask).last_hidden_state, p_mask), p=2, dim=1)
-            emb_n = F.normalize(mean_pool(model(n_ids, n_mask).last_hidden_state, n_mask), p=2, dim=1)
+            emb_a = F.normalize(cls_pool(model(a_ids, a_mask).last_hidden_state, a_mask), p=2, dim=1)
+            emb_p = F.normalize(cls_pool(model(p_ids, p_mask).last_hidden_state, p_mask), p=2, dim=1)
+            emb_n = F.normalize(cls_pool(model(n_ids, n_mask).last_hidden_state, n_mask), p=2, dim=1)
 
             candidates = torch.cat([emb_p, emb_n], dim=0)
             scores = (emb_a @ candidates.T) / TEMPERATURE
             labels = torch.arange(len(emb_a), device=device)
-            loss = F.cross_entropy(scores, labels)
-
-            optimizer.zero_grad()
+            loss = F.cross_entropy(scores, labels) / GRAD_ACCUM_STEPS
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            optimizer.step()
-            scheduler.step()
 
-            epoch_loss += loss.item()
-            epoch_steps += 1
+            is_last_micro_batch = (i + 1) == len(loader)
+            if (i + 1) % GRAD_ACCUM_STEPS == 0 or is_last_micro_batch:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                optimizer.step()
+                scheduler.step()
+                optimizer.zero_grad()
 
-        avg_loss = epoch_loss / max(1, epoch_steps)
+            epoch_loss += loss.item() * GRAD_ACCUM_STEPS  # undo the accumulation scaling for logging
+            epoch_micro_steps += 1
+
+            # Pace sanity-check instrumentation (not needed for correctness): every 20 micro-steps,
+            # log elapsed time + s/step + VRAM so a bad config is caught in minutes, not hours.
+            if epoch == 0 and (i + 1) % 20 == 0:
+                elapsed_steps = time.perf_counter() - step_t0
+                mem_mb = torch.cuda.memory_allocated() / (1024 * 1024) if torch.cuda.is_available() else 0.0
+                mem_reserved_mb = torch.cuda.memory_reserved() / (1024 * 1024) if torch.cuda.is_available() else 0.0
+                logger.info(
+                    "[%s] pace check: %d/%d micro-steps, %.3fs/step, VRAM allocated=%.0fMB reserved=%.0fMB",
+                    task, i + 1, len(loader), elapsed_steps / (i + 1), mem_mb, mem_reserved_mb,
+                )
+
+        avg_loss = epoch_loss / max(1, epoch_micro_steps)
         loss_history.append(avg_loss)
         logger.info("[%s] epoch %d/%d  avg_loss=%.4f", task, epoch + 1, epochs, avg_loss)
 
@@ -251,6 +302,7 @@ def train(task: str, lr: float, epochs: int, batch_size: int, weight_decay: floa
         "hyperparams": {
             "lr": lr, "epochs": epochs, "batch_size": batch_size, "weight_decay": weight_decay,
             "temperature": TEMPERATURE, "max_len": MAX_LEN, "seed": SEED,
+            "per_device_batch": per_device_batch, "grad_accum_steps": GRAD_ACCUM_STEPS,
         },
         "loss_by_epoch": loss_history,
         "train_seconds": elapsed,

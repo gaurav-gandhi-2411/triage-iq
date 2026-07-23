@@ -8,6 +8,9 @@ bootstrap used for ADR-0027/w3_t5_eval.py.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -16,10 +19,37 @@ N_BOOTSTRAP = 2000
 K_VALUES = [1, 5, 10, 20]
 MAX_BODY = 512
 
+# D1's canonical, hand-verified, issue-level-disjoint eval sets (ADR-0033) -- the SAME
+# population scripts/d1_baseline_eval.py measures the canonical baseline against, and the
+# SAME index (full current corpus, not the stale served dup_index_*) it uses. Supersedes
+# select_live_product_pairs()/gold_related_v2.parquet below, which was the ADR-0030-era,
+# unaudited (72% k8s / 20% vscode genuine, per ADR-0032) population ADR-0031's levers
+# originally used -- see the ADR correcting ADR-0031/0033/0034.
+D1_EVAL_SET_BY_REPO = {
+    "kubernetes_kubernetes": "reports/d1_eval_set_k8s_related.json",
+    "microsoft_vscode": "reports/d1_eval_set_vscode_duplicate.json",
+}
+D1_INDEX_DIR_BY_REPO = {
+    "kubernetes_kubernetes": "data/models/d1_full_corpus_index_kubernetes_kubernetes_bge",
+    "microsoft_vscode": "data/models/d1_full_corpus_index_microsoft_vscode_bge",
+}
+
+
+def load_d1_eval_pairs(repo: str) -> pd.DataFrame:
+    """Load D1's canonical eval-set pairs for `repo` (query_body-augmented) as a DataFrame,
+    same column shape (`query_title`, `query_body`, `query_number`, `original_number`,
+    `original_title`) select_live_product_pairs() used to return.
+    """
+    path = Path(D1_EVAL_SET_BY_REPO[repo])
+    return pd.DataFrame(json.loads(path.read_text(encoding="utf-8")))
+
 
 def select_live_product_pairs(gold: pd.DataFrame, repo: str, live_numbers: set[int]) -> pd.DataFrame:
-    """Product-stratum pairs for `repo` whose query and target both fall in the live index.
+    """DEPRECATED for the three levers -- see load_d1_eval_pairs() above. Kept only because
+    it's still historically referenced (ADR-0031's original numbers used it); not called by
+    lever1/2/3 anymore.
 
+    Product-stratum pairs for `repo` whose query and target both fall in the live index.
     Same selection rule as phaseC_k8s_live_product_eval.py / phaseC_vscode_live_product_eval.py:
     filtered by live-index membership, not w3-retry split label (ADR-0030 zero-leakage
     reasoning -- the live model is a pretrained, untrained-on-gold-pairs embedder).
@@ -35,7 +65,10 @@ def select_live_product_pairs(gold: pd.DataFrame, repo: str, live_numbers: set[i
 
 
 def query_text(row: pd.Series) -> str:
-    return str(row["query_title"]) + ". " + str(row["query_body"])[:MAX_BODY]
+    # Byte-identical to production (triage.py::_collect_signals): f"{title}. {body}", UNTRUNCATED.
+    # The prior [:MAX_BODY] truncation was an eval-only divergence from prod; see the ADR
+    # correcting ADR-0031/0033/0034. Corpus-side truncation (_build_text, MAX_BODY) is untouched.
+    return str(row["query_title"]) + ". " + str(row["query_body"])
 
 
 def paired_bootstrap_ci(base_hits: np.ndarray, new_hits: np.ndarray) -> tuple[float, float, float]:

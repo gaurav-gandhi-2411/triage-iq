@@ -83,11 +83,11 @@ suggested_next_steps, triage_summary
 | Component classifier | vscode | Macro F1 (top-1) | 0.585 |
 | Component classifier | kubernetes | Macro F1 (top-1) | 0.466 |
 | Component classifier | vscode | Inference latency p50 | 4.9ms |
-| Similar issue retriever | kubernetes | **Recall@5, related task (clean eval — see note)** | **9.3%** [5.3, 14.0] |
-| Similar issue retriever | kubernetes | Recall@1 / @10 (related task, clean eval) | 3.3% / 12.0% |
-| Similar issue retriever | vscode | **Recall@5, duplicate task (clean eval — see note)** | **43.5%** [37.0, 50.5] |
-| Similar issue retriever | vscode | Recall@1 / @10 (duplicate task, clean eval) | 22.5% / 47.5% |
-| Similar issue retriever | vscode | Recall@5, related task (directional, n=19 — see note) | 57.9% [36.8, 78.9] |
+| Similar issue retriever | kubernetes | **Recall@5, related task (corrected, prod-matching — see note)** | **18.0%** [12.0, 24.0] |
+| Similar issue retriever | kubernetes | Recall@1 / @10 (related task, corrected) | 9.3% / 23.3% |
+| Similar issue retriever | vscode | **Recall@5, duplicate task (corrected, prod-matching — see note)** | **50.5%** [43.0, 57.5] |
+| Similar issue retriever | vscode | Recall@1 / @10 (duplicate task, corrected) | 27.0% / 59.5% |
+| Similar issue retriever | vscode | Recall@5, related task (directional, n=19 — see note) | 63.2% [42.1, 84.2] |
 | Similar issue retriever | vscode | Index size (BGE) | 24.3 MB |
 | Resolution predictor | kubernetes | Point estimate: MAE vs naive (served) | 104.05d vs 106.29d naive (+2.1%) |
 | Resolution predictor | kubernetes | Bucket classifier: accuracy vs naive (served) | 33.24% vs 29.97% naive (+3.27pp [+1.80, +4.74]) |
@@ -123,26 +123,48 @@ suggested_next_steps, triage_summary
 > gated) — vscode is genuinely two different tasks, reported separately, never blended.
 > Full reasoning: [`docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md`](docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md).
 >
-> **D2 fine-tune result (2026-07-23, ADR-0034) — confirmed regression, BGE-base off-the-shelf
-> stays the shipped retriever.** D1's clean, disjoint vscode_duplicate data (1,734 training pairs,
-> leakage guard PASSED 0-overlap on every run) was fine-tuned locally (BGE-base, MNRL loss,
-> measure-first single run: 5 epochs, lr=2e-5). Result: **R@5 38.5% vs. the 43.5% baseline
-> (−5.0pp, CI [−11.0, +0.5])** — every metric moved backward. A diagnostic leg then tested the
-> leading alternative explanation (overfitting) directly: 2 epochs, lr=1e-5 — the textbook
-> anti-overfit fix, ending training at a 5.7× higher, far-less-memorized loss (0.255 vs. 0.045).
-> If overfitting were the cause, this should have recovered some of the gap. Instead **R@5 dropped
-> further to 33.5% (−10.0pp, CI [−16.0, −4.5], excludes zero)** — a statistically confirmed
-> regression, worse than the first run. Overfitting is ruled out, not just unaddressed; the leading
-> remaining (untested) hypothesis is a train/eval candidate-distribution mismatch — trained
-> against ~5 mined hard negatives per pair, evaluated against the full 13,315-issue corpus. No HF
-> release, no cutover; declined on evidence. k8s_related (264 pairs, thinner than vscode's pool) is
-> now explicitly NO-GO by the same mechanism, not merely unattempted. **BGE-base off-the-shelf
-> remains the shipped retriever, unbeaten across FIVE independently-tried levers**: hybrid
-> BM25+RRF fusion (rejected, CI crosses zero), a pretrained cross-encoder reranker (regressed,
-> +190–330× latency), a stronger pretrained embedder (rejected, CI crosses zero), the W3 in-domain
-> fine-tune on noisy pairs (held, marginal +3.5pp/+3.2pp, CIs cross zero), and this D2 in-domain
-> fine-tune on clean, leakage-asserted pairs (confirmed regression). This is a characterized limit
-> of the current data/approach combination, not a failure to try. Full reasoning:
+> **Harness correction (2026-07-24, ADR-0035, supersedes the 2026-07-23 framing below) —
+> three measurement bugs found and fixed; the corrected picture is weaker-but-real baselines
+> and NO SIGNAL from fine-tuning, not a confirmed regression.** GG's call after five
+> independent retrieval-improvement techniques all failed: "stronger evidence of a broken
+> harness than of a uniquely hard task." The audit found (1) every eval query was **title-only**
+> while production embeds title+body untruncated (`triage.py`) — eval-set JSON never populated
+> `query_body`; (2) the D2 fine-tune trained/saved **mean pooling** against BGE-base's native
+> **CLS-token pooling**; (3) training truncated at 128 tokens, cutting **65.73%** of examples
+> (measured token-length p95=230, corrected to 256); (4) all three ADR-0031 levers were measured
+> against an unaudited, pre-D1 pair population (277/292 pairs, only 72%/20% hand-verified
+> genuine) instead of D1's clean, disjoint eval sets. **Corrected canonical baselines: k8s R@5
+> 9.3%→18.0% [12.0, 24.0], vscode R@5 43.5%→50.5% [43.0, 57.5]** (both nearly double/gain 7pts
+> — production was always this good, only the measurement undersold it). **All four ADR-0031
+> levers are still rejected** on the corrected harness, but **weighted fusion flipped sign** —
+> originally reported as marginally shipping (+3.25pp k8s, +4.11pp vscode, both CIs excluding
+> zero), it's now flat on k8s and a **significant vscode regression** (−8.0pp, CI [−13.5,−3.0]).
+> BM25-alone (newly measured) is the *weaker* system on both repos, not a diluted strong
+> signal. **The D2 fine-tune conclusion is WITHDRAWN**: re-run with both bugs fixed, the result
+> is **+2.0pp R@5 (50.5%→52.5%), CI [−4.5, +8.5]** — every metric moved positive (a full sign
+> reversal from the withdrawn "confirmed regression"), but no CI excludes zero. At n=200 the CI
+> half-width is ≈±6.5pp — **this is underpowered, not disproven**; whether more data or
+> different hyperparameters would show a real, detectable lift is genuinely open. Still
+> flagged, not fixed: corpus/query truncation asymmetry (512 vs. untruncated), BGE's unused
+> query instruction prefix, BM25 tokenization uninspected. Nothing in production changed —
+> confirmed the served index and model are untouched throughout. Full reasoning:
+> [`docs/architecture/adr/0035-retrieval-harness-correction.md`](docs/architecture/adr/0035-retrieval-harness-correction.md).
+>
+> **D2 fine-tune result (2026-07-23, ADR-0034 — historical, WITHDRAWN above, kept for
+> provenance): confirmed regression, BGE-base off-the-shelf stays the shipped retriever.**
+> D1's clean, disjoint vscode_duplicate data (1,734 training pairs, leakage guard PASSED
+> 0-overlap on every run) was fine-tuned locally (BGE-base, MNRL loss, measure-first single
+> run: 5 epochs, lr=2e-5). Result: **R@5 38.5% vs. the 43.5% baseline (−5.0pp, CI [−11.0,
+> +0.5])** — every metric moved backward. A diagnostic leg then tested the leading alternative
+> explanation (overfitting) directly: 2 epochs, lr=1e-5 — the textbook anti-overfit fix, ending
+> training at a 5.7× higher, far-less-memorized loss (0.255 vs. 0.045). If overfitting were the
+> cause, this should have recovered some of the gap. Instead **R@5 dropped further to 33.5%
+> (−10.0pp, CI [−16.0, −4.5], excludes zero)** — reported at the time as a statistically
+> confirmed regression. **This reasoning is now known to be wrong** (ADR-0035, above): both
+> runs trained with mean pooling against BGE's native CLS pooling and truncated 65.73% of
+> training examples at 128 tokens — the diagnostic leg never isolated either confound, so it
+> could not have ruled out overfitting as *the* mechanism. Kept here for historical accuracy
+> of what was reported and when; superseded finding is above. Original ADR:
 > [`docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md`](docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md).
 >
 > **Prior framing (2026-07-16, ADR-0030/0031/0032 — historical, superseded above): k8s

@@ -2,23 +2,23 @@
   "results": [
     {
       "repo": "kubernetes_kubernetes",
-      "n_pairs": 277,
+      "n_pairs": 150,
       "baseline_bge_base": {
-        "recall_at_1": 0.10469314079422383,
-        "recall_at_5": 0.23465703971119134,
-        "recall_at_10": 0.30324909747292417,
-        "recall_at_20": 0.36462093862815886
+        "recall_at_1": 0.09333333333333334,
+        "recall_at_5": 0.18,
+        "recall_at_10": 0.23333333333333334,
+        "recall_at_20": 0.28
       },
       "candidate_bge_large": {
-        "recall_at_1": 0.09747292418772563,
-        "recall_at_5": 0.24548736462093862,
-        "recall_at_10": 0.2996389891696751,
-        "recall_at_20": 0.37545126353790614
+        "recall_at_1": 0.08666666666666667,
+        "recall_at_5": 0.18,
+        "recall_at_10": 0.24666666666666667,
+        "recall_at_20": 0.2733333333333333
       },
-      "r5_delta_pp": 1.08,
+      "r5_delta_pp": 0.0,
       "r5_ci95_pp": [
-        -2.17,
-        4.33
+        -4.67,
+        4.67
       ],
       "ships": false,
       "bootstrap": {
@@ -29,39 +29,39 @@
       "cost": {
         "model_id": "BAAI/bge-large-en-v1.5",
         "embedding_dim": 1024,
-        "n_docs": 15000,
-        "index_bytes_float32": 61440000,
-        "index_mb_float32": 58.6,
-        "corpus_embed_build_s": 129.4105137999868
+        "n_docs": 29994,
+        "index_bytes_float32": 122855424,
+        "index_mb_float32": 117.2,
+        "corpus_embed_build_s": 594.1344208999653
       },
       "latency_cpu_subsample": {
         "n_sample": 30,
         "seed": 42,
         "device": "cpu",
-        "baseline_query_encode_mean_s": 0.03663072333826373,
-        "candidate_query_encode_mean_s": 0.06407005999935791,
-        "added_latency_pct": 74.9
+        "baseline_query_encode_mean_s": 0.06366916999686509,
+        "candidate_query_encode_mean_s": 0.10068159333701866,
+        "added_latency_pct": 58.1
       }
     },
     {
       "repo": "microsoft_vscode",
-      "n_pairs": 292,
+      "n_pairs": 200,
       "baseline_bge_base": {
-        "recall_at_1": 0.1095890410958904,
-        "recall_at_5": 0.2671232876712329,
-        "recall_at_10": 0.4554794520547945,
-        "recall_at_20": 0.6986301369863014
+        "recall_at_1": 0.27,
+        "recall_at_5": 0.505,
+        "recall_at_10": 0.595,
+        "recall_at_20": 0.675
       },
       "candidate_bge_large": {
-        "recall_at_1": 0.11301369863013698,
-        "recall_at_5": 0.3047945205479452,
-        "recall_at_10": 0.5,
-        "recall_at_20": 0.7363013698630136
+        "recall_at_1": 0.285,
+        "recall_at_5": 0.475,
+        "recall_at_10": 0.57,
+        "recall_at_20": 0.64
       },
-      "r5_delta_pp": 3.77,
+      "r5_delta_pp": -3.0,
       "r5_ci95_pp": [
-        -0.34,
-        7.88
+        -7.5,
+        1.5
       ],
       "ships": false,
       "bootstrap": {
@@ -72,18 +72,18 @@
       "cost": {
         "model_id": "BAAI/bge-large-en-v1.5",
         "embedding_dim": 1024,
-        "n_docs": 7028,
-        "index_bytes_float32": 28786688,
-        "index_mb_float32": 27.5,
-        "corpus_embed_build_s": 108.17872440000065
+        "n_docs": 13315,
+        "index_bytes_float32": 54538240,
+        "index_mb_float32": 52.0,
+        "corpus_embed_build_s": 255.37605780002195
       },
       "latency_cpu_subsample": {
         "n_sample": 30,
         "seed": 42,
         "device": "cpu",
-        "baseline_query_encode_mean_s": 0.027467976654103648,
-        "candidate_query_encode_mean_s": 0.04774500667117536,
-        "added_latency_pct": 73.8
+        "baseline_query_encode_mean_s": 0.0620503899990581,
+        "candidate_query_encode_mean_s": 0.10075136666224958,
+        "added_latency_pct": 62.4
       }
     }
   ]

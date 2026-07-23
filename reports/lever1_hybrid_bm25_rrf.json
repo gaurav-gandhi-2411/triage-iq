@@ -2,37 +2,48 @@
   "results": [
     {
       "repo": "kubernetes_kubernetes",
-      "n_pairs": 277,
+      "n_pairs": 150,
       "dense_only": {
-        "recall_at_1": 0.10469314079422383,
-        "recall_at_5": 0.23465703971119134,
-        "recall_at_10": 0.30324909747292417,
-        "recall_at_20": 0.36462093862815886
+        "recall_at_1": 0.09333333333333334,
+        "recall_at_5": 0.18,
+        "recall_at_10": 0.23333333333333334,
+        "recall_at_20": 0.28
+      },
+      "bm25_only": {
+        "recall_at_1": 0.04,
+        "recall_at_5": 0.12666666666666668,
+        "recall_at_10": 0.16,
+        "recall_at_20": 0.20666666666666667
       },
       "hybrid_rrf": {
-        "recall_at_1": 0.10469314079422383,
-        "recall_at_5": 0.24187725631768953,
-        "recall_at_10": 0.30324909747292417,
-        "recall_at_20": 0.36101083032490977
+        "recall_at_1": 0.08,
+        "recall_at_5": 0.14666666666666667,
+        "recall_at_10": 0.22,
+        "recall_at_20": 0.28
       },
       "hybrid_weighted": {
-        "recall_at_1": 0.10830324909747292,
-        "recall_at_5": 0.26714801444043323,
-        "recall_at_10": 0.3212996389891697,
-        "recall_at_20": 0.3862815884476534
+        "recall_at_1": 0.08666666666666667,
+        "recall_at_5": 0.18666666666666668,
+        "recall_at_10": 0.20666666666666667,
+        "recall_at_20": 0.29333333333333333
       },
-      "rrf_vs_dense_r5_delta_pp": 0.72,
+      "bm25_vs_dense_r5_delta_pp": -5.33,
+      "bm25_vs_dense_r5_ci95_pp": [
+        -10.67,
+        0.0
+      ],
+      "rrf_vs_dense_r5_delta_pp": -3.33,
       "rrf_vs_dense_r5_ci95_pp": [
-        -2.89,
-        4.69
+        -8.0,
+        0.67
       ],
       "rrf_ships": false,
-      "weighted_vs_dense_r5_delta_pp": 3.25,
+      "weighted_vs_dense_r5_delta_pp": 0.67,
       "weighted_vs_dense_r5_ci95_pp": [
-        0.35,
-        6.5
+        -2.67,
+        4.0
       ],
-      "weighted_ships": true,
+      "weighted_ships": false,
       "bootstrap": {
         "n_resamples": 2000,
         "seed": 42,
@@ -42,235 +53,59 @@
       "candidate_pool": 100,
       "tuning_provenance": "RRF k=60 is the untuned standard default. No held-out tuning slice was carved out of the product-task pairs -- doing so would either shrink this repo's already-thin powered eval set or require tuning on the test pairs themselves (the leak spec.md explicitly rules out). Nothing was tuned on the test pairs.",
       "latency_s": {
-        "dense_retrieve_mean": 0.0527603711183973,
-        "bm25_score_mean": 0.26689389169960875,
-        "fuse_mean": 0.0002646584808490229,
-        "bm25_index_build_total": 0.39160159998573363,
-        "added_per_query_mean": 0.26715855018045775
+        "dense_retrieve_mean": 0.09264460666609618,
+        "bm25_score_mean": 3.21350195333284,
+        "fuse_mean": 0.0004609226683775584,
+        "bm25_index_build_total": 1.7307671000016853,
+        "added_per_query_mean": 3.2139628760012178
       },
       "diagnostic_bm25_recovers_dense_misses": {
-        "n_cases": 15,
-        "n_cases_pct_of_pairs": 5.42,
+        "n_cases": 3,
+        "n_cases_pct_of_pairs": 2.0,
         "examples": [
           {
-            "query_number": 7648,
-            "target_number": 7647,
-            "query_title": "Put Root CA Cert for cluster into all(ish) pods",
-            "target_title": "Generate kubeconfig as well as tokens for service accounts",
-            "dense_rank_of_target": 7,
-            "bm25_rank_of_target": 1,
+            "query_number": 21511,
+            "target_number": 20738,
+            "query_title": "Don't rely on events in deployment e2e",
+            "target_title": "Rewrite scheduler-centric e2e tests to avoid use of events for validation",
+            "dense_rank_of_target": 20,
+            "bm25_rank_of_target": 17,
             "shared_high_idf_terms": [
-              "tokencontroller",
-              "serviceaccount",
-              "accounts",
-              "kubeconfig",
-              "well"
+              "rely",
+              "events",
+              "the",
+              "api",
+              "so"
             ]
           },
           {
-            "query_number": 8957,
-            "target_number": 5799,
-            "query_title": "Help needed to update the examples in getting-started-guides/mesos.md",
-            "target_title": "\"Getting started\" guides should point to 'examples/' rather than have their own individual examples",
-            "dense_rank_of_target": 7,
-            "bm25_rank_of_target": 1,
-            "shared_high_idf_terms": [
-              "individual",
-              "own",
-              "guestbook",
-              "point",
-              "guides"
-            ]
-          },
-          {
-            "query_number": 4676,
-            "target_number": 1066,
-            "query_title": "TestPortForward is flaky",
-            "target_title": "kubelet TestReadFromFile is flaky",
-            "dense_rank_of_target": 13,
-            "bm25_rank_of_target": 3,
-            "shared_high_idf_terms": [
-              "flaky",
-              "block",
-              "code",
-              "is"
-            ]
-          },
-          {
-            "query_number": 12377,
-            "target_number": 1066,
-            "query_title": "TestReflector_resyncChan is flaky",
-            "target_title": "kubelet TestReadFromFile is flaky",
+            "query_number": 29620,
+            "target_number": 29548,
+            "query_title": "Mount EBS volume fail if --hostname-override is set on kubelet",
+            "target_title": "Mounting EBS not working in k8s 1.3.X with AWS",
             "dense_rank_of_target": 8,
-            "bm25_rank_of_target": 4,
-            "shared_high_idf_terms": [
-              "flaky",
-              "block",
-              "code",
-              "is"
-            ]
-          },
-          {
-            "query_number": 14059,
-            "target_number": 1066,
-            "query_title": "TestWatch is flaky",
-            "target_title": "kubelet TestReadFromFile is flaky",
-            "dense_rank_of_target": 8,
-            "bm25_rank_of_target": 4,
-            "shared_high_idf_terms": [
-              "flaky",
-              "block",
-              "code",
-              "is"
-            ]
-          },
-          {
-            "query_number": 14531,
-            "target_number": 1066,
-            "query_title": "runSchedulerNoPhantomPodsTest is flaky",
-            "target_title": "kubelet TestReadFromFile is flaky",
-            "dense_rank_of_target": 12,
-            "bm25_rank_of_target": 5,
-            "shared_high_idf_terms": [
-              "flaky",
-              "block",
-              "code",
-              "is"
-            ]
-          },
-          {
-            "query_number": 13891,
-            "target_number": 13478,
-            "query_title": "kubernetes-e2e-gce-parallel is occasionally timing out after 2 hours",
-            "target_title": "E2e: Services should be able to up and down services",
-            "dense_rank_of_target": 22,
-            "bm25_rank_of_target": 3,
-            "shared_high_idf_terms": [
-              "20builds",
-              "critical",
-              "kubekins",
-              "dls",
-              "corp"
-            ]
-          },
-          {
-            "query_number": 3253,
-            "target_number": 1521,
-            "query_title": "Proposal: In-container command execution & port forwarding",
-            "target_title": "Support attach",
-            "dense_rank_of_target": 7,
-            "bm25_rank_of_target": 5,
-            "shared_high_idf_terms": [
-              "1513",
-              "stdin",
-              "stdout",
-              "attach",
-              "ssh"
-            ]
-          },
-          {
-            "query_number": 3861,
-            "target_number": 3681,
-            "query_title": "Configure bind-to addresses for each daemon based on --bind-to config rather than an IP.",
-            "target_title": "Master components should probably bind to 0 by default",
-            "dense_rank_of_target": 17,
-            "bm25_rank_of_target": 14,
-            "shared_high_idf_terms": [
-              "nic",
-              "bind",
-              "public",
-              "ip",
-              "currently"
-            ]
-          },
-          {
-            "query_number": 4301,
-            "target_number": 3948,
-            "query_title": "Scheduler input should be taken when reducing replicas",
-            "target_title": "Kubernetes killing running pods instead of unassigned when reducing replicas",
-            "dense_rank_of_target": 11,
-            "bm25_rank_of_target": 16,
-            "shared_high_idf_terms": [
-              "reducing",
-              "assigned",
-              "replicas",
-              "pods",
-              "1"
-            ]
-          },
-          {
-            "query_number": 5136,
-            "target_number": 5084,
-            "query_title": "Add e2e test coverage of kubectl proxy",
-            "target_title": "kubectl proxy fails during kubectl e2e test",
-            "dense_rank_of_target": 7,
             "bm25_rank_of_target": 2,
             "shared_high_idf_terms": [
-              "proxy",
-              "tests",
-              "running",
-              "was",
-              "kubectl"
+              "ebs",
+              "mounting",
+              "attached",
+              "mount",
+              "trying"
             ]
           },
           {
-            "query_number": 6583,
-            "target_number": 5475,
-            "query_title": "v1beta1->v1beta3 storage translation tool",
-            "target_title": "Flip to v1beta3",
-            "dense_rank_of_target": 7,
-            "bm25_rank_of_target": 3,
-            "shared_high_idf_terms": [
-              "their",
-              "v1beta3",
-              "googlecloudplatform",
-              "to",
-              "can"
-            ]
-          },
-          {
-            "query_number": 8702,
-            "target_number": 7203,
-            "query_title": "Generalize container image representation",
-            "target_title": "Support OCI images in API",
-            "dense_rank_of_target": 7,
-            "bm25_rank_of_target": 2,
-            "shared_high_idf_terms": [
-              "future",
-              "images",
-              "image",
-              "support",
-              "other"
-            ]
-          },
-          {
-            "query_number": 13412,
-            "target_number": 13398,
-            "query_title": "We should handle flaky cloud provider APIs more gracefully",
-            "target_title": "Gracefully handle cloud provider api downtime",
-            "dense_rank_of_target": 19,
-            "bm25_rank_of_target": 15,
-            "shared_high_idf_terms": [
-              "gracefully",
-              "handle",
-              "provider",
-              "cloud",
-              "node"
-            ]
-          },
-          {
-            "query_number": 14023,
-            "target_number": 3185,
-            "query_title": "Pods hang in pending state indefinitely",
-            "target_title": "pods not starting - pending status",
+            "query_number": 28312,
+            "target_number": 28311,
+            "query_title": "Accounting and feasibility for opaque integer resources in the API server and scheduler.",
+            "target_title": "Hardware feature discovery to add node labels with a unique prefix (e.g. `scheduler.alpha.intel.com/<feature-name>`).",
             "dense_rank_of_target": 9,
-            "bm25_rank_of_target": 37,
+            "bm25_rank_of_target": 2,
             "shared_high_idf_terms": [
-              "pending",
-              "they",
-              "then",
-              "at",
-              "pods"
+              "28310",
+              "bookkeeping",
+              "discovering",
+              "isolating",
+              "relates"
             ]
           }
         ]
@@ -278,37 +113,48 @@
     },
     {
       "repo": "microsoft_vscode",
-      "n_pairs": 292,
+      "n_pairs": 200,
       "dense_only": {
-        "recall_at_1": 0.1095890410958904,
-        "recall_at_5": 0.2671232876712329,
-        "recall_at_10": 0.4554794520547945,
-        "recall_at_20": 0.6986301369863014
+        "recall_at_1": 0.27,
+        "recall_at_5": 0.505,
+        "recall_at_10": 0.595,
+        "recall_at_20": 0.675
+      },
+      "bm25_only": {
+        "recall_at_1": 0.15,
+        "recall_at_5": 0.235,
+        "recall_at_10": 0.29,
+        "recall_at_20": 0.34
       },
       "hybrid_rrf": {
-        "recall_at_1": 0.11301369863013698,
-        "recall_at_5": 0.2876712328767123,
-        "recall_at_10": 0.5136986301369864,
-        "recall_at_20": 0.7602739726027398
+        "recall_at_1": 0.205,
+        "recall_at_5": 0.405,
+        "recall_at_10": 0.51,
+        "recall_at_20": 0.615
       },
       "hybrid_weighted": {
-        "recall_at_1": 0.11301369863013698,
-        "recall_at_5": 0.3082191780821918,
-        "recall_at_10": 0.4965753424657534,
-        "recall_at_20": 0.7636986301369864
+        "recall_at_1": 0.225,
+        "recall_at_5": 0.425,
+        "recall_at_10": 0.585,
+        "recall_at_20": 0.65
       },
-      "rrf_vs_dense_r5_delta_pp": 2.05,
+      "bm25_vs_dense_r5_delta_pp": -27.0,
+      "bm25_vs_dense_r5_ci95_pp": [
+        -34.01,
+        -20.0
+      ],
+      "rrf_vs_dense_r5_delta_pp": -10.0,
       "rrf_vs_dense_r5_ci95_pp": [
-        -1.37,
-        5.82
+        -17.5,
+        -3.0
       ],
       "rrf_ships": false,
-      "weighted_vs_dense_r5_delta_pp": 4.11,
+      "weighted_vs_dense_r5_delta_pp": -8.0,
       "weighted_vs_dense_r5_ci95_pp": [
-        1.03,
-        7.19
+        -13.5,
+        -3.0
       ],
-      "weighted_ships": true,
+      "weighted_ships": false,
       "bootstrap": {
         "n_resamples": 2000,
         "seed": 42,
@@ -318,239 +164,239 @@
       "candidate_pool": 100,
       "tuning_provenance": "RRF k=60 is the untuned standard default. No held-out tuning slice was carved out of the product-task pairs -- doing so would either shrink this repo's already-thin powered eval set or require tuning on the test pairs themselves (the leak spec.md explicitly rules out). Nothing was tuned on the test pairs.",
       "latency_s": {
-        "dense_retrieve_mean": 0.04672384417850256,
-        "bm25_score_mean": 0.07205287465460483,
-        "fuse_mean": 0.0002368349324407898,
-        "bm25_index_build_total": 0.25804049998987466,
-        "added_per_query_mean": 0.07228970958704563
+        "dense_retrieve_mean": 0.0910445470007835,
+        "bm25_score_mean": 1.3498590709999554,
+        "fuse_mean": 0.0005179299984592944,
+        "bm25_index_build_total": 1.0014521999983117,
+        "added_per_query_mean": 1.3503770009984146
       },
       "diagnostic_bm25_recovers_dense_misses": {
-        "n_cases": 19,
-        "n_cases_pct_of_pairs": 6.51,
+        "n_cases": 16,
+        "n_cases_pct_of_pairs": 8.0,
         "examples": [
           {
-            "query_number": 2743,
-            "target_number": 2741,
-            "query_title": "Provide support to synchronize settings across machines",
-            "target_title": "[ExtensionDev] Expose API to get at file system locations",
-            "dense_rank_of_target": 80,
+            "query_number": 140736,
+            "target_number": 135559,
+            "query_title": "`vscode.dev` it doesn't remember my open folders/files",
+            "target_title": "Local file system: Restore opened folders and files",
+            "dense_rank_of_target": 14,
             "bm25_rank_of_target": 1,
             "shared_high_idf_terms": [
-              "exposed",
-              "paths",
-              "hard",
-              "those",
-              "them"
+              "dev",
+              "folders",
+              "folder",
+              "in",
+              "the"
             ]
           },
           {
-            "query_number": 311224,
-            "target_number": 311141,
-            "query_title": "Ehh",
-            "target_title": "11",
-            "dense_rank_of_target": 6,
-            "bm25_rank_of_target": 12,
+            "query_number": 2056,
+            "target_number": 2054,
+            "query_title": "No intellisense for Javascript projects",
+            "target_title": "NONE of the code features work in ES6 projects for language type: Javascript",
+            "dense_rank_of_target": 21,
+            "bm25_rank_of_target": 23,
             "shared_high_idf_terms": [
-              "yes",
-              "occur",
-              "disabled",
-              "extensions",
-              "reproduce"
+              "79215",
+              "projects",
+              "javascript",
+              "11e5",
+              "code"
             ]
           },
           {
-            "query_number": 312560,
-            "target_number": 312558,
-            "query_title": "workerman",
-            "target_title": "Bugs",
-            "dense_rank_of_target": 6,
-            "bm25_rank_of_target": 5,
+            "query_number": 3456,
+            "target_number": 850,
+            "query_title": "mark extention as installed",
+            "target_title": "'install extension' should be more clear which extensions are already installed",
+            "dense_rank_of_target": 14,
+            "bm25_rank_of_target": 6,
             "shared_high_idf_terms": [
-              "sonnet",
-              "gpt",
-              "logs",
-              "ask",
-              "claude"
+              "installed",
+              "which",
+              "the",
+              "to",
+              "would"
             ]
           },
           {
-            "query_number": 311923,
-            "target_number": 311566,
-            "query_title": "[Error] unhandlederror-potential listener LEAK detected, popular \u2014 chat/chatEditingServiceImpl / chatModel",
-            "target_title": "[Error] unhandlederror-potential listener LEAK detected, popular",
-            "dense_rank_of_target": 6,
+            "query_number": 3632,
+            "target_number": 871,
+            "query_title": "Request keyboard binding configurable to execute multiple actions",
+            "target_title": "Macro like keybindings",
+            "dense_rank_of_target": 36,
+            "bm25_rank_of_target": 1,
+            "shared_high_idf_terms": [
+              "array",
+              "execute",
+              "keyboard",
+              "could",
+              "example"
+            ]
+          },
+          {
+            "query_number": 18706,
+            "target_number": 3518,
+            "query_title": "Can't copy code to Microsoft Word with style",
+            "target_title": "Add ability to copy formatted code to clipboard",
+            "dense_rank_of_target": 9,
+            "bm25_rank_of_target": 25,
+            "shared_high_idf_terms": [
+              "word",
+              "copy",
+              "text",
+              "the",
+              "code"
+            ]
+          },
+          {
+            "query_number": 41444,
+            "target_number": 6929,
+            "query_title": "Extensions per OS Platform",
+            "target_title": "Provide way for extensions to download and install native dependencies",
+            "dense_rank_of_target": 17,
             "bm25_rank_of_target": 8,
             "shared_high_idf_terms": [
-              "1263",
-              "l1263",
-              "1062",
-              "l1062",
-              "popular"
+              "platform",
+              "download",
+              "during",
+              "support",
+              "any"
             ]
           },
           {
-            "query_number": 4854,
-            "target_number": 4853,
-            "query_title": "Cannot read property 'unshift' of null",
-            "target_title": "Cannot read property 'onTokensChanged' of undefined",
-            "dense_rank_of_target": 13,
-            "bm25_rank_of_target": 1,
+            "query_number": 67982,
+            "target_number": 53816,
+            "query_title": "Can't paste \u201e\u2262\u201c (U+2262)",
+            "target_title": "Unicode character U+2262 (\"not identical to\") is not drawn correctly",
+            "dense_rank_of_target": 18,
+            "bm25_rank_of_target": 94,
             "shared_high_idf_terms": [
-              "43ff6af3d4564f59196caa9be4897fc33c15f24c",
-              "ef2a1fcaa553d14d7731b284a5ac5e4a55c42936",
-              "18",
-              "typeerror",
-              "29"
+              "2262",
+              "u",
+              "paste",
+              "than",
+              "the"
             ]
           },
           {
-            "query_number": 312533,
-            "target_number": 312274,
-            "query_title": "sss",
-            "target_title": "Agent",
+            "query_number": 91724,
+            "target_number": 74338,
+            "query_title": "Change keys",
+            "target_title": "I'd like to be able to alias shortcut key to another key",
             "dense_rank_of_target": 6,
-            "bm25_rank_of_target": 1,
+            "bm25_rank_of_target": 23,
             "shared_high_idf_terms": [
-              "sonnet",
-              "gpt",
-              "logs",
-              "ask",
-              "claude"
+              "call",
+              "key",
+              "another",
+              "code",
+              "a"
             ]
           },
           {
-            "query_number": 311708,
-            "target_number": 311022,
-            "query_title": "[Error] unhandlederror-potential listener LEAK detected, popular \u2014 textModel / chatEditingModifiedNotebookEntry",
-            "target_title": "[Error] unhandlederror-potential listener LEAK detected, popular",
-            "dense_rank_of_target": 16,
-            "bm25_rank_of_target": 1,
+            "query_number": 91880,
+            "target_number": 12622,
+            "query_title": "Locking a tabview",
+            "target_title": "Add option to pin tabs similar to Visual Studio",
+            "dense_rank_of_target": 30,
+            "bm25_rank_of_target": 10,
             "shared_high_idf_terms": [
-              "1262",
-              "l1262",
-              "ondidchange",
-              "1062",
-              "l1062"
+              "where",
+              "want",
+              "tab",
+              "also",
+              "in"
             ]
           },
           {
-            "query_number": 312333,
-            "target_number": 311161,
-            "query_title": "bu found",
-            "target_title": ".",
-            "dense_rank_of_target": 11,
-            "bm25_rank_of_target": 8,
+            "query_number": 115916,
+            "target_number": 115876,
+            "query_title": "Latest VS Code (1.53.0) breaks debug configs",
+            "target_title": "tasks.json npm script does not work with arguments since 1.53",
+            "dense_rank_of_target": 22,
+            "bm25_rank_of_target": 21,
             "shared_high_idf_terms": [
-              "yes",
-              "occur",
-              "disabled",
-              "extensions",
-              "reproduce"
+              "npm",
+              "information",
+              "script",
+              "tasks",
+              "53"
             ]
           },
           {
-            "query_number": 312066,
-            "target_number": 311482,
-            "query_title": "issue",
-            "target_title": "\u0627",
-            "dense_rank_of_target": 15,
-            "bm25_rank_of_target": 4,
+            "query_number": 116145,
+            "target_number": 113801,
+            "query_title": "Don't allow tabs to expand when using editor.wrapTabs",
+            "target_title": "Tab wrap - tab should not fill all spare space when wrap to new line",
+            "dense_rank_of_target": 6,
+            "bm25_rank_of_target": 16,
             "shared_high_idf_terms": [
-              "yes",
-              "occur",
-              "disabled",
-              "extensions",
-              "reproduce"
+              "row",
+              "wrap",
+              "fill",
+              "space",
+              "behavior"
             ]
           },
           {
-            "query_number": 312177,
-            "target_number": 311482,
-            "query_title": "We have this issue",
-            "target_title": "\u0627",
-            "dense_rank_of_target": 8,
+            "query_number": 116307,
+            "target_number": 115874,
+            "query_title": "creating a debug file on all the working folders",
+            "target_title": "v1.53 creates debug.log automatically",
+            "dense_rank_of_target": 7,
             "bm25_rank_of_target": 7,
             "shared_high_idf_terms": [
-              "yes",
-              "occur",
-              "disabled",
-              "extensions",
-              "reproduce"
+              "19041",
+              "2021",
+              "created",
+              "53",
+              "log"
             ]
           },
           {
-            "query_number": 312184,
-            "target_number": 311482,
-            "query_title": "issue",
-            "target_title": "\u0627",
-            "dense_rank_of_target": 15,
-            "bm25_rank_of_target": 4,
-            "shared_high_idf_terms": [
-              "yes",
-              "occur",
-              "disabled",
-              "extensions",
-              "reproduce"
-            ]
-          },
-          {
-            "query_number": 312282,
-            "target_number": 312066,
-            "query_title": "Timestamp",
-            "target_title": "issue",
-            "dense_rank_of_target": 11,
-            "bm25_rank_of_target": 3,
-            "shared_high_idf_terms": [
-              "yes",
-              "occur",
-              "disabled",
-              "extensions",
-              "reproduce"
-            ]
-          },
-          {
-            "query_number": 312282,
-            "target_number": 312184,
-            "query_title": "Timestamp",
-            "target_title": "issue",
+            "query_number": 141196,
+            "target_number": 53405,
+            "query_title": "Filter Extension Search Results by Most Recently Updated",
+            "target_title": "Sort extensions by extension update date",
             "dense_rank_of_target": 10,
             "bm25_rank_of_target": 2,
             "shared_high_idf_terms": [
-              "yes",
-              "occur",
-              "disabled",
-              "extensions",
-              "reproduce"
+              "bunch",
+              "newly",
+              "sort",
+              "often",
+              "may"
             ]
           },
           {
-            "query_number": 312335,
-            "target_number": 312066,
-            "query_title": "\ubb38\uc81c\ubc84\uadf8 \ub77c\uace0 \ud558\ub124\uc694",
-            "target_title": "issue",
+            "query_number": 144359,
+            "target_number": 9526,
+            "query_title": "navigation (Alt + \u2190) back to wrong tab when I split same file into two editor",
+            "target_title": "Make history navigation aware of editor groups",
+            "dense_rank_of_target": 6,
+            "bm25_rank_of_target": 18,
+            "shared_high_idf_terms": [
+              "navigation",
+              "back",
+              "cursor",
+              "same",
+              "nt"
+            ]
+          },
+          {
+            "query_number": 176369,
+            "target_number": 176051,
+            "query_title": "Discard Changes Not Works",
+            "target_title": "VScode git revert line multiplies reverted changes in the file",
             "dense_rank_of_target": 9,
-            "bm25_rank_of_target": 2,
+            "bm25_rank_of_target": 24,
             "shared_high_idf_terms": [
-              "yes",
-              "occur",
-              "disabled",
-              "extensions",
-              "reproduce"
-            ]
-          },
-          {
-            "query_number": 312335,
-            "target_number": 312184,
-            "query_title": "\ubb38\uc81c\ubc84\uadf8 \ub77c\uace0 \ud558\ub124\uc694",
-            "target_title": "issue",
-            "dense_rank_of_target": 8,
-            "bm25_rank_of_target": 3,
-            "shared_high_idf_terms": [
-              "yes",
-              "occur",
-              "disabled",
-              "extensions",
-              "reproduce"
+              "76",
+              "your",
+              "git",
+              "works",
+              "changes"
             ]
           }
         ]

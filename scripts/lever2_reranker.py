@@ -27,10 +27,16 @@ Method:
   - Paired bootstrap CI (scripts/_retrieval_eval_common.py, ADR-0027's method) on the R@5
     delta vs the dense-only baseline, recomputed in the same loop for exact pairing.
 
+CORRECTED (see the ADR superseding ADR-0031/0033/0034): originally read gold_related_v2.parquet
+via select_live_product_pairs() against the stale served dup_index_*, with truncated/effectively
+title-only queries. Now reads D1's canonical, hand-verified, disjoint eval sets against the
+full-corpus d1_full_corpus_index_*, with untruncated title+body queries matching production.
+
 Reads:
-  data/gold_related_v2.parquet
-  data/models/dup_index_kubernetes_kubernetes_bge/
-  data/models/dup_index_microsoft_vscode_bge/
+  reports/d1_eval_set_k8s_related.json
+  reports/d1_eval_set_vscode_duplicate.json
+  data/models/d1_full_corpus_index_kubernetes_kubernetes_bge/
+  data/models/d1_full_corpus_index_microsoft_vscode_bge/
 
 Output: reports/lever2_reranker.json
 Reproduce: python scripts/lever2_reranker.py
@@ -55,9 +61,9 @@ from _retrieval_eval_common import (  # noqa: E402
     K_VALUES,
     N_BOOTSTRAP,
     SEED,
+    load_d1_eval_pairs,
     paired_bootstrap_ci,
     query_text,
-    select_live_product_pairs,
 )
 
 logging.basicConfig(
@@ -65,7 +71,6 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-GOLD_PATH = Path("data/gold_related_v2.parquet")
 OUTPUT_PATH = Path("reports/lever2_reranker.json")
 
 MODEL_ID = "BAAI/bge-reranker-v2-m3"
@@ -74,10 +79,9 @@ K_MAX = max(K_VALUES)
 LATENCY_N = 30  # CPU latency subsample size per repo
 
 
-def load_pairs(repo: str, index_dir: str, gold: pd.DataFrame) -> tuple[SimilarIssueRetriever, pd.DataFrame]:
+def load_pairs(repo: str, index_dir: str) -> tuple[SimilarIssueRetriever, pd.DataFrame]:
     detector = SimilarIssueRetriever.load(index_dir)
-    live_numbers = {int(n) for n in detector.issue_numbers}
-    pairs = select_live_product_pairs(gold, repo, live_numbers)
+    pairs = load_d1_eval_pairs(repo)
     return detector, pairs
 
 
@@ -171,16 +175,15 @@ def main() -> None:
     log.info("Loading second CrossEncoder instance forced to CPU for latency subsample")
     cpu_reranker = CrossEncoder(MODEL_ID, max_length=512, trust_remote_code=False, device="cpu")
 
-    gold = pd.read_parquet(GOLD_PATH)
     repos = [
-        {"repo": "kubernetes_kubernetes", "index_dir": "data/models/dup_index_kubernetes_kubernetes_bge"},
-        {"repo": "microsoft_vscode", "index_dir": "data/models/dup_index_microsoft_vscode_bge"},
+        {"repo": "kubernetes_kubernetes", "index_dir": "data/models/d1_full_corpus_index_kubernetes_kubernetes_bge"},
+        {"repo": "microsoft_vscode", "index_dir": "data/models/d1_full_corpus_index_microsoft_vscode_bge"},
     ]
 
     results = []
     for r in repos:
-        detector, pairs = load_pairs(r["repo"], r["index_dir"], gold)
-        log.info("[%s] %d in-range product-task pairs", r["repo"], len(pairs))
+        detector, pairs = load_pairs(r["repo"], r["index_dir"])
+        log.info("[%s] %d D1 canonical eval pairs", r["repo"], len(pairs))
 
         recall_result = eval_recall(r["repo"], detector, pairs, gpu_reranker)
         latency_result = eval_latency_cpu(r["repo"], detector, pairs, cpu_reranker)

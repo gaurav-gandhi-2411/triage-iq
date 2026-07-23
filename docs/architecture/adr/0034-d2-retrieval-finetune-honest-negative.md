@@ -1,6 +1,16 @@
 # ADR-0034 — D2 Retrieval Fine-Tune: Documented Honest Negative (vscode-duplicate)
 
-**Status:** Accepted (documented negative; no cutover, no HF release)
+**Status:** WITHDRAWN — superseded by [ADR-0035](0035-retrieval-harness-correction.md) (2026-07-24).
+Both runs analyzed below (5ep/lr2e-5 and the 2ep/lr1e-5 diagnostic leg) trained with MEAN pooling
+against BGE's native CLS pooling, and truncated 65.73% of training examples at 128 tokens. The
+"overfitting rejected -> distribution mismatch" reasoning in this ADR had no support: the
+diagnostic leg's anti-overfit correction (fewer epochs, lower LR) never touched either confound,
+so it could not have ruled out anything about the actual fine-tune mechanism. With both fixed and
+re-measured against the corrected baseline, the corrected result is **NO SIGNAL** (+2.0pp R@5,
+CI [-4.5, +8.5], underpowered at n=200 -- not a regression, not disproven, open). This ADR's
+CONCLUSION is withdrawn; its methodology writeup (leakage guard discipline, measure-first
+sequencing) remains accurate and is not what's wrong.
+**Original status:** Accepted (documented negative; no cutover, no HF release)
 **Date:** 2026-07-23
 **Decider:** Gaurav Gandhi (measure-first run + diagnostic leg executed autonomously by CC per spec.md, both escalated)
 

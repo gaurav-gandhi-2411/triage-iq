@@ -86,7 +86,12 @@ def eval_one(label: str, repo: str, eval_path: str, detector: SimilarIssueRetrie
     k_max = max(K_VALUES)
     hit_lists: list[list[bool]] = []
     for row in usable:
-        query_text = f"{row['query_title']}. {row.get('query_body', '')[:MAX_BODY]}"
+        # Byte-identical to production (src/triage_iq/models/triage.py::_collect_signals):
+        # f"{title}. {body}", UNTRUNCATED. The prior [:MAX_BODY] truncation here was an eval-only
+        # divergence from prod and from itself never populating query_body -- both bugs fixed
+        # together (see ADR correcting ADR-0033). Corpus-side truncation (_build_text, MAX_BODY)
+        # is untouched -- a separate, disclosed asymmetry, not fixed here (would invalidate the index).
+        query_text = f"{row['query_title']}. {row.get('query_body', '')}"
         results = detector.retrieve(query_text, k=k_max, exclude_number=int(row["query_number"]))
         retrieved = [r["number"] for r in results]
         pos = int(row["original_number"])

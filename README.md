@@ -76,12 +76,12 @@ suggested_next_steps, triage_summary
 
 | System | Repo | Metric | Value |
 |---|---|---|---|
-| Component classifier | vscode | **Top-3 accuracy (primary — see note)** | **90.4%** [85.3, 93.8] |
-| Component classifier | vscode | Top-1 accuracy (secondary) | 69.0% [62.0, 75.2] |
-| Component classifier | kubernetes | **Top-3 accuracy (primary — see note)** | **82.5%** [77.7, 86.5] |
-| Component classifier | kubernetes | Top-1 accuracy (secondary) | 51.4% [45.6, 57.1] |
-| Component classifier | vscode | Macro F1 (top-1) | 0.585 |
-| Component classifier | kubernetes | Macro F1 (top-1) | 0.466 |
+| Component classifier | vscode | **Top-3 accuracy (primary, multi-label — see note)** | **89.8%** [84.7, 93.4] |
+| Component classifier | vscode | Top-1 accuracy (secondary) | 76.5% [69.9, 82.0] |
+| Component classifier | kubernetes | **Top-3 accuracy (primary, multi-label — see note)** | **87.1%** [82.7, 90.5] |
+| Component classifier | kubernetes | Top-1 accuracy (secondary) | 60.5% [54.7, 66.0] |
+| Component classifier | vscode | Macro F1 (top-1) | 0.627 |
+| Component classifier | kubernetes | Macro F1 (top-1) | 0.462 |
 | Component classifier | vscode | Inference latency p50 | 4.9ms |
 | Similar issue retriever | kubernetes | **Recall@5, related task (corrected, prod-matching — see note)** | **18.0%** [12.0, 24.0] |
 | Similar issue retriever | kubernetes | Recall@1 / @10 (related task, corrected) | 9.3% / 23.3% |
@@ -211,6 +211,23 @@ suggested_next_steps, triage_summary
 > latency were also materially worse (ECE 0.40 vs. 0.14 vscode; CPU p50 97.7ms/197.2ms vs.
 > TF-IDF's ~5ms) — TF-IDF+LR remains the shipped classifier, now for a corrected reason.
 > Full numbers: [`reports/distilbert_results_top3_corrected.json`](reports/distilbert_results_top3_corrected.json).
+>
+> **Multi-label supervision fix SHIPPED (2026-07-24, ADR-0036) — same TF-IDF+LR architecture,
+> corrected supervision.** `preprocess.py::normalize_labels()` keeps only the first matching
+> component label per issue, discarding the rest — 30.4% of k8s test issues / 8.0% of
+> vscode's genuinely have more than one. Retrained as one-vs-rest logistic regression over
+> ALL valid labels (same TF-IDF features, only the supervision changes): **k8s top-3
+> 82.5%→87.1% (+4.55pp, CI [+0.35,+8.39], excludes zero)**, vscode top-3 flat (90.4%→89.8%,
+> ceiling + smaller collapse rate) but **top-1 improves significantly on both repos**
+> (k8s +9.09pp, vscode +7.49pp, both CIs excluding zero) — consistent direction across three
+> independent CIs, unlike ADR-0031's rejected weighted-fusion result (marginal + inconsistent
+> direction across repos). Recalibrated (temperature scaling generalized to OvR's independent
+> per-class logits, argmax-preserving, verified empirically): ECE improves on both repos
+> (0.086→0.053 vscode, 0.111→0.090 k8s) and k8s's new overconfidence (a real risk the naive
+> calibration objective first made *worse*, caught before shipping) is corrected. The
+> selective-prediction abstention gate's fixed thresholds (ADR-0021, off by default) are now
+> stale against this new confidence distribution — documented, not silently left dead. Full
+> reasoning: [`docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md`](docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md).
 >
 > **Retriever metric correction (2026-07-11).** The advertised vscode Recall@5 (36.7%)
 > was measured against `data/gold_related.parquet` (v1), which is only 74.0% genuine

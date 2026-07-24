@@ -258,7 +258,15 @@ def main() -> None:
 
         # --- Judge ---
         time.sleep(JUDGE_DELAY)
-        plan_json = json.dumps(plan.model_dump(), ensure_ascii=False)
+        # exclude={"declared_attribution", "abstention_status"}: must match run_eval.py's
+        # plan_json exactly (same fields) so the judge cache key computed here at record
+        # time is the same one run_eval.py's replay looks up later. Both fields are
+        # unconditional on TriagePlan (always serialize, even as None) but never populated
+        # by this eval harness -- see run_eval.py's ADR-0020/ADR-0021 comment for detail.
+        plan_json = json.dumps(
+            plan.model_dump(exclude={"declared_attribution", "abstention_status"}),
+            ensure_ascii=False,
+        )
         gold = {
             "component": issue["gold_component"],
             "priority": issue["gold_priority"],

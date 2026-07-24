@@ -34,7 +34,7 @@ ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
 from triage_iq.cache import LLMCache
-from triage_iq.models.component_classifier import TFIDFComponentClassifier
+from triage_iq.models.component_classifier import load_classifier
 from triage_iq.models.similar_issues import SimilarIssueRetriever
 from triage_iq.models.resolution import ResolutionTimePredictor
 from triage_iq.models.triage import TriageAssistant, TriagePlan
@@ -65,14 +65,6 @@ PROGRESS_PATH = ROOT / "reports" / "judge_eval_progress.md"
 # ---------------------------------------------------------------------------
 # Loading helpers
 # ---------------------------------------------------------------------------
-
-def load_classifier(repo_slug: str) -> TFIDFComponentClassifier:
-    for prefix in ["component_classifier", "tfidf_classifier"]:
-        path = ROOT / "data" / "models" / f"{prefix}_{repo_slug}.pkl"
-        if path.exists():
-            return TFIDFComponentClassifier.load(str(path))
-    raise FileNotFoundError(f"No classifier found for {repo_slug}")
-
 
 def load_detector(repo_slug: str, model_key: str = "bge") -> SimilarIssueRetriever:
     path = ROOT / "data" / "models" / f"dup_index_{repo_slug}_{model_key}"
@@ -741,7 +733,7 @@ def main():
         logger.info("=== %s: %d gold issues ===", repo, len(gold_df))
 
         try:
-            classifier = load_classifier(repo_slug)
+            classifier = load_classifier(ROOT / "data" / "models", repo_slug)
             detector = load_detector(repo_slug)
             predictor = load_predictor(repo_slug)
             train_df = load_train(repo_slug)

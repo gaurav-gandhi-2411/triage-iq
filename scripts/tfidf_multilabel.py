@@ -118,10 +118,12 @@ def run_repo(repo: str) -> dict:
     X_test = _build_text(test["title"], test["body_clean"])
     y_test = test["component"]
 
-    # Load the EXISTING shipped single-label baseline for a paired comparison -- never retrain
-    # it here (LogisticRegression's saga solver has no fixed seed; a past incident overwrote
-    # the shipped artifact non-reproducibly by retraining directly instead of loading).
-    baseline = TFIDFComponentClassifier.load(str(MODELS_DIR / f"component_classifier_{repo}.pkl"))
+    # Load the single-label baseline for a paired comparison -- never retrain it here
+    # (LogisticRegression's saga solver has no fixed seed; a past incident overwrote the
+    # shipped artifact non-reproducibly by retraining directly instead of loading). Post-ADR-0036
+    # cutover, component_classifier_{repo}.pkl IS the multi-label model -- the single-label
+    # baseline now only exists at the archived _PRE_MULTILABEL.pkl path.
+    baseline = TFIDFComponentClassifier.load(str(MODELS_DIR / f"component_classifier_{repo}_PRE_MULTILABEL.pkl"))
     base_proba = baseline.predict_proba(X_test)
     base_classes = baseline.classes_()
     base_top3 = hit_vectors(base_proba, base_classes, y_test, k=3)

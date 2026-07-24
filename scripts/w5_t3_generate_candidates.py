@@ -28,7 +28,7 @@ import pandas as pd
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from triage_iq.models.component_classifier import TFIDFComponentClassifier
+from triage_iq.models.component_classifier import load_classifier
 from triage_iq.models.similar_issues import SimilarIssueRetriever
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s — %(message)s")
@@ -354,7 +354,8 @@ def add_tfidf_predictions(
             df[f"tfidf_top{i}_conf"] = None
         return df
 
-    clf = TFIDFComponentClassifier.load(str(clf_path))
+    # load_classifier() dispatches on the pkl's model_kind marker (ADR-0036).
+    clf = load_classifier(clf_path.parent, repo.replace("/", "_"))
     classes = clf.classes_()
 
     texts = (

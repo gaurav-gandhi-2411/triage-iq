@@ -330,7 +330,11 @@ def run_repo(repo: str) -> dict:
     log.info("=" * 70)
     log.info("REPO: %s", repo)
 
-    model_path = MODELS_DIR / f"component_classifier_{repo}.pkl"
+    # Single-label-specific diagnostic (accesses clf.pipeline directly) -- superseded for the
+    # currently-deployed model by scripts/calibrate_multilabel_classifier.py (ADR-0036).
+    # component_classifier_{repo}.pkl IS the multi-label model post-cutover; this diagnostic's
+    # method only applies to the archived single-label artifact.
+    model_path = MODELS_DIR / f"component_classifier_{repo}_PRE_MULTILABEL.pkl"
     clf = TFIDFComponentClassifier.load(str(model_path))
     assert clf.pipeline is not None and clf.label_encoder is not None
 

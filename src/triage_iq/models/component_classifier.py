@@ -248,3 +248,28 @@ class MultiLabelTFIDFComponentClassifier:
         obj.label_encoder = data["label_encoder"]
         obj.T = data.get("T")
         return obj
+
+
+def load_classifier(
+    models_dir: str | Path, slug: str
+) -> TFIDFComponentClassifier | MultiLabelTFIDFComponentClassifier:
+    """THE single entry point for loading a saved component classifier -- every caller (the
+    live API, eval harness, one-off scripts) must go through this, not instantiate
+    TFIDFComponentClassifier/MultiLabelTFIDFComponentClassifier.load() directly.
+
+    Dispatches on the pkl's model_kind marker (ADR-0036: "multilabel_ovr" vs absent =>
+    legacy single-label). Before this was centralized, 15 call sites each hardcoded
+    TFIDFComponentClassifier.load() independently -- when the multi-label format shipped,
+    every one of them became a latent KeyError, and only the 3 that happened to be
+    exercised by the test suite were caught before someone hit it manually. One function,
+    everyone uses it, a future format change can't fragment the same way again.
+    """
+    models_dir = Path(models_dir)
+    for prefix in ("component_classifier", "tfidf_classifier"):
+        p = models_dir / f"{prefix}_{slug}.pkl"
+        if p.exists():
+            kind = joblib.load(str(p)).get("model_kind")
+            if kind == "multilabel_ovr":
+                return MultiLabelTFIDFComponentClassifier.load(str(p))
+            return TFIDFComponentClassifier.load(str(p))
+    raise FileNotFoundError(f"No classifier for {slug} in {models_dir}")

@@ -5,7 +5,7 @@ sys.path.insert(0, "src")
 sys.path.insert(0, "eval")
 import numpy as np, pandas as pd, sklearn, torch
 print(f"numpy={np.__version__} sklearn={sklearn.__version__} torch={torch.__version__}", flush=True)
-from triage_iq.models.component_classifier import TFIDFComponentClassifier
+from triage_iq.models.component_classifier import load_classifier
 from triage_iq.models.similar_issues import SimilarIssueRetriever
 from triage_iq.models.resolution import ResolutionTimePredictor
 from triage_iq.models.triage import TriageAssistant
@@ -13,7 +13,7 @@ from triage_iq.cache.llm_cache import LLMCache
 from cassette import CassettePlayer
 issues = [json.loads(l) for l in open("eval/eval_set.jsonl").read().splitlines() if l.strip()]
 issue = issues[0]
-clf = TFIDFComponentClassifier.load("data/models/component_classifier_microsoft_vscode.pkl")
+clf = load_classifier("data/models", "microsoft_vscode")
 det = SimilarIssueRetriever.load("data/models/dup_index_microsoft_vscode_bge")
 pred = ResolutionTimePredictor.load("data/models/resolution_predictor_microsoft_vscode.pkl")
 train = pd.read_parquet("data/processed/microsoft_vscode_temporal_train.parquet")

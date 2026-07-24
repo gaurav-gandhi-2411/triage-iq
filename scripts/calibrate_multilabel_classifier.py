@@ -130,7 +130,9 @@ def run_repo(repo: str) -> dict:
     # --- Abstention threshold firing-rate check (GG's addition) ---
     repo_key = REPO_KEY[repo]
     threshold = COMPONENT_CONFIDENCE_THRESHOLD.get(repo_key)
-    baseline = TFIDFComponentClassifier.load(str(MODELS_DIR / f"component_classifier_{repo}.pkl"))
+    # Post-ADR-0036 cutover, component_classifier_{repo}.pkl IS the multi-label model -- the
+    # single-label baseline this compares against now only exists at the archived path.
+    baseline = TFIDFComponentClassifier.load(str(MODELS_DIR / f"component_classifier_{repo}_PRE_MULTILABEL.pkl"))
     base_proba = baseline.predict_proba_calibrated(X_test)
     base_top1_conf = base_proba.max(axis=1)
     new_top1_conf = proba_cal_test.max(axis=1)

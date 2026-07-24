@@ -134,7 +134,8 @@ class ModelStore:
         for repo, slug in _REPO_SLUGS.items():
             try:
                 logger.info("Loading models for %s …", repo)
-                clf = _load_classifier(models_dir, slug)
+                from triage_iq.models.component_classifier import load_classifier
+                clf = load_classifier(models_dir, slug)
                 det = _load_detector(models_dir, slug)
                 pred = _load_predictor(models_dir, slug)
                 train_df = _load_train(processed_dir, slug)
@@ -162,25 +163,6 @@ class ModelStore:
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
-
-def _load_classifier(models_dir: Path, slug: str):
-    import joblib
-
-    from triage_iq.models.component_classifier import (
-        MultiLabelTFIDFComponentClassifier,
-        TFIDFComponentClassifier,
-    )
-    for prefix in ["component_classifier", "tfidf_classifier"]:
-        p = models_dir / f"{prefix}_{slug}.pkl"
-        if p.exists():
-            # model_kind marks the multi-label format (ADR-0036); absent => legacy
-            # single-label pkl. Peeking the dict avoids maintaining two file-naming schemes.
-            kind = joblib.load(str(p)).get("model_kind")
-            if kind == "multilabel_ovr":
-                return MultiLabelTFIDFComponentClassifier.load(str(p))
-            return TFIDFComponentClassifier.load(str(p))
-    raise FileNotFoundError(f"No classifier for {slug} in {models_dir}")
-
 
 def _load_detector(models_dir: Path, slug: str):
     from triage_iq.models.similar_issues import SimilarIssueRetriever

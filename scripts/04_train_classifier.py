@@ -69,8 +69,14 @@ def run_repo(repo: str, eval_only: bool = False) -> dict:
         # is NOT reproducible -- it silently swaps the shipped model for a different
         # one. --eval-only loads the existing artifact instead, for report/metric
         # regeneration that must not touch the deployed model.
-        log.info("--eval-only: loading existing model from %s (not retraining)", model_path)
-        clf = TFIDFComponentClassifier.load(str(model_path))
+        #
+        # This script trains/represents the single-label architecture specifically
+        # (see the `else` branch below) -- component_classifier_{repo}.pkl IS the
+        # multi-label model post-ADR-0036, so --eval-only now loads the archived
+        # single-label baseline for consistency with what this script actually trains.
+        eval_only_path = MODELS_DIR / f"component_classifier_{repo}_PRE_MULTILABEL.pkl"
+        log.info("--eval-only: loading existing model from %s (not retraining)", eval_only_path)
+        clf = TFIDFComponentClassifier.load(str(eval_only_path))
         train_time = 0.0
     else:
         # ── Train ─────────────────────────────────────────────────

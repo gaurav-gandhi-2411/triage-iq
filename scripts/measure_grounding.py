@@ -25,7 +25,7 @@ import pandas as pd
 
 from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
-from triage_iq.models.component_classifier import TFIDFComponentClassifier
+from triage_iq.api.loader import _load_classifier
 from triage_iq.models.grounding import verify_plan_grounding
 from triage_iq.models.resolution import ResolutionTimePredictor
 from triage_iq.models.triage import TriageAssistant
@@ -66,9 +66,8 @@ def _load_models(
     Mirrors eval/run_eval.py:_load_models exactly, using FrozenRetriever instead of
     live FAISS so this is a deterministic, cassette-only replay.
     """
-    classifier = TFIDFComponentClassifier.load(
-        str(MODELS_DIR / f"component_classifier_{slug}.pkl")
-    )
+    # _load_classifier() dispatches on the pkl's model_kind marker (ADR-0036).
+    classifier = _load_classifier(MODELS_DIR, slug)
     predictor = ResolutionTimePredictor.load(
         str(MODELS_DIR / f"resolution_predictor_{slug}.pkl")
     )

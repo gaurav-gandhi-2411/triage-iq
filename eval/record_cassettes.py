@@ -36,8 +36,8 @@ import os
 
 from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
+from triage_iq.api.loader import _load_classifier
 from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore, TriageJudge
-from triage_iq.models.component_classifier import TFIDFComponentClassifier
 from triage_iq.models.resolution import ResolutionTimePredictor
 from triage_iq.models.triage import TriageAssistant
 
@@ -143,9 +143,8 @@ def main() -> None:
         models_dir = ROOT / "data" / "models"
         processed_dir = ROOT / "data" / "processed"
         try:
-            classifier = TFIDFComponentClassifier.load(
-                str(models_dir / f"component_classifier_{slug}.pkl")
-            )
+            # _load_classifier() dispatches on the pkl's model_kind marker (ADR-0036).
+            classifier = _load_classifier(models_dir, slug)
             predictor = ResolutionTimePredictor.load(
                 str(models_dir / f"resolution_predictor_{slug}.pkl")
             )

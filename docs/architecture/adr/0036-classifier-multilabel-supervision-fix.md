@@ -193,6 +193,33 @@ independent of the top-3 ship-bar question.
 deployment — per the standing rule, cutover/deploy decisions escalate separately from the
 measurement decision.
 
+### Lesson learned, for the next cutover: sequence step 3 AFTER the consuming code merges
+
+This cutover's actual execution order was: (1) swap local artifacts, (2) fix `loader.py`'s
+dispatch on this branch, (3) publish the new artifacts to GCS — all on the feature branch, before
+merge. That opened a real window: from the moment of the GCS publish until this branch merges to
+`main`, **any other deploy triggered from `main`** (an unrelated hotfix, a docs change that still
+matches `deploy.yml`'s trigger paths, anything) would have built a new image pulling the new
+multi-label artifacts from GCS while still running `main`'s old `loader.py` — which hardcoded
+`TFIDFComponentClassifier.load()` with no dispatch, and would have crashed on startup
+(`KeyError: 'pipeline'`) the moment the container tried to load a real request.
+
+Nothing was actually deployed while this window was open — GG held `main` deliberately for the
+entire window, on request, specifically because of this risk. But holding the merge target
+hostage isn't a substitute for correct sequencing, and it isn't always available (a shared repo
+with other contributors couldn't rely on "everyone stop touching main until I say so").
+
+**The correct order for any future model-format cutover: merge the consuming code (the loader
+dispatch, or whatever reads the new artifact) to `main` FIRST — while the artifact at the
+production GCS path is still the OLD format, so `main`'s old code keeps working correctly against
+it — THEN publish the new artifact.** Publishing the artifact is the step that should happen last,
+immediately before (or as part of) the deploy that's actually meant to pick it up, not staged
+early "to save a step." A consumer that can read both formats (this cutover's `model_kind`
+dispatch) closes the window entirely regardless of publish timing, which is why it's the right
+permanent fix — but the sequencing discipline is the cheaper, more general lesson: never leave a
+newer artifact format sitting in a shared, live-read location while the code that knows how to
+read it still lives only on an unmerged branch.
+
 ## Alternatives considered
 
 | Alternative | Reason rejected |

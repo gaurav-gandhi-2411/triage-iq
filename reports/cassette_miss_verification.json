@@ -1,0 +1,26 @@
+{
+  "purpose": "Verify (not infer) that the cassette cache-miss found in eval/test_quality_regression.py is caused by the classifier's changed output specifically, not an unrelated break.",
+  "issue": {"repo": "microsoft/vscode", "number": 311284, "title": "Fix disposed SCM source control retention"},
+  "classifier_top3": {
+    "OLD (single-label, archived _PRE_MULTILABEL.pkl)": [
+      {"label": "tasks", "confidence": 0.2213},
+      {"label": "git", "confidence": 0.1661},
+      {"label": "api", "confidence": 0.1444}
+    ],
+    "NEW (multi-label, deployed)": [
+      {"label": "api", "confidence": 0.3905},
+      {"label": "tasks", "confidence": 0.3167},
+      {"label": "typescript", "confidence": 0.2943}
+    ]
+  },
+  "cache_keys": {
+    "OLD": "86917262ab8607391756c1f532854f421e9ff6b2c91bced774b0d9c0c8effa9e",
+    "NEW": "6ddcb7adceb27a3400fb73c4e29149bc0df9bc03fcbbec73f8514359b961635b",
+    "keys_differ": true
+  },
+  "cassette_lookup": {
+    "old_key_present_in_recorded_cassette": true,
+    "new_key_present_in_recorded_cassette": false
+  },
+  "conclusion": "Confirmed: the classifier's genuinely different top-3 predictions and confidences (both label order and values changed) are embedded verbatim into the LLM prompt text (triage_prompt.py), which changes LLMCache.compute_key's SHA-256 hash of the full messages payload. The recorded cassette was built against the OLD model's output (its key IS in the cassette); the NEW model's output produces a different key (NOT in the cassette) -- a legitimate cache miss caused by the classifier swap, not an unrelated break. Fix: re-record via .github/workflows/record-cassette.yml (dedicated manual workflow, live Groq calls, already built for this exact scenario)."
+}

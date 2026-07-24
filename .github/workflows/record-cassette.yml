@@ -27,7 +27,10 @@ jobs:
   record:
     name: Record cassette on CI platform
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # 90min: was 60, headroom added for Ollama install + qwen3:8b pull (~5GB) + CPU-only
+    # judge inference for 64 issues. Not yet measured on this runner -- right-size once
+    # a real run reports actual duration.
+    timeout-minutes: 90
     permissions:
       contents: write
       id-token: write
@@ -93,7 +96,28 @@ jobs:
           python3 -c "import json; json.dump({'done': {}}, open('eval/cassettes/recording_checkpoint.json', 'w'), indent=2, ensure_ascii=False)"
           echo "Cassette cleared (0 entries), checkpoint reset"
 
-      - name: Record cassette (live Groq API calls ~20 min)
+      - name: Install Ollama (local judge runtime, ADR-0019)
+        run: curl -fsSL https://ollama.com/install.sh | sh
+
+      - name: Start Ollama server
+        run: |
+          ollama serve > /tmp/ollama-server.log 2>&1 &
+          echo "Waiting for Ollama server to become ready..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:11434/api/version >/dev/null 2>&1; then
+              echo "Ollama server is up after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Ollama server did not become ready in time -- server log:"
+          cat /tmp/ollama-server.log
+          exit 1
+
+      - name: Pull judge model (qwen3:8b)
+        run: ollama pull qwen3:8b
+
+      - name: Record cassette (live Groq API calls + local Ollama judge — timing not yet measured on CI, watch for timeout)
         run: python eval/record_cassettes.py
 
       - name: Update eval baseline

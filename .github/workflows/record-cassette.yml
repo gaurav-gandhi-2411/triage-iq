@@ -2,10 +2,18 @@ name: Record Cassette (Manual)
 
 # Trigger manually to re-record eval cassette on the exact CI platform.
 # Run when: models change (GCS upload), platform env changes, or cassette is stale.
-# After it completes, eval-gate re-runs automatically on the pushed commit.
+# dry_run (default true): records, prints before/after means diff, uploads cassette+baseline
+#   as a workflow artifact -- no commit. Re-run with dry_run:false once the diff looks right
+#   to commit+push for real. After a real (non-dry-run) push, eval-gate re-runs automatically
+#   on the pushed commit.
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Produce re-recorded cassette + baseline as artifacts only (no commit/push). Set false to write."
+        type: boolean
+        default: true
 
 concurrency:
   group: record-cassette-${{ github.ref }}
@@ -39,6 +47,9 @@ jobs:
         run: |
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install -r requirements-dev.txt
+
+      - name: Preserve pre-record baseline for before/after diff
+        run: cp reports/eval_baseline.json /tmp/eval_baseline.OLD.json
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
@@ -88,13 +99,71 @@ jobs:
       - name: Update eval baseline
         run: python eval/run_eval.py --update-baseline
 
+      - name: Compute before/after means diff
+        run: |
+          python3 - <<'PY' | tee /tmp/baseline_diff.txt | tee -a "$GITHUB_STEP_SUMMARY"
+          import json
+
+          try:
+              old = json.load(open("/tmp/eval_baseline.OLD.json", encoding="utf-8"))
+          except FileNotFoundError:
+              old = None
+
+          new = json.load(open("reports/eval_baseline.json", encoding="utf-8"))
+
+          print("## Baseline means: OLD -> NEW\n")
+          if old is None:
+              print("No prior baseline found (first recording) -- nothing to diff against.\n")
+          else:
+              repos = sorted(set(old.get("per_repo", {})) | set(new.get("per_repo", {})))
+              for repo in repos:
+                  o = old.get("per_repo", {}).get(repo)
+                  n = new.get("per_repo", {}).get(repo)
+                  if o is None or n is None:
+                      print(f"- {repo}: MISSING on one side (old={o!r}, new={n!r})")
+                      continue
+                  delta = n["mean"] - o["mean"]
+                  print(
+                      f"- {repo}: {o['mean']:.4f} (n={o['n']}) -> {n['mean']:.4f} (n={n['n']})  "
+                      f"delta={delta:+.4f}"
+                  )
+              od, nd = old.get("overall", {}), new.get("overall", {})
+              odelta = nd["mean"] - od["mean"]
+              print(
+                  f"\n**overall**: {od['mean']:.4f} (n={od['n']}) -> {nd['mean']:.4f} (n={nd['n']})  "
+                  f"delta={odelta:+.4f}"
+              )
+          PY
+
+      - name: "DRY RUN: no commit -- see means diff above / artifact below"
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "::notice::DRY RUN -- nothing committed. Download the artifact below to inspect the full cassette; means diff is in the log/summary above."
+          cat /tmp/baseline_diff.txt
+
+      - name: Upload recorded cassette + baseline (dry run artifact)
+        if: ${{ inputs.dry_run }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: recorded-cassette-${{ github.run_id }}
+          path: |
+            eval/cassettes/eval_cassette.json
+            eval/cassettes/recording_checkpoint.json
+            reports/eval_baseline.json
+          retention-days: 14
+
       - name: Configure git
+        if: ${{ !inputs.dry_run }}
         run: |
           git config user.email "gaurav.gandhi2411@gmail.com"
           git config user.name "Gaurav Gandhi"
 
       - name: Commit and push cassette + baseline
+        if: ${{ !inputs.dry_run }}
         run: |
+          echo "::warning::WRITING BASELINE -- this commits directly to the branch with no PR gate."
+          echo "Before/after means (see above for full detail):"
+          cat /tmp/baseline_diff.txt
           git add eval/cassettes/eval_cassette.json \
                   eval/cassettes/recording_checkpoint.json \
                   reports/eval_baseline.json

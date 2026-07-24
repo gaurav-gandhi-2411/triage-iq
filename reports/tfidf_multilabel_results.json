@@ -1,0 +1,109 @@
+{
+  "microsoft_vscode": {
+    "repo": "microsoft_vscode",
+    "n_train": 1488,
+    "n_test": 187,
+    "n_multi_label_train_rows": 108,
+    "baseline_top1_accuracy": 0.6898395721925134,
+    "baseline_top3_accuracy": 0.9037433155080213,
+    "top1_accuracy": 0.7647058823529411,
+    "top1_accuracy_ci95": [
+      0.6989591971169768,
+      0.8197956236348927
+    ],
+    "top3_accuracy": 0.8983957219251337,
+    "top3_accuracy_ci95": [
+      0.846766723039666,
+      0.9339854819303195
+    ],
+    "top3_delta_vs_baseline_paired": -0.0053,
+    "top3_delta_ci95_paired": [
+      -0.0428,
+      0.0321
+    ],
+    "top3_ships": false,
+    "top1_delta_vs_baseline_paired": 0.0749,
+    "top1_delta_ci95_paired": [
+      0.0267,
+      0.1283
+    ],
+    "macro_f1": 0.6270515626237253,
+    "weighted_f1": 0.7576757080260217,
+    "any_valid_label_top1_accuracy": 0.7914438502673797,
+    "any_valid_label_top1_accuracy_ci95": [
+      0.7276370946252126,
+      0.8435172029702802
+    ],
+    "n_multi_label_test_rows": 15,
+    "tail_classes_recall": {
+      "keybindings": 1.0,
+      "editor-core": 0.0,
+      "editor-find": 1.0,
+      "search": 0.0,
+      "electron": 0.0,
+      "suggest": 0.0,
+      "workbench-editors": 0.0
+    },
+    "tail_threshold": 15,
+    "bootstrap": {
+      "n_resamples": 2000,
+      "seed": 42,
+      "method": "paired percentile"
+    }
+  },
+  "kubernetes_kubernetes": {
+    "repo": "kubernetes_kubernetes",
+    "n_train": 2284,
+    "n_test": 286,
+    "n_multi_label_train_rows": 694,
+    "baseline_top1_accuracy": 0.513986013986014,
+    "baseline_top3_accuracy": 0.8251748251748252,
+    "top1_accuracy": 0.6048951048951049,
+    "top1_accuracy_ci95": [
+      0.547205326923996,
+      0.6598042948832257
+    ],
+    "top3_accuracy": 0.8706293706293706,
+    "top3_accuracy_ci95": [
+      0.8267683652791292,
+      0.9046656317730538
+    ],
+    "top3_delta_vs_baseline_paired": 0.0455,
+    "top3_delta_ci95_paired": [
+      0.0035,
+      0.0839
+    ],
+    "top3_ships": true,
+    "top1_delta_vs_baseline_paired": 0.0909,
+    "top1_delta_ci95_paired": [
+      0.0385,
+      0.1469
+    ],
+    "macro_f1": 0.46216178233824307,
+    "weighted_f1": 0.5788383786458036,
+    "any_valid_label_top1_accuracy": 0.7272727272727273,
+    "any_valid_label_top1_accuracy_ci95": [
+      0.6728990225452588,
+      0.7756218247037213
+    ],
+    "n_multi_label_test_rows": 87,
+    "tail_classes_recall": {
+      "isolation": 0.5,
+      "swagger": 0.0,
+      "extensibility": 0.0,
+      "rkt": 1.0,
+      "ui": 0.0,
+      "monitoring": 0.0,
+      "controller-manager": 0.0,
+      "os/ubuntu": 0.0,
+      "etcd": 0.0,
+      "provider/gcp": 1.0
+    },
+    "tail_threshold": 15,
+    "bootstrap": {
+      "n_resamples": 2000,
+      "seed": 42,
+      "method": "paired percentile"
+    }
+  }
+}

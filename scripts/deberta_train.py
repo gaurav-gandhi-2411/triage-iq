@@ -112,7 +112,12 @@ def build_multi_hot(repo: str, labels_raw_series: pd.Series, classes: list[str])
     return Y
 
 
-def train(arm: str, repo: str) -> dict:
+def train(
+    arm: str, repo: str,
+    max_len: int = MAX_LEN,
+    per_device_batch: int = PER_DEVICE_BATCH,
+    grad_accum_steps: int = GRAD_ACCUM_STEPS,
+) -> dict:
     assert_leakage_guard_passed()
     set_seed(SEED)
 
@@ -142,8 +147,8 @@ def train(arm: str, repo: str) -> dict:
                 arm, repo, device, n_classes, len(train_df), len(val_df))
 
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
-    enc_train = tokenizer(X_train, truncation=True, max_length=MAX_LEN, padding="max_length", return_tensors="pt")
-    enc_val = tokenizer(X_val, truncation=True, max_length=MAX_LEN, padding="max_length", return_tensors="pt")
+    enc_train = tokenizer(X_train, truncation=True, max_length=max_len, padding="max_length", return_tensors="pt")
+    enc_val = tokenizer(X_val, truncation=True, max_length=max_len, padding="max_length", return_tensors="pt")
 
     ds_train = TextDataset(enc_train, y_train, multi_label)
     ds_val = TextDataset(enc_val, y_val, multi_label)
@@ -156,9 +161,9 @@ def train(arm: str, repo: str) -> dict:
     args = TrainingArguments(
         output_dir=str(out_dir),
         num_train_epochs=EPOCHS,
-        per_device_train_batch_size=PER_DEVICE_BATCH,
-        per_device_eval_batch_size=PER_DEVICE_BATCH,
-        gradient_accumulation_steps=GRAD_ACCUM_STEPS,
+        per_device_train_batch_size=per_device_batch,
+        per_device_eval_batch_size=per_device_batch,
+        gradient_accumulation_steps=grad_accum_steps,
         learning_rate=LR,
         weight_decay=WEIGHT_DECAY,
         warmup_ratio=0.10,
@@ -200,9 +205,9 @@ def train(arm: str, repo: str) -> dict:
         "n_train": len(train_df),
         "n_val": len(val_df),
         "hyperparams": {
-            "lr": LR, "epochs": EPOCHS, "per_device_batch": PER_DEVICE_BATCH,
-            "grad_accum_steps": GRAD_ACCUM_STEPS, "effective_batch": PER_DEVICE_BATCH * GRAD_ACCUM_STEPS,
-            "max_len": MAX_LEN, "weight_decay": WEIGHT_DECAY, "seed": SEED,
+            "lr": LR, "epochs": EPOCHS, "per_device_batch": per_device_batch,
+            "grad_accum_steps": grad_accum_steps, "effective_batch": per_device_batch * grad_accum_steps,
+            "max_len": max_len, "weight_decay": WEIGHT_DECAY, "seed": SEED,
         },
         "log_history": log_history,
         "train_seconds": elapsed,
@@ -216,10 +221,15 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--arm", required=True, choices=["single", "multi"])
     ap.add_argument("--repo", required=True, choices=["microsoft_vscode", "kubernetes_kubernetes"])
+    ap.add_argument("--max-len", type=int, default=MAX_LEN)
+    ap.add_argument("--per-device-batch", type=int, default=PER_DEVICE_BATCH)
+    ap.add_argument("--grad-accum-steps", type=int, default=GRAD_ACCUM_STEPS)
+    ap.add_argument("--run-name", type=str, default=None)
     args = ap.parse_args()
 
-    result = train(args.arm, args.repo)
-    report_path = REPORTS / f"deberta_train_{args.arm}_{args.repo}.json"
+    result = train(args.arm, args.repo, args.max_len, args.per_device_batch, args.grad_accum_steps)
+    suffix = f"_{args.run_name}" if args.run_name else ""
+    report_path = REPORTS / f"deberta_train_{args.arm}_{args.repo}{suffix}.json"
     report_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
     logger.info("Wrote %s", report_path)
 

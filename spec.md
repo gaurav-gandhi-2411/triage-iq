@@ -1,107 +1,123 @@
-# Project Spec: TriageIQ — Phase C: Product-Task Gold Feasibility (data decision)
+# Project Spec: TriageIQ — Phase D2: GPU Fine-Tune Retrieval on Clean Data
 
 ## Goal
 
-Two things are currently BLOCKED on the same missing data — genuine product-task (issue→related-
-issue) gold pairs, at powered scale, per repo:
-1. The k8s retriever's LIVE product-task recall@5 is UNMEASURABLE (ADR-0028): zero product-task test
-   pairs exist against the live k8s index. We literally cannot say how well k8s retrieval serves the
-   product task.
-2. The Phase 2 retrieval fine-tune is HELD (ADR-0027): its product-task improvement is directionally
-   positive but crosses zero on both repos — it needs more product-task test pairs to gate on the
-   task that matters.
+D1 produced clean, hand-verified, disjoint-asserted training pools + held-out eval sets, and the
+honest baselines: retrieval is genuinely weak on the tasks the data supports. D2 fine-tunes the
+embedder LOCALLY on GG's RTX 3070 (8GB VRAM) on the CLEAN data and finds the best model — measured
+on D1's trustworthy held-out eval, with leakage impossible by construction. $0 cost (GCP was
+evaluated and ruled out — the billing account's free tier structurally bans GPU instances; local
+compute is both cheaper and simpler for a job this size).
 
-Both unblock with the same asset: enough genuine issue→related-issue pairs (NOT PR→issue proxy, NOT
-near-duplicate) to power a product-task recall@5 CI per repo. This iteration DECIDES whether mining
-that asset at scale is worth it — with numbers, before committing to the collection effort. It is
-analysis-only: no mining at scale, no fine-tune cutover. The deliverable is a go/no-go.
+Two trainable tasks (asymmetric — different tasks, different data volumes):
+- **vscode-DUPLICATE (PRIMARY)**: 2,242 clean pairs @ 85%, held-out eval n=200 (gateable),
+  baseline R@5 = 43.5% [37.0, 50.5]. Most data, cleanest signal, real headroom — the likeliest real
+  win and the likeliest HF-publishable model.
+- **k8s-RELATED (SECONDARY, thin-data experiment)**: 264 training pairs @ 84.6%, held-out eval
+  n=150 (gateable), baseline R@5 = 9.3% [5.3, 14.0]. 264 pairs is THIN for embedder fine-tuning —
+  real overfit risk. Pre-register the honest expectation it may not generalize; a negative is a
+  valid finding.
 
-## Background (why the data is scarce)
+**Measure-first**: before any hyperparameter sweep, ONE default fine-tune run on vscode-duplicate.
+If it doesn't move 43.5% meaningfully, no sweep will — stop and report. Only sweep if the single run
+shows real signal.
 
-- Product-task = issue→related-issue (a user triaging an ISSUE wants related ISSUES). This is the
-  use case; PR→issue (proxy) and duplicate→canonical (Phase 2b dup channel) are NOT it.
-- Current product-task gold: vscode ~254-304 (grew via Phase 2), k8s ~72-78 (mostly stranded in
-  train, ~0 evaluable against the live index).
-- Phase 2b's dup-mining channel (the /duplicate comment parse) yields DUPLICATES, not general related
-  issues — it can't provide the related-pair asset (dups are a different stratum).
-- ADR-0027's stated unblock: vscode needs ~700 product test pairs (~4,700 issue→issue total) for 80%
-  power; k8s needs its live-index product pairs to exist at all.
+## Local GPU environment (RTX 3070 laptop GPU, 8GB VRAM, Windows/CUDA)
 
-## Scope (analysis only — no scale mining, no fine-tune)
+- No cloud, no VM, no staging. Training data (corpus parquet, D1 full-corpus indices, mined hard
+  negatives) is already local — GG runs the scripts directly, no provisioning step.
+- The 3070 is shared with GG's AetherArt work. **Don't touch the AetherArt process** (don't kill it,
+  don't assume its VRAM is free) — GG runs D2 once AetherArt's job releases the GPU, not before.
+- BGE-base (109M params) at the scripts' default batch size (16) fits comfortably in 8GB; note in
+  the escalation report if a run needs a smaller batch size to fit alongside anything else resident.
+- CC gives the exact local run sequence in chat (per GG's standing rule — commands pasted in chat,
+  not just files). Never ANTHROPIC_API_KEY.
 
-**1. Sources of genuine issue→related-issue pairs (what channels exist?):**
-- Beyond dup-links and PR-links, where do GitHub issues express "related to #N" NON-duplicate,
-  NON-PR relationships? Candidates: "related to #N" / "see also #N" / "similar to #N" in bodies AND
-  comments; GitHub's native "linked issues" (not PRs); cross-references in timeline; label-based
-  clustering (issues sharing a fine-grained component + temporal proximity as weak-related).
-- For each channel: estimate the YIELD per repo (how many genuine related-pairs mineable) and the
-  PRECISION (how many are truly related vs incidental mentions). Sample-and-measure like Phase 2b's
-  probe, don't assume.
+## The leakage guard (NON-NEGOTIABLE — the whole reason D1 existed)
 
-**2. The power target (how many pairs are actually needed?):**
-- From the held Phase 2 fine-tune result (product-task deltas + CIs), how many product-task TEST
-  pairs per repo would tighten the CI to exclude zero IF the effect is ~the point estimate? (Re-use
-  the Phase 2a power-calc method.) And how many for the k8s LIVE index to be measurable at all
-  (a workable ±5pp CI)?
-- Honest flag: if the product-task point estimate is too near-zero (like vscode's borderline case),
-  no n saves the fine-tune — say so, and then the ONLY value of the data is MEASURING k8s (still
-  worth something) not SHIPPING the fine-tune.
+- Train ONLY on the training pool. Evaluate ONLY on the D1 held-out eval set. They are disjoint at
+  the issue level (D1 asserted this). D2 RE-ASSERTS it programmatically before training and before
+  eval — a trained model evaluated on any training issue is a contaminated fake number (the bug
+  class this project has caught 5×).
+- No eval issue in any training pair, no training issue in any eval pair. Assert, fail hard on violation.
+- Hard-negative mining (if used) draws negatives ONLY from training-pool issues, never eval issues.
 
-**3. The live-index problem (k8s-specific):**
-- k8s product pairs must be evaluable against the LIVE index (15K records). Phase 2b's forward-scrape
-  pairs (#15,003-30,000) are NOT in the live index. So either: mine product-pairs from the
-  IN-LIVE-INDEX issue range (#1-15,000), or accept that measuring k8s requires re-indexing to the
-  grown corpus (a bigger change). Quantify: how many mineable product-pairs fall in the live-index
-  range vs require re-indexing?
+## The ship / publish bar
 
-**4. Go/no-go with the collection scope:**
-- GO: which channel(s), expected yield + precision per repo, whether it hits the power target for
-  (a) measuring k8s live retriever, (b) gating the Phase 2 fine-tune product task, and the rough
-  effort. → becomes the Phase C-build (mining) spec.
-- NO-GO: the data isn't mineable at sufficient yield/precision → honest finding: product-task
-  retrieval stays unmeasurable / the fine-tune stays held indefinitely, and WHY.
-- MIXED (likely): "enough to MEASURE k8s (worth doing), not enough to SHIP the fine-tune" OR
-  "vscode gateable, k8s needs re-indexing" — the honest split.
+- Metric: R@5 on the D1 held-out eval, per task, bootstrap CI vs the D1 baseline (vscode-dup 43.5%,
+  k8s-related 9.3%). Report R@1/R@10 for shape.
+- **SHIP bar: a MEANINGFUL lift, not marginal.** A fine-tune that squeaks past significance
+  (e.g. 43.5% → 46%, CI barely excluding zero) is the marginal-polish trap that got W3 held — NOT a
+  ship. State the effect size; the lift must be substantial and the CI must clearly exclude zero.
+- **PUBLISH bar (HF): gated on a REAL USP, assessed AFTER training** (see D3 below). A marginal
+  model is NOT published — a mediocre model on HF under GG's name is worse than none.
+- A fine-tune that doesn't clear the bar is a documented negative (W3 / reranker / lever pattern),
+  not a failure. Do not p-hack, do not lower the bar.
+
+## Scope
+
+### In scope
+1. **vscode-duplicate (primary)**: measure-first single fine-tune (sensible defaults: base BGE,
+   contrastive/triplet loss on the clean pairs, in-batch + mined hard negatives from TRAINING pool
+   only). Eval on held-out n=200. ESCALATE the single-run result.
+2. If the single run shows real signal → a bounded hyperparameter sweep (LR, epochs, batch, negative
+   strategy), each eval'd on the held-out set. Pick the best by held-out R@5. Report the sweep.
+3. **k8s-related (secondary)**: ONE thin-data fine-tune attempt (264 pairs), strong regularization /
+   early stopping to fight overfit, eval on held-out n=150. Pre-registered honest expectation: may
+   not generalize. Report whatever it does — negative is valid.
+4. **Best eval params (from D1's rec)**: apply the D1-recommended k / metrics / CI consistently.
+5. If a model clears the ship bar: the fine-tuned embedder artifact + a reproducible training script
+   + the held-out eval result — staged for a deliberate cutover decision (a retrieval change =
+   re-index + re-record + re-baseline; escalate the cutover separately, don't auto-ship).
 
 ### Out of scope
-
-- No scale mining (this decides whether to). No fine-tune cutover. No re-indexing (this quantifies
-  whether it'd be needed). No model/pipeline changes. Analysis only.
+- No cutover/deploy in D2 (train + measure only; cutover is a separate escalated decision).
+- No training on eval issues (leakage). No lowering the ship bar. No paid APIs.
+- No HF push in D2 (that's D3, gated on the USP assessment).
+- vscode-related (n=22) and any task without a clean trainable pool — not trained (directional-only).
 
 ## Autonomy & escalation
-
-CC runs the full analysis autonomously. Escalate ONLY:
-1. The go/no-go + numbers (channel yields + precision, power target, live-index quantification,
-   collection scope if go) — the strategic decision, human-made.
+CC prepares the training code + the local run sequence autonomously. Escalate:
+1. **The measure-first single-run result** (vscode-dup) — before any sweep.
+2. **The final per-task results** (fine-tune vs baseline, CI, effect size) — before any cutover or
+   HF decision.
+3. **Any leakage-guard question** — if the disjointness assertion is ambiguous, STOP.
+4. The cutover (if a model ships to prod) and the HF push (D3) — separate decisions.
 
 ## Hard rules
-
-- Honest numbers, no foregone conclusion. If a channel's precision is low (incidental "#N" mentions,
-  not real relationships), SAY SO — don't inflate yield with noise. If the fine-tune's point estimate
-  can't be saved by any n, SAY SO.
-- Distinguish "worth it to MEASURE k8s" from "worth it to SHIP the fine-tune" — they have different
-  data bars and one may be reachable without the other.
-- Analysis only — no scale mining, no cutover, no re-indexing. Branch `analysis/phaseC-feasibility`;
-  I merge. Zero-cost, no LLM at scale (small precision-sampling only). Claude Max — never
-  ANTHROPIC_API_KEY. Don't touch aetherart-497918.
+- Leakage guard asserted before train AND before eval — fail hard on violation. Non-negotiable.
+- Ship bar = meaningful lift, CI clearly excludes zero, effect size stated. Marginal = documented
+  negative, not shipped.
+- Measure-first: single run before sweep.
+- Local run only (RTX 3070); don't touch the AetherArt process sharing the GPU.
+- Branch `feat/retrieval-gpu-finetune`; human merges. Never ANTHROPIC_API_KEY.
+  Don't touch aetherart-497918.
 
 ## Success criteria
+- Leakage disjointness re-asserted programmatically (train vs held-out) before train + eval.
+- vscode-duplicate: measure-first single run reported; sweep only if signal; best model by held-out R@5.
+- k8s-related: thin-data attempt reported honestly (incl. a valid negative).
+- Per-task fine-tune vs baseline: R@5 + CI + effect size, on D1's held-out eval.
+- ADR-0034: the training, per-task results, ship/reject per task, and (if shipping) the USP
+  assessment feeding the D3 HF decision.
 
-- Related-pair channels enumerated; yield + precision estimated per channel per repo (sampled, not
-  assumed).
-- Power target: product-task test pairs needed per repo to (a) measure k8s live, (b) gate the fine-tune.
-- Live-index quantification: mineable k8s product-pairs in-live-range vs requiring re-indexing.
-- Go/no-go (likely mixed) with collection scope if go — escalated.
-- reports/phaseC_feasibility.json + ADR-0030.
+## Build order
+1. Prepare training code + re-assert leakage disjointness.
+2. GG runs the vscode-duplicate MEASURE-FIRST single run locally. ESCALATE the result.
+3. If signal → bounded sweep, pick best by held-out R@5. Then the k8s-related thin-data attempt.
+4. ESCALATE final per-task results (vs baseline, CI, effect size).
+5. ADR-0034 + USP assessment for the D3 HF decision.
 
-## Build order (CC autonomous)
+---
 
-1. Enumerate + sample related-pair channels (bodies/comments "related to #N", native linked-issues,
-   timeline cross-refs, label-cluster weak-related). Yield + precision per channel per repo.
-2. Power calc: pairs needed to measure k8s live + to gate the fine-tune, per repo. Flag if the
-   fine-tune's effect is too near-zero for any n.
-3. Live-index quantification (k8s in-range vs re-index-needed).
-4. ESCALATE the go/no-go + collection scope.
-5. ADR-0030.
+## D3 (outline only — separate spec after D2, gated on the ship bar)
+
+HuggingFace release, same as AetherArt / Mindmeld — ONLY IF D2 produces a genuinely strong model
+with a REAL, honest USP:
+- USP candidates: "open model for GitHub issue DUPLICATE detection, honestly per-task benchmarked"
+  (narrow but real if vscode-dup trains well). NOT "related retrieval" (data can't support it).
+- Model card with the HONEST benchmarks (the held-out R@5, the baseline it beats, the task scope,
+  the limitations — vscode-related unmeasured, k8s-related thin). The honesty IS the differentiator.
+- Gated: if D2 is only marginal, DO NOT publish. Assess the USP on D2's real numbers first.
 ```
 

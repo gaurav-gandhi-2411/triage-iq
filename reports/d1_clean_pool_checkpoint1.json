@@ -1,0 +1,251 @@
+{
+  "channel_decisions": [
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "k8s_forward_scrape",
+      "source": "body_related",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 45,
+      "decision": "KEEP",
+      "precision_evidence": {
+        "n_judged": 45,
+        "n_genuine": 38,
+        "precision": 0.8444,
+        "wilson95": [
+          0.7122,
+          0.9225
+        ],
+        "sample_note": "full_census",
+        "provenance": "D1 fresh full census, this phase"
+      },
+      "note": ""
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "k8s_forward_scrape",
+      "source": "body_related_ext",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 454,
+      "decision": "KEEP",
+      "precision_evidence": {
+        "n_judged": 30,
+        "n_genuine": 25,
+        "precision": 0.8333,
+        "wilson95": [
+          0.6644,
+          0.9266
+        ],
+        "sample_note": "sample_30_of_454",
+        "provenance": "D1 fresh sample n=30 of 454, this phase"
+      },
+      "note": ""
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "legacy_gold_v1",
+      "source": "body_related",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 37,
+      "decision": "KEEP",
+      "precision_evidence": {
+        "n_judged": 3,
+        "n_genuine": 3,
+        "precision": 1.0,
+        "wilson95": [
+          0.4385,
+          1.0
+        ],
+        "provenance": "ADR-0032 review, resliced by source"
+      },
+      "note": "thin sample (n=3 of 37) -- consistent with sibling channels, not independently powered"
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "k8s_extended_mine",
+      "source": "body_related_ext",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 200,
+      "decision": "DROP",
+      "precision_evidence": {
+        "n_judged": 20,
+        "n_genuine": 13,
+        "precision": 0.65,
+        "wilson95": [
+          0.4329,
+          0.8188
+        ],
+        "provenance": "ADR-0032 review, resliced by source"
+      },
+      "note": "GG decision: 65% meaningfully below sibling channels (~83-84%) -- traded size for precision"
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "legacy_gold_v1",
+      "source": "body_ref",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 2,
+      "decision": "DROP",
+      "precision_evidence": {
+        "n_judged": 2,
+        "n_genuine": 0,
+        "precision": 0.0,
+        "wilson95": [
+          0.0,
+          0.6576
+        ],
+        "sample_note": "full_census"
+      },
+      "note": "full census n=2, both incidental (self-disclaimed 'maybe/probably not the same')"
+    },
+    {
+      "repo": "kubernetes_kubernetes",
+      "channel": "*",
+      "source": "title_sim",
+      "stratum": "*",
+      "task": "related",
+      "pool_size": 0,
+      "decision": "DROP",
+      "precision_evidence": null,
+      "note": "hard rule -- title_sim dropped unconditionally"
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "vscode_dup_scrape",
+      "source": "dup_comment",
+      "stratum": "gate",
+      "task": "duplicate",
+      "pool_size": 2242,
+      "decision": "KEEP",
+      "precision_evidence": {
+        "n_judged": 40,
+        "n_genuine": 34,
+        "precision": 0.85,
+        "wilson95": [
+          0.7093,
+          0.9294
+        ],
+        "sample_note": "sample_40_of_2242",
+        "provenance": "D1 fresh sample n=40 of 2242, this phase"
+      },
+      "note": "powered/gateable -- vscode's largest channel by far"
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "legacy_gold_v1",
+      "source": "body_ref",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 1,
+      "decision": "KEEP (eval-only, directional)",
+      "precision_evidence": {
+        "n_judged": 1,
+        "n_genuine": 1,
+        "precision": 1.0,
+        "wilson95": [
+          0.2065,
+          1.0
+        ],
+        "sample_note": "full_census",
+        "provenance": "D1 fresh full census, this phase"
+      },
+      "note": ""
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "legacy_gold_v1",
+      "source": "body_related",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 10,
+      "decision": "KEEP (eval-only, directional)",
+      "precision_evidence": {
+        "n_judged": 10,
+        "n_genuine": 8,
+        "precision": 0.8,
+        "wilson95": [
+          0.4902,
+          0.9433
+        ],
+        "sample_note": "full_census",
+        "provenance": "D1 fresh full census, this phase"
+      },
+      "note": ""
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "vscode_body_refs",
+      "source": "body_related",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 11,
+      "decision": "KEEP (eval-only, directional)",
+      "precision_evidence": {
+        "n_judged": 11,
+        "n_genuine": 10,
+        "precision": 0.9091,
+        "wilson95": [
+          0.6226,
+          0.9838
+        ],
+        "sample_note": "full_census",
+        "provenance": "D1 fresh full census, this phase"
+      },
+      "note": "GG decision: too small to power (n=22) -- held out entirely as eval-only diagnostic, never trained on, never gated"
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "vscode_body_refs",
+      "source": "body_related_ext",
+      "stratum": "product",
+      "task": "related",
+      "pool_size": 206,
+      "decision": "DROP",
+      "precision_evidence": {
+        "precision_range": [
+          0.3,
+          0.43
+        ],
+        "n": 30,
+        "provenance": "ADR-0030 Channel A table, cited not re-derived"
+      },
+      "note": "noisy, same tier as title_sim -- non-title_sim alone is NOT sufficient for 'clean'"
+    },
+    {
+      "repo": "microsoft_vscode",
+      "channel": "*",
+      "source": "title_sim",
+      "stratum": "*",
+      "task": "related",
+      "pool_size": 0,
+      "decision": "DROP",
+      "precision_evidence": null,
+      "note": "hard rule -- title_sim dropped unconditionally"
+    }
+  ],
+  "summary": {
+    "kubernetes_kubernetes": {
+      "task": "related (no duplicate/comment channel exists -- 0% comment coverage, ADR-0030)",
+      "clean_pool_size": 536,
+      "weighted_precision": 0.8457,
+      "powered_gateable": "TBD at eval-carve step (task 6/7) -- ADR-0030 estimated ~289-385 test pairs needed for a tight measurement CI; 536 total must cover train+eval"
+    },
+    "microsoft_vscode": {
+      "duplicate_task": {
+        "pool_size": 2242,
+        "weighted_precision": 0.85,
+        "status": "powered/gateable -- large enough for a proper train/eval split"
+      },
+      "related_task": {
+        "pool_size": 22,
+        "weighted_precision": 0.8636,
+        "status": "directional-only, eval-only diagnostic (n=22) -- NOT trained on, NOT gated, NOT blended with the duplicate number"
+      },
+      "note": "duplicate and related are reported as two separate tasks, never combined into one 'vscode retrieval' number"
+    }
+  }
+}

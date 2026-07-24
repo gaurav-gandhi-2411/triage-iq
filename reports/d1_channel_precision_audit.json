@@ -1,0 +1,75 @@
+{
+  "n_judged": 139,
+  "by_channel": {
+    "kubernetes_kubernetes::k8s_forward_scrape::body_related::product": {
+      "n_judged": 45,
+      "n_genuine": 38,
+      "precision": 0.8444,
+      "wilson95": [
+        0.7122,
+        0.9225
+      ],
+      "sample_note": "full_census"
+    },
+    "kubernetes_kubernetes::k8s_forward_scrape::body_related_ext::product": {
+      "n_judged": 30,
+      "n_genuine": 25,
+      "precision": 0.8333,
+      "wilson95": [
+        0.6644,
+        0.9266
+      ],
+      "sample_note": "sample_30_of_454"
+    },
+    "kubernetes_kubernetes::legacy_gold_v1::body_ref::product": {
+      "n_judged": 2,
+      "n_genuine": 0,
+      "precision": 0.0,
+      "wilson95": [
+        0.0,
+        0.6576
+      ],
+      "sample_note": "full_census"
+    },
+    "microsoft_vscode::legacy_gold_v1::body_ref::product": {
+      "n_judged": 1,
+      "n_genuine": 1,
+      "precision": 1.0,
+      "wilson95": [
+        0.2065,
+        1.0
+      ],
+      "sample_note": "full_census"
+    },
+    "microsoft_vscode::legacy_gold_v1::body_related::product": {
+      "n_judged": 10,
+      "n_genuine": 8,
+      "precision": 0.8,
+      "wilson95": [
+        0.4902,
+        0.9433
+      ],
+      "sample_note": "full_census"
+    },
+    "microsoft_vscode::vscode_body_refs::body_related::product": {
+      "n_judged": 11,
+      "n_genuine": 10,
+      "precision": 0.9091,
+      "wilson95": [
+        0.6226,
+        0.9838
+      ],
+      "sample_note": "full_census"
+    },
+    "microsoft_vscode::vscode_dup_scrape::dup_comment::gate": {
+      "n_judged": 40,
+      "n_genuine": 34,
+      "precision": 0.85,
+      "wilson95": [
+        0.7093,
+        0.9294
+      ],
+      "sample_note": "sample_40_of_2242"
+    }
+  }
+}

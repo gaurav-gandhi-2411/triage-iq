@@ -192,6 +192,18 @@ explicitly turned on.
   future product-value decision; resolution's threshold should not be reused without first
   finding a width-independent, coverage-discriminative signal (see "the interesting thread"
   above).
+- **`COMPONENT_CONFIDENCE_THRESHOLD` is now STALE, effectively dead (ADR-0036, 2026-07-24).**
+  These values (k8s=0.45, vscode=0.29) were tuned against the single-label classifier's
+  calibrated confidence distribution. ADR-0036 replaced the shipped classifier with a
+  multi-label one-vs-rest model with a different confidence stream (independent per-class
+  sigmoids, recalibrated with its own temperature) — under the new distribution the SAME fixed
+  thresholds fire at a wildly different rate on the held-out test set: **k8s 59.8% → 0.0%,
+  vscode 13.9% → 0.5%** (see `reports/tfidf_multilabel_calibration_and_threshold_check.json`).
+  This gate has stayed off the whole time this measured, so nothing in production changed — but
+  **these constants MUST be re-derived from the new confidence distribution before
+  `TRIAGE_ENABLE_ABSTENTION_GATE` is ever set to `1`.** Flipping that flag today would enable a
+  gate calibrated to a confidence stream that no longer exists — silently dead (fires ~never on
+  k8s) rather than doing what this ADR's own tradeoff analysis intended.
 - Generalization caveat: these numbers describe this exact prompt/model pair (Groq
   `llama-3.1-8b-instant`, no attribution — `TRIAGE_PROMPT_INCLUDE_ATTRIBUTION` off) and this
   exact gold set. A future prompt or model change requires re-measurement.

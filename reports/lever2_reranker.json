@@ -1,0 +1,88 @@
+{
+  "results": [
+    {
+      "repo": "kubernetes_kubernetes",
+      "n_pairs": 150,
+      "model_id": "BAAI/bge-reranker-v2-m3",
+      "rerank_pool": 30,
+      "dense_only": {
+        "recall_at_1": 0.09333333333333334,
+        "recall_at_5": 0.18,
+        "recall_at_10": 0.23333333333333334,
+        "recall_at_20": 0.28
+      },
+      "reranked": {
+        "recall_at_1": 0.04666666666666667,
+        "recall_at_5": 0.15333333333333332,
+        "recall_at_10": 0.22,
+        "recall_at_20": 0.2866666666666667
+      },
+      "r5_delta_pp": -2.67,
+      "r5_ci95_pp": [
+        -7.33,
+        2.67
+      ],
+      "ships": false,
+      "bootstrap": {
+        "n_resamples": 2000,
+        "seed": 42,
+        "method": "paired percentile"
+      },
+      "latency_cpu_subsample": {
+        "repo": "kubernetes_kubernetes",
+        "n_sample": 30,
+        "seed": 42,
+        "device": "cpu",
+        "dense_retrieve_mean_s": 0.14409871000098065,
+        "ce_rerank_mean_s": 51.995877436664884,
+        "ce_rerank_p50_s": 46.324253850005334,
+        "ce_rerank_p95_s": 95.92875506999845,
+        "total_dense_only_mean_s": 0.14409871000098065,
+        "total_with_rerank_mean_s": 52.139976146665866,
+        "added_latency_pct": 36083.5
+      }
+    },
+    {
+      "repo": "microsoft_vscode",
+      "n_pairs": 200,
+      "model_id": "BAAI/bge-reranker-v2-m3",
+      "rerank_pool": 30,
+      "dense_only": {
+        "recall_at_1": 0.27,
+        "recall_at_5": 0.505,
+        "recall_at_10": 0.595,
+        "recall_at_20": 0.675
+      },
+      "reranked": {
+        "recall_at_1": 0.23,
+        "recall_at_5": 0.475,
+        "recall_at_10": 0.57,
+        "recall_at_20": 0.67
+      },
+      "r5_delta_pp": -3.0,
+      "r5_ci95_pp": [
+        -10.0,
+        3.5
+      ],
+      "ships": false,
+      "bootstrap": {
+        "n_resamples": 2000,
+        "seed": 42,
+        "method": "paired percentile"
+      },
+      "latency_cpu_subsample": {
+        "repo": "microsoft_vscode",
+        "n_sample": 30,
+        "seed": 42,
+        "device": "cpu",
+        "dense_retrieve_mean_s": 0.08425395333130534,
+        "ce_rerank_mean_s": 27.133908270008398,
+        "ce_rerank_p50_s": 28.512605750001967,
+        "ce_rerank_p95_s": 37.05041043001402,
+        "total_dense_only_mean_s": 0.08425395333130534,
+        "total_with_rerank_mean_s": 27.218162223339704,
+        "added_latency_pct": 32204.9
+      }
+    }
+  ]
+}

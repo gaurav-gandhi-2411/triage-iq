@@ -69,7 +69,11 @@ def run_repo(repo: str) -> dict:
     log.info("=" * 60)
     log.info("Repo: %s", repo)
 
-    model_path = MODELS_DIR / f"component_classifier_{repo}.pkl"
+    # Single-label-specific tool (accesses clf.pipeline directly below) -- superseded for the
+    # currently-deployed model by scripts/calibrate_multilabel_classifier.py (ADR-0036).
+    # component_classifier_{repo}.pkl IS the multi-label model post-cutover; this script's
+    # single-softmax method only applies to the archived single-label artifact.
+    model_path = MODELS_DIR / f"component_classifier_{repo}_PRE_MULTILABEL.pkl"
     if not model_path.exists():
         log.error("Model not found: %s", model_path)
         sys.exit(1)

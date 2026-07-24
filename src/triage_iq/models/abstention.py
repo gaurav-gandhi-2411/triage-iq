@@ -25,6 +25,16 @@ if TYPE_CHECKING:
 # what was measured, not as a shipped default (ADR-0021 rejected shipping either stage for v1).
 # Missing a repo key means that repo's stage is never gated (fails open, same policy as
 # resolution_interval_conformal).
+#
+# *** STALE as of ADR-0036 (2026-07-24) -- DO NOT ENABLE TRIAGE_ENABLE_ABSTENTION_GATE WITHOUT
+# *** RE-DERIVING THESE FIRST. These values were tuned to the single-label classifier's
+# *** confidence distribution. ADR-0036 shipped a multi-label one-vs-rest classifier with a
+# *** different, independently-recalibrated confidence stream -- under it, these SAME fixed
+# *** thresholds fire at a wildly different rate on the held-out test set: k8s 59.8%->0.0%,
+# *** vscode 13.9%->0.5% (reports/tfidf_multilabel_calibration_and_threshold_check.json). The
+# *** gate has been off throughout, so nothing live changed -- but flipping the flag today with
+# *** these constants unchanged would enable a silently-dead gate (fires ~never on k8s), not the
+# *** behavior this ADR's tradeoff analysis measured. See ADR-0021's Consequences section.
 COMPONENT_CONFIDENCE_THRESHOLD: dict[str, float] = {
     "kubernetes/kubernetes": 0.45,
     "microsoft/vscode": 0.29,

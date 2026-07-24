@@ -1,0 +1,22 @@
+{
+  "microsoft_vscode": {
+    "repo": "microsoft_vscode",
+    "T_opt": 0.8398,
+    "argmax_preserved": true,
+    "ece_test": 0.0533,
+    "mean_conf_test": 0.7434,
+    "mean_acc_test": 0.7647,
+    "overconfident": false,
+    "staged_path": "data\\models\\component_classifier_microsoft_vscode_multilabel_staged.pkl"
+  },
+  "kubernetes_kubernetes": {
+    "repo": "kubernetes_kubernetes",
+    "T_opt": 5.551,
+    "argmax_preserved": true,
+    "ece_test": 0.0903,
+    "mean_conf_test": 0.5473,
+    "mean_acc_test": 0.6049,
+    "overconfident": false,
+    "staged_path": "data\\models\\component_classifier_kubernetes_kubernetes_multilabel_staged.pkl"
+  }
+}

@@ -64,7 +64,7 @@ from scipy import stats
 from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
 from triage_iq.api.loader import _load_conformal_adjustments
-from triage_iq.models.component_classifier import TFIDFComponentClassifier
+from triage_iq.models.component_classifier import load_classifier
 from triage_iq.models.grounding import verify_plan_grounding
 from triage_iq.models.resolution import BUCKET_LABELS, ResolutionTimePredictor
 from triage_iq.models.triage import TriageAssistant
@@ -123,9 +123,8 @@ def _load_eval_set(path: Path) -> list[dict]:
 def _load_models(
     repo: str, slug: str, cassette: CassettePlayer, frozen_retrievers: dict
 ) -> TriageAssistant:
-    classifier = TFIDFComponentClassifier.load(
-        str(MODELS_DIR / f"component_classifier_{slug}.pkl")
-    )
+    # load_classifier() dispatches on the pkl's model_kind marker (ADR-0036).
+    classifier = load_classifier(MODELS_DIR, slug)
     predictor = ResolutionTimePredictor.load(
         str(MODELS_DIR / f"resolution_predictor_{slug}.pkl")
     )

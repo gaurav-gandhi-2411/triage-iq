@@ -1,0 +1,406 @@
+{
+  "results": [
+    {
+      "repo": "kubernetes_kubernetes",
+      "n_pairs": 150,
+      "dense_only": {
+        "recall_at_1": 0.09333333333333334,
+        "recall_at_5": 0.18,
+        "recall_at_10": 0.23333333333333334,
+        "recall_at_20": 0.28
+      },
+      "bm25_only": {
+        "recall_at_1": 0.04,
+        "recall_at_5": 0.12666666666666668,
+        "recall_at_10": 0.16,
+        "recall_at_20": 0.20666666666666667
+      },
+      "hybrid_rrf": {
+        "recall_at_1": 0.08,
+        "recall_at_5": 0.14666666666666667,
+        "recall_at_10": 0.22,
+        "recall_at_20": 0.28
+      },
+      "hybrid_weighted": {
+        "recall_at_1": 0.08666666666666667,
+        "recall_at_5": 0.18666666666666668,
+        "recall_at_10": 0.20666666666666667,
+        "recall_at_20": 0.29333333333333333
+      },
+      "bm25_vs_dense_r5_delta_pp": -5.33,
+      "bm25_vs_dense_r5_ci95_pp": [
+        -10.67,
+        0.0
+      ],
+      "rrf_vs_dense_r5_delta_pp": -3.33,
+      "rrf_vs_dense_r5_ci95_pp": [
+        -8.0,
+        0.67
+      ],
+      "rrf_ships": false,
+      "weighted_vs_dense_r5_delta_pp": 0.67,
+      "weighted_vs_dense_r5_ci95_pp": [
+        -2.67,
+        4.0
+      ],
+      "weighted_ships": false,
+      "bootstrap": {
+        "n_resamples": 2000,
+        "seed": 42,
+        "method": "paired percentile"
+      },
+      "rrf_k": 60,
+      "candidate_pool": 100,
+      "tuning_provenance": "RRF k=60 is the untuned standard default. No held-out tuning slice was carved out of the product-task pairs -- doing so would either shrink this repo's already-thin powered eval set or require tuning on the test pairs themselves (the leak spec.md explicitly rules out). Nothing was tuned on the test pairs.",
+      "latency_s": {
+        "dense_retrieve_mean": 0.09264460666609618,
+        "bm25_score_mean": 3.21350195333284,
+        "fuse_mean": 0.0004609226683775584,
+        "bm25_index_build_total": 1.7307671000016853,
+        "added_per_query_mean": 3.2139628760012178
+      },
+      "diagnostic_bm25_recovers_dense_misses": {
+        "n_cases": 3,
+        "n_cases_pct_of_pairs": 2.0,
+        "examples": [
+          {
+            "query_number": 21511,
+            "target_number": 20738,
+            "query_title": "Don't rely on events in deployment e2e",
+            "target_title": "Rewrite scheduler-centric e2e tests to avoid use of events for validation",
+            "dense_rank_of_target": 20,
+            "bm25_rank_of_target": 17,
+            "shared_high_idf_terms": [
+              "rely",
+              "events",
+              "the",
+              "api",
+              "so"
+            ]
+          },
+          {
+            "query_number": 29620,
+            "target_number": 29548,
+            "query_title": "Mount EBS volume fail if --hostname-override is set on kubelet",
+            "target_title": "Mounting EBS not working in k8s 1.3.X with AWS",
+            "dense_rank_of_target": 8,
+            "bm25_rank_of_target": 2,
+            "shared_high_idf_terms": [
+              "ebs",
+              "mounting",
+              "attached",
+              "mount",
+              "trying"
+            ]
+          },
+          {
+            "query_number": 28312,
+            "target_number": 28311,
+            "query_title": "Accounting and feasibility for opaque integer resources in the API server and scheduler.",
+            "target_title": "Hardware feature discovery to add node labels with a unique prefix (e.g. `scheduler.alpha.intel.com/<feature-name>`).",
+            "dense_rank_of_target": 9,
+            "bm25_rank_of_target": 2,
+            "shared_high_idf_terms": [
+              "28310",
+              "bookkeeping",
+              "discovering",
+              "isolating",
+              "relates"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "repo": "microsoft_vscode",
+      "n_pairs": 200,
+      "dense_only": {
+        "recall_at_1": 0.27,
+        "recall_at_5": 0.505,
+        "recall_at_10": 0.595,
+        "recall_at_20": 0.675
+      },
+      "bm25_only": {
+        "recall_at_1": 0.15,
+        "recall_at_5": 0.235,
+        "recall_at_10": 0.29,
+        "recall_at_20": 0.34
+      },
+      "hybrid_rrf": {
+        "recall_at_1": 0.205,
+        "recall_at_5": 0.405,
+        "recall_at_10": 0.51,
+        "recall_at_20": 0.615
+      },
+      "hybrid_weighted": {
+        "recall_at_1": 0.225,
+        "recall_at_5": 0.425,
+        "recall_at_10": 0.585,
+        "recall_at_20": 0.65
+      },
+      "bm25_vs_dense_r5_delta_pp": -27.0,
+      "bm25_vs_dense_r5_ci95_pp": [
+        -34.01,
+        -20.0
+      ],
+      "rrf_vs_dense_r5_delta_pp": -10.0,
+      "rrf_vs_dense_r5_ci95_pp": [
+        -17.5,
+        -3.0
+      ],
+      "rrf_ships": false,
+      "weighted_vs_dense_r5_delta_pp": -8.0,
+      "weighted_vs_dense_r5_ci95_pp": [
+        -13.5,
+        -3.0
+      ],
+      "weighted_ships": false,
+      "bootstrap": {
+        "n_resamples": 2000,
+        "seed": 42,
+        "method": "paired percentile"
+      },
+      "rrf_k": 60,
+      "candidate_pool": 100,
+      "tuning_provenance": "RRF k=60 is the untuned standard default. No held-out tuning slice was carved out of the product-task pairs -- doing so would either shrink this repo's already-thin powered eval set or require tuning on the test pairs themselves (the leak spec.md explicitly rules out). Nothing was tuned on the test pairs.",
+      "latency_s": {
+        "dense_retrieve_mean": 0.0910445470007835,
+        "bm25_score_mean": 1.3498590709999554,
+        "fuse_mean": 0.0005179299984592944,
+        "bm25_index_build_total": 1.0014521999983117,
+        "added_per_query_mean": 1.3503770009984146
+      },
+      "diagnostic_bm25_recovers_dense_misses": {
+        "n_cases": 16,
+        "n_cases_pct_of_pairs": 8.0,
+        "examples": [
+          {
+            "query_number": 140736,
+            "target_number": 135559,
+            "query_title": "`vscode.dev` it doesn't remember my open folders/files",
+            "target_title": "Local file system: Restore opened folders and files",
+            "dense_rank_of_target": 14,
+            "bm25_rank_of_target": 1,
+            "shared_high_idf_terms": [
+              "dev",
+              "folders",
+              "folder",
+              "in",
+              "the"
+            ]
+          },
+          {
+            "query_number": 2056,
+            "target_number": 2054,
+            "query_title": "No intellisense for Javascript projects",
+            "target_title": "NONE of the code features work in ES6 projects for language type: Javascript",
+            "dense_rank_of_target": 21,
+            "bm25_rank_of_target": 23,
+            "shared_high_idf_terms": [
+              "79215",
+              "projects",
+              "javascript",
+              "11e5",
+              "code"
+            ]
+          },
+          {
+            "query_number": 3456,
+            "target_number": 850,
+            "query_title": "mark extention as installed",
+            "target_title": "'install extension' should be more clear which extensions are already installed",
+            "dense_rank_of_target": 14,
+            "bm25_rank_of_target": 6,
+            "shared_high_idf_terms": [
+              "installed",
+              "which",
+              "the",
+              "to",
+              "would"
+            ]
+          },
+          {
+            "query_number": 3632,
+            "target_number": 871,
+            "query_title": "Request keyboard binding configurable to execute multiple actions",
+            "target_title": "Macro like keybindings",
+            "dense_rank_of_target": 36,
+            "bm25_rank_of_target": 1,
+            "shared_high_idf_terms": [
+              "array",
+              "execute",
+              "keyboard",
+              "could",
+              "example"
+            ]
+          },
+          {
+            "query_number": 18706,
+            "target_number": 3518,
+            "query_title": "Can't copy code to Microsoft Word with style",
+            "target_title": "Add ability to copy formatted code to clipboard",
+            "dense_rank_of_target": 9,
+            "bm25_rank_of_target": 25,
+            "shared_high_idf_terms": [
+              "word",
+              "copy",
+              "text",
+              "the",
+              "code"
+            ]
+          },
+          {
+            "query_number": 41444,
+            "target_number": 6929,
+            "query_title": "Extensions per OS Platform",
+            "target_title": "Provide way for extensions to download and install native dependencies",
+            "dense_rank_of_target": 17,
+            "bm25_rank_of_target": 8,
+            "shared_high_idf_terms": [
+              "platform",
+              "download",
+              "during",
+              "support",
+              "any"
+            ]
+          },
+          {
+            "query_number": 67982,
+            "target_number": 53816,
+            "query_title": "Can't paste \u201e\u2262\u201c (U+2262)",
+            "target_title": "Unicode character U+2262 (\"not identical to\") is not drawn correctly",
+            "dense_rank_of_target": 18,
+            "bm25_rank_of_target": 94,
+            "shared_high_idf_terms": [
+              "2262",
+              "u",
+              "paste",
+              "than",
+              "the"
+            ]
+          },
+          {
+            "query_number": 91724,
+            "target_number": 74338,
+            "query_title": "Change keys",
+            "target_title": "I'd like to be able to alias shortcut key to another key",
+            "dense_rank_of_target": 6,
+            "bm25_rank_of_target": 23,
+            "shared_high_idf_terms": [
+              "call",
+              "key",
+              "another",
+              "code",
+              "a"
+            ]
+          },
+          {
+            "query_number": 91880,
+            "target_number": 12622,
+            "query_title": "Locking a tabview",
+            "target_title": "Add option to pin tabs similar to Visual Studio",
+            "dense_rank_of_target": 30,
+            "bm25_rank_of_target": 10,
+            "shared_high_idf_terms": [
+              "where",
+              "want",
+              "tab",
+              "also",
+              "in"
+            ]
+          },
+          {
+            "query_number": 115916,
+            "target_number": 115876,
+            "query_title": "Latest VS Code (1.53.0) breaks debug configs",
+            "target_title": "tasks.json npm script does not work with arguments since 1.53",
+            "dense_rank_of_target": 22,
+            "bm25_rank_of_target": 21,
+            "shared_high_idf_terms": [
+              "npm",
+              "information",
+              "script",
+              "tasks",
+              "53"
+            ]
+          },
+          {
+            "query_number": 116145,
+            "target_number": 113801,
+            "query_title": "Don't allow tabs to expand when using editor.wrapTabs",
+            "target_title": "Tab wrap - tab should not fill all spare space when wrap to new line",
+            "dense_rank_of_target": 6,
+            "bm25_rank_of_target": 16,
+            "shared_high_idf_terms": [
+              "row",
+              "wrap",
+              "fill",
+              "space",
+              "behavior"
+            ]
+          },
+          {
+            "query_number": 116307,
+            "target_number": 115874,
+            "query_title": "creating a debug file on all the working folders",
+            "target_title": "v1.53 creates debug.log automatically",
+            "dense_rank_of_target": 7,
+            "bm25_rank_of_target": 7,
+            "shared_high_idf_terms": [
+              "19041",
+              "2021",
+              "created",
+              "53",
+              "log"
+            ]
+          },
+          {
+            "query_number": 141196,
+            "target_number": 53405,
+            "query_title": "Filter Extension Search Results by Most Recently Updated",
+            "target_title": "Sort extensions by extension update date",
+            "dense_rank_of_target": 10,
+            "bm25_rank_of_target": 2,
+            "shared_high_idf_terms": [
+              "bunch",
+              "newly",
+              "sort",
+              "often",
+              "may"
+            ]
+          },
+          {
+            "query_number": 144359,
+            "target_number": 9526,
+            "query_title": "navigation (Alt + \u2190) back to wrong tab when I split same file into two editor",
+            "target_title": "Make history navigation aware of editor groups",
+            "dense_rank_of_target": 6,
+            "bm25_rank_of_target": 18,
+            "shared_high_idf_terms": [
+              "navigation",
+              "back",
+              "cursor",
+              "same",
+              "nt"
+            ]
+          },
+          {
+            "query_number": 176369,
+            "target_number": 176051,
+            "query_title": "Discard Changes Not Works",
+            "target_title": "VScode git revert line multiplies reverted changes in the file",
+            "dense_rank_of_target": 9,
+            "bm25_rank_of_target": 24,
+            "shared_high_idf_terms": [
+              "76",
+              "your",
+              "git",
+              "works",
+              "changes"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "bootstrap": {
+    "n_resamples": 2000,
+    "seed": 42,
+    "method": "percentile"
+  },
+  "results": [
+    {
+      "label": "k8s_related",
+      "repo": "kubernetes_kubernetes",
+      "n_eval_pairs_total": 150,
+      "n_missing_from_index": 0,
+      "n_evaluated": 150,
+      "index": "d1_full_corpus_index_kubernetes_kubernetes_bge (29994 records)",
+      "recall_at_1": 0.03333333333333333,
+      "recall_at_5": 0.09333333333333334,
+      "recall_at_10": 0.12,
+      "recall_at_20": 0.15333333333333332,
+      "recall_at_1_ci95": [
+        0.0067,
+        0.0667
+      ],
+      "recall_at_5_ci95": [
+        0.0533,
+        0.14
+      ],
+      "recall_at_10_ci95": [
+        0.0733,
+        0.1733
+      ],
+      "mrr": 0.05926252723311547,
+      "mrr_ci95": [
+        0.0313,
+        0.0934
+      ],
+      "ci_note": null
+    },
+    {
+      "label": "vscode_duplicate",
+      "repo": "microsoft_vscode",
+      "n_eval_pairs_total": 200,
+      "n_missing_from_index": 0,
+      "n_evaluated": 200,
+      "index": "d1_full_corpus_index_microsoft_vscode_bge (13315 records)",
+      "recall_at_1": 0.225,
+      "recall_at_5": 0.435,
+      "recall_at_10": 0.475,
+      "recall_at_20": 0.555,
+      "recall_at_1_ci95": [
+        0.165,
+        0.285
+      ],
+      "recall_at_5_ci95": [
+        0.3699,
+        0.505
+      ],
+      "recall_at_10_ci95": [
+        0.405,
+        0.545
+      ],
+      "mrr": 0.3178551556587548,
+      "mrr_ci95": [
+        0.2627,
+        0.3736
+      ],
+      "ci_note": null
+    },
+    {
+      "label": "vscode_related",
+      "repo": "microsoft_vscode",
+      "n_eval_pairs_total": 19,
+      "n_missing_from_index": 0,
+      "n_evaluated": 19,
+      "index": "d1_full_corpus_index_microsoft_vscode_bge (13315 records)",
+      "recall_at_1": 0.3684210526315789,
+      "recall_at_5": 0.5789473684210527,
+      "recall_at_10": 0.631578947368421,
+      "recall_at_20": 0.6842105263157895,
+      "recall_at_1_ci95": [
+        0.1579,
+        0.5789
+      ],
+      "recall_at_5_ci95": [
+        0.3684,
+        0.7895
+      ],
+      "recall_at_10_ci95": [
+        0.4211,
+        0.8421
+      ],
+      "mrr": 0.4449088407292742,
+      "mrr_ci95": [
+        0.2505,
+        0.6559
+      ],
+      "ci_note": "small-n, illustrative CI only -- directional, not a gate"
+    }
+  ]
+}

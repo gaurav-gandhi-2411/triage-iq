@@ -1,0 +1,25 @@
+{
+  "k8s_related": {
+    "label": "k8s_related",
+    "target": 150,
+    "available_genuine": 167,
+    "eval_set_size": 150,
+    "achieved_target": true,
+    "train_pool_size": 264,
+    "eval_issues_dropped_from_train": 247
+  },
+  "vscode_duplicate": {
+    "label": "vscode_duplicate",
+    "target": 200,
+    "available_genuine": 224,
+    "eval_set_size": 200,
+    "achieved_target": true,
+    "train_pool_size": 1734,
+    "eval_issues_dropped_from_train": 472
+  },
+  "vscode_related": {
+    "label": "vscode_related",
+    "eval_set_size": 19,
+    "status": "eval-only diagnostic, NOT trained on, NOT gated, NOT blended with duplicate task"
+  }
+}

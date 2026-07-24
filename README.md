@@ -46,8 +46,8 @@ POST /triage {repo, title, body}
 ┌───────────────────────────────────────┐
 │ System 2: Similar Issue Retriever      │  ~27ms p50
 │ BGE-base-en-v1.5 + FAISS cosine       │
-│ vscode R@5 22.4% (product-task, live) │
-│ k8s R@5 23.5% (product-task, live)    │
+│ k8s related R@5 9.3% (clean, weak)    │
+│ vscode dup R@5 43.5% (clean)          │
 └──────────────────┬────────────────────┘
                    │ top-5 similar issues + similarity scores
                    ▼
@@ -76,17 +76,18 @@ suggested_next_steps, triage_summary
 
 | System | Repo | Metric | Value |
 |---|---|---|---|
-| Component classifier | vscode | **Top-3 accuracy (primary — see note)** | **90.4%** [85.3, 93.8] |
-| Component classifier | vscode | Top-1 accuracy (secondary) | 69.0% [62.0, 75.2] |
-| Component classifier | kubernetes | **Top-3 accuracy (primary — see note)** | **82.5%** [77.7, 86.5] |
-| Component classifier | kubernetes | Top-1 accuracy (secondary) | 51.4% [45.6, 57.1] |
-| Component classifier | vscode | Macro F1 (top-1) | 0.585 |
-| Component classifier | kubernetes | Macro F1 (top-1) | 0.466 |
+| Component classifier | vscode | **Top-3 accuracy (primary, multi-label — see note)** | **89.8%** [84.7, 93.4] |
+| Component classifier | vscode | Top-1 accuracy (secondary) | 76.5% [69.9, 82.0] |
+| Component classifier | kubernetes | **Top-3 accuracy (primary, multi-label — see note)** | **87.1%** [82.7, 90.5] |
+| Component classifier | kubernetes | Top-1 accuracy (secondary) | 60.5% [54.7, 66.0] |
+| Component classifier | vscode | Macro F1 (top-1) | 0.627 |
+| Component classifier | kubernetes | Macro F1 (top-1) | 0.462 |
 | Component classifier | vscode | Inference latency p50 | 4.9ms |
-| Similar issue retriever | vscode | **Recall@5 (product-task, live index — see note)** | **22.4%** [17.7, 28.0] |
-| Similar issue retriever | vscode | Recall@10 / @20 (product-task) | 43.7% / 71.3% |
-| Similar issue retriever | kubernetes | **Recall@5 (product-task, live index — see note)** | **23.5%** [18.4, 28.5] |
-| Similar issue retriever | kubernetes | Recall@10 / @20 (product-task) | 30.3% / 36.5% |
+| Similar issue retriever | kubernetes | **Recall@5, related task (corrected, prod-matching — see note)** | **18.0%** [12.0, 24.0] |
+| Similar issue retriever | kubernetes | Recall@1 / @10 (related task, corrected) | 9.3% / 23.3% |
+| Similar issue retriever | vscode | **Recall@5, duplicate task (corrected, prod-matching — see note)** | **50.5%** [43.0, 57.5] |
+| Similar issue retriever | vscode | Recall@1 / @10 (duplicate task, corrected) | 27.0% / 59.5% |
+| Similar issue retriever | vscode | Recall@5, related task (directional, n=19 — see note) | 63.2% [42.1, 84.2] |
 | Similar issue retriever | vscode | Index size (BGE) | 24.3 MB |
 | Resolution predictor | kubernetes | Point estimate: MAE vs naive (served) | 104.05d vs 106.29d naive (+2.1%) |
 | Resolution predictor | kubernetes | Bucket classifier: accuracy vs naive (served) | 33.24% vs 29.97% naive (+3.27pp [+1.80, +4.74]) |
@@ -105,18 +106,87 @@ suggested_next_steps, triage_summary
 
 95% Wilson CIs shown in brackets where computed on a held-out test split.
 
-> **Headline finding (2026-07-12): product-task retrieval is the weakest model in this
-> pipeline.** The first honest, apples-to-apples measurement of Recall@5 on the actual
-> product task ("given a new issue, find related issues"), against the actually-deployed
-> live index, on both repos: **k8s 23.5% [18.4, 28.5]** (n=277), **vscode 22.4% [17.7,
-> 28.0]** (n=254) — statistically indistinguishable. The retriever finds the
-> genuinely-related issue in the top-5 roughly a quarter of the time, on both repos — the
-> lowest absolute score of any model in this system's per-model audit (classifier top-3
-> 82.5%/90.4%, resolution's real k8s bucket gains, synthesis's floor-fail rates). It was
-> invisible until now because neither repo had ever been measured this way: k8s was
-> measured on a PR→issue proxy, vscode on a proxy-inflated duplicate-comment number (both
-> corrected below). Full reasoning:
-> [`docs/architecture/adr/0030-phaseC-product-task-feasibility.md`](docs/architecture/adr/0030-phaseC-product-task-feasibility.md).
+> **Headline finding (2026-07-19, final framing per ADR-0033, supersedes the 2026-07-16
+> framing below): retrieval quality is now measured on a clean, hand-verified, disjoint
+> eval set — and it's honestly weaker than previously reported, not better.** k8s's clean
+> product-task R@5 (issue → related issue, its only available task — vscode has a
+> duplicate-comment channel k8s never had) is **9.3% [5.3, 14.0]** (n=150,
+> hand-verified genuine by construction) — down from the previously-reported 23.5%, which
+> was itself measured on a gold set later found to be title_sim-contaminated (ADR-0032).
+> Two factors plausibly explain the drop, not fully disentangled: cleaner (harder, less
+> lexically-inflated) pairs, and a ~2x larger candidate corpus (30,000 vs. the old index's
+> 15,000) that mechanically lowers recall. **vscode reverses its "unmeasured" status**:
+> its `dup_comment` channel — never precision-audited before ADR-0033 — turned out to be
+> vscode's largest, cleanest channel (85% precision, n=2,242), giving a properly powered
+> duplicate-task R@5 of **43.5% [37.0, 50.5]** (n=200). vscode's separate related-issue
+> task (non-duplicate) stays underpowered (n=19, directional only, reported but never
+> gated) — vscode is genuinely two different tasks, reported separately, never blended.
+> Full reasoning: [`docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md`](docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md).
+>
+> **Harness correction (2026-07-24, ADR-0035, supersedes the 2026-07-23 framing below) —
+> three measurement bugs found and fixed; the corrected picture is weaker-but-real baselines
+> and NO SIGNAL from fine-tuning, not a confirmed regression.** GG's call after five
+> independent retrieval-improvement techniques all failed: "stronger evidence of a broken
+> harness than of a uniquely hard task." The audit found (1) every eval query was **title-only**
+> while production embeds title+body untruncated (`triage.py`) — eval-set JSON never populated
+> `query_body`; (2) the D2 fine-tune trained/saved **mean pooling** against BGE-base's native
+> **CLS-token pooling**; (3) training truncated at 128 tokens, cutting **65.73%** of examples
+> (measured token-length p95=230, corrected to 256); (4) all three ADR-0031 levers were measured
+> against an unaudited, pre-D1 pair population (277/292 pairs, only 72%/20% hand-verified
+> genuine) instead of D1's clean, disjoint eval sets. **Corrected canonical baselines: k8s R@5
+> 9.3%→18.0% [12.0, 24.0], vscode R@5 43.5%→50.5% [43.0, 57.5]** (both nearly double/gain 7pts
+> — production was always this good, only the measurement undersold it). **All four ADR-0031
+> levers are still rejected** on the corrected harness, but **weighted fusion flipped sign** —
+> originally reported as marginally shipping (+3.25pp k8s, +4.11pp vscode, both CIs excluding
+> zero), it's now flat on k8s and a **significant vscode regression** (−8.0pp, CI [−13.5,−3.0]).
+> BM25-alone (newly measured) is the *weaker* system on both repos, not a diluted strong
+> signal. **The D2 fine-tune conclusion is WITHDRAWN**: re-run with both bugs fixed, the result
+> is **+2.0pp R@5 (50.5%→52.5%), CI [−4.5, +8.5]** — every metric moved positive (a full sign
+> reversal from the withdrawn "confirmed regression"), but no CI excludes zero. At n=200 the CI
+> half-width is ≈±6.5pp — **this is underpowered, not disproven**; whether more data or
+> different hyperparameters would show a real, detectable lift is genuinely open. Still
+> flagged, not fixed: corpus/query truncation asymmetry (512 vs. untruncated), BGE's unused
+> query instruction prefix, BM25 tokenization uninspected. Nothing in production changed —
+> confirmed the served index and model are untouched throughout. Full reasoning:
+> [`docs/architecture/adr/0035-retrieval-harness-correction.md`](docs/architecture/adr/0035-retrieval-harness-correction.md).
+>
+> **D2 fine-tune result (2026-07-23, ADR-0034 — historical, WITHDRAWN above, kept for
+> provenance): confirmed regression, BGE-base off-the-shelf stays the shipped retriever.**
+> D1's clean, disjoint vscode_duplicate data (1,734 training pairs, leakage guard PASSED
+> 0-overlap on every run) was fine-tuned locally (BGE-base, MNRL loss, measure-first single
+> run: 5 epochs, lr=2e-5). Result: **R@5 38.5% vs. the 43.5% baseline (−5.0pp, CI [−11.0,
+> +0.5])** — every metric moved backward. A diagnostic leg then tested the leading alternative
+> explanation (overfitting) directly: 2 epochs, lr=1e-5 — the textbook anti-overfit fix, ending
+> training at a 5.7× higher, far-less-memorized loss (0.255 vs. 0.045). If overfitting were the
+> cause, this should have recovered some of the gap. Instead **R@5 dropped further to 33.5%
+> (−10.0pp, CI [−16.0, −4.5], excludes zero)** — reported at the time as a statistically
+> confirmed regression. **This reasoning is now known to be wrong** (ADR-0035, above): both
+> runs trained with mean pooling against BGE's native CLS pooling and truncated 65.73% of
+> training examples at 128 tokens — the diagnostic leg never isolated either confound, so it
+> could not have ruled out overfitting as *the* mechanism. Kept here for historical accuracy
+> of what was reported and when; superseded finding is above. Original ADR:
+> [`docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md`](docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md).
+>
+> **Prior framing (2026-07-16, ADR-0030/0031/0032 — historical, superseded above): k8s
+> product-task retrieval is genuinely weak, hand-verified; vscode product-task retrieval is
+> currently UNMEASURED.** k8s Recall@5 on the actual product task ("given a new issue, find
+> related issues"), against the actually-deployed live index: **23.5% [18.4, 28.5]** (n=277) —
+> the lowest absolute score of any model in this system's per-model audit (classifier top-3
+> 82.5%/90.4%, resolution's real k8s bucket gains, synthesis's floor-fail rates). A
+> hand-judged precision audit (ADR-0032) confirms this number is real, not eval noise: 72%
+> of the underlying gold pairs are genuinely related, and pulling the incidental 28% out
+> doesn't move Recall@5 outside its own confidence interval. Three untried,
+> zero-training improvement levers were then tried against it and **all three failed to
+> clear the bar** (ADR-0031): hybrid BM25+dense fusion (CI crosses zero), a pretrained
+> cross-encoder reranker (quality regresses on both repos, +190-330x latency), and a
+> stronger pretrained embedder (CI crosses zero). The earlier "vscode is statistically
+> indistinguishable from k8s, both ~23-27%" framing was retired: the same precision audit
+> (ADR-0032) found vscode's gold pairs were only 20% genuinely related (94.9% sourced from
+> an unaudited title-similarity channel, dominated by blank-template and
+> generic-crash-title collisions). Full reasoning:
+> [`docs/architecture/adr/0030-phaseC-product-task-feasibility.md`](docs/architecture/adr/0030-phaseC-product-task-feasibility.md),
+> [`docs/architecture/adr/0031-retrieval-quality-improvement.md`](docs/architecture/adr/0031-retrieval-quality-improvement.md),
+> [`docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md`](docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md).
 >
 > **Classifier metric correction (2026-07-11).** The product never surfaces a single
 > label — `triage.py` builds `classifier_top3` and `grounding.py::verify_plan_grounding`
@@ -129,12 +199,51 @@ suggested_next_steps, triage_summary
 > further to 59.4% (k8s) / 71.7% (vscode) top-1. Full methodology:
 > [`reports/model_eval_audit.json`](reports/model_eval_audit.json) → `component_classifier`.
 >
+> **DistilBERT dismissal correction (2026-07-24).** `05_train_distilbert.py`'s architecture
+> comparison was dismissed as "TF-IDF latency and accuracy were sufficient at this data
+> scale" — using **top-1**, the exact metric the correction above found was the wrong one
+> to evaluate this classifier on. Re-evaluated the existing trained artifacts (no
+> retraining) at top-3, the product's real correctness definition: **DistilBERT loses on
+> both repos** — 88.2% vs. TF-IDF's 90.4% (vscode) and 74.5% vs. 82.5% (k8s, an 8pp gap) —
+> despite appearing to *win* on vscode's top-1 (75.4% vs. 69.0%), which is what the original
+> dismissal cited. Same wrong-metric error class as the retrieval corrections
+> (ADR-0035): a comparison decided on a metric the product doesn't use. Calibration and
+> latency were also materially worse (ECE 0.40 vs. 0.14 vscode; CPU p50 97.7ms/197.2ms vs.
+> TF-IDF's ~5ms) — TF-IDF+LR remains the shipped classifier, now for a corrected reason.
+> Full numbers: [`reports/distilbert_results_top3_corrected.json`](reports/distilbert_results_top3_corrected.json).
+>
+> **Multi-label supervision fix SHIPPED (2026-07-24, ADR-0036) — same TF-IDF+LR architecture,
+> corrected supervision.** `preprocess.py::normalize_labels()` keeps only the first matching
+> component label per issue, discarding the rest — 30.4% of k8s test issues / 8.0% of
+> vscode's genuinely have more than one. Retrained as one-vs-rest logistic regression over
+> ALL valid labels (same TF-IDF features, only the supervision changes): **k8s top-3
+> 82.5%→87.1% (+4.55pp, CI [+0.35,+8.39], excludes zero)**, vscode top-3 flat (90.4%→89.8%,
+> ceiling + smaller collapse rate) but **top-1 improves significantly on both repos**
+> (k8s +9.09pp, vscode +7.49pp, both CIs excluding zero) — consistent direction across three
+> independent CIs, unlike ADR-0031's rejected weighted-fusion result (marginal + inconsistent
+> direction across repos). Recalibrated (temperature scaling generalized to OvR's independent
+> per-class logits, argmax-preserving, verified empirically): ECE improves on both repos
+> (0.086→0.053 vscode, 0.111→0.090 k8s) and k8s's new overconfidence (a real risk the naive
+> calibration objective first made *worse*, caught before shipping) is corrected. The
+> selective-prediction abstention gate's fixed thresholds (ADR-0021, off by default) are now
+> stale against this new confidence distribution — documented, not silently left dead. **Note:**
+> displayed `component_confidence` values run structurally higher post-cutover (independent
+> per-class sigmoids vs. a competing 35-way softmax, e.g. 0.221→0.391 for a comparable
+> prediction) — a scale change, not increased model certainty; ECE confirms the new numbers are
+> equally or more honest. Full reasoning:
+> [`docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md`](docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md).
+>
 > **Retriever metric correction (2026-07-11).** The advertised vscode Recall@5 (36.7%)
 > was measured against `data/gold_related.parquet` (v1), which is only 74.0% genuine
 > issue→issue pairs — the rest are PR→issue or duplicate-comment pairs, an easier proxy
-> task the product doesn't perform. The honest product-task-only number, measured
-> against the actually-deployed live index, is 22.4% [17.7, 28.0] — a ~12–14pp
-> inflation, CIs do not overlap.
+> task the product doesn't perform. The next candidate honest number, measured against
+> the actually-deployed live index, was 26.7% [21.6, 31.9] — a ~10pp inflation, CIs do not
+> overlap. (This superseded ADR-0028's originally-reported 22.4% [17.7, 28.0] — n=254,
+> ADR-0031 (2026-07-12) found no committed script ever reproduced that number and its
+> denominator didn't match the full product stratum; 26.7%/n=292 is the byte-reproducible
+> number via `scripts/phaseC_vscode_live_product_eval.py`.) **This 26.7% number was itself
+> retired five days later (ADR-0032, below) — it wasn't a wrong computation, but a
+> computation against a gold set later found to be ~80% incidental.**
 >
 > **k8s retriever re-eval (2026-07-12, ADR-0030).** kubernetes was first reported as
 > "unmeasurable" (zero product-task pairs land in the *test-split* of the live corpus).
@@ -148,20 +257,57 @@ suggested_next_steps, triage_summary
 > (`scripts/phaseC_k8s_live_product_eval.py`) — see the headline finding above for the
 > result. A W3 fine-tune was evaluated against both a proxy gate task and the product task
 > (`docs/architecture/adr/0027-w3-retry-stratified-eval.md`): proxy-task gains were real
-> and significant (k8s +14.3pp, vscode +4.6pp), but product-task gains were directionally
-> positive and underpowered on both repos (k8s +3.5pp, vscode +3.2pp, both CIs cross
-> zero) — **held, and stays held on both repos, per
+> and significant (k8s +14.3pp, vscode +4.6pp) — this gate stratum is unaffected by the
+> gold-pair-quality finding below (ADR-0032 Finding 4: it's sourced from PR-query/
+> dup_comment pairs, not the contaminated `title_sim` channel). Product-task gains were
+> directionally positive and underpowered on both repos (k8s +3.5pp, vscode +3.2pp, both
+> CIs cross zero) — **held, and stays held on both repos, per
 > `docs/architecture/adr/0030-phaseC-product-task-feasibility.md`: NO-GO on mining more
 > product-task pairs to gate either fine-tune, decided on value, not feasibility.** k8s's
 > data ask was disproportionate anyway (~6,075 pairs, ~8x the current stratum), but
 > that's not the operative reason — proving a ~3.5pp lift on top of a 23.5% base rate
 > would still ship a retriever that misses the related issue 3 times out of 4. vscode's
 > data gap is smaller and closeable (~664 more pairs), but closing it would only prove a
-> +3.2pp lift against a 22.4% base rate — the same weak-baseline problem, just with an
+> +3.2pp lift against a ~23-27% base rate — the same weak-baseline problem, just with an
 > easier data path. Neither fine-tune is a near-miss awaiting data; both are marginal
-> against a weak baseline. Whether retrieval quality itself needs work (hybrid
-> BM25+dense, reranking, a stronger base embedder) is a real, separate decision —
-> deliberately not started here.
+> against a weak baseline.
+>
+> **Retrieval-quality-lever pass (2026-07-12, ADR-0031).** Hybrid BM25+dense fusion, a
+> pretrained cross-encoder reranker (the ADR-0006 retry against the corrected metric), and
+> a stronger pretrained embedder were each tried against the product-task R@5 bar. All
+> three rejected — see the headline finding above and
+> [`docs/architecture/adr/0031-retrieval-quality-improvement.md`](docs/architecture/adr/0031-retrieval-quality-improvement.md)
+> for full per-lever results. The two remaining paths (in-domain fine-tuning, which
+> reopens the leakage question ADR-0030 deliberately kept closed; or new related-pair
+> mining, already NO-GO'd on value grounds) are both harder and were explicitly deferred,
+> not attempted here.
+>
+> **Gold pair quality audit (2026-07-16, ADR-0032) — k8s confirmed real, vscode retired
+> and marked unmeasured.** Before accepting ~23-27% as a ceiling, a hand-judged 50-pair
+> sample (25/repo, fixed seed) checked whether the gold pairs behind these R@5 numbers
+> are genuinely related. **k8s: 72.0% precision [52.4, 85.7]** — the pair set is 86%
+> reference-mined ("See #N"/"Forked from #N"), and pulling incidental pairs out doesn't
+> move R@5 outside its own CI (27.8% genuine-only vs. 23.5% full-set) — **the k8s finding
+> holds up as real**, and stands as this project's headline retrieval number (above).
+> **vscode: 20.0% precision [8.9, 39.1]** — 94.9% of its live-evaluated pairs come from
+> `title_sim` (title-text similarity), a channel never precision-audited before, and the
+> sample is dominated by boilerplate-template collisions ("Bayou"↔"11", both blank issue
+> forms) and generic auto-bucket title matches on different actual bugs. **Conclusion:
+> vscode's 26.7% is retired, not caveated** — it was measuring a ~80%-incidental gold set,
+> not retrieval quality. vscode product-task retrieval is reported as **UNMEASURED** above
+> and in the eval table, not as a number with an asterisk; no properly-powered clean
+> re-measurement exists yet (the genuine-only subsample, n=5, is too small to read).
+> Separately: of the genuinely-related pairs the retriever misses, 0/17 have zero shared
+> vocabulary with their target (overlap up to 90 shared tokens on near-duplicate crash
+> reports) — misses are lexically findable in principle, not an unfindable-by-any-method
+> ceiling, for the k8s finding above. **Broader caution:** `title_sim` isn't scoped to this
+> eval — it also feeds the (HELD, unshipped) W3 fine-tune's hard-negative mining, its
+> train/val split, and its own training and val-monitoring data; the fine-tune's primary
+> CI-gated metric (the `gate` stratum) is unaffected (PR-query/`dup_comment`-sourced, not
+> `title_sim`), but any future revival of that fine-tune thread should re-audit or exclude
+> `title_sim` pairs first. Full methodology, every pair's judgment, and the full consumer
+> trace:
+> [`docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md`](docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md).
 >
 > **Synthesis quality metric redesign (2026-07-11).** The mean-band score is a
 > *regression detector* (fails only if it drops below its own prior baseline by more
@@ -276,7 +422,7 @@ python scripts/11_evaluate_triage.py      # full pipeline evaluation
 python scripts/11b_verify_priority_calibration.py
 ```
 
-> Scripts `05_train_distilbert.py` and `06_eval_llm_fewshot.py` explored alternative architectures that are not used in the production pipeline (TF-IDF latency and accuracy were sufficient at this data scale).
+> Scripts `05_train_distilbert.py` and `06_eval_llm_fewshot.py` explored alternative architectures that are not used in the production pipeline — DistilBERT loses to TF-IDF+LR on the product's real metric (top-3), on both repos; see the DistilBERT dismissal correction note above for the corrected numbers and why the original top-1-based dismissal was measuring the wrong thing.
 
 After retraining, upload artifacts to GCS:
 

@@ -1,0 +1,32 @@
+{
+  "microsoft_vscode": {
+    "repo": "microsoft_vscode",
+    "T_opt": 0.8398,
+    "ece_raw_test": 0.0863,
+    "ece_calibrated_test": 0.0533,
+    "mean_conf_calibrated": 0.7434,
+    "mean_acc_calibrated": 0.7647,
+    "overconfident_calibrated": false,
+    "argmax_preserved": true,
+    "hard_stop_triggered": false,
+    "abstention_threshold": 0.29,
+    "abstention_fire_rate_old_baseline": 0.13903743315508021,
+    "abstention_fire_rate_new_multilabel": 0.0053475935828877,
+    "abstention_gate_live_in_prod": false
+  },
+  "kubernetes_kubernetes": {
+    "repo": "kubernetes_kubernetes",
+    "T_opt": 5.551,
+    "ece_raw_test": 0.1114,
+    "ece_calibrated_test": 0.0903,
+    "mean_conf_calibrated": 0.5473,
+    "mean_acc_calibrated": 0.6049,
+    "overconfident_calibrated": false,
+    "argmax_preserved": true,
+    "hard_stop_triggered": false,
+    "abstention_threshold": 0.45,
+    "abstention_fire_rate_old_baseline": 0.5979020979020979,
+    "abstention_fire_rate_new_multilabel": 0.0,
+    "abstention_gate_live_in_prod": false
+  }
+}

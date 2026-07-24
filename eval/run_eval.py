@@ -25,8 +25,8 @@ import pandas as pd
 
 from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
+from triage_iq.models.component_classifier import load_classifier
 from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore, TriageJudge
-from triage_iq.models.component_classifier import TFIDFComponentClassifier
 from triage_iq.models.resolution import ResolutionTimePredictor
 from triage_iq.models.triage import TriageAssistant
 
@@ -78,9 +78,9 @@ def _load_models(
     Uses FrozenRetriever instead of live FAISS so synthesis prompts are
     deterministic on any hardware. Production /triage is unchanged.
     """
-    classifier = TFIDFComponentClassifier.load(
-        str(MODELS_DIR / f"component_classifier_{slug}.pkl")
-    )
+    # load_classifier() dispatches on the pkl's model_kind marker (ADR-0036: multi-label
+    # OvR vs legacy single-label) -- same loader the live API uses, not hardcoded to one class.
+    classifier = load_classifier(MODELS_DIR, slug)
     predictor = ResolutionTimePredictor.load(
         str(MODELS_DIR / f"resolution_predictor_{slug}.pkl")
     )

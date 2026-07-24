@@ -1,0 +1,32 @@
+{
+  "method": "Same ECE/reliability methodology as ADR-0004 (classifier_eval.py::calibration_analysis), applied to the multi-label OvR model's raw (uncalibrated) output, compared against the shipped baseline's already-calibrated ECE.",
+  "downstream_consumer_audit": {
+    "grounding.py::verify_plan_grounding": "set-membership check on labels only; never reads or sums confidence values",
+    "triage.py:566": "component_confidence=float(top.get('confidence', 0.0)) -- single top-1 value, no sum-to-1 assumption",
+    "TriageResponse.component_confidence": "Pydantic ge=0.0, le=1.0 on one float; no cross-field/sum constraint",
+    "verdict": "nothing in the codebase computationally requires probabilities to sum to 1"
+  },
+  "results": {
+    "microsoft_vscode": {
+      "proba_row_sum": {"mean": 3.950, "min": 2.444, "max": 5.244, "note": "softmax would be ~1.0"},
+      "baseline_calibrated_ece": 0.1381,
+      "multilabel_raw_uncalibrated_ece": 0.0863,
+      "multilabel_mean_confidence": 0.722,
+      "multilabel_mean_accuracy": 0.765,
+      "multilabel_overconfident": false,
+      "top3_all_three_above_0.5_rate": 0.016,
+      "mean_top3_values": [0.722, 0.378, 0.282]
+    },
+    "kubernetes_kubernetes": {
+      "proba_row_sum": {"mean": 4.934, "min": 3.812, "max": 6.522, "note": "softmax would be ~1.0"},
+      "baseline_calibrated_ece": 0.1558,
+      "multilabel_raw_uncalibrated_ece": 0.1114,
+      "multilabel_mean_confidence": 0.706,
+      "multilabel_mean_accuracy": 0.605,
+      "multilabel_overconfident": true,
+      "top3_all_three_above_0.5_rate": 0.115,
+      "mean_top3_values": [0.706, 0.535, 0.372]
+    }
+  },
+  "verdict": "ECE numerically better than the shipped calibrated baseline on both repos, but k8s flips direction (mild overconfidence vs. the original severe-underconfidence pattern) -- a real semantic change, not a silent equivalent swap. Proposed fix: re-fit temperature scaling on the multi-label model's top-1 confidence stream before shipping -- see ADR-0036 cutover plan step 1, not yet implemented."
+}

@@ -25,9 +25,26 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).parent.parent
 MANIFEST_PATH = REPO_ROOT / "data" / "models" / "MANIFEST.sha256"
 GCS_PREFIX = "gs://triageiq-portfolio-495022-models"
+EXPECTED_PROJECT = "triageiq-portfolio-495022"
 
 # On Windows, gcloud is a .cmd file; bare "gcloud" requires shell=True or the .cmd suffix.
 _GCLOUD = "gcloud.cmd" if sys.platform == "win32" else "gcloud"
+
+
+def _assert_correct_project() -> None:
+    """Hard gate before any gcloud/GCS-touching command in this publish path. The active
+    project has drifted silently before (2026-07-23, root-caused: an explicit
+    `gcloud config set project` to a different, off-limits project, undetected for hours
+    because nothing in between happened to run a project-scoped command). A read-only mistake
+    was luck last time; a publish/upload against the wrong project is the failure this guards
+    against."""
+    result = subprocess.run([_GCLOUD, "config", "get-value", "project"], capture_output=True, text=True)
+    active = result.stdout.strip()
+    if active != EXPECTED_PROJECT:
+        print(f"HARD STOP: active gcloud project is '{active}', expected '{EXPECTED_PROJECT}'.")
+        print("Refusing to publish/upload against the wrong project.")
+        print(f"Fix: gcloud config set project {EXPECTED_PROJECT}")
+        sys.exit(1)
 
 # Artifacts to publish, relative to REPO_ROOT.
 # Any addition here must be mirrored in verify_model_manifest.py.
@@ -57,6 +74,7 @@ def _gcs_path(local_rel: str) -> str:
 
 
 def main(dry_run: bool = False) -> None:
+    _assert_correct_project()
     print("=== publish_models.py ===")
     print(f"Manifest: {MANIFEST_PATH}")
     print(f"GCS prefix: {GCS_PREFIX}")

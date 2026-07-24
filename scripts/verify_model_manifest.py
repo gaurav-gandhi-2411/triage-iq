@@ -25,9 +25,22 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).parent.parent
 MANIFEST_PATH = REPO_ROOT / "data" / "models" / "MANIFEST.sha256"
 GCS_PREFIX = "gs://triageiq-portfolio-495022-models"
+EXPECTED_PROJECT = "triageiq-portfolio-495022"
 
 # On Windows, gcloud is a .cmd file; bare "gcloud" requires shell=True or the .cmd suffix.
 _GCLOUD = "gcloud.cmd" if sys.platform == "win32" else "gcloud"
+
+
+def _assert_correct_project() -> None:
+    """Hard gate before any gcloud/GCS-touching command -- see publish_models.py's copy of this
+    check for why (2026-07-23 silent project drift, root-caused in ADR-0036)."""
+    result = subprocess.run([_GCLOUD, "config", "get-value", "project"], capture_output=True, text=True)
+    active = result.stdout.strip()
+    if active != EXPECTED_PROJECT:
+        print(f"HARD STOP: active gcloud project is '{active}', expected '{EXPECTED_PROJECT}'.")
+        print("Refusing to verify/download against the wrong project.")
+        print(f"Fix: gcloud config set project {EXPECTED_PROJECT}")
+        sys.exit(1)
 
 
 def _sha256_file(path: Path) -> str:
@@ -40,6 +53,7 @@ def _gcs_path(local_rel: str) -> str:
 
 
 def main() -> None:
+    _assert_correct_project()
     if not MANIFEST_PATH.exists():
         print(f"ERROR: manifest not found at {MANIFEST_PATH}")
         sys.exit(1)

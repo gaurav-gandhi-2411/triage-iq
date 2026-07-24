@@ -27,10 +27,11 @@ jobs:
   record:
     name: Record cassette on CI platform
     runs-on: ubuntu-latest
-    # 90min: was 60, headroom added for Ollama install + qwen3:8b pull (~5GB) + CPU-only
-    # judge inference for 64 issues. Not yet measured on this runner -- right-size once
-    # a real run reports actual duration.
-    timeout-minutes: 90
+    # 130min: measured on this runner 2026-07-24 (run 30102404525) -- 90min was a guess and
+    # undershot. Actual: ~3min setup (incl. qwen3:8b pull) + ~96s/issue x 64 issues (CPU-only
+    # judge inference is the bottleneck, not the ~2s Groq triage call) = ~108-112min recording
+    # alone. 130min leaves ~15% buffer over the measured figure.
+    timeout-minutes: 130
     permissions:
       contents: write
       id-token: write

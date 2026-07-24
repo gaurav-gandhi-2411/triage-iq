@@ -199,6 +199,19 @@ suggested_next_steps, triage_summary
 > further to 59.4% (k8s) / 71.7% (vscode) top-1. Full methodology:
 > [`reports/model_eval_audit.json`](reports/model_eval_audit.json) → `component_classifier`.
 >
+> **DistilBERT dismissal correction (2026-07-24).** `05_train_distilbert.py`'s architecture
+> comparison was dismissed as "TF-IDF latency and accuracy were sufficient at this data
+> scale" — using **top-1**, the exact metric the correction above found was the wrong one
+> to evaluate this classifier on. Re-evaluated the existing trained artifacts (no
+> retraining) at top-3, the product's real correctness definition: **DistilBERT loses on
+> both repos** — 88.2% vs. TF-IDF's 90.4% (vscode) and 74.5% vs. 82.5% (k8s, an 8pp gap) —
+> despite appearing to *win* on vscode's top-1 (75.4% vs. 69.0%), which is what the original
+> dismissal cited. Same wrong-metric error class as the retrieval corrections
+> (ADR-0035): a comparison decided on a metric the product doesn't use. Calibration and
+> latency were also materially worse (ECE 0.40 vs. 0.14 vscode; CPU p50 97.7ms/197.2ms vs.
+> TF-IDF's ~5ms) — TF-IDF+LR remains the shipped classifier, now for a corrected reason.
+> Full numbers: [`reports/distilbert_results_top3_corrected.json`](reports/distilbert_results_top3_corrected.json).
+>
 > **Retriever metric correction (2026-07-11).** The advertised vscode Recall@5 (36.7%)
 > was measured against `data/gold_related.parquet` (v1), which is only 74.0% genuine
 > issue→issue pairs — the rest are PR→issue or duplicate-comment pairs, an easier proxy
@@ -388,7 +401,7 @@ python scripts/11_evaluate_triage.py      # full pipeline evaluation
 python scripts/11b_verify_priority_calibration.py
 ```
 
-> Scripts `05_train_distilbert.py` and `06_eval_llm_fewshot.py` explored alternative architectures that are not used in the production pipeline (TF-IDF latency and accuracy were sufficient at this data scale).
+> Scripts `05_train_distilbert.py` and `06_eval_llm_fewshot.py` explored alternative architectures that are not used in the production pipeline — DistilBERT loses to TF-IDF+LR on the product's real metric (top-3), on both repos; see the DistilBERT dismissal correction note above for the corrected numbers and why the original top-1-based dismissal was measuring the wrong thing.
 
 After retraining, upload artifacts to GCS:
 

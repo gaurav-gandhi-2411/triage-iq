@@ -1,0 +1,40 @@
+{
+  "microsoft_vscode": {
+    "top1_accuracy": 0.7540106951871658,
+    "top1_accuracy_ci95": [
+      0.6875804055230987,
+      0.8102146244913215
+    ],
+    "top3_accuracy": 0.8823529411764706,
+    "top3_accuracy_ci95": [
+      0.8283007229383529,
+      0.9210117959254586
+    ],
+    "macro_f1": 0.5967594754346115,
+    "weighted_f1": 0.7437960143764853,
+    "multi_label_credit_accuracy": 0.7807486631016043,
+    "multi_label_credit_accuracy_ci95": [
+      0.7161247303599525,
+      0.8340697764980911
+    ]
+  },
+  "kubernetes_kubernetes": {
+    "top1_accuracy": 0.46503496503496505,
+    "top1_accuracy_ci95": [
+      0.4080741428745882,
+      0.522922649856338
+    ],
+    "top3_accuracy": 0.7447552447552448,
+    "top3_accuracy_ci95": [
+      0.6912114547334925,
+      0.7918109961500247
+    ],
+    "macro_f1": 0.4148014830444962,
+    "weighted_f1": 0.427719926711946,
+    "multi_label_credit_accuracy": 0.5664335664335665,
+    "multi_label_credit_accuracy_ci95": [
+      0.508493312634033,
+      0.6226127811772075
+    ]
+  }
+}

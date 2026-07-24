@@ -226,8 +226,12 @@ suggested_next_steps, triage_summary
 > (0.086→0.053 vscode, 0.111→0.090 k8s) and k8s's new overconfidence (a real risk the naive
 > calibration objective first made *worse*, caught before shipping) is corrected. The
 > selective-prediction abstention gate's fixed thresholds (ADR-0021, off by default) are now
-> stale against this new confidence distribution — documented, not silently left dead. Full
-> reasoning: [`docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md`](docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md).
+> stale against this new confidence distribution — documented, not silently left dead. **Note:**
+> displayed `component_confidence` values run structurally higher post-cutover (independent
+> per-class sigmoids vs. a competing 35-way softmax, e.g. 0.221→0.391 for a comparable
+> prediction) — a scale change, not increased model certainty; ECE confirms the new numbers are
+> equally or more honest. Full reasoning:
+> [`docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md`](docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md).
 >
 > **Retriever metric correction (2026-07-11).** The advertised vscode Recall@5 (36.7%)
 > was measured against `data/gold_related.parquet` (v1), which is only 74.0% genuine

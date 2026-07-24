@@ -108,6 +108,18 @@ for genuinely multi-labeled issues (independent presence-probabilities, not a fo
 but it is a real, user-facing semantic shift from "P(this is the one correct label)" to "P(this
 label applies, independently)," not a silent equivalent swap.
 
+**Displayed `component_confidence` values shift upward across this cutover — read this as a scale
+change, not increased model certainty.** A 35-way softmax necessarily divides probability mass
+across every class; independent per-class sigmoids don't compete with each other the same way, so
+the reported top-1 number runs structurally higher for the same underlying prediction quality.
+Concrete example (`vscode#311284`, `reports/cassette_miss_verification.json`): top-1 confidence
+0.221 (old, single-label) → 0.391 (new, multi-label) for a comparable prediction. Post-calibration
+ECE improved on both repos (see table above), so the *reliability* of these numbers is honest — a
+reported 0.39 really is right about 39% of the time it's stated at that confidence, checked against
+ground truth. But anyone diffing raw `component_confidence` values from before and after this
+cutover — in a dashboard, a support ticket, a screenshot comparison — should know the scale moved,
+not conclude the classifier became more certain.
+
 **Proposed fix (not yet implemented — part of the cutover plan below, not this ADR's scope):**
 re-run ADR-0004's temperature-scaling procedure against the multi-label model's own top-1
 confidence stream (same technique — fit scalar T minimizing NLL/ECE on the val split,

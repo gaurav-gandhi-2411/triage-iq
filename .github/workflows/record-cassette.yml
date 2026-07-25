@@ -6,6 +6,16 @@ name: Record Cassette (Manual)
 #   as a workflow artifact -- no commit. Re-run with dry_run:false once the diff looks right
 #   to commit+push for real. After a real (non-dry-run) push, eval-gate re-runs automatically
 #   on the pushed commit.
+#
+# OPERATING RULE -- ONE ATTEMPT PER ROLLING 24H WINDOW (added 2026-07-25 after four stacked
+# same-day attempts exhausted Groq's TPD quota, ~497644/500000 tokens, none of which was one
+# recording's fault -- a single clean run needs only ~215k of the 500k daily budget, see
+# ADR/commit 550f05b). Groq's TPD limit is a ROLLING 24h window, not a fixed clock reset: it
+# clears based on when the bulk of the prior usage happened, not when the last attempt was
+# made. If the pre-flight quota check below aborts, DO NOT immediately retry hoping it
+# refilled -- wait roughly a full day from the prior usage, then let the pre-flight check
+# (not a guess) decide whether to proceed. The abort costs ~5s; stacking attempts costs the
+# whole next window too.
 
 on:
   workflow_dispatch:

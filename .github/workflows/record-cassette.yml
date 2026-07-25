@@ -6,22 +6,34 @@ name: Record Cassette (Manual)
 #   as a workflow artifact -- no commit. Re-run with dry_run:false once the diff looks right
 #   to commit+push for real. After a real (non-dry-run) push, eval-gate re-runs automatically
 #   on the pushed commit.
+# resume (default true): seeds this run's cassette/checkpoint from the most recent prior
+#   run's uploaded artifact on this branch, so a TPD-interrupted recording continues from
+#   where it stopped instead of restarting at issue 0. Set false for a guaranteed clean-slate
+#   recording -- required if the production models changed since the last partial attempt.
 #
-# OPERATING RULE -- ONE ATTEMPT PER ROLLING 24H WINDOW (added 2026-07-25 after four stacked
-# same-day attempts exhausted Groq's TPD quota, ~497644/500000 tokens, none of which was one
-# recording's fault -- a single clean run needs only ~215k of the 500k daily budget, see
-# ADR/commit 550f05b). Groq's TPD limit is a ROLLING 24h window, not a fixed clock reset: it
-# clears based on when the bulk of the prior usage happened, not when the last attempt was
-# made. If the pre-flight quota check below aborts, DO NOT immediately retry hoping it
-# refilled -- wait roughly a full day from the prior usage, then let the pre-flight check
-# (not a guess) decide whether to proceed. The abort costs ~5s; stacking attempts costs the
-# whole next window too.
+# OPERATING RULE -- ONE ATTEMPT PER ROLLING 24H WINDOW, BUT PROGRESS ACCUMULATES ACROSS
+# WINDOWS (added 2026-07-25, revised same day after adding resume). Four stacked same-day
+# attempts exhausted Groq's TPD quota (~497644/500000) even though one clean recording only
+# needs ~215k of the 500k daily budget (ADR/commit 550f05b) -- the quota is a ROLLING 24h
+# window that clears based on when the bulk of prior usage happened, not a fixed clock reset,
+# and refills gradually rather than all-at-once. That means a fresh day may still start with
+# only partial headroom, and a single run needing all 128 calls (64 issues x synthesis+judge)
+# in one window can keep failing at the same point. The fix is NOT "wait longer and hope for
+# a bigger window" -- it's resume: each TPD-interrupted attempt's partial cassette carries
+# into the next, so the recording completes across as many attempts as it takes, never
+# re-paying for issues already recorded. Still: don't immediately retry within the same
+# window hoping it refilled -- let the pre-flight quota check (not a guess) decide when to
+# run the next attempt, roughly a day apart.
 
 on:
   workflow_dispatch:
     inputs:
       dry_run:
         description: "Produce re-recorded cassette + baseline as artifacts only (no commit/push). Set false to write."
+        type: boolean
+        default: true
+      resume:
+        description: "Resume from the most recent prior run's partial cassette artifact on this branch, if one exists (default true). Set false to force a clean-slate re-record -- do this if the production models changed since the last partial attempt, since a resumed cassette would otherwise silently mix entries recorded against two different model versions."
         type: boolean
         default: true
 
@@ -45,6 +57,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
+      actions: read  # list/download artifacts from prior runs of this workflow, for resume
 
     steps:
       - uses: actions/checkout@v4
@@ -135,11 +148,69 @@ jobs:
             echo "Quota check passed: not currently at the daily TPD wall."
           fi
 
-      - name: Clear cassette and checkpoint
+      - name: Restore prior recording progress (resume)
+        if: ${{ inputs.resume }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 -c "import json; json.dump({'schema_version': 'v1', 'description': 'Recorded LLM interactions for eval/test_quality_regression.py. DO NOT EDIT manually. Re-record via eval/record_cassettes.py.', 'entries': {}}, open('eval/cassettes/eval_cassette.json', 'w'), indent=2, ensure_ascii=False)"
-          python3 -c "import json; json.dump({'done': {}}, open('eval/cassettes/recording_checkpoint.json', 'w'), indent=2, ensure_ascii=False)"
-          echo "Cassette cleared (0 entries), checkpoint reset"
+          # Groq's TPD quota refills gradually (rolling 24h window), not all-at-once on a fixed
+          # reset (see the OPERATING RULE comment at the top of this file) -- a run needing 128
+          # calls (64 issues x synthesis+judge) against a budget that only trickles back in will
+          # keep hitting the same partial point unless progress carries over BETWEEN runs. Every
+          # TPD-interrupted run already uploads its partial cassette+checkpoint via "Upload
+          # cassette on failure (diagnostic)" below -- this step makes that upload double as
+          # resumable input: find the most recent prior run of this workflow ON THIS BRANCH with
+          # a cassette artifact, download it, and seed this run's cassette/checkpoint so
+          # record_cassettes.py's own checkpoint-skip logic (eval/record_cassettes.py:199) picks
+          # up from the first un-recorded issue instead of issue 0. Scoped to this branch (not
+          # all branches) to reduce the chance of resuming from an unrelated attempt.
+          echo "Searching recent runs on this branch for a resumable cassette artifact..."
+          RUNS=$(gh run list --repo "${{ github.repository }}" --workflow=record-cassette.yml \
+            --branch "${{ github.ref_name }}" --limit 30 --json databaseId --jq '.[].databaseId')
+          FOUND_RUN=""
+          FOUND_ART=""
+          for RID in $RUNS; do
+            if [ "$RID" = "${{ github.run_id }}" ]; then
+              continue
+            fi
+            ART=$(gh api "repos/${{ github.repository }}/actions/runs/$RID/artifacts" \
+              --jq '.artifacts[] | select(.name | test("^(FAILED-cassette-diagnostic|recorded-cassette)-")) | .name' \
+              2>/dev/null | head -1)
+            if [ -n "$ART" ]; then
+              FOUND_RUN="$RID"
+              FOUND_ART="$ART"
+              break
+            fi
+          done
+          if [ -n "$FOUND_RUN" ]; then
+            echo "Found artifact '$FOUND_ART' on run $FOUND_RUN -- downloading."
+            rm -rf /tmp/resume_artifact
+            gh run download "$FOUND_RUN" --repo "${{ github.repository }}" \
+              --name "$FOUND_ART" --dir /tmp/resume_artifact
+            if [ -f /tmp/resume_artifact/eval_cassette.json ] && [ -f /tmp/resume_artifact/recording_checkpoint.json ]; then
+              mkdir -p eval/cassettes
+              cp /tmp/resume_artifact/eval_cassette.json eval/cassettes/eval_cassette.json
+              cp /tmp/resume_artifact/recording_checkpoint.json eval/cassettes/recording_checkpoint.json
+              ENTRIES=$(python3 -c "import json; print(len(json.load(open('eval/cassettes/eval_cassette.json'))['entries']))")
+              DONE=$(python3 -c "import json; print(len(json.load(open('eval/cassettes/recording_checkpoint.json'))['done']))")
+              echo "RESUMED from run $FOUND_RUN: $ENTRIES cassette entries, $DONE issues checkpointed done."
+              echo "resumed=true" >> "$GITHUB_ENV"
+            else
+              echo "Artifact '$FOUND_ART' downloaded but missing expected files -- starting clean."
+            fi
+          else
+            echo "No resumable cassette artifact found in the last 30 runs on this branch -- starting clean."
+          fi
+
+      - name: Initialize cassette and checkpoint (if not resumed)
+        run: |
+          if [ "$resumed" = "true" ]; then
+            echo "Using restored cassette/checkpoint from the prior run (see previous step)."
+          else
+            python3 -c "import json; json.dump({'schema_version': 'v1', 'description': 'Recorded LLM interactions for eval/test_quality_regression.py. DO NOT EDIT manually. Re-record via eval/record_cassettes.py.', 'entries': {}}, open('eval/cassettes/eval_cassette.json', 'w'), indent=2, ensure_ascii=False)"
+            python3 -c "import json; json.dump({'done': {}}, open('eval/cassettes/recording_checkpoint.json', 'w'), indent=2, ensure_ascii=False)"
+            echo "Cassette cleared (0 entries), checkpoint reset."
+          fi
 
       - name: Install Ollama (local judge runtime, ADR-0019)
         run: curl -fsSL https://ollama.com/install.sh | sh
@@ -221,11 +292,14 @@ jobs:
             reports/eval_baseline.json
           retention-days: 14
 
-      - name: Upload cassette on failure (diagnostic)
+      - name: Upload cassette on failure (diagnostic + resume seed)
         # Runs whenever ANY prior step failed (Record cassette or Update eval baseline),
         # regardless of dry_run -- without this, a failed run leaves nothing to inspect:
         # the cassette + checkpoint exist on the runner's disk but vanish when the job
         # ends, so root-causing a CassetteMissError means re-running blind every time.
+        # Also the resume mechanism's input: "Restore prior recording progress" above
+        # downloads this exact artifact on the next attempt to continue where a
+        # TPD-interrupted run left off, instead of restarting at issue 0.
         if: failure()
         uses: actions/upload-artifact@v4
         with:

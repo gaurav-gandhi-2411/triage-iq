@@ -91,6 +91,37 @@ jobs:
           echo "::add-mask::$KEY"
           echo "GROQ_API_KEY=$KEY" >> "$GITHUB_ENV"
 
+      - name: Pre-flight Groq TPD quota check (fail fast, ~1 token cost)
+        run: |
+          # Measured 2026-07-25 (run 30139030012, 35 clean synthesis calls before TPD hit,
+          # 117644 tokens, avg 3361 tok/call, range 3210-3632): a full 64-issue recording
+          # needs ~215k tokens. NEEDED adds ~20% headroom over that estimate. This makes a
+          # minimal (max_tokens=1) completion call solely to read the x-ratelimit-* response
+          # headers Groq returns on every request -- costs a handful of tokens regardless of
+          # outcome, vs. burning a 60-90min partial run into a quota wall we could have seen
+          # in 5 seconds.
+          NEEDED=258000
+          HEADERS=$(curl -sS -D - -o /tmp/groq_probe_body.json \
+            -X POST https://api.groq.com/openai/v1/chat/completions \
+            -H "Authorization: Bearer $GROQ_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"model":"llama-3.1-8b-instant","messages":[{"role":"user","content":"hi"}],"max_tokens":1}')
+          echo "$HEADERS"
+          REMAINING=$(echo "$HEADERS" | grep -i "^x-ratelimit-remaining-tokens:" | awk '{print $2}' | tr -d '\r')
+          LIMIT=$(echo "$HEADERS" | grep -i "^x-ratelimit-limit-tokens:" | awk '{print $2}' | tr -d '\r')
+          RESET=$(echo "$HEADERS" | grep -i "^x-ratelimit-reset-tokens:" | awk '{print $2}' | tr -d '\r')
+          echo "Groq TPD: remaining=$REMAINING limit=$LIMIT reset=$RESET"
+          if [ -z "$REMAINING" ]; then
+            echo "::warning::Could not read x-ratelimit-remaining-tokens header -- proceeding without the pre-flight guard."
+          else
+            echo "Need ~$NEEDED tokens for a full 64-issue recording; $REMAINING available."
+            if [ "$REMAINING" -lt "$NEEDED" ]; then
+              echo "::error::Only $REMAINING tokens remaining (limit $LIMIT, resets in ${RESET}s) -- need ~$NEEDED for a full recording. Aborting before burning a partial run."
+              exit 1
+            fi
+            echo "Quota check passed."
+          fi
+
       - name: Clear cassette and checkpoint
         run: |
           python3 -c "import json; json.dump({'schema_version': 'v1', 'description': 'Recorded LLM interactions for eval/test_quality_regression.py. DO NOT EDIT manually. Re-record via eval/record_cassettes.py.', 'entries': {}}, open('eval/cassettes/eval_cassette.json', 'w'), indent=2, ensure_ascii=False)"

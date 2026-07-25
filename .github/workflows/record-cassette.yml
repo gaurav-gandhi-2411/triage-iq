@@ -101,35 +101,38 @@ jobs:
           echo "::add-mask::$KEY"
           echo "GROQ_API_KEY=$KEY" >> "$GITHUB_ENV"
 
-      - name: Pre-flight Groq TPD quota check (fail fast, ~1 token cost)
+      - name: Pre-flight Groq TPD quota check (fail fast on an already-exhausted daily quota)
         run: |
-          # Measured 2026-07-25 (run 30139030012, 35 clean synthesis calls before TPD hit,
-          # 117644 tokens, avg 3361 tok/call, range 3210-3632): a full 64-issue recording
-          # needs ~215k tokens. NEEDED adds ~20% headroom over that estimate. This makes a
-          # minimal (max_tokens=1) completion call solely to read the x-ratelimit-* response
-          # headers Groq returns on every request -- costs a handful of tokens regardless of
-          # outcome, vs. burning a 60-90min partial run into a quota wall we could have seen
-          # in 5 seconds.
-          NEEDED=258000
-          HEADERS=$(curl -sS -D - -o /tmp/groq_probe_body.json \
+          # CORRECTED 2026-07-25 after run 30148079525 false-aborted: the x-ratelimit-*-tokens
+          # response HEADERS report the PER-MINUTE (TPM) budget, not per-day (TPD) -- confirmed
+          # empirically, limit-tokens=6000 exactly matches this model's known TPM tier, nowhere
+          # close to the ~215k a full recording needs, so comparing against a daily-sized
+          # threshold aborted every time regardless of actual daily headroom. Groq does not
+          # expose remaining DAILY tokens on a successful response at all -- the only place it
+          # ever appears is inside a 429 error BODY's message text once you're already AT the
+          # daily wall ("... on tokens per day (TPD): Limit 500000, Used NNNNNN, ..."). So this
+          # check can only detect "already exhausted" (exactly what caused every failure today),
+          # not predict headroom on a healthy day -- that signal doesn't exist more cheaply than
+          # running the job.
+          RESP=$(curl -sS -w "\n%{http_code}" \
             -X POST https://api.groq.com/openai/v1/chat/completions \
             -H "Authorization: Bearer $GROQ_API_KEY" \
             -H "Content-Type: application/json" \
             -d '{"model":"llama-3.1-8b-instant","messages":[{"role":"user","content":"hi"}],"max_tokens":1}')
-          echo "$HEADERS"
-          REMAINING=$(echo "$HEADERS" | grep -i "^x-ratelimit-remaining-tokens:" | awk '{print $2}' | tr -d '\r')
-          LIMIT=$(echo "$HEADERS" | grep -i "^x-ratelimit-limit-tokens:" | awk '{print $2}' | tr -d '\r')
-          RESET=$(echo "$HEADERS" | grep -i "^x-ratelimit-reset-tokens:" | awk '{print $2}' | tr -d '\r')
-          echo "Groq TPD: remaining=$REMAINING limit=$LIMIT reset=$RESET"
-          if [ -z "$REMAINING" ]; then
-            echo "::warning::Could not read x-ratelimit-remaining-tokens header -- proceeding without the pre-flight guard."
+          HTTP_CODE=$(echo "$RESP" | tail -1)
+          BODY=$(echo "$RESP" | sed '$d')
+          echo "HTTP $HTTP_CODE"
+          echo "$BODY"
+          if [ "$HTTP_CODE" = "429" ] && echo "$BODY" | grep -qi "tokens per day"; then
+            USED=$(echo "$BODY" | grep -oE "Used [0-9]+" | grep -oE "[0-9]+")
+            LIMIT=$(echo "$BODY" | grep -oE "Limit [0-9]+" | grep -oE "[0-9]+" | head -1)
+            echo "::error::Groq daily token quota already exhausted (Used ${USED:-?}/${LIMIT:-500000}). Aborting before burning a partial run -- wait ~24h from the bulk of prior usage per the one-attempt-per-window rule above, then retry."
+            exit 1
+          fi
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::warning::Pre-flight probe got unexpected HTTP $HTTP_CODE (not a TPD 429, not a 200) -- proceeding without the guard; the real recording will surface any genuine problem."
           else
-            echo "Need ~$NEEDED tokens for a full 64-issue recording; $REMAINING available."
-            if [ "$REMAINING" -lt "$NEEDED" ]; then
-              echo "::error::Only $REMAINING tokens remaining (limit $LIMIT, resets in ${RESET}s) -- need ~$NEEDED for a full recording. Aborting before burning a partial run."
-              exit 1
-            fi
-            echo "Quota check passed."
+            echo "Quota check passed: not currently at the daily TPD wall."
           fi
 
       - name: Clear cassette and checkpoint

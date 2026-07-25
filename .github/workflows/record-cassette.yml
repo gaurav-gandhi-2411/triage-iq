@@ -177,6 +177,21 @@ jobs:
             reports/eval_baseline.json
           retention-days: 14
 
+      - name: Upload cassette on failure (diagnostic)
+        # Runs whenever ANY prior step failed (Record cassette or Update eval baseline),
+        # regardless of dry_run -- without this, a failed run leaves nothing to inspect:
+        # the cassette + checkpoint exist on the runner's disk but vanish when the job
+        # ends, so root-causing a CassetteMissError means re-running blind every time.
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FAILED-cassette-diagnostic-${{ github.run_id }}
+          path: |
+            eval/cassettes/eval_cassette.json
+            eval/cassettes/recording_checkpoint.json
+            reports/eval_baseline.json
+          retention-days: 14
+
       - name: Configure git
         if: ${{ !inputs.dry_run }}
         run: |

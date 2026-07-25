@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "project": "triageiq",
+  "docs": "https://github.com/gaurav-gandhi-2411/gg-portfolio#autonomous-metric-refresh",
+  "metrics": [
+    {
+      "id": "triageiq:classifier-top3",
+      "label": "Component classifier top-3 accuracy",
+      "value": "82.5% (k8s) / 90.4% (vscode)",
+      "source_file": "reports/model_eval_audit.json",
+      "source_line": null,
+      "commit_sha": "62274339c045676e2fd6ba3a2dd086d1e6503487",
+      "measured_at": "2026-07-13"
+    }
+  ]
+}

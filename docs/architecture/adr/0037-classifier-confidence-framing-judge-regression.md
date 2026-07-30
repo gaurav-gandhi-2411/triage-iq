@@ -1,9 +1,11 @@
 # ADR-0037 — Judge-Score Regression After ADR-0036: Confidence Framing, Not Labels
 
-**Status:** Accepted — prompt fix implemented, pending validation recording
+**Status:** Accepted — v3 prompt fix implemented (v1 and v2 tried and superseded, see below),
+pending full validation recording
 **Date:** 2026-07-30
 **Decider:** Gaurav Gandhi (root-cause investigation and fix executed by CC on
-`fix/record-cassette-ollama-ci`; GG directed the diagnostic procedure and the fix approach)
+`fix/record-cassette-ollama-ci`; GG directed the diagnostic procedure and the fix approach at every
+iteration)
 
 ---
 
@@ -83,7 +85,7 @@ The LLM writes a less assertive plan across dimensions it wasn't given new infor
 because its own stated component confidence dropped from "93-99% sure" to "55-58% sure, with two
 other things almost as likely."
 
-## Decision: fix the prompt's interpretation of confidence, not the numbers
+## Decision (v1): fix the prompt's interpretation of confidence, not the numbers
 
 Two candidate fixes were considered and one rejected — see Alternatives. The chosen fix:
 
@@ -111,23 +113,86 @@ Two candidate fixes were considered and one rejected — see Alternatives. The c
    bytes are untouched, and the freeze's purpose (stable, byte-exact demonstrations) is preserved for
    the original three.
 
+**v1 result (full validation recording, `dry_run:true resume:false`, 2026-07-30 11:40-13:34 UTC):**
+k8s mean landed at **10.1887 — identical to 4 decimal places to the pre-fix regression**, i.e. zero
+net movement (still -0.3207 vs. OLD, still outside the ±0.22 band). vscode recovered strongly
+(8.3636 → 9.2727). Per-dimension, the targeted mechanism partially worked:
+`resolution_estimate_reasonableness` recovered *above* OLD (1.302 → 1.321) and
+`next_steps_actionability` recovered close to OLD (2.547 → 2.491) — but `component_match` got worse
+(1.415 → 1.245) and `floor_fail_rate` more than doubled (0.094 → 0.226), exactly offsetting the gain.
+Root cause: `label == gold_component` accuracy dropped 49.1% → 41.5%, concentrated in the LLM
+switching to "kubectl" (a broad, generic-sounding k8s term) on issues where the classifier's own
+top-1 was correct in the prior (no-fix) recording. The v1 wording asked the LLM to treat "several
+components can apply" without also anchoring it to *which one is still the prediction* — it started
+treating the ranked top-3 as a menu to choose from by its own textual judgment rather than a ranked
+recommendation to defer to by default.
+
+## Decision (v2, rejected as a no-op): sharpen the wording
+
+Tried adding explicit anchoring language: "the primary pick... should be chosen by default; deviate
+ONLY if the issue text contains a specific concrete reason it doesn't fit." Validated *before* any
+quota spend via a synthesis-only probe (`scripts/probe_label_anchoring_fix.py`) on the 9 k8s issues
+that regressed under v1 — no judge, ~9 Groq calls instead of 128, since the label-drift question is
+answerable from `predicted_component` alone.
+
+**Result: 9/9 outputs byte-identical to v1.** The sharpened paragraph changed nothing measurable.
+**Non-obvious, reusable lesson: the `[primary pick]` / `[also plausible]` structural labels on the
+top-3 lines were doing 100% of the anchoring work — the surrounding instruction prose was
+decorative.** At `temperature=0.0`, the model anchors hard to an explicit inline marker on the data
+itself; rewording the paragraph around that marker doesn't change the anchoring strength one bit.
+This generalizes beyond this fix: when a prompt marks structure directly on the data block (a label,
+a bracket, a bold tag), that marker will dominate free-text instructions elsewhere in the same
+prompt about how to weigh that data — don't expect prose elsewhere to override it, and don't expect
+prose elsewhere to be *necessary* once the marker is there either.
+
+## Decision (v3, chosen): remove the anchoring labels, keep de-hedging unchanged
+
+Removed the `[primary pick]` / `[also plausible]` labels entirely and the "choose it by default,
+deviate only with concrete reason" directive. Replaced with neutral language: explain the confidence
+semantics without directing which entry to choose ("weigh these scores together with the issue text
+and the similar issues below, the same way you always would"). The resolution/next-steps de-hedging
+sentence — demonstrated to work in v1 — is untouched. The appended fourth few-shot example's user
+turn was updated to match (no more inline labels, so the example stays a faithful demonstration of
+what the model actually sees); its assistant turn (picking the classifier's own top-1 for that
+example) was left as-is since v3 doesn't forbid agreeing with the classifier, it just stops
+instructing it.
+
+**Cheap-probe result (same 9 issues, live, no judge):** `label == gold` 3/9, up from v1's 1/9 (3x),
+against a no-fix baseline of 4/9. 2 of the 3 correct→wrong flips recovered (k8s-12703, k8s-14363).
+The third (k8s-14895) stayed on "kubectl" — but the classifier's own top-1 for that issue *is*
+"kubectl" (gold is `client-libraries`), so this is a **classifier error, not a prompt problem**;
+GG's explicit call was to not iterate the prompt to force an override of one specific classifier
+mistake, since that fits one gold label without generalizing. On the non-flip cases, v3 repeatedly
+reproduced the *no-fix* recording's specific answer rather than v1's — including on issues where that
+answer isn't gold-correct — which is independent evidence the fix restored the LLM's original
+decision process rather than coincidentally matching more gold labels.
+
 ## Consequences
 
-- All 211 repo tests pass after the change. One test asserted the old few-shot count (3 assistant
+- All 211 repo tests pass after each iteration. One test asserted the old few-shot count (3 assistant
   turns) and was updated to 4 — a legitimate update to a count that changed intentionally, not a
   weakened assertion.
-- The classifier and its calibration are untouched. ADR-0036's accuracy win (k8s +9.09pp top-1,
-  vscode +7.49pp top-1, both CIs excluding zero) stands regardless of this ADR's outcome.
+- The classifier and its calibration are untouched throughout. ADR-0036's accuracy win (k8s +9.09pp
+  top-1, vscode +7.49pp top-1, both CIs excluding zero) stands regardless of this ADR's outcome.
 - This is a live-prompt change (affects production synthesis output, not just the eval harness) —
   the validation recording (`dry_run:true`) measures its effect before any baseline write, per the
   standing eval-baseline-write escalation gate.
-- If the validation recording shows k8s recovering toward 10.51 (or landing inside the ±0.22 noise
-  band), the new baseline gets written and this prompt change ships as-is. If it partially recovers,
-  reassess scope. If it doesn't move, the hedging is deeper than prompt framing (candidates: the
-  frozen few-shot examples still outweighing the new fourth one and the guidance text combined, or a
-  more fundamental judge-model sensitivity to stated confidence) — that gets diagnosed next, and the
-  fallback explicitly ruled out in advance is *not* faking a wider confidence spread to game the
-  judge score (see Alternatives).
+- Approval criteria for the v3 full recording: k8s within ±0.22 of OLD (10.5094) with de-hedging
+  retained (resolution/next-steps at or above OLD) → baseline write approved. If `component_match`
+  recovers but the mean still sits low, that gets reported and investigated on its own terms rather
+  than triggering another prompt-wording iteration.
+
+## Separately logged, not fixed here
+
+**Resolution-estimate text/number mismatch.** k8s-14756 and k8s-13096 kept getting dinged on
+`resolution_estimate_reasonableness` across both v1 and the no-fix recording even where the
+underlying LightGBM numbers were unchanged and the language wasn't obviously hedged. Reading the
+actual text: k8s-14756's `expected_resolution_summary` said *"typically 1 day or less for a
+straightforward configuration tweak"* against a numeric interval of `[2.8d, 21.6d]` — the prose
+summary doesn't match the number it's supposed to summarize. This is a distinct, pre-existing quality
+bug (the LLM's free-text resolution summary can contradict the resolution predictor's own interval)
+independent of the confidence-framing regression this ADR addresses. Not in scope here per GG's
+explicit instruction — logged for a future pass.
 
 ## Alternatives considered
 

@@ -24,9 +24,10 @@ PRIORITY GUIDELINES:
 CLASSIFIER CONFIDENCE GUIDANCE:
 The component classifier in SYSTEM 1 reports independent per-component probabilities, not a single
 normalized distribution, so several components scoring similarly is expected and does not mean the
-classifier is unsure. Judge the classifier by its ranked order, not by how close the scores are to
-each other. The resolution estimate and next steps are produced by separate, independent models —
-do not soften or hedge them because the classifier's scores happen to be close together.
+classifier is unsure. Weigh it together with the issue text and the similar issues below, the same
+way you always would — a close spread is additional context, not an instruction toward or away from
+any particular entry. The resolution estimate and next steps are produced by separate, independent
+models — do not soften or hedge them because the classifier's scores happen to be close together.
 
 ATTRIBUTION RULES:
 1. predicted_component should normally be one of the classifier's top-3 predictions. If you deviate, you MUST set component_source to "model_override" and explain why in component_override_reason.
@@ -99,7 +100,6 @@ def build_triage_prompt(
 
     classifier_lines = "\n".join(
         f"  {i+1}. {c['label']} (confidence: {c['confidence']:.3f})"
-        f"{'  [primary pick]' if i == 0 else '  [also plausible]'}"
         for i, c in enumerate(classifier_top3)
     )
 
@@ -130,10 +130,9 @@ Body:
 --- SYSTEM 1: COMPONENT CLASSIFIER (TF-IDF) ---
 These are independent per-component probabilities, not a single normalized distribution: each score
 answers "does this component apply?" on its own, so it is normal and expected for two or three
-components to score similarly when an issue plausibly touches more than one area. A close spread
-means "several components plausibly apply" — it does NOT mean the classifier is unsure or unreliable.
-Use the ranked order (primary pick vs. also-plausible, marked below) as your signal, not the size of
-the numeric gap between scores.
+components to score similarly when an issue plausibly touches more than one area — this does not by
+itself mean the classifier is unsure. Weigh these scores together with the issue text and the similar
+issues below, the same way you always would.
 Top-3 predictions:
 {classifier_lines}
 
@@ -175,9 +174,10 @@ PRIORITY GUIDELINES:
 CLASSIFIER CONFIDENCE GUIDANCE:
 The component classifier in SYSTEM 1 reports independent per-component probabilities, not a single
 normalized distribution, so several components scoring similarly is expected and does not mean the
-classifier is unsure. Judge the classifier by its ranked order, not by how close the scores are to
-each other. The resolution estimate and next steps are produced by separate, independent models —
-do not soften or hedge them because the classifier's scores happen to be close together.
+classifier is unsure. Weigh it together with the issue text and the similar issues below, the same
+way you always would — a close spread is additional context, not an instruction toward or away from
+any particular entry. The resolution estimate and next steps are produced by separate, independent
+models — do not soften or hedge them because the classifier's scores happen to be close together.
 
 Schema:
 {
@@ -389,14 +389,13 @@ When switching between user profiles with Settings Sync enabled, per-extension s
 --- SYSTEM 1: COMPONENT CLASSIFIER (TF-IDF) ---
 These are independent per-component probabilities, not a single normalized distribution: each score
 answers "does this component apply?" on its own, so it is normal and expected for two or three
-components to score similarly when an issue plausibly touches more than one area. A close spread
-means "several components plausibly apply" — it does NOT mean the classifier is unsure or unreliable.
-Use the ranked order (primary pick vs. also-plausible, marked below) as your signal, not the size of
-the numeric gap between scores.
+components to score similarly when an issue plausibly touches more than one area — this does not by
+itself mean the classifier is unsure. Weigh these scores together with the issue text and the similar
+issues below, the same way you always would.
 Top-3 predictions:
-  1. settings-sync (confidence: 0.579)  [primary pick]
-  2. extensions (confidence: 0.531)  [also plausible]
-  3. profiles (confidence: 0.492)  [also plausible]
+  1. settings-sync (confidence: 0.579)
+  2. extensions (confidence: 0.531)
+  3. profiles (confidence: 0.492)
 
 --- SYSTEM 2: SIMILAR ISSUES (BGE retrieval) ---
   #15210 (similarity: 0.742): Extension settings not restored after switching profiles on sync...
@@ -619,14 +618,13 @@ When switching between user profiles with Settings Sync enabled, per-extension s
 --- SYSTEM 1: COMPONENT CLASSIFIER (TF-IDF) ---
 These are independent per-component probabilities, not a single normalized distribution: each score
 answers "does this component apply?" on its own, so it is normal and expected for two or three
-components to score similarly when an issue plausibly touches more than one area. A close spread
-means "several components plausibly apply" — it does NOT mean the classifier is unsure or unreliable.
-Use the ranked order (primary pick vs. also-plausible, marked below) as your signal, not the size of
-the numeric gap between scores.
+components to score similarly when an issue plausibly touches more than one area — this does not by
+itself mean the classifier is unsure. Weigh these scores together with the issue text and the similar
+issues below, the same way you always would.
 Top-3 predictions:
-  1. settings-sync (confidence: 0.579)  [primary pick]
-  2. extensions (confidence: 0.531)  [also plausible]
-  3. profiles (confidence: 0.492)  [also plausible]
+  1. settings-sync (confidence: 0.579)
+  2. extensions (confidence: 0.531)
+  3. profiles (confidence: 0.492)
 
 --- SYSTEM 2: SIMILAR ISSUES (BGE retrieval) ---
   #15210 (similarity: 0.742): Extension settings not restored after switching profiles on sync...

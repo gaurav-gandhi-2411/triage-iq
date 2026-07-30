@@ -161,6 +161,19 @@ jobs:
             USED=$(echo "$BODY" | grep -oE "Used [0-9]+" | grep -oE "[0-9]+")
             LIMIT=$(echo "$BODY" | grep -oE "Limit [0-9]+" | grep -oE "[0-9]+" | head -1)
             echo "::error::Groq daily token quota already exhausted (Used ${USED:-?}/${LIMIT:-500000}). Aborting before burning a partial run -- wait ~24h from the bulk of prior usage per the one-attempt-per-window rule above, then retry."
+            # Log this reading -- reports/groq_tpd_probe_log.json feeds
+            # scripts/groq_tpd_estimate.py's headroom-recovery projection, so a 429 caught
+            # here (cheap, 1 token) is as valuable a data point as one from an actual
+            # recording attempt. Committed directly (small, separate commit, independent of
+            # dry_run) since this is observability data, not the eval baseline.
+            if [ -n "$USED" ]; then
+              python3 -c "import json, datetime; p='reports/groq_tpd_probe_log.json'; log=json.load(open(p, encoding='utf-8')); log['readings'].append({'timestamp_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds').replace('+00:00', 'Z'), 'used': int('$USED'), 'requested': None, 'source': 'CI pre-flight check, run ${{ github.run_id }}'}); json.dump(log, open(p, 'w', encoding='utf-8'), indent=2, ensure_ascii=False); open(p, 'a', encoding='utf-8').write(chr(10))"
+              git config user.email "gaurav.gandhi2411@gmail.com"
+              git config user.name "Gaurav Gandhi"
+              git add reports/groq_tpd_probe_log.json
+              git commit -m "chore(record-cassette): log TPD probe reading (Used ${USED}/${LIMIT:-500000})"
+              git push origin HEAD:refs/heads/${{ github.ref_name }} || echo "::warning::Could not push the probe-log commit (non-fatal, the reading is only lost from the log, not from this run's abort)."
+            fi
             exit 1
           fi
           if [ "$HTTP_CODE" != "200" ]; then

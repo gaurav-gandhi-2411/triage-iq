@@ -61,26 +61,78 @@ OLLAMA_SEED = 42
 JUDGE_MODEL = "qwen3:8b"  # same model production/CI use for judging (ADR-0019) -- this part
 # IS production-identical, since the judge already runs on local Ollama everywhere.
 
-# Same 9 k8s issues as scripts/probe_label_anchoring_fix.py -- see that file's comment for
-# how this set was chosen. Kept in sync manually (small, one-off diagnostic scripts; not
-# worth a shared-import indirection for 9 hardcoded IDs).
+# The original 9-issue regression set (see scripts/probe_label_anchoring_fix.py's comment
+# for how it was chosen) plus 15 more k8s issues sampled (seed=42, from the 44 not in that
+# original 9) to broaden coverage for a v3-validation pass beyond the cherry-picked worst
+# cases -- includes k8s-13270/14756 (the hedging examples from ADR-0037's diagnosis, one
+# recovered under v1, one didn't) and k8s-14281 (the single worst score drop / near-tie
+# label flip). Default here is the full 24; pass a smaller list at the call site if you
+# only need the quick 9-issue check.
 TARGET_ISSUE_IDS = [
-    "k8s-12703", "k8s-12737", "k8s-14895", "k8s-14363",  # correct(no-fix) -> wrong(v1 fix)
-    "k8s-13784",  # control: improved under the un-anchored v1 fix, must not regress
-    "k8s-14550", "k8s-14935", "k8s-14477", "k8s-12665",  # other label drift
+    "k8s-12224", "k8s-12248", "k8s-12287", "k8s-12665", "k8s-12703", "k8s-12737",
+    "k8s-12828", "k8s-13257", "k8s-13270", "k8s-13435", "k8s-13508", "k8s-13784",
+    "k8s-14125", "k8s-14135", "k8s-14190", "k8s-14281", "k8s-14363", "k8s-14477",
+    "k8s-14550", "k8s-14711", "k8s-14756", "k8s-14762", "k8s-14895", "k8s-14935",
 ]
 
+# All 53 k8s issues' predicted_component from the two Groq-recorded full runs (no-fix:
+# 2026-07-30T07:18 UTC, v1/un-anchored fix: 2026-07-30T11:40 UTC) -- for reference only,
+# not required (TARGET_ISSUE_IDS can be any subset; issues without an entry here just print
+# "-" in those columns instead of blocking).
 NOFIX_V1_LABELS = {
-    # From the two Groq-recorded runs (2026-07-30 07:18 and 11:40 UTC), for reference only.
+    "k8s-12122": ("cloudprovider", "cloudprovider"),
+    "k8s-12123": ("kubectl", "kubectl"),
+    "k8s-12224": ("example", "example"),
+    "k8s-12248": ("kubectl", "kubectl"),
+    "k8s-12254": ("test-infra", "test-infra"),
+    "k8s-12277": ("nodecontroller", "nodecontroller"),
+    "k8s-12284": ("cloudprovider", "cloudprovider"),
+    "k8s-12287": ("cloudprovider", "cloudprovider"),
+    "k8s-12461": ("kubectl", "kubectl"),
+    "k8s-12477": ("apiserver", "apiserver"),
+    "k8s-12587": ("os/coreos", "os/coreos"),
+    "k8s-12615": ("api", "api"),
+    "k8s-12665": ("app-lifecycle", "usability"),
     "k8s-12703": ("ui", "kubectl"),
     "k8s-12737": ("apiserver", "api"),
-    "k8s-14895": ("client-libraries", "kubectl"),
-    "k8s-14363": ("cloudprovider", "kubectl"),
+    "k8s-12784": ("apiserver", "apiserver"),
+    "k8s-12818": ("test-infra", "test-infra"),
+    "k8s-12828": ("kubectl", "kubectl"),
+    "k8s-12853": ("os/coreos", "os/coreos"),
+    "k8s-13034": ("cloudprovider", "cloudprovider"),
+    "k8s-13057": ("api", "usability"),
+    "k8s-13062": ("test-infra", "test-infra"),
+    "k8s-13096": ("api", "api"),
+    "k8s-13257": ("test-infra", "test-infra"),
+    "k8s-13270": ("kube-proxy", "kube-proxy"),
+    "k8s-13276": ("ui", "ui"),
+    "k8s-13435": ("usability", "usability"),
+    "k8s-13470": ("kubelet", "kubelet"),
+    "k8s-13508": ("cloudprovider", "cloudprovider"),
     "k8s-13784": ("cloudprovider", "kubelet"),
-    "k8s-14550": ("nodecontroller", "test-infra"),
-    "k8s-14935": ("kubelet", "isolation"),
+    "k8s-13995": ("test-infra", "test-infra"),
+    "k8s-14009": ("monitoring", "monitoring"),
+    "k8s-14054": ("kubelet", "kubelet"),
+    "k8s-14078": ("test-infra", "test-infra"),
+    "k8s-14125": ("test-infra", "test-infra"),
+    "k8s-14135": ("test-infra", "test-infra"),
+    "k8s-14190": ("api", "api"),
+    "k8s-14281": ("kubectl", "kubectl"),
+    "k8s-14363": ("cloudprovider", "kubectl"),
+    "k8s-14424": ("test-infra", "test-infra"),
     "k8s-14477": ("kube-proxy", "test-infra"),
-    "k8s-12665": ("app-lifecycle", "usability"),
+    "k8s-14550": ("nodecontroller", "test-infra"),
+    "k8s-14552": ("test-infra", "test-infra"),
+    "k8s-14553": ("platform/mesos", "platform/mesos"),
+    "k8s-14557": ("kubelet", "kubelet"),
+    "k8s-14711": ("introspection", "introspection"),
+    "k8s-14723": ("security", "security"),
+    "k8s-14756": ("kube-proxy", "kube-proxy"),
+    "k8s-14762": ("kubelet", "introspection"),
+    "k8s-14785": ("build-release", "build-release"),
+    "k8s-14835": ("build-release", "build-release"),
+    "k8s-14895": ("client-libraries", "kubectl"),
+    "k8s-14935": ("kubelet", "isolation"),
 }
 
 
@@ -150,6 +202,9 @@ def main() -> None:
     matches_gold = 0
     matches_v1 = 0
     judge_totals = []
+    resolution_est_scores = []
+    next_steps_scores = []
+    component_match_scores = []
     for iid in TARGET_ISSUE_IDS:
         issue = issues_by_id[iid]
 
@@ -206,7 +261,7 @@ def main() -> None:
             plan = None
 
         gold = issue["gold_component"]
-        nofix_label, v1_label = NOFIX_V1_LABELS[iid]
+        nofix_label, v1_label = NOFIX_V1_LABELS.get(iid, ("-", "-"))
         tag = "GOLD" if probe_label == gold else ("same-as-v1" if probe_label == v1_label else "")
         if probe_label == gold:
             matches_gold += 1
@@ -235,6 +290,9 @@ def main() -> None:
             },
         )
         judge_totals.append(judge_score.total())
+        resolution_est_scores.append(judge_score.resolution_estimate_reasonableness)
+        next_steps_scores.append(judge_score.next_steps_actionability)
+        component_match_scores.append(judge_score.component_match)
         print(
             f"  judge: {judge_score.total()}/{sum(DIMENSION_MAX.values())}  "
             f"resolution_est={judge_score.resolution_estimate_reasonableness}  "
@@ -244,10 +302,15 @@ def main() -> None:
         print(f"  rationale: {judge_score.judge_rationale}")
 
     print(f"\n{n_calls} local Ollama synthesis calls + {len(judge_totals)} local Ollama judge calls made. Zero Groq tokens spent.")
-    print(f"Matches gold: {matches_gold}/{len(TARGET_ISSUE_IDS)}")
+    print(f"Matches gold: {matches_gold}/{len(TARGET_ISSUE_IDS)}  ({matches_gold/len(TARGET_ISSUE_IDS):.1%})")
     print(f"Identical to v1 (un-anchored, Groq) output: {matches_v1}/{len(TARGET_ISSUE_IDS)}")
     if judge_totals:
         print(f"Local-judge mean total: {np.mean(judge_totals):.2f}/{sum(DIMENSION_MAX.values())}")
+        print(f"Local-judge mean resolution_estimate_reasonableness: {np.mean(resolution_est_scores):.2f}/{DIMENSION_MAX['resolution_estimate_reasonableness']}  "
+              f"(the primary de-hedging signal from ADR-0037)")
+        print(f"Local-judge mean next_steps_actionability: {np.mean(next_steps_scores):.2f}/{DIMENSION_MAX['next_steps_actionability']}  "
+              f"(the other de-hedging signal)")
+        print(f"Local-judge mean component_match: {np.mean(component_match_scores):.2f}/{DIMENSION_MAX['component_match']}")
     print(
         "\nReminder: this is a structural signal on a different model than production. "
         "A promising result here justifies spending the Groq recording to confirm; "

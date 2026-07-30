@@ -1,0 +1,80 @@
+{
+  "schema_version": "v1",
+  "description": "Timestamped Groq TPD (tokens-per-day) 'Used' readings for org_01kpw92fcwebnbpwgabfd5r32b / llama-3.1-8b-instant, plus known usage bursts with exact per-call token sums where available. Groq never exposes remaining daily headroom on a healthy (200) response -- the only place a 'Used' figure appears is inside a 429 error body once the daily wall is already hit (see record-cassette.yml's pre-flight step comment). This log exists so scripts/groq_tpd_estimate.py can project forward from real readings instead of the pre-flight check just reporting a boolean 'not at the wall this instant'.",
+  "limit": 500000,
+  "readings": [
+    {
+      "timestamp_utc": "2026-07-24T19:18:05Z",
+      "used": 498500,
+      "requested": 3885,
+      "source": "run 30117129640 TPD hit, 25 synthesis calls made"
+    },
+    {
+      "timestamp_utc": "2026-07-25T02:43:35Z",
+      "used": 497644,
+      "requested": 3945,
+      "source": "run 30139030012 TPD hit, 35 synthesis calls made"
+    },
+    {
+      "timestamp_utc": "2026-07-25T07:22:40Z",
+      "used": 498756,
+      "requested": 3372,
+      "source": "run 30148210156 TPD hit, 16 synthesis calls made"
+    },
+    {
+      "timestamp_utc": "2026-07-30T17:02:22Z",
+      "used": 496486,
+      "requested": 5101,
+      "source": "run 30562204315 TPD hit, 12 synthesis calls made"
+    },
+    {
+      "timestamp_utc": "2026-07-30T18:18:31Z",
+      "used": 497564,
+      "requested": 5021,
+      "source": "run 30569456403 TPD hit, 0 synthesis calls made (hit on the first attempt)"
+    }
+  ],
+  "known_usage_bursts": [
+    {
+      "start_utc": "2026-07-30T07:23:26Z",
+      "end_utc": "2026-07-30T08:36:37Z",
+      "calls": 48,
+      "exact_tokens": 160770,
+      "source": "run 30522533130 (resume completion, 16->64 issues)",
+      "token_precision": "exact -- summed from per-call 'groq N+N tok' log lines"
+    },
+    {
+      "start_utc": "2026-07-30T11:43:35Z",
+      "end_utc": "2026-07-30T13:32:05Z",
+      "calls": 64,
+      "exact_tokens": 288332,
+      "source": "run 30539492414 (clean v1 recording, dry_run)",
+      "token_precision": "exact -- summed from per-call 'groq N+N tok' log lines"
+    },
+    {
+      "start_utc": "2026-07-30T13:45:00Z",
+      "end_utc": "2026-07-30T14:15:00Z",
+      "calls": 9,
+      "exact_tokens": 36000,
+      "source": "cheap probe v2 (scripts/probe_label_anchoring_fix.py, sharpened-wording test, rejected as a no-op)",
+      "token_precision": "estimated -- script did not log per-call tokens; timestamps are approximate (not captured at run time), token count uses the observed ~4000/call average from the two exact bursts above"
+    },
+    {
+      "start_utc": "2026-07-30T15:15:00Z",
+      "end_utc": "2026-07-30T15:45:00Z",
+      "calls": 9,
+      "exact_tokens": 36000,
+      "source": "cheap probe v3 (scripts/probe_label_anchoring_fix.py, neutral-framing validation)",
+      "token_precision": "estimated -- same caveats as probe v2 above"
+    },
+    {
+      "start_utc": "2026-07-30T16:39:15Z",
+      "end_utc": "2026-07-30T16:58:43Z",
+      "calls": 12,
+      "exact_tokens": 53670,
+      "source": "run 30562204315 (v3 recording, TPD hit after 12/64)",
+      "token_precision": "exact -- summed from per-call 'groq N+N tok' log lines"
+    }
+  ],
+  "reconciliation_note": "Summing the known_usage_bursts' tokens (160770+288332+36000(est)+36000(est)+53670 = 574772) exceeds the actual reading at the third burst's TPD hit (496486 at 2026-07-30T17:02:22Z) by roughly 78K -- even without the two estimated-token probe bursts, the three EXACT bursts alone (502772) still exceed 496486 by ~6300. This is a real reconciliation gap (~1-6% of the total, depending on how much of the probe estimate is trusted), not a bug being papered over: possible causes include Groq's actual accounting differing slightly from a naive full-24h rolling sum (e.g. a coarser window boundary), retried/rate-limited attempts consuming some token budget without a logged success line, or the probe token estimates simply being off. Treat scripts/groq_tpd_estimate.py's Used(T) projections as directionally useful, not exact -- prefer a live pre-flight probe's real reading over the projection whenever one is available."
+}

@@ -12,6 +12,12 @@ classifier's rank-1 pick.
 
 Run locally with GROQ_API_KEY set (fetched from Secret Manager here to match CI's pattern).
 Not part of the eval suite; not run in CI. One-off diagnostic per ADR-0037.
+
+Superseded for prompt-ITERATION use by scripts/probe_prompt_structure_local.py (zero Groq
+quota, local Ollama). This script (or the pattern it follows) is for the final
+production-model confirmation of a structural signal found locally -- not for iterating on
+wording, which is what actually burned quota here (two 9-call Groq runs, v2 and v3, when
+only v3's needed to be on Groq).
 """
 
 import json

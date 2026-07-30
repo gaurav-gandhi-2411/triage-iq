@@ -65,6 +65,27 @@ jobs:
           ref: ${{ github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute prompt fingerprint (for safe resume matching)
+        run: |
+          # Incident 2026-07-30: the resume step below used to pick whichever candidate had
+          # the MOST checkpointed issues, with no check that the candidate was recorded
+          # against the SAME prompt code as this run. It picked a 64/64 cassette from an
+          # earlier, since-superseded prompt version over a 12/64 partial from the CURRENT
+          # version -- "most progress" isn't "compatible progress". Concretely: predicted
+          # component/confidence/message content depends on triage_prompt.py and the message
+          # assembly + signal computation in triage.py; the judge's cache key additionally
+          # depends on record_cassettes.py's plan_json field selection. A resumed cassette
+          # recorded under different versions of any of these has different cache keys for
+          # every entry, and record_cassettes.py's checkpoint-skip logic has no way to detect
+          # that mismatch on its own -- it just marks everything "done" and skips it, so the
+          # run silently records ZERO new issues and only fails much later when run_eval.py's
+          # replay (a different job step) hits CassetteMissError. This fingerprint lets the
+          # resume step reject an incompatible candidate BEFORE restoring it, not after.
+          mkdir -p eval/cassettes
+          cat src/triage_iq/prompts/triage_prompt.py src/triage_iq/models/triage.py eval/record_cassettes.py \
+            | sha256sum | cut -d' ' -f1 > eval/cassettes/PROMPT_FINGERPRINT.sha256
+          echo "This run's prompt fingerprint: $(cat eval/cassettes/PROMPT_FINGERPRINT.sha256)"
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -208,6 +229,16 @@ jobs:
               echo "  run $RID: cassette identical to the already-committed one -- not new progress (likely a pre-flight abort before Clear-cassette ran). Skipping."
               continue
             fi
+            # Incident 2026-07-30: "most progress" picked a 64/64 cassette from a superseded
+            # prompt version over a 12/64 partial from the current one -- reject any candidate
+            # whose recorded prompt fingerprint doesn't match this run's (see "Compute prompt
+            # fingerprint" step above). Missing fingerprint (artifacts from before this check
+            # existed) is treated as incompatible, not as an automatic pass.
+            CAND_FINGERPRINT="$CAND_DIR/eval/cassettes/PROMPT_FINGERPRINT.sha256"
+            if [ ! -f "$CAND_FINGERPRINT" ] || ! cmp -s "$CAND_FINGERPRINT" eval/cassettes/PROMPT_FINGERPRINT.sha256; then
+              echo "  run $RID: prompt fingerprint missing or does not match this run's (recorded against a different prompt version) -- skipping."
+              continue
+            fi
             DONE=$(python3 -c "import json; cur={json.loads(l)['id'] for l in open('eval/eval_set.jsonl', encoding='utf-8') if l.strip()}; done=json.load(open('$CAND_CHECKPOINT', encoding='utf-8'))['done']; print(0 if not set(done) <= cur else sum(1 for v in done.values() if not v.get('tpd_hit')))")
             echo "  run $RID: $DONE genuine issues done (non-tpd_hit, within current eval_set)."
             if [ "$DONE" -gt "$BEST_DONE" ]; then
@@ -220,6 +251,8 @@ jobs:
             mkdir -p eval/cassettes
             cp "/tmp/resume_candidates/$BEST_RUN/eval/cassettes/eval_cassette.json" eval/cassettes/eval_cassette.json
             cp "/tmp/resume_candidates/$BEST_RUN/eval/cassettes/recording_checkpoint.json" eval/cassettes/recording_checkpoint.json
+            # PROMPT_FINGERPRINT.sha256 is not copied -- it's already correct for this run
+            # (written by "Compute prompt fingerprint" above, and just verified to match).
             ENTRIES=$(python3 -c "import json; print(len(json.load(open('eval/cassettes/eval_cassette.json'))['entries']))")
             echo "RESUMED from run $BEST_RUN: $ENTRIES cassette entries, $BEST_DONE issues checkpointed done."
             echo "resumed=true" >> "$GITHUB_ENV"
@@ -314,6 +347,7 @@ jobs:
           path: |
             eval/cassettes/eval_cassette.json
             eval/cassettes/recording_checkpoint.json
+            eval/cassettes/PROMPT_FINGERPRINT.sha256
             reports/eval_baseline.json
           retention-days: 14
 
@@ -332,6 +366,7 @@ jobs:
           path: |
             eval/cassettes/eval_cassette.json
             eval/cassettes/recording_checkpoint.json
+            eval/cassettes/PROMPT_FINGERPRINT.sha256
             reports/eval_baseline.json
           retention-days: 14
 

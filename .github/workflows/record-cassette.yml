@@ -159,16 +159,26 @@ jobs:
           # keep hitting the same partial point unless progress carries over BETWEEN runs. Every
           # TPD-interrupted run already uploads its partial cassette+checkpoint via "Upload
           # cassette on failure (diagnostic)" below -- this step makes that upload double as
-          # resumable input: find the most recent prior run of this workflow ON THIS BRANCH with
-          # a cassette artifact, download it, and seed this run's cassette/checkpoint so
-          # record_cassettes.py's own checkpoint-skip logic (eval/record_cassettes.py:199) picks
-          # up from the first un-recorded issue instead of issue 0. Scoped to this branch (not
-          # all branches) to reduce the chance of resuming from an unrelated attempt.
-          echo "Searching recent runs on this branch for a resumable cassette artifact..."
+          # resumable input.
+          #
+          # Picks the candidate with the MOST checkpointed progress among the last 10 runs on
+          # this branch, not just the most recent artifact -- an earlier attempt can have made
+          # more progress than a later one (e.g. TPD headroom shrank between attempts), so
+          # "most recent" and "most progress" are not the same thing. Two more filters, both
+          # learned from a real false-positive (2026-07-30, run 30148079525's diagnostic upload):
+          # a run that aborts at the pre-flight quota check NEVER reaches "Clear cassette and
+          # checkpoint", so its "diagnostic" upload is just whatever eval/cassettes/*.json were
+          # in the checkout -- i.e. the currently-committed cassette, not new progress. Candidates
+          # are dropped if (a) their eval_cassette.json is byte-identical to the checked-out
+          # repo's copy (no new work happened), or (b) their checkpoint's issue IDs aren't a
+          # subset of the current eval_set.jsonl (recorded against a stale/different eval set).
+          echo "Searching recent runs on this branch for the most-progressed resumable cassette artifact..."
           RUNS=$(gh run list --repo "${{ github.repository }}" --workflow=record-cassette.yml \
-            --branch "${{ github.ref_name }}" --limit 30 --json databaseId --jq '.[].databaseId')
-          FOUND_RUN=""
-          FOUND_ART=""
+            --branch "${{ github.ref_name }}" --limit 10 --json databaseId --jq '.[].databaseId')
+          rm -rf /tmp/resume_candidates
+          mkdir -p /tmp/resume_candidates
+          BEST_RUN=""
+          BEST_DONE=0
           for RID in $RUNS; do
             if [ "$RID" = "${{ github.run_id }}" ]; then
               continue
@@ -176,30 +186,45 @@ jobs:
             ART=$(gh api "repos/${{ github.repository }}/actions/runs/$RID/artifacts" \
               --jq '.artifacts[] | select(.name | test("^(FAILED-cassette-diagnostic|recorded-cassette)-")) | .name' \
               2>/dev/null | head -1)
-            if [ -n "$ART" ]; then
-              FOUND_RUN="$RID"
-              FOUND_ART="$ART"
-              break
+            if [ -z "$ART" ]; then
+              continue
+            fi
+            CAND_DIR="/tmp/resume_candidates/$RID"
+            if ! gh run download "$RID" --repo "${{ github.repository }}" --name "$ART" --dir "$CAND_DIR" 2>/dev/null; then
+              echo "  run $RID: artifact '$ART' download failed (likely expired) -- skipping."
+              continue
+            fi
+            # actions/upload-artifact@v4 preserves the workflow's relative directory structure
+            # for the multi-path glob used in the two upload steps below (eval/cassettes/*.json,
+            # reports/eval_baseline.json) -- downloaded files land at
+            # $CAND_DIR/eval/cassettes/eval_cassette.json, NOT flattened to $CAND_DIR/eval_cassette.json.
+            CAND_CASSETTE="$CAND_DIR/eval/cassettes/eval_cassette.json"
+            CAND_CHECKPOINT="$CAND_DIR/eval/cassettes/recording_checkpoint.json"
+            if [ ! -f "$CAND_CASSETTE" ] || [ ! -f "$CAND_CHECKPOINT" ]; then
+              echo "  run $RID: artifact missing expected files -- skipping."
+              continue
+            fi
+            if cmp -s "$CAND_CASSETTE" eval/cassettes/eval_cassette.json; then
+              echo "  run $RID: cassette identical to the already-committed one -- not new progress (likely a pre-flight abort before Clear-cassette ran). Skipping."
+              continue
+            fi
+            DONE=$(python3 -c "import json; cur={json.loads(l)['id'] for l in open('eval/eval_set.jsonl', encoding='utf-8') if l.strip()}; done=json.load(open('$CAND_CHECKPOINT', encoding='utf-8'))['done']; print(0 if not set(done) <= cur else sum(1 for v in done.values() if not v.get('tpd_hit')))")
+            echo "  run $RID: $DONE genuine issues done (non-tpd_hit, within current eval_set)."
+            if [ "$DONE" -gt "$BEST_DONE" ]; then
+              BEST_DONE="$DONE"
+              BEST_RUN="$RID"
             fi
           done
-          if [ -n "$FOUND_RUN" ]; then
-            echo "Found artifact '$FOUND_ART' on run $FOUND_RUN -- downloading."
-            rm -rf /tmp/resume_artifact
-            gh run download "$FOUND_RUN" --repo "${{ github.repository }}" \
-              --name "$FOUND_ART" --dir /tmp/resume_artifact
-            if [ -f /tmp/resume_artifact/eval_cassette.json ] && [ -f /tmp/resume_artifact/recording_checkpoint.json ]; then
-              mkdir -p eval/cassettes
-              cp /tmp/resume_artifact/eval_cassette.json eval/cassettes/eval_cassette.json
-              cp /tmp/resume_artifact/recording_checkpoint.json eval/cassettes/recording_checkpoint.json
-              ENTRIES=$(python3 -c "import json; print(len(json.load(open('eval/cassettes/eval_cassette.json'))['entries']))")
-              DONE=$(python3 -c "import json; print(len(json.load(open('eval/cassettes/recording_checkpoint.json'))['done']))")
-              echo "RESUMED from run $FOUND_RUN: $ENTRIES cassette entries, $DONE issues checkpointed done."
-              echo "resumed=true" >> "$GITHUB_ENV"
-            else
-              echo "Artifact '$FOUND_ART' downloaded but missing expected files -- starting clean."
-            fi
+          if [ -n "$BEST_RUN" ] && [ "$BEST_DONE" -gt 0 ]; then
+            echo "Best candidate: run $BEST_RUN with $BEST_DONE issues done -- restoring."
+            mkdir -p eval/cassettes
+            cp "/tmp/resume_candidates/$BEST_RUN/eval/cassettes/eval_cassette.json" eval/cassettes/eval_cassette.json
+            cp "/tmp/resume_candidates/$BEST_RUN/eval/cassettes/recording_checkpoint.json" eval/cassettes/recording_checkpoint.json
+            ENTRIES=$(python3 -c "import json; print(len(json.load(open('eval/cassettes/eval_cassette.json'))['entries']))")
+            echo "RESUMED from run $BEST_RUN: $ENTRIES cassette entries, $BEST_DONE issues checkpointed done."
+            echo "resumed=true" >> "$GITHUB_ENV"
           else
-            echo "No resumable cassette artifact found in the last 30 runs on this branch -- starting clean."
+            echo "No resumable cassette artifact with genuine new progress found in the last 10 runs on this branch -- starting clean."
           fi
 
       - name: Initialize cassette and checkpoint (if not resumed)

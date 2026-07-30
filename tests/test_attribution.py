@@ -264,7 +264,7 @@ def test_few_shot_examples_have_valid_declared_attribution() -> None:
 
     examples = build_few_shot_examples()
     assistant_turns = [ex for ex in examples if ex["role"] == "assistant"]
-    assert len(assistant_turns) == 3
+    assert len(assistant_turns) == 4  # 3 frozen (ADR-0020) + 1 appended (ADR-0037, clustered confidence)
 
     for turn in assistant_turns:
         data = json.loads(turn["content"])

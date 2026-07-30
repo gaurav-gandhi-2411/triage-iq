@@ -7,7 +7,12 @@ chat LLM responds to this prompt's structure and framing, not questions that req
 production's exact model -- so this script builds the IDENTICAL messages
 (SYSTEM_PROMPT_LEGACY + the four few-shot examples + build_triage_prompt()'s user turn,
 via the same functions production imports) and sends them to a LOCAL Ollama model
-instead of Groq.
+instead of Groq. Also runs the SAME judge production/CI already uses (qwen3:8b via
+Ollama, ADR-0019) against each plan -- the judge was already zero-cost, so there was no
+reason the label-drift-only version of this script left hedging tone (the
+resolution_estimate_reasonableness / next_steps_actionability dimensions, and the judge's
+own rationale text) unmeasured. Both checks this script was built for -- top-1 adherence
+and hedging tone -- are covered here for zero Groq cost.
 
 *** IMPORTANT CAVEAT, read before trusting a result from this script ***
 Results here indicate STRUCTURAL prompt behavior (anchoring, hedging, label drift) under
@@ -41,6 +46,7 @@ import numpy as np
 import pandas as pd
 
 from frozen_retriever import build_frozen_retrievers
+from triage_iq.evaluation.triage_eval import DIMENSION_MAX, TriageJudge
 from triage_iq.models.component_classifier import load_classifier
 from triage_iq.models.resolution import ResolutionTimePredictor
 from triage_iq.models.triage import TriageAssistant
@@ -52,6 +58,8 @@ EVAL_SET = ROOT / "eval" / "eval_set.jsonl"
 # a different weights/quantization/serving stack -- see the module docstring caveat.
 LOCAL_MODEL = "llama3.1:8b"
 OLLAMA_SEED = 42
+JUDGE_MODEL = "qwen3:8b"  # same model production/CI use for judging (ADR-0019) -- this part
+# IS production-identical, since the judge already runs on local Ollama everywhere.
 
 # Same 9 k8s issues as scripts/probe_label_anchoring_fix.py -- see that file's comment for
 # how this set was chosen. Kept in sync manually (small, one-off diagnostic scripts; not
@@ -132,11 +140,16 @@ def main() -> None:
 
     few_shots = build_few_shot_examples_legacy()
 
-    print(f"*** LOCAL MODEL ({LOCAL_MODEL} via Ollama) -- structural probe, NOT production-identical ***\n")
+    judge = TriageJudge(model=JUDGE_MODEL, provider="ollama", temperature=0.0, ollama_seed=OLLAMA_SEED, cache=None)
+    print("Ollama judge warm-up call (absorbing cold-start variance, ADR-0019)...")
+    judge._ollama_completion([{"role": "user", "content": "Reply with just: OK"}])
+
+    print(f"\n*** LOCAL MODEL ({LOCAL_MODEL} via Ollama) -- structural probe, NOT production-identical ***\n")
     print(f"{'issue':12} {'gold':20} {'clf_top1':20} {'no-fix':20} {'v1(un-anchored)':20} {'local probe':20}")
     n_calls = 0
     matches_gold = 0
     matches_v1 = 0
+    judge_totals = []
     for iid in TARGET_ISSUE_IDS:
         issue = issues_by_id[iid]
 
@@ -190,6 +203,7 @@ def main() -> None:
             probe_label = plan.predicted_component
         except Exception as e:
             probe_label = f"<parse failed: {e}>"
+            plan = None
 
         gold = issue["gold_component"]
         nofix_label, v1_label = NOFIX_V1_LABELS[iid]
@@ -200,9 +214,40 @@ def main() -> None:
             matches_v1 += 1
         print(f"{iid:12} {gold:20} {clf_top1:20} {nofix_label:20} {v1_label:20} {probe_label:20} [{tag}]")
 
-    print(f"\n{n_calls} local Ollama calls made. Zero Groq tokens spent.")
+        if plan is None:
+            print("  (judge skipped -- plan failed to parse)")
+            continue
+
+        # Local judge, zero Groq cost -- exclude fields to match run_eval.py/record_cassettes.py's
+        # plan_json construction (ADR-0020/ADR-0021), though this is a probe, not a cassette entry.
+        plan_json = json.dumps(
+            plan.model_dump(exclude={"declared_attribution", "abstention_status"}),
+            ensure_ascii=False,
+        )
+        judge_score = judge.score(
+            issue_title=issue["title"],
+            issue_body=issue["body"][:600],
+            triage_plan_json=plan_json,
+            gold={
+                "component": issue["gold_component"],
+                "priority": issue["gold_priority"],
+                "actual_resolution_days": issue["actual_resolution_days"],
+            },
+        )
+        judge_totals.append(judge_score.total())
+        print(
+            f"  judge: {judge_score.total()}/{sum(DIMENSION_MAX.values())}  "
+            f"resolution_est={judge_score.resolution_estimate_reasonableness}  "
+            f"next_steps={judge_score.next_steps_actionability}  "
+            f"component_match={judge_score.component_match}"
+        )
+        print(f"  rationale: {judge_score.judge_rationale}")
+
+    print(f"\n{n_calls} local Ollama synthesis calls + {len(judge_totals)} local Ollama judge calls made. Zero Groq tokens spent.")
     print(f"Matches gold: {matches_gold}/{len(TARGET_ISSUE_IDS)}")
     print(f"Identical to v1 (un-anchored, Groq) output: {matches_v1}/{len(TARGET_ISSUE_IDS)}")
+    if judge_totals:
+        print(f"Local-judge mean total: {np.mean(judge_totals):.2f}/{sum(DIMENSION_MAX.values())}")
     print(
         "\nReminder: this is a structural signal on a different model than production. "
         "A promising result here justifies spending the Groq recording to confirm; "

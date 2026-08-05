@@ -6,6 +6,33 @@
 
 ---
 
+> **⚠ STALE BELOW THIS LINE.** This file predates the multi-label classifier cutover
+> (ADR-0036), the GCP billing migration (ADR-0038), and everything past ADR-0011 — it was
+> not kept current through those sessions. Do not trust workstream/PR/ADR-index details
+> below as current state; the top-level `README.md` and `docs/architecture/adr/` (numbered
+> sequentially, highest number = most recent) are the actual sources of truth.
+>
+> **Current shipped status (2026-08-05), for the record here since this is where a reader
+> looking for "project state" lands first:**
+> - Component classifier: multi-label OvR cutover **live in production**, ground-truth
+>   accuracy verified (k8s top-1 +9.09pp / top-3 +4.55pp, vscode top-1 +7.49pp, CIs
+>   excluding zero) — ADR-0036.
+> - Serving stack: migrated off `triageiq-portfolio-495022` (billing account closed,
+>   caused an undetected production outage) to `expense-tracker-498014`, co-tenanted with
+>   IAM scoped to zero project-level grants — ADR-0038. Live API URL is now
+>   `https://triageiq-api-242393598566.us-central1.run.app`, not the URL printed below in
+>   the stale section.
+> - Synthesis-quality eval gate: **known-failing on kubernetes/kubernetes, by deliberate
+>   decision, not a bug** — the classifier cutover improved ground-truth component
+>   accuracy but regressed LLM-judged plan prose quality on k8s (-0.62 vs a frozen
+>   pre-cutover baseline). Four prompt-wording fixes tried, none closed the gap. Decision:
+>   keep the classifier (real accuracy win over judge-proxy optimization), leave the
+>   baseline frozen at its pre-cutover value, mark the gate `xfail` — ADR-0037, ADR-0039.
+> - Judge is now local `qwen3:8b` via Ollama (zero-cost, ADR-0019), not the Cohere/70b
+>   setup this file describes below.
+
+---
+
 ## 1. What TriageIQ is
 
 TriageIQ turns a raw GitHub issue (repo, title, body) into a structured `TriagePlan` JSON in under 4 seconds. The pipeline has four systems in sequence:

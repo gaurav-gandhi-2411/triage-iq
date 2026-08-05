@@ -66,6 +66,54 @@ mechanical changes make this a documented, deliberate state rather than a red my
    in either direction. `test_vscode_quality_regression` is untouched (vscode genuinely improved,
    +0.36 over OLD, and should keep passing normally).
 
+## UPDATE (2026-08-05, same day) — the gate had never actually run in CI. Now it does.
+
+Wiring the `xfail` marker surfaced a bigger problem: `eval-gate.yml`'s two jobs (`Structural
+invariants`, `Quality regression`) were dying at an earlier, shared pre-step —
+`scripts/verify_model_manifest.py` — before ever reaching `pytest`, for every run since at
+least 2026-07-11. Root cause: `data/models/cqr_conformal_adjustments.json`'s committed manifest
+hash was never updated after commit `39b5d88` legitimately regenerated that artifact fixing a
+CQR calibration-set leak (that commit's own message flags the regenerated artifact as needing
+approval "before treating as canonical" — a follow-up that never happened). `continue-on-error:
+true` on both jobs meant this never blocked a merge and never produced an alert — it just quietly
+turned every run of these two jobs into a no-op for **~3.5 weeks**, invisible unless someone
+opened the job log and noticed it never got past the first step.
+
+**Fixed properly, not just re-synced blind:** confirmed the local dev copy and the GCS-published
+copy of the artifact already agreed with each other (both `9ad1a63...`) — there was never an
+actual content inconsistency, only a stale manifest record — so the fix is a one-line manifest
+correction, not a re-publish. Verified against the live bucket: 11/11 artifacts now match.
+
+**Unblocking it revealed a second, independent dead test.** `eval/test_invariants.py::
+test_calibration_ece_in_tolerance` has an `ImportError` (`triage_iq.api.loader._load_classifier`
+— never existed; the real function is `triage_iq.models.component_classifier.load_classifier`)
+introduced in the *same commit* as the ADR-0036 classifier cutover (`2430490`, 2026-07-24). This
+test has not passed — has not even successfully *collected* — a single time since it was written.
+Fixed (corrected import path).
+
+**So: the honest answer to "has the quality-regression gate ever run successfully in CI" is
+effectively no, not since the manifest drift appeared.** We built the `xfail`/`strict=True`
+discipline documented above around a check that CI was never actually executing. That's now
+fixed — confirmed by re-running live (not just locally): `test_k8s_quality_regression` shows as
+`XFAIL` in the actual GitHub Actions log, `test_vscode_quality_regression`/
+`test_k8s_no_fabrication`/`test_cassette_hash_matches_baseline` all `PASSED`, and the one
+remaining failure (`test_vscode_no_fabrication`) is the pre-existing, already-documented
+informational case (vscode#311836) — matching local exactly. The required `test` CI check (a
+separate, unrelated dependency-CVE failure — 3 new aiohttp CVEs, fixed by bumping to 3.14.3, a
+genuine patch not a suppression) is also confirmed green.
+
+**One more thing unblocking the gate revealed, left open on purpose:**
+`test_grounding_known_cases_still_flagged` — a ratchet that pins two specific known-hallucination
+issues (#13057 k8s, #311836 vscode) to make sure the grounding verifier hasn't regressed to a
+no-op — now fails too, because neither pinned case reproduces under the v3 cassette. Investigated
+before touching anything: the grounding verifier itself is still working correctly
+(`test_grounding_ratchet_no_new_ungrounded_claims` passes — k8s has 0 ungrounded issues now,
+vscode has 1, both within the ratchet's bound), it's specifically the two *named* examples that
+no longer hallucinate under v3's prompt. The current actual ungrounded case for vscode is
+`#311284` instead. This is the same category of decision as the quality-baseline call above —
+which known-bad example to pin as the new canary is a judgment call, not a mechanical fix — so
+it's left failing (already non-blocking, `continue-on-error: true`) rather than silently re-pinned.
+
 ## Consequences
 
 - **Open, tracked, not silently absorbed.** The synthesis-quality regression on k8s is a real,

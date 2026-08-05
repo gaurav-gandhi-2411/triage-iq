@@ -18,11 +18,11 @@
 #     - roles/logging.configWriter   (for log-based metrics)
 #
 # Usage:
-#   GCP_PROJECT=triageiq-portfolio-495022 ALERT_EMAIL=you@example.com bash scripts/setup_monitoring.sh
+#   GCP_PROJECT=expense-tracker-498014 ALERT_EMAIL=you@example.com bash scripts/setup_monitoring.sh
 
 set -euo pipefail
 
-GCP_PROJECT="${GCP_PROJECT:-triageiq-portfolio-495022}"
+GCP_PROJECT="${GCP_PROJECT:-expense-tracker-498014}"
 SERVICE_NAME="${SERVICE_NAME:-triageiq-api}"
 GCP_REGION="${GCP_REGION:-us-central1}"
 ALERT_EMAIL="${ALERT_EMAIL:-gg5678g@gmail.com}"

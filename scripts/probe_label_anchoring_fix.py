@@ -72,7 +72,7 @@ def _get_groq_key() -> str:
         raise SystemExit(
             "GROQ_API_KEY not set. Fetch it and export it before running this script, e.g.:\n"
             "  GROQ_API_KEY=$(gcloud secrets versions access latest "
-            "--secret=groq-api-key --project=triageiq-portfolio-495022)"
+            "--secret=groq-api-key --project=expense-tracker-498014)"
         )
     return key
 

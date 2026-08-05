@@ -8,14 +8,14 @@ TriageIQ turns raw GitHub issues into structured triage decisions in under 4 sec
 
 ## Live API
 
-**Base URL:** `https://triageiq-api-779563952988.us-central1.run.app`
+**Base URL:** `https://triageiq-api-242393598566.us-central1.run.app`
 
 ```bash
 # Service info
-curl https://triageiq-api-779563952988.us-central1.run.app/
+curl https://triageiq-api-242393598566.us-central1.run.app/
 
 # Triage an issue
-curl -s -X POST https://triageiq-api-779563952988.us-central1.run.app/triage \
+curl -s -X POST https://triageiq-api-242393598566.us-central1.run.app/triage \
   -H "Content-Type: application/json" \
   -d '{
     "repo": "microsoft/vscode",
@@ -427,10 +427,10 @@ python scripts/11b_verify_priority_calibration.py
 After retraining, upload artifacts to GCS:
 
 ```bash
-gsutil -m cp data/models/component_classifier_*.pkl gs://triageiq-portfolio-495022-models/models/
-gsutil -m cp data/models/resolution_predictor_*.pkl gs://triageiq-portfolio-495022-models/models/
-gsutil -m cp -r data/models/dup_index_*_bge gs://triageiq-portfolio-495022-models/models/
-gsutil -m cp data/processed/*_temporal_train.parquet gs://triageiq-portfolio-495022-models/processed/
+gsutil -m cp data/models/component_classifier_*.pkl gs://triageiq-models/models/
+gsutil -m cp data/models/resolution_predictor_*.pkl gs://triageiq-models/models/
+gsutil -m cp -r data/models/dup_index_*_bge gs://triageiq-models/models/
+gsutil -m cp data/processed/*_temporal_train.parquet gs://triageiq-models/processed/
 ```
 
 ---
@@ -547,7 +547,7 @@ Trigger via GitHub Actions UI: `Actions → Deploy to Cloud Run → Run workflow
 ### Prometheus metrics
 
 ```bash
-curl https://triageiq-api-779563952988.us-central1.run.app/metrics \
+curl https://triageiq-api-242393598566.us-central1.run.app/metrics \
   -H "Authorization: Bearer $METRICS_TOKEN"
 ```
 
@@ -561,7 +561,7 @@ Auth behavior:
 Configured once via `scripts/setup_monitoring.sh`:
 
 ```bash
-GCP_PROJECT=triageiq-portfolio-495022 ALERT_EMAIL=you@example.com \
+GCP_PROJECT=expense-tracker-498014 ALERT_EMAIL=you@example.com \
   bash scripts/setup_monitoring.sh
 ```
 

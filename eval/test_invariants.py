@@ -238,7 +238,7 @@ def test_calibration_ece_in_tolerance() -> None:
     """Verify calibrated ECE is within tolerance of recorded values on the frozen eval set."""
     import pandas as pd
 
-    from triage_iq.api.loader import _load_classifier
+    from triage_iq.models.component_classifier import load_classifier
 
     if not EVAL_SET.exists():
         pytest.skip(reason="eval_set.jsonl not found — skipping ECE check")
@@ -250,9 +250,9 @@ def test_calibration_ece_in_tolerance() -> None:
         if not model_path.exists():
             pytest.skip(reason=f"Classifier model not found: {model_path}")
 
-        # _load_classifier() dispatches on the pkl's model_kind marker (ADR-0036: multi-label
+        # load_classifier() dispatches on the pkl's model_kind marker (ADR-0036: multi-label
         # OvR vs legacy single-label) -- same loader the live API uses, not hardcoded to one class.
-        clf = _load_classifier(MODELS_DIR, slug)
+        clf = load_classifier(MODELS_DIR, slug)
         repo_issues = [iss for iss in issues if iss["repo"] == repo]
 
         texts = [f"{iss['title']}. {iss['body']}" for iss in repo_issues]

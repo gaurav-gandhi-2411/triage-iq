@@ -1,0 +1,44 @@
+name: Health Monitor
+
+# Standing detection for exactly the failure mode that let the 2026-08-05 billing-account
+# outage go unnoticed for up to 12 days: nothing was watching /health on a schedule, so a
+# scale-to-zero Cloud Run service can silently stop being able to cold-start and nobody finds
+# out until someone happens to hit it by hand. This workflow is that watcher. A failed run
+# sends GitHub's default scheduled-workflow-failure email to the repo owner -- no extra
+# notification wiring needed for a solo-maintainer portfolio project.
+
+on:
+  schedule:
+    # Every 30 minutes. GitHub's cron scheduler is best-effort or up to a few minutes late
+    # under load, never early -- fine for a freshness check with this much margin either way.
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: health-monitor
+  cancel-in-progress: true
+
+env:
+  SERVICE_URL: https://triageiq-api-242393598566.us-central1.run.app
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit /health, fail loudly on anything but 200 + status=ok
+        run: |
+          RESP=$(curl -sS -w "\n%{http_code}" --max-time 20 "${{ env.SERVICE_URL }}/health")
+          HTTP_CODE=$(echo "$RESP" | tail -1)
+          BODY=$(echo "$RESP" | sed '$d')
+          echo "HTTP $HTTP_CODE"
+          echo "$BODY"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::/health returned $HTTP_CODE, expected 200 -- service may be down (billing, quota, crash-looping, or a bad deploy)."
+            exit 1
+          fi
+          STATUS=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || echo "")
+          if [ "$STATUS" != "ok" ]; then
+            echo "::error::/health returned 200 but status field was '$STATUS', not 'ok' -- degraded, not down."
+            exit 1
+          fi
+          echo "Health check passed."

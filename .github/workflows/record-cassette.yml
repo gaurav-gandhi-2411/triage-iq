@@ -6,12 +6,34 @@ name: Record Cassette (Manual)
 #   as a workflow artifact -- no commit. Re-run with dry_run:false once the diff looks right
 #   to commit+push for real. After a real (non-dry-run) push, eval-gate re-runs automatically
 #   on the pushed commit.
+# resume (default true): seeds this run's cassette/checkpoint from the most recent prior
+#   run's uploaded artifact on this branch, so a TPD-interrupted recording continues from
+#   where it stopped instead of restarting at issue 0. Set false for a guaranteed clean-slate
+#   recording -- required if the production models changed since the last partial attempt.
+#
+# OPERATING RULE -- ONE ATTEMPT PER ROLLING 24H WINDOW, BUT PROGRESS ACCUMULATES ACROSS
+# WINDOWS (added 2026-07-25, revised same day after adding resume). Four stacked same-day
+# attempts exhausted Groq's TPD quota (~497644/500000) even though one clean recording only
+# needs ~215k of the 500k daily budget (ADR/commit 550f05b) -- the quota is a ROLLING 24h
+# window that clears based on when the bulk of prior usage happened, not a fixed clock reset,
+# and refills gradually rather than all-at-once. That means a fresh day may still start with
+# only partial headroom, and a single run needing all 128 calls (64 issues x synthesis+judge)
+# in one window can keep failing at the same point. The fix is NOT "wait longer and hope for
+# a bigger window" -- it's resume: each TPD-interrupted attempt's partial cassette carries
+# into the next, so the recording completes across as many attempts as it takes, never
+# re-paying for issues already recorded. Still: don't immediately retry within the same
+# window hoping it refilled -- let the pre-flight quota check (not a guess) decide when to
+# run the next attempt, roughly a day apart.
 
 on:
   workflow_dispatch:
     inputs:
       dry_run:
         description: "Produce re-recorded cassette + baseline as artifacts only (no commit/push). Set false to write."
+        type: boolean
+        default: true
+      resume:
+        description: "Resume from the most recent prior run's partial cassette artifact on this branch, if one exists (default true). Set false to force a clean-slate re-record -- do this if the production models changed since the last partial attempt, since a resumed cassette would otherwise silently mix entries recorded against two different model versions."
         type: boolean
         default: true
 
@@ -21,22 +43,48 @@ concurrency:
 
 env:
   GCP_REGION: us-central1
-  GCP_PROJECT: triageiq-portfolio-495022
+  GCP_PROJECT: expense-tracker-498014
 
 jobs:
   record:
     name: Record cassette on CI platform
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # 130min: measured on this runner 2026-07-24 (run 30102404525) -- 90min was a guess and
+    # undershot. Actual: ~3min setup (incl. qwen3:8b pull) + ~96s/issue x 64 issues (CPU-only
+    # judge inference is the bottleneck, not the ~2s Groq triage call) = ~108-112min recording
+    # alone. 130min leaves ~15% buffer over the measured figure.
+    timeout-minutes: 130
     permissions:
       contents: write
       id-token: write
+      actions: read  # list/download artifacts from prior runs of this workflow, for resume
 
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute prompt fingerprint (for safe resume matching)
+        run: |
+          # Incident 2026-07-30: the resume step below used to pick whichever candidate had
+          # the MOST checkpointed issues, with no check that the candidate was recorded
+          # against the SAME prompt code as this run. It picked a 64/64 cassette from an
+          # earlier, since-superseded prompt version over a 12/64 partial from the CURRENT
+          # version -- "most progress" isn't "compatible progress". Concretely: predicted
+          # component/confidence/message content depends on triage_prompt.py and the message
+          # assembly + signal computation in triage.py; the judge's cache key additionally
+          # depends on record_cassettes.py's plan_json field selection. A resumed cassette
+          # recorded under different versions of any of these has different cache keys for
+          # every entry, and record_cassettes.py's checkpoint-skip logic has no way to detect
+          # that mismatch on its own -- it just marks everything "done" and skips it, so the
+          # run silently records ZERO new issues and only fails much later when run_eval.py's
+          # replay (a different job step) hits CassetteMissError. This fingerprint lets the
+          # resume step reject an incompatible candidate BEFORE restoring it, not after.
+          mkdir -p eval/cassettes
+          cat src/triage_iq/prompts/triage_prompt.py src/triage_iq/models/triage.py eval/record_cassettes.py \
+            | sha256sum | cut -d' ' -f1 > eval/cassettes/PROMPT_FINGERPRINT.sha256
+          echo "This run's prompt fingerprint: $(cat eval/cassettes/PROMPT_FINGERPRINT.sha256)"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -55,7 +103,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: triageiq-deployer@triageiq-portfolio-495022.iam.gserviceaccount.com
+          service_account: triageiq-deployer@expense-tracker-498014.iam.gserviceaccount.com
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -64,19 +112,19 @@ jobs:
         run: |
           mkdir -p data/models data/processed
           gsutil -m cp \
-            "gs://triageiq-portfolio-495022-models/models/component_classifier_microsoft_vscode.pkl" \
-            "gs://triageiq-portfolio-495022-models/models/component_classifier_kubernetes_kubernetes.pkl" \
-            "gs://triageiq-portfolio-495022-models/models/resolution_predictor_microsoft_vscode.pkl" \
-            "gs://triageiq-portfolio-495022-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
-            "gs://triageiq-portfolio-495022-models/models/cqr_conformal_adjustments.json" \
+            "gs://triageiq-models/models/component_classifier_microsoft_vscode.pkl" \
+            "gs://triageiq-models/models/component_classifier_kubernetes_kubernetes.pkl" \
+            "gs://triageiq-models/models/resolution_predictor_microsoft_vscode.pkl" \
+            "gs://triageiq-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
+            "gs://triageiq-models/models/cqr_conformal_adjustments.json" \
             data/models/
           gsutil -m cp -r \
-            "gs://triageiq-portfolio-495022-models/models/dup_index_microsoft_vscode_bge" \
-            "gs://triageiq-portfolio-495022-models/models/dup_index_kubernetes_kubernetes_bge" \
+            "gs://triageiq-models/models/dup_index_microsoft_vscode_bge" \
+            "gs://triageiq-models/models/dup_index_kubernetes_kubernetes_bge" \
             data/models/
           gsutil -m cp \
-            "gs://triageiq-portfolio-495022-models/processed/microsoft_vscode_temporal_train.parquet" \
-            "gs://triageiq-portfolio-495022-models/processed/kubernetes_kubernetes_temporal_train.parquet" \
+            "gs://triageiq-models/processed/microsoft_vscode_temporal_train.parquet" \
+            "gs://triageiq-models/processed/kubernetes_kubernetes_temporal_train.parquet" \
             data/processed/
 
       - name: Get Groq API key from Secret Manager
@@ -87,13 +135,176 @@ jobs:
           echo "::add-mask::$KEY"
           echo "GROQ_API_KEY=$KEY" >> "$GITHUB_ENV"
 
-      - name: Clear cassette and checkpoint
+      - name: Pre-flight Groq TPD quota check (fail fast on an already-exhausted daily quota)
         run: |
-          python3 -c "import json; json.dump({'schema_version': 'v1', 'description': 'Recorded LLM interactions for eval/test_quality_regression.py. DO NOT EDIT manually. Re-record via eval/record_cassettes.py.', 'entries': {}}, open('eval/cassettes/eval_cassette.json', 'w'), indent=2, ensure_ascii=False)"
-          python3 -c "import json; json.dump({'done': {}}, open('eval/cassettes/recording_checkpoint.json', 'w'), indent=2, ensure_ascii=False)"
-          echo "Cassette cleared (0 entries), checkpoint reset"
+          # CORRECTED 2026-07-25 after run 30148079525 false-aborted: the x-ratelimit-*-tokens
+          # response HEADERS report the PER-MINUTE (TPM) budget, not per-day (TPD) -- confirmed
+          # empirically, limit-tokens=6000 exactly matches this model's known TPM tier, nowhere
+          # close to the ~215k a full recording needs, so comparing against a daily-sized
+          # threshold aborted every time regardless of actual daily headroom. Groq does not
+          # expose remaining DAILY tokens on a successful response at all -- the only place it
+          # ever appears is inside a 429 error BODY's message text once you're already AT the
+          # daily wall ("... on tokens per day (TPD): Limit 500000, Used NNNNNN, ..."). So this
+          # check can only detect "already exhausted" (exactly what caused every failure today),
+          # not predict headroom on a healthy day -- that signal doesn't exist more cheaply than
+          # running the job.
+          RESP=$(curl -sS -w "\n%{http_code}" \
+            -X POST https://api.groq.com/openai/v1/chat/completions \
+            -H "Authorization: Bearer $GROQ_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"model":"llama-3.1-8b-instant","messages":[{"role":"user","content":"hi"}],"max_tokens":1}')
+          HTTP_CODE=$(echo "$RESP" | tail -1)
+          BODY=$(echo "$RESP" | sed '$d')
+          echo "HTTP $HTTP_CODE"
+          echo "$BODY"
+          if [ "$HTTP_CODE" = "429" ] && echo "$BODY" | grep -qi "tokens per day"; then
+            USED=$(echo "$BODY" | grep -oE "Used [0-9]+" | grep -oE "[0-9]+")
+            LIMIT=$(echo "$BODY" | grep -oE "Limit [0-9]+" | grep -oE "[0-9]+" | head -1)
+            echo "::error::Groq daily token quota already exhausted (Used ${USED:-?}/${LIMIT:-500000}). Aborting before burning a partial run -- wait ~24h from the bulk of prior usage per the one-attempt-per-window rule above, then retry."
+            # Log this reading -- reports/groq_tpd_probe_log.json feeds
+            # scripts/groq_tpd_estimate.py's headroom-recovery projection, so a 429 caught
+            # here (cheap, 1 token) is as valuable a data point as one from an actual
+            # recording attempt. Committed directly (small, separate commit, independent of
+            # dry_run) since this is observability data, not the eval baseline.
+            if [ -n "$USED" ]; then
+              python3 -c "import json, datetime; p='reports/groq_tpd_probe_log.json'; log=json.load(open(p, encoding='utf-8')); log['readings'].append({'timestamp_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds').replace('+00:00', 'Z'), 'used': int('$USED'), 'requested': None, 'source': 'CI pre-flight check, run ${{ github.run_id }}'}); json.dump(log, open(p, 'w', encoding='utf-8'), indent=2, ensure_ascii=False); open(p, 'a', encoding='utf-8').write(chr(10))"
+              git config user.email "gaurav.gandhi2411@gmail.com"
+              git config user.name "Gaurav Gandhi"
+              git add reports/groq_tpd_probe_log.json
+              git commit -m "chore(record-cassette): log TPD probe reading (Used ${USED}/${LIMIT:-500000})"
+              git push origin HEAD:refs/heads/${{ github.ref_name }} || echo "::warning::Could not push the probe-log commit (non-fatal, the reading is only lost from the log, not from this run's abort)."
+            fi
+            exit 1
+          fi
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::warning::Pre-flight probe got unexpected HTTP $HTTP_CODE (not a TPD 429, not a 200) -- proceeding without the guard; the real recording will surface any genuine problem."
+          else
+            echo "Quota check passed: not currently at the daily TPD wall."
+          fi
 
-      - name: Record cassette (live Groq API calls ~20 min)
+      - name: Restore prior recording progress (resume)
+        if: ${{ inputs.resume }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Groq's TPD quota refills gradually (rolling 24h window), not all-at-once on a fixed
+          # reset (see the OPERATING RULE comment at the top of this file) -- a run needing 128
+          # calls (64 issues x synthesis+judge) against a budget that only trickles back in will
+          # keep hitting the same partial point unless progress carries over BETWEEN runs. Every
+          # TPD-interrupted run already uploads its partial cassette+checkpoint via "Upload
+          # cassette on failure (diagnostic)" below -- this step makes that upload double as
+          # resumable input.
+          #
+          # Picks the candidate with the MOST checkpointed progress among the last 10 runs on
+          # this branch, not just the most recent artifact -- an earlier attempt can have made
+          # more progress than a later one (e.g. TPD headroom shrank between attempts), so
+          # "most recent" and "most progress" are not the same thing. Two more filters, both
+          # learned from a real false-positive (2026-07-30, run 30148079525's diagnostic upload):
+          # a run that aborts at the pre-flight quota check NEVER reaches "Clear cassette and
+          # checkpoint", so its "diagnostic" upload is just whatever eval/cassettes/*.json were
+          # in the checkout -- i.e. the currently-committed cassette, not new progress. Candidates
+          # are dropped if (a) their eval_cassette.json is byte-identical to the checked-out
+          # repo's copy (no new work happened), or (b) their checkpoint's issue IDs aren't a
+          # subset of the current eval_set.jsonl (recorded against a stale/different eval set).
+          echo "Searching recent runs on this branch for the most-progressed resumable cassette artifact..."
+          RUNS=$(gh run list --repo "${{ github.repository }}" --workflow=record-cassette.yml \
+            --branch "${{ github.ref_name }}" --limit 10 --json databaseId --jq '.[].databaseId')
+          rm -rf /tmp/resume_candidates
+          mkdir -p /tmp/resume_candidates
+          BEST_RUN=""
+          BEST_DONE=0
+          for RID in $RUNS; do
+            if [ "$RID" = "${{ github.run_id }}" ]; then
+              continue
+            fi
+            ART=$(gh api "repos/${{ github.repository }}/actions/runs/$RID/artifacts" \
+              --jq '.artifacts[] | select(.name | test("^(FAILED-cassette-diagnostic|recorded-cassette)-")) | .name' \
+              2>/dev/null | head -1)
+            if [ -z "$ART" ]; then
+              continue
+            fi
+            CAND_DIR="/tmp/resume_candidates/$RID"
+            if ! gh run download "$RID" --repo "${{ github.repository }}" --name "$ART" --dir "$CAND_DIR" 2>/dev/null; then
+              echo "  run $RID: artifact '$ART' download failed (likely expired) -- skipping."
+              continue
+            fi
+            # actions/upload-artifact@v4 preserves the workflow's relative directory structure
+            # for the multi-path glob used in the two upload steps below (eval/cassettes/*.json,
+            # reports/eval_baseline.json) -- downloaded files land at
+            # $CAND_DIR/eval/cassettes/eval_cassette.json, NOT flattened to $CAND_DIR/eval_cassette.json.
+            CAND_CASSETTE="$CAND_DIR/eval/cassettes/eval_cassette.json"
+            CAND_CHECKPOINT="$CAND_DIR/eval/cassettes/recording_checkpoint.json"
+            if [ ! -f "$CAND_CASSETTE" ] || [ ! -f "$CAND_CHECKPOINT" ]; then
+              echo "  run $RID: artifact missing expected files -- skipping."
+              continue
+            fi
+            if cmp -s "$CAND_CASSETTE" eval/cassettes/eval_cassette.json; then
+              echo "  run $RID: cassette identical to the already-committed one -- not new progress (likely a pre-flight abort before Clear-cassette ran). Skipping."
+              continue
+            fi
+            # Incident 2026-07-30: "most progress" picked a 64/64 cassette from a superseded
+            # prompt version over a 12/64 partial from the current one -- reject any candidate
+            # whose recorded prompt fingerprint doesn't match this run's (see "Compute prompt
+            # fingerprint" step above). Missing fingerprint (artifacts from before this check
+            # existed) is treated as incompatible, not as an automatic pass.
+            CAND_FINGERPRINT="$CAND_DIR/eval/cassettes/PROMPT_FINGERPRINT.sha256"
+            if [ ! -f "$CAND_FINGERPRINT" ] || ! cmp -s "$CAND_FINGERPRINT" eval/cassettes/PROMPT_FINGERPRINT.sha256; then
+              echo "  run $RID: prompt fingerprint missing or does not match this run's (recorded against a different prompt version) -- skipping."
+              continue
+            fi
+            DONE=$(python3 -c "import json; cur={json.loads(l)['id'] for l in open('eval/eval_set.jsonl', encoding='utf-8') if l.strip()}; done=json.load(open('$CAND_CHECKPOINT', encoding='utf-8'))['done']; print(0 if not set(done) <= cur else sum(1 for v in done.values() if not v.get('tpd_hit')))")
+            echo "  run $RID: $DONE genuine issues done (non-tpd_hit, within current eval_set)."
+            if [ "$DONE" -gt "$BEST_DONE" ]; then
+              BEST_DONE="$DONE"
+              BEST_RUN="$RID"
+            fi
+          done
+          if [ -n "$BEST_RUN" ] && [ "$BEST_DONE" -gt 0 ]; then
+            echo "Best candidate: run $BEST_RUN with $BEST_DONE issues done -- restoring."
+            mkdir -p eval/cassettes
+            cp "/tmp/resume_candidates/$BEST_RUN/eval/cassettes/eval_cassette.json" eval/cassettes/eval_cassette.json
+            cp "/tmp/resume_candidates/$BEST_RUN/eval/cassettes/recording_checkpoint.json" eval/cassettes/recording_checkpoint.json
+            # PROMPT_FINGERPRINT.sha256 is not copied -- it's already correct for this run
+            # (written by "Compute prompt fingerprint" above, and just verified to match).
+            ENTRIES=$(python3 -c "import json; print(len(json.load(open('eval/cassettes/eval_cassette.json'))['entries']))")
+            echo "RESUMED from run $BEST_RUN: $ENTRIES cassette entries, $BEST_DONE issues checkpointed done."
+            echo "resumed=true" >> "$GITHUB_ENV"
+          else
+            echo "No resumable cassette artifact with genuine new progress found in the last 10 runs on this branch -- starting clean."
+          fi
+
+      - name: Initialize cassette and checkpoint (if not resumed)
+        run: |
+          if [ "$resumed" = "true" ]; then
+            echo "Using restored cassette/checkpoint from the prior run (see previous step)."
+          else
+            python3 -c "import json; json.dump({'schema_version': 'v1', 'description': 'Recorded LLM interactions for eval/test_quality_regression.py. DO NOT EDIT manually. Re-record via eval/record_cassettes.py.', 'entries': {}}, open('eval/cassettes/eval_cassette.json', 'w'), indent=2, ensure_ascii=False)"
+            python3 -c "import json; json.dump({'done': {}}, open('eval/cassettes/recording_checkpoint.json', 'w'), indent=2, ensure_ascii=False)"
+            echo "Cassette cleared (0 entries), checkpoint reset."
+          fi
+
+      - name: Install Ollama (local judge runtime, ADR-0019)
+        run: curl -fsSL https://ollama.com/install.sh | sh
+
+      - name: Start Ollama server
+        run: |
+          ollama serve > /tmp/ollama-server.log 2>&1 &
+          echo "Waiting for Ollama server to become ready..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:11434/api/version >/dev/null 2>&1; then
+              echo "Ollama server is up after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Ollama server did not become ready in time -- server log:"
+          cat /tmp/ollama-server.log
+          exit 1
+
+      - name: Pull judge model (qwen3:8b)
+        run: ollama pull qwen3:8b
+
+      - name: Record cassette (live Groq API calls + local Ollama judge — timing not yet measured on CI, watch for timeout)
         run: python eval/record_cassettes.py
 
       - name: Update eval baseline
@@ -149,6 +360,26 @@ jobs:
           path: |
             eval/cassettes/eval_cassette.json
             eval/cassettes/recording_checkpoint.json
+            eval/cassettes/PROMPT_FINGERPRINT.sha256
+            reports/eval_baseline.json
+          retention-days: 14
+
+      - name: Upload cassette on failure (diagnostic + resume seed)
+        # Runs whenever ANY prior step failed (Record cassette or Update eval baseline),
+        # regardless of dry_run -- without this, a failed run leaves nothing to inspect:
+        # the cassette + checkpoint exist on the runner's disk but vanish when the job
+        # ends, so root-causing a CassetteMissError means re-running blind every time.
+        # Also the resume mechanism's input: "Restore prior recording progress" above
+        # downloads this exact artifact on the next attempt to continue where a
+        # TPD-interrupted run left off, instead of restarting at issue 0.
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FAILED-cassette-diagnostic-${{ github.run_id }}
+          path: |
+            eval/cassettes/eval_cassette.json
+            eval/cassettes/recording_checkpoint.json
+            eval/cassettes/PROMPT_FINGERPRINT.sha256
             reports/eval_baseline.json
           retention-days: 14
 

@@ -234,7 +234,13 @@ def main() -> None:
                 print(f"Synthesis recorded: {n_synthesis_recorded}")
                 print(f"Judge recorded: {n_judge_recorded}")
                 print(f"Cassette entries: {cassette.stats()['entries']}")
-                sys.exit(0)
+                # exit(1): this recording is INCOMPLETE. exit(0) here previously let a
+                # partial cassette look like a clean run to the shell -- CI's "Update
+                # eval baseline" step would then hit CassetteMissError on the first
+                # un-recorded issue with no indication the recording itself was short.
+                # Local resumable use is unaffected: re-running still resumes from
+                # recording_checkpoint.json regardless of this process's exit code.
+                sys.exit(1)
             if _is_connection_error(exc):
                 logger.error(
                     "STOP: connection lost after %d synthesis calls. "
@@ -246,7 +252,7 @@ def main() -> None:
                 print(f"Synthesis recorded: {n_synthesis_recorded}")
                 print(f"Judge recorded: {n_judge_recorded}")
                 print(f"Cassette entries: {cassette.stats()['entries']}")
-                sys.exit(0)
+                sys.exit(1)  # incomplete recording -- see TPD-exit comment above
             logger.warning("  synthesis FAILED: %s", exc)
             triage_error = str(exc)
 
@@ -258,7 +264,15 @@ def main() -> None:
 
         # --- Judge ---
         time.sleep(JUDGE_DELAY)
-        plan_json = json.dumps(plan.model_dump(), ensure_ascii=False)
+        # exclude={"declared_attribution", "abstention_status"}: must match run_eval.py's
+        # plan_json exactly (same fields) so the judge cache key computed here at record
+        # time is the same one run_eval.py's replay looks up later. Both fields are
+        # unconditional on TriagePlan (always serialize, even as None) but never populated
+        # by this eval harness -- see run_eval.py's ADR-0020/ADR-0021 comment for detail.
+        plan_json = json.dumps(
+            plan.model_dump(exclude={"declared_attribution", "abstention_status"}),
+            ensure_ascii=False,
+        )
         gold = {
             "component": issue["gold_component"],
             "priority": issue["gold_priority"],
@@ -294,7 +308,7 @@ def main() -> None:
                     print("\n=== CONNECTION LOST (during judge) ===")
                     print(f"Synthesis recorded: {n_synthesis_recorded}")
                     print(f"Judge recorded: {n_judge_recorded}")
-                    sys.exit(0)
+                    sys.exit(1)  # incomplete recording -- see TPD-exit comment above
                 if _is_rate_limit_error(exc):
                     _wait = 20 * (2 ** _attempt)
                     logger.warning(
@@ -322,7 +336,7 @@ def main() -> None:
             print(f"Synthesis recorded: {n_synthesis_recorded}")
             print(f"Judge recorded: {n_judge_recorded}")
             print(f"Cassette entries: {cassette.stats()['entries']}")
-            sys.exit(0)
+            sys.exit(1)  # incomplete recording -- see TPD-exit comment above
 
         rec = {
             "plan": plan.model_dump(),
@@ -359,6 +373,21 @@ def main() -> None:
     else:
         print(f"\n=== RECORDING INCOMPLETE — no judge scores ===")
         print(f"Cassette entries: {cassette.stats()['entries']}")
+
+    # --- Completeness assertion ---
+    # The loop above can silently leave an issue with judge_score=None without ever
+    # hitting one of the sys.exit(1) paths above: a non-TPD/non-connection synthesis
+    # exception (line ~253) or a non-TPD/non-connection/non-rate-limit judge failure
+    # after 6 retries (line ~314) both just `continue`/`break` to the next issue. Those
+    # gaps are invisible here in this script's own output -- they only surface later as
+    # a CassetteMissError in run_eval.py's replay, in a different job step (or a
+    # different day), with no link back to this run. Assert it here instead: every
+    # issue must have a non-None judge_score, or this is not a usable recording.
+    missing = [iid for iid in (i["id"] for i in issues) if results.get(iid, {}).get("judge_score") is None]
+    if missing:
+        print(f"\n=== INCOMPLETE: {len(missing)}/{len(issues)} issues missing a judge score ===")
+        print(f"Missing: {missing[:20]}{' ...' if len(missing) > 20 else ''}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

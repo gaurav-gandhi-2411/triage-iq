@@ -24,7 +24,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-REPO_URL = "https://triageiq-api-779563952988.us-central1.run.app"
+REPO_URL = "https://triageiq-api-242393598566.us-central1.run.app"
 GOLD_FILE = Path("data/triage_eval_checkpoint.jsonl")
 OUT_FILE = Path("reports/priority_calibration_verification.json")
 

@@ -21,6 +21,14 @@ PRIORITY GUIDELINES:
 4. Resource-leak / memory-leak framing does NOT automatically imply high. Assign medium unless the leak also causes a crash or completely blocks usage.
 5. Empty or image-only body: assign priority based on the title alone. If the title is ambiguous and does not indicate a crash or data loss, default to medium.
 
+CLASSIFIER CONFIDENCE GUIDANCE:
+The component classifier in SYSTEM 1 reports independent per-component probabilities, not a single
+normalized distribution, so several components scoring similarly is expected and does not mean the
+classifier is unsure. Weigh it together with the issue text and the similar issues below, the same
+way you always would — a close spread is additional context, not an instruction toward or away from
+any particular entry. The resolution estimate and next steps are produced by separate, independent
+models — do not soften or hedge them because the classifier's scores happen to be close together.
+
 ATTRIBUTION RULES:
 1. predicted_component should normally be one of the classifier's top-3 predictions. If you deviate, you MUST set component_source to "model_override" and explain why in component_override_reason.
 2. Every issue number you cite anywhere in your plan MUST be one of the numbers listed in SYSTEM 2. Never invent issue numbers.
@@ -120,6 +128,11 @@ Body:
 {body_preview}
 
 --- SYSTEM 1: COMPONENT CLASSIFIER (TF-IDF) ---
+These are independent per-component probabilities, not a single normalized distribution: each score
+answers "does this component apply?" on its own, so it is normal and expected for two or three
+components to score similarly when an issue plausibly touches more than one area — this does not by
+itself mean the classifier is unsure. Weigh these scores together with the issue text and the similar
+issues below, the same way you always would.
 Top-3 predictions:
 {classifier_lines}
 
@@ -158,6 +171,14 @@ PRIORITY GUIDELINES:
 4. Resource-leak / memory-leak framing does NOT automatically imply high. Assign medium unless the leak also causes a crash or completely blocks usage.
 5. Empty or image-only body: assign priority based on the title alone. If the title is ambiguous and does not indicate a crash or data loss, default to medium.
 
+CLASSIFIER CONFIDENCE GUIDANCE:
+The component classifier in SYSTEM 1 reports independent per-component probabilities, not a single
+normalized distribution, so several components scoring similarly is expected and does not mean the
+classifier is unsure. Weigh it together with the issue text and the similar issues below, the same
+way you always would — a close spread is additional context, not an instruction toward or away from
+any particular entry. The resolution estimate and next steps are produced by separate, independent
+models — do not soften or hedge them because the classifier's scores happen to be close together.
+
 Schema:
 {
   "predicted_component": "string — the single best component label for this issue",
@@ -182,7 +203,17 @@ Schema:
 
 
 def build_few_shot_examples_legacy() -> list[dict]:
-    """Frozen pre-attribution few-shot examples (ADR-0020) — do not edit; see SYSTEM_PROMPT_LEGACY."""
+    """Pre-attribution few-shot examples; see SYSTEM_PROMPT_LEGACY.
+
+    The first three (low/medium/high) are frozen (ADR-0020) -- do not edit their content, only
+    append after them. A fourth was appended for ADR-0037: those three were written against the
+    single-label softmax classifier's confidence shape (one dominant score, two near-zero) and no
+    longer demonstrate what the current multi-label OvR classifier normally outputs (three
+    similarly-scored components). Editing them would violate the freeze; appending doesn't -- their
+    bytes are untouched -- and gives the model an in-context precedent for "clustered scores, still
+    decisive" instead of leaving that only as instruction text in SYSTEM_PROMPT_LEGACY, which
+    in-context demonstrations tend to outweigh.
+    """
     return [
         # --- LOW ---
         {
@@ -341,6 +372,68 @@ Produce a triage plan as valid JSON matching the schema in the system prompt.
     "Add a smoke test that opens a repo folder on each supported platform in CI."
   ],
   "triage_summary": "VS Code crashes on opening any folder with a .git directory after the 1.85.0 upgrade, affecting all users on both macOS and Windows with no workaround. Two highly similar prior reports confirm the regression. High priority; requires an immediate hotfix release."
+}""",
+        },
+        # --- CLUSTERED CONFIDENCE (appended, not a frozen original -- see the module docstring
+        # note below build_few_shot_examples_legacy() for why) ---
+        {
+            "role": "user",
+            "content": """\
+Repository: microsoft/vscode
+
+--- ISSUE ---
+Title: Settings Sync intermittently drops extension-specific settings after profile switch
+Body:
+When switching between user profiles with Settings Sync enabled, per-extension settings (e.g. formatter configuration, linter rules) occasionally fail to reapply after the switch completes. Reproducible roughly 1 in 5 switches on VS Code 1.88.0. Global (non-extension) settings sync correctly every time. Re-triggering sync manually usually fixes it.
+
+--- SYSTEM 1: COMPONENT CLASSIFIER (TF-IDF) ---
+These are independent per-component probabilities, not a single normalized distribution: each score
+answers "does this component apply?" on its own, so it is normal and expected for two or three
+components to score similarly when an issue plausibly touches more than one area — this does not by
+itself mean the classifier is unsure. Weigh these scores together with the issue text and the similar
+issues below, the same way you always would.
+Top-3 predictions:
+  1. settings-sync (confidence: 0.579)
+  2. extensions (confidence: 0.531)
+  3. profiles (confidence: 0.492)
+
+--- SYSTEM 2: SIMILAR ISSUES (BGE retrieval) ---
+  #15210 (similarity: 0.742): Extension settings not restored after switching profiles on sync...
+  #14889 (similarity: 0.681): Intermittent settings sync failure specific to extension-contributed keys...
+
+--- SYSTEM 3: RESOLUTION TIME PREDICTOR (LightGBM) ---
+Point estimate: 9.4 days
+80% prediction interval: [2.8d, 21.6d]
+Note: These estimates are trained on historical data and may not account for current team velocity or issue priority changes.
+
+--- TASK ---
+Produce a triage plan as valid JSON matching the schema in the system prompt.
+Use the classifier signals, similar issues, and resolution estimate to inform your plan.
+Be specific and actionable. Do not hallucinate issue numbers not listed above.
+""",
+        },
+        {
+            "role": "assistant",
+            "content": """\
+{
+  "predicted_component": "settings-sync",
+  "component_confidence": 0.579,
+  "similar_issues": [
+    {"number": 15210, "similarity": 0.742, "relevance_note": "Same failure mode -- extension-contributed settings not restored after a profile switch."},
+    {"number": 14889, "similarity": 0.681, "relevance_note": "Same intermittent pattern isolated to extension-contributed keys specifically, not global settings."}
+  ],
+  "expected_resolution_summary": "Cross-cutting sync timing bug between profile switch and extension settings restore; typically 1-3 weeks once the race condition is isolated.",
+  "expected_resolution_lower_days": 2.8,
+  "expected_resolution_upper_days": 21.6,
+  "priority_guess": "medium",
+  "priority_rationale": "Reproducible regression with real user impact (extension settings silently drop), but a manual re-sync works around it and the failure rate (~1 in 5) is partial, not universal.",
+  "suggested_assignee_class": "settings-sync team",
+  "suggested_next_steps": [
+    "Reproduce with a minimal profile containing a single extension with custom settings, sync, then switch profiles 10x to isolate the race window.",
+    "Check whether extension-contributed settings restore is awaited before the profile switch reports complete.",
+    "Confirm #15210 and #14889 are duplicates of this or distinct manifestations of the same race."
+  ],
+  "triage_summary": "Settings Sync drops extension-specific settings on roughly 1 in 5 profile switches while global settings sync reliably every time, pointing to a timing race in the extension-settings restore path specifically. Two closely related prior reports confirm this is a recurring pattern, not a one-off. Assign to the settings-sync team; medium priority given the available workaround."
 }""",
         },
     ]
@@ -509,6 +602,68 @@ Produce a triage plan as valid JSON matching the schema in the system prompt.
   ],
   "triage_summary": "VS Code crashes on opening any folder with a .git directory after the 1.85.0 upgrade, affecting all users on both macOS and Windows with no workaround. Two highly similar prior reports confirm the regression. High priority; requires an immediate hotfix release.",
   "declared_attribution": {"component_source": "classifier_top3", "component_override_reason": "", "summary_cited_issues": [19201, 18877], "next_steps_cited_issues": []}
+}""",
+        },
+        # --- CLUSTERED CONFIDENCE (appended, ADR-0037 -- see build_few_shot_examples_legacy()) ---
+        {
+            "role": "user",
+            "content": """\
+Repository: microsoft/vscode
+
+--- ISSUE ---
+Title: Settings Sync intermittently drops extension-specific settings after profile switch
+Body:
+When switching between user profiles with Settings Sync enabled, per-extension settings (e.g. formatter configuration, linter rules) occasionally fail to reapply after the switch completes. Reproducible roughly 1 in 5 switches on VS Code 1.88.0. Global (non-extension) settings sync correctly every time. Re-triggering sync manually usually fixes it.
+
+--- SYSTEM 1: COMPONENT CLASSIFIER (TF-IDF) ---
+These are independent per-component probabilities, not a single normalized distribution: each score
+answers "does this component apply?" on its own, so it is normal and expected for two or three
+components to score similarly when an issue plausibly touches more than one area — this does not by
+itself mean the classifier is unsure. Weigh these scores together with the issue text and the similar
+issues below, the same way you always would.
+Top-3 predictions:
+  1. settings-sync (confidence: 0.579)
+  2. extensions (confidence: 0.531)
+  3. profiles (confidence: 0.492)
+
+--- SYSTEM 2: SIMILAR ISSUES (BGE retrieval) ---
+  #15210 (similarity: 0.742): Extension settings not restored after switching profiles on sync...
+  #14889 (similarity: 0.681): Intermittent settings sync failure specific to extension-contributed keys...
+
+--- SYSTEM 3: RESOLUTION TIME PREDICTOR (LightGBM) ---
+Point estimate: 9.4 days
+80% prediction interval: [2.8d, 21.6d]
+Note: These estimates are trained on historical data and may not account for current team velocity or issue priority changes.
+
+--- TASK ---
+Produce a triage plan as valid JSON matching the schema in the system prompt.
+Use the classifier signals, similar issues, and resolution estimate to inform your plan.
+Be specific and actionable. Do not hallucinate issue numbers not listed above.
+""",
+        },
+        {
+            "role": "assistant",
+            "content": """\
+{
+  "predicted_component": "settings-sync",
+  "component_confidence": 0.579,
+  "similar_issues": [
+    {"number": 15210, "similarity": 0.742, "relevance_note": "Same failure mode -- extension-contributed settings not restored after a profile switch."},
+    {"number": 14889, "similarity": 0.681, "relevance_note": "Same intermittent pattern isolated to extension-contributed keys specifically, not global settings."}
+  ],
+  "expected_resolution_summary": "Cross-cutting sync timing bug between profile switch and extension settings restore; typically 1-3 weeks once the race condition is isolated.",
+  "expected_resolution_lower_days": 2.8,
+  "expected_resolution_upper_days": 21.6,
+  "priority_guess": "medium",
+  "priority_rationale": "Reproducible regression with real user impact (extension settings silently drop), but a manual re-sync works around it and the failure rate (~1 in 5) is partial, not universal.",
+  "suggested_assignee_class": "settings-sync team",
+  "suggested_next_steps": [
+    "Reproduce with a minimal profile containing a single extension with custom settings, sync, then switch profiles 10x to isolate the race window.",
+    "Check whether extension-contributed settings restore is awaited before the profile switch reports complete.",
+    "Confirm #15210 and #14889 are duplicates of this or distinct manifestations of the same race."
+  ],
+  "triage_summary": "Settings Sync drops extension-specific settings on roughly 1 in 5 profile switches while global settings sync reliably every time, pointing to a timing race in the extension-settings restore path specifically. Two closely related prior reports confirm this is a recurring pattern, not a one-off. Assign to the settings-sync team; medium priority given the available workaround.",
+  "declared_attribution": {"component_source": "classifier_top3", "component_override_reason": "", "summary_cited_issues": [15210, 14889], "next_steps_cited_issues": [15210, 14889]}
 }""",
         },
     ]

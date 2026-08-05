@@ -21,7 +21,7 @@ pytest eval/test_invariants.py -v --no-cov
 Requires production models in `data/models/` and `data/processed/`. Download via:
 
 ```bash
-gsutil -m cp "gs://triageiq-portfolio-495022-models/models/..." data/models/
+gsutil -m cp "gs://triageiq-models/models/..." data/models/
 ```
 
 ## How to intentionally change behavior (baseline + cassette update procedure)

@@ -1,8 +1,11 @@
 # ADR-0037 — Judge-Score Regression After ADR-0036: Confidence Framing, Not Labels
 
-**Status:** Accepted — v3 prompt fix implemented (v1 and v2 tried and superseded, see below),
-pending full validation recording
-**Date:** 2026-07-30
+**Status:** v3 full validation recording FAILED the approval bar (2026-08-05) — v1/v2/v3 all
+tried and none reaches OLD; GG's explicit call is to stop iterating the prompt (see "v3 full
+recording result" below). Open: whether to accept the regression, roll back the classifier, or
+leave the baseline unwritten as a known issue — decision pending GG, no further prompt work
+until then.
+**Date:** 2026-07-30 (opened), updated 2026-08-05
 **Decider:** Gaurav Gandhi (root-cause investigation and fix executed by CC on
 `fix/record-cassette-ollama-ci`; GG directed the diagnostic procedure and the fix approach at every
 iteration)
@@ -201,3 +204,120 @@ explicit instruction — logged for a future pass.
 | Softmax-renormalize the top-3 confidences for display only (classifier's stored/calibrated probabilities untouched) | Rejected on direct evidence from k8s-14281: the correct label (app-lifecycle, 0.511) currently loses a genuine near-tie to a wrong one (kubectl, 0.520). A display rescale can't distinguish a right-label near-tie from a wrong-label near-tie — it would render *both* as confidently decisive, manufacturing false certainty on exactly the issues where the model is honestly, correctly uncertain. Also: the clustering is real information (several components genuinely plausible — the entire point of the ADR-0036 multi-label supervision fix), so faking a spread to recover a judge score would be optimizing the metric, not the product. |
 | Do nothing / accept the regression as an inherent cost of the classifier upgrade | Rejected — the evidence (both-correct group still losing 0.58 points; dimensions fed by an unchanged resolution predictor showing the same hedge) shows this is a framing artifact, not a real quality cost, so accepting it would be leaving recoverable synthesis quality on the table for no reason. |
 | Edit the three frozen few-shot examples' confidence values to reflect the new model's typical spread | Rejected — violates the ADR-0020 freeze (`do not edit`, kept for byte-exact reproducibility of what those examples demonstrate). Appending a fourth achieves the same in-context-learning goal without that cost. |
+
+## UPDATE (2026-08-05) — v3 full recording result: FAILED the approval bar. No further prompt iteration.
+
+**Full 64-issue live recording (Groq + real production classifier, run `30998299699`, dry_run):**
+
+| repo | OLD | no-fix | v1 | v3 (this recording) |
+|---|---|---|---|---|
+| k8s (n=53) | 10.5094 | 10.1887 | 10.1887 | 9.8868 (delta vs OLD -0.6226, 2.8x the +/-0.22 band) |
+| vscode (n=11) | 8.3636 | 8.4545 | 9.2727 | 8.7273 (delta vs OLD +0.3637) |
+
+k8s per-dimension, v3 vs OLD: `resolution_estimate_reasonableness` 1.3019 -> 1.1887 (below OLD --
+worse than v1's 1.321, which was above OLD); `next_steps_actionability` 2.5472 -> 2.3774 (below
+OLD -- worse than v1's 2.491); `component_match` 1.4151 -> 1.2830; `floor_fail_rate` 0.0943 -> 0.1887
+(2x). Label accuracy (`predicted_component == gold_component`, computed by replaying this run's
+actual cassette through `eval/run_eval.py`'s own pipeline): 42.2% overall (27/64) -- k8s 45.3%,
+vscode 27.3%. Against OLD 49.1% -> no-fix 47.2% -> v1 41.5% -> v3 42.2%: v3 gained only +0.7pp over
+v1's failed attempt, nowhere near no-fix or OLD.
+
+**Verdict: FAILS both approval conditions.** k8s mean is far outside +/-0.22, and de-hedging did not
+hold -- v3 is *worse* than v1 specifically on the two dimensions the whole v1-to-v3 arc was trying to
+protect, despite v3 explicitly keeping v1's de-hedging sentence unchanged and only removing the
+anchoring labels. **GG's call: stop here.** Four variants (no-fix, v1, v2, v3) and ~1.5M cumulative
+Groq tokens across this investigation is enough evidence that the framing-only hypothesis, as
+currently understood, does not have a prompt-wording fix. No further prompt iteration without a new
+diagnostic finding that changes the picture.
+
+### Local-probe invalidation -- the most reusable finding from this whole arc
+
+The 24-issue local probe (`scripts/probe_prompt_structure_local.py`, llama3.1:8b via Ollama plus the
+same qwen3:8b judge) run against v3 before spending the full recording showed zero hedging language
+in judge rationales and partial label recovery on the hardest subset -- a clean go signal. The real,
+full-scale, production-model recording showed the opposite on the metric that actually gates the
+baseline (de-hedging retention). **Local synthesis does not predict production synthesis behavior
+for this class of prompt question** (confidence framing / hedging tone) -- a different base model
+(llama3.1:8b vs Groq's llama-3.1-8b-instant) apparently reacts differently enough to the same
+confidence-clustering stimulus that a clean local signal is not informative about the production
+outcome, at least not reliably enough to use as a gate. This generalizes: any future zero-cost local
+probe of tone/hedging/framing behavior (as opposed to structural anchoring -- v2's probe, which did
+replicate cleanly, since it tested whether an inline label dominates surrounding prose, a much more
+mechanical question) should be treated as, at most, a reason to spend the real recording sooner
+rather than later -- never as a substitute for it, and never as grounds to skip it. Probe script's
+own docstring updated with this incident recorded explicitly (`scripts/probe_prompt_structure_local.py`)
+so it can't be misread as a validation gate on a future skim.
+
+### Is the k8s regression classifier-attributable, or judge drift/noise?
+
+Investigated directly (zero Groq cost -- replayed the already-recorded v1 cassette, run `30539492414`,
+downloaded from GitHub Actions artifacts which are independent of the now-migrated GCP project,
+against v1's actual code checked out in an isolated `git worktree`, and the v3 cassette against
+current code; both via the exact `eval/run_eval.py` replay machinery already used for scoring).
+
+Both the synthesis call and the judge call are nominally deterministic (`temperature=0.0` throughout;
+judge additionally pins `ollama_seed=42`) -- so any difference in what gets scored between two
+recordings is either (a) a genuine effect of the prompt text changing, or (b) real-world
+non-determinism in the hosted Groq inference / local Ollama inference despite temp=0 settings (a
+known industry-wide caveat for both, and the likely source of the +/-0.22 noise band itself, which
+was measured empirically via a two-recording jitter study rather than assumed to be zero).
+
+Found 53 k8s issues where v1 and v3 produced the identical final `predicted_component` (so the
+classifier's own contribution to the plan is constant) and compared the judge's scores and rationale
+text directly:
+
+- The 5 largest v1-to-v3 regressions on `resolution_estimate_reasonableness` / `next_steps_actionability`
+  all show the same pattern: v1's rationale calls the plan "excellent" / "reasonable" / "aligns
+  well," v3's rationale for the same final component explicitly says "the resolution estimate is
+  imprecise and overly optimistic" -- a specific, consistent, non-random characterization, not a
+  scattered flip.
+- Reading the actual `expected_resolution_summary` / `suggested_next_steps` text behind those scores:
+  in some cases (k8s-13270) the text substantively changed in a way that plausibly reads as vaguer.
+  In others (k8s-12122, k8s-12828) the text is nearly identical wording between v1 and v3, yet judged
+  differently -- which is not consistent with "the plan is objectively worse," and is consistent with
+  the judge being sensitive to something else in the full plan (component_confidence value,
+  priority_rationale, overall gestalt) that shifts its holistic read even when the specific sentence
+  being critiqued barely moved.
+
+**Honest conclusion: predominantly real, not predominantly noise, but not 100% clean either.** Three
+pieces of evidence point at "real": (1) magnitude -- k8s's delta is 2.8x the project's own
+empirically-measured noise floor, too large to attribute to jitter alone; (2) directional consistency
+-- the judge's own rationale language is not randomly distributed, it repeatedly names the same
+failure mode (imprecise/optimistic resolution estimates) specifically in v3, not scattered across
+dimensions; (3) this replicates ADR-0037's original finding above (the "both correct" bucket in the
+OLD-vs-no-fix comparison lost 0.58 points on average with zero label change) -- the same shape of
+regression, on the same dimensions, recurring across three independent classifier-unchanged prompt
+comparisons (OLD->no-fix, no-fix->v1, v1->v3) is a mechanism repeating, not noise repeating. Against
+that: the near-identical-text counterexamples (k8s-12122, k8s-12828) mean some real fraction of the
+delta likely IS judge measurement instability at the margin -- LLM judges are known to be less than
+perfectly stable to small input perturbations even fully deterministic end-to-end, which is exactly
+what the pre-existing +/-0.22 band already exists to absorb. **Net: attribute the bulk of the -0.62
+to a real, reproducible synthesis-text effect tied to the classifier's confidence-structure change;
+attribute some unquantified minority of it to judge measurement noise that the +/-0.22 band was
+already sized to tolerate, not to eliminate entirely.**
+
+### The rollback tradeoff, framed plainly
+
+**Keep the multi-label classifier (current state):** verified, statistically significant ground-truth
+accuracy win -- k8s top-1 +9.09pp / top-3 +4.55pp, vscode top-1 +7.49pp (ADR-0036, paired bootstrap,
+CIs excluding zero). Cost: judge-scored synthesis quality regresses on k8s by -0.62 (worse plan
+prose, not worse plan predictions), un-fixed after four prompt attempts.
+
+**Roll back to the single-label classifier:** restores the OLD judge baseline (the regression's root
+mechanism -- OvR sigmoid confidence clustering -- goes away with it, not just its symptom). Cost:
+gives up the verified accuracy win, i.e. regresses the actual component predictions users see against
+ground truth to recover a proxy metric (judge-scored plan prose quality) that is one step further
+from ground truth than the classifier's own top-1/top-3 accuracy is. It also does not fix anything --
+it avoids triggering the LLM's sensitivity to compressed confidence spreads today, but that latent
+prompt fragility (the synthesis prompt hedges when given a tightly-clustered top-3, regardless of why
+the clustering happened) remains unaddressed and could resurface on a future model or calibration
+change that produces a similar confidence shape. Rollback is also not a zero-effort action -- it's a
+real deploy, a real re-record, and a real reversal of ADR-0036's shipped work, not a free lever.
+
+**The decision is fundamentally**: better plans by judge score vs. better component predictions by
+ground truth. Nothing found in this investigation resolves that tradeoff -- it's a product call, not
+an engineering one, and it's GG's to make among: accept the regression with it documented (current
+state, nothing further required), roll back the classifier (undoes a verified win to fix an unverified
+proxy), or leave the baseline unwritten as a tracked known-issue (defers the call, keeps both signals
+visible, costs nothing further). **No baseline written; no further prompt iteration pending this
+decision.**

@@ -14,17 +14,35 @@ resolution_estimate_reasonableness / next_steps_actionability dimensions, and th
 own rationale text) unmeasured. Both checks this script was built for -- top-1 adherence
 and hedging tone -- are covered here for zero Groq cost.
 
-*** IMPORTANT CAVEAT, read before trusting a result from this script ***
+*** IMPORTANT CAVEAT, read before trusting a result from this script -- THIS IS NOT A
+VALIDATION GATE, IT HAS ALREADY BEEN WRONG ONCE ***
 Results here indicate STRUCTURAL prompt behavior (anchoring, hedging, label drift) under
 a locally-run model. They are NOT production-identical output -- production synthesis is
 served by Groq's llama-3.1-8b-instant, a specific hosted model/quantization/serving stack
 that this script does not reproduce. Default model below (llama3.1:8b via Ollama) is the
 closest local match by base architecture, but is still a different weights/serving path.
-Treat a "fixed here" result as a promising signal that justifies spending the real
+Treat a "fixed here" result as, at most, a weak prior that MIGHT justify spending the real
 128-call Groq recording to confirm -- never as a substitute for that recording, and never
-as grounds to write a new eval baseline. The eval baseline is defined by what production
-actually serves; this script exists so prompt iteration doesn't have to pay Groq's TPD
-budget on every attempt, only once, at the end, to confirm.
+as grounds to write a new eval baseline.
+
+CONFIRMED FALSE POSITIVE (2026-08-05, ADR-0037 v3): a 24-issue run of this script against
+the v3 prompt (labels-removed variant) showed zero hedging language in judge rationales and
+partial label recovery on the hardest subset -- a clean "go" signal. The subsequent full
+64-issue LIVE Groq + real production classifier recording showed the opposite: k8s mean
+regressed -0.62 (2.8x the project's own ±0.22 noise band), and de-hedging did NOT hold --
+resolution_estimate_reasonableness and next_steps_actionability both landed BELOW the OLD
+pre-cutover baseline, worse than v1 achieved on that same axis. Root cause of the mismatch
+is not fully understood, but the practical lesson is unambiguous either way: local synthesis
+(llama3.1:8b via Ollama) did NOT predict production synthesis (Groq llama-3.1-8b-instant)
+behavior for this class of confidence-framing/hedging prompt question, at a scale (24 vs 64
+issues) and cost (zero vs ~215K tokens) that made the discrepancy expensive to discover late
+rather than cheap to discover early. See ADR-0037's "Local-probe invalidation" section for
+the full writeup. Do not resume trusting this script's signal as gating evidence without
+first re-reading that section.
+
+The eval baseline is defined by what production actually serves; this script exists so
+prompt iteration doesn't have to pay Groq's TPD budget on every attempt, only once, at the
+end, to confirm -- treat "once, at the end, to confirm" as load-bearing, not optional.
 
 Ported from scripts/probe_label_anchoring_fix.py (2026-07-30) after two Groq-based cheap
 probes (18 calls total) were spent testing prompt-wording variants that could have been

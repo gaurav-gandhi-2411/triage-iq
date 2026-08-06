@@ -1,7 +1,8 @@
 {
   "schema_version": "v2",
   "eval_set_hash": "86c1df0a066c9dce5ece19ff9da4b3298563b8a59c2d6f8d807e4658e43260a4",
-  "cassette_hash": "f86e93f5590fbd6a036698a88f5bfa8c3eebdad6efe831ff7d235043f149fdf6",
+  "cassette_hash": "19d414f15942becf68d0910c845cb051231370e915381df0bf43ab6b1735321e",
+  "cassette_hash_note": "Re-recorded 2026-08-05 against the ADR-0036 multi-label classifier (run 30998299699, prompt v3 -- ADR-0037). This hash intentionally matches the NEW cassette so replay doesn't hard-crash with a CassetteMissError; the per_repo/overall MEANS below are intentionally left at the OLD pre-cutover values as the frozen regression target, NOT updated to the new recording's scores -- see ADR-0037/0039 for why the k8s regression is being tracked as a documented known-failing gate rather than folded into a new baseline. Do not run --update-baseline to 'fix' this without reading those ADRs first.",
   "judge": {
     "model": "qwen3:8b",
     "provider": "ollama",

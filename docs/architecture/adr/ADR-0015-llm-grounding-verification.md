@@ -98,6 +98,13 @@ set that may no longer contain them.
 This mirrors the existing `_RECORDED_ECE` pattern in the same file and the
 `current_scores`/`baseline` session-fixture pattern in `eval/test_quality_regression.py`.
 
+**UPDATE (2026-08-06, ADR-0039):** `test_grounding_known_cases_still_flagged` (item 2 above) was
+removed after the ADR-0036 classifier cutover made its pinned cases (#1678/#13435's successors,
+#13057/#311836) stop reproducing — re-pinning to whatever the current cassette happened to produce
+would have made the test tautological. `test_grounding_ratchet_no_new_ungrounded_claims` (item 1)
+remains and is now the sole grounding regression guard; see ADR-0039 for the no-op-verifier blind
+spot this reopens and why it was accepted rather than re-pinned blind.
+
 ## Explicit deferral: prompt-attribution change
 
 A separate, more invasive change — modifying the synthesis prompt to explicitly ask the LLM to

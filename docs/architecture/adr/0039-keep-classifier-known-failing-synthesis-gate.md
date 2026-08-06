@@ -110,9 +110,59 @@ before touching anything: the grounding verifier itself is still working correct
 (`test_grounding_ratchet_no_new_ungrounded_claims` passes — k8s has 0 ungrounded issues now,
 vscode has 1, both within the ratchet's bound), it's specifically the two *named* examples that
 no longer hallucinate under v3's prompt. The current actual ungrounded case for vscode is
-`#311284` instead. This is the same category of decision as the quality-baseline call above —
-which known-bad example to pin as the new canary is a judgment call, not a mechanical fix — so
-it's left failing (already non-blocking, `continue-on-error: true`) rather than silently re-pinned.
+`#311284` instead.
+
+## UPDATE (2026-08-06) — the named-case pin removed, not re-pinned
+
+The judgment call flagged above is resolved: **`test_grounding_known_cases_still_flagged` is
+removed**, not re-pinned to `#311284`.
+
+Re-pinning to whatever the current cassette happens to produce would have turned the test into a
+tautology — it would pass by construction on every future recording, since "the known-bad case"
+would always be redefined as "whatever the last recording flagged." That's the same failure mode
+this ADR's own gate-wiring fix exists to prevent elsewhere: a check that always reports green
+regardless of what actually happened.
+
+The pin's real job was covered anyway. `test_grounding_ratchet_no_new_ungrounded_claims` bounds
+the *rate* (`ungrounded_count <= baseline`, checked per-repo) and it already passes on the v3
+cassette (k8s 0, vscode 1, both within bound) — the grounding verifier itself is confirmed still
+working. The two originally-pinned cases (#13057 k8s, #311836 vscode) simply no longer reproduce
+under the current classifier + v3 prompt; that's a legitimate change in what the model gets wrong,
+not a regression in the thing that's supposed to catch it.
+
+**Tradeoff accepted, not free:** ADR-0015 added the named-case pin specifically to close a blind
+spot the rate ratchet alone can't cover — a verifier that regresses to a no-op (always reports
+`all_grounded=True`) produces an ungrounded count of 0, which trivially satisfies `0 <= 1` at
+every repo. Removing the pin reopens that blind spot until a new one is added. Deliberately not
+fixed today by grabbing whatever case is currently failing; the reason is the same as the
+tautology point above — a pin has to be a case chosen *because* it's a good adversarial example
+(a real edge case worth permanently guarding), not because it's simply what the last cassette
+happened to produce. If per-case pinning comes back, it needs a small, deliberately-curated set
+of cases picked for that reason, re-derived by hand the way the original #1678/#13435 → #13057/
+#311836 migration was, not harvested mechanically from `grounding_reports`.
+
+## UPDATE (2026-08-06) — masked-failure section: the bug wasn't just the two bugs
+
+The two mechanical bugs found in the previous update (`verify_model_manifest.py` dying on manifest
+drift, the broken `_load_classifier` import) are each individually fixed. But naming only those two
+as "the fix" understates the actual failure: **`continue-on-error: true` on both `eval-gate.yml`
+jobs is what let either bug survive for ~3.5 weeks without anyone noticing.** The manifest drift and
+the import error are the specific instances; the masking mechanism is the reusable failure mode —
+the next silent-breakage bug in this gate (a new one, not these two) would have been just as
+invisible under the same setting. Fixing the two known bugs without touching the setting that hid
+them fixes this incident but not the next one shaped like it.
+
+**Open question, deliberately not resolved today:** now that the gate actually executes (rather
+than dying before `pytest` ever ran), should `continue-on-error: true` come off `eval-gate.yml`'s
+two jobs? Not changed in this session — `test_k8s_quality_regression` is legitimately
+`xfail(strict=True)`-known-failing per this ADR's own Decision section above, and flipping the CI
+job to blocking today would make that job red on every PR touching eval code regardless of xfail
+status, which isn't the intent. But the underlying tension stands: a gate that structurally cannot
+fail loudly (`continue-on-error: true`, independent of what's inside it) is a gate that will rot
+again the same way — quietly, for weeks, until someone happens to open a job log. Resolving that
+tension (e.g. scoping `continue-on-error` to just the informational/known-xfail assertions instead
+of the whole job, so a *new*, undocumented failure still blocks) is future work, tracked here so it
+isn't rediscovered from scratch.
 
 ## Consequences
 

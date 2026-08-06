@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import cast
+from typing import Protocol, cast
 
 import faiss
 import joblib
@@ -21,6 +21,22 @@ import pandas as pd
 from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
+
+
+class Tokenizer(Protocol):
+    """Structural interface for the HF tokenizer _build_text() needs -- matches
+    SentenceTransformer.tokenizer's encode()/decode() (transformers.PreTrainedTokenizerBase),
+    without importing transformers just for a type hint."""
+
+    def encode(
+        self,
+        text: str,
+        add_special_tokens: bool = ...,
+        truncation: bool = ...,
+        max_length: int | None = ...,
+    ) -> list[int]: ...
+
+    def decode(self, ids: list[int], skip_special_tokens: bool = ...) -> str: ...
 
 SUPPORTED_MODELS = {
     "bge": "BAAI/bge-base-en-v1.5",
@@ -59,7 +75,7 @@ QUERY_INSTRUCTION_REPO_OVERRIDE: dict[str, bool] = {
 def _build_text(
     title: pd.Series,
     body: pd.Series,
-    tokenizer: object | None = None,
+    tokenizer: Tokenizer | None = None,
     max_tokens: int = 512,
     max_body: int = 512,
 ) -> list[str]:

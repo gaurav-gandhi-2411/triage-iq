@@ -1,0 +1,60 @@
+{
+  "microsoft_vscode": {
+    "repo": "microsoft_vscode",
+    "train_size": 9793,
+    "val_size": 1224,
+    "test_size": 1225,
+    "point_regression": {
+      "naive_mae_days": 3.91,
+      "model_mae_days": 11.81,
+      "improvement_pct": -202.27
+    },
+    "bucket_classifier_vs_naive": {
+      "n": 1225,
+      "trained_accuracy": 0.8269,
+      "naive_accuracy": 0.8376,
+      "accuracy_delta_bootstrap": {
+        "mean": -0.010612244897959184,
+        "ci95_lower": -0.016346938775510203,
+        "ci95_upper": -0.005714285714285714
+      },
+      "trained_obo": 0.951,
+      "naive_obo": 0.9641,
+      "obo_delta_bootstrap": {
+        "mean": -0.013061224489795919,
+        "ci95_lower": -0.019591836734693877,
+        "ci95_upper": -0.007346938775510204
+      },
+      "naive_majority_bucket": "hours"
+    }
+  },
+  "kubernetes_kubernetes": {
+    "repo": "kubernetes_kubernetes",
+    "train_size": 23928,
+    "val_size": 2991,
+    "test_size": 2992,
+    "point_regression": {
+      "naive_mae_days": 104.23,
+      "model_mae_days": 101.98,
+      "improvement_pct": 2.16
+    },
+    "bucket_classifier_vs_naive": {
+      "n": 2992,
+      "trained_accuracy": 0.3235,
+      "naive_accuracy": 0.26,
+      "accuracy_delta_bootstrap": {
+        "mean": 0.06350267379679145,
+        "ci95_lower": 0.05080213903743316,
+        "ci95_upper": 0.07554311497326198
+      },
+      "trained_obo": 0.6143,
+      "naive_obo": 0.5107,
+      "obo_delta_bootstrap": {
+        "mean": 0.1036096256684492,
+        "ci95_lower": 0.08789271390374331,
+        "ci95_upper": 0.11931818181818182
+      },
+      "naive_majority_bucket": "hours"
+    }
+  }
+}

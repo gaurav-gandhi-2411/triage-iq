@@ -1,0 +1,78 @@
+{
+  "microsoft_vscode": {
+    "repo": "microsoft_vscode",
+    "half_life_sweep": [
+      {
+        "half_life_days": 90,
+        "val_mae_days": 44.605
+      },
+      {
+        "half_life_days": 180,
+        "val_mae_days": 44.606
+      },
+      {
+        "half_life_days": 365,
+        "val_mae_days": 44.664
+      },
+      {
+        "half_life_days": 730,
+        "val_mae_days": 44.838
+      }
+    ],
+    "selected_half_life_days": 90,
+    "point_regression": {
+      "naive_mae_days": 3.91,
+      "model_mae_days": 6.82,
+      "improvement_pct": -74.63
+    },
+    "bucket_classifier_vs_naive": {
+      "n": 1225,
+      "trained_accuracy": 0.5902,
+      "naive_accuracy": 0.8376,
+      "naive_majority_bucket": "hours",
+      "accuracy_delta_bootstrap": {
+        "mean": -0.2473469387755102,
+        "ci95_lower": -0.2710408163265306,
+        "ci95_upper": -0.2220408163265306
+      }
+    }
+  },
+  "kubernetes_kubernetes": {
+    "repo": "kubernetes_kubernetes",
+    "half_life_sweep": [
+      {
+        "half_life_days": 90,
+        "val_mae_days": 107.435
+      },
+      {
+        "half_life_days": 180,
+        "val_mae_days": 107.799
+      },
+      {
+        "half_life_days": 365,
+        "val_mae_days": 107.606
+      },
+      {
+        "half_life_days": 730,
+        "val_mae_days": 107.426
+      }
+    ],
+    "selected_half_life_days": 730,
+    "point_regression": {
+      "naive_mae_days": 104.23,
+      "model_mae_days": 101.27,
+      "improvement_pct": 2.84
+    },
+    "bucket_classifier_vs_naive": {
+      "n": 2992,
+      "trained_accuracy": 0.3262,
+      "naive_accuracy": 0.26,
+      "naive_majority_bucket": "hours",
+      "accuracy_delta_bootstrap": {
+        "mean": 0.0661764705882353,
+        "ci95_lower": 0.05314171122994652,
+        "ci95_upper": 0.07921122994652406
+      }
+    }
+  }
+}

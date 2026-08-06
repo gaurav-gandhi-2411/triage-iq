@@ -1,0 +1,47 @@
+{
+  "model_max_seq_length": 512,
+  "per_repo": {
+    "kubernetes_kubernetes": {
+      "n_issues": 29994,
+      "full_text_tokens": {
+        "p50": 67.0,
+        "p90": 223.0,
+        "p95": 323.0,
+        "mean": 112.89854637594185,
+        "max": 5388
+      },
+      "current_encoded_tokens_512char_cut": {
+        "p50": 67.0,
+        "p90": 156.0,
+        "p95": 176.0,
+        "mean": 79.71057544842301,
+        "max": 355
+      },
+      "frac_issues_truncated_today": 0.17790224711608987,
+      "frac_issues_still_over_512_tokens_even_untruncated": 0.022637860905514437,
+      "mean_frac_content_dropped_today_among_truncated": 0.36672897692763495,
+      "median_tokens_dropped_today": 78.0
+    },
+    "microsoft_vscode": {
+      "n_issues": 13315,
+      "full_text_tokens": {
+        "p50": 146.0,
+        "p90": 681.0,
+        "p95": 984.2999999999993,
+        "mean": 284.20210289147576,
+        "max": 5199
+      },
+      "current_encoded_tokens_512char_cut": {
+        "p50": 133.0,
+        "p90": 209.0,
+        "p95": 228.0,
+        "mean": 129.23387157341344,
+        "max": 354
+      },
+      "frac_issues_truncated_today": 0.43161847540368004,
+      "frac_issues_still_over_512_tokens_even_untruncated": 0.14615095756665414,
+      "mean_frac_content_dropped_today_among_truncated": 0.4788338682107357,
+      "median_tokens_dropped_today": 165.0
+    }
+  }
+}

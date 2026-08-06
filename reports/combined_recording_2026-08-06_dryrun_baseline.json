@@ -1,0 +1,83 @@
+{
+  "schema_version": "v2",
+  "eval_set_hash": "0c2e57410098ea170f3f65668ff8977d3ce4942936b9a3e2ffb6696a09621bfe",
+  "cassette_hash": "996a02dacb5d637352de19170a7226363339ac56a9b1f67a282b02e4dca5c612",
+  "judge": {
+    "model": "qwen3:8b",
+    "provider": "ollama",
+    "note": "Local judge (ADR-0019) -- zero-cost, reproducible without a live key. Replaces llama-3.3-70b-versatile (Groq) used for the prior n=60 baseline. Means below are NOT comparable to that prior baseline: both the gold set (train-contamination removed, ADR-0018) and the judge model changed simultaneously -- this is a new baseline, not a corrected old one."
+  },
+  "per_repo": {
+    "microsoft/vscode": {
+      "n": 11,
+      "mean": 8.6364,
+      "dimensions": {
+        "component_match": 0.7272727272727273,
+        "similar_issues_relevance": 2.727272727272727,
+        "resolution_estimate_reasonableness": 1.0,
+        "priority_alignment": 0.36363636363636365,
+        "next_steps_actionability": 2.1818181818181817,
+        "overall_quality": 1.6363636363636365
+      },
+      "floor_fail_rate": 0.6364,
+      "fabrication_rate": 0.0,
+      "prose_number_contradiction_rate": 0.0
+    },
+    "kubernetes/kubernetes": {
+      "n": 53,
+      "mean": 10.2642,
+      "dimensions": {
+        "component_match": 1.3018867924528301,
+        "similar_issues_relevance": 2.849056603773585,
+        "resolution_estimate_reasonableness": 1.2264150943396226,
+        "priority_alignment": 0.41509433962264153,
+        "next_steps_actionability": 2.3962264150943398,
+        "overall_quality": 2.0754716981132075
+      },
+      "floor_fail_rate": 0.1887,
+      "fabrication_rate": 0.0,
+      "prose_number_contradiction_rate": 0.0
+    }
+  },
+  "overall": {
+    "n": 64,
+    "mean": 9.9844
+  },
+  "threshold": {
+    "method": "One-directional per-repo mean regression check: fires only if new_mean < baseline_mean - band. Improvements above the band never trip it.",
+    "measured_jitter": {
+      "source": "Two independent full local-judge re-recordings (attempt1 n=65, attempt2 n=57 before an unrelated Groq synthesis TPD stop), compared on 57 issues common to both.",
+      "std_per_issue_total_score": 0.748,
+      "note": "Empirically measured, not guessed -- see ADR-0019."
+    },
+    "per_repo_band": {
+      "microsoft/vscode": {
+        "band": 0.45,
+        "sem": 0.2255,
+        "n_used_for_sem": 11
+      },
+      "kubernetes/kubernetes": {
+        "band": 0.22,
+        "sem": 0.1103,
+        "n_used_for_sem": 46
+      }
+    },
+    "vscode_note": "microsoft/vscode's band (0.45) is wider than kubernetes/kubernetes's (0.22) because n=11 makes its mean statistically less stable -- this is the honest signal of the vscode data-ceiling finding (ADR-0017), not a fudged tolerance. Its gate is genuinely coarser.",
+    "derivation": "band = 2 x SEM = 2 x (measured_std / sqrt(n))"
+  },
+  "synthesis_quality_floor": {
+    "note": "ADR-0028 Phase B3: the mean-band gate above is a REGRESSION detector, not a quality floor -- it cannot catch fabrication (the judge never sees classifier_top3/retrieved_numbers) and averages away a correctness-critical floor-fail rate. per_repo[repo].fabrication_rate and .floor_fail_rate are additive first-class metrics, computed with zero new LLM calls (reused from plan.grounding_status and the judge dimension scores already produced).",
+    "fabrication_rate": {
+      "definition": "fraction of plans where plan.grounding_status.all_grounded is False (predicted_component not in classifier_top3, or any cited similar-issue number not in the retrieved set for that request).",
+      "gate": "INFORMATIONAL ONLY (GG decision, 2026-07-11): eval/test_quality_regression.py asserts fabrication_rate == 0 per repo, but that file's CI job is continue-on-error:true -- visible, non-blocking, pending a real-world observation window before promoting to a hard gate."
+    },
+    "floor_fail_rate": {
+      "definition": "fraction of plans where component_match==0 OR similar_issues_relevance==0 (the judge's own worst-band signal).",
+      "gate": "REPORT ONLY, no gate (GG decision, 2026-07-11): vscode's n=11 gives a [21,72]% CI on this proportion -- too underpowered to gate reliably. Surfaced here and in README for visibility instead."
+    },
+    "prose_number_contradiction_rate": {
+      "definition": "fraction of plans where expected_resolution_summary's free-text time claim has ZERO overlap with [expected_resolution_lower_days, expected_resolution_upper_days] (src/triage_iq/models/resolution_consistency.py, ADR-0042, LEVER 4). Motivating case: k8s-14756 said 'typically 1 day or less' against a [2.8d, 21.6d] interval -- the model contradicting numbers it was directly given, not a hedging-tone issue.",
+      "gate": "INFORMATIONAL ONLY (measured 0/64 on the current cassette -- not currently material, kept as a standing zero-cost check rather than a hard gate sized to a single historical anecdote)."
+    }
+  }
+}

@@ -38,7 +38,9 @@ def baseline() -> dict:
     import json
 
     if not BASELINE_PATH.exists():
-        pytest.skip(reason=f"Baseline file not found: {BASELINE_PATH} — run eval/run_eval.py --update-baseline first")
+        pytest.skip(
+            reason=f"Baseline file not found: {BASELINE_PATH} — run eval/run_eval.py --update-baseline first"
+        )
 
     return json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
 
@@ -86,15 +88,13 @@ def _check_repo_quality(repo: str, current_scores: dict, baseline: dict) -> None
             "",
             "  Per-criterion breakdown:",
             f"  {'dimension':<40} {'baseline':>9} {'current':>9} {'delta':>9}",
-            f"  {'-'*40} {'-'*9} {'-'*9} {'-'*9}",
+            f"  {'-' * 40} {'-' * 9} {'-' * 9} {'-' * 9}",
         ]
         for key in DIMENSION_KEYS:
             b_val = baseline_dims.get(key, float("nan"))
             c_val = current_dims.get(key, float("nan"))
             delta = c_val - b_val
-            lines.append(
-                f"  {key:<40} {b_val:>9.4f} {c_val:>9.4f} {delta:>+9.4f}"
-            )
+            lines.append(f"  {key:<40} {b_val:>9.4f} {c_val:>9.4f} {delta:>+9.4f}")
 
         pytest.fail("\n".join(lines))
 
@@ -156,6 +156,37 @@ def test_k8s_no_fabrication(current_scores: dict) -> None:
     _check_no_fabrication("kubernetes/kubernetes", current_scores)
 
 
+def _check_no_prose_number_contradiction(repo: str, current_scores: dict) -> None:
+    """Assert zero prose/number contradictions for `repo` (ADR-0042, LEVER 4).
+
+    Motivating case (ADR-0037, k8s-14756): expected_resolution_summary said "typically 1
+    day or less" against a numeric interval of [2.8d, 21.6d] -- the model contradicting
+    numbers it was directly given, a real correctness defect distinct from the hedging-tone
+    investigation in ADR-0037. INFORMATIONAL ONLY: measured 0/64 on the current cassette
+    (reports/lever4_prose_number_consistency.json) -- not currently material, kept as a
+    standing zero-cost check (same discipline as fabrication_rate above) rather than a hard
+    gate sized to a single historical anecdote from an older cassette recording.
+    """
+    rate = current_scores["per_repo"][repo]["prose_number_contradiction_rate"]
+    n = current_scores["per_repo"][repo]["n"]
+    assert rate == 0.0, (
+        f"Prose/number contradiction detected for {repo}: rate={rate:.4f} (n={n}). "
+        "The free-text expected_resolution_summary claims a time range with zero overlap "
+        "against expected_resolution_lower_days/upper_days -- see "
+        "src/triage_iq/models/resolution_consistency.py for the offending plan(s)."
+    )
+
+
+def test_vscode_no_prose_number_contradiction(current_scores: dict) -> None:
+    """microsoft/vscode's resolution summaries must not contradict their own numeric interval."""
+    _check_no_prose_number_contradiction("microsoft/vscode", current_scores)
+
+
+def test_k8s_no_prose_number_contradiction(current_scores: dict) -> None:
+    """kubernetes/kubernetes's resolution summaries must not contradict their own numeric interval."""
+    _check_no_prose_number_contradiction("kubernetes/kubernetes", current_scores)
+
+
 def test_cassette_hash_matches_baseline(baseline: dict) -> None:
     """Cassette on disk must match the hash recorded in eval_baseline.json.
 
@@ -167,7 +198,9 @@ def test_cassette_hash_matches_baseline(baseline: dict) -> None:
 
     baseline_hash: str = baseline.get("cassette_hash", "")
     if not baseline_hash:
-        pytest.fail("eval_baseline.json is missing 'cassette_hash' — re-run run_eval.py --update-baseline")
+        pytest.fail(
+            "eval_baseline.json is missing 'cassette_hash' — re-run run_eval.py --update-baseline"
+        )
 
     if not CASSETTE_PATH.exists():
         pytest.fail(f"Cassette not found: {CASSETTE_PATH}")

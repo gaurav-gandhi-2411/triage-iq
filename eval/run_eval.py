@@ -28,6 +28,7 @@ from frozen_retriever import build_frozen_retrievers
 from triage_iq.models.component_classifier import load_classifier
 from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore, TriageJudge
 from triage_iq.models.resolution import ResolutionTimePredictor
+from triage_iq.models.resolution_consistency import verify_resolution_consistency
 from triage_iq.models.triage import TriageAssistant
 
 MODELS_DIR = ROOT / "data" / "models"
@@ -81,9 +82,7 @@ def _load_models(
     # load_classifier() dispatches on the pkl's model_kind marker (ADR-0036: multi-label
     # OvR vs legacy single-label) -- same loader the live API uses, not hardcoded to one class.
     classifier = load_classifier(MODELS_DIR, slug)
-    predictor = ResolutionTimePredictor.load(
-        str(MODELS_DIR / f"resolution_predictor_{slug}.pkl")
-    )
+    predictor = ResolutionTimePredictor.load(str(MODELS_DIR / f"resolution_predictor_{slug}.pkl"))
     train_df = pd.read_parquet(PROCESSED_DIR / f"{slug}_temporal_train.parquet")
     assistant = TriageAssistant(
         repo=repo,
@@ -142,24 +141,36 @@ def compute_scores(
     # triage_with_metadata -- reading it off here adds zero LLM calls. floor_fail_rate
     # similarly reuses dimension scores the judge already produced.
     repo_grounded: dict[str, list[bool]] = {repo: [] for repo in REPO_MAP}
+    # LEVER 4 (ADR-0042): does the free-text expected_resolution_summary contradict the
+    # numeric interval it was generated alongside? Same zero-extra-cost, deterministic-check
+    # pattern as fabrication_rate above -- reads fields TriagePlan already produces.
+    repo_prose_contradicts: dict[str, list[bool]] = {repo: [] for repo in REPO_MAP}
 
     for issue in issues:
         repo = issue["repo"]
         assistant = models[repo]["assistant"]
 
-        row = pd.Series({
-            "title": issue["title"],
-            "body_clean": issue["body"],
-            "number": issue["number"],
-            "created_at": (
-                pd.Timestamp(issue["created_at"])
-                if issue.get("created_at")
-                else pd.Timestamp("now", tz="UTC")
-            ),
-        })
+        row = pd.Series(
+            {
+                "title": issue["title"],
+                "body_clean": issue["body"],
+                "number": issue["number"],
+                "created_at": (
+                    pd.Timestamp(issue["created_at"])
+                    if issue.get("created_at")
+                    else pd.Timestamp("now", tz="UTC")
+                ),
+            }
+        )
 
         plan, _meta = assistant.triage_with_metadata(row)
         repo_grounded[repo].append(plan.grounding_status.all_grounded)
+        consistency = verify_resolution_consistency(
+            plan.expected_resolution_summary,
+            plan.expected_resolution_lower_days,
+            plan.expected_resolution_upper_days,
+        )
+        repo_prose_contradicts[repo].append(consistency.contradicts)
 
         # ADR-0019: the cassette was re-recorded from scratch against current TriagePlan
         # (grounding + grounding_status included) — no exclusion needed for those anymore.
@@ -221,6 +232,7 @@ def compute_scores(
         ]
         n = len(totals)
         fabrication_rate = float(np.mean([not g for g in repo_grounded[repo]])) if n else 0.0
+        prose_number_contradiction_rate = float(np.mean(repo_prose_contradicts[repo])) if n else 0.0
 
         per_repo[repo] = {
             "n": n,
@@ -228,6 +240,7 @@ def compute_scores(
             "dimensions": dim_means,
             "floor_fail_rate": round(float(np.mean(floor_fails)), 4) if n else 0.0,
             "fabrication_rate": round(fabrication_rate, 4),
+            "prose_number_contradiction_rate": round(prose_number_contradiction_rate, 4),
         }
 
     overall: dict[str, Any] = {
@@ -263,7 +276,7 @@ _JITTER_SEM_N = {"kubernetes/kubernetes": 46, "microsoft/vscode": 11}
 def _tolerance_band(repo: str) -> float:
     """2x SEM band for `repo`, derived from the measured re-record jitter (ADR-0019)."""
     n = _JITTER_SEM_N[repo]
-    sem = _MEASURED_JITTER_STD / (n ** 0.5)
+    sem = _MEASURED_JITTER_STD / (n**0.5)
     return round(2 * sem, 2)
 
 
@@ -343,6 +356,17 @@ def _write_baseline(scores: dict, path: Path = BASELINE_PATH) -> None:
                 "[21,72]% CI on this proportion -- too underpowered to gate reliably. Surfaced "
                 "here and in README for visibility instead.",
             },
+            "prose_number_contradiction_rate": {
+                "definition": "fraction of plans where expected_resolution_summary's free-text "
+                "time claim has ZERO overlap with [expected_resolution_lower_days, "
+                "expected_resolution_upper_days] (src/triage_iq/models/resolution_consistency.py, "
+                "ADR-0042, LEVER 4). Motivating case: k8s-14756 said 'typically 1 day or less' "
+                "against a [2.8d, 21.6d] interval -- the model contradicting numbers it was "
+                "directly given, not a hedging-tone issue.",
+                "gate": "INFORMATIONAL ONLY (measured 0/64 on the current cassette -- not "
+                "currently material, kept as a standing zero-cost check rather than a hard gate "
+                "sized to a single historical anecdote).",
+            },
         },
     }
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -372,7 +396,8 @@ def main() -> None:
             print(f"    {dim}: {val:.4f}")
         print(
             f"    floor_fail_rate: {data['floor_fail_rate']:.4f}   "
-            f"fabrication_rate: {data['fabrication_rate']:.4f}"
+            f"fabrication_rate: {data['fabrication_rate']:.4f}   "
+            f"prose_number_contradiction_rate: {data['prose_number_contradiction_rate']:.4f}"
         )
     print()
     print(f"  overall: n={scores['overall']['n']}, mean={scores['overall']['mean']:.4f}/15")

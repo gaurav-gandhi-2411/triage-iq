@@ -10,6 +10,13 @@ TriageIQ turns raw GitHub issues into structured triage decisions in under 4 sec
 
 **Base URL:** `https://triageiq-api-242393598566.us-central1.run.app`
 
+> Served from GCP project `expense-tracker-498014` (region `us-central1`), co-tenanted alongside
+> an unrelated product under an IAM-scoped deploy identity with zero project-level grants. This is
+> a stopgap after the original project's billing account was closed and production went down
+> undetected for up to 12 days — full rationale, the IAM scoping that makes co-tenancy safe, and
+> the plan to eventually move to a dedicated project:
+> [`docs/architecture/adr/0038-billing-outage-migration-expense-tracker.md`](docs/architecture/adr/0038-billing-outage-migration-expense-tracker.md).
+
 ```bash
 # Service info
 curl https://triageiq-api-242393598566.us-central1.run.app/
@@ -97,8 +104,8 @@ suggested_next_steps, triage_summary
 | Resolution predictor | vscode | Bucket classifier: served output (see note) | **naive-prior fallback** (~33% conf) — raw classifier loses to naive by −22.08pp [−25.81, −18.02] |
 | Resolution predictor | vscode | CQR conformal coverage (target 80%) | 74.6% [69.9, 78.8] |
 | Resolution predictor | vscode | Inference latency p50 | 1.4ms |
-| LLM synthesis (judge, /15) | kubernetes | Mean-band score (regression detector only) | 10.51/15 (70.1%) |
-| LLM synthesis (judge, /15) | vscode | Mean-band score (regression detector only) | 8.36/15 (55.8%) |
+| LLM synthesis (judge, /15) | kubernetes | **Current mean, regression detector (see Known Limitations)** | **9.89/15 (65.9%)** — vs. frozen gate baseline 10.51/15, known regression |
+| LLM synthesis (judge, /15) | vscode | Current mean, regression detector (see Known Limitations) | 8.73/15 (58.2%) — vs. frozen gate baseline 8.36/15, improved |
 | LLM synthesis | kubernetes | **Floor-fail rate (see note)** | **9.4%** [4.0, 19.9] |
 | LLM synthesis | vscode | **Floor-fail rate (see note)** | **45.5%** [21.3, 72.0] |
 | LLM synthesis | kubernetes | Fabrication rate (grounding-verified, see note) | 1.9% |
@@ -593,7 +600,11 @@ jsonPayload.log_type="access" AND jsonPayload.llm_status="parse_failure"  # LLM 
 
 **CVE-2026-1839 in transformers 4.x.** Suppressed in `pip-audit` — the vulnerable code path (`Trainer._load_rng_state`) is not reachable in an inference-only service. Fix requires `sentence-transformers 2→5` + `transformers 4→5` (triple major bump). Tracked in [`DEPENDENCIES.md`](DEPENDENCIES.md).
 
-**Synthesis judge quality gate: known-failing on kubernetes/kubernetes, by deliberate decision, not a bug.** The ADR-0036 multi-label classifier cutover (component prediction: k8s top-1 +9.09pp / top-3 +4.55pp, vscode top-1 +7.49pp — both ground-truth-verified, CIs excluding zero, **live in production**) has a documented side effect on LLM-judged synthesis-plan quality: the new classifier's independent per-class confidence scores cluster more tightly than the old softmax's, which reads to the synthesis LLM as "the model is unsure" and induces hedged language in the generated plan (including in dimensions fed by an unrelated, unchanged resolution predictor). k8s's judge-scored quality mean sits at 9.8868/15 against a frozen baseline of 10.5094/15 (-0.62, outside the measured ±0.22 noise band). Four prompt-wording fixes were tried and none closed the gap (see ADR-0037). **Decision (ADR-0039): keep the classifier — a verified ground-truth accuracy win is not traded away to satisfy a judge proxy reacting to writing style — leave the baseline frozen at its pre-cutover value rather than silently normalizing the regression, and mark `eval/test_quality_regression.py::test_k8s_quality_regression` as an explicit, `strict=True` `xfail` pointing at both ADRs.** Component predictions actually served to users are unaffected and improved; only the LLM-judge's opinion of the generated plan's prose regressed.
+**Synthesis judge quality gate: known-failing on kubernetes/kubernetes, by deliberate decision, not a bug.** The ADR-0036 multi-label classifier cutover (component prediction: k8s top-1 +9.09pp / top-3 +4.55pp, vscode top-1 +7.49pp — both ground-truth-verified, CIs excluding zero, **live in production**) has a documented side effect on LLM-judged synthesis-plan quality: the new classifier's independent per-class confidence scores cluster more tightly than the old softmax's, which reads to the synthesis LLM as "the model is unsure" and induces hedged language in the generated plan (including in dimensions fed by an unrelated, unchanged resolution predictor). k8s's judge-scored quality mean sits at 9.8868/15 against a frozen baseline of 10.5094/15 (-0.62, outside the measured ±0.22 noise band). Four prompt-wording fixes were tried and none closed the gap (see ADR-0037). **Decision (ADR-0039): keep the classifier — a verified ground-truth accuracy win is not traded away to satisfy a judge proxy reacting to writing style — leave the baseline frozen at its pre-cutover value rather than silently normalizing the regression, and mark `eval/test_quality_regression.py::test_k8s_quality_regression` as an explicit, `strict=True` `xfail` pointing at both ADRs.** Component predictions actually served to users are unaffected and improved; only the LLM-judge's opinion of the generated plan's prose regressed. vscode moved the other direction under the same recording (8.3636 → 8.7273, +0.36) and keeps passing its regression test normally.
+
+**Eval gate is informational-only, not a merge block.** All the `xfail`/ratchet discipline above lives inside `.github/workflows/eval-gate.yml`'s two jobs (`structural-invariants`, `quality-regression`), and both are still `continue-on-error: true` — informational, never a required status check. ADR-0039 also found (2026-08-05) that these jobs had been silently failing at an earlier pre-step (a stale model-manifest hash) for ~3.5 weeks before that fix, and `continue-on-error` is exactly why that never blocked anything or raised an alert. The gate now runs and reports correctly, but promoting it to an actual required check — so a future regression can't merge silently the way this one almost did — is still open.
+
+**Health monitor fires on an irregular cadence, not the configured 30 minutes.** `.github/workflows/health-monitor.yml` (added in ADR-0038 specifically to close the blind spot that let the billing-outage go undetected for up to 12 days) is configured for `cron: '*/30 * * * *'`, but observed run history shows gaps of 1.5–3+ hours between executions, not 30 minutes — a known characteristic of GitHub Actions' scheduled-workflow queue for low-traffic repos, not a bug in the workflow itself. The monitor is still meaningfully better than nothing (it did catch the outage-recovery transition), but a multi-hour detection window is a real gap against the incident it exists to prevent.
 
 ---
 

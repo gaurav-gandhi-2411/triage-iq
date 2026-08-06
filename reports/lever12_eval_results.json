@@ -1,0 +1,116 @@
+{
+  "bootstrap": {
+    "n_resamples": 2000,
+    "seed": 42
+  },
+  "results": {
+    "k8s_related": {
+      "repo": "kubernetes_kubernetes",
+      "n_eval_pairs_total": 150,
+      "n_evaluated": 150,
+      "n_missing_from_index": 0,
+      "baseline_r5": 0.18,
+      "baseline_r5_ci95": [
+        0.12,
+        0.24
+      ],
+      "lever1_r5": 0.21333333333333335,
+      "lever1_r5_ci95": [
+        0.1467,
+        0.28
+      ],
+      "lever1_2_r5": 0.24666666666666667,
+      "lever1_2_r5_ci95": [
+        0.18,
+        0.3133
+      ],
+      "delta_lever1_vs_baseline": 0.0333,
+      "delta_lever1_vs_baseline_ci95": [
+        0.0067,
+        0.06
+      ],
+      "delta_lever1_2_vs_baseline": 0.0667,
+      "delta_lever1_2_vs_baseline_ci95": [
+        0.0267,
+        0.1067
+      ],
+      "delta_lever2_only_vs_lever1": 0.0333,
+      "delta_lever2_only_vs_lever1_ci95": [
+        0.0,
+        0.0667
+      ]
+    },
+    "vscode_duplicate": {
+      "repo": "microsoft_vscode",
+      "n_eval_pairs_total": 200,
+      "n_evaluated": 200,
+      "n_missing_from_index": 0,
+      "baseline_r5": 0.505,
+      "baseline_r5_ci95": [
+        0.43,
+        0.575
+      ],
+      "lever1_r5": 0.535,
+      "lever1_r5_ci95": [
+        0.465,
+        0.605
+      ],
+      "lever1_2_r5": 0.515,
+      "lever1_2_r5_ci95": [
+        0.445,
+        0.585
+      ],
+      "delta_lever1_vs_baseline": 0.03,
+      "delta_lever1_vs_baseline_ci95": [
+        -0.01,
+        0.07
+      ],
+      "delta_lever1_2_vs_baseline": 0.01,
+      "delta_lever1_2_vs_baseline_ci95": [
+        -0.035,
+        0.05
+      ],
+      "delta_lever2_only_vs_lever1": -0.02,
+      "delta_lever2_only_vs_lever1_ci95": [
+        -0.05,
+        0.01
+      ]
+    },
+    "vscode_related": {
+      "repo": "microsoft_vscode",
+      "n_eval_pairs_total": 19,
+      "n_evaluated": 19,
+      "n_missing_from_index": 0,
+      "baseline_r5": 0.631578947368421,
+      "baseline_r5_ci95": [
+        0.4211,
+        0.8421
+      ],
+      "lever1_r5": 0.5789473684210527,
+      "lever1_r5_ci95": [
+        0.3684,
+        0.7895
+      ],
+      "lever1_2_r5": 0.47368421052631576,
+      "lever1_2_r5_ci95": [
+        0.2632,
+        0.6842
+      ],
+      "delta_lever1_vs_baseline": -0.0526,
+      "delta_lever1_vs_baseline_ci95": [
+        -0.1579,
+        0.0
+      ],
+      "delta_lever1_2_vs_baseline": -0.1579,
+      "delta_lever1_2_vs_baseline_ci95": [
+        -0.3158,
+        0.0
+      ],
+      "delta_lever2_only_vs_lever1": -0.1053,
+      "delta_lever2_only_vs_lever1_ci95": [
+        -0.2632,
+        0.0
+      ]
+    }
+  }
+}

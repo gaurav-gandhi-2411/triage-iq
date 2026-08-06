@@ -1,0 +1,49 @@
+{
+  "reproduction": {
+    "k8s_related": {
+      "repo": "kubernetes_kubernetes",
+      "n_evaluated": 150,
+      "query_instruction_applied": true,
+      "recall_at_5": 0.24666666666666667,
+      "recall_at_5_ci95": [
+        0.18,
+        0.3133
+      ]
+    },
+    "vscode_duplicate": {
+      "repo": "microsoft_vscode",
+      "n_evaluated": 200,
+      "query_instruction_applied": false,
+      "recall_at_5": 0.535,
+      "recall_at_5_ci95": [
+        0.465,
+        0.605
+      ]
+    },
+    "vscode_related": {
+      "repo": "microsoft_vscode",
+      "n_evaluated": 19,
+      "query_instruction_applied": false,
+      "recall_at_5": 0.5789473684210527,
+      "recall_at_5_ci95": [
+        0.3684,
+        0.7895
+      ]
+    }
+  },
+  "consistency": {
+    "kubernetes_kubernetes": {
+      "n_checked": 200,
+      "n_mismatches": 0,
+      "mismatches_sample": [],
+      "passed": true
+    },
+    "microsoft_vscode": {
+      "n_checked": 200,
+      "n_mismatches": 0,
+      "mismatches_sample": [],
+      "passed": true
+    }
+  },
+  "all_consistency_checks_passed": true
+}

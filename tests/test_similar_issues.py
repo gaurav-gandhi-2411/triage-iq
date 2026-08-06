@@ -11,6 +11,7 @@ from __future__ import annotations
 import pandas as pd
 
 from triage_iq.models.similar_issues import (
+    QUERY_INSTRUCTION_REPO_OVERRIDE,
     QUERY_INSTRUCTIONS,
     SimilarIssueRetriever,
     _build_text,
@@ -88,15 +89,16 @@ def test_build_text_reserves_room_for_longer_titles() -> None:
     assert n_words_long < n_words_short
 
 
-def _retriever_stub(model_key: str) -> SimilarIssueRetriever:
+def _retriever_stub(model_key: str, repo: str = "some_other_repo") -> SimilarIssueRetriever:
     """Build a SimilarIssueRetriever without loading a real SentenceTransformer -- only
-    model_key is needed by _apply_query_instruction()."""
+    model_key/repo are needed by _apply_query_instruction()."""
     obj = SimilarIssueRetriever.__new__(SimilarIssueRetriever)
     obj.model_key = model_key
+    obj.repo = repo
     return obj
 
 
-def test_query_instruction_default_applies_for_bge() -> None:
+def test_query_instruction_default_applies_for_bge_on_a_repo_with_no_override() -> None:
     r = _retriever_stub("bge")
     out = r._apply_query_instruction("how do I fix X", None)  # noqa: SLF001
     assert out == QUERY_INSTRUCTIONS["bge"] + "how do I fix X"
@@ -118,6 +120,30 @@ def test_query_instruction_explicit_override_false() -> None:
     r = _retriever_stub("bge")
     out = r._apply_query_instruction("q", False)  # noqa: SLF001
     assert out == "q"
+
+
+def test_query_instruction_repo_override_on_for_k8s() -> None:
+    """ADR-0040: k8s gets the instruction by default even without an explicit override."""
+    r = _retriever_stub("bge", repo="kubernetes_kubernetes")
+    out = r._apply_query_instruction("q", None)  # noqa: SLF001
+    assert out == QUERY_INSTRUCTIONS["bge"] + "q"
+    assert QUERY_INSTRUCTION_REPO_OVERRIDE["kubernetes_kubernetes"] is True
+
+
+def test_query_instruction_repo_override_off_for_vscode() -> None:
+    """ADR-0040: vscode's per-repo override wins over the model's own bge default -- this is
+    the whole point of the override (bge's blanket default would otherwise turn it on here)."""
+    r = _retriever_stub("bge", repo="microsoft_vscode")
+    out = r._apply_query_instruction("q", None)  # noqa: SLF001
+    assert out == "q"
+    assert QUERY_INSTRUCTION_REPO_OVERRIDE["microsoft_vscode"] is False
+
+
+def test_query_instruction_repo_override_beaten_by_explicit_flag() -> None:
+    """The explicit True/False override (eval A/B isolation) beats even the repo override."""
+    r = _retriever_stub("bge", repo="microsoft_vscode")
+    out = r._apply_query_instruction("q", True)  # noqa: SLF001
+    assert out == QUERY_INSTRUCTIONS["bge"] + "q"
 
 
 def test_build_index_never_gets_query_instruction() -> None:

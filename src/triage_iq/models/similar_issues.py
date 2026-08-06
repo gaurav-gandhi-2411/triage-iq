@@ -37,6 +37,24 @@ QUERY_INSTRUCTIONS: dict[str, str] = {
     "minilm": "",
 }
 
+# Per-repo override for whether to apply this model's query instruction (ADR-0040, LEVER 2).
+# Measured on D1's frozen eval sets (paired bootstrap, reports/lever12_eval_results.json):
+# k8s_related R@5 +6.67pp CI[+2.67,+10.67] with the instruction ON (excludes zero, real);
+# vscode_duplicate R@5 the instruction ALONE (isolated from lever 1) moves -2.00pp
+# CI[-5.0,+1.0] -- doesn't clear significance, but it's directionally negative and it erases
+# lever 1's own positive trend on that repo (53.5% -> 51.5%). GG's call: encode the asymmetry
+# rather than average over it -- shipping a change with a known-negative direction on one repo
+# for the sake of a uniform config is accepting a real (if unproven) cost for code simplicity.
+# Working hypothesis, NOT confirmed: vscode's task is near-duplicate matching, where BGE's
+# "searching relevant passages" framing may dilute the exact-match lexical signal that task
+# depends on; k8s's task is genuinely semantic relatedness, where the framing fits. If a
+# future eval shows the instruction actually helps vscode, flip this -- don't leave it stale
+# out of inertia. Repos not listed here fall back to the model's QUERY_INSTRUCTIONS default.
+QUERY_INSTRUCTION_REPO_OVERRIDE: dict[str, bool] = {
+    "kubernetes_kubernetes": True,
+    "microsoft_vscode": False,
+}
+
 
 def _build_text(
     title: pd.Series,
@@ -134,16 +152,22 @@ class SimilarIssueRetriever:
     def _apply_query_instruction(self, text: str, apply_query_instruction: bool | None) -> str:
         """Prefix `text` with this model's query-side instruction (BGE only; no-op for MiniLM).
 
-        apply_query_instruction=None (the default for all real callers, prod included) means
-        "use this model's documented default" -- True for bge, False for minilm. The explicit
-        True/False override exists only so eval scripts can A/B the instruction's effect in
-        isolation (LEVER 2); prod code should never pass it.
+        Resolution order for apply_query_instruction=None (all real callers, prod included):
+          1. QUERY_INSTRUCTION_REPO_OVERRIDE[self.repo], if this repo has one (ADR-0040) --
+             a per-repo decision beats the model-level default, since the same model can
+             behave asymmetrically across genuinely different retrieval tasks (see ADR-0040).
+          2. Otherwise, the model's own QUERY_INSTRUCTIONS default -- True for bge, False for
+             minilm.
+        The explicit True/False override exists only so eval scripts can A/B the instruction's
+        effect in isolation, ignoring both the repo and model defaults; prod code should never
+        pass it.
         """
-        use = (
-            apply_query_instruction
-            if apply_query_instruction is not None
-            else bool(QUERY_INSTRUCTIONS.get(self.model_key, ""))
-        )
+        if apply_query_instruction is not None:
+            use = apply_query_instruction
+        elif self.repo in QUERY_INSTRUCTION_REPO_OVERRIDE:
+            use = QUERY_INSTRUCTION_REPO_OVERRIDE[self.repo]
+        else:
+            use = bool(QUERY_INSTRUCTIONS.get(self.model_key, ""))
         return QUERY_INSTRUCTIONS.get(self.model_key, "") + text if use else text
 
     def retrieve(

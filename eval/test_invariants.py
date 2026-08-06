@@ -58,33 +58,24 @@ _COVERAGE_TOL = 0.05
 # Re-derived 2026-07-11 (ADR-0028 Phase B1): k8s #14398 quarantined from eval_set.jsonl
 # (a near-duplicate leak, cosine 0.907 vs classifier_train #14399 — unrelated to
 # grounding), changing the file's hash and k8s's n from 54 to 53. #14398 itself was
-# grounded, so this is purely a denominator/hash change — the same two known-bad cases
-# (#13057 k8s, #311836 vscode) persist unchanged; re-confirmed directly via
-# measure_grounding.compute_grounding_reports() against the current committed cassette.
+# grounded, so this is purely a denominator/hash change.
+#
+# ADR-0039: the per-issue named-case pin (test_grounding_known_cases_still_flagged) was
+# removed 2026-08-06 — the two cases pinned at the time (#13057 k8s, #311836 vscode) no
+# longer reproduce under the v3 cassette, and re-pinning to whatever the current cassette
+# happens to produce would make the test self-fulfilling. Only the rate bound
+# (ungrounded_count/n below) remains; see ADR-0039 for the no-op-verifier blind-spot
+# tradeoff this reopens and the guidance for choosing deliberate adversarial pins later.
 _GROUNDING_BASELINE = {
     "eval_set_hash": "86c1df0a066c9dce5ece19ff9da4b3298563b8a59c2d6f8d807e4658e43260a4",
     "per_repo": {
         "kubernetes/kubernetes": {
             "ungrounded_count": 1,
             "n": 53,
-            "known_ungrounded_cases": {
-                13057: {
-                    "axis": "component",
-                    "detail": "predicted_component 'storage' not in classifier_top3 "
-                    "['provider/gcp', 'kubectl', 'security']",
-                },
-            },
         },
         "microsoft/vscode": {
             "ungrounded_count": 1,
             "n": 11,
-            "known_ungrounded_cases": {
-                311836: {
-                    "axis": "component",
-                    "detail": "predicted_component 'webview' not in classifier_top3 "
-                    "['suggest', 'accessibility', 'debug']",
-                },
-            },
         },
     },
 }
@@ -467,8 +458,8 @@ def _eval_set_hash_guard() -> str:
 
 
 _HASH_DRIFT_MSG = (
-    "eval_set.jsonl changed — re-derive _GROUNDING_BASELINE (ratchet + known-case pins) "
-    "deliberately, do not silently compare across different sets"
+    "eval_set.jsonl changed — re-derive _GROUNDING_BASELINE (ratchet bound) deliberately, "
+    "do not silently compare across different sets"
 )
 
 
@@ -494,6 +485,14 @@ def test_grounding_ratchet_no_new_ungrounded_claims(grounding_reports: list[dict
     test on its own, independent of the other repo's volume. Guards against silent
     regressions in synthesis grounding (component/similar-issue hallucination) creeping in
     above the measured 2/30 (k8s) + 0/30 (vscode) baseline. See ADR-0015.
+
+    This is now the sole grounding regression guard — the companion named-case pin
+    (test_grounding_known_cases_still_flagged) was removed per ADR-0039 because its pinned
+    cases stopped reproducing and re-pinning to the current output would have made it
+    self-fulfilling. That reopens the no-op-verifier blind spot ADR-0015 originally added
+    the pin to close (a verifier that always returns all_grounded=True would trivially
+    satisfy `0 <= 1` here); see ADR-0039 for why that tradeoff was accepted rather than
+    re-pinned blind.
     """
     current_hash = _eval_set_hash_guard()
     assert current_hash == _GROUNDING_BASELINE["eval_set_hash"], _HASH_DRIFT_MSG
@@ -510,37 +509,3 @@ def test_grounding_ratchet_no_new_ungrounded_claims(grounding_reports: list[dict
             f"{repo}: ungrounded claim count regressed: {ungrounded_count} > "
             f"baseline {baseline['ungrounded_count']}"
         )
-
-
-def test_grounding_known_cases_still_flagged(grounding_reports: list[dict]) -> None:
-    """The two known-bad cases (#13057 k8s, #311836 vscode) must still be caught by name.
-
-    This catches a verifier regressed to a no-op, which would otherwise trivially satisfy
-    the ratchet test at 0 <= 1 ungrounded per repo. See ADR-0015.
-
-    Re-derived against the clean n=65 set + local qwen3:8b judge (ADR-0018/0019). The old
-    pins (#1678 similar_issue-axis, #13435 component-axis, both from the contaminated n=60
-    set) are gone: #1678 isn't in the clean n=65 set, and no similar_issue-axis hallucination
-    exists in the current committed cassette to pin — both new pins are component-axis. This
-    is not a weaker test by design; it reflects what's actually in the committed recording.
-    """
-    current_hash = _eval_set_hash_guard()
-    assert current_hash == _GROUNDING_BASELINE["eval_set_hash"], _HASH_DRIFT_MSG
-
-    by_issue = {c["issue_number"]: c for c in grounding_reports}
-
-    case_13057 = by_issue.get(13057)
-    assert case_13057 is not None, "Issue #13057 not found in grounding reports"
-    assert case_13057["component_grounded"] is False, (
-        "Issue #13057: expected component_grounded is False "
-        f"(predicted_component={case_13057['predicted_component']!r}, "
-        f"classifier_top3_labels={case_13057['classifier_top3_labels']})"
-    )
-
-    case_311836 = by_issue.get(311836)
-    assert case_311836 is not None, "Issue #311836 not found in grounding reports"
-    assert case_311836["component_grounded"] is False, (
-        "Issue #311836: expected component_grounded is False "
-        f"(predicted_component={case_311836['predicted_component']!r}, "
-        f"classifier_top3_labels={case_311836['classifier_top3_labels']})"
-    )

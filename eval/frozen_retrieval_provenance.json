@@ -1,10 +1,10 @@
 {
   "embedding_model": "BAAI/bge-base-en-v1.5",
   "k": 5,
-  "frozen_at": "2026-06-21",
+  "frozen_at": "2026-08-06",
   "frozen_on": "cpu-float32",
   "index_hashes": {
-    "microsoft_vscode": "32bfc53cfaf2c240a5998424b3b83fcbf16edc9c2b879e79100fa6b13f918efc",
-    "kubernetes_kubernetes": "d9ed7e3e2951f4042e6955b8249c0c68887db58912ecc054b3192e73d6a0be68"
+    "microsoft_vscode": "3b825bd00696b2b83c2731a0e5cde9af0123b109eded2f7e48ea1194855e3a53",
+    "kubernetes_kubernetes": "a2ff35a0f7665ec76126ef01db40a4d84471165696c54e0e0a96836de0004dab"
   }
 }

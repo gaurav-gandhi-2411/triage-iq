@@ -91,7 +91,7 @@ def main(dry_run: bool = False) -> None:
         provenance = {
             "embedding_model": "BAAI/bge-base-en-v1.5",
             "k": K,
-            "frozen_at": "2026-06-21",
+            "frozen_at": "2026-08-06",
             "frozen_on": "cpu-float32",
             "index_hashes": {
                 slug: _index_hash(slug)

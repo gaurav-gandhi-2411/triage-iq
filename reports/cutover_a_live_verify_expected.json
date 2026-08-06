@@ -1,0 +1,128 @@
+{
+  "kubernetes_kubernetes": {
+    "query_number": 15083,
+    "query_title": "GKE upgrade e2e tests leaking firewall rules",
+    "query_body": "It looks like every run has leaked the following two firewall rules:\n\n[CODE_BLOCK]\n\nI'm assigning to team/control-plane, same as #13515, but feel free to reassign if that's the wrong team.",
+    "top5_with_instruction": [
+      7029,
+      13515,
+      16194,
+      23888,
+      24170
+    ],
+    "top5_without_instruction": [
+      11014,
+      13515,
+      16194,
+      20489,
+      24170
+    ],
+    "top5_via_per_repo_default": [
+      13515,
+      16194,
+      23888,
+      7029,
+      24170
+    ],
+    "repo_default_is_instruction_on": true,
+    "expected_top5_scores_default": [
+      {
+        "number": 13515,
+        "score": 0.8393
+      },
+      {
+        "number": 16194,
+        "score": 0.7643
+      },
+      {
+        "number": 23888,
+        "score": 0.7559
+      },
+      {
+        "number": 7029,
+        "score": 0.7459
+      },
+      {
+        "number": 24170,
+        "score": 0.7447
+      }
+    ],
+    "expected_classifier_top3": [
+      {
+        "label": "test",
+        "confidence": 0.533014406027275
+      },
+      {
+        "label": "test-infra",
+        "confidence": 0.5125497750774671
+      },
+      {
+        "label": "upgrade",
+        "confidence": 0.47604011217150755
+      }
+    ]
+  },
+  "microsoft_vscode": {
+    "query_number": 18140,
+    "query_title": "Feature-Request: Support specifying alternative tsconfig.json in workspace settings",
+    "query_body": "In our project, we have two tsconfig.json, one for development, one for production.\r\nIf we can specify which tsconfig.json to use in the workspace, that would be great",
+    "top5_with_instruction": [
+      2903,
+      3772,
+      12463,
+      18379,
+      65546
+    ],
+    "top5_without_instruction": [
+      1785,
+      3772,
+      12463,
+      18379,
+      65546
+    ],
+    "top5_via_per_repo_default": [
+      18379,
+      1785,
+      65546,
+      3772,
+      12463
+    ],
+    "repo_default_is_instruction_on": false,
+    "expected_top5_scores_default": [
+      {
+        "number": 18379,
+        "score": 0.8113
+      },
+      {
+        "number": 1785,
+        "score": 0.8104
+      },
+      {
+        "number": 65546,
+        "score": 0.8096
+      },
+      {
+        "number": 3772,
+        "score": 0.7994
+      },
+      {
+        "number": 12463,
+        "score": 0.7908
+      }
+    ],
+    "expected_classifier_top3": [
+      {
+        "label": "json",
+        "confidence": 0.5982417282184551
+      },
+      {
+        "label": "typescript",
+        "confidence": 0.5364904166053776
+      },
+      {
+        "label": "debug",
+        "confidence": 0.2663908878208743
+      }
+    ]
+  }
+}

@@ -1,0 +1,94 @@
+Replaying v3 (currently committed cassette, PRE-Cutover-A eval_set.jsonl)...
+Replaying NEW (combined recording, downloaded artifact, current eval_set.jsonl)...
+
+v3 vscode floor-fails: 5/11
+NEW vscode floor-fails: 7/11
+
+#4978 'Make search files exclusion editable'
+  v3 : floor_fail=True component_match=0 similar_issues_relevance=1 predicted='file-explorer' gold='search'
+       similar_issues=[(1587, 0.773), (4873, 0.771), (311806, 0.758), (2972, 0.757), (4912, 0.754)]
+       rationale: "The triage plan has actionable next steps and aligns with the low priority, but the component is incorrectly labeled as 'file-explorer' instead of 'search'."
+  NEW: floor_fail=True component_match=0 similar_issues_relevance=2 predicted='file-explorer' gold='search'
+       similar_issues=[(88487, 0.846), (19029, 0.827), (18796, 0.798), (2494, 0.787), (87961, 0.786)]
+       rationale: "The triage plan has actionable next steps and aligns with the low priority, but the component is incorrectly labeled as 'file-explorer' instead of 'search', which significantly impacts the quality score."
+
+#4993 'Should provide option for "Show next statement" to get the current deb'
+  v3 : floor_fail=False component_match=2 similar_issues_relevance=3 predicted='debug' gold='debug'
+       similar_issues=[(4519, 0.809), (2671, 0.786), (4733, 0.78), (503, 0.779), (1319, 0.775)]
+       rationale: 'The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, correct priority alignment, actionable next steps, and a clear, well-structured summary.'
+  NEW: floor_fail=False component_match=2 similar_issues_relevance=2 predicted='debug' gold='debug'
+       similar_issues=[(4519, 0.809), (2671, 0.799), (19361, 0.792), (2974, 0.783), (204529, 0.781)]
+       rationale: 'The triage plan is solid and aligns well with the gold standard, with minor edits needed for resolution estimate precision and next steps clarity.'
+
+#4996 'Multiple cursor paste pastes contents of all cursors' <<< CHANGED
+  v3 : floor_fail=False component_match=1 similar_issues_relevance=2 predicted='editor-core' gold='editor-multicursor'
+       similar_issues=[(4375, 0.787), (4134, 0.785), (110, 0.776), (740, 0.763), (1479, 0.756)]
+       rationale: 'The triage plan has actionable next steps and relevant similar issues, but the component is misclassified (gold: editor-multicursor vs. predicted: editor-core), and the priority is incorrectly set to medium instead of low.'
+  NEW: floor_fail=True component_match=0 similar_issues_relevance=3 predicted='editor-core' gold='editor-multicursor'
+       similar_issues=[(18976, 0.89), (18223, 0.837), (16486, 0.807), (16037, 0.805), (5160, 0.8)]
+       rationale: 'The triage plan has actionable next steps but fails to correctly identify the component and provides an unreasonable resolution estimate. The component is misclassified, and the resolution estimate is wildly off, leading to a low overall quality score.'
+
+#239838 'VSCode freezes when opening a terminal'
+  v3 : floor_fail=True component_match=0 similar_issues_relevance=3 predicted='install-update' gold='terminal'
+       similar_issues=[(311834, 0.851), (312633, 0.833), (311145, 0.832)]
+       rationale: "The triage plan has highly relevant similar issues but incorrectly identifies the component as 'install-update' instead of 'terminal'. The resolution estimate is order-of-magnitude off, and the priority is misaligned with the gold standard. The next steps are actionable but lack precision."
+  NEW: floor_fail=True component_match=0 similar_issues_relevance=3 predicted='install-update' gold='terminal'
+       similar_issues=[(240002, 0.884), (240145, 0.882), (239946, 0.873), (240064, 0.862), (240006, 0.86)]
+       rationale: 'The triage plan has actionable next steps but misclassifies the component and overestimates priority, leading to a marginally useful plan with significant gaps.'
+
+#278113 'Always show "detail" field for debug adapter completions'
+  v3 : floor_fail=False component_match=2 similar_issues_relevance=3 predicted='debug' gold='debug'
+       similar_issues=[(1793, 0.773), (3455, 0.772), (4563, 0.766), (2180, 0.76), (3382, 0.758)]
+       rationale: 'The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, correct priority, actionable next steps, and a clear, well-structured summary.'
+  NEW: floor_fail=False component_match=2 similar_issues_relevance=3 predicted='debug' gold='debug'
+       similar_issues=[(174126, 0.797), (1793, 0.778), (3455, 0.772), (173343, 0.763), (2180, 0.76)]
+       rationale: 'The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, correct priority alignment, actionable next steps, and a clear, well-structured summary.'
+
+#286776 "Git Source Control Graph tree doesn't expand for some entries"
+  v3 : floor_fail=False component_match=1 similar_issues_relevance=2 predicted='git' gold='scm'
+       similar_issues=[(311189, 0.778), (1844, 0.764), (210, 0.752)]
+       rationale: 'The triage plan is solid and actionable, with relevant similar issues and a reasonable resolution estimate, though the resolution estimate is imprecise and the component label is plausible but not the gold label.'
+  NEW: floor_fail=False component_match=2 similar_issues_relevance=3 predicted='git' gold='scm'
+       similar_issues=[(112487, 0.813), (201797, 0.808), (173226, 0.792), (115238, 0.785), (237367, 0.782)]
+       rationale: 'The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, correct priority, actionable next steps, and a clear, well-structured summary.'
+
+#311284 'Fix disposed SCM source control retention' <<< CHANGED
+  v3 : floor_fail=False component_match=1 similar_issues_relevance=3 predicted='extension-host' gold='scm'
+       similar_issues=[(311282, 0.887), (312211, 0.734), (312150, 0.733)]
+       rationale: 'The triage plan has some relevant similar issues but the resolution estimate is off by an order of magnitude, and the priority is misaligned with the gold standard.'
+  NEW: floor_fail=True component_match=0 similar_issues_relevance=3 predicted='api' gold='scm'
+       similar_issues=[(311282, 0.895), (312211, 0.747), (311706, 0.746), (311990, 0.736), (312150, 0.736)]
+       rationale: "The triage plan has some relevant similar issues but misclassifies the component as 'api' instead of 'scm', assigns low priority instead of high, and provides an unreasonable resolution estimate. These errors significantly reduce the overall quality."
+
+#311836 'Use real streaming for loading webview resources'
+  v3 : floor_fail=True component_match=0 similar_issues_relevance=2 predicted='ux' gold='perf'
+       similar_issues=[(311844, 0.889), (312490, 0.726), (312020, 0.691), (227, 0.687), (2006, 0.675)]
+       rationale: "The triage plan has actionable next steps and some relevant similar issues, but the component is incorrectly labeled as 'ux' instead of 'perf', and the priority is misaligned with the gold standard's 'high' priority."
+  NEW: floor_fail=True component_match=0 similar_issues_relevance=2 predicted='ux' gold='perf'
+       similar_issues=[(311844, 0.877), (43049, 0.747), (312490, 0.726), (83645, 0.705), (312020, 0.691)]
+       rationale: 'The triage plan has significant issues with component labeling and resolution estimate, which severely impact the overall quality. However, the next steps are somewhat actionable.'
+
+#311878 'Avoid computing and storing commands to skip shell per terminal instan'
+  v3 : floor_fail=True component_match=0 similar_issues_relevance=2 predicted='api' gold='terminal'
+       similar_issues=[(438, 0.783), (1037, 0.781), (2575, 0.775), (1033, 0.753), (311046, 0.752)]
+       rationale: 'The triage plan has significant misalignment in component labeling, incorrect priority assessment, and an unreasonable resolution estimate, leading to a low overall quality score.'
+  NEW: floor_fail=True component_match=0 similar_issues_relevance=3 predicted='api' gold='terminal'
+       similar_issues=[(175049, 0.799), (68689, 0.791), (438, 0.783), (1037, 0.781), (2575, 0.775)]
+       rationale: "The triage plan has highly relevant similar issues but incorrectly assigns the component to 'api' instead of 'terminal'. The resolution estimate is off by an order of magnitude, and the priority is misaligned with the gold standard's 'high' priority."
+
+#312260 'run_in_terminal returns partial output for multi-line POSIX commands ('
+  v3 : floor_fail=True component_match=0 similar_issues_relevance=3 predicted='api' gold='terminal'
+       similar_issues=[(312263, 0.814), (312853, 0.782), (312383, 0.774), (311757, 0.767), (311298, 0.766)]
+       rationale: "The triage plan has actionable next steps and relevant similar issues, but the predicted component is incorrect (gold is 'terminal', predicted is 'api'), and the priority is misaligned with the high severity of the issue."
+  NEW: floor_fail=True component_match=0 similar_issues_relevance=3 predicted='api' gold='terminal'
+       similar_issues=[(312263, 0.86), (311757, 0.808), (312363, 0.804), (312853, 0.798), (311591, 0.79)]
+       rationale: "The triage plan has actionable next steps and relevant similar issues, but the component is incorrectly labeled as 'api' instead of 'terminal', and the priority is misaligned with the gold standard's 'high' priority."
+
+#312423 'Accessibility: Add verbosity setting, aria label hint, and keyboard sh'
+  v3 : floor_fail=False component_match=2 similar_issues_relevance=3 predicted='accessibility' gold='accessibility'
+       similar_issues=[(312429, 0.963), (2145, 0.757), (3643, 0.733), (311176, 0.731), (311037, 0.727)]
+       rationale: "The triage plan is solid but has some gaps. The component is correctly labeled, similar issues are highly relevant, and next steps are actionable. However, the resolution estimate is imprecise and the priority is misaligned with the gold standard's high priority."
+  NEW: floor_fail=False component_match=2 similar_issues_relevance=3 predicted='accessibility' gold='accessibility'
+       similar_issues=[(312429, 0.97), (2145, 0.76), (6731, 0.755), (311175, 0.745), (311176, 0.744)]
+       rationale: 'The triage plan is solid but has significant gaps in priority alignment and resolution estimate reasonableness. It correctly identifies the component and retrieves highly relevant similar issues, but the priority is misaligned with the gold standard (high vs. low), and the resolution estimate is imprecise and off by an order of magnitude.'
+

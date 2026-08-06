@@ -1,0 +1,57 @@
+{
+  "run_id": 31103655399,
+  "run_url": "https://github.com/gaurav-gandhi-2411/triage-iq/actions/runs/31103655399",
+  "dry_run": true,
+  "means_vs_old_and_v3": {
+    "kubernetes/kubernetes": {
+      "OLD": 10.5094,
+      "v3": 9.8868,
+      "NEW": 10.2642,
+      "delta_vs_OLD": -0.2452,
+      "delta_vs_v3": 0.3774
+    },
+    "microsoft/vscode": {
+      "OLD": 8.3636,
+      "v3": 8.7273,
+      "NEW": 8.6364,
+      "delta_vs_OLD": 0.2728,
+      "delta_vs_v3": -0.0909
+    },
+    "overall": {
+      "OLD": 10.1406,
+      "NEW": 9.9844
+    }
+  },
+  "k8s_gap_attribution": {
+    "original_gap_OLD_minus_v3": 0.6226,
+    "recovered_v3_to_NEW": 0.3774,
+    "recovered_pct": 60.6,
+    "residual_gap_OLD_minus_NEW": 0.2452,
+    "residual_pct": 39.4,
+    "residual_vs_band": "marginally outside +/-0.22"
+  },
+  "label_accuracy": {
+    "overall": 0.4062,
+    "kubernetes/kubernetes": 0.434,
+    "microsoft/vscode": 0.2727,
+    "comparison_note": "v3 was overall 42.2%, k8s 45.3%, vscode 27.3% (ADR-0037) -- flat within 1 issue"
+  },
+  "fabrication_rate": {
+    "kubernetes/kubernetes": 0.0,
+    "microsoft/vscode": 0.0
+  },
+  "prose_number_contradiction_rate": {
+    "kubernetes/kubernetes": 0.0,
+    "microsoft/vscode": 0.0
+  },
+  "vscode_floor_fail_investigation": {
+    "v3_floor_fails": "5/11",
+    "NEW_floor_fails": "7/11",
+    "issues_that_moved": [
+      4996,
+      311284
+    ],
+    "issues_that_moved_the_other_direction": [],
+    "conclusion": "small-n noise (judge component_match 1->0 flips on already-borderline calls); retrieval relevance for both moved issues held steady or improved, not worse"
+  }
+}

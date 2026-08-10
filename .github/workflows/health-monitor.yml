@@ -3,14 +3,33 @@ name: Health Monitor
 # Standing detection for exactly the failure mode that let the 2026-08-05 billing-account
 # outage go unnoticed for up to 12 days: nothing was watching /health on a schedule, so a
 # scale-to-zero Cloud Run service can silently stop being able to cold-start and nobody finds
-# out until someone happens to hit it by hand. This workflow is that watcher. A failed run
-# sends GitHub's default scheduled-workflow-failure email to the repo owner -- no extra
-# notification wiring needed for a solo-maintainer portfolio project.
+# out until someone happens to hit it by hand. A failed run sends GitHub's default
+# scheduled-workflow-failure email to the repo owner -- no extra notification wiring needed.
+#
+# SECONDARY check as of 2026-08-10 -- the PRIMARY outage detector is now a GCP Cloud
+# Monitoring uptime check (`triageiq-health`, expense-tracker-498014 project, 5min period,
+# mirrors the existing expense-tracker-health pattern) with an email alert policy on
+# gaurav.gandhi2411@gmail.com. Investigated 2026-08-10: this workflow's actual fire interval
+# was measured at 34-135min against the nominal 30min schedule (GitHub throttles scheduled
+# workflows on low-activity repos, confirmed against 100 real run timestamps, not assumed) --
+# too wide a gap for the "~30min to notice an outage" requirement on its own. GCP uptime
+# checks run at a fixed interval from Google's own infrastructure, unaffected by GitHub
+# Actions scheduling pressure, so that's the check the ~30min guarantee now actually rests
+# on. This workflow is kept as a redundant secondary signal (different infra, different
+# failure modes) now that its own bug (see below) is fixed, not removed -- but a gap here
+# should not be read as "no monitoring", only "one of two watchers is late."
+#
+# The same investigation also found this workflow had been essentially non-functional as a
+# check since it was written: 99/100 recent runs failed with curl error 28 (timeout) because
+# --max-time was 20s and a genuine cold start (service runs --min-instances 0) measured at
+# 36s live. See the step comment below for the fix. A monitor that constantly false-fires is
+# worse than no monitor -- it trains the owner to ignore its alerts, which is the exact
+# failure mode this workflow exists to prevent, just self-inflicted instead of external.
 
 on:
   schedule:
-    # Every 30 minutes. GitHub's cron scheduler is best-effort or up to a few minutes late
-    # under load, never early -- fine for a freshness check with this much margin either way.
+    # Every 30 minutes nominal -- see the SECONDARY-check comment above for why the real
+    # interval is wider and why that's now covered by the GCP uptime check instead.
     - cron: '*/30 * * * *'
   workflow_dispatch:
 
@@ -27,18 +46,33 @@ jobs:
     steps:
       - name: Hit /health, fail loudly on anything but 200 + status=ok
         run: |
-          RESP=$(curl -sS -w "\n%{http_code}" --max-time 20 "${{ env.SERVICE_URL }}/health")
-          HTTP_CODE=$(echo "$RESP" | tail -1)
-          BODY=$(echo "$RESP" | sed '$d')
-          echo "HTTP $HTTP_CODE"
-          echo "$BODY"
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "::error::/health returned $HTTP_CODE, expected 200 -- service may be down (billing, quota, crash-looping, or a bad deploy)."
-            exit 1
+          # --max-time was 20s until 2026-08-10 -- discovered false-failing on ~99/100 runs
+          # (curl error 28, timeout) because the service runs --min-instances 0 (deploy.yml)
+          # and a genuine cold start (loading BGE embeddings + FAISS indices + classifiers)
+          # measured at 36s live, well past 20s. Cloud Run's own startup probe
+          # (deploy.yml: timeoutSeconds=30, periodSeconds=60, failureThreshold=3) tolerates up
+          # to ~180s before considering an instance failed, so 90s here still fails well before
+          # that ceiling while giving a real cold start comfortable margin. Two attempts (not
+          # one) absorb the rare case where the checked instance scales down between connect
+          # and response; worst case ~190s total, negligible against the 30min run cadence.
+          check() {
+            RESP=$(curl -sS -w "\n%{http_code}" --max-time 90 "${{ env.SERVICE_URL }}/health")
+            HTTP_CODE=$(echo "$RESP" | tail -1)
+            BODY=$(echo "$RESP" | sed '$d')
+            echo "HTTP $HTTP_CODE"
+            echo "$BODY"
+            [ "$HTTP_CODE" = "200" ] || return 1
+            STATUS=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || echo "")
+            [ "$STATUS" = "ok" ] || return 1
+          }
+          if check; then
+            echo "Health check passed."
+            exit 0
           fi
-          STATUS=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || echo "")
-          if [ "$STATUS" != "ok" ]; then
-            echo "::error::/health returned 200 but status field was '$STATUS', not 'ok' -- degraded, not down."
-            exit 1
+          echo "First attempt failed -- retrying once before alerting."
+          if check; then
+            echo "Health check passed on retry."
+            exit 0
           fi
-          echo "Health check passed."
+          echo "::error::/health failed twice in a row -- service may be down (billing, quota, crash-looping, or a bad deploy), or degraded (200 but status != ok)."
+          exit 1

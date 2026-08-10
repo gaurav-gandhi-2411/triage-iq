@@ -38,7 +38,7 @@ K = 5
 
 def _index_hash(slug: str) -> str:
     manifest_lines = MANIFEST_PATH.read_text(encoding="utf-8").splitlines()
-    needle = f"data/models/dup_index_{slug}_bge/index.faiss"
+    needle = f"data/models/similar_issue_index_{slug}_bge/index.faiss"
     for line in manifest_lines:
         if line.strip().endswith(needle):
             return line.split()[0]
@@ -55,7 +55,7 @@ def main(dry_run: bool = False) -> None:
     # Load indexes
     detectors: dict[str, SimilarIssueRetriever] = {}
     for repo, slug in REPO_SLUGS.items():
-        idx_dir = str(ROOT / "data" / "models" / f"dup_index_{slug}_bge")
+        idx_dir = str(ROOT / "data" / "models" / f"similar_issue_index_{slug}_bge")
         print(f"Loading {repo} index from {idx_dir} …")
         detectors[repo] = SimilarIssueRetriever.load(idx_dir)
 

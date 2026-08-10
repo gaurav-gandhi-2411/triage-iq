@@ -17,9 +17,13 @@ jobs:
   structural-invariants:
     name: Structural invariants (no LLM)
     runs-on: ubuntu-latest
-    # NON-BLOCKING: this check is informational only until explicitly promoted
-    # to a required status check after one confirmed green cycle on the branch.
-    continue-on-error: true
+    # Promoted to blocking 2026-08-10: continue-on-error had masked this job's own
+    # failures for weeks on three separate occasions (model-manifest drift ~3.5 weeks,
+    # a broken _load_classifier import, and a stale grounding-ratchet baseline hash --
+    # the eval baseline write on 2026-08-10 was what actually surfaced the third one).
+    # A check that can't fail loudly rots silently -- demonstrated three times, not
+    # hypothesized. Confirmed genuinely green (all 8 tests passing, not masked) on
+    # three consecutive live runs before this flip.
     permissions:
       contents: read
       id-token: write
@@ -75,9 +79,11 @@ jobs:
     name: Quality regression (cassette-replayed judge)
     runs-on: ubuntu-latest
     needs: []
-    # NON-BLOCKING: this check is informational only until explicitly promoted
-    # to a required status check after one confirmed green cycle on the branch.
-    continue-on-error: true
+    # Promoted to blocking 2026-08-10 -- see the matching comment on structural-invariants
+    # above for the three-strikes rationale. This job includes what used to be the
+    # informational-only fabrication_rate/prose_number_contradiction checks (ADR-0028
+    # Phase B3, ADR-0042 LEVER 4) -- both measure 0/64 on the current baseline, confirmed
+    # genuinely passing (not masked) on three consecutive live runs before this flip.
     permissions:
       contents: read
       id-token: write

@@ -380,7 +380,7 @@ def test_retrieval_top_k() -> None:
         issues_by_num.setdefault(iss["repo"], {})[iss["number"]] = iss
 
     for repo, slug in REPO_SLUGS.items():
-        idx_dir = MODELS_DIR / f"dup_index_{slug}_bge"
+        idx_dir = MODELS_DIR / f"similar_issue_index_{slug}_bge"
         if not idx_dir.exists():
             pytest.skip(f"FAISS index not found: {idx_dir}")
 

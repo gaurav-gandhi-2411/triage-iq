@@ -436,7 +436,7 @@ After retraining, upload artifacts to GCS:
 ```bash
 gsutil -m cp data/models/component_classifier_*.pkl gs://triageiq-models/models/
 gsutil -m cp data/models/resolution_predictor_*.pkl gs://triageiq-models/models/
-gsutil -m cp -r data/models/dup_index_*_bge gs://triageiq-models/models/
+gsutil -m cp -r data/models/similar_issue_index_*_bge gs://triageiq-models/models/
 gsutil -m cp data/processed/*_temporal_train.parquet gs://triageiq-models/processed/
 ```
 

@@ -14,7 +14,7 @@ from cassette import CassettePlayer
 issues = [json.loads(l) for l in open("eval/eval_set.jsonl").read().splitlines() if l.strip()]
 issue = issues[0]
 clf = load_classifier("data/models", "microsoft_vscode")
-det = SimilarIssueRetriever.load("data/models/dup_index_microsoft_vscode_bge")
+det = SimilarIssueRetriever.load("data/models/similar_issue_index_microsoft_vscode_bge")
 pred = ResolutionTimePredictor.load("data/models/resolution_predictor_microsoft_vscode.pkl")
 train = pd.read_parquet("data/processed/microsoft_vscode_temporal_train.parquet")
 # Patch compute_key to capture first call

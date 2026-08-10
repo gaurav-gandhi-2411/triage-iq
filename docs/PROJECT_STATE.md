@@ -172,8 +172,6 @@ The same run's full scorecard becomes the n=150 baseline for all future workstre
 
 **W2.B — Migrate triage LLM to `openai/gpt-oss-20b` on Groq:** Server-side prompt caching on Groq means cached tokens do NOT count toward TPD — the structural fix for recurring daily quota walls. Likely a quality upgrade. Requires re-running the full eval suite (one full judge run) to establish a new baseline. ~1 session.
 
-**GitHub #3 — Artifact rename:** Rename `data/models/dup_index_*` directories to `similar_issue_index_*` to match the ADR-0008 vocabulary. Loader has a `TODO(#3)` comment. Low effort, reduces confusion in new sessions.
-
 **GitHub #5 — UI type drift closure:** Surface `resolution_bucket` and `resolution_confidence_pct` in the React UI (returned by API, not yet displayed). Wire `openapi-typescript` codegen to auto-generate TypeScript types from the FastAPI OpenAPI spec — closes the type-drift risk ADR-0001 documented. Scope: 1 session in the UI repo.
 
 **llama-70b W1.2 retrofit (opportunistic):** `data/judge_scores_checkpoint_llama_3_3_70b_versatile.jsonl` has 17/180 scored from a 2026-05-20 session that hit TPD. After W2.B (prompt caching), the remaining 163 calls will largely serve from cache at near-zero token cost. Resume with: `python scripts/11_evaluate_triage.py --judge-model llama-3.3-70b-versatile --output-file reports/triage_results_llama70b_retrofit.json`
@@ -199,7 +197,7 @@ The same run's full scorecard becomes the n=150 baseline for all future workstre
 | Similar-issue retriever | `src/triage_iq/models/similar_issues.py` (`.source` attribute) |
 | Fine-tuned model | `data/models/bge_finetuned_combined/` |
 | Fine-tuned FAISS | `data/models/bge_finetuned_k8s_index/`, `bge_finetuned_vsc_index/` |
-| Baseline FAISS | `data/models/dup_index_kubernetes_kubernetes_bge/`, `dup_index_microsoft_vscode_bge/` |
+| Baseline FAISS | `data/models/similar_issue_index_kubernetes_kubernetes_bge/`, `similar_issue_index_microsoft_vscode_bge/` (GitHub #3, renamed from `dup_index_*`) |
 | Eval checkpoints | `data/triage_eval_checkpoint.jsonl`, `data/judge_scores_checkpoint_{model}.jsonl` |
 | Current judge baseline | `reports/triage_results_w4_cohere.json` — `similar_issues_relevance: 2.87/3` |
 | W3 corrected results | `reports/w3_corrected_eval_results.json` |

@@ -101,7 +101,7 @@ jobs:
         run: cp reports/eval_baseline.json /tmp/eval_baseline.OLD.json
 
       - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: triageiq-deployer@expense-tracker-498014.iam.gserviceaccount.com

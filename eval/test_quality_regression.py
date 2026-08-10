@@ -104,24 +104,16 @@ def test_vscode_quality_regression(current_scores: dict, baseline: dict) -> None
     _check_repo_quality("microsoft/vscode", current_scores, baseline)
 
 
-@pytest.mark.xfail(
-    reason=(
-        "KNOWN, DOCUMENTED, DELIBERATE regression -- not a bug, do not 'fix' by writing a new "
-        "baseline or loosening the band. The ADR-0036 multi-label classifier shipped a verified "
-        "ground-truth accuracy win (k8s top-1 +9.09pp / top-3 +4.55pp, CIs excluding zero) at the "
-        "cost of a judge-scored synthesis-quality regression on k8s (-0.62, 2.8x the +/-0.22 band). "
-        "Four prompt-wording fixes were tried (ADR-0037) and none closed the gap; GG's explicit "
-        "decision (ADR-0039) is to keep the classifier and leave this gate failing rather than roll "
-        "back a real accuracy gain to satisfy a proxy metric, or silently write the regression in as "
-        "the new normal. strict=True: if this ever unexpectedly PASSES, that's worth investigating, "
-        "not ignoring -- read ADR-0037 and ADR-0039 before touching this marker either direction."
-    ),
-    strict=True,
-)
 def test_k8s_quality_regression(current_scores: dict, baseline: dict) -> None:
     """kubernetes/kubernetes mean score must not drop below baseline.
 
-    KNOWN-FAILING as of 2026-08-05 -- see the xfail reason above, and ADR-0037/ADR-0039.
+    The xfail marker that lived here (2026-08-05 -> 2026-08-10) is gone: the baseline was
+    re-recorded to the ADR-0036 multi-label classifier cutover's own scores (k8s 10.2642,
+    ADR-0043), so this now compares the recording against itself rather than against the
+    frozen pre-cutover target. The -0.2452 residual vs. the OLD frozen baseline is not a
+    regression this gate needs to catch going forward -- it's baked into the new floor as a
+    deliberately accepted tradeoff (ADR-0037/ADR-0039/ADR-0043). This test still protects
+    against *future* regressions below the new floor.
     """
     _check_repo_quality("kubernetes/kubernetes", current_scores, baseline)
 

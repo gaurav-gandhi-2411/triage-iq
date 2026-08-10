@@ -1,7 +1,7 @@
 # ADR-0043 — Combined retrieval+resolution cutover: k8s synthesis quality recovers 61% of the ADR-0037 gap; confidence-framing was never the whole story
 
-**Status:** Accepted (findings); baseline write pending GG's explicit approval (separate step)
-**Date:** 2026-08-06
+**Status:** Accepted (findings + baseline write)
+**Date:** 2026-08-06 (findings); 2026-08-10 (baseline write)
 **Decider:** Gaurav Gandhi
 
 ## Context
@@ -108,12 +108,29 @@ signal** — this is unreadable as a trend, not a regression from the index chan
 
 ## Decision
 
-**Findings accepted and recorded here regardless of the baseline call**, per instruction. **No
-baseline write yet** — `reports/eval_baseline.json` and `eval/cassettes/eval_cassette.json`
-remain at the v3 values; this was a `dry_run:true` recording, nothing was committed. Writing the
-new baseline (k8s 10.2642, vscode 8.6364) requires a separate, explicit approval step — this ADR
-is the informative-result writeup that approval decision was contingent on, not the approval
-itself.
+**Findings accepted and recorded here regardless of the baseline call**, per instruction. Writing
+the new baseline (k8s 10.2642, vscode 8.6364) required a separate, explicit approval step — this
+ADR was originally the informative-result writeup that approval decision was contingent on, not
+the approval itself.
+
+**2026-08-10 update: the baseline write was approved and executed** (run 31103655399's dry-run
+recording, committed via PR #56). `reports/eval_baseline.json` and `eval/cassettes/eval_cassette.json`
+now hold the NEW values from this ADR's table (k8s 10.2642, vscode 8.6364, overall 9.9844),
+replacing the frozen pre-cutover baseline (k8s 10.5094, vscode 8.3636, overall 10.1406) that
+`test_k8s_quality_regression` had been pinned against via `xfail(strict=True)` since 2026-08-05.
+
+**The -0.2452 k8s residual (vs. the OLD frozen baseline) is now BAKED INTO the new baseline as a
+deliberately accepted tradeoff — it is not a ceiling, ratchet, or open item this gate tracks going
+forward.** Concretely: `test_k8s_quality_regression` now compares future recordings against
+10.2642, not against 10.5094 — so a future reader should not read 10.2642 as "the regression we're
+still trying to close." It's the floor the ADR-0036 classifier cutover's verified ground-truth
+accuracy win (k8s top-1 +9.09pp / top-3 +4.55pp) costs in this proxy metric, accepted per ADR-0039,
+with 61% of the *original* -0.6226 gap independently recovered by the unrelated upstream-signal
+fixes documented above (ADR-0040/ADR-0042) and the remaining ~39% left as the confidence-semantics
+residual this decision explicitly keeps rather than chases further at the prompt-wording level
+(ADR-0037 already exhausted that lever). The xfail marker on `test_k8s_quality_regression` was
+removed in the same change — the test now protects against regressions *below* 10.2642, not
+against the already-accepted gap relative to 10.5094.
 
 ## Consequences
 

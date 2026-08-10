@@ -10,6 +10,10 @@ matplotlib>=3.7
 seaborn>=0.12
 scikit-plot>=0.3
 
+# Lexical-similarity eval metric (normalized Levenshtein ratio) — vscode/k8s lexical
+# characterization investigation, docs/investigations/vscode-retrieval-lexical-and-hybrid-2026-08-10.md
+rapidfuzz>=3.6
+
 # Eval judge (local qwen3:8b via Ollama — ADR-0019). Requires an Ollama server
 # reachable at OLLAMA_HOST (default http://localhost:11434) with the model pulled;
 # this package alone is only the client.

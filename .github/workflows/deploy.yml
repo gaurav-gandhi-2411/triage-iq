@@ -70,8 +70,8 @@ jobs:
             "gs://triageiq-models/models/cqr_conformal_adjustments.json" \
             data/models/
           gsutil -m cp -r \
-            "gs://triageiq-models/models/dup_index_microsoft_vscode_bge" \
-            "gs://triageiq-models/models/dup_index_kubernetes_kubernetes_bge" \
+            "gs://triageiq-models/models/similar_issue_index_microsoft_vscode_bge" \
+            "gs://triageiq-models/models/similar_issue_index_kubernetes_kubernetes_bge" \
             data/models/
           gsutil -m cp \
             "gs://triageiq-models/processed/microsoft_vscode_temporal_train.parquet" \

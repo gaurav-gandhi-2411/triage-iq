@@ -166,10 +166,18 @@ class ModelStore:
 
 def _load_detector(models_dir: Path, slug: str):
     from triage_iq.models.similar_issues import SimilarIssueRetriever
-    p = models_dir / f"dup_index_{slug}_bge"  # TODO(#3): GCS artifact rename pending. See https://github.com/gaurav-gandhi-2411/triage-iq/issues/3
+    p = models_dir / f"similar_issue_index_{slug}_bge"
     if p.exists():
         return SimilarIssueRetriever.load(str(p))
-    raise FileNotFoundError(f"Detector not found: {p}")
+    # Transitional fallback for issue #3's cutover window: old-named GCS artifacts are kept
+    # until the new names are verified serving in prod, so a candidate revision built from a
+    # not-yet-updated image (or a local dev tree that hasn't re-pulled) still loads. Remove
+    # once the dup_index_* GCS objects are deleted.
+    legacy = models_dir / f"dup_index_{slug}_bge"
+    if legacy.exists():
+        logger.warning("Loaded similar-issue index from legacy path %s — see issue #3", legacy)
+        return SimilarIssueRetriever.load(str(legacy))
+    raise FileNotFoundError(f"Detector not found: {p} (legacy path {legacy} also missing)")
 
 
 def _load_predictor(models_dir: Path, slug: str):

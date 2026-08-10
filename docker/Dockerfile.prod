@@ -58,8 +58,8 @@ RUN pip install --no-cache-dir --no-deps -e .
 # Production model artifacts (populated by CI/CD workflow from GCS)
 # Excludes DistilBERT (12 GB each — not used in production)
 COPY data/models/component_classifier_*.pkl   data/models/
-COPY data/models/dup_index_microsoft_vscode_bge   data/models/dup_index_microsoft_vscode_bge
-COPY data/models/dup_index_kubernetes_kubernetes_bge   data/models/dup_index_kubernetes_kubernetes_bge
+COPY data/models/similar_issue_index_microsoft_vscode_bge   data/models/similar_issue_index_microsoft_vscode_bge
+COPY data/models/similar_issue_index_kubernetes_kubernetes_bge   data/models/similar_issue_index_kubernetes_kubernetes_bge
 COPY data/models/resolution_predictor_*.pkl   data/models/
 COPY data/models/cqr_conformal_adjustments.json   data/models/
 COPY data/processed/microsoft_vscode_temporal_train.parquet   data/processed/

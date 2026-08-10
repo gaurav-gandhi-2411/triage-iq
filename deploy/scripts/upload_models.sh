@@ -17,8 +17,8 @@ gsutil -m cp \
 
 # BGE FAISS indices (NOT minilm, NOT distilbert)
 gsutil -m cp -r \
-  data/models/dup_index_microsoft_vscode_bge \
-  data/models/dup_index_kubernetes_kubernetes_bge \
+  data/models/similar_issue_index_microsoft_vscode_bge \
+  data/models/similar_issue_index_kubernetes_kubernetes_bge \
   "$BUCKET/models/"
 
 # Resolution predictors

@@ -50,7 +50,7 @@ No behavior change, no metric change, no API change.
 - `similar_issues_relevance` judge dimension — always correct
 - `duplicate_count` API response field — user-facing, breaking change to rename; deferred
 - `_has_duplicate_label()` function — checks GitHub's own `duplicate` label by name; semantically correct
-- `dup_index_microsoft_vscode_bge` / `dup_index_kubernetes_kubernetes_bge` — GCS artifact names; renaming requires a coordinated GCS → local rename; deferred as a follow-up
+- `dup_index_microsoft_vscode_bge` / `dup_index_kubernetes_kubernetes_bge` — GCS artifact names; renaming requires a coordinated GCS → local rename; deferred as a follow-up. **Update:** completed in issue #3 — renamed to `similar_issue_index_*`.
 
 **GCS artifact deferral:** The FAISS index directories on GCS and in `data/models/` retain the `dup_index_*` naming. `loader.py` contains a comment marking the path strings as deferred-rename. Once GCS artifacts are renamed (a separate operational step), update `deploy.yml`, `Dockerfile.prod`, and `loader.py` in a single follow-up commit.
 

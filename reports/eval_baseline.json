@@ -70,15 +70,15 @@
     "note": "ADR-0028 Phase B3: the mean-band gate above is a REGRESSION detector, not a quality floor -- it cannot catch fabrication (the judge never sees classifier_top3/retrieved_numbers) and averages away a correctness-critical floor-fail rate. per_repo[repo].fabrication_rate and .floor_fail_rate are additive first-class metrics, computed with zero new LLM calls (reused from plan.grounding_status and the judge dimension scores already produced).",
     "fabrication_rate": {
       "definition": "fraction of plans where plan.grounding_status.all_grounded is False (predicted_component not in classifier_top3, or any cited similar-issue number not in the retrieved set for that request).",
-      "gate": "INFORMATIONAL ONLY (GG decision, 2026-07-11): eval/test_quality_regression.py asserts fabrication_rate == 0 per repo, but that file's CI job is continue-on-error:true -- visible, non-blocking, pending a real-world observation window before promoting to a hard gate."
+      "gate": "BLOCKING (promoted 2026-08-10): eval/test_quality_regression.py asserts fabrication_rate == 0 per repo. Was informational-only under eval-gate.yml's continue-on-error:true (GG decision, 2026-07-11) pending a real-world observation window; that window is over -- measured 0/64 on the current baseline, and the observation period surfaced three separate real bugs masked by the same continue-on-error (model-manifest drift, a broken _load_classifier import, a stale grounding-ratchet hash), so the case for keeping any check in that job non-blocking is gone."
     },
     "floor_fail_rate": {
       "definition": "fraction of plans where component_match==0 OR similar_issues_relevance==0 (the judge's own worst-band signal).",
-      "gate": "REPORT ONLY, no gate (GG decision, 2026-07-11): vscode's n=11 gives a [21,72]% CI on this proportion -- too underpowered to gate reliably. Surfaced here and in README for visibility instead."
+      "gate": "REPORT ONLY, no gate (GG decision, 2026-07-11): vscode's n=11 gives a [21,72]% CI on this proportion -- too underpowered to gate reliably. Surfaced here and in README for visibility instead. Unaffected by the continue-on-error promotion below -- this metric was never asserted on by any test, only reported."
     },
     "prose_number_contradiction_rate": {
       "definition": "fraction of plans where expected_resolution_summary's free-text time claim has ZERO overlap with [expected_resolution_lower_days, expected_resolution_upper_days] (src/triage_iq/models/resolution_consistency.py, ADR-0042, LEVER 4). Motivating case: k8s-14756 said 'typically 1 day or less' against a [2.8d, 21.6d] interval -- the model contradicting numbers it was directly given, not a hedging-tone issue.",
-      "gate": "INFORMATIONAL ONLY (measured 0/64 on the current cassette -- not currently material, kept as a standing zero-cost check rather than a hard gate sized to a single historical anecdote)."
+      "gate": "BLOCKING (promoted 2026-08-10, same eval-gate.yml continue-on-error removal as fabrication_rate above): measured 0/64 on the current cassette."
     }
   }
 }

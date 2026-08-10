@@ -1,8 +1,7 @@
 {
   "schema_version": "v2",
-  "eval_set_hash": "86c1df0a066c9dce5ece19ff9da4b3298563b8a59c2d6f8d807e4658e43260a4",
-  "cassette_hash": "19d414f15942becf68d0910c845cb051231370e915381df0bf43ab6b1735321e",
-  "cassette_hash_note": "Re-recorded 2026-08-05 against the ADR-0036 multi-label classifier (run 30998299699, prompt v3 -- ADR-0037). This hash intentionally matches the NEW cassette so replay doesn't hard-crash with a CassetteMissError; the per_repo/overall MEANS below are intentionally left at the OLD pre-cutover values as the frozen regression target, NOT updated to the new recording's scores -- see ADR-0037/0039 for why the k8s regression is being tracked as a documented known-failing gate rather than folded into a new baseline. Do not run --update-baseline to 'fix' this without reading those ADRs first.",
+  "eval_set_hash": "0c2e57410098ea170f3f65668ff8977d3ce4942936b9a3e2ffb6696a09621bfe",
+  "cassette_hash": "996a02dacb5d637352de19170a7226363339ac56a9b1f67a282b02e4dca5c612",
   "judge": {
     "model": "qwen3:8b",
     "provider": "ollama",
@@ -11,36 +10,38 @@
   "per_repo": {
     "microsoft/vscode": {
       "n": 11,
-      "mean": 8.3636,
+      "mean": 8.6364,
       "dimensions": {
         "component_match": 0.7272727272727273,
-        "similar_issues_relevance": 2.272727272727273,
-        "resolution_estimate_reasonableness": 1.1818181818181819,
-        "priority_alignment": 0.2727272727272727,
+        "similar_issues_relevance": 2.727272727272727,
+        "resolution_estimate_reasonableness": 1.0,
+        "priority_alignment": 0.36363636363636365,
         "next_steps_actionability": 2.1818181818181817,
-        "overall_quality": 1.7272727272727273
+        "overall_quality": 1.6363636363636365
       },
-      "floor_fail_rate": 0.4545,
-      "fabrication_rate": 0.0909
+      "floor_fail_rate": 0.6364,
+      "fabrication_rate": 0.0,
+      "prose_number_contradiction_rate": 0.0
     },
     "kubernetes/kubernetes": {
       "n": 53,
-      "mean": 10.5094,
+      "mean": 10.2642,
       "dimensions": {
-        "component_match": 1.4150943396226414,
-        "similar_issues_relevance": 2.6037735849056602,
-        "resolution_estimate_reasonableness": 1.3018867924528301,
-        "priority_alignment": 0.4339622641509434,
-        "next_steps_actionability": 2.547169811320755,
-        "overall_quality": 2.207547169811321
+        "component_match": 1.3018867924528301,
+        "similar_issues_relevance": 2.849056603773585,
+        "resolution_estimate_reasonableness": 1.2264150943396226,
+        "priority_alignment": 0.41509433962264153,
+        "next_steps_actionability": 2.3962264150943398,
+        "overall_quality": 2.0754716981132075
       },
-      "floor_fail_rate": 0.0943,
-      "fabrication_rate": 0.0189
+      "floor_fail_rate": 0.1887,
+      "fabrication_rate": 0.0,
+      "prose_number_contradiction_rate": 0.0
     }
   },
   "overall": {
     "n": 64,
-    "mean": 10.1406
+    "mean": 9.9844
   },
   "threshold": {
     "method": "One-directional per-repo mean regression check: fires only if new_mean < baseline_mean - band. Improvements above the band never trip it.",
@@ -73,6 +74,10 @@
     "floor_fail_rate": {
       "definition": "fraction of plans where component_match==0 OR similar_issues_relevance==0 (the judge's own worst-band signal).",
       "gate": "REPORT ONLY, no gate (GG decision, 2026-07-11): vscode's n=11 gives a [21,72]% CI on this proportion -- too underpowered to gate reliably. Surfaced here and in README for visibility instead."
+    },
+    "prose_number_contradiction_rate": {
+      "definition": "fraction of plans where expected_resolution_summary's free-text time claim has ZERO overlap with [expected_resolution_lower_days, expected_resolution_upper_days] (src/triage_iq/models/resolution_consistency.py, ADR-0042, LEVER 4). Motivating case: k8s-14756 said 'typically 1 day or less' against a [2.8d, 21.6d] interval -- the model contradicting numbers it was directly given, not a hedging-tone issue.",
+      "gate": "INFORMATIONAL ONLY (measured 0/64 on the current cassette -- not currently material, kept as a standing zero-cost check rather than a hard gate sized to a single historical anecdote)."
     }
   }
 }

@@ -123,11 +123,11 @@ def _check_no_fabrication(repo: str, current_scores: dict) -> None:
 
     A fabricated component/similar-issue claim is qualitatively worse than a soft
     quality miss and the mean-band gate above cannot detect it at all (the judge never
-    sees classifier_top3/retrieved_numbers). INFORMATIONAL ONLY (GG decision,
-    2026-07-11): this file's CI job is continue-on-error:true, so this assertion is
-    visible without blocking merges -- there's a known pre-existing case (vscode
-    #311836) this would currently fail on, and the intent is to observe the real-world
-    rate before promoting to a hard, blocking gate.
+    sees classifier_top3/retrieved_numbers). BLOCKING since PR #57 (this file's CI job
+    lost continue-on-error:true 2026-08-10). Deliberately zero-tolerance, no per-repo
+    slack even for vscode's n=11 -- see ADR-0044 for why (grounding is replay-deterministic,
+    so this can only move on a deliberate, human-reviewed cassette re-record, not on an
+    ordinary PR).
     """
     rate = current_scores["per_repo"][repo]["fabrication_rate"]
     n = current_scores["per_repo"][repo]["n"]
@@ -154,10 +154,11 @@ def _check_no_prose_number_contradiction(repo: str, current_scores: dict) -> Non
     Motivating case (ADR-0037, k8s-14756): expected_resolution_summary said "typically 1
     day or less" against a numeric interval of [2.8d, 21.6d] -- the model contradicting
     numbers it was directly given, a real correctness defect distinct from the hedging-tone
-    investigation in ADR-0037. INFORMATIONAL ONLY: measured 0/64 on the current cassette
-    (reports/lever4_prose_number_consistency.json) -- not currently material, kept as a
-    standing zero-cost check (same discipline as fabrication_rate above) rather than a hard
-    gate sized to a single historical anecdote from an older cassette recording.
+    investigation in ADR-0037. BLOCKING since PR #57 (this file's CI job lost
+    continue-on-error:true 2026-08-10): measured 0/64 on the current cassette
+    (reports/lever4_prose_number_consistency.json) -- same zero-tolerance rationale as
+    fabrication_rate above (ADR-0044): replay-deterministic, so it only moves on a
+    deliberate cassette re-record, not on an ordinary PR.
     """
     rate = current_scores["per_repo"][repo]["prose_number_contradiction_rate"]
     n = current_scores["per_repo"][repo]["n"]

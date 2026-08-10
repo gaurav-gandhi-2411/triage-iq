@@ -147,6 +147,35 @@ against the already-accepted gap relative to 10.5094.
 - **vscode's floor_fail_rate is confirmed noisy at n=11**, not a new problem introduced by either
   cutover — worth remembering the next time this metric moves for vscode specifically.
 
+## Postscript (2026-08-10): continue-on-error accumulates silent rot, not just one bug at a time
+
+Writing the baseline required verifying `eval-gate.yml`'s two jobs actually go green, not just
+report green — which surfaced that `continue-on-error: true` on both jobs had been silently
+masking real failures. Four separate stale artifacts were found behind it, each discovered only
+because this specific task happened to force a genuine (non-masked) run:
+
+1. **Model-manifest drift**, undetected for ~3.5 weeks.
+2. **A broken `_load_classifier` import.**
+3. **A stale `_GROUNDING_BASELINE` hash** in `eval/test_invariants.py` — `eval_set.jsonl` was
+   refreshed in PR #52 (2026-08-06, ADR-0040's retrieval snapshot), but the hardcoded ratchet
+   baseline was never re-derived to match. `test_grounding_ratchet_no_new_ungrounded_claims` had
+   been silently failing on every run since.
+4. **A stale committed cassette vs. the same refreshed `eval_set.jsonl`** — `main`'s cassette
+   (recorded 2026-08-05) predated PR #52's refresh, so replaying it against the current eval set
+   threw `CassetteMissError` on vscode's tests once masking was removed. Resolved incidentally by
+   this ADR's own baseline write (the new cassette was recorded *after* the refresh), but it was a
+   real, independent break in `main` before that, invisible the whole time.
+
+Each of these was individually plausible as "pre-existing, documented, non-blocking, will get
+fixed eventually" — the standard justification for leaving a check informational. **The reusable
+lesson isn't any one of the four bugs — it's that this justification doesn't hold at scale.**
+Four independent staleness bugs accumulated behind the same masking mechanism without any of them
+being *caused* by each other; a job that can't fail loudly doesn't fail less often, it just fails
+invisibly, and the failures compound because nothing forces them to be noticed and fixed in turn.
+`eval-gate.yml`'s two jobs were promoted to blocking as a direct consequence (companion PRs #56/#57)
+— confirmed genuinely green (masking never invoked, because nothing failed) across multiple
+consecutive live CI runs before and after the promotion.
+
 ## Alternatives considered
 
 | Alternative | Reason rejected |

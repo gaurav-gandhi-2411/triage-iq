@@ -58,6 +58,7 @@ jobs:
       contents: write
       id-token: write
       actions: read  # list/download artifacts from prior runs of this workflow, for resume
+      pull-requests: write  # open the baseline-update PR (main requires the "test" status check, so a direct push is always rejected -- see the "Commit and push" step below)
 
     steps:
       - uses: actions/checkout@v4
@@ -389,15 +390,30 @@ jobs:
           git config user.email "gaurav.gandhi2411@gmail.com"
           git config user.name "Gaurav Gandhi"
 
-      - name: Commit and push cassette + baseline
+      - name: Commit, push to a branch, and open a PR
+        # Was a direct push to github.ref_name -- main's branch protection requires the "test"
+        # status check (enforce_admins:true, no bypass even for this token), so a direct push
+        # is unconditionally rejected with GH006 regardless of platform health. Confirmed via
+        # git log that this workflow had never actually completed a direct push before (run
+        # 31350036305, 2026-08-10) -- the "no PR gate" design predates the protection rule and
+        # was never compatible with it, not a regression. Push to a dedicated branch and open a
+        # PR instead; a human merges it (this is a large machine-generated diff -- cassette +
+        # checkpoint are recorded LLM interaction logs, not hand-reviewable -- so it fails the
+        # rule-70a gate-3 size gate regardless of prior approval of the underlying numbers).
         if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "::warning::WRITING BASELINE -- this commits directly to the branch with no PR gate."
           echo "Before/after means (see above for full detail):"
           cat /tmp/baseline_diff.txt
+          BRANCH="chore/eval-baseline-update-${{ github.run_id }}"
+          git checkout -b "$BRANCH"
           git add eval/cassettes/eval_cassette.json \
                   eval/cassettes/recording_checkpoint.json \
                   reports/eval_baseline.json
           git diff --staged --stat
           git commit -m "test(eval): re-record cassette on CI platform (ubuntu-latest Python 3.11)"
-          git push origin HEAD:refs/heads/${{ github.ref_name }}
+          git push origin "HEAD:refs/heads/$BRANCH"
+          gh pr create --draft --base "${{ github.ref_name }}" --head "$BRANCH" \
+            --title "test(eval): re-record cassette on CI platform (ubuntu-latest Python 3.11)" \
+            --body "$(printf 'Automated eval baseline update from record-cassette.yml run %s.\n\nBefore/after means:\n```\n%s\n```\n\nOpened as draft: this diff is machine-generated (recorded LLM interaction cassette + checkpoint), not hand-reviewable, so it does not meet the rule-70a gate-3 size gate regardless of whether the underlying numbers were pre-approved. Human merge required.' "${{ github.run_id }}" "$(cat /tmp/baseline_diff.txt)")"

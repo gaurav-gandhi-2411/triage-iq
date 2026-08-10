@@ -67,14 +67,23 @@ _COVERAGE_TOL = 0.05
 # (ungrounded_count/n below) remains; see ADR-0039 for the no-op-verifier blind-spot
 # tradeoff this reopens and the guidance for choosing deliberate adversarial pins later.
 _GROUNDING_BASELINE = {
-    "eval_set_hash": "86c1df0a066c9dce5ece19ff9da4b3298563b8a59c2d6f8d807e4658e43260a4",
+    # Re-derived 2026-08-10: eval_set.jsonl drifted to 0c2e5741... in PR #52 (2026-08-06,
+    # frozen retrieval snapshot refresh for ADR-0040) but this ratchet baseline was never
+    # updated to match -- masked for the intervening period by eval-gate.yml's job-level
+    # continue-on-error, so this test had been silently failing on main since 2026-08-06
+    # rather than gating anything. New counts measured directly against the current cassette
+    # via scripts/measure_grounding.py's compute_grounding_reports() (zero live LLM calls):
+    # both repos are now fully grounded (0 ungrounded claims), consistent with
+    # reports/eval_baseline.json's fabrication_rate: 0.0 for both repos on the same cassette
+    # (same underlying definition -- plan.grounding_status.all_grounded is False).
+    "eval_set_hash": "0c2e57410098ea170f3f65668ff8977d3ce4942936b9a3e2ffb6696a09621bfe",
     "per_repo": {
         "kubernetes/kubernetes": {
-            "ungrounded_count": 1,
+            "ungrounded_count": 0,
             "n": 53,
         },
         "microsoft/vscode": {
-            "ungrounded_count": 1,
+            "ungrounded_count": 0,
             "n": 11,
         },
     },

@@ -1,8 +1,7 @@
 {
   "schema_version": "v2",
-  "eval_set_hash": "86c1df0a066c9dce5ece19ff9da4b3298563b8a59c2d6f8d807e4658e43260a4",
-  "cassette_hash": "19d414f15942becf68d0910c845cb051231370e915381df0bf43ab6b1735321e",
-  "cassette_hash_note": "Re-recorded 2026-08-05 against the ADR-0036 multi-label classifier (run 30998299699, prompt v3 -- ADR-0037). This hash intentionally matches the NEW cassette so replay doesn't hard-crash with a CassetteMissError; the per_repo/overall MEANS below are intentionally left at the OLD pre-cutover values as the frozen regression target, NOT updated to the new recording's scores -- see ADR-0037/0039 for why the k8s regression is being tracked as a documented known-failing gate rather than folded into a new baseline. Do not run --update-baseline to 'fix' this without reading those ADRs first.",
+  "eval_set_hash": "0c2e57410098ea170f3f65668ff8977d3ce4942936b9a3e2ffb6696a09621bfe",
+  "cassette_hash": "996a02dacb5d637352de19170a7226363339ac56a9b1f67a282b02e4dca5c612",
   "judge": {
     "model": "qwen3:8b",
     "provider": "ollama",
@@ -11,36 +10,38 @@
   "per_repo": {
     "microsoft/vscode": {
       "n": 11,
-      "mean": 8.3636,
+      "mean": 8.6364,
       "dimensions": {
         "component_match": 0.7272727272727273,
-        "similar_issues_relevance": 2.272727272727273,
-        "resolution_estimate_reasonableness": 1.1818181818181819,
-        "priority_alignment": 0.2727272727272727,
+        "similar_issues_relevance": 2.727272727272727,
+        "resolution_estimate_reasonableness": 1.0,
+        "priority_alignment": 0.36363636363636365,
         "next_steps_actionability": 2.1818181818181817,
-        "overall_quality": 1.7272727272727273
+        "overall_quality": 1.6363636363636365
       },
-      "floor_fail_rate": 0.4545,
-      "fabrication_rate": 0.0909
+      "floor_fail_rate": 0.6364,
+      "fabrication_rate": 0.0,
+      "prose_number_contradiction_rate": 0.0
     },
     "kubernetes/kubernetes": {
       "n": 53,
-      "mean": 10.5094,
+      "mean": 10.2642,
       "dimensions": {
-        "component_match": 1.4150943396226414,
-        "similar_issues_relevance": 2.6037735849056602,
-        "resolution_estimate_reasonableness": 1.3018867924528301,
-        "priority_alignment": 0.4339622641509434,
-        "next_steps_actionability": 2.547169811320755,
-        "overall_quality": 2.207547169811321
+        "component_match": 1.3018867924528301,
+        "similar_issues_relevance": 2.849056603773585,
+        "resolution_estimate_reasonableness": 1.2264150943396226,
+        "priority_alignment": 0.41509433962264153,
+        "next_steps_actionability": 2.3962264150943398,
+        "overall_quality": 2.0754716981132075
       },
-      "floor_fail_rate": 0.0943,
-      "fabrication_rate": 0.0189
+      "floor_fail_rate": 0.1887,
+      "fabrication_rate": 0.0,
+      "prose_number_contradiction_rate": 0.0
     }
   },
   "overall": {
     "n": 64,
-    "mean": 10.1406
+    "mean": 9.9844
   },
   "threshold": {
     "method": "One-directional per-repo mean regression check: fires only if new_mean < baseline_mean - band. Improvements above the band never trip it.",
@@ -62,17 +63,22 @@
       }
     },
     "vscode_note": "microsoft/vscode's band (0.45) is wider than kubernetes/kubernetes's (0.22) because n=11 makes its mean statistically less stable -- this is the honest signal of the vscode data-ceiling finding (ADR-0017), not a fudged tolerance. Its gate is genuinely coarser.",
-    "derivation": "band = 2 x SEM = 2 x (measured_std / sqrt(n))"
+    "derivation": "band = 2 x SEM = 2 x (measured_std / sqrt(n))",
+    "retention_note": "GG decision, 2026-08-10: these bands are carried forward UNCHANGED from ADR-0019's original two-recording jitter study, not re-derived against this baseline's own recording. A real re-derivation needs a second independent full recording compared on common issues (the ADR-0019 methodology) -- using the spread across DIFFERENT issues within this single recording instead would conflate genuine cross-issue signal variance with measurement jitter, overestimating noise and silently loosening the gate (a false-negative risk). No compatible second recording exists under the current prompt/model version, and producing one costs a full Groq TPD-budget recording (~215K tokens, most of a day's quota) for a benefit that isn't established: the judge itself (qwen3:8b, same temperature, same 6 dimensions) is unchanged from the ADR-0019 study -- what changed between then and now is the inputs being judged (retrieval corpus, resolution model, classifier), not the judge's own noise characteristics. Carrying forward a properly-derived band from an unchanged judge is more defensible than either spending most of a day's quota to re-derive it on spec or fabricating one from within-recording spread. Re-derive opportunistically if a second full recording happens for another reason (e.g. a future model/prompt cutover requiring one anyway) -- not proactively for this alone."
   },
   "synthesis_quality_floor": {
     "note": "ADR-0028 Phase B3: the mean-band gate above is a REGRESSION detector, not a quality floor -- it cannot catch fabrication (the judge never sees classifier_top3/retrieved_numbers) and averages away a correctness-critical floor-fail rate. per_repo[repo].fabrication_rate and .floor_fail_rate are additive first-class metrics, computed with zero new LLM calls (reused from plan.grounding_status and the judge dimension scores already produced).",
     "fabrication_rate": {
       "definition": "fraction of plans where plan.grounding_status.all_grounded is False (predicted_component not in classifier_top3, or any cited similar-issue number not in the retrieved set for that request).",
-      "gate": "INFORMATIONAL ONLY (GG decision, 2026-07-11): eval/test_quality_regression.py asserts fabrication_rate == 0 per repo, but that file's CI job is continue-on-error:true -- visible, non-blocking, pending a real-world observation window before promoting to a hard gate."
+      "gate": "BLOCKING (promoted 2026-08-10): eval/test_quality_regression.py asserts fabrication_rate == 0 per repo. Was informational-only under eval-gate.yml's continue-on-error:true (GG decision, 2026-07-11) pending a real-world observation window; that window is over -- measured 0/64 on the current baseline, and the observation period surfaced three separate real bugs masked by the same continue-on-error (model-manifest drift, a broken _load_classifier import, a stale grounding-ratchet hash), so the case for keeping any check in that job non-blocking is gone."
     },
     "floor_fail_rate": {
       "definition": "fraction of plans where component_match==0 OR similar_issues_relevance==0 (the judge's own worst-band signal).",
-      "gate": "REPORT ONLY, no gate (GG decision, 2026-07-11): vscode's n=11 gives a [21,72]% CI on this proportion -- too underpowered to gate reliably. Surfaced here and in README for visibility instead."
+      "gate": "REPORT ONLY, no gate (GG decision, 2026-07-11): vscode's n=11 gives a [21,72]% CI on this proportion -- too underpowered to gate reliably. Surfaced here and in README for visibility instead. Unaffected by the continue-on-error promotion below -- this metric was never asserted on by any test, only reported."
+    },
+    "prose_number_contradiction_rate": {
+      "definition": "fraction of plans where expected_resolution_summary's free-text time claim has ZERO overlap with [expected_resolution_lower_days, expected_resolution_upper_days] (src/triage_iq/models/resolution_consistency.py, ADR-0042, LEVER 4). Motivating case: k8s-14756 said 'typically 1 day or less' against a [2.8d, 21.6d] interval -- the model contradicting numbers it was directly given, not a hedging-tone issue.",
+      "gate": "BLOCKING (promoted 2026-08-10, same eval-gate.yml continue-on-error removal as fabrication_rate above): measured 0/64 on the current cassette."
     }
   }
 }

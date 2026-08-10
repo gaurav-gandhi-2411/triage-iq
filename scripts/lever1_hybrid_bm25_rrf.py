@@ -34,11 +34,22 @@ practice). Now reads D1's canonical, hand-verified, disjoint eval sets (150/200 
 genuine by construction) against the full-corpus d1_full_corpus_index_*, with untruncated
 title+body queries matching production exactly.
 
+CORRECTED AGAIN (2026-08-10, docs/investigations/vscode-retrieval-lexical-and-hybrid-2026-08-10.md):
+this script previously pointed REPOS at `data/models/d1_full_corpus_index_{repo}_bge` -- the
+PRE-Lever-1-fix index (fixed 512-CHARACTER corpus truncation, ADR-0040's "BASELINE" row: vscode
+R@5=50.50%), not the corpus-truncation-fixed index ADR-0040 shipped. Now points at
+`data/models/d1_full_corpus_index_{repo}_bge_lever1`, confirmed byte-identical (sha256) to the
+currently live-serving `data/models/similar_issue_index_{repo}_bge` -- this is the actual current
+production index, and reproduces ADR-0040's own "Lever1-only" R@5 (vscode 53.50%) as the
+dense-only baseline below, since `detector.retrieve()` is called with no `apply_query_instruction`
+override -- the real per-repo default (`QUERY_INSTRUCTION_REPO_OVERRIDE`) resolves on its own,
+exactly like production.
+
 Reads:
   reports/d1_eval_set_k8s_related.json
   reports/d1_eval_set_vscode_duplicate.json
-  data/models/d1_full_corpus_index_kubernetes_kubernetes_bge/
-  data/models/d1_full_corpus_index_microsoft_vscode_bge/
+  data/models/d1_full_corpus_index_kubernetes_kubernetes_bge_lever1/
+  data/models/d1_full_corpus_index_microsoft_vscode_bge_lever1/
 
 Output: reports/lever1_hybrid_bm25_rrf.json
 Reproduce: python scripts/lever1_hybrid_bm25_rrf.py
@@ -83,8 +94,8 @@ K_MAX = max(K_VALUES)
 TOKEN_RE = re.compile(r"[a-z0-9]+")
 
 REPOS = [
-    {"repo": "kubernetes_kubernetes", "index_dir": "data/models/d1_full_corpus_index_kubernetes_kubernetes_bge"},
-    {"repo": "microsoft_vscode", "index_dir": "data/models/d1_full_corpus_index_microsoft_vscode_bge"},
+    {"repo": "kubernetes_kubernetes", "index_dir": "data/models/d1_full_corpus_index_kubernetes_kubernetes_bge_lever1"},
+    {"repo": "microsoft_vscode", "index_dir": "data/models/d1_full_corpus_index_microsoft_vscode_bge_lever1"},
 ]
 
 

@@ -20,7 +20,7 @@ pyarrow>=14.0
 scikit-learn>=1.6,<1.8
 lightgbm>=4.0
 transformers>=4.40
-sentence-transformers>=2.2,<3.0
+sentence-transformers>=5.7.0,<6.0
 datasets>=2.14
 
 # Retrieval
@@ -37,4 +37,4 @@ prometheus-fastapi-instrumentator>=7.1.0
 prometheus-client>=0.19
 
 # LLM (production: groq only; google-genai + cohere are eval harness deps, not installed in Docker)
-groq>=1.2.0
+groq>=1.6.0

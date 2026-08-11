@@ -55,11 +55,83 @@ outside the k=5 cutoff), where the topic is clearly right and a moderately bette
 plausibly close the gap (e.g. #21937→#20613, kubernetes-test-go timeout flake, target at rank 8
 with all 5 retrieved results also being test-timeout flakes).
 
-**Read:** 24.67% is closer to the real ceiling than it looks. Naively "fixing" this eval
-population (the (iii) cases) might mechanically raise the measured number without reflecting any
-retrieval improvement at all — an eval-cleanup opportunity in its own right, but a different
-piece of work than model improvement, and worth being honest that it would inflate the metric
-without inflating the product.
+**Read:** 24.67% is closer to the real ceiling than it looks — confirmed below by actually
+building the clean subset and re-scoring it, not left as a guess.
+
+## A2 — Follow-up: full-150 clean eval set, hand-verified blind to retrieval outcome
+
+The 30-pair sample in Part A suggested most misses aren't fixable by a better retriever, but a
+sample of misses can't answer "what does the retriever score on a fair population" — and
+excluding pairs *because* they were misses would be circular (an easy pair a retriever also
+missed by bad luck would get excluded for the wrong reason; a hard pair it happened to hit would
+survive for the wrong reason). Fixed by pre-registering exclusion criteria on the pair's own
+content and applying them **blind to hit/miss** to all 150 pairs, then only afterward joining
+the labels to the already-computed retrieval results.
+
+**Pre-registered criteria (defined before any pair was scored against retrieval outcomes):**
+
+- `VALID` — query and target share genuine, substantive topical content overlap: the same
+  specific bug, feature, or proposal. Default label; the bar to exclude is "real, articulable
+  reason," not "any tangential imperfection."
+- `EXCLUDE_UMBRELLA` — the query is a checklist/tracking issue enumerating multiple distinct
+  sub-issues, such that no single embedding of it could fairly be expected to be close to any
+  ONE referenced item.
+- `EXCLUDE_CAUSAL_ONLY` — the target is cited only as background/precedent/motivating-example
+  for a topic the query is actually, substantively about something else.
+- `EXCLUDE_OTHER` — any other reason the pair isn't a fair content-similarity test (near-empty
+  query/target body, etc.), with the specific reason stated.
+
+**Execution** (`scripts/track2_k8s_clean_eval_build.py` inputs preserved in
+`reports/track2_k8s_clean_eval.json`): extracted all 150 pairs' query+target title/body (target
+body joined from the corpus parquet) into a form with **no hit/miss or retrieval-score field at
+all**. Dispatched to parallel reviewers in 5 batches of 30, matching this project's own D1
+precedent (ADR-0033 used two parallel agents for the same kind of hand-verification at a
+comparable scale) — each batch reviewed once against the written rubric above, blind to
+retrieval outcome and to the other batches. All 150 pair_ids returned exactly once; spot-checked
+for internal consistency (e.g. the same umbrella query paired with 4 different targets — #21699,
+"v1.0 upgrades to v1.2: outstanding issues" — was independently labeled `EXCLUDE_UMBRELLA` all 4
+times it appeared, without the reviewer being told these were the same source issue).
+
+**Results:**
+
+| Label | n | Hit rate |
+|---|---|---|
+| VALID (clean subset) | 66 | 39.4% (26/66) |
+| EXCLUDE_UMBRELLA | 27 | 14.8% |
+| EXCLUDE_CAUSAL_ONLY | 48 | 8.3% |
+| EXCLUDE_OTHER | 9 | 33.3% |
+| **All 150 (unfiltered, for reference)** | 150 | **24.67% (37/150)** — exact match to ADR-0040 |
+
+**Clean-subset R@5 = 39.39% [27.27%, 51.52%] (95% CI, percentile bootstrap, 2000 resamples,
+seed=42 — same method as `_retrieval_eval_common.py`/D1).** The unfiltered 24.67% point estimate
+sits just below the clean subset's CI lower bound — the clean number is distinguishably higher,
+not just directionally higher, though n=66 keeps the CI fairly wide (±12pp half-width) and this
+should be read as informative, not fully powered in the way the 150-pair gate set is.
+
+**Addressing the selection-bias risk directly, as instructed:** excluded pairs do have a lower
+hit rate (13.1%) than valid pairs (39.4%) — but this is the expected, correct shape for a
+principled filter, not evidence of cherry-picking. The exclusion labels were assigned with zero
+visibility into whether the retriever hit or missed each pair; the gap exists because the
+exclusion criteria target genuine properties (diluted/multi-topic content, citation-only
+references) that independently make a pair both *invalid as a content-similarity test* and
+*harder for a content-similarity retriever to win* — the same underlying reason, not two
+coincidentally-correlated ones. If exclusion had been outcome-driven, the excluded-pair hit rate
+would trivially be ~0% by construction; 13.1% (not 0%) is consistent with a validity-based filter
+that happens to correlate with difficulty, not a difficulty-based filter dressed up as validity.
+
+**Disclosed limitation**: each pair was reviewed once (5 non-overlapping batches), not
+D1's full double-review-with-reconciliation. The rubric here is more mechanical/checkable
+(checklist-structure, background-citation-vs-core-topic) than D1's harder "is this genuinely the
+same issue at all" judgment, so single-review is a reasonable trade for this pass, but a second
+independent pass reconciling disagreements would be the next rigor increment if this number
+becomes decision-load-bearing (e.g. gating a future fine-tune attempt).
+
+**Read: the "weak retriever" framing was partly an eval artifact.** On pairs that are actually a
+fair test of content-based retrieval, the current off-the-shelf BGE embedder scores ~39%, not
+25% — a real, substantial difference in how the product's retrieval quality should be described,
+even though nothing about the retriever itself changed. The remaining ~60% miss rate on the
+clean subset is still real headroom (this is not "retrieval is secretly great"), but the honest
+starting point for judging any future retrieval work is 39%, not 25%.
 
 ## B — Is the corpus complete? Clean negative.
 
@@ -150,14 +222,22 @@ unpredictability ceiling for vscode with current features.
 
 Nothing here proposes a build. Summary for the next decision:
 
-- **k8s retrieval**: ~24.7% may be close to the practical ceiling for a single-vector retriever
-  against this eval population; the clearest real lever left is cleaning the eval/mining
-  population's umbrella-issue and near-duplicate-cluster noise (a measurement fix, matching this
-  project's 5-for-5 record), not another embedder/fine-tune attempt in isolation.
+- **k8s retrieval: the "weak retriever" framing was substantially an eval artifact.** Building
+  and hand-verifying a clean eval subset (66 of 150 pairs survive a pre-registered, outcome-blind
+  validity filter) puts the current, unmodified off-the-shelf BGE embedder at **R@5 = 39.4%
+  [27.3%, 51.5%]**, not 24.7%. This changes the shape of the problem: the priority is a permanent
+  clean(er) eval set (and, separately, a precision-filtered mining method for any future training
+  data — the umbrella-issue/causal-reference noise found here is the same noise the product-
+  stratum training pairs are mined with) over another embedder/fine-tune attempt aimed at closing
+  a gap that was partly measurement, not model quality. The remaining ~60% miss rate on the clean
+  subset is still real headroom, not "problem solved" — but 39%, not 25%, is the honest baseline
+  any future retrieval work should be measured against.
 - **k8s training data**: volume is no longer the blocker; a next fine-tune attempt (if ever
-  pursued) should prioritize a bigger product-task TEST set and a precision-filtered mining
-  method over just mining more pairs.
+  pursued) should prioritize a bigger, similarly-cleaned product-task TEST set and the same
+  precision filter used here for mining, over just mining more pairs.
 - **vscode resolution**: the duplicate-wave hypothesis is tested and rejected as the explanation
   for the naive loss. Current naive-fallback serving stays correct. One narrower follow-up
   (semantic near-dup clustering instead of title-keyword filtering) would fully close this out,
   but the highest-value, cheapest hypothesis has already been checked and didn't pan out.
+- **CORS bug (#78)**: fix proposed and tested (PR #80, draft) — not merged/deployed, escalated
+  per standing instruction on security-surface changes.

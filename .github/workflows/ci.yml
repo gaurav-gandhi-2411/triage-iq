@@ -36,8 +36,11 @@ jobs:
           # full triage.
           #
           # CVE-2026-1839: unsafe torch.load() in Trainer._load_rng_state()
-          # (transformers/trainer.py) — training-checkpoint-restoration path. TriageIQ never
-          # imports Trainer. NVD: https://nvd.nist.gov/vuln/detail/CVE-2026-1839
+          # (transformers/trainer.py) — training-checkpoint-restoration path. The served
+          # inference API never imports Trainer; only the offline training script
+          # (scripts/deberta_train.py) does, and it has no external attack surface (no
+          # file-upload/model-path surface, requires local filesystem write access + explicit
+          # invocation). NVD: https://nvd.nist.gov/vuln/detail/CVE-2026-1839
           #
           # PYSEC-2025-217: X-CLIP checkpoint-conversion-script RCE. TriageIQ never imports
           # X-CLIP or runs any checkpoint-conversion script.

@@ -13,10 +13,12 @@
 **Why suppressed:**
 The vulnerability is in `Trainer._load_rng_state()` (`src/transformers/trainer.py`), which
 uses `torch.load()` without `weights_only=True` during training checkpoint restoration.
-TriageIQ is an **inference-only** service: it never imports `Trainer`, never loads checkpoint
-files, and exposes no model-path or file-upload surface to external callers. The attack
-requires local filesystem write access to a checkpoint directory and explicit `Trainer`
-invocation — neither condition is reachable through our API.
+The **served inference API** never imports `Trainer`, never loads checkpoint files, and
+exposes no model-path or file-upload surface to external callers — that's the surface this
+suppression covers. `scripts/deberta_train.py` (an offline training script, not part of the
+API) does import `Trainer`, but the attack requires local filesystem write access to a
+checkpoint directory plus explicit `Trainer` invocation — neither condition is reachable
+through the deployed service.
 
 **Why not fixed immediately:**
 The fix requires a double major version bump:

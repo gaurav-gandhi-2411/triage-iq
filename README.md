@@ -46,15 +46,15 @@ POST /triage {repo, title, body}
 ┌───────────────────────────────────────┐
 │ System 1: TF-IDF Component Classifier  │  ~5ms p50
 │ Logistic Regression, 28–35 classes    │
-│ vscode: 90.4% top-3 acc (69.0% top-1) │
+│ vscode: 89.8% top-3 acc (76.5% top-1) │
 └──────────────────┬────────────────────┘
                    │ top-3 component candidates + confidence
                    ▼
 ┌───────────────────────────────────────┐
 │ System 2: Similar Issue Retriever      │  ~27ms p50
 │ BGE-base-en-v1.5 + FAISS cosine       │
-│ k8s related R@5 9.3% (clean, weak)    │
-│ vscode dup R@5 43.5% (clean)          │
+│ k8s related R@5 24.7% (Lever1+2)      │
+│ vscode dup R@5 53.5% (Lever1)         │
 └──────────────────┬────────────────────┘
                    │ top-5 similar issues + similarity scores
                    ▼
@@ -90,29 +90,84 @@ suggested_next_steps, triage_summary
 | Component classifier | vscode | Macro F1 (top-1) | 0.627 |
 | Component classifier | kubernetes | Macro F1 (top-1) | 0.462 |
 | Component classifier | vscode | Inference latency p50 | 4.9ms |
-| Similar issue retriever | kubernetes | **Recall@5, related task (corrected, prod-matching — see note)** | **18.0%** [12.0, 24.0] |
-| Similar issue retriever | kubernetes | Recall@1 / @10 (related task, corrected) | 9.3% / 23.3% |
-| Similar issue retriever | vscode | **Recall@5, duplicate task (corrected, prod-matching — see note)** | **50.5%** [43.0, 57.5] |
-| Similar issue retriever | vscode | Recall@1 / @10 (duplicate task, corrected) | 27.0% / 59.5% |
-| Similar issue retriever | vscode | Recall@5, related task (directional, n=19 — see note) | 63.2% [42.1, 84.2] |
+| Similar issue retriever | kubernetes | **Recall@5, related task (Lever1+2 shipped, ADR-0040 — see note)** | **24.67%** [18.0, 31.3] |
+| Similar issue retriever | kubernetes | Recall@1 / @10 (related task, pre-Lever1/2 — not yet re-measured) | 9.3% / 23.3% |
+| Similar issue retriever | vscode | **Recall@5, duplicate task (Lever1 only shipped, ADR-0040 — see note)** | **53.50%** [46.5, 60.5] |
+| Similar issue retriever | vscode | Recall@1 / @10 (duplicate task, pre-Lever1 — not yet re-measured) | 27.0% / 59.5% |
+| Similar issue retriever | vscode | Recall@5, related task (directional, n=19, post-Lever1 — see note) | 57.89% [36.8, 78.9] |
 | Similar issue retriever | vscode | Index size (BGE) | 24.3 MB |
 | Resolution predictor | kubernetes | Point estimate: MAE vs naive (served) | 104.05d vs 106.29d naive (+2.1%) |
-| Resolution predictor | kubernetes | Bucket classifier: accuracy vs naive (served) | 33.24% vs 29.97% naive (+3.27pp [+1.80, +4.74]) |
+| Resolution predictor | kubernetes | Bucket classifier: accuracy vs naive (served, ADR-0041 stale-split fix — see note) | +6.35pp [+5.08, +7.55] vs naive |
 | Resolution predictor | kubernetes | CQR conformal coverage (target 80%) | 76.2% [73.5, 78.6] |
 | Resolution predictor | kubernetes | Inference latency p50 | 1.5ms |
 | Resolution predictor | vscode | Point estimate: MAE vs naive (served — see note) | 6.02d vs 3.53d naive (**−70.5%, worse than naive**) |
 | Resolution predictor | vscode | Bucket classifier: served output (see note) | **naive-prior fallback** (~33% conf) — raw classifier loses to naive by −22.08pp [−25.81, −18.02] |
 | Resolution predictor | vscode | CQR conformal coverage (target 80%) | 74.6% [69.9, 78.8] |
 | Resolution predictor | vscode | Inference latency p50 | 1.4ms |
-| LLM synthesis (judge, /15) | kubernetes | **Current mean, regression detector (see Known Limitations)** | **9.89/15 (65.9%)** — vs. frozen gate baseline 10.51/15, known regression |
-| LLM synthesis (judge, /15) | vscode | Current mean, regression detector (see Known Limitations) | 8.73/15 (58.2%) — vs. frozen gate baseline 8.36/15, improved |
-| LLM synthesis | kubernetes | **Floor-fail rate (see note)** | **9.4%** [4.0, 19.9] |
-| LLM synthesis | vscode | **Floor-fail rate (see note)** | **45.5%** [21.3, 72.0] |
-| LLM synthesis | kubernetes | Fabrication rate (grounding-verified, see note) | 1.9% |
-| LLM synthesis | vscode | Fabrication rate (grounding-verified, see note) | 9.1% |
+| LLM synthesis (judge, /15) | kubernetes | **Current mean, regression detector (ADR-0043 baseline — see Known Limitations)** | **10.26/15 (68.4%)** — new committed baseline; -0.245 vs. OLD pre-cutover 10.51/15, accepted tradeoff (not tracked as a regression) |
+| LLM synthesis (judge, /15) | vscode | Current mean, regression detector (ADR-0043 baseline — see Known Limitations) | 8.64/15 (57.6%) — new committed baseline, flat vs. OLD 8.36/15 within noise band |
+| LLM synthesis | kubernetes | **Floor-fail rate (ADR-0043, no CI recomputed — see note)** | **18.9%** (was 9.4%, unchanged v3→NEW) |
+| LLM synthesis | vscode | **Floor-fail rate (ADR-0043, no CI recomputed — see note)** | **63.6%** (was 45.5%; investigated, small-n judge-scoring jitter, not a real regression) |
+| LLM synthesis | kubernetes | Fabrication rate (grounding-verified; hard zero-tolerance gate, ADR-0044) | 0.0% (0/53) |
+| LLM synthesis | vscode | Fabrication rate (grounding-verified; hard zero-tolerance gate, ADR-0044) | 0.0% (0/11) |
 
 95% Wilson CIs shown in brackets where computed on a held-out test split.
 
+> **2026-08-10 update — retrieval, resolution, and synthesis cutovers shipped (ADR-0040/0041/0043/0044), supersedes the retrieval/resolution/synthesis numbers in the notes below.**
+> **Retrieval (ADR-0040):** two independent bugs fixed — corpus-side text was truncated at 512
+> *characters* instead of BGE's real 512-*token* limit (dropped a median 78/165 tokens per
+> truncated k8s/vscode issue), and BGE's model-card-documented query instruction prefix was
+> never applied. Lever 1 (truncation fix) ships unconditionally for both repos. Lever 2 (query
+> instruction) ships **on for k8s only** (`QUERY_INSTRUCTION_REPO_OVERRIDE`) — it's a
+> significant additive win for k8s (+6.67pp) but directionally *negative* for vscode's
+> duplicate-matching task, so shipping it uniformly would trade away a proven gain for config
+> simplicity. Result: **k8s R@5 18.0%→24.67%** [18.0, 31.3], **vscode R@5 50.5%→53.5%**
+> [46.5, 60.5]. Live-verified through the real, un-overridden `/triage` code path, not just a
+> unit test. A follow-up investigation (2026-08-10,
+> [`docs/investigations/vscode-retrieval-lexical-and-hybrid-2026-08-10.md`](docs/investigations/vscode-retrieval-lexical-and-hybrid-2026-08-10.md))
+> tested whether near-duplicate/lexical-overlap dominance explains why the instruction helps
+> k8s but hurts vscode — that specific hypothesis did not hold up; the asymmetry's real cause
+> stays open. Hybrid BM25+dense fusion was re-tested against the corrected corpus and rejected
+> again on both repos (dense-only remains stronger).
+>
+> **Resolution (ADR-0041):** the shipped resolution models were trained on a stale split
+> (regenerated 2026-05-30) against a corpus that had grown 99-100% since (regenerated
+> 2026-07-11, Phase 2b). Re-splitting from the current corpus roughly doubles k8s's
+> bucket-classifier gain over naive: **+3.27pp→+6.35pp** [+5.08, +7.55], cutover and
+> live-verified. Recency weighting added nothing on top (k8s's corpus is still entirely
+> 2014-2016 in calendar time even with 100% more rows, so there's no recency signal to exploit).
+> vscode's re-split was tried and **rejected** — it makes the bucket classifier dramatically
+> worse (-24.73pp with recency weighting), so vscode's naive-prior fallback is unchanged.
+>
+> **Synthesis (ADR-0043):** ADR-0039 accepted a k8s synthesis-quality regression (-0.6226 vs.
+> the frozen OLD baseline) as a side effect of the ADR-0036 classifier cutover, diagnosed as
+> confidence-framing (tighter per-class confidence scores reading to the LLM as "the model is
+> unsure," inducing hedged language). The retrieval and resolution fixes above are unrelated to
+> that classifier and don't touch its confidence output — but re-running the full pipeline with
+> both landed anyway **recovered 61% of the original gap**: k8s's judge mean moved
+> 9.8868→**10.2642**/15. Per-dimension analysis confirms *why*: `similar_issues_relevance` and
+> `resolution_estimate_reasonableness` (fed directly by the two fixes) recovered strongly or
+> fully; `component_match` and `next_steps_actionability` (the two dimensions ADR-0037 traced
+> specifically to confidence-framing) barely moved at all — exactly the causal signature you'd
+> expect if both mechanisms are real and independent. **10.2642 is now the committed baseline**
+> (`test_k8s_quality_regression`'s `xfail` marker removed) — the residual -0.2452 vs. OLD is a
+> deliberately accepted cost of the classifier's verified ground-truth accuracy win, not an
+> open item this gate tracks going forward. vscode: 8.7273→8.6364, flat within its own noise
+> band. A follow-up probe (2026-08-10,
+> [`docs/investigations/confidence-structural-representation-2026-08-10.md`](docs/investigations/confidence-structural-representation-2026-08-10.md))
+> tested ADR-0037's last untested lever (showing the LLM less/differently-structured confidence
+> information, not just different wording) — neither candidate cleared the bar for a full
+> confirming run; one candidate introduced a new component-label fabrication failure mode the
+> current prompt doesn't have. No further prompt-lever work is planned.
+>
+> **Fabrication rate promoted to a hard, zero-tolerance blocking gate (ADR-0044).** Previously
+> informational; PR #57 promoted both `eval-gate.yml` jobs off `continue-on-error`, and ADR-0044
+> then explicitly decided **not** to add per-repo slack (e.g. for vscode's small n=11 sample) —
+> a discrete, replay-deterministic correctness signal (no live LLM call, confirmed
+> byte-identical across replays) doesn't get the same statistical tolerance band as the
+> continuous judge-score gate. Currently 0/53 k8s, 0/11 vscode.
+> Full reasoning: [`docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md`](docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md), [`docs/architecture/adr/0041-resolution-stale-split-recency-weighting.md`](docs/architecture/adr/0041-resolution-stale-split-recency-weighting.md), [`docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md`](docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md), [`docs/architecture/adr/0044-fabrication-rate-hard-gate-bound.md`](docs/architecture/adr/0044-fabrication-rate-hard-gate-bound.md).
+>
 > **Headline finding (2026-07-19, final framing per ADR-0033, supersedes the 2026-07-16
 > framing below): retrieval quality is now measured on a clean, hand-verified, disjoint
 > eval set — and it's honestly weaker than previously reported, not better.** k8s's clean
@@ -600,9 +655,9 @@ jsonPayload.log_type="access" AND jsonPayload.llm_status="parse_failure"  # LLM 
 
 **CVE-2026-1839 in transformers 4.x.** Suppressed in `pip-audit` — the vulnerable code path (`Trainer._load_rng_state`) is not reachable in an inference-only service. Fix requires `sentence-transformers 2→5` + `transformers 4→5` (triple major bump). Tracked in [`DEPENDENCIES.md`](DEPENDENCIES.md).
 
-**Synthesis judge quality gate: known-failing on kubernetes/kubernetes, by deliberate decision, not a bug.** The ADR-0036 multi-label classifier cutover (component prediction: k8s top-1 +9.09pp / top-3 +4.55pp, vscode top-1 +7.49pp — both ground-truth-verified, CIs excluding zero, **live in production**) has a documented side effect on LLM-judged synthesis-plan quality: the new classifier's independent per-class confidence scores cluster more tightly than the old softmax's, which reads to the synthesis LLM as "the model is unsure" and induces hedged language in the generated plan (including in dimensions fed by an unrelated, unchanged resolution predictor). k8s's judge-scored quality mean sits at 9.8868/15 against a frozen baseline of 10.5094/15 (-0.62, outside the measured ±0.22 noise band). Four prompt-wording fixes were tried and none closed the gap (see ADR-0037). **Decision (ADR-0039): keep the classifier — a verified ground-truth accuracy win is not traded away to satisfy a judge proxy reacting to writing style — leave the baseline frozen at its pre-cutover value rather than silently normalizing the regression, and mark `eval/test_quality_regression.py::test_k8s_quality_regression` as an explicit, `strict=True` `xfail` pointing at both ADRs.** Component predictions actually served to users are unaffected and improved; only the LLM-judge's opinion of the generated plan's prose regressed. vscode moved the other direction under the same recording (8.3636 → 8.7273, +0.36) and keeps passing its regression test normally.
+**Synthesis judge quality gate: k8s carries a deliberately accepted, permanent -0.245 residual vs. the pre-cutover baseline — not a bug, and no longer an `xfail`.** The ADR-0036 multi-label classifier cutover (component prediction: k8s top-1 +9.09pp / top-3 +4.55pp, vscode top-1 +7.49pp — both ground-truth-verified, CIs excluding zero, **live in production**) caused a k8s synthesis-quality regression on the LLM-judge score (-0.6226 vs. the frozen OLD baseline), diagnosed as a side effect of the new classifier's tighter per-class confidence scores reading to the LLM as "the model is unsure" and inducing hedged language. ADR-0039 (2026-08-05): keep the classifier regardless — a verified ground-truth accuracy win is not traded away for a judge proxy reacting to writing style — freeze the baseline and mark the regression test `xfail` pending further investigation. **ADR-0043 (2026-08-10) then found the regression was only ~39% confidence-framing** — the other ~61% was an unrelated, independently-fixed upstream-signal-quality gap (the retrieval and resolution cutovers documented in the evaluation table above). Re-running the pipeline with both fixes landed recovered k8s's mean to **10.2642/15** (was 9.8868, OLD frozen baseline was 10.5094) — per-dimension analysis confirms the causal split cleanly: the two dimensions fed by the fixed signals recovered strongly, the two dimensions ADR-0037 traced specifically to confidence-framing barely moved at all. **10.2642 is now the committed baseline and the `xfail` marker is removed** — `test_k8s_quality_regression` protects against regressions *below* 10.2642 going forward, not against the residual -0.2452 vs. 10.5094, which is a permanently accepted cost of the classifier's accuracy win. A follow-up probe of ADR-0037's last untested lever (structural confidence representation) found no clean win worth shipping — see the evaluation table's 2026-08-10 note above. vscode: 8.3636 (OLD) → 8.7273 (post-cutover) → 8.6364 (current, both fixes landed) — flat throughout within its own noise band.
 
-**Eval gate is informational-only, not a merge block.** All the `xfail`/ratchet discipline above lives inside `.github/workflows/eval-gate.yml`'s two jobs (`structural-invariants`, `quality-regression`), and both are still `continue-on-error: true` — informational, never a required status check. ADR-0039 also found (2026-08-05) that these jobs had been silently failing at an earlier pre-step (a stale model-manifest hash) for ~3.5 weeks before that fix, and `continue-on-error` is exactly why that never blocked anything or raised an alert. The gate now runs and reports correctly, but promoting it to an actual required check — so a future regression can't merge silently the way this one almost did — is still open.
+**Eval gate fails loud but is not yet a required branch-protection check.** `.github/workflows/eval-gate.yml`'s two jobs (`structural-invariants`, `quality-regression`) had their `continue-on-error: true` removed 2026-08-10 (PR #57) after it was found to have silently masked real failures for weeks on three separate occasions (model-manifest drift, a broken import, a stale grounding-ratchet baseline hash). A red eval-gate run is now visible instead of silently green — but the jobs are still not in GitHub's `required_status_checks` (only `test` is), so a PR can still merge past a red eval-gate through the GitHub UI, and this repo's own merge-gate hook only enforces the same branch-protection-required list. **2026-08-11: promotion to required is blocked on a real flakiness finding, not yet fixed** — both jobs make a live, uncached HTTP fetch to `huggingface.co` to load `BAAI/bge-base-en-v1.5` (no `actions/cache` step exists for the HF model cache), which failed twice in the last 100 runs (~2.7%) with connection/429-rate-limit errors unrelated to code correctness. The already-required `test` job avoids this by stubbing the embedder (`tests/test_similar_issues.py`); the eval-gate jobs need the same fix (HF model caching, or an equivalent) before promotion is safe.
 
 **Health monitor fires on an irregular cadence, not the configured 30 minutes.** `.github/workflows/health-monitor.yml` (added in ADR-0038 specifically to close the blind spot that let the billing-outage go undetected for up to 12 days) is configured for `cron: '*/30 * * * *'`, but observed run history shows gaps of 1.5–3+ hours between executions, not 30 minutes — a known characteristic of GitHub Actions' scheduled-workflow queue for low-traffic repos, not a bug in the workflow itself. The monitor is still meaningfully better than nothing (it did catch the outage-recovery transition), but a multi-hour detection window is a real gap against the incident it exists to prevent.
 

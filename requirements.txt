@@ -37,4 +37,4 @@ prometheus-fastapi-instrumentator>=7.1.0
 prometheus-client>=0.19
 
 # LLM (production: groq only; google-genai + cohere are eval harness deps, not installed in Docker)
-groq>=1.2.0
+groq>=1.6.0

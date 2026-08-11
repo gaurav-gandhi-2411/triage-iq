@@ -230,7 +230,14 @@ _cors_origins = (
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
-    allow_origin_regex=r"https://triage-iq-orcin-.*\.vercel\.app",
+    # Matches Vercel's actual preview/branch URL scheme for this team
+    # (<slug>-gaurav-gandhi-2411s-projects.vercel.app), not the stale
+    # triage-iq-orcin-* pattern the old regex assumed -- see triage-iq#78.
+    # Starlette applies this via re.fullmatch(), so the anchors are
+    # redundant but kept for clarity if this pattern is ever reused elsewhere.
+    allow_origin_regex=(
+        r"^https://[a-z0-9]+(?:-[a-z0-9]+)*-gaurav-gandhi-2411s-projects\.vercel\.app$"
+    ),
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

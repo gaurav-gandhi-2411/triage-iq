@@ -126,6 +126,36 @@ class TextDataset(torch.utils.data.Dataset):
         return item
 
 
+def compute_pos_weight(y_train: np.ndarray, cap: float) -> torch.Tensor:
+    """Per-class BCE pos_weight = n_negative / n_positive, clipped to `cap`. Diagnostic for
+    ARM 2's k8s regression (Phase B): unweighted BCE over 35 sparse classes (median raw
+    pos_weight ~61x, max ~189x) lets the model minimize loss by staying uniformly conservative
+    rather than learning per-class ranking. Capping avoids the instability of applying the raw
+    (up to 189x) weight directly."""
+    n_pos = y_train.sum(axis=0)
+    n_neg = len(y_train) - n_pos
+    raw = n_neg / np.maximum(n_pos, 1)
+    capped = np.clip(raw, 1.0, cap)
+    return torch.tensor(capped, dtype=torch.float32)
+
+
+class WeightedBCETrainer(Trainer):
+    """Trainer variant that applies a per-class pos_weight to BCEWithLogitsLoss -- HF's built-in
+    multi_label_classification problem_type always uses unweighted BCE, so this is the only way
+    to rebalance without hand-rolling the whole training loop."""
+
+    def __init__(self, *args, pos_weight: torch.Tensor, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.pos_weight = pos_weight
+
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+        labels = inputs.pop("labels")
+        outputs = model(**inputs)
+        loss_fct = torch.nn.BCEWithLogitsLoss(pos_weight=self.pos_weight.to(outputs.logits.device))
+        loss = loss_fct(outputs.logits, labels)
+        return (loss, outputs) if return_outputs else loss
+
+
 def build_multi_hot(repo: str, labels_raw_series: pd.Series, classes: list[str]) -> np.ndarray:
     class_to_idx = {c: i for i, c in enumerate(classes)}
     Y = np.zeros((len(labels_raw_series), len(classes)), dtype=np.float32)
@@ -141,6 +171,8 @@ def train(
     max_len: int = MAX_LEN,
     per_device_batch: int = PER_DEVICE_BATCH,
     grad_accum_steps: int = GRAD_ACCUM_STEPS,
+    pos_weight_cap: float | None = None,
+    run_name: str | None = None,
 ) -> dict:
     assert_leakage_guard_passed()
     set_seed(SEED)
@@ -181,7 +213,11 @@ def train(
         BASE_MODEL, num_labels=n_classes, problem_type=problem_type,
     ).to(device)
 
-    out_dir = MODELS_DIR / f"deberta_{arm}_{repo}"
+    if pos_weight_cap is not None and not multi_label:
+        raise SystemExit("--pos-weight-cap only applies to --arm multi")
+
+    suffix = f"_{run_name}" if run_name else ""
+    out_dir = MODELS_DIR / f"deberta_{arm}_{repo}{suffix}"
     args = TrainingArguments(
         output_dir=str(out_dir),
         num_train_epochs=EPOCHS,
@@ -200,11 +236,19 @@ def train(
         fp16=torch.cuda.is_available(),
     )
 
-    heartbeat = Heartbeat(REPORTS / f"heartbeat_deberta_{arm}_{repo}.jsonl")
-    trainer = Trainer(
-        model=model, args=args, train_dataset=ds_train, eval_dataset=ds_val,
-        callbacks=[HeartbeatCallback(heartbeat)],
-    )
+    heartbeat = Heartbeat(REPORTS / f"heartbeat_deberta_{arm}_{repo}{suffix}.jsonl")
+    pos_weight = None
+    if pos_weight_cap is not None:
+        pos_weight = compute_pos_weight(y_train, pos_weight_cap)
+        trainer = WeightedBCETrainer(
+            model=model, args=args, train_dataset=ds_train, eval_dataset=ds_val,
+            callbacks=[HeartbeatCallback(heartbeat)], pos_weight=pos_weight,
+        )
+    else:
+        trainer = Trainer(
+            model=model, args=args, train_dataset=ds_train, eval_dataset=ds_val,
+            callbacks=[HeartbeatCallback(heartbeat)],
+        )
 
     t0 = time.perf_counter()
     train_result = trainer.train()
@@ -236,6 +280,8 @@ def train(
             "lr": LR, "epochs": EPOCHS, "per_device_batch": per_device_batch,
             "grad_accum_steps": grad_accum_steps, "effective_batch": per_device_batch * grad_accum_steps,
             "max_len": max_len, "weight_decay": WEIGHT_DECAY, "seed": SEED,
+            "pos_weight_cap": pos_weight_cap,
+            "pos_weight_per_class": pos_weight.tolist() if pos_weight is not None else None,
         },
         "log_history": log_history,
         "train_seconds": elapsed,
@@ -253,9 +299,15 @@ def main() -> None:
     ap.add_argument("--per-device-batch", type=int, default=PER_DEVICE_BATCH)
     ap.add_argument("--grad-accum-steps", type=int, default=GRAD_ACCUM_STEPS)
     ap.add_argument("--run-name", type=str, default=None)
+    ap.add_argument("--pos-weight-cap", type=float, default=None,
+                     help="Cap for per-class BCE pos_weight (multi arm only). Diagnostic for "
+                          "class-imbalance-driven BCE collapse.")
     args = ap.parse_args()
 
-    result = train(args.arm, args.repo, args.max_len, args.per_device_batch, args.grad_accum_steps)
+    result = train(
+        args.arm, args.repo, args.max_len, args.per_device_batch, args.grad_accum_steps,
+        pos_weight_cap=args.pos_weight_cap, run_name=args.run_name,
+    )
     suffix = f"_{args.run_name}" if args.run_name else ""
     report_path = REPORTS / f"deberta_train_{args.arm}_{args.repo}{suffix}.json"
     report_path.write_text(json.dumps(result, indent=2), encoding="utf-8")

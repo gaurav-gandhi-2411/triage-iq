@@ -1,0 +1,33 @@
+{
+  "arm": "single",
+  "repo": "microsoft_vscode",
+  "n_test": 187,
+  "top1_accuracy": 0.5668449197860963,
+  "top1_accuracy_ci95": [
+    0.4951835472851503,
+    0.6358151448239078
+  ],
+  "top3_accuracy": 0.7593582887700535,
+  "top3_accuracy_ci95": [
+    0.6932635087923685,
+    0.8150114165907766
+  ],
+  "macro_f1": 0.2284130596066956,
+  "weighted_f1": 0.5017939090058717,
+  "any_valid_label_top1_accuracy": 0.5775401069518716,
+  "any_valid_label_top1_accuracy_ci95": [
+    0.505880365703072,
+    0.6460781171434352
+  ],
+  "n_multi_label_test_rows": 15,
+  "tail_classes_recall": {
+    "keybindings": 0.0,
+    "editor-core": 0.0,
+    "editor-find": 0.0,
+    "search": 0.0,
+    "electron": 0.0,
+    "suggest": 0.0,
+    "workbench-editors": 0.0
+  },
+  "tail_threshold": 15
+}

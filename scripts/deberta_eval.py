@@ -71,9 +71,11 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--arm", required=True, choices=["single", "multi"])
     ap.add_argument("--repo", required=True, choices=["microsoft_vscode", "kubernetes_kubernetes"])
+    ap.add_argument("--run-name", type=str, default=None)
     args = ap.parse_args()
 
-    model_dir = f"data/models/deberta_{args.arm}_{args.repo}"
+    suffix = f"_{args.run_name}" if args.run_name else ""
+    model_dir = f"data/models/deberta_{args.arm}_{args.repo}{suffix}"
     train_df = pd.read_parquet(PROCESSED_DIR / f"{args.repo}_classifier_train.parquet")
     test_df = pd.read_parquet(PROCESSED_DIR / f"{args.repo}_classifier_test.parquet")
 
@@ -112,7 +114,7 @@ def main() -> None:
         "tail_classes_recall": {c: round(rec, 4) for c, rec in tail_recall.items()},
         "tail_threshold": TAIL_THRESHOLD,
     }
-    out_path = REPORTS / f"deberta_eval_{args.arm}_{args.repo}.json"
+    out_path = REPORTS / f"deberta_eval_{args.arm}_{args.repo}{suffix}.json"
     out_path.write_text(json.dumps(out, indent=2), encoding="utf-8")
     print(f"\nWrote {out_path}")
 

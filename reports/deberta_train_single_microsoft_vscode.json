@@ -1,0 +1,138 @@
+{
+  "arm": "single",
+  "repo": "microsoft_vscode",
+  "base_model": "microsoft/deberta-v3-base",
+  "problem_type": "single_label_classification",
+  "n_classes": 28,
+  "n_train": 1488,
+  "n_val": 187,
+  "hyperparams": {
+    "lr": 2e-05,
+    "epochs": 5,
+    "per_device_batch": 4,
+    "grad_accum_steps": 4,
+    "effective_batch": 16,
+    "max_len": 512,
+    "weight_decay": 0.01,
+    "seed": 42,
+    "pos_weight_cap": null,
+    "pos_weight_per_class": null
+  },
+  "log_history": [
+    {
+      "loss": 3.3152,
+      "epoch": 0.21505376344086022
+    },
+    {
+      "loss": 3.234,
+      "epoch": 0.43010752688172044
+    },
+    {
+      "loss": 3.005,
+      "epoch": 0.6451612903225806
+    },
+    {
+      "loss": 2.7691,
+      "epoch": 0.8602150537634409
+    },
+    {
+      "eval_loss": 2.621105432510376,
+      "epoch": 1.0
+    },
+    {
+      "loss": 2.6941,
+      "epoch": 1.075268817204301
+    },
+    {
+      "loss": 2.6754,
+      "epoch": 1.2903225806451613
+    },
+    {
+      "loss": 2.3883,
+      "epoch": 1.5053763440860215
+    },
+    {
+      "loss": 2.4407,
+      "epoch": 1.7204301075268817
+    },
+    {
+      "loss": 2.2854,
+      "epoch": 1.935483870967742
+    },
+    {
+      "eval_loss": 2.1745080947875977,
+      "epoch": 2.0
+    },
+    {
+      "loss": 2.2357,
+      "epoch": 2.150537634408602
+    },
+    {
+      "loss": 2.0714,
+      "epoch": 2.3655913978494625
+    },
+    {
+      "loss": 2.0179,
+      "epoch": 2.5806451612903225
+    },
+    {
+      "loss": 1.864,
+      "epoch": 2.795698924731183
+    },
+    {
+      "eval_loss": 1.8750619888305664,
+      "epoch": 3.0
+    },
+    {
+      "loss": 1.9481,
+      "epoch": 3.010752688172043
+    },
+    {
+      "loss": 1.7673,
+      "epoch": 3.225806451612903
+    },
+    {
+      "loss": 1.7126,
+      "epoch": 3.4408602150537635
+    },
+    {
+      "loss": 1.7329,
+      "epoch": 3.6559139784946235
+    },
+    {
+      "loss": 1.7043,
+      "epoch": 3.870967741935484
+    },
+    {
+      "eval_loss": 1.6498655080795288,
+      "epoch": 4.0
+    },
+    {
+      "loss": 1.5881,
+      "epoch": 4.086021505376344
+    },
+    {
+      "loss": 1.5799,
+      "epoch": 4.301075268817204
+    },
+    {
+      "loss": 1.4727,
+      "epoch": 4.516129032258064
+    },
+    {
+      "loss": 1.5427,
+      "epoch": 4.731182795698925
+    },
+    {
+      "loss": 1.5467,
+      "epoch": 4.946236559139785
+    },
+    {
+      "eval_loss": 1.6104788780212402,
+      "epoch": 5.0
+    }
+  ],
+  "train_seconds": 515.9034648999805,
+  "device": "cuda",
+  "out_dir": "data\\models\\deberta_single_microsoft_vscode"
+}

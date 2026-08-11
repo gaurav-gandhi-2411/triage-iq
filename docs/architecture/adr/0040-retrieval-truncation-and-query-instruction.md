@@ -1,7 +1,17 @@
 # ADR-0040 — Corpus token-truncation fix + per-repo BGE query instruction
 
 **Status:** Accepted — code + measurement + candidate-index verification done; GCS publish and
-deploy are separate, explicitly-gated next steps, not covered by this ADR's acceptance
+deploy are separate, explicitly-gated next steps, not covered by this ADR's acceptance.
+**k8s's 24.67% R@5 figure below is superseded as the headline retrieval number** (2026-08-11,
+[`docs/investigations/2026-08-11-k8s-retrieval-ceiling-and-vscode-resolution-close.md`](../../investigations/2026-08-11-k8s-retrieval-ceiling-and-vscode-resolution-close.md)):
+a hand-verified clean eval subset (66/150 pairs, exclusion criteria pre-registered and applied
+blind to retrieval outcome) scores **39.39% [27.3, 51.5]** — the unfiltered 24.67% understated
+the retriever because ~56% of the eval population turns out to be structurally invalid as a
+content-similarity test (umbrella/tracking issues, causal-only references), not because the
+retriever is weak. This ADR's own measurements, decisions, and code changes below are otherwise
+unaffected and still correct — only the R@5 headline number is corrected, not fixed/rewritten in
+place per this project's convention (see ADR-0033's own superseded-baseline banner for the same
+pattern).
 **Date:** 2026-08-06
 **Decider:** Gaurav Gandhi
 

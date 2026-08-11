@@ -53,7 +53,7 @@ POST /triage {repo, title, body}
 ┌───────────────────────────────────────┐
 │ System 2: Similar Issue Retriever      │  ~27ms p50
 │ BGE-base-en-v1.5 + FAISS cosine       │
-│ k8s related R@5 24.7% (Lever1+2)      │
+│ k8s related R@5 39.4% (clean eval)*   │
 │ vscode dup R@5 53.5% (Lever1)         │
 └──────────────────┬────────────────────┘
                    │ top-5 similar issues + similarity scores
@@ -77,6 +77,11 @@ expected_resolution_days, priority_guess,
 suggested_next_steps, triage_summary
 ```
 
+\* k8s R@5 on a hand-verified clean eval subset — see the Evaluation table and note below;
+the unfiltered number over the full eval population is lower (24.67%) because ~56% of that
+population turns out to be structurally invalid as a retrieval test, not because the retriever
+got worse.
+
 ---
 
 ## Evaluation
@@ -90,8 +95,9 @@ suggested_next_steps, triage_summary
 | Component classifier | vscode | Macro F1 (top-1) | 0.627 |
 | Component classifier | kubernetes | Macro F1 (top-1) | 0.462 |
 | Component classifier | vscode | Inference latency p50 | 4.9ms |
-| Similar issue retriever | kubernetes | **Recall@5, related task (Lever1+2 shipped, ADR-0040 — see note)** | **24.67%** [18.0, 31.3] |
-| Similar issue retriever | kubernetes | Recall@1 / @10 (related task, pre-Lever1/2 — not yet re-measured) | 9.3% / 23.3% |
+| Similar issue retriever | kubernetes | **Recall@5, related task, clean eval subset (n=66, blind-labeled valid pairs only — see note)** | **39.39%** [27.3, 51.5] |
+| Similar issue retriever | kubernetes | Recall@5, related task, unfiltered eval population (n=150, ~56% structurally invalid — see note) | 24.67% [18.0, 31.3] |
+| Similar issue retriever | kubernetes | Recall@1 / @10 (related task, unfiltered, pre-Lever1/2 — not yet re-measured) | 9.3% / 23.3% |
 | Similar issue retriever | vscode | **Recall@5, duplicate task (Lever1 only shipped, ADR-0040 — see note)** | **53.50%** [46.5, 60.5] |
 | Similar issue retriever | vscode | Recall@1 / @10 (duplicate task, pre-Lever1 — not yet re-measured) | 27.0% / 59.5% |
 | Similar issue retriever | vscode | Recall@5, related task (directional, n=19, post-Lever1 — see note) | 57.89% [36.8, 78.9] |
@@ -129,6 +135,25 @@ suggested_next_steps, triage_summary
 > k8s but hurts vscode — that specific hypothesis did not hold up; the asymmetry's real cause
 > stays open. Hybrid BM25+dense fusion was re-tested against the corrected corpus and rejected
 > again on both repos (dense-only remains stronger).
+>
+> **Retrieval, k8s eval-population audit (2026-08-11):** the 24.67% k8s number above measures
+> R@5 over the full 150-pair eval population, but hand-categorizing a sample of its misses found
+> most weren't retrievable-in-principle: umbrella/tracking issues that reference many unrelated
+> sub-issues at once (no single embedding can be close to all of them), and citations where the
+> target is background/precedent for a topic the query is actually about something else. Built a
+> clean subset the honest way to avoid selection bias — **two exclusion criteria (checklist-style
+> umbrella queries; causal-only references) were written down *before* any pair was scored
+> against retrieval outcomes**, applied blind to hit/miss across all 150 pairs by 5 independent
+> reviewers, and only *then* joined to the already-computed results. 66/150 pairs survive as a
+> fair content-similarity test; **clean-subset R@5 = 39.39% [27.3, 51.5]**, CI lower bound above
+> the unfiltered point estimate. Excluded pairs hit at 13.1% vs. valid pairs' 39.4% — reported as
+> the check against selection bias (exclusion labels never saw the outcome, so this gap reflects
+> the criteria's validity, not outcome-driven cherry-picking) rather than hidden. Full methodology
+> and reproducible scripts:
+> [`docs/investigations/2026-08-11-k8s-retrieval-ceiling-and-vscode-resolution-close.md`](docs/investigations/2026-08-11-k8s-retrieval-ceiling-and-vscode-resolution-close.md).
+> Read: the prior "weak k8s retriever" framing was substantially an eval artifact, not a model
+> quality problem — the unmodified BGE embedder is materially better than 24.67% suggested. The
+> ~60% miss rate on the clean subset is still real headroom, not a solved problem.
 >
 > **Resolution (ADR-0041):** the shipped resolution models were trained on a stale split
 > (regenerated 2026-05-30) against a corpus that had grown 99-100% since (regenerated

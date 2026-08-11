@@ -1,0 +1,36 @@
+{
+  "arm": "multi",
+  "repo": "kubernetes_kubernetes",
+  "n_test": 286,
+  "top1_accuracy": 0.3706293706293706,
+  "top1_accuracy_ci95": [
+    0.3167145518639534,
+    0.4279735812404733
+  ],
+  "top3_accuracy": 0.6608391608391608,
+  "top3_accuracy_ci95": [
+    0.6041619447598268,
+    0.7132528086779131
+  ],
+  "macro_f1": 0.08755979135661594,
+  "weighted_f1": 0.2543844696558189,
+  "any_valid_label_top1_accuracy": 0.513986013986014,
+  "any_valid_label_top1_accuracy_ci95": [
+    0.45625956262130885,
+    0.5713417202863207
+  ],
+  "n_multi_label_test_rows": 87,
+  "tail_classes_recall": {
+    "isolation": 0.0,
+    "swagger": 0.0,
+    "extensibility": 0.0,
+    "rkt": 0.0,
+    "ui": 0.0,
+    "monitoring": 0.0,
+    "controller-manager": 0.0,
+    "os/ubuntu": 0.0,
+    "etcd": 0.0,
+    "provider/gcp": 0.0
+  },
+  "tail_threshold": 15
+}

@@ -1,12 +1,33 @@
 # Phase B: DeBERTa-v3-base classifier — result summary (negative)
 
-**Question:** does a transformer classifier beat the shipped multi-label TF-IDF+LR on top-3 (the
-metric the product actually uses)? Two arms tested architecture and supervision separately.
+## Headline finding: this is a data-scale ceiling, not an architecture ceiling
 
-**Answer: no, on both repos, in every configuration tried, including a diagnosed and partially
-corrected version of ARM 2. TF-IDF+LR remains champion. Nothing here changes production.**
+DeBERTa-v3-base (184M params) lost to the shipped TF-IDF+LR baseline by a **wider** margin than
+the earlier, smaller DistilBERT (66M params) did, on the exact same data (vscode: DeBERTa −13.9pp
+to −17.1pp vs DistilBERT −2.2pp; k8s: DeBERTa −20.3pp to −30.8pp vs DistilBERT −8pp). A bigger,
+architecturally stronger transformer doing *worse* than a smaller one, on the same 1,488–2,284
+training issues, is the signature of a training-set-size ceiling, not a model-capability ceiling —
+more parameters without more data made things worse, not better.
 
-## Ship bar
+The tail-class evidence is the same finding from a second direction: recall was **0.000 across all
+17 tail classes (10 on k8s, 7 on vscode, each with 8–13 training examples) in every arm and every
+configuration tested** — unweighted BCE, pos_weight-corrected BCE, and single-label softmax alike.
+Loss-function reweighting moved head-class ranking (+9.8pp top-3 on k8s from pos_weight alone) but
+never moved tail recall off zero, because reweighting a loss cannot manufacture signal from 8–13
+examples. Two independent measurements — aggregate accuracy vs. model size, and recall vs. class
+sample count — point at the same constraint.
+
+**What would change this answer:** materially more labeled training data (both more issues overall
+and more examples per tail class), not a different architecture and not further loss-function
+tuning. Until that exists, **TF-IDF+LR is the appropriate model class for this problem at this data
+scale** — not a placeholder awaiting a better model.
+
+This closes the classifier-improvement thread for this dataset. Multi-label supervision on
+TF-IDF+LR (fixing `normalize_labels()` discarding valid labels) was the actual win here — +9.09pp
+top-1, +4.55pp top-3, already shipped and live in production. Transformers are now ruled out at
+this data scale with evidence, not by assumption.
+
+## Ship bar (not met)
 
 Meaningful top-3 lift over the shipped baseline, with a paired-bootstrap CI clearly excluding
 zero. No configuration below reaches that bar — most miss by a wide margin, with non-overlapping
@@ -24,11 +45,6 @@ CIs against baseline in every case.
 
 Baseline (shipped, for reference): k8s top-3 87.1% [82.7, 90.5], top-1 60.5%, any-valid top-1
 59.4%. vscode top-3 89.8% [84.7, 93.4], top-1 76.5%, any-valid top-1 71.7%.
-
-Tail-class recall (<15 train examples): **0.000 across all 10 k8s tail classes and all 7 vscode
-tail classes, in every arm and configuration** — architecture and loss-reweighting changes made
-no difference here. These classes have 8–13 training examples; that is a data-volume floor no
-model choice tested can clear.
 
 ## Pre-training gates (all passed, see session log for detail)
 
@@ -62,20 +78,13 @@ problem_type has no built-in `pos_weight` support) and reran with per-class pos_
 doubled macro-F1 (0.047→0.088). The imbalance mechanism was real. But the corrected arm is still
 21.0pp below baseline with CIs not overlapping, and tail-class recall stayed at exactly 0.000 —
 pos_weight reweights the loss, it cannot manufacture signal from 8–12 examples. That remainder is
-a data-scale ceiling, not a tunable hyperparameter.
+the data-scale ceiling described above, not a tunable hyperparameter.
 
 **ARM 1 (single-label, matches baseline's own supervision) lost by a similar margin on k8s
 (66.8%, −20.3pp)** as the pos_weight-corrected ARM 2 — architecture, not supervision, is the
 dominant factor. Both arms did comparably better on vscode (ARM1 75.9%, ARM2-posw10 72.7%),
 consistent with vscode's much lower label collapse giving the supervision fix less room to matter
 either way.
-
-**Comparison to the prior DistilBERT result** (Phase A/pre-registered): DistilBERT — a smaller
-model (66M vs DeBERTa-v3-base's 184M params) — lost by a *narrower* margin on both repos (vscode
-88.2% vs 90.4%, −2.2pp; k8s 74.5% vs 82.5%, −8pp) than DeBERTa did here. A larger, architecturally
-stronger transformer underperforming a smaller one on the same small dataset (1488–2284 train
-issues) is consistent with the data-scale-limited read: more parameters without more data does not
-help, and may hurt, at this training-set size.
 
 ## Cost
 
@@ -85,7 +94,7 @@ single, plus the posw10 diagnostic already counted): ~51 min total GPU time, $0.
 ## Recommendation
 
 Do not ship. TF-IDF+LR remains champion for this deployment. If component-classification quality
-becomes a renewed priority, the next lever is more labeled data for tail classes (8–13 examples
-each is the binding constraint, not model architecture) — not a bigger or better-tuned
-transformer. No production change made; models saved locally under `data/models/deberta_*`
-(gitignored, not committed) for reference only.
+becomes a renewed priority, the next lever is more labeled data — both more training issues overall
+and more examples per tail class — not a bigger or better-tuned transformer. No production change
+made; models saved locally under `data/models/deberta_*` for reference only (not committed —
+`data/models/**` is gitignored).

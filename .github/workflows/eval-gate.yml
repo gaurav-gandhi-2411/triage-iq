@@ -29,12 +29,28 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
           python-version: "3.11"
+
+      # 2026-08-11: both eval-gate jobs make a live, uncached fetch of BAAI/bge-base-en-v1.5
+      # from huggingface.co (SentenceTransformer instantiation in the retrieval-invariant
+      # test) with no cache step -- confirmed via 2 real failures in the last 100 runs
+      # (a connection error and a 429 rate-limit), unrelated to code correctness. This is
+      # exactly the kind of external-service flakiness that must be fixed before a job can
+      # be trusted as a required branch-protection check. Keyed on requirements-dev.txt's
+      # hash (invalidates on any dependency bump, including a sentence-transformers version
+      # change) with a prefix restore-keys fallback so a stale cache still helps partially.
+      - name: Cache HuggingFace model (BAAI/bge-base-en-v1.5)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-bge-base-en-v1.5-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            hf-bge-base-en-v1.5-
 
       - name: Install dependencies
         run: |
@@ -89,12 +105,21 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
           python-version: "3.11"
+
+      # See the matching comment on structural-invariants above.
+      - name: Cache HuggingFace model (BAAI/bge-base-en-v1.5)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-bge-base-en-v1.5-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            hf-bge-base-en-v1.5-
 
       - name: Install dependencies
         run: |

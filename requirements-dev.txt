@@ -20,7 +20,7 @@ rapidfuzz>=3.6
 ollama>=0.4
 
 # Testing
-pytest>=7.4
+pytest>=9.1.1
 pytest-cov>=7.1.0
 
 # Linting / type checking

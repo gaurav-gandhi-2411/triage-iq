@@ -42,11 +42,20 @@ import numpy as np
 import pandas as pd
 import torch
 from sklearn.preprocessing import LabelEncoder
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments
+from transformers import (
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    Trainer,
+    TrainerCallback,
+    TrainingArguments,
+)
 
 sys.path.insert(0, "src")
 from triage_iq.evaluation.classifier_eval import all_matching_component_labels  # noqa: E402
 from triage_iq.models.component_classifier import _build_text  # noqa: E402
+
+sys.path.insert(0, "scripts")
+from heartbeat import Heartbeat  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -82,6 +91,21 @@ def assert_leakage_guard_passed() -> None:
     if result.returncode != 0:
         print(result.stderr)
         raise SystemExit("Leakage guard FAILED -- refusing to train.")
+
+
+class HeartbeatCallback(TrainerCallback):
+    """Writes a heartbeat beat() on every Trainer log event (cadence = TrainingArguments.
+    logging_steps). Lets a staleness check (`python scripts/heartbeat.py check <path>
+    --max-age-minutes N`) tell a genuinely stalled run apart from one that's just slow --
+    process/GPU state alone can't make that distinction (see scripts/heartbeat.py docstring)."""
+
+    def __init__(self, heartbeat: Heartbeat) -> None:
+        self.heartbeat = heartbeat
+
+    def on_log(self, args, state, control, logs=None, **kwargs) -> None:
+        logs = logs or {}
+        note = ", ".join(f"{k}={v:.4f}" if isinstance(v, float) else f"{k}={v}" for k, v in logs.items())
+        self.heartbeat.beat(step=state.global_step, note=note)
 
 
 class TextDataset(torch.utils.data.Dataset):
@@ -176,7 +200,11 @@ def train(
         fp16=torch.cuda.is_available(),
     )
 
-    trainer = Trainer(model=model, args=args, train_dataset=ds_train, eval_dataset=ds_val)
+    heartbeat = Heartbeat(REPORTS / f"heartbeat_deberta_{arm}_{repo}.jsonl")
+    trainer = Trainer(
+        model=model, args=args, train_dataset=ds_train, eval_dataset=ds_val,
+        callbacks=[HeartbeatCallback(heartbeat)],
+    )
 
     t0 = time.perf_counter()
     train_result = trainer.train()

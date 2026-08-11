@@ -229,7 +229,7 @@ jobs:
               echo "  run $RID: artifact '$ART' download failed (likely expired) -- skipping."
               continue
             fi
-            # actions/upload-artifact@v4 preserves the workflow's relative directory structure
+            # actions/upload-artifact@v7 preserves the workflow's relative directory structure
             # for the multi-path glob used in the two upload steps below (eval/cassettes/*.json,
             # reports/eval_baseline.json) -- downloaded files land at
             # $CAND_DIR/eval/cassettes/eval_cassette.json, NOT flattened to $CAND_DIR/eval_cassette.json.
@@ -355,7 +355,7 @@ jobs:
 
       - name: Upload recorded cassette + baseline (dry run artifact)
         if: ${{ inputs.dry_run }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: recorded-cassette-${{ github.run_id }}
           path: |
@@ -374,7 +374,7 @@ jobs:
         # downloads this exact artifact on the next attempt to continue where a
         # TPD-interrupted run left off, instead of restarting at issue 0.
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: FAILED-cassette-diagnostic-${{ github.run_id }}
           path: |

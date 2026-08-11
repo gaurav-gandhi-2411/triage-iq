@@ -61,7 +61,7 @@ jobs:
       pull-requests: write  # open the baseline-update PR (main requires the "test" status check, so a direct push is always rejected -- see the "Commit and push" step below)
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}

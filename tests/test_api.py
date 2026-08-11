@@ -776,3 +776,60 @@ def test_load_conformal_adjustments_parses_json(tmp_path):
     vscode = result["microsoft/vscode"]
     assert vscode["q_adjustment_hours"] == pytest.approx(1.2542)
     assert vscode["empirical_coverage"] == pytest.approx(0.7405)
+
+
+# ---------------------------------------------------------------------------
+# CORS (triage-iq#78 -- allow_origin_regex must match Vercel's actual preview
+# URL scheme, not a stale pattern from a since-renamed project alias)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "https://triage-iq-gaurav-gandhi-2411s-projects.vercel.app",  # project-default prod alias
+        "https://triage-iq-git-main-gaurav-gandhi-2411s-projects.vercel.app",  # git-branch alias
+        "https://triage-9tf830266-gaurav-gandhi-2411s-projects.vercel.app",  # per-deployment hash (observed)
+    ],
+)
+def test_cors_allows_vercel_team_preview_urls(client, origin):
+    """Preflight from a real Vercel preview/branch URL for this team must be allowed."""
+    r = client.options(
+        "/triage",
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+    assert r.headers.get("access-control-allow-origin") == origin
+
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "https://some-other-app.vercel.app",
+        "https://vercel.app",
+        "https://triage-iq-gaurav-gandhi-2411s-projects.vercel.app.evil.com",
+    ],
+)
+def test_cors_rejects_unrelated_origins(client, origin):
+    """Preflight from an origin outside this team/explicit allowlist must NOT be allowed."""
+    r = client.options(
+        "/triage",
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+    assert "access-control-allow-origin" not in r.headers
+
+
+def test_cors_allows_explicit_production_origin(client):
+    """The explicitly-allowlisted production custom-domain origin must still work."""
+    r = client.options(
+        "/triage",
+        headers={
+            "Origin": "https://triage-iq-orcin.vercel.app",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+    assert r.headers.get("access-control-allow-origin") == "https://triage-iq-orcin.vercel.app"

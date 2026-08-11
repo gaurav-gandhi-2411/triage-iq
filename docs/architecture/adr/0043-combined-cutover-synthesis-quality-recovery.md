@@ -17,7 +17,11 @@ working assumption that the regression was primarily a confidence-framing/hedgin
 Since then, two independent, unrelated fixes shipped that both improve signals synthesis
 consumes, neither touching the classifier or its confidence framing at all:
 - **ADR-0040 (retrieval)**: k8s product-task R@5 18.0% → 24.7% (corpus truncation fix + query
-  instruction, both cutover and live-verified).
+  instruction, both cutover and live-verified). *24.7% itself was later found to understate the
+  retriever on ~56% of the eval population (structurally invalid pairs) — corrected to 39.4% on
+  a clean subset, 2026-08-11, see ADR-0040's status banner. Doesn't change this ADR's own
+  finding: the retrieval fix, whatever its exact number, is a real, independent contributor to
+  the synthesis recovery measured below.*
 - **ADR-0041 (resolution)**: k8s bucket-classifier accuracy delta vs naive +3.27pp → +6.35pp
   (stale-split fix, cutover and live-verified).
 

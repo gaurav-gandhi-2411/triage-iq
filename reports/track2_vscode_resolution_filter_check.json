@@ -1,0 +1,123 @@
+{
+  "n_total": 1225,
+  "n_bot": 63,
+  "n_dup_wave": 13,
+  "n_either_filtered_out": 76,
+  "n_remaining": 1149,
+  "bucket_distribution_unfiltered": {
+    "hours": 0.8376,
+    "days": 0.1265,
+    "weeks": 0.0261,
+    "months": 0.0065,
+    "long": 0.0033
+  },
+  "bucket_distribution_filtered": {
+    "hours": 0.832,
+    "days": 0.1314,
+    "weeks": 0.0279,
+    "months": 0.007,
+    "long": 0.0017
+  },
+  "dup_wave_sample": [
+    {
+      "number": 240078,
+      "title": "Windows Terminal by open Visual Studio Code can't used",
+      "author": "ApkCreator",
+      "resolution_hours": 0.5025
+    },
+    {
+      "number": 240081,
+      "title": "Terminal is not working",
+      "author": "1bit-010",
+      "resolution_hours": 0.10611111111111111
+    },
+    {
+      "number": 240082,
+      "title": "Terminal is not working",
+      "author": "1bit-010",
+      "resolution_hours": 0.04472222222222222
+    },
+    {
+      "number": 240083,
+      "title": "terminal problem",
+      "author": "mustafa-siam",
+      "resolution_hours": 3.9425
+    },
+    {
+      "number": 240096,
+      "title": "terminal issue",
+      "author": "mustafa-siam",
+      "resolution_hours": 0.3186111111111111
+    },
+    {
+      "number": 240110,
+      "title": "Terminal not responding",
+      "author": "zaazxz",
+      "resolution_hours": 1.3994444444444445
+    },
+    {
+      "number": 240133,
+      "title": "VS Code Terminal Not Working in Latest Version",
+      "author": "Ismai21k",
+      "resolution_hours": 0.1638888888888889
+    },
+    {
+      "number": 240145,
+      "title": "vs code freezes the moment I try to open terminal",
+      "author": "yw1-sf",
+      "resolution_hours": 0.38083333333333336
+    },
+    {
+      "number": 240154,
+      "title": "Terminal Issue",
+      "author": "Lauora",
+      "resolution_hours": 0.24472222222222223
+    },
+    {
+      "number": 240164,
+      "title": "Can't open the terminal, the entire application freezes",
+      "author": "johnnie99-23",
+      "resolution_hours": 5.047777777777778
+    },
+    {
+      "number": 240168,
+      "title": "Terminal issue",
+      "author": "soumyasais",
+      "resolution_hours": 2.301111111111111
+    },
+    {
+      "number": 240212,
+      "title": "Integrated Terminal Freezes VS Code in Latest Update",
+      "author": "AustinKingOry",
+      "resolution_hours": 0.3983333333333333
+    },
+    {
+      "number": 311652,
+      "title": "Terminal Problem Of VS Code With SQL",
+      "author": "Shreyask28",
+      "resolution_hours": 0.23416666666666666
+    }
+  ],
+  "eval_unfiltered": {
+    "n": 1225,
+    "trained_accuracy": 0.8269,
+    "naive_accuracy": 0.8376,
+    "accuracy_delta_bootstrap": {
+      "mean": -0.010612244897959184,
+      "ci95_lower": -0.016346938775510203,
+      "ci95_upper": -0.005714285714285714
+    },
+    "naive_majority_bucket": "hours"
+  },
+  "eval_filtered": {
+    "n": 1149,
+    "trained_accuracy": 0.8207,
+    "naive_accuracy": 0.832,
+    "accuracy_delta_bootstrap": {
+      "mean": -0.011314186248912098,
+      "ci95_lower": -0.017406440382941687,
+      "ci95_upper": -0.006092254134029591
+    },
+    "naive_majority_bucket": "hours"
+  }
+}

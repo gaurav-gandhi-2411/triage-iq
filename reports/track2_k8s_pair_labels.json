@@ -1,0 +1,752 @@
+[
+  {
+    "pair_id": 0,
+    "label": "VALID",
+    "reason": "Both concern the identical GKE upgrade e2e firewall-rule leak problem, same team assignment."
+  },
+  {
+    "pair_id": 1,
+    "label": "VALID",
+    "reason": "Mirror-image companion issues (delete old raw-resource API vs add new cpu-request-utilization API) for the exact same autoscaling feature transition."
+  },
+  {
+    "pair_id": 2,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is about pods left in Error state when nodes are 1.1 (passes at 1.0) while target is a different specific graceful-termination bug on 1.0 nodes under a 1.1 master, cited only as a 'thought duplicate' the reporter is unsure about."
+  },
+  {
+    "pair_id": 3,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query is a long friction-log enumerating ~12 distinct Spark and Kubernetes-general sub-problems, of which the target is just one passing bullet."
+  },
+  {
+    "pair_id": 4,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query's core subject is v1.2 kubelet scalability/resource targets; the target (memory measurement accuracy) is cited only as an aside footnote about one measurement caveat."
+  },
+  {
+    "pair_id": 5,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is an RFC about where to host package/template repos; the Spark friction-log target is cited only as a motivating example, not the query's actual subject."
+  },
+  {
+    "pair_id": 6,
+    "label": "VALID",
+    "reason": "Query explicitly states it implements the --overwrite flag that 'Fixes' the target's kubectl apply conflict-detection issue -- same specific feature."
+  },
+  {
+    "pair_id": 7,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is a detailed PodSecurityPolicy 'Use' verb authorization proposal; target is a separate, narrower architectural doc on object-vs-field authorization cited as one supporting rationale bullet among many."
+  },
+  {
+    "pair_id": 8,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query proposes a kubectl export-local-volume feature; target is a request for a universal shared-storage example, cited only to justify choosing NFS as the volume type."
+  },
+  {
+    "pair_id": 9,
+    "label": "VALID",
+    "reason": "Both are about the same root problem: the rbd command dependency breaking volume plugin support on platforms like CoreOS."
+  },
+  {
+    "pair_id": 10,
+    "label": "VALID",
+    "reason": "Both concern failures in the same cluster-autoscaling e2e test suite."
+  },
+  {
+    "pair_id": 11,
+    "label": "VALID",
+    "reason": "Query explicitly identifies this as the same iscsi teardown panic bug as the target."
+  },
+  {
+    "pair_id": 12,
+    "label": "VALID",
+    "reason": "Both concern the same class of reboot/flapping-container test failures on GKE."
+  },
+  {
+    "pair_id": 13,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query's core subject is service-account key rotation procedure; target (how to avoid creating a service account at all) is only one unrelated action item in its checklist."
+  },
+  {
+    "pair_id": 14,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is about a specific script bug in kube-addon-update; target (AWS t2.micro master unresponsiveness) is cited only as the symptom this bug could worsen."
+  },
+  {
+    "pair_id": 15,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query investigates go1.4.3/go1.5.3 performance regressions 'for background' citing target, but target itself is just a build-log link with no go-version-specific content."
+  },
+  {
+    "pair_id": 16,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query body is a single sentence ('see #21230 for motivation') with no independent content to judge topical overlap against."
+  },
+  {
+    "pair_id": 17,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Target body is essentially content-free ('3 tests failed' plus a build-log link), giving no substantive text to match against the query's detailed bug report."
+  },
+  {
+    "pair_id": 18,
+    "label": "VALID",
+    "reason": "Both apply the same specific technical initiative -- removing reliance on unstable Events API for e2e validation -- to different but closely related test suites."
+  },
+  {
+    "pair_id": 19,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query is an overview checklist of many distinct v1.0-to-v1.2 upgrade test failures; this target is just one bullet in that list."
+  },
+  {
+    "pair_id": 20,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Same umbrella checklist query as pair 19; this target is another distinct bullet (NodePort output differences) in the list."
+  },
+  {
+    "pair_id": 21,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Same umbrella checklist query as pair 19; this target is another distinct bullet (scheduler naming change) in the list."
+  },
+  {
+    "pair_id": 22,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Same umbrella checklist query as pair 19; this target is another distinct bullet (HPA e2e failures) in the list."
+  },
+  {
+    "pair_id": 23,
+    "label": "VALID",
+    "reason": "Query explicitly flags this as possibly the same kubernetes-test-go apiserver-timeout flake as the target."
+  },
+  {
+    "pair_id": 24,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query's subject is reorganizing test images into a separate gcr.io project; target's run_nfs.sh CPU-usage bug is cited only as an example of external usage of one such image."
+  },
+  {
+    "pair_id": 25,
+    "label": "VALID",
+    "reason": "Both report the identical named e2e flake ('Simple pod should support exec through an HTTP proxy')."
+  },
+  {
+    "pair_id": 26,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query's subject is the algorithm for a Deployment to find its ReplicaSets; target (validating no RC selector overlap at creation time) is cited only as a forward-looking prerequisite mechanism, a different specific problem."
+  },
+  {
+    "pair_id": 27,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Same query as pair 26; target (a general label-selector-overlap constraint solver) is cited only as a prerequisite capability for one candidate approach, not the query's actual subject."
+  },
+  {
+    "pair_id": 28,
+    "label": "VALID",
+    "reason": "Query explicitly considers this a possible duplicate of the same named kubectl-exec-through-HTTP-proxy flake as the target."
+  },
+  {
+    "pair_id": 29,
+    "label": "VALID",
+    "reason": "Both documents cover the same underlying problem -- deploying a quorum-based stateful clustered system in PetSet with matching initialization/scaling/reconfiguration challenges -- for zookeeper and etcd respectively, and the query explicitly draws the direct parallel."
+  },
+  {
+    "pair_id": 30,
+    "label": "VALID",
+    "reason": "Both report the exact same e2e flake (\"up and down services: Only 2 pods started out of 3\"), with the query explicitly flagging it as a possible duplicate of the target."
+  },
+  {
+    "pair_id": 31,
+    "label": "VALID",
+    "reason": "Both are about the same Pod Disks e2e test flakiness, with the query explicitly noting the target as a duplicate."
+  },
+  {
+    "pair_id": 32,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query attributes local e2e_node failures to a sudo credential-refresh trigger while target attributes similar breakage to a possible etcd issue after a rebase; target is cited only \"for some background\" on a different specific root cause."
+  },
+  {
+    "pair_id": 33,
+    "label": "VALID",
+    "reason": "Both are specifically about exposing node allocated-resources info through the API/kubectl instead of via docker inspect."
+  },
+  {
+    "pair_id": 34,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Target is cited only as \"the error message that led me to find this\" and its body is near-content-free (a one-line comment plus a code block), while the query's actual topic is servicecontroller namespace auto-creation."
+  },
+  {
+    "pair_id": 35,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Target (daemonset scheduling on master) is one of three motivating bug examples (#29108, #26810, #29193) cited for a broader design proposal to convert NodeSpec.unschedulable into a Taint, which is the query's real subject."
+  },
+  {
+    "pair_id": 36,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Target is a generic broken-soak-build report listing several unrelated failing tests, cited only as background evidence for the query's actual, narrower topic of investigating a kubelet RSS memory increase."
+  },
+  {
+    "pair_id": 37,
+    "label": "VALID",
+    "reason": "Both report the same specific EBS-volume-mount failure on k8s 1.3.x/AWS, with the query flagging it as a possible duplicate."
+  },
+  {
+    "pair_id": 38,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query explicitly calls the target only \"somewhat related\"; target is about missing GCR release images generally while the query's own topic (hyperkube image misconfiguration) is a distinct problem, and the query body carries almost no independent content."
+  },
+  {
+    "pair_id": 39,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query is an explicit \"[User Story]\" checklist enumerating eight distinct sub-issues (docker hangs, scalability RFC, event streams, GC, kubelet performance, etc.), of which the target is just one item."
+  },
+  {
+    "pair_id": 40,
+    "label": "VALID",
+    "reason": "Both specifically discuss the problem of node label updates/deletions in the context of region/zone labeling, with the query directly pointing to this shared concern."
+  },
+  {
+    "pair_id": 41,
+    "label": "VALID",
+    "reason": "Both describe the same underlying DNS latency phenomenon (SkyDNS/resolv.conf ndots search-domain expansion causing throttling/delay), with the query explicitly listing the target as an issue reference for the same symptom."
+  },
+  {
+    "pair_id": 42,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "The query's Objective section enumerates four distinct sub-problems each tied to its own issue citation (#19953 x2, #11879, #20835); the target (GCE disk partition mounting) is only one bullet, while the bulk of the lengthy design doc concerns the general volume manager redesign."
+  },
+  {
+    "pair_id": 43,
+    "label": "VALID",
+    "reason": "Both concern the specific problem of the scheduler's identifying name as recorded on Event objects (SchedulerName / \"scheduler\" vs \"default-scheduler\")."
+  },
+  {
+    "pair_id": 44,
+    "label": "VALID",
+    "reason": "Query and target both concern the same specific problem: autoscaling/v1 HPA producing unexpected/inconsistent results due to defaulting behavior."
+  },
+  {
+    "pair_id": 45,
+    "label": "VALID",
+    "reason": "Both concern the same specific problem of inconsistent API group/version reported for HPA resources across kubectl/API paths."
+  },
+  {
+    "pair_id": 46,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is about \"no public IP\" warning log spam while target is about AWS API RequestLimit throttling not triggering \u2014 different specific bugs linked only via a shared GitHub comment thread."
+  },
+  {
+    "pair_id": 47,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is forked from a comment on the target's broad apiserver-memory-leak investigation; the query's specific fix proposal (bounding the node status image list) is not the target's core subject (general apiserver OOM/memory growth)."
+  },
+  {
+    "pair_id": 48,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is about loading a netfilter kernel module for kubenet bridge plugins while target is about deciding kubenet's promiscuous-mode handling \u2014 related area but different specific configuration topics, connected only via a \"ref\"."
+  },
+  {
+    "pair_id": 49,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query is an explicit \"Research and references\" roundup citing four distinct prior issues as background for a broad logging-architecture discussion; the target is just one of the cited items."
+  },
+  {
+    "pair_id": 50,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Target is a broad federation task-list tracker; the query's specific ask (refactoring scheduler/controller-manager for code reuse) is not the target's core content, only referenced as the originating plan."
+  },
+  {
+    "pair_id": 51,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Target is explicitly cited as an \"example\" of multiple defaulting/validation errors in one type; the query's actual subject is a systemic design proposal for declarative field defaulting/validation, distinct from the target's specific PV/keyring bug."
+  },
+  {
+    "pair_id": 52,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query is explicitly titled \"Umbrella issue for various swagger related improvements\" and is a checklist summarizing many distinct swagger sub-issues, of which the target is one."
+  },
+  {
+    "pair_id": 53,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Same umbrella/checklist query issue as pair 52, here paired against a different one of its many enumerated sub-issues."
+  },
+  {
+    "pair_id": 54,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query explicitly consolidates discussion across five distinct referenced issues/PRs on rkt networking; the target appears only as a bare link in that reference list with no dedicated discussion."
+  },
+  {
+    "pair_id": 55,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query body is a single-sentence attribution (\"Raised by X in a comment\") with no independent content, and the target is a generic HPA-GA-step-2 task checklist containing nothing specific to scaleTargetReference."
+  },
+  {
+    "pair_id": 56,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query proposes per-container bandwidth/iops limiting while target proposes network isolation for the control plane \u2014 related motivating problem (control-plane overload) but different specific technical solutions/topics."
+  },
+  {
+    "pair_id": 57,
+    "label": "VALID",
+    "reason": "Both specifically concern turning down docker's log level to reduce baseline CPU usage on GCI/node components."
+  },
+  {
+    "pair_id": 58,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Target is a generic \"investigate soak test failures\" tracker with no influxdb-specific content; the query is a specific finding (influxdb crash-looping) filed as \"part of the investigation.\""
+  },
+  {
+    "pair_id": 59,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query is an explicit \"roundup issue... tracker to orient folks on the ongoing work\" spanning dozens of distinct performance sub-topics, of which the target (SharedInformer) is one linked item."
+  },
+  {
+    "pair_id": 60,
+    "label": "VALID",
+    "reason": "Both describe the identical bug: fluentd not handling sub-second timestamp resolution for docker logs."
+  },
+  {
+    "pair_id": 61,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query is a multi-item node-conformance-test prep checklist covering several distinct sub-issues (test sharing, image whitelist, namespace controller, parallel tests), with target mentioned only as a tangential XRef at the end."
+  },
+  {
+    "pair_id": 62,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is specifically about master/node clock skew breaking deployment availability checks, while target is a generic e2e flake-tracking issue for the 'rollover' test that merely hosted the diagnostic comment."
+  },
+  {
+    "pair_id": 63,
+    "label": "VALID",
+    "reason": "Both describe the same mechanism: kubelet refusing to delete pods/perform housekeeping because not all pod sources are marked ready."
+  },
+  {
+    "pair_id": 64,
+    "label": "VALID",
+    "reason": "Query's design proposal explicitly solves the exact volume-stuck-on-inaccessible-node problem reported in the target."
+  },
+  {
+    "pair_id": 65,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is about fixing kubelet's own internal Prometheus metrics/instrumentation, while target is about a Prometheus service-discovery mechanism for scraping k8s services \u2014 different specific topics linked only as a dependency."
+  },
+  {
+    "pair_id": 66,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query is a checklist of distinct swagger-ui replacement sub-issues (spec source, tests, cross-links, README, disabling swagger-ui), with target being just one checked-off list item."
+  },
+  {
+    "pair_id": 67,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is about public/private AWS subnetting best practices, forked from a comment on target which is about the AWS plugin overwriting unrelated existing security groups \u2014 different specific topics."
+  },
+  {
+    "pair_id": 68,
+    "label": "VALID",
+    "reason": "Query proposes a proxy URL-rewriting fix explicitly intended to solve the exact Zeppelin-over-proxy failure described in the target."
+  },
+  {
+    "pair_id": 69,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query body is a single link plus a cc list with no independent technical content, and its topic (manual scaling) is also conceptually distinct from the target's (autoscaling)."
+  },
+  {
+    "pair_id": 70,
+    "label": "VALID",
+    "reason": "Query is an implementation roadmap for generating k8s API clients via go2idl, directly building on target's originating design problem statement for client/rest-code generation."
+  },
+  {
+    "pair_id": 71,
+    "label": "VALID",
+    "reason": "Both concern the same performance problem: linear/expanding iptables rules in kube-proxy as the number of services grows."
+  },
+  {
+    "pair_id": 72,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is about cleaning up redundant versioning structs in code, while target is about adding version-guard logic for a broken subresource proxy path \u2014 related only because one prompted the other."
+  },
+  {
+    "pair_id": 73,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query is a user-story checklist covering many distinct scalability sub-issues (docker daemon hangs, GC min-age, pod abstraction, container listing cost), with target as just one line item."
+  },
+  {
+    "pair_id": 74,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query proposes a scheduler priority function for quarantining flapping nodes; target is a broad, unrelated list of soak-test e2e failures that merely hosted the originating comment."
+  },
+  {
+    "pair_id": 75,
+    "label": "VALID",
+    "reason": "Query and target both concern the same specific phenomenon: e2e tests breaking when run with a HEAD master against 1.1 nodes, with target being one directly on-topic instance (services e2e verification failing)."
+  },
+  {
+    "pair_id": 76,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is a user bug report about Deployments not creating RCs; target (kubectl --validate failing for optional APIs) is cited only to explain one incidental symptom detail, not the core subject."
+  },
+  {
+    "pair_id": 77,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query proposes removing influxdb-grafana-controller from e2e test setup, forked from target which is a general, differently-scoped flaky-serial-tests tracking issue."
+  },
+  {
+    "pair_id": 78,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query is a policy proposal citing 6-7 distinct flaky-test issues as supporting examples; target is just one of those citations, not the query's actual subject."
+  },
+  {
+    "pair_id": 79,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Same umbrella query as pair 78 (policy on the Flaky label) citing many distinct example issues; this target is another one of the multiple citations."
+  },
+  {
+    "pair_id": 80,
+    "label": "VALID",
+    "reason": "Both are the same specific 'KubeProxy should test kube-proxy' e2e flake, with the query explicitly filed as a follow-up to the target."
+  },
+  {
+    "pair_id": 81,
+    "label": "VALID",
+    "reason": "Both concern gcloud flakiness during kube-up around firewall rule creation, with the query's proposed retry-loop fix matching the target's title directly."
+  },
+  {
+    "pair_id": 82,
+    "label": "VALID",
+    "reason": "Query's policy (e2es shouldn't depend on specific scheduler-emitted events) directly describes the exact failure mechanism reported in the target (empty events after scheduler rename)."
+  },
+  {
+    "pair_id": 83,
+    "label": "VALID",
+    "reason": "Both are the same specific e2e flake: ServiceAccounts failing to mount an API token into pods."
+  },
+  {
+    "pair_id": 84,
+    "label": "VALID",
+    "reason": "Query proposes automated tests for docker restart/upgrade issues, directly citing target's docker 1.9 restart failure as the motivating instance of the same problem class."
+  },
+  {
+    "pair_id": 85,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is about improving soak-test debugging infrastructure generally, forked from target which is about a specific kernel race bug mitigation \u2014 different specific subjects."
+  },
+  {
+    "pair_id": 86,
+    "label": "VALID",
+    "reason": "Query's proposed fix (clearing cached swagger schema) directly explains and addresses the exact validation failure for runtime-config-enabled types reported in the target."
+  },
+  {
+    "pair_id": 87,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is about improving supervisord failure logging for daemons, forked from target which is a distinct e2e flake about nodes not reaching Ready."
+  },
+  {
+    "pair_id": 88,
+    "label": "VALID",
+    "reason": "Both report the same phenomenon of intermittent pod network/DNS latency spikes, just on different platforms (CoreOS/AWS vs GCE), and the query explicitly cross-references the target."
+  },
+  {
+    "pair_id": 89,
+    "label": "VALID",
+    "reason": "Both are e2e service test failures caused by the same v1.1-vs-v1.2 version-skew testing scenario, which the query explicitly flags as possibly related to the target."
+  },
+  {
+    "pair_id": 90,
+    "label": "VALID",
+    "reason": "Both are e2e deployment flakes sharing the identical failure signature \"[minUnavailable/maxSurge violated]\"."
+  },
+  {
+    "pair_id": 91,
+    "label": "VALID",
+    "reason": "Both are e2e flakes occurring in the \"Update Demo\" test that leave the cluster/network unstable."
+  },
+  {
+    "pair_id": 92,
+    "label": "VALID",
+    "reason": "The design doc's read-only-to-read-write reattach objective matches the target's core PD attach/detach RO/RW race scenario almost verbatim."
+  },
+  {
+    "pair_id": 93,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is about tagging ELBs with cluster/service labels; target's core subject is LB deletion tracking across controller-manager restarts, cited only via a specific comment."
+  },
+  {
+    "pair_id": 94,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is about proxy hangs to unresponsive nodes; target is a vague scalability-suite-timeout flake, linked only via one specific comment on a different subject."
+  },
+  {
+    "pair_id": 95,
+    "label": "VALID",
+    "reason": "Both are e2e flakes about the master/cluster failing to initialize/create."
+  },
+  {
+    "pair_id": 96,
+    "label": "VALID",
+    "reason": "Both are about kubectl logs failing due to hostname resolution / --hostname-override problems."
+  },
+  {
+    "pair_id": 97,
+    "label": "VALID",
+    "reason": "Both are about scheme.ObjectKind() returning an arbitrary/wrong API group for multi-kind types like HorizontalPodAutoscaler."
+  },
+  {
+    "pair_id": 98,
+    "label": "VALID",
+    "reason": "Both concern LoadBalancer/service-type creation failing with backend errors on GCE."
+  },
+  {
+    "pair_id": 99,
+    "label": "VALID",
+    "reason": "Both are about broken/unusable htmlpreview cross-links in Kubernetes docs."
+  },
+  {
+    "pair_id": 100,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Target explicitly self-identifies as \"an umbrella issue\" tracking many distinct conformance-testing subtasks (docs, scripts, cleanup, per-branch checklists)."
+  },
+  {
+    "pair_id": 101,
+    "label": "VALID",
+    "reason": "Both are near-duplicate reports of AWS nodes randomly going NotReady."
+  },
+  {
+    "pair_id": 102,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query's bug is kubelet never terminating a pod on image-pull failure; target is a namespace-deletion e2e flake cited only as a suspected downstream symptom, a different specific issue."
+  },
+  {
+    "pair_id": 103,
+    "label": "VALID",
+    "reason": "Both are about kubelet/volume-plugin errors being eaten instead of surfaced properly in kubectl describe."
+  },
+  {
+    "pair_id": 104,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Explicit \"Loadbalancing umbrella issue\" checklist spanning many unrelated ingress/LB subtopics (source IP, certs, DNS, affinity, DoS, etc.)."
+  },
+  {
+    "pair_id": 105,
+    "label": "VALID",
+    "reason": "Both concern correctly handling/validating intermediate cert chains for Ingress TLS setups."
+  },
+  {
+    "pair_id": 106,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about missing unit tests for kubectl describers; target is an unrelated --events=false CLI flag request with no real topical overlap beyond a vague \"related to\" reference."
+  },
+  {
+    "pair_id": 107,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query asks a general question about ServiceAccount secret lifecycle; target is a specific kube2sky credential-error report cited only as the originating symptom that prompted the question."
+  },
+  {
+    "pair_id": 108,
+    "label": "VALID",
+    "reason": "Both are about AWS nodes running low on/out of (ephemeral instance) disk space."
+  },
+  {
+    "pair_id": 109,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query proposes decoupling kubelet status updates from SyncPod; target is a narrower image-pull-progress feature request cited only as one motivating example."
+  },
+  {
+    "pair_id": 110,
+    "label": "VALID",
+    "reason": "Both are about documenting kubectl conventions/best practices, specifically kubectl run guidance."
+  },
+  {
+    "pair_id": 111,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Target is a large federation \"task list\" checklist spanning apiserver/client/controller work, not specifically about surfacing clusters in kubectl help."
+  },
+  {
+    "pair_id": 112,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Explicit \"Umbrella issue for various swagger related improvements\" checklist covering many distinct swagger subtasks."
+  },
+  {
+    "pair_id": 113,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Same explicit swagger umbrella query as pair 112, here paired with a different checklist item target."
+  },
+  {
+    "pair_id": 114,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query explicitly consolidates discussion across many distinct referenced issues/PRs on rkt networking design options, not focused on the one narrow probing bug in the target."
+  },
+  {
+    "pair_id": 115,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query requests an OWNERS file for pkg/storage; target is an unrelated etcd3 unit-test-flake report cited only as the triggering event."
+  },
+  {
+    "pair_id": 116,
+    "label": "VALID",
+    "reason": "Identical duplicate bug reports (same title/description) about a PersistentVolumeClaim failing to rebind after being recreated."
+  },
+  {
+    "pair_id": 117,
+    "label": "VALID",
+    "reason": "Both are about kubelet image garbage collection failing to free disk space from unused images."
+  },
+  {
+    "pair_id": 118,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is about image-pull bearer-token errors; target's actual subject is an unrelated service type/port e2e flake, linked only via one comment."
+  },
+  {
+    "pair_id": 119,
+    "label": "VALID",
+    "reason": "Both are about designing/cleaning up the kubelet's (RESTful) pod API."
+  },
+  {
+    "pair_id": 120,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query lists target as one of four unelaborated 'related discussions' for a new push-manifest bootstrap feature, while target's own content is about documenting the existing kubelet REST API generally, a different specific subject."
+  },
+  {
+    "pair_id": 121,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query and target are sibling 'see also' issues spawned from the same parent (#28310) but cover distinct specific subtopics: countable opaque resources (GPU/FPGA) versus binary feature-discovery labels (AES-NI/TSX)."
+  },
+  {
+    "pair_id": 122,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query body is a single sentence ('See #28324') with no independent content of its own beyond the cross-reference."
+  },
+  {
+    "pair_id": 123,
+    "label": "VALID",
+    "reason": "Query proposes extending CronJob to use a generic template and target is precisely the issue tracking implementation of that generic templating proposal."
+  },
+  {
+    "pair_id": 124,
+    "label": "VALID",
+    "reason": "Both are substantively about the same problem of bloated release artifacts/binaries that end users don't need, just at different scopes (kubemark specifically vs. release tarballs generally)."
+  },
+  {
+    "pair_id": 125,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query is a checklist issue enumerating seven distinct PetSet sub-topics (storage, upgrade, events, IPs, leader election, examples, fencing); target (upgrades) is just one enumerated item."
+  },
+  {
+    "pair_id": 126,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Same umbrella PetSet-beta checklist query as pair 125; target (pod condition probes for leader election) is one of seven enumerated sub-items, not a fair single-target match."
+  },
+  {
+    "pair_id": 127,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Same umbrella PetSet-beta checklist query as pair 125; target (Kafka-on-PetSet example) is one of seven enumerated sub-items, not a fair single-target match."
+  },
+  {
+    "pair_id": 128,
+    "label": "VALID",
+    "reason": "Query directly quotes and extends a comment from the target issue, addressing the exact same specific bug: LoadBalancer-type services failing without a cloud provider configured."
+  },
+  {
+    "pair_id": 129,
+    "label": "VALID",
+    "reason": "Target explicitly lists 'Add image white list' referencing the query issue as a concrete checklist item, and both share the specific node e2e image-whitelisting subject even though target also tracks other test-framework work."
+  },
+  {
+    "pair_id": 130,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query cites target only as precedent for a suggested admission-control workaround, but target's actual content is a different specific bug (generic HTTP apiserver/admission-control errors), not the missing-service-account-token issue query describes."
+  },
+  {
+    "pair_id": 131,
+    "label": "VALID",
+    "reason": "Both issues concern the same specific defect class: nodePort/targetPort values not being handled or translated correctly by kubectl/apiserver."
+  },
+  {
+    "pair_id": 132,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query cites target only as a motivating example of 'image pulling flake,' but target's actual subject (static pod image-pull timeouts during cluster bringup) is a distinct specific issue from reducing the fluentd base image size."
+  },
+  {
+    "pair_id": 133,
+    "label": "VALID",
+    "reason": "Query is explicitly filed as a sub-task of target, and both concern the same theme of reducing API/controller/client CPU and conversion overhead in the 1.4 performance effort."
+  },
+  {
+    "pair_id": 134,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query explicitly states discussing the Service abstraction (target's subject) is a non-goal, so despite referencing it once, the two design docs cover substantively different specific subjects (external IP exposure vs. general Service redesign)."
+  },
+  {
+    "pair_id": 135,
+    "label": "VALID",
+    "reason": "Both proposals concern the same specific subject of what JSONBase/resourceVersion metadata should be returned in API responses, with query explicitly endorsing returning resourceVersion as target proposes."
+  },
+  {
+    "pair_id": 136,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query cites target only as the originating commit/fix that caused its regression, but target's actual bug (kubecfg.sh external-ip failure) is a different specific issue from the Mac OS build script breakage query describes."
+  },
+  {
+    "pair_id": 137,
+    "label": "VALID",
+    "reason": "Both concern conveying detailed pod termination/status reasons to users; query's delete-reason parameter is explicitly framed as feeding into the detailed-status mechanism target discusses."
+  },
+  {
+    "pair_id": 138,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Target is cited once for a specific sub-mechanism (deployment-specific label deletion) within query's broader seven-point config reconciliation proposal, while target's actual core subject is name/label scoping for multi-instance composition, a distinct topic."
+  },
+  {
+    "pair_id": 139,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query is about the deployment orchestration/workflow tool itself and cites target only in passing regarding multi-file/multi-object configs, while target's actual subject is build-step config generation/templating, a different specific topic."
+  },
+  {
+    "pair_id": 140,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query body is a single sentence ('It's non-obvious. See #1712.') with essentially no independent content."
+  },
+  {
+    "pair_id": 141,
+    "label": "VALID",
+    "reason": "Both concern securing/gating access to the grafana service via the apiserver proxy, with target explicitly naming grafana as its motivating use case."
+  },
+  {
+    "pair_id": 142,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query is a checklist tracking multiple distinct node-management work items (lifecycle, watch, instrumentation, registration, re-provisioning); target (secure minion registration) is just one enumerated item."
+  },
+  {
+    "pair_id": 143,
+    "label": "VALID",
+    "reason": "Both substantively discuss the same specific List/Watch/merge-deltas code pattern and its deduplication across kube-proxy and other components."
+  },
+  {
+    "pair_id": 144,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query cites target only as background for adding crash-loop backoff logic, but target's actual subject is kubelet logging/metrics for failed pod-start attempts, a different specific topic from backoff behavior."
+  },
+  {
+    "pair_id": 145,
+    "label": "VALID",
+    "reason": "Both are about the same specific problem: confusion caused by kubectl/kubeconfig merging configuration from multiple locations."
+  },
+  {
+    "pair_id": 146,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query body's substantive content is redacted to a bare code block plus 'this is busted' with cross-references, leaving no visible independent text to confirm topical overlap beyond the shared 'update.sh' label."
+  },
+  {
+    "pair_id": 147,
+    "label": "VALID",
+    "reason": "Query explicitly names target's exact scenario (showing uid/resourceVersion for a Secret volume) as its motivating case for adding VolumeStatus in PodStatus."
+  },
+  {
+    "pair_id": 148,
+    "label": "EXCLUDE_CAUSAL_ONLY",
+    "reason": "Query's actual content is a specific release request with a cherry-pick list, citing target only for generic procedural instructions on how releases are documented, a different specific subject."
+  },
+  {
+    "pair_id": 149,
+    "label": "VALID",
+    "reason": "Target's LOAS daemon proposal is presented within query as a concrete alternative solution to the exact same problem of securely distributing credentials to pods without exposing them."
+  }
+]

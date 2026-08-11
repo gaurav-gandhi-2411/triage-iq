@@ -20,7 +20,7 @@ pyarrow>=14.0
 scikit-learn>=1.6,<1.8
 lightgbm>=4.0
 transformers>=4.40
-sentence-transformers>=2.2,<3.0
+sentence-transformers>=5.7.0,<6.0
 datasets>=2.14
 
 # Retrieval

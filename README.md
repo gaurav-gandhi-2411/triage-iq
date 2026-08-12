@@ -10,12 +10,14 @@ TriageIQ turns raw GitHub issues into structured triage decisions in under 4 sec
 
 **Base URL:** `https://triageiq-api-242393598566.us-central1.run.app`
 
-> Served from GCP project `expense-tracker-498014` (region `us-central1`), co-tenanted alongside
-> an unrelated product under an IAM-scoped deploy identity with zero project-level grants. This is
-> a stopgap after the original project's billing account was closed and production went down
-> undetected for up to 12 days — full rationale, the IAM scoping that makes co-tenancy safe, and
-> the plan to eventually move to a dedicated project:
-> [`docs/architecture/adr/0038-billing-outage-migration-expense-tracker.md`](docs/architecture/adr/0038-billing-outage-migration-expense-tracker.md).
+> Served from GCP project `triageiq-prod-260812` (region `us-central1`), a dedicated project under
+> its own GCP identity, still under an IAM-scoped deploy identity with zero project-level grants.
+> This is the second migration: the original project (`triageiq-portfolio-495022`) had its billing
+> account closed (2026-08-05); the co-tenant stopgap that replaced it (`expense-tracker-498014`)
+> then had ITS billing disabled too (2026-08-12), caught this time via CI failing rather than an
+> undetected outage. Full rationale and the new billing-status monitoring added specifically to
+> catch a third occurrence:
+> [`docs/architecture/adr/0050-second-billing-outage-dedicated-project-migration.md`](docs/architecture/adr/0050-second-billing-outage-dedicated-project-migration.md).
 
 ```bash
 # Service info
@@ -514,10 +516,10 @@ python scripts/11b_verify_priority_calibration.py
 After retraining, upload artifacts to GCS:
 
 ```bash
-gsutil -m cp data/models/component_classifier_*.pkl gs://triageiq-models/models/
-gsutil -m cp data/models/resolution_predictor_*.pkl gs://triageiq-models/models/
-gsutil -m cp -r data/models/similar_issue_index_*_bge gs://triageiq-models/models/
-gsutil -m cp data/processed/*_temporal_train.parquet gs://triageiq-models/processed/
+gsutil -m cp data/models/component_classifier_*.pkl gs://triageiq-prod-260812-models/models/
+gsutil -m cp data/models/resolution_predictor_*.pkl gs://triageiq-prod-260812-models/models/
+gsutil -m cp -r data/models/similar_issue_index_*_bge gs://triageiq-prod-260812-models/models/
+gsutil -m cp data/processed/*_temporal_train.parquet gs://triageiq-prod-260812-models/processed/
 ```
 
 ---
@@ -648,7 +650,7 @@ Auth behavior:
 Configured once via `scripts/setup_monitoring.sh`:
 
 ```bash
-GCP_PROJECT=expense-tracker-498014 ALERT_EMAIL=you@example.com \
+GCP_PROJECT=triageiq-prod-260812 ALERT_EMAIL=you@example.com \
   bash scripts/setup_monitoring.sh
 ```
 

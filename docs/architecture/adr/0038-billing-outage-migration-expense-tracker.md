@@ -1,5 +1,16 @@
 # 0038 — Serving-stack migration off closed-billing project, co-tenanting in expense-tracker-498014
 
+**Superseded (2026-08-12) by ADR-0050.** The co-tenancy this ADR designed turned out to have a
+real, materialized failure mode this ADR did not anticipate: on 2026-08-12, a parallel session
+running an unrelated GCP account teardown swept and soft-deleted `expense-tracker-498014` — its
+criticality (`hosts-prod: triageiq`) was recorded only in this document, invisible from the
+project's name, its own console listing, or any label, so nothing stopped it from being treated
+as an inert side-project and deleted. Recovered via `gcloud projects undelete` within the 30-day
+window, no data lost, but this is exactly the co-tenancy risk made concrete rather than
+theoretical. Production has since moved to a dedicated project (`triageiq-prod-260812`, ADR-0050)
+for exactly this reason. `expense-tracker-498014` is retained temporarily as a labeled
+(`do-not-delete: true`) fallback, not decommissioned as of this note.
+
 ## Context
 
 TriageIQ's original GCP project, `triageiq-portfolio-495022`, had its billing account

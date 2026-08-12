@@ -1,0 +1,2532 @@
+[
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 1743,
+    "original_number": 503,
+    "query_title": "Deployment resource (was Evaluate adoption of OpenShift template configs and/or deployments)",
+    "original_title": "Higher level image and deployment concepts in Kubernetes",
+    "channel": "legacy_gold_v1",
+    "source": "body_related",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 6280,
+    "original_number": 6055,
+    "query_title": "Record events for entity status changes in apiserver",
+    "original_title": "Transactions for Entities and Event Recordings",
+    "channel": "legacy_gold_v1",
+    "source": "body_related",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 6991,
+    "original_number": 5671,
+    "query_title": "Add support for new Docker 1.6 cgroup parent flag",
+    "original_title": "Kubelet: Create a top-level container for pods",
+    "channel": "legacy_gold_v1",
+    "source": "body_related",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 7395,
+    "original_number": 4007,
+    "query_title": "AWS: Support bearer tokens and client certs",
+    "original_title": "Remaining work for using tokens instead of basic auth",
+    "channel": "legacy_gold_v1",
+    "source": "body_related",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 7396,
+    "original_number": 4007,
+    "query_title": "Azure: Support bearer tokens and client certs",
+    "original_title": "Remaining work for using tokens instead of basic auth",
+    "channel": "legacy_gold_v1",
+    "source": "body_related",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 7397,
+    "original_number": 4007,
+    "query_title": "Vagrant: Support bearer tokens and client certs",
+    "original_title": "Remaining work for using tokens instead of basic auth",
+    "channel": "legacy_gold_v1",
+    "source": "body_related",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 7398,
+    "original_number": 4007,
+    "query_title": "Docker Single Node: Support bearer tokens and client certs",
+    "original_title": "Remaining work for using tokens instead of basic auth",
+    "channel": "legacy_gold_v1",
+    "source": "body_related",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 7534,
+    "original_number": 7438,
+    "query_title": "Improve PV/Claim binding",
+    "original_title": "Migrate PV binding from PV.Spec.ClaimRef to Binding subresource",
+    "channel": "legacy_gold_v1",
+    "source": "body_related",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 7648,
+    "original_number": 7647,
+    "query_title": "Put Root CA Cert for cluster into all(ish) pods",
+    "original_title": "Generate kubeconfig as well as tokens for service accounts",
+    "channel": "legacy_gold_v1",
+    "source": "body_related",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 7884,
+    "original_number": 5907,
+    "query_title": "Problem on updating pods with file",
+    "original_title": "Find portalIP automatically while updating a service",
+    "channel": "legacy_gold_v1",
+    "source": "body_related",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 8683,
+    "original_number": 8642,
+    "query_title": "Kubelet should store the config of a static pod as an annotation in the mirror pod",
+    "original_title": "Regression: mirror pods get deleted and recreated repeated due to spec mismatch",
+    "channel": "legacy_gold_v1",
+    "source": "body_related",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 8957,
+    "original_number": 5799,
+    "query_title": "Help needed to update the examples in getting-started-guides/mesos.md",
+    "original_title": "\"Getting started\" guides should point to 'examples/' rather than have their own individual examples",
+    "channel": "legacy_gold_v1",
+    "source": "body_related",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 11816,
+    "original_number": 10209,
+    "query_title": "Secure master -> node communication",
+    "original_title": "Proxy endpoint container",
+    "channel": "legacy_gold_v1",
+    "source": "body_related",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 12526,
+    "original_number": 1996,
+    "query_title": "Container dependencies & volumes-from support within Pod",
+    "original_title": "Run Once containers vs. Chaining / Container dependencies",
+    "channel": "legacy_gold_v1",
+    "source": "body_related",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 124,
+    "original_number": 122,
+    "query_title": "Tools/Master should show true external IP",
+    "original_title": "\"Running a container (simple version)\" -- spin up, then ???, stop/delete",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 159,
+    "original_number": 137,
+    "query_title": "Provide restart operation in Kubernetes API",
+    "original_title": "More comprehensive reporting of termination reasons",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 274,
+    "original_number": 160,
+    "query_title": "scheduler should leverage resource usage for pod placement",
+    "original_title": "Integration with cAdvisor",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 1393,
+    "original_number": 1098,
+    "query_title": "weird \"waiting\" status",
+    "original_title": "Unable to create replication controller (pod) locally",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 1437,
+    "original_number": 1261,
+    "query_title": "Support Pluggable Naming",
+    "original_title": "Proposal: Internal Dynamic DNS service",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 1722,
+    "original_number": 1684,
+    "query_title": "(CoreOS) Lifecycle : postStart : exec : command fails,   due to missing /usr/sbin/nsinit",
+    "original_title": "\"exec\" livenessProbes never execute",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 1992,
+    "original_number": 1297,
+    "query_title": "Add RFC952 validation to Annotations",
+    "original_title": "Label key, value validation rules need to be defined with a label selector grammar.",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 2575,
+    "original_number": 2144,
+    "query_title": "Update examples to use kubectl",
+    "original_title": "Deprecate kubecfg",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 2576,
+    "original_number": 2144,
+    "query_title": "Update e2e tests to run kubectl commands",
+    "original_title": "Deprecate kubecfg",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 3243,
+    "original_number": 260,
+    "query_title": "Proposal: SkyDNS entry per Pod",
+    "original_title": "PetSet (was nominal services)",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 3253,
+    "original_number": 1521,
+    "query_title": "Proposal: In-container command execution & port forwarding",
+    "original_title": "Support attach",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 3253,
+    "original_number": 1513,
+    "query_title": "Proposal: In-container command execution & port forwarding",
+    "original_title": "Real container ssh",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 3334,
+    "original_number": 2953,
+    "query_title": "Discussion: Version skewed e2e tests",
+    "original_title": "Supply server capabilities along with version",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 3361,
+    "original_number": 3244,
+    "query_title": "contrib: add preconfigured cluster VM images",
+    "original_title": "Provide an easy way to bootstrap a cluster on Mac OS",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 3437,
+    "original_number": 2578,
+    "query_title": "GCE PDs don't detach in a timely fashion",
+    "original_title": "GCE PD is not detached after a failed mount",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 3710,
+    "original_number": 3667,
+    "query_title": "Go tests share one client causing rate limits to be exceeded",
+    "original_title": "Retry rate limiter rejections",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 3861,
+    "original_number": 3681,
+    "query_title": "Configure bind-to addresses for each daemon based on --bind-to config rather than an IP.",
+    "original_title": "Master components should probably bind to 0 by default",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 4253,
+    "original_number": 3837,
+    "query_title": "Move liveness tests to the pods suite",
+    "original_title": "Port End-to-End tests to ginkgo/gomega",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 4301,
+    "original_number": 3948,
+    "query_title": "Scheduler input should be taken when reducing replicas",
+    "original_title": "Kubernetes killing running pods instead of unassigned when reducing replicas",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 4310,
+    "original_number": 4298,
+    "query_title": "Kubectl refuses to respect KUBERNETES_PROVIDER when gce cluster is running",
+    "original_title": "kubectl.sh reports pods from wrong cluster",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 4630,
+    "original_number": 4411,
+    "query_title": "Need an API call for \"teardown all external resources\"",
+    "original_title": "Bringing down the cluster doesn't delete forwarding rules and load balancer for default services",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 4683,
+    "original_number": 1959,
+    "query_title": "Minor improvements to builds on Mac OS X",
+    "original_title": "`make clean` shouldn't require Docker if Docker is not installed",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 4782,
+    "original_number": 2144,
+    "query_title": "Update Debugging FAQ to refer to kubectl",
+    "original_title": "Deprecate kubecfg",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 4889,
+    "original_number": 2004,
+    "query_title": "API should differentiate between lists to merge and lists to replace in reconciliation",
+    "original_title": "Document why we don't use maps in the API in api-conventions.md",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 4909,
+    "original_number": 2726,
+    "query_title": "Create subresource end points for replication controllers",
+    "original_title": "Properly set object status",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 5044,
+    "original_number": 4855,
+    "query_title": "upgrade: Rolling system updates via delete/re-create nodes",
+    "original_title": "Cluster versioning",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 5086,
+    "original_number": 4973,
+    "query_title": "Replication controller doesn't reject updates with a modified resourceVersion",
+    "original_title": "Move replication controller validation into rcstrategy",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 5136,
+    "original_number": 5084,
+    "query_title": "Add e2e test coverage of kubectl proxy",
+    "original_title": "kubectl proxy fails during kubectl e2e test",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 5180,
+    "original_number": 5156,
+    "query_title": "External load balancer creation should be a post-creation \"initializer\", not inline",
+    "original_title": "kubectl create -f service almost always times out",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 5212,
+    "original_number": 5202,
+    "query_title": "Monitoring.sh appears to not test everything...",
+    "original_title": "Heapster is sending the wrong field selector.",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 5331,
+    "original_number": 3060,
+    "query_title": "Attach documentation to API types and/or resources",
+    "original_title": "Add support to kubectl to describe API types and operations",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 5356,
+    "original_number": 4083,
+    "query_title": "Validate swagger spec on each commit",
+    "original_title": "swagger json is invalid",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 5548,
+    "original_number": 4817,
+    "query_title": "cache selector results",
+    "original_title": "Efficient lookup by label selection, reverse label selection, uid, and IP addresses",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 5721,
+    "original_number": 991,
+    "query_title": "API support for identifying application types",
+    "original_title": "API plugin design thread",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 5908,
+    "original_number": 2726,
+    "query_title": "Where to keep Nodes Capacity",
+    "original_title": "Properly set object status",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 6077,
+    "original_number": 6072,
+    "query_title": "Need reconciliation loop for node schedulable",
+    "original_title": "Node IPAddresses is not refreshed",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 6095,
+    "original_number": 3333,
+    "query_title": "Node upgrades: write in Go and hook into pkg/cloudprovider",
+    "original_title": "upgrade: Make node components upgradeable (at all possible)",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 6294,
+    "original_number": 5629,
+    "query_title": "`Networking should function for pods` broken on head",
+    "original_title": "Networking test timing out on Jenkins",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 6557,
+    "original_number": 6499,
+    "query_title": "Figure out the most reliable way to identify a node",
+    "original_title": "Mirror pod failures with hostnameoverride",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 6558,
+    "original_number": 6557,
+    "query_title": "Kubelet shouldn't require apiserver to populate host ip of pods",
+    "original_title": "Figure out the most reliable way to identify a node",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 6656,
+    "original_number": 5626,
+    "query_title": "Updating service publicIPs does not update iptables",
+    "original_title": "Allow DNS names to be used in service publicIP's list",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 7043,
+    "original_number": 2264,
+    "query_title": "Use IntOrString for numeric types (like 'replicas') to make them parametrizable",
+    "original_title": "'int' in API types considered harmful",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 7111,
+    "original_number": 2306,
+    "query_title": "Proposal: Long term evolution of runtime.Scheme / conversion.Scheme",
+    "original_title": "Our API code is hard to understand",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 7528,
+    "original_number": 6910,
+    "query_title": "Document kernel requirements",
+    "original_title": "kube-proxy: use sysctl route_localnet to simplify logic",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 7630,
+    "original_number": 7222,
+    "query_title": "Density test should surface node failures",
+    "original_title": "Pods being scheduled on shut down machines",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 7693,
+    "original_number": 1319,
+    "query_title": "Exclude docker cache proxy from CoreOS getting started guide",
+    "original_title": "Run a Docker registry",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 7856,
+    "original_number": 1899,
+    "query_title": "Eliminate Phase and simplify Conditions",
+    "original_title": "Allow users to wait for conditions from kubectl and using the API",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 8231,
+    "original_number": 8196,
+    "query_title": "Cluster up failure because `kube-controller-manager` is grumpy with GCE",
+    "original_title": "Node coming up as master on G[C|K]E",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 8305,
+    "original_number": 1148,
+    "query_title": "How to cleanup unused containers and images?",
+    "original_title": "kubecfg delete pods should remove docker containers too",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 8676,
+    "original_number": 8572,
+    "query_title": "Room for optimizing rc stop operations",
+    "original_title": "Kubectl stop should watch rc status",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 8687,
+    "original_number": 8572,
+    "query_title": "Kubectl should be smarter about the stop timeout",
+    "original_title": "Kubectl stop should watch rc status",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 8702,
+    "original_number": 7203,
+    "query_title": "Generalize container image representation",
+    "original_title": "Support OCI images in API",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 8731,
+    "original_number": 2867,
+    "query_title": "Support for cookie based session affinity",
+    "original_title": "Feature - Add support for session affinity (aka sticky sessions)",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 9178,
+    "original_number": 9075,
+    "query_title": "Revamp CoreOS getting started guides",
+    "original_title": "Do not break CoreOS when deprecating kubernetes-ro",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 9188,
+    "original_number": 6764,
+    "query_title": "Kubelet sometimes slow to delete pods",
+    "original_title": "Deleting containers holds up the update bus on kubelet",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 9218,
+    "original_number": 7835,
+    "query_title": "Validate mounting volumes by type",
+    "original_title": "Volume resource counting to enforce scheduling constraints",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 9275,
+    "original_number": 8335,
+    "query_title": "Kubelet can rectify corrupt pod phase",
+    "original_title": "Flip pod's ready condition when node is unreachable",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 9450,
+    "original_number": 9444,
+    "query_title": "Allocator bugs",
+    "original_title": "e2e is flakey with spec.clusterIP value failures",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 9713,
+    "original_number": 3258,
+    "query_title": "Getting error status on WatchServices channel",
+    "original_title": "Got error status on WatchServices channel",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 9881,
+    "original_number": 9788,
+    "query_title": "Cap docker resource cgroup's limit",
+    "original_title": "Cluster addons make large clusters unstable (user container's oom_score_adj is misconfigured)",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 9893,
+    "original_number": 3996,
+    "query_title": "Can we stop supporting TRACE method in proxy requests",
+    "original_title": "Improve documentation for /redirect and /proxy",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 9964,
+    "original_number": 4083,
+    "query_title": "Swagger fails validation",
+    "original_title": "swagger json is invalid",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 10042,
+    "original_number": 9792,
+    "query_title": "Record pod StartTime when we receive a watch notification on the kubelet",
+    "original_title": "Comment for Pod.Status.StartTime inconsistent with implementation",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 10306,
+    "original_number": 10282,
+    "query_title": "Detect node issues from density test",
+    "original_title": "Scalability tests failing on Jenkins due to non starting pods",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 10475,
+    "original_number": 4817,
+    "query_title": "Implement watch at apiserver level",
+    "original_title": "Efficient lookup by label selection, reverse label selection, uid, and IP addresses",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 10620,
+    "original_number": 9208,
+    "query_title": "elasticsearch failing due to /var/run/secrets/kubernetes.io/serviceaccount/token: no such file or directory",
+    "original_title": "Secrets and EmptyDir E2E are broken in master",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 10735,
+    "original_number": 1755,
+    "query_title": "kubectl needs better cluster-info and switching cluster functionality",
+    "original_title": "Support multiple CLI configuration profiles",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 10858,
+    "original_number": 10368,
+    "query_title": "Nodes not being able to register after running cluster upgrade test",
+    "original_title": "kubelet does not recover from machine reboot",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 10919,
+    "original_number": 391,
+    "query_title": "Creating a privileged container",
+    "original_title": "[Enhancement] Support privileged container",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 11089,
+    "original_number": 8448,
+    "query_title": "kubectl port-forward should accept a pod without -p",
+    "original_title": "kubectl exec is dissonant with other commands",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 11489,
+    "original_number": 6487,
+    "query_title": "Create easy way to generate config templates/forms",
+    "original_title": "Facilitate automatic form and client generation",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 11631,
+    "original_number": 1366,
+    "query_title": "Node controller should delete pods assigned to deleted nodes",
+    "original_title": "Improve eviction of pods from unhealthy and vanished nodes",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 11658,
+    "original_number": 10548,
+    "query_title": "Run scale tests somewhere",
+    "original_title": "Properly partition e2e tests with labels to avoid murkiness around what's running where",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 11697,
+    "original_number": 11684,
+    "query_title": "[1.0.1] Web Interface /ui does not load",
+    "original_title": "kube-ui : no endpoints available for \"kube-ui\"",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 11752,
+    "original_number": 8478,
+    "query_title": "NoDiskConflict when mounting GDE disk in read-only mode",
+    "original_title": "NoDiskConflict() should not reject multiple read-only PD mounts",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 11816,
+    "original_number": 3168,
+    "query_title": "Secure master -> node communication",
+    "original_title": "Secure node -> master communication",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 12053,
+    "original_number": 12039,
+    "query_title": "Merge NamespaceExists and NamespaceLifecycle admission controllers",
+    "original_title": "Consider making namespace support more internally consistent",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 12102,
+    "original_number": 7660,
+    "query_title": "Hide failed/succeeded pods in 'kubectl get pods' by default",
+    "original_title": "Reap/GC terminated pods",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 12121,
+    "original_number": 11979,
+    "query_title": "AWS: We should add a rate limiter to AWS API calls",
+    "original_title": "AWS Request limit exceeded",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 12413,
+    "original_number": 10009,
+    "query_title": "[WIP] Make expapi an API group",
+    "original_title": "Supporting multiple API prefixes",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 12439,
+    "original_number": 12424,
+    "query_title": "PersistentVolumeClaim get output is not useful",
+    "original_title": "Describe volumes in rc and pod",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 12534,
+    "original_number": 11101,
+    "query_title": "kube2sky failing with \"Failed to list *api.Service: couldn't get version/kind; json parse error: invalid character '<' looking for beginning of value\"",
+    "original_title": "skydns always restart in a loop",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 12682,
+    "original_number": 3760,
+    "query_title": "Test pure iptables proxy vs userspace proxy.",
+    "original_title": "use iptables for proxying instead of userspace",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 12773,
+    "original_number": 12614,
+    "query_title": "Kubernetes 1.0.3 Vagrant Demo Doesn't Work (but 1.0.1 does)",
+    "original_title": "Kubernetes 1.0.3 does not work with VirtualBox 5.0.0",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 12843,
+    "original_number": 3760,
+    "query_title": "kube-proxy: iptables implementation: allow a fallback flag to MASQUERADE pod source IPs",
+    "original_title": "use iptables for proxying instead of userspace",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 13009,
+    "original_number": 12468,
+    "query_title": "Kube-ui don't show anything",
+    "original_title": "kube-ui does not work properly",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 13412,
+    "original_number": 13398,
+    "query_title": "We should handle flaky cloud provider APIs more gracefully",
+    "original_title": "Gracefully handle cloud provider api downtime",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 14022,
+    "original_number": 14017,
+    "query_title": "https-nginx example fails to execute on Macintosh",
+    "original_title": "https-nginx example requires a development environment to be setup",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 14023,
+    "original_number": 3185,
+    "query_title": "Pods hang in pending state indefinitely",
+    "original_title": "pods not starting - pending status",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 14071,
+    "original_number": 14048,
+    "query_title": "Swagger spec: Incorrect response model for /api/v1/namespaces/{namespace}/pods/{name}/log",
+    "original_title": "Swagger doc for getting pod log looks wrong",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 14241,
+    "original_number": 13073,
+    "query_title": "Error creating external load balancer with GKE via gcloud/kubectl",
+    "original_title": "Error creating external load balancer with gce and CoreOS cluster",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 14468,
+    "original_number": 13117,
+    "query_title": "reenable race detection for integration tests",
+    "original_title": "Etcd integration test data race",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 14520,
+    "original_number": 14308,
+    "query_title": "Experimental: HorizontalPodAutoscaler: needs Status Update",
+    "original_title": "Experimental: Job status not being updated",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 14521,
+    "original_number": 14344,
+    "query_title": "Experimental: Deployments: needs Status Update",
+    "original_title": "Experimental: DaemonSet: needs Status Update",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 14680,
+    "original_number": 6045,
+    "query_title": "testServiceTest is flaky on Shippable",
+    "original_title": "integration test flaky due to missing endpoints",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 14713,
+    "original_number": 13226,
+    "query_title": "Ability to add a Host header in http livenessProbe",
+    "original_title": "Issue with livenessProbe",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 14774,
+    "original_number": 13812,
+    "query_title": "Add tests for kubectl validation on List",
+    "original_title": "Regression: kubectl create with List no longer works",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 14829,
+    "original_number": 6343,
+    "query_title": "kubectl unable Unable to upgrade connection",
+    "original_title": "Kubectl exec fails trying to upgrade to a spdy connection",
+    "channel": "k8s_extended_mine",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 15334,
+    "original_number": 15139,
+    "query_title": "SchedulerPredicates validates MaxPods and SchedulerPredicates validates resource limits failing consistently in the soak test",
+    "original_title": "\"SchedulerPredicates validates MaxPods\" e2e test is flaky",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 15483,
+    "original_number": 13339,
+    "query_title": "Beta and official release mechanics issues",
+    "original_title": "Alpha release mechanics issues",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 15592,
+    "original_number": 15303,
+    "query_title": "kube-dns should be the only Nameserver for Pod with DnsPolicy=ClusterFirst",
+    "original_title": "Ensure that skydns does not round robin between nameservers",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 15629,
+    "original_number": 15599,
+    "query_title": "Investigate service-soak failure",
+    "original_title": "kubernetes-e2e-gce started to failed with two tests since build 8919",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 15644,
+    "original_number": 15528,
+    "query_title": "Kubelet eats lots of memory and cpu",
+    "original_title": "kubelet cpu high",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 15991,
+    "original_number": 15723,
+    "query_title": "Add an option to create an autoscaler for kubectl run",
+    "original_title": "kubectl autoscale",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 16165,
+    "original_number": 15806,
+    "query_title": "Remove handling of old non-capitalized event reason in scheduler-predicates test",
+    "original_title": "\"limit number of pods that are allowed to run\" failing on version-skewed clusters running 1.1 master and 1.0 nodes",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 16243,
+    "original_number": 8042,
+    "query_title": "skydns container in reboot loop on minion",
+    "original_title": "skydns container exits repeatedly and new one gets created",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 16268,
+    "original_number": 16201,
+    "query_title": "Cluster size autoscaling doesn't work with master 1.1 and nodes 1.0",
+    "original_title": "Heapster crash looping in version skewed cluster (v1.1 master, v1.0 node)",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 16429,
+    "original_number": 13969,
+    "query_title": "Fix and/or document watch window constraint",
+    "original_title": "Change Watch behavior for resourceVersion=0 in v2 API",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 16519,
+    "original_number": 16393,
+    "query_title": "Brokwn download link in gh-pages",
+    "original_title": "Download link doesn't display well in gh-pages",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 16541,
+    "original_number": 16391,
+    "query_title": "Write a munger to replace the tabs with spaces in ```yaml of *md",
+    "original_title": "gh-pages shows red rectangles in code ",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 16586,
+    "original_number": 8734,
+    "query_title": "Can't mount secret volumes",
+    "original_title": "Unable to use secret when Kubernetes is running inside Docker",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 16586,
+    "original_number": 16055,
+    "query_title": "Can't mount secret volumes",
+    "original_title": "Volumes Not Mounting in Dockerized K8S",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 16786,
+    "original_number": 13357,
+    "query_title": "Secret key value pairs should have linux filename limitations for key name instead of DNS_SUBDOMAIN restrictions",
+    "original_title": "The secret data is not allowed to be more than 253 characters?",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 16816,
+    "original_number": 15731,
+    "query_title": "Pod does not start despite restartPolicy=OnFailure",
+    "original_title": "Kubernetes pods die with default restartPolicy=true and do not restart",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 16883,
+    "original_number": 13478,
+    "query_title": "Services should be able to up and down services is flaky",
+    "original_title": "E2e: Services should be able to up and down services",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 16987,
+    "original_number": 16965,
+    "query_title": "enable automatic generation of service account tokens in hyperkube",
+    "original_title": "containerized controller manager doesn't generate secrets w/ default configuration",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 17168,
+    "original_number": 12143,
+    "query_title": "Develop Deployment UX equivalent to kubectl rolling-update",
+    "original_title": "Move kubectl client logic into server",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 17186,
+    "original_number": 14452,
+    "query_title": "Out of resource killing",
+    "original_title": "Node becomes unstable when overcommit on memory qos, does not always recover",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 17297,
+    "original_number": 16105,
+    "query_title": "DaemonSet should not/currently cannot schedule pods on SchedulingDisabled nodes",
+    "original_title": "DaemonSet should not schedule pods on NotReady nodes",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 17505,
+    "original_number": 17504,
+    "query_title": "hack/local-up-cluster.sh is missing in release",
+    "original_title": "\"Getting started in Vagrant\" document missing critical steps.",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 17558,
+    "original_number": 15763,
+    "query_title": "support to delete resource<pod,service> via its ip ",
+    "original_title": "kubectl command to convert pod IP to pod name",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 17820,
+    "original_number": 14474,
+    "query_title": "v1.1 getting start guide ubuntu document should be update",
+    "original_title": "deployment for ubuntu fails for unknown admission plugin",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 17860,
+    "original_number": 17726,
+    "query_title": "Correct the expression of nodecontroller for the sync loop in admin/node.html",
+    "original_title": "Is nodecontroller also responsible for create new node based on cloudprovider query?",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 17981,
+    "original_number": 17060,
+    "query_title": "[Proposal] Make Kubernetes run on ARM devices",
+    "original_title": "Kubernetes just compiles on amd64",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 18123,
+    "original_number": 10353,
+    "query_title": "Critical builds should fail eagerly and handle flaky tests better",
+    "original_title": "Make our testing environment more sane",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 18255,
+    "original_number": 18126,
+    "query_title": "scheduler: inefficient cache operation slows down scheduler",
+    "original_title": "scheduler: using inefficient math library causes significant slowdown",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 18361,
+    "original_number": 15073,
+    "query_title": "Any possibility of using a persistent storage on AWS?",
+    "original_title": "Available EBS volume remains in 'detached' state",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 18577,
+    "original_number": 16500,
+    "query_title": "APIResourceList should give sufficient information to build a RESTMapper",
+    "original_title": "HPA controller needs more flexibility from APIInstaller",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 18735,
+    "original_number": 246,
+    "query_title": "Write proposal on how to self host the kubernetes control-plane",
+    "original_title": "Make it easy to run Kubernetes on top of the Kubelet (aka self-hosting)",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 18914,
+    "original_number": 18913,
+    "query_title": "TestWatchEtcdError fairly consistently timing out",
+    "original_title": "data race in k8s.io/kubernetes/pkg/storage/etcd",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 18935,
+    "original_number": 18927,
+    "query_title": "trying to access apiserver web tools: unauthorized",
+    "original_title": "kubectl with TLS secured etcd on Mac OS X: error: couldn't read version from server: the server has asked for the client to provide credentials",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 19054,
+    "original_number": 12143,
+    "query_title": "Server-side cascading deletion",
+    "original_title": "Move kubectl client logic into server",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 19095,
+    "original_number": 16177,
+    "query_title": "[User Story] Improve HPA to bring to GA ",
+    "original_title": "HPA needs to handle discovery, controller credentials, privilege escalation protection",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 19097,
+    "original_number": 4710,
+    "query_title": "[User Story] Secrets should be exposed to containers as environment variables",
+    "original_title": "Expose secrets to containers in environment variables",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 19273,
+    "original_number": 2742,
+    "query_title": "Where to define common api machinery objects used by genericapiserver and client",
+    "original_title": "Break genericapiserver and API machinery into separate repos",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 19291,
+    "original_number": 10548,
+    "query_title": "Fix GKE reboot ci tests",
+    "original_title": "Properly partition e2e tests with labels to avoid murkiness around what's running where",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 19432,
+    "original_number": 18770,
+    "query_title": "Deprecate cAdvisor flags in kubelet",
+    "original_title": "Standalone cAdvisor for monitoring",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 19444,
+    "original_number": 2838,
+    "query_title": "SEO: v1.1 docs should take precedence over v1.0",
+    "original_title": "Improve SEO for kubernetes.io",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 19658,
+    "original_number": 15805,
+    "query_title": "High CPU consumption of Kubelet 1.1",
+    "original_title": "Investigate goroutine leakage issue in Kubelet",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 19798,
+    "original_number": 10265,
+    "query_title": "DNS not resolving though all keys are there in etcd?",
+    "original_title": "kube2sky can not resolve kubernetes service DNS name",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 19858,
+    "original_number": 18947,
+    "query_title": "DaemonSet conflict after controller-manager restart",
+    "original_title": "Daemonset Waiting forever when Pod pull image failed. ",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 20361,
+    "original_number": 16737,
+    "query_title": "Opportunistic scaling in Deployment",
+    "original_title": "Rolling update fails sometimes because of a timeout and leaves two replication controllers",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 20424,
+    "original_number": 18969,
+    "query_title": "Error handling on node-not-up in kube-up ",
+    "original_title": "In 1000 node clusters some nodes fail to register/become running",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 20459,
+    "original_number": 19715,
+    "query_title": "v1.2 clients can't propagate errors from v1.1 API servers",
+    "original_title": "\"Kubectl client Simple pod should support inline execution and attach\" failing at HEAD against a 1.1 cluster",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 20470,
+    "original_number": 20402,
+    "query_title": "Kubeproxy should always apply latest snapshot",
+    "original_title": "Services and endpoints out of sync causing test flake",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 20567,
+    "original_number": 20470,
+    "query_title": "Investigate kube-proxy performance needs",
+    "original_title": "Kubeproxy should always apply latest snapshot",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 20935,
+    "original_number": 20229,
+    "query_title": "discovery summarizer: should it merge swagger spec from all servers",
+    "original_title": "federated api servers: Implement a discovery merger",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 21087,
+    "original_number": 20661,
+    "query_title": "Collect master logs for GKE e2e's",
+    "original_title": "Increase the logging level for a GKE test cluster",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 21111,
+    "original_number": 6158,
+    "query_title": "Guestbook example not working,unable to connect to master radis ",
+    "original_title": "CoreOS_Standalone: Redis-slave can't resolve redis-master:6379 in guestbook example",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 21125,
+    "original_number": 17971,
+    "query_title": "Kubelet: We should define Container Waiting state better.",
+    "original_title": "ContainerState may be set to Terminated when it should be Waiting.",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 21159,
+    "original_number": 7828,
+    "query_title": "AWS: Master stop/start fails",
+    "original_title": "Certificate error when connecting to master after AWS cluster stop/start",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 21215,
+    "original_number": 20617,
+    "query_title": "Kubernetes security in master-slave salt mode",
+    "original_title": "Why does GCE salt setup do not use master-minion mode?",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 21548,
+    "original_number": 18352,
+    "query_title": "Update cadvisor version in kubelet to allow limiting number of exported custom metrics",
+    "original_title": "Horizontal pod autoscaling based on custom metrics",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 21608,
+    "original_number": 20836,
+    "query_title": "Add versions for test images",
+    "original_title": "Don't use \":latest\" or non-tagged images in e2e tests",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 21623,
+    "original_number": 12121,
+    "query_title": "AWS: Volume attachment/detachment requires polling of DescribeVolume",
+    "original_title": "AWS: We should add a rate limiter to AWS API calls",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 21630,
+    "original_number": 21625,
+    "query_title": "LoadBalancer creation retry happens every second",
+    "original_title": "The servicecontroller loop is racy",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 21631,
+    "original_number": 14558,
+    "query_title": "Assumptions in \"Securing the Service\" no longer hold",
+    "original_title": "example https-nginx make fail.",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 21633,
+    "original_number": 21631,
+    "query_title": "https-nginx example can clarify secrets/cert generation step",
+    "original_title": "Assumptions in \"Securing the Service\" no longer hold",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 21657,
+    "original_number": 21656,
+    "query_title": "Replication controller to re-schedule Pod in `ContainerCreating` and `ImageNotReady` status for a long time",
+    "original_title": "Pods unable to get IP addresses",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 21798,
+    "original_number": 21753,
+    "query_title": "e2e flake: deployment should delete old replica sets [failed remove pods]",
+    "original_title": "e2e flake: RollingUpdateDeployment should delete old pods and create new ones [failed remove pods]",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 21810,
+    "original_number": 21753,
+    "query_title": "e2e flake:  RollingUpdateDeployment should delete old pods and create new ones [minUnavailable/maxSurge violated]",
+    "original_title": "e2e flake: RollingUpdateDeployment should delete old pods and create new ones [failed remove pods]",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 21912,
+    "original_number": 21079,
+    "query_title": "All controllers should raise events when they can't create objects as expected",
+    "original_title": "HPA should log an event if it can't create pods",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 21973,
+    "original_number": 15227,
+    "query_title": "e2e flake: dns and kibana are failing in cluster",
+    "original_title": "Crashlooping kube-system pods make soak cluster unusable",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 22004,
+    "original_number": 13056,
+    "query_title": "unable to create service with AWS load balancer for a pod running in single az.",
+    "original_title": "Kubernetes on AWS should be Multi-AZ by default",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 22199,
+    "original_number": 21995,
+    "query_title": "e2e flake: `ServiceAccounts should ensure a single API token exists`",
+    "original_title": "e2e flake: It should ensure a single API token exists",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 22205,
+    "original_number": 12744,
+    "query_title": "DaemonSet should respect new scheduling constraints",
+    "original_title": "Move scheduler fit predicates into a library",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 22218,
+    "original_number": 22122,
+    "query_title": "Deployment e2e tests should wait for async actions to happen rather than checking it immediately.",
+    "original_title": "e2e flake: deployment should support rollback [status not updated]",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 22271,
+    "original_number": 22128,
+    "query_title": "integration flake: pods \"cassandra\" not found",
+    "original_title": "integration flake: casandra failure",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 22334,
+    "original_number": 21374,
+    "query_title": "e2e gce-serial and gke-serial flaky",
+    "original_title": "e2e flake: gce serial is broken",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 22388,
+    "original_number": 22300,
+    "query_title": "Deployment controller should handle errors better when retrying updates",
+    "original_title": "e2e flake: RecreateDeployment should delete old pods and create new ones [pods not running]",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 22422,
+    "original_number": 22340,
+    "query_title": "Admission controllers can cause unnecessary significant load on apiserver",
+    "original_title": "e2e flake: density and load are failing with too high latency of api calls",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 22480,
+    "original_number": 22259,
+    "query_title": "Kubelet failed to delete pods which has container(s) stucking at waiting state (failed to docker creation)",
+    "original_title": "e2e flake: Kubelet syncloop hangs",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 22494,
+    "original_number": 7351,
+    "query_title": "Kubelet should respect ACPI shutdown",
+    "original_title": "Implement \"machine shutdown\"",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 22499,
+    "original_number": 18037,
+    "query_title": "AWS: Check e2e on release-1.1 branch",
+    "original_title": "kubernetes-e2e-aws failing to start cluster",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 22506,
+    "original_number": 2763,
+    "query_title": "json: cannot unmarshal number into Go value of type string",
+    "original_title": "Can't create pods from yaml template",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 22601,
+    "original_number": 20836,
+    "query_title": "redis images do not have a non-latest image",
+    "original_title": "Don't use \":latest\" or non-tagged images in e2e tests",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 22675,
+    "original_number": 12143,
+    "query_title": "API and sufficient OpenAPI info to translate metadata, object names/references, and selectors to relative API URIs",
+    "original_title": "Move kubectl client logic into server",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 22998,
+    "original_number": 22984,
+    "query_title": "Problem enabling --cloudprovider=aws in release-1.2 ",
+    "original_title": "kubelet --hostname-override is ignored in v1.2.0-beta.1",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 23174,
+    "original_number": 5472,
+    "query_title": "implement v2 of kubernetes deployments",
+    "original_title": "Proposal to rework Kubernetes deployment CLI",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 23233,
+    "original_number": 23174,
+    "query_title": "kube-addon-update revamp",
+    "original_title": "implement v2 of kubernetes deployments",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 23252,
+    "original_number": 21257,
+    "query_title": "Deployment in an inconsistent after kubectl delete and ctrl + C",
+    "original_title": "integration flake: kubectl delete deployment/nginx-deployment",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 23291,
+    "original_number": 17429,
+    "query_title": "Ingress and TCP ",
+    "original_title": "Support exposing a service as ingress",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 23291,
+    "original_number": 19333,
+    "query_title": "Ingress and TCP ",
+    "original_title": "HTTPS Ingress controller for SNI based routing",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 23335,
+    "original_number": 1521,
+    "query_title": "API: use cases for kubectl attach?",
+    "original_title": "Support attach",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 23641,
+    "original_number": 13048,
+    "query_title": "Cluster addon resource usage needs to be tracked and tested",
+    "original_title": "Feature request: dynamic cluster addon resizer",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 23641,
+    "original_number": 13695,
+    "query_title": "Cluster addon resource usage needs to be tracked and tested",
+    "original_title": "kube-addons are all guaranteed qos tier, seems like they could be burstable",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 23961,
+    "original_number": 23956,
+    "query_title": "Update kubelet perf tests using the new metrics API ",
+    "original_title": "Kubelet's logic of checking docker running in host does not work in systemd distro",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 24044,
+    "original_number": 13610,
+    "query_title": "Add transient archive volume type that stores arbitrarily complex file structure",
+    "original_title": "Add an inline volume type that stores small amounts of RO data with the manifest",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 24123,
+    "original_number": 5011,
+    "query_title": "Eliminate the docker load from the production",
+    "original_title": "Design: Build docker images for master components for dev cluster on the fly",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 24188,
+    "original_number": 24094,
+    "query_title": "help-need: some requests are really slow",
+    "original_title": "\"empty input\" error when have large number of request",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 24228,
+    "original_number": 24169,
+    "query_title": "Missing dev workflow documentation needs to be added/updated",
+    "original_title": "Finer granularity of ACLs, specifically for labels on issues/pull requests",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 24236,
+    "original_number": 21498,
+    "query_title": "Consider reducing the PV/PVC binder provisioner retry time",
+    "original_title": "Slow binding of PV => PVC",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 24312,
+    "original_number": 24310,
+    "query_title": "Better one stop update-all script ",
+    "original_title": "verify-api-reference-docs fails trying to contact github ",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 24375,
+    "original_number": 23394,
+    "query_title": "Informer should not saturate workqueue with sync events",
+    "original_title": "Split the \"resync interval\" on reflectors into \"relist interval\" and \"resync interval\"",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 24380,
+    "original_number": 23799,
+    "query_title": "controller manager not starting due to empty preferred version in third party resource",
+    "original_title": "GroupVersion not present in src",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 24399,
+    "original_number": 24188,
+    "query_title": "add \"latencies_bucket\" for etcd request",
+    "original_title": "help-need: some requests are really slow",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 24430,
+    "original_number": 22964,
+    "query_title": "rkt: Support dynamic pod.",
+    "original_title": "Revisit Container Runtime interface ",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 24513,
+    "original_number": 24241,
+    "query_title": "Pod Creation shows Status as Container Creating ",
+    "original_title": "kubectl pods creating showing status Container Creating",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 24812,
+    "original_number": 10265,
+    "query_title": "kube2sky can not connect to apiserver: invalid TLS certificate",
+    "original_title": "kube2sky can not resolve kubernetes service DNS name",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 24873,
+    "original_number": 11488,
+    "query_title": "Is there a way to generate yml files that will produce the existing cluster?",
+    "original_title": "kubectl --dry-run",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 25013,
+    "original_number": 13585,
+    "query_title": "overlapping text due to common PS1s in `kubernetes exec`",
+    "original_title": "[kubectl] terminal dimensions not exported with 'exec' command",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 25050,
+    "original_number": 23976,
+    "query_title": "Allow nodes with no internet connection to become master nodes",
+    "original_title": "the kube-proxy cannot run on centos",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 25138,
+    "original_number": 24952,
+    "query_title": "Flake: unit test federation/cmd/federated-apiserver/app.TestRun",
+    "original_title": "Flake: unit test federation/cmd/federated-apiserver/app.TestRun",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 25254,
+    "original_number": 24533,
+    "query_title": "Add doomed-to-failure detection to Job",
+    "original_title": "`kubectl run --restart=Never` restarts (creates a Job)",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 25601,
+    "original_number": 20374,
+    "query_title": "Delete cluster from kubectl config",
+    "original_title": "Kubectl get cluster ",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 25643,
+    "original_number": 25594,
+    "query_title": "Shared informer nil pointer",
+    "original_title": "integration flake: panic in pkg/controller/framework/controller.go:108",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 25788,
+    "original_number": 24858,
+    "query_title": "Fix how revisions are sorted in kubectl rollout history",
+    "original_title": "kubectl patch --record doesn't show up at rollout history",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 25893,
+    "original_number": 19720,
+    "query_title": "Determine docker version(s) for Kubernetes 1.3 release ",
+    "original_title": "Validate Docker 1.10",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 25893,
+    "original_number": 23397,
+    "query_title": "Determine docker version(s) for Kubernetes 1.3 release ",
+    "original_title": "Validate Docker v1.11",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 26246,
+    "original_number": 6351,
+    "query_title": "Too many open files error in small cluster",
+    "original_title": "\"too many open files\" error in a large cluster",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 26268,
+    "original_number": 24978,
+    "query_title": "Support mixed HTTP/HTTPS ports in ELBs",
+    "original_title": "AWS: Proposed set of annotations for ELB \"advanced features\"",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 26390,
+    "original_number": 26322,
+    "query_title": "Serve e2e images from local docker registry",
+    "original_title": "Load docker images from a PD for node e2e",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 26390,
+    "original_number": 25277,
+    "query_title": "Serve e2e images from local docker registry",
+    "original_title": "e2e flake: slow and unreliable image pulling",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 26390,
+    "original_number": 20550,
+    "query_title": "Serve e2e images from local docker registry",
+    "original_title": "e2e flake: unable to ping registry endpoint",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 26464,
+    "original_number": 23397,
+    "query_title": "Add docker performance tests for image pulling ",
+    "original_title": "Validate Docker v1.11",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 26464,
+    "original_number": 25277,
+    "query_title": "Add docker performance tests for image pulling ",
+    "original_title": "e2e flake: slow and unreliable image pulling",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 27264,
+    "original_number": 16670,
+    "query_title": "kubectl run -it loses some lines of the log",
+    "original_title": "interactive run \"Unrecognized input header\"",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 27436,
+    "original_number": 18174,
+    "query_title": "Kubernetes Master High Availability Proposal",
+    "original_title": "\"don't require a load balancer between cluster and control plane and still be HA\"",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 27519,
+    "original_number": 27004,
+    "query_title": "Proposal: informer redesign",
+    "original_title": "Race condition in Informer",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 27540,
+    "original_number": 25818,
+    "query_title": "Kubectl attach command doesn't work for InitContainters",
+    "original_title": "exec, logs, attach and any other \"container\" command should work on init containers",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 27745,
+    "original_number": 17801,
+    "query_title": "rkt: Support restart back-off for containers",
+    "original_title": "Make backoff parameters configurable",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 27804,
+    "original_number": 27684,
+    "query_title": "Decide how/if to distribute SSL CA certs with components",
+    "original_title": "Build federation-controller-manager docker image with ca-certificates",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 28313,
+    "original_number": 28310,
+    "query_title": "Support for isolating opaque resources.",
+    "original_title": "Discovering, bookkeeping and isolating platform resources other than CPU time and main memory.",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 28378,
+    "original_number": 25277,
+    "query_title": "[k8s.io] Deployment paused deployment should be ignored by the controller {Kubernetes e2e suite}",
+    "original_title": "e2e flake: slow and unreliable image pulling",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 28702,
+    "original_number": 24510,
+    "query_title": "cluster/images/hyperkube: hyperkube symlinks should be fixed or re-enabled",
+    "original_title": "Propose kubelet symlink in hyperkube image",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 28855,
+    "original_number": 28854,
+    "query_title": "Detect Unexpected Detach Operations and Notify Users",
+    "original_title": "PD tests should wait for safe detach",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 28956,
+    "original_number": 28890,
+    "query_title": "Unable to build kubernetes running 'make'",
+    "original_title": "Unable to build kubernetes running 'make'",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 28999,
+    "original_number": 27872,
+    "query_title": "kubernetes unable to successfull mount volume in AWS",
+    "original_title": "AWS: problem mounting dynamic PVs",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 29213,
+    "original_number": 19765,
+    "query_title": "kube-up gce/coreos for recent CoreOS results in a cluster without port-forward working",
+    "original_title": "Port-forwarding not working due to missing socat command",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 29262,
+    "original_number": 29051,
+    "query_title": "Make Attach/Detach controller robust against pre-mature PVC/PV deletion",
+    "original_title": "PVC Volume not detached if pod deleted via namespace deletion",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 29323,
+    "original_number": 28156,
+    "query_title": "Expose metrics for desired replica counts",
+    "original_title": "Properly expose counter states and generally better metrics to Prometheus",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 29362,
+    "original_number": 28082,
+    "query_title": "make taints unique by <key, effect> on a node",
+    "original_title": "Update commented-out taint/toleration code to replace NoScheduleNoAdmitNoExecute with NoExecute",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 29617,
+    "original_number": 29059,
+    "query_title": "[1.3.2] Pod stuck in the ContainerCreating state while mounting secret timeout",
+    "original_title": "kubelet remounting default-token-xxxx repeatedly",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 29633,
+    "original_number": 28416,
+    "query_title": "Race in `Downward API volume should update annotations / labels on modification`",
+    "original_title": "[k8s.io] Downward API volume should update labels on modification [Conformance] {Kubernetes e2e suite}",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 29633,
+    "original_number": 28462,
+    "query_title": "Race in `Downward API volume should update annotations / labels on modification`",
+    "original_title": "[k8s.io] Downward API volume should update annotations on modification [Conformance] {Kubernetes e2e suite}",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 29695,
+    "original_number": 29555,
+    "query_title": "Volume Manager Data Structure Should Use Pod UID in Key",
+    "original_title": "Secret and ConfigMap volume do not report unique volume name correctly",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 29749,
+    "original_number": 20476,
+    "query_title": "[1.3.3] OpenID Connect provider fails with trailing slashes in the issuer URL",
+    "original_title": "Problem using Auth0 in Kubernetes OIDC Authentication",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 29776,
+    "original_number": 29607,
+    "query_title": "ConfigMap links",
+    "original_title": "ConfigMaps consuming pod facts",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  },
+  {
+    "repo": "kubernetes_kubernetes",
+    "query_number": 29778,
+    "original_number": 21578,
+    "query_title": "HPA in GA step 4",
+    "original_title": "HPA in GA step 3",
+    "channel": "k8s_forward_scrape",
+    "source": "body_related_ext",
+    "stratum": "product"
+  }
+]

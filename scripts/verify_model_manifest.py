@@ -24,8 +24,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
 MANIFEST_PATH = REPO_ROOT / "data" / "models" / "MANIFEST.sha256"
-GCS_PREFIX = "gs://triageiq-models"
-EXPECTED_PROJECT = "expense-tracker-498014"
+GCS_PREFIX = "gs://triageiq-prod-260812-models"
+EXPECTED_PROJECT = "triageiq-prod-260812"
 
 # On Windows, gcloud is a .cmd file; bare "gcloud" requires shell=True or the .cmd suffix.
 _GCLOUD = "gcloud.cmd" if sys.platform == "win32" else "gcloud"

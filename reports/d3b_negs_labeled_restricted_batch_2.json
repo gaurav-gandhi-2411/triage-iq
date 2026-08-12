@@ -1,0 +1,102 @@
+[
+  {
+    "pair_id": 20,
+    "label": "VALID",
+    "reason": "Both issues concern the same concrete effort of bringing HorizontalPodAutoscaler to GA, with the neg being a specific step in exactly that GA-readiness work the query's checklist item tracks."
+  },
+  {
+    "pair_id": 21,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about relocating shared api-machinery types (RESTMapper, GroupMeta) out of a client package, while neg is about capturing plugin-specific unknown data in API objects -- different specific problems in the API layer, genuinely unrelated topics."
+  },
+  {
+    "pair_id": 22,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about writing an e2e test for Service session affinity; neg is about a flaky scheduler MaxPods predicate e2e test -- different tests covering different features."
+  },
+  {
+    "pair_id": 23,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is a specific Docker 1.9.1 IPv4 address pool exhaustion bug report; neg is an unrelated beginner question about accessing a simple example container -- genuinely unrelated topics."
+  },
+  {
+    "pair_id": 24,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about updating cAdvisor to limit exported custom metrics count; neg is about restricting cAdvisor's network binding to localhost -- both mention cAdvisor but address different specific issues."
+  },
+  {
+    "pair_id": 25,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is a specific integration flake about a missing cassandra pod citing #22128/#22134; neg is a separate e2e flake about RecreateDeployment pod recreation -- different flaky tests with no stated connection to each other."
+  },
+  {
+    "pair_id": 26,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about sizing TerminatedPodGCThreshold to avoid master OOM from failed pods; neg is about optimizing replication-controller stop/resize performance -- different specific problems, only tangentially both about controller resource management."
+  },
+  {
+    "pair_id": 27,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is a specific bug about kubectl delete + Ctrl+C leaving a Deployment inconsistent; neg is a separate bug about rolling updates timing out and leaving two replication controllers -- different specific incidents, not the same bug despite a similar failure class."
+  },
+  {
+    "pair_id": 28,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is a feature request for kubectl drain to skip nodes with local data volumes; neg is a request for kubectl port-forward to accept a pod without -p -- different kubectl subcommands and unrelated features."
+  },
+  {
+    "pair_id": 29,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query proposes a new transient archive volume type; neg is a user question about persistent storage on AWS -- both volume-adjacent but addressing different specific proposals/problems."
+  },
+  {
+    "pair_id": 30,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about kube-up warning on pre-existing AWS-tagged resources; neg is about pods stuck in Unknown state in an Elasticsearch test scenario -- genuinely unrelated topics."
+  },
+  {
+    "pair_id": 31,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query reports slow production requests citing a specific related issue (#24094); neg is about scale tests not being run in CI -- both loosely touch scalability but are different specific concerns."
+  },
+  {
+    "pair_id": 32,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is a specific bug about ThirdPartyResource creation failing due to plurality rules; neg is about better-defining the Kubelet container Waiting state -- genuinely unrelated topics."
+  },
+  {
+    "pair_id": 33,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is a general code-quality issue about error messages losing context across the codebase; neg is a specific https-nginx example failing on Macintosh -- genuinely unrelated topics."
+  },
+  {
+    "pair_id": 34,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about updating GCE kube-up.sh to use the new cluster autoscaler; neg is about kube-controller-manager failing to bring up a cluster on GCE -- both concern GCE cluster bring-up but different specific issues, no cross-reference between them."
+  },
+  {
+    "pair_id": 35,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about validating/choosing Docker version(s) for the 1.3 release; neg is about integrating Docker with the new container runtime interface -- both Docker-related but different specific proposals."
+  },
+  {
+    "pair_id": 36,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is a feature proposal for mixed HTTP/HTTPS ports on ELBs; neg is an unrelated build failure in the https-nginx example -- genuinely unrelated topics."
+  },
+  {
+    "pair_id": 37,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about delayed route creation causing gke-slow test failures due to route-controller starvation; neg is about investigating kube-proxy performance causing nodeport test flakes -- different subsystems and different specific causes of flakiness."
+  },
+  {
+    "pair_id": 38,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about how to distribute/package CA certs to components; neg is about adding the master IP as a SAN on the server certificate -- both TLS-cert related but address different specific certificate problems."
+  },
+  {
+    "pair_id": 39,
+    "label": "VALID",
+    "reason": "Both concern kubectl port-forward failing in the same class of environment -- the query's root-cause bug (missing socat on CoreOS breaking port-forward) plausibly produces exactly the symptom the neg's flaky 'Simple pod should support port-forward' e2e test is reporting."
+  }
+]

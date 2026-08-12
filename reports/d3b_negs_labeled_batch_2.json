@@ -1,0 +1,102 @@
+[
+  {
+    "pair_id": 20,
+    "label": "VALID",
+    "reason": "Both concern HPA privilege escalation specifically -- query's checklist item on HPA controller-credential/escalation protection and neg's PR eliminating the cross-namespace HPA escalation attack are the same specific security issue."
+  },
+  {
+    "pair_id": 21,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Both are genericapiserver refactors but different specific proposals -- moving RESTMapper/GroupMeta out of client vs. moving StorageFactory-building logic into genericapiserver -- with no shared concrete change."
+  },
+  {
+    "pair_id": 22,
+    "label": "VALID",
+    "reason": "Both are specifically about Service session affinity -- an e2e test proposal for session affinity and a design discussion of session affinity support in federation -- the same concrete feature."
+  },
+  {
+    "pair_id": 23,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is a Docker 1.9.1 IPv4-address-exhaustion bridge-networking bug; neg is a PR adding IPv6 address support for pods -- genuinely different topics beyond shared 'pod networking' theme."
+  },
+  {
+    "pair_id": 24,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Both are cadvisor version bumps in kubelet but for unrelated reasons -- enabling a custom-metrics-limiting feature vs. an old 0.4.0 upgrade removing deprecated percentile code -- not the same specific change."
+  },
+  {
+    "pair_id": 25,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Both are integration test flakes but distinct ones -- a missing 'cassandra' pod flake vs. an unrelated etcd-unavailable flake in a different test -- no shared root cause or reference."
+  },
+  {
+    "pair_id": 26,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about sizing TerminatedPodGCThreshold to avoid OOM from too many failed pods; neg is about raising a zero-limit RAM value for pod spreading scheduling -- different specific mechanisms despite both touching master/node RAM sizing."
+  },
+  {
+    "pair_id": 27,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is a Deployment left inconsistent after Ctrl+C during kubectl delete; neg is a kubectl validation bug for non-v1 objects in v1 lists -- different specific kubectl/Deployment bugs."
+  },
+  {
+    "pair_id": 28,
+    "label": "VALID",
+    "reason": "Both substantively discuss the design of the 'kubectl drain' command itself -- adding a local-data-volume skip option vs. moving drain server-side -- the same specific feature area."
+  },
+  {
+    "pair_id": 29,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query proposes a new transient archive volume type; neg is about restructuring volume-plugin architecture for persistent volumes -- related to 'volumes' broadly but different specific proposals."
+  },
+  {
+    "pair_id": 30,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Both are AWS kube-up issues but distinct bugs -- warning about pre-existing tagged resources vs. an incorrect binary-path message printed after turnup -- no shared specific defect."
+  },
+  {
+    "pair_id": 31,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about slow production API requests; neg is about a slow-running kube-proxy test -- different specific issues sharing only the word 'slow'."
+  },
+  {
+    "pair_id": 32,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is a ThirdPartyResource plurality-rule bug in kubectl create; neg is about allowing multiple file arguments to kubectl create -f -- different specific kubectl bugs."
+  },
+  {
+    "pair_id": 33,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is a general proposal about error-context propagation across the codebase; neg is a specific misleading-error bug for a non-existing kubeconfig context -- different specific issues under a loose 'error messages' theme."
+  },
+  {
+    "pair_id": 34,
+    "label": "VALID",
+    "reason": "Both are specifically about updating/bumping the cluster-autoscaler version used with kube-up -- the same concrete maintenance feature."
+  },
+  {
+    "pair_id": 35,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Both touch 'what docker version does kubernetes support' but are distinct, unconnected instances -- a formal 1.3-release docker-version validation effort vs. an unrelated ad-hoc question about upgrading docker in a 1.1.x/1.8.3 branch."
+  },
+  {
+    "pair_id": 36,
+    "label": "VALID",
+    "reason": "Both are specifically about the ELB SSL annotations feature -- implementing the mixed HTTP/HTTPS port annotation and documenting that same annotation mechanism -- the same concrete feature."
+  },
+  {
+    "pair_id": 37,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about delayed route creation causing gke-slow test failures; neg is about lowering test timeouts across gce/gke suites now that they run in parallel -- different specific fixes under a shared 'flaky slow e2e tests' theme."
+  },
+  {
+    "pair_id": 38,
+    "label": "VALID",
+    "reason": "Both are specifically about certificate handling for containerized hyperkube -- deciding how to distribute CA certs to it vs. its setup-files.sh failing to create certificates -- the same concrete mechanism."
+  },
+  {
+    "pair_id": 39,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about missing socat breaking port-forward on recent CoreOS kube-up; neg is about reworking the kube-manifests file layout for coreos kube-up -- different specific problems sharing only the 'coreos kube-up' component."
+  }
+]

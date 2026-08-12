@@ -1,0 +1,56 @@
+{
+  "pooling": {
+    "checkpoint_pooling_config": {
+      "word_embedding_dimension": 768,
+      "pooling_mode_cls_token": true,
+      "pooling_mode_mean_tokens": false,
+      "pooling_mode_max_tokens": false,
+      "pooling_mode_mean_sqrt_len_tokens": false
+    },
+    "training_uses": "cls_pool() -> hidden[:, 0, :], pooling_mode_cls_token=True in _save_st_model()",
+    "matches_checkpoint": true,
+    "status": "PASS"
+  },
+  "tokenizer": {
+    "requested_model": "BAAI/bge-base-en-v1.5",
+    "tokenizer_name_or_path": "BAAI/bge-base-en-v1.5",
+    "is_fast": true,
+    "vocab_size": 30522,
+    "status": "PASS"
+  },
+  "seq_length": {
+    "configured_max_len": 256,
+    "per_task": {
+      "vscode_duplicate": {
+        "n_texts": 13704,
+        "note": "included 9790 mined hard-negative texts",
+        "p50": 148,
+        "p90": 218,
+        "p95": 231,
+        "p99": 274,
+        "max": 314,
+        "pct_truncated_at_max_len": 2.19
+      },
+      "k8s_related": {
+        "n_texts": 3136,
+        "note": "included 2240 mined hard-negative texts",
+        "p50": 136,
+        "p90": 176,
+        "p95": 198,
+        "p99": 234,
+        "max": 280,
+        "pct_truncated_at_max_len": 0.22
+      }
+    },
+    "combined": {
+      "n_texts": 16840,
+      "p50": 144,
+      "p90": 214,
+      "p95": 228,
+      "p99": 270,
+      "max": 314,
+      "pct_truncated_at_max_len": 1.82
+    },
+    "status": "PASS"
+  }
+}

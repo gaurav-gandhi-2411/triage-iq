@@ -1,0 +1,26 @@
+{
+  "task": "vscode_duplicate",
+  "base_model": "BAAI/bge-base-en-v1.5",
+  "n_triplets": 9780,
+  "hyperparams": {
+    "lr": 2e-05,
+    "epochs": 5,
+    "batch_size": 16,
+    "weight_decay": 0.01,
+    "temperature": 0.05,
+    "max_len": 256,
+    "seed": 42,
+    "per_device_batch": 8,
+    "grad_accum_steps": 2
+  },
+  "loss_by_epoch": [
+    0.616952992198975,
+    0.10149928372283257,
+    0.03981921509700619,
+    0.03029029905561507,
+    0.02374713069996138
+  ],
+  "train_seconds": 3019.4376896000467,
+  "device": "cuda",
+  "out_dir": "data\\models\\d3_finetuned_vscode_duplicate"
+}

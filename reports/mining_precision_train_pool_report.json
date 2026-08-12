@@ -1,0 +1,48 @@
+{
+  "k8s_related": {
+    "channels": [
+      "k8s_forward_scrape/body_related/product",
+      "k8s_forward_scrape/body_related_ext/product",
+      "legacy_gold_v1/body_related/product",
+      "k8s_extended_mine/body_related_ext/product"
+    ],
+    "raw_by_channel": {
+      "k8s_extended_mine/body_related_ext": 200,
+      "k8s_forward_scrape/body_related": 45,
+      "k8s_forward_scrape/body_related_ext": 454,
+      "legacy_gold_v1/body_related": 37
+    },
+    "raw_total": 736,
+    "dropped_eval_issue_touch": 250,
+    "dropped_hand_reviewed_bad": 38,
+    "final_pool_size": 448,
+    "eval_issue_count": 277,
+    "disjointness": "PASS"
+  },
+  "vscode_duplicate": {
+    "channels": [
+      "vscode_dup_scrape/dup_comment/gate",
+      "vscode_body_refs/body_related/product",
+      "vscode_body_refs/body_related_ext/product",
+      "legacy_gold_v1/body_related/product"
+    ],
+    "raw_by_channel": {
+      "legacy_gold_v1/body_related": 10,
+      "vscode_body_refs/body_related": 11,
+      "vscode_body_refs/body_related_ext": 206,
+      "vscode_dup_scrape/dup_comment": 2242
+    },
+    "raw_total": 2469,
+    "dropped_eval_issue_touch": 479,
+    "dropped_hand_reviewed_bad": 32,
+    "final_pool_size": 1958,
+    "eval_issue_count": 391,
+    "disjointness": "PASS"
+  },
+  "comparison_to_D1_original": {
+    "k8s_related_D1_original": 264,
+    "k8s_related_now": 448,
+    "vscode_duplicate_D1_original": 1734,
+    "vscode_duplicate_now": 1958
+  }
+}

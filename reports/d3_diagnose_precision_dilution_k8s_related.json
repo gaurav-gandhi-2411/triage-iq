@@ -1,0 +1,307 @@
+{
+  "task": "k8s_related",
+  "repo": "kubernetes_kubernetes",
+  "model_dir": "data/models/d3_finetuned_k8s_related",
+  "valid_66": {
+    "n_pairs": 66,
+    "n_evaluated": 66,
+    "recall_at_1": {
+      "baseline": 0.21212121212121213,
+      "baseline_ci95": [
+        0.1212,
+        0.3182
+      ],
+      "trained": 0.12121212121212122,
+      "trained_ci95": [
+        0.0455,
+        0.2121
+      ],
+      "delta": -0.0909,
+      "delta_ci95_paired": [
+        -0.1667,
+        -0.0303
+      ],
+      "excludes_zero": true
+    },
+    "recall_at_5": {
+      "baseline": 0.3939393939393939,
+      "baseline_ci95": [
+        0.2727,
+        0.5152
+      ],
+      "trained": 0.24242424242424243,
+      "trained_ci95": [
+        0.1364,
+        0.3485
+      ],
+      "delta": -0.1515,
+      "delta_ci95_paired": [
+        -0.2424,
+        -0.0758
+      ],
+      "excludes_zero": true
+    },
+    "recall_at_10": {
+      "baseline": 0.4696969696969697,
+      "baseline_ci95": [
+        0.3485,
+        0.5909
+      ],
+      "trained": 0.3181818181818182,
+      "trained_ci95": [
+        0.2121,
+        0.4394
+      ],
+      "delta": -0.1515,
+      "delta_ci95_paired": [
+        -0.2727,
+        -0.0455
+      ],
+      "excludes_zero": true
+    },
+    "mrr_baseline": 0.2823593073593074,
+    "mrr_trained": 0.17310606060606062
+  },
+  "exclude_84": {
+    "n_pairs": 84,
+    "n_evaluated": 84,
+    "recall_at_1": {
+      "baseline": 0.023809523809523808,
+      "baseline_ci95": [
+        0.0,
+        0.0595
+      ],
+      "trained": 0.047619047619047616,
+      "trained_ci95": [
+        0.0119,
+        0.0952
+      ],
+      "delta": 0.0238,
+      "delta_ci95_paired": [
+        -0.0238,
+        0.0714
+      ],
+      "excludes_zero": false
+    },
+    "recall_at_5": {
+      "baseline": 0.13095238095238096,
+      "baseline_ci95": [
+        0.0595,
+        0.2024
+      ],
+      "trained": 0.08333333333333333,
+      "trained_ci95": [
+        0.0357,
+        0.1429
+      ],
+      "delta": -0.0476,
+      "delta_ci95_paired": [
+        -0.0952,
+        -0.0119
+      ],
+      "excludes_zero": true
+    },
+    "recall_at_10": {
+      "baseline": 0.16666666666666666,
+      "baseline_ci95": [
+        0.0952,
+        0.25
+      ],
+      "trained": 0.11904761904761904,
+      "trained_ci95": [
+        0.0595,
+        0.1905
+      ],
+      "delta": -0.0476,
+      "delta_ci95_paired": [
+        -0.119,
+        0.0119
+      ],
+      "excludes_zero": false
+    },
+    "mrr_baseline": 0.06539115646258502,
+    "mrr_trained": 0.06539115646258503
+  },
+  "exclude_by_reason": {
+    "EXCLUDE_CAUSAL_ONLY": {
+      "n_pairs": 48,
+      "n_evaluated": 48,
+      "recall_at_1": {
+        "baseline": 0.020833333333333332,
+        "baseline_ci95": [
+          0.0,
+          0.0625
+        ],
+        "trained": 0.020833333333333332,
+        "trained_ci95": [
+          0.0,
+          0.0625
+        ],
+        "delta": 0.0,
+        "delta_ci95_paired": [
+          -0.0625,
+          0.0625
+        ],
+        "excludes_zero": false
+      },
+      "recall_at_5": {
+        "baseline": 0.08333333333333333,
+        "baseline_ci95": [
+          0.0208,
+          0.1667
+        ],
+        "trained": 0.0625,
+        "trained_ci95": [
+          0.0,
+          0.1458
+        ],
+        "delta": -0.0208,
+        "delta_ci95_paired": [
+          -0.0625,
+          0.0
+        ],
+        "excludes_zero": false
+      },
+      "recall_at_10": {
+        "baseline": 0.10416666666666667,
+        "baseline_ci95": [
+          0.0208,
+          0.1875
+        ],
+        "trained": 0.08333333333333333,
+        "trained_ci95": [
+          0.0208,
+          0.1667
+        ],
+        "delta": -0.0208,
+        "delta_ci95_paired": [
+          -0.0833,
+          0.0417
+        ],
+        "excludes_zero": false
+      },
+      "mrr_baseline": 0.04117063492063492,
+      "mrr_trained": 0.036458333333333336
+    },
+    "EXCLUDE_UMBRELLA": {
+      "n_pairs": 27,
+      "n_evaluated": 27,
+      "recall_at_1": {
+        "baseline": 0.037037037037037035,
+        "baseline_ci95": [
+          0.0,
+          0.1111
+        ],
+        "trained": 0.07407407407407407,
+        "trained_ci95": [
+          0.0,
+          0.1852
+        ],
+        "delta": 0.037,
+        "delta_ci95_paired": [
+          0.0,
+          0.1111
+        ],
+        "excludes_zero": false
+      },
+      "recall_at_5": {
+        "baseline": 0.14814814814814814,
+        "baseline_ci95": [
+          0.037,
+          0.2963
+        ],
+        "trained": 0.07407407407407407,
+        "trained_ci95": [
+          0.0,
+          0.1852
+        ],
+        "delta": -0.0741,
+        "delta_ci95_paired": [
+          -0.1852,
+          0.0
+        ],
+        "excludes_zero": false
+      },
+      "recall_at_10": {
+        "baseline": 0.18518518518518517,
+        "baseline_ci95": [
+          0.0731,
+          0.3333
+        ],
+        "trained": 0.14814814814814814,
+        "trained_ci95": [
+          0.037,
+          0.2963
+        ],
+        "delta": -0.037,
+        "delta_ci95_paired": [
+          -0.1852,
+          0.0741
+        ],
+        "excludes_zero": false
+      },
+      "mrr_baseline": 0.08395061728395062,
+      "mrr_trained": 0.08306878306878307
+    },
+    "EXCLUDE_OTHER": {
+      "n_pairs": 9,
+      "n_evaluated": 9,
+      "recall_at_1": {
+        "baseline": 0.0,
+        "baseline_ci95": [
+          0.0,
+          0.0
+        ],
+        "trained": 0.1111111111111111,
+        "trained_ci95": [
+          0.0,
+          0.3333
+        ],
+        "delta": 0.1111,
+        "delta_ci95_paired": [
+          0.0,
+          0.3333
+        ],
+        "excludes_zero": false
+      },
+      "recall_at_5": {
+        "baseline": 0.3333333333333333,
+        "baseline_ci95": [
+          0.0,
+          0.6667
+        ],
+        "trained": 0.2222222222222222,
+        "trained_ci95": [
+          0.0,
+          0.5556
+        ],
+        "delta": -0.1111,
+        "delta_ci95_paired": [
+          -0.3333,
+          0.0
+        ],
+        "excludes_zero": false
+      },
+      "recall_at_10": {
+        "baseline": 0.4444444444444444,
+        "baseline_ci95": [
+          0.1111,
+          0.7778
+        ],
+        "trained": 0.2222222222222222,
+        "trained_ci95": [
+          0.0,
+          0.5556
+        ],
+        "delta": -0.2222,
+        "delta_ci95_paired": [
+          -0.5556,
+          0.0
+        ],
+        "excludes_zero": false
+      },
+      "mrr_baseline": 0.1388888888888889,
+      "mrr_trained": 0.16666666666666666
+    }
+  }
+}

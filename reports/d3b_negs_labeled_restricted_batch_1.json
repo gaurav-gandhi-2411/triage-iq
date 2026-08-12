@@ -1,0 +1,102 @@
+[
+  {
+    "pair_id": 0,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about a local scheduler/apiserver connection-refused error while neg is about the semantics of the Pod.Status.StartTime field; genuinely unrelated topics."
+  },
+  {
+    "pair_id": 1,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is specifically about propagating system OOM-kill events from cAdvisor through the kubelet, while neg is a general early proposal to integrate cAdvisor stats/storage into kubernetes with no mention of OOM events."
+  },
+  {
+    "pair_id": 2,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query is explicitly labeled 'Umbrella' and is a tracking issue enumerating many open sub-issues needed for 3rd-party cluster extensions."
+  },
+  {
+    "pair_id": 3,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query proposes in-container exec/port-forwarding while neg proposes a docker-multinode based cluster deployment method; different specific proposals."
+  },
+  {
+    "pair_id": 4,
+    "label": "VALID",
+    "reason": "Both concern the same specific feature, kubectl port-forward -- the query proposes the port-forwarding mechanism and the neg discusses gathering use cases for that exact feature."
+  },
+  {
+    "pair_id": 5,
+    "label": "VALID",
+    "reason": "Both discuss the same specific problem of cleanly deleting a node/master VM and its associated external resources on the cloud provider before/during teardown."
+  },
+  {
+    "pair_id": 6,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about a reconciliation loop for the node-schedulable status bit while neg is about a node incorrectly appearing as master and failing to post status; different specific bugs."
+  },
+  {
+    "pair_id": 7,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query 'Design: DNS revamp' is a consolidating design doc collecting many separate DNS discussions, and its overlap with the neg's service-spec reorg proposal is only at that broad collecting level, not a shared specific feature."
+  },
+  {
+    "pair_id": 8,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about etcd read-consistency semantics for the IP allocator repair logic while neg is about a data race in an etcd integration test; different specific issues."
+  },
+  {
+    "pair_id": 9,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about capping docker's cgroup memory limit due to a docker memory leak while neg is about docker ps hanging due to a kernel bug; different specific docker-related bugs."
+  },
+  {
+    "pair_id": 10,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about handling flaky cloud-provider (OpenStack) APIs gracefully while neg is about a data race in the etcd storage package; genuinely unrelated topics."
+  },
+  {
+    "pair_id": 11,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about separating Update from UpdateStatus for HorizontalPodAutoscaler while neg is about handling flaky cloud-provider APIs; genuinely unrelated topics."
+  },
+  {
+    "pair_id": 12,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Neg 'Design: DNS revamp' is an explicit consolidating doc collecting many DNS discussions; its overlap with the specific skydns round-robin bug is only at that broad collecting level."
+  },
+  {
+    "pair_id": 13,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Neg 'Design: DNS revamp' is an explicit consolidating doc collecting many DNS discussions; its overlap with the specific kube-dns-as-only-nameserver bug is only at that broad collecting level."
+  },
+  {
+    "pair_id": 14,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Neg is explicitly a tracking issue ('created to help track the progress of the container runtime interface/API') that the query's specific network-plugin-interface change falls under."
+  },
+  {
+    "pair_id": 15,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about documenting API backward-compatibility decisions while neg is a proposal for controller pod management (adoption/orphaning/GC); different specific topics."
+  },
+  {
+    "pair_id": 16,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about adding an autoscaler option to kubectl run while neg is about restructuring the codebase's directory layout; genuinely unrelated topics."
+  },
+  {
+    "pair_id": 17,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query is explicitly a checklist-style tracking issue ('tracks support for basic disk accounting... Core Features [x]/[ ]') enumerating multiple distinct work items."
+  },
+  {
+    "pair_id": 18,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about outdated content in the v1.1 ubuntu getting-started guide while neg is about SEO/canonical-link precedence between v1.0 and v1.1 docs; different specific issues despite both touching v1.1 docs."
+  },
+  {
+    "pair_id": 19,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is a concrete performance fix for the scheduler's cache/reflection usage while neg is an early architectural proposal to split core cluster services from schedulers; different specific proposals."
+  }
+]

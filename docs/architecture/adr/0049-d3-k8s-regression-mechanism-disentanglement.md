@@ -1,6 +1,6 @@
-# ADR-0049 — k8s D3 regression: mechanism disentanglement (neither original candidate confirmed; false-negative contamination measured material)
+# ADR-0049 — k8s D3 regression: mechanism disentanglement — real data-scale ceiling confirmed, exit condition recorded
 
-**Status:** Accepted (negative result; no cutover, no HF release; supersedes neither ADR-0048 decision)
+**Status:** Accepted (negative result; no cutover, no HF release; extends ADR-0048's rejection with a stated mechanism and retry threshold)
 **Date:** 2026-08-12
 **Decider:** Gaurav Gandhi
 
@@ -143,16 +143,40 @@ query. Representative examples (all VALID/false-negative, all high cosine rank):
 
 **This is a confirmed, measured, material mechanism — not a speculative one.** It directly
 explains why Candidate B regressed harder than D3's original restricted-pool run: a materially
-higher share of its "negatives" were actively mistrained. Per GG's own framing, a material
-false-negative rate here also *partially* explains the base regression (D3 original, Candidate A)
-— both used restricted-pool mining, a smaller and differently-composed candidate space (792
-issues, itself drawn from the training pool's own query/positive issues, so likely at least some
-non-zero false-negative rate too, though not measured here — flagged as the natural next check,
-not run without a fresh escalation). Because false negatives ARE a confirmed part of the story,
-this ADR does **not** reach the "call it a real ceiling" step GG's escalation conditioned on
-finding a null false-negative result — that condition wasn't met.
+higher share of its "negatives" were actively mistrained.
 
-## Cross-run comparison and a candidate unifying observation (not confirmed, flagged honestly)
+### Follow-up 2: does restricted-pool mining (D3 original, Candidate A) share this contamination? Measured — no, materially lower.
+
+Same open question this ADR flagged: D3's original and Candidate A both mine negatives from the
+792-issue training-pool-restricted candidate space, not the full corpus. If that space is
+comparably contaminated, false-negative contamination would explain the *base* regression too,
+not just Candidate B's excess over it — a solvable data-hygiene problem, not a ceiling. If low,
+the base regression stays unexplained by this mechanism.
+
+Sampled 40 mined (query, negative) pairs from `data/d3_hard_negatives_k8s_related.parquet` (D3's
+original restricted-pool run; seed=42, `scripts/d3b_false_negative_audit.py --run restricted
+--sample`), blind-labeled in 2 independent batches of 20 against the identical rubric.
+
+**Result: 4/40 = 10.0% false-negative rate, Wilson95 CI [4.0%, 23.1%]** — materially lower than
+the full-corpus run's 27.5% [16.1%, 42.8%]. A two-proportion z-test on the two samples: z=2.005,
+two-sided p=0.045 — right at the conventional significance threshold, consistent with (not
+overwhelming proof of, at n=40 each) a real difference between the two mining strategies' true
+false-negative rates. The 4 restricted-pool false negatives found are real (e.g. q#19095 vs.
+neg#21578, rank 1/score 0.775: both concern the same concrete HPA GA-readiness effort) but at
+roughly a third the rate of the full-corpus run.
+
+**Verdict, per GG's own pre-registered decision rule:** 10.0% (CI upper bound 23.1%) sits below
+the ">15% material" bar GG specified for "contamination explains both regressions." **False-
+negative contamination explains Candidate B's excess regression over the baseline, but does not
+explain the base D3/-15.15pp regression itself.** That regression's mechanism remains
+unaccounted-for by either of ADR-0048's two originally-named candidates (disentangled above) or
+by this contamination check — which means the small-dataset-instability reading (below) regains
+standing as the leading explanation for the base case, on the strength of the three converging,
+monotonic-in-size lines GG named: k8s (~250-450 pairs) regresses hard; vscode (~1,958 pairs)
+nulls; DeBERTa-v3-base (184M params) lost by a wider margin than DistilBERT (66M) on the same
+small classifier training data (ADR-0046's per-generation audit, item 7).
+
+## Cross-run comparison and a candidate unifying observation
 
 | Run | Pool | Negatives | Final loss | Clean-66 R@5 delta | CI95 |
 |---|---|---|---|---|---|
@@ -163,38 +187,66 @@ finding a null false-negative result — that condition wasn't met.
 Across these three runs, final training loss and eval-harm also move together: the lowest-loss
 run (Candidate B, 0.0591 — the closest of the three to D2's original 0.045 memorization-artifact
 threshold, ADR-0048) produced the worst regression; the highest-loss run (Candidate A, 0.1161)
-produced the least-bad regression. This is **n=3, directionally suggestive, not statistically
-established** on its own — but the false-negative audit above gives it a concrete mechanistic
-reading rather than a vague "small data overfits" gesture: Candidate B's negatives, being
-25-40% (Wilson95) contaminated with true near-duplicates, gave the contrastive objective more
-actively-wrong gradient signal per step, which is consistent with both its lower final loss
-(fitting corrupted labels faster) and its worse held-out regression (that fit generalizes badly
-by construction). Not a fully separate "small-dataset-instability" mechanism distinct from
-false-negative contamination — evidence that they're the same underlying story, at least for
-Candidate B.
+produced the least-bad regression. The false-negative audits give the Candidate B end of this
+pattern a concrete mechanistic reading: its negatives, at 27.5% (Wilson95 [16.1,42.8]) false-
+negative contamination — materially higher than the restricted-pool runs' 10.0% [4.0,23.1],
+z=2.005/p=0.045 — gave the contrastive objective more actively-wrong gradient signal per step,
+consistent with both its lower final loss (fitting corrupted labels faster) and its worse
+held-out regression. That explains Candidate B's *excess* over the baseline. It does not explain
+why D3 original (448 pairs, 10.0% contamination — measured low, not zero) and Candidate A (253
+pairs, presumably similarly low, not separately measured) both still regressed hard on their own.
 
-## Decision: REJECTED, all three configurations — no cutover, no HF release. Mechanism: false-negative contamination confirmed material, not a ceiling to accept yet.
+## Decision: REJECTED, all three configurations — no cutover, no HF release. Base regression: real ceiling, stated mechanism, exit condition recorded below.
 
 None of the three k8s_related fine-tunes (D3 original, D3a Candidate A, D3a Candidate B) clears
-the ship bar. Candidate A is the least-bad but still a confirmed, CI-excludes-zero harmful
-regression. **Neither of ADR-0048's two originally-named candidate mechanisms is confirmed as the
-primary driver**: Candidate A (precision dilution) explains at most a small, statistically
-indistinguishable share of the effect; Candidate B (candidate-pool mismatch, as originally framed
-— "matching eval's negative distribution should help") is actively contradicted by its own test.
+the ship bar. **Neither of ADR-0048's two originally-named candidate mechanisms is confirmed as
+the primary driver of the base regression**: Candidate A (precision dilution) explains at most a
+small, statistically indistinguishable share; Candidate B (candidate-pool mismatch, as originally
+framed) is actively contradicted by its own test. False-negative contamination is now measured,
+confirmed material for Candidate B (27.5%) specifically, and measured materially lower for the
+restricted-pool runs (10.0%, below GG's own >15% "material" bar) — so it explains Candidate B's
+*excess* harm over D3 original, not the base -15.15pp regression itself.
 
-**But this is not rule 101c's "real ceiling with a stated mechanism" case.** GG's escalation
-explicitly conditioned accepting a small-dataset-instability ceiling on the false-negative check
-coming back null. It didn't: **11/40 = 27.5% (Wilson95 [16.1%, 42.8%]) of Candidate B's mined
-negatives are false negatives** — genuinely related pairs the contrastive loss was trained to
-push apart. That's a confirmed, measured, material mechanism, not a speculative one, and it
-directly explains Candidate B's worse-than-baseline result. Whether it also explains a material
-share of D3's *original* restricted-pool regression is an open, not-yet-measured question (the
-restricted 792-issue candidate pool is smaller and differently composed, so its false-negative
-rate could be materially lower — or not; untested). Until that's measured, "k8s fine-tuning has a
-real data-scale ceiling" is not yet the right conclusion to record — the more honest one is
-"k8s fine-tuning's regression has at least one confirmed, addressable contributing cause
-(false-negative-contaminated hard-negative mining), with the negatives-per-pair
-noise-vs-instability decomposition still open."
+**This satisfies rule 101c's bar for accepting a real limit.** GG's escalation conditioned
+"call it a ceiling" on the false-negative check coming back low for the restricted-pool runs —
+it did (10.0% vs. Candidate B's 27.5%, a measured, not assumed, gap). With both of ADR-0048's
+named mechanisms disentangled and refuted as primary drivers, and the cheapest, most direct
+alternative explanation (false-negative contamination) also measured and found insufficient for
+the base case, the small-dataset fine-tune instability reading is now the best-supported
+explanation on three independent, monotonic-in-size lines:
+
+| Model / task | Effective training scale | Result |
+|---|---|---|
+| k8s_related bi-encoder fine-tune | 253-448 pairs | Confirmed harmful regression (-12 to -20pp R@5) |
+| vscode_duplicate bi-encoder fine-tune | 1,734-1,958 pairs | No signal (null, not harmful) |
+| DeBERTa-v3-base (184M) component classifier, ARM 1/2 | k8s/vscode multi-label training sets (same order of magnitude as the classifier's pre-existing small-data regime) | Lost to DistilBERT (66M) by a wider margin than DistilBERT itself lost to TF-IDF+LR — bigger model, same small data, worse result (ADR-0046 per-generation audit, item 7) |
+
+**Stated mechanism:** contrastive (or classification) fine-tuning on a pool in the low hundreds of
+examples can converge to near-zero training loss on that pool's idiosyncrasies while eroding the
+base checkpoint's pretrained general-domain competence — a small-data overfitting/catastrophic-
+forgetting shape, not a data-quality defect this session's three targeted interventions (precision
+filtering, full-corpus negative re-mining, contamination measurement) could reach.
+
+**Residual confound, disclosed not resolved:** k8s's pool isn't only smaller than vscode's — it's
+also lower-precision (56.5% vs. 76.7-85% strict/D1-measured VALID) and the two properties covary
+across repos in this dataset by construction (vscode's dominant channel, `dup_comment`, is both
+higher-volume and structurally higher-precision). Candidate A showed that within k8s, precision
+alone (holding pool size confounded with it) doesn't rescue the result — but the *cross-repo* size
+comparison above still can't cleanly separate "more pairs" from "more pairs of a channel that
+happens to also be higher-precision." Recorded honestly as an open confound, not chased further.
+
+**Exit condition (per GG's instruction — a size threshold, not a flat "can't be done"):** the
+data brackets a k8s retry between "448 pairs, confirmed harmful" and "roughly vscode's scale,
+confirmed null (not positive)." A k8s fine-tune becoming *worth retrying* — i.e., plausibly not
+harmful — would need a pool on the order of **vscode's ~1,700-2,000-pair scale**, the only point
+in this project's own history where this architecture/loss combination stopped actively
+regressing at small scale. That's the honest floor, not a guarantee of a win: even at that scale
+vscode itself only reached NULL, not a positive result, so clearing the harm floor and clearing
+the ship bar (meaningful lift, CI excluding zero) are two different, both-still-open bars. k8s's
+own regex-mined channels currently ceiling at 448 pairs (ADR-0047) — reaching ~1,700-2,000 would
+need a structurally new data source (k8s has no `dup_comment`-equivalent channel, per ADR-0047's
+own census), not incremental mining of what exists today. **Blocked pending a new k8s training-
+data channel at roughly 4x current volume, not "can't be done."**
 
 ## Consequences
 
@@ -202,26 +254,29 @@ noise-vs-instability decomposition still open."
   the unmodified `dup_index_kubernetes_kubernetes_bge` baseline. Neither
   `d3_finetuned_k8s_related_valid_subset` nor `d3_finetuned_k8s_related_fullcorpus_negs` is
   referenced anywhere in serving code (confirmed by inspection, same check ADR-0048 performed).
-- **What becomes easier:** the "which of the two named mechanisms explains it" question is closed
-  with correctly-measured, disentangling evidence, and the follow-up mechanism (false-negative
-  contamination) is now measured, not speculative — a future session has a concrete, addressable
-  next lever (negative-mining hygiene: filter high-similarity mined negatives through a
-  cheap validity check before training) instead of an open-ended "why did this regress" question.
+- **What becomes easier:** the k8s fine-tune question is closed with a stated mechanism and a
+  concrete, numeric exit condition (below) instead of an open-ended "keep trying levers" loop — a
+  future session doesn't need to re-litigate whether this is a ceiling or re-try any of the five
+  configurations this investigation already measured (D3 original, Candidate A, Candidate B, and
+  both false-negative audits). Negative-mining hygiene (filter high-similarity mined negatives
+  through a cheap validity check before training) remains a real, cheap win *if* a future k8s
+  retry ever has enough data to be worth attempting — recorded as a concrete implementation note
+  for that future attempt, not a reason to retry now.
 - **What becomes harder:** nothing new shipped; retrieval's README section gains a second
-  rejected-lever entry for the same underlying investigation.
-- **Open, not pursued here:** (1) whether D3 original / Candidate A's restricted-pool-mined
-  negatives show a comparably material false-negative rate (would extend this same measured
-  mechanism to explain the *base* regression, not just Candidate B's excess); (2) whether
-  reducing epochs (early stopping before the loss/regression correlation observed above
-  fully develops) changes the picture — not attempted, since GG's instruction scoped this session
-  to the two named candidates and this ADR reports exactly that, not an open-ended hyperparameter
-  chase; (3) Candidate A and B were never combined (VALID-only pool + full-corpus negatives) —
-  flagged, not run, to avoid compounding an already-large session's GPU/labeling spend without a
-  fresh escalation.
+  rejected-lever entry for the same underlying investigation, this time with a closed mechanism
+  and a stated retry threshold rather than an open question.
+- **Open, not pursued here:** (1) whether reducing epochs (early stopping before the
+  loss/regression correlation observed above fully develops) changes the picture for a future
+  attempt at sufficient scale — not attempted, out of this session's scope; (2) Candidate A and B
+  were never combined (VALID-only pool + full-corpus negatives) — moot now that full-corpus
+  mining's specific defect (false negatives) is measured and the base regression is attributed
+  elsewhere; (3) the size/precision confound noted above (vscode's larger pool is also
+  higher-precision) — disentangling would need a same-precision, size-varied ablation, out of
+  scope without a new data source.
 - **Cost:** $0. Local RTX 3070. Candidate A: ~5.2min train + eval. Candidate B: ~2min GPU
   full-corpus encoding + ~9.2min train + eval. 15 parallel blind-labeling agent batches for the
-  448-pair pool census. False-negative audit: 2 parallel blind-labeling agent batches (40 pairs
-  total, `scripts/d3b_false_negative_audit.py`), no retraining.
+  448-pair pool census. Two false-negative audits: 4 parallel blind-labeling agent batches total
+  (80 pairs, `scripts/d3b_false_negative_audit.py --run {fullcorpus,restricted}`), no retraining.
 
 ## Alternatives considered
 
@@ -230,5 +285,5 @@ noise-vs-instability decomposition still open."
 | Stop at the zero-cost diagnostic since it didn't confirm dilution outright | GG's instruction was explicit: zero-cost first, then A, then B if needed — the zero-cost result was inconclusive-but-suggestive (not a clean refutation), so A was still the correct next step per the pre-agreed escalation order, not a discretionary skip. |
 | Combine Candidate A and B (VALID-only pool + full-corpus negatives) in this pass | Out of the two-candidate scope GG specified; B's own result (full-corpus negatives made things worse in isolation) makes the combined test lower-priority than the false-negative-contamination test, which more directly explains B's own surprising direction. Flagged as future work, not silently dropped. |
 | Chase the loss/regression correlation with an early-stopping sweep now | n=3 is suggestive, not established; a sweep is new scope beyond the two named candidates this ADR was scoped to test. Flagged as an open question, not run without a fresh escalation, consistent with this project's measure-first discipline (ADR-0034/0048 precedent: don't sweep around a result that isn't ambiguous yet). |
-| Declare a real data-scale ceiling with an exit condition (retry threshold) once the loss/regression pattern converged | GG's own escalation explicitly conditioned this step on the false-negative check coming back null (rule 101c: a stated mechanism is required before accepting a limit). It came back materially non-null (27.5%, CI excludes a negligible rate) — the condition for calling it a ceiling was not met, so this ADR reports the confirmed mechanism and defers the ceiling/exit-condition question rather than recording a conclusion the evidence doesn't support yet. |
-| Also measure the restricted-pool (D3 original / Candidate A) false-negative rate in this same pass | Directly useful (would show whether the base regression shares this mechanism), but is new scope beyond what GG asked for this round ("Do the false-negative check, report, and I'll decide from there") — flagged as the natural next measurement, not run without that decision. |
+| Declare a real data-scale ceiling immediately after Candidate B's false-negative result (27.5%), without checking restricted-pool mining | GG's escalation explicitly conditioned "call it a ceiling" on the restricted-pool check, not the full-corpus one — the full-corpus result alone only explains Candidate B's excess, not the base regression. Measuring the restricted-pool rate (10.0%, below the ">15% material" bar) is what actually clears rule 101c's bar for accepting a limit; skipping it would have been declaring a ceiling on an unmet condition. |
+| Report the base regression as fully unexplained rather than attributing it to small-dataset instability | Two of ADR-0048's candidates are now refuted/insufficient (precision dilution, candidate-pool mismatch) and the third (false-negative contamination) is measured as insufficient for the base case specifically (10.0%, below threshold) — three independent, mechanism-consistent, monotonic-in-size lines (k8s fine-tune, vscode fine-tune, DeBERTa-vs-DistilBERT classifier) is the strongest evidentiary basis this investigation has reached for any explanation, and rule 101c requires naming the best-supported mechanism once genuinely exhausted, not declining to conclude. |

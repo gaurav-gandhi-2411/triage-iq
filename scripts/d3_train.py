@@ -46,6 +46,8 @@ GRAD_ACCUM_STEPS = 2
 REPO_BY_TASK = {
     "vscode_duplicate": "microsoft_vscode",
     "k8s_related": "kubernetes_kubernetes",
+    "k8s_related_valid_subset": "kubernetes_kubernetes",
+    "k8s_related_fullcorpus_negs": "kubernetes_kubernetes",
 }
 REPORTS = Path("reports")
 DATA = Path("data")
@@ -57,6 +59,12 @@ MODELS_DIR = DATA / "models"
 DEFAULTS = {
     "vscode_duplicate": {"lr": 2e-5, "epochs": 5, "batch_size": 16, "weight_decay": 0.01},
     "k8s_related": {"lr": 2e-5, "epochs": 4, "batch_size": 16, "weight_decay": 0.05},
+    # D3a candidate-A test (ADR-0048 follow-up): same hyperparams as k8s_related -- this run's
+    # purpose is isolating the effect of pool precision, not re-sweeping hyperparameters on top.
+    "k8s_related_valid_subset": {"lr": 2e-5, "epochs": 4, "batch_size": 16, "weight_decay": 0.05},
+    # D3a candidate-B test: same hyperparams and same 448-pair pool as k8s_related -- only the
+    # hard-negative candidate space differs (full corpus vs. training-pool-restricted).
+    "k8s_related_fullcorpus_negs": {"lr": 2e-5, "epochs": 4, "batch_size": 16, "weight_decay": 0.05},
 }
 
 

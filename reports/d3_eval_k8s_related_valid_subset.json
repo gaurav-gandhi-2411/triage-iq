@@ -1,0 +1,125 @@
+{
+  "task": "k8s_related_valid_subset",
+  "repo": "kubernetes_kubernetes",
+  "model_dir": "data/models/d3_finetuned_k8s_related_valid_subset",
+  "full_eval_set": {
+    "n_pairs": 150,
+    "n_evaluated": 150,
+    "recall_at_1": {
+      "baseline": 0.10666666666666667,
+      "baseline_ci95": [
+        0.06,
+        0.16
+      ],
+      "trained": 0.08,
+      "trained_ci95": [
+        0.04,
+        0.1267
+      ],
+      "delta": -0.0267,
+      "delta_ci95_paired": [
+        -0.0733,
+        0.02
+      ],
+      "excludes_zero": false
+    },
+    "recall_at_5": {
+      "baseline": 0.24666666666666667,
+      "baseline_ci95": [
+        0.18,
+        0.3133
+      ],
+      "trained": 0.17333333333333334,
+      "trained_ci95": [
+        0.1133,
+        0.2333
+      ],
+      "delta": -0.0733,
+      "delta_ci95_paired": [
+        -0.1333,
+        -0.02
+      ],
+      "excludes_zero": true
+    },
+    "recall_at_10": {
+      "baseline": 0.3,
+      "baseline_ci95": [
+        0.2267,
+        0.3733
+      ],
+      "trained": 0.22666666666666666,
+      "trained_ci95": [
+        0.16,
+        0.2933
+      ],
+      "delta": -0.0733,
+      "delta_ci95_paired": [
+        -0.14,
+        -0.0067
+      ],
+      "excludes_zero": true
+    },
+    "mrr_baseline": 0.16085714285714284,
+    "mrr_trained": 0.11828306878306878
+  },
+  "valid_subset_66": {
+    "n_pairs": 66,
+    "n_evaluated": 66,
+    "recall_at_1": {
+      "baseline": 0.21212121212121213,
+      "baseline_ci95": [
+        0.1212,
+        0.3182
+      ],
+      "trained": 0.12121212121212122,
+      "trained_ci95": [
+        0.0455,
+        0.197
+      ],
+      "delta": -0.0909,
+      "delta_ci95_paired": [
+        -0.1818,
+        0.0
+      ],
+      "excludes_zero": false
+    },
+    "recall_at_5": {
+      "baseline": 0.3939393939393939,
+      "baseline_ci95": [
+        0.2727,
+        0.5152
+      ],
+      "trained": 0.2727272727272727,
+      "trained_ci95": [
+        0.1667,
+        0.3788
+      ],
+      "delta": -0.1212,
+      "delta_ci95_paired": [
+        -0.2273,
+        -0.0152
+      ],
+      "excludes_zero": true
+    },
+    "recall_at_10": {
+      "baseline": 0.4696969696969697,
+      "baseline_ci95": [
+        0.3485,
+        0.5909
+      ],
+      "trained": 0.3484848484848485,
+      "trained_ci95": [
+        0.2273,
+        0.4697
+      ],
+      "delta": -0.1212,
+      "delta_ci95_paired": [
+        -0.2273,
+        -0.0152
+      ],
+      "excludes_zero": true
+    },
+    "mrr_baseline": 0.2823593073593074,
+    "mrr_trained": 0.18416907166907165
+  }
+}

@@ -24,6 +24,21 @@ TASKS = {
         "mining_precision_train_pool_k8s_related.json",
         "d1_eval_set_k8s_related.json",
     ),
+    # D3a candidate-A test (ADR-0048 follow-up): same 448-pair pool filtered to the 253 pairs
+    # blind-labeled VALID under the strict rubric (reports/d3a_pool_labeled_batch_*.json) --
+    # a subset of an already-disjoint pool, so still trivially disjoint from both eval sets.
+    "k8s_related_valid_subset": (
+        "mining_precision_train_pool_k8s_related_valid_subset.json",
+        "d1_eval_set_k8s_related.json",
+    ),
+    # D3a candidate-B test (ADR-0048 follow-up): same 448-pair pool as k8s_related, but hard
+    # negatives mined from the FULL corpus candidate space (not the 792-issue training-pool-
+    # restricted space) -- isolates ADR-0048's second candidate mechanism, hard-negative
+    # candidate-pool vs. full-corpus-eval distribution mismatch.
+    "k8s_related_fullcorpus_negs": (
+        "mining_precision_train_pool_k8s_related.json",
+        "d1_eval_set_k8s_related.json",
+    ),
 }
 
 

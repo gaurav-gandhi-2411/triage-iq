@@ -1,0 +1,25 @@
+{
+  "task": "k8s_related_fullcorpus_negs",
+  "base_model": "BAAI/bge-base-en-v1.5",
+  "n_triplets": 2240,
+  "hyperparams": {
+    "lr": 2e-05,
+    "epochs": 4,
+    "batch_size": 16,
+    "weight_decay": 0.05,
+    "temperature": 0.05,
+    "max_len": 256,
+    "seed": 42,
+    "per_device_batch": 8,
+    "grad_accum_steps": 2
+  },
+  "loss_by_epoch": [
+    1.6896542087197304,
+    0.37313265264300366,
+    0.08980222917494497,
+    0.05908260943501124
+  ],
+  "train_seconds": 549.3683087999998,
+  "device": "cuda",
+  "out_dir": "data\\models\\d3_finetuned_k8s_related_fullcorpus_negs"
+}

@@ -61,6 +61,8 @@ K_VALUES = [1, 5, 10]
 REPO_BY_TASK = {
     "vscode_duplicate": "microsoft_vscode",
     "k8s_related": "kubernetes_kubernetes",
+    "k8s_related_valid_subset": "kubernetes_kubernetes",
+    "k8s_related_fullcorpus_negs": "kubernetes_kubernetes",
 }
 REPORTS = Path("reports")
 DATA = Path("data")
@@ -174,7 +176,8 @@ def main() -> None:
     result: dict = {"task": args.task, "repo": repo, "model_dir": args.model_dir}
     score_pairs("full_eval_set", result, base_vecs, trained_vecs)
 
-    if args.task == "k8s_related" and K8S_CLEAN_EVAL.exists():
+    k8s_tasks = ("k8s_related", "k8s_related_valid_subset", "k8s_related_fullcorpus_negs")
+    if args.task in k8s_tasks and K8S_CLEAN_EVAL.exists():
         clean = json.loads(K8S_CLEAN_EVAL.read_text(encoding="utf-8"))["pairs"]
         valid_keys = {
             (int(p["query_number"]), int(p["target_number"])) for p in clean if p["label"] == "VALID"

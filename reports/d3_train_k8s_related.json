@@ -1,0 +1,25 @@
+{
+  "task": "k8s_related",
+  "base_model": "BAAI/bge-base-en-v1.5",
+  "n_triplets": 2240,
+  "hyperparams": {
+    "lr": 2e-05,
+    "epochs": 4,
+    "batch_size": 16,
+    "weight_decay": 0.05,
+    "temperature": 0.05,
+    "max_len": 256,
+    "seed": 42,
+    "per_device_batch": 8,
+    "grad_accum_steps": 2
+  },
+  "loss_by_epoch": [
+    1.3438964406826666,
+    0.2638315519517554,
+    0.10744375385942735,
+    0.09027224436202752
+  ],
+  "train_seconds": 547.6269167000428,
+  "device": "cuda",
+  "out_dir": "data\\models\\d3_finetuned_k8s_related"
+}

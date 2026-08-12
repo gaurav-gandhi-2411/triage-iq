@@ -1,0 +1,15 @@
+{
+  "run": "fullcorpus",
+  "n_sampled": 40,
+  "n_false_negatives": 11,
+  "false_negative_rate": 0.275,
+  "wilson95": [
+    0.1611,
+    0.4284
+  ],
+  "label_counts": {
+    "EXCLUDE_OTHER": 27,
+    "EXCLUDE_UMBRELLA": 2,
+    "VALID": 11
+  }
+}

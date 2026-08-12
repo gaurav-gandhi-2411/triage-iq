@@ -26,6 +26,23 @@ project under a new GCP identity (`gaurav.gandhi1129@gmail.com`, billing account
 `01285B-91E4CB-70AD7E`) entirely, and this time add the monitoring that would have caught either
 outage immediately instead of via CI coincidence.
 
+**Correction (same day): this was not a second independent billing outage.** The framing above —
+written when the only evidence available was `billingEnabled: false` — was wrong about the
+mechanism, though not about the urgency or the correct response. The actual cause: a parallel
+session running an unrelated GCP account teardown swept `expense-tracker-498014` and soft-deleted
+it, not knowing it hosted live production — that fact existed only in ADR-0038's prose, invisible
+from the project's name (`expense-tracker-498014`, reads as an unrelated finance-tracker
+side-project), its console listing, or any label. A soft-deleted project reports
+`billingEnabled: false`, indistinguishable from a genuine billing lapse via the one command this
+session initially checked. `expense-tracker-498014` was separately recovered via
+`gcloud projects undelete` (by the teardown session, once alerted) — confirmed still `ACTIVE`,
+`billingEnabled: true`, now labeled `do-not-delete: true` / `hosts-prod: triageiq` and renamed to
+"expense-tracker DO NOT DELETE" to prevent a recurrence. This correction doesn't change the
+decision below: whether the trigger was a billing lapse or a collateral-damage deletion, the
+underlying problem is the same and this ADR exists to fix it — **co-tenancy makes a shared
+project's criticality invisible at the project level**, and that risk was theoretical in ADR-0038,
+now demonstrated. See "Final state" below for the as-of-merge outcome.
+
 ## Decision
 
 Migrate to `triageiq-prod-260812`, a fresh, dedicated (not co-tenant) project, replicating
@@ -131,6 +148,51 @@ as of 2026-08-10 lived in `expense-tracker-498014` and has not been recreated in
 re-run. Until it is, `health-monitor.yml`'s two jobs (billing-check + the existing `/health`
 check) are the only automated detection running, which is a real, disclosed gap relative to the
 2026-08-10 state, not a silent one.
+
+## Final state (2026-08-12, post-merge, independently re-verified)
+
+Before merging, `triageiq-prod-260812`'s ownership was independently re-checked (not trusted from
+memory) given the trigger for this migration was ultimately different from what it first looked
+like: project IAM (`gcloud projects get-iam-policy`) shows `user:gaurav.gandhi1129@gmail.com` as
+sole Owner; `gcloud billing accounts list` run separately as each identity shows `1129` sees
+`01285B-91E4CB-70AD7E` and `2411` does not (only its own, unrelated `014DAE-6B3556-077365`) —
+`2411` has zero IAM visibility into the new project's billing account. Confirmed clean.
+
+PRs #88 (backend) and #9 (`triage-iq-ui`) merged by GG. Post-merge, independently re-verified
+(not reused from pre-merge checks):
+
+- **Deploy landed on `triageiq-prod-260812` via the CI pipeline itself** (not the one-time manual
+  bootstrap) — `google-github-actions/auth` step confirmed authenticating with
+  `workload_identity_provider: projects/1014562031321/.../gh-actions-pool/providers/
+  gh-actions-provider` and `service_account: triageiq-deployer@triageiq-prod-260812...`, proving
+  the `GCP_WIF_PROVIDER`/`deploy.yml` mismatch this PR fixed is actually resolved, not just
+  configured. New revision `triageiq-api-00002-zuh`, deployed `--no-traffic`/candidate, smoke-
+  tested, then promoted — `latestRevision: true`, 100% traffic.
+- **Production frontend (`triage-iq-orcin.vercel.app`) bundle decompiled and checked directly**:
+  zero occurrences of the old `242393598566` URL, two occurrences of
+  `https://triageiq-api-1014562031321.us-central1.run.app` (the new one) in the built JS.
+- **Real `/triage` calls through the actual production path** (`Origin: https://triage-iq-
+  orcin.vercel.app` against the live backend, exercising the same CORS path the deployed UI's own
+  fetch calls take): k8s → `kubectl` @57.6% confidence; vscode → `json` @48.4% confidence,
+  `resolution_confidence_pct` 34.5% (correctly under the product's own <40% low-confidence
+  threshold), `resolution_model_beats_naive=false` (matches known vscode behavior). Both fully
+  grounded, zero fabrication.
+- **`expense-tracker-498014` confirmed still up, not decommissioned**: `lifecycleState: ACTIVE`,
+  `billingEnabled: true`, labeled `do-not-delete: true` / `hosts-prod: triageiq`, its own Cloud Run
+  service still healthy and serving. Retained as a temporary, explicitly labeled fallback per GG's
+  instruction — decommissioning is a separate, later, explicitly green-lit step, not automatic
+  once the new stack looked stable.
+
+**Net outcome**: production runs on a dedicated project under `gaurav.gandhi1129@gmail.com`'s
+billing, independent of both `gaurav.gandhi2411@gmail.com` (being fully retired) and the
+co-tenancy arrangement that nearly cost the project its production stack. The co-tenancy
+experiment's actual, measured outcome: it worked exactly as designed from an IAM standpoint (zero
+project-level grants held; the deployer identity never had reach beyond its five scoped
+resources) but failed at the layer ADR-0038 didn't design for — a project's *criticality* to
+another product is not visible from the project itself, only from documentation elsewhere, which
+means anyone (a teardown script, a cleanup pass, a future session) operating on that project
+without having read this specific ADR has no way to know it matters. Dedicated-project-per-product
+removes that entire failure class rather than mitigating it with labels and hope.
 
 ## Alternatives considered
 

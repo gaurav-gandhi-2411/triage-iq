@@ -1,28 +1,36 @@
-"""D3b false-negative-contamination check (ADR-0049 follow-up, GG's cheap-check escalation).
+"""D3b/D3c false-negative-contamination check (ADR-0049 follow-up, GG's cheap-check escalation).
 
 Candidate B (full-corpus hard-negative mining) regressed WORSE than D3's original restricted-
 pool mining, the opposite of what the candidate-pool-mismatch hypothesis predicted. One
-mechanistic explanation ADR-0049 flagged but didn't measure: full-corpus mining draws from a much
-larger, more diverse candidate space, so its top-ranked "hard negatives" (highest cosine
-similarity to the query) are more likely to actually BE genuinely related issues that the
-regex-based gold-mining heuristic simply never captured -- i.e. false negatives. Training a
-contrastive loss to push a query and its true near-duplicate apart would directly corrupt useful
-embedding structure, not just fail to help.
+mechanistic explanation ADR-0049 flagged: full-corpus mining draws from a much larger, more
+diverse candidate space, so its top-ranked "hard negatives" (highest cosine similarity to the
+query) are more likely to actually BE genuinely related issues that the regex-based gold-mining
+heuristic simply never captured -- i.e. false negatives. Training a contrastive loss to push a
+query and its true near-duplicate apart would directly corrupt useful embedding structure, not
+just fail to help. Measured for the full-corpus run (D3b): 11/40 = 27.5% (Wilson95 [16.1,42.8]).
 
-This is directly measurable without retraining: sample mined negatives and blind-label each
+Second question, GG's follow-up escalation: does D3's ORIGINAL restricted-pool mining (the 792-
+issue training-pool-restricted candidate space, used by both D3 original and Candidate A) share a
+comparable false-negative rate? If yes, contamination explains the BASE regression too, not just
+Candidate B's excess -- a solvable data-hygiene problem, not a ceiling. If low, the base
+regression stays unexplained by this mechanism and the small-dataset-instability reading (ADR-
+0049's cross-run loss/regression pattern) regains standing.
+
+Both checks directly measurable without retraining: sample mined negatives and blind-label each
 (query, negative) pair with the SAME validity rubric used throughout this investigation
 (VALID/EXCLUDE_UMBRELLA/EXCLUDE_CAUSAL_ONLY/EXCLUDE_OTHER) -- except here VALID means "this
 negative is actually a false negative" rather than "this eval pair is a fair test."
 
-Reads:  data/d3_hard_negatives_k8s_related_fullcorpus_negs.parquet
+Reads:  data/d3_hard_negatives_k8s_related_fullcorpus_negs.parquet   (--run fullcorpus)
+        data/d3_hard_negatives_k8s_related.parquet                   (--run restricted)
         data/processed/issues_kubernetes_kubernetes.parquet
-Writes: reports/d3b_negs_blind_k8s_fullcorpus.json   (--sample)
-        reports/d3b_false_negative_audit.json         (--analyze, after labeling)
+Writes: reports/d3b_negs_blind_k8s_{run}.json     (--sample)
+        reports/d3b_false_negative_audit_{run}.json  (--analyze, after labeling)
 
-Reproduce: python scripts/d3b_false_negative_audit.py --sample
-After labeling (fill "label"+"reason" into reports/d3b_negs_labeled_batch_*.json, same blind
-dispatch pattern as scripts/mining_precision_strict_audit.py):
-           python scripts/d3b_false_negative_audit.py --analyze
+Reproduce: python scripts/d3b_false_negative_audit.py --run restricted --sample
+After labeling (fill "label"+"reason" into reports/d3b_negs_labeled_{run}_batch_*.json, same
+blind dispatch pattern as scripts/mining_precision_strict_audit.py):
+           python scripts/d3b_false_negative_audit.py --run restricted --analyze
 """
 
 from __future__ import annotations
@@ -30,6 +38,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -43,11 +52,22 @@ N_SAMPLE = 40
 BATCH_SIZE = 20
 MAX_BODY = 512
 
-NEGS_PATH = Path("data/d3_hard_negatives_k8s_related_fullcorpus_negs.parquet")
 CORPUS_PATH = Path("data/processed/issues_kubernetes_kubernetes.parquet")
-BLIND_PATH = Path("reports/d3b_negs_blind_k8s_fullcorpus.json")
-LABELED_GLOB = "reports/d3b_negs_labeled_batch_*.json"
-OUTPUT_PATH = Path("reports/d3b_false_negative_audit.json")
+
+RUNS = {
+    "fullcorpus": {
+        "negs_path": Path("data/d3_hard_negatives_k8s_related_fullcorpus_negs.parquet"),
+        "blind_path": Path("reports/d3b_negs_blind_k8s_fullcorpus.json"),
+        "labeled_glob": "reports/d3b_negs_labeled_batch_*.json",
+        "output_path": Path("reports/d3b_false_negative_audit.json"),
+    },
+    "restricted": {
+        "negs_path": Path("data/d3_hard_negatives_k8s_related.parquet"),
+        "blind_path": Path("reports/d3b_negs_blind_k8s_restricted.json"),
+        "labeled_glob": "reports/d3b_negs_labeled_restricted_batch_*.json",
+        "output_path": Path("reports/d3b_false_negative_audit_restricted.json"),
+    },
+}
 
 
 def _build_text(title: object, body: object) -> str:
@@ -56,8 +76,9 @@ def _build_text(title: object, body: object) -> str:
     return f"{t}. {b}"
 
 
-def build_sample() -> None:
-    negs = pd.read_parquet(NEGS_PATH)
+def build_sample(run: str) -> None:
+    cfg = RUNS[run]
+    negs = pd.read_parquet(cfg["negs_path"])
     corpus = pd.read_parquet(CORPUS_PATH, columns=["number", "title", "body_clean"])
     title_by_num = dict(zip(corpus["number"].astype(int), corpus["title"], strict=True))
     body_by_num = dict(zip(corpus["number"].astype(int), corpus["body_clean"], strict=True))
@@ -85,9 +106,10 @@ def build_sample() -> None:
     for i, row in enumerate(rows):
         row["batch"] = i // BATCH_SIZE + 1
 
-    BLIND_PATH.write_text(json.dumps(rows, indent=2, ensure_ascii=False), encoding="utf-8")
+    cfg["blind_path"].write_text(json.dumps(rows, indent=2, ensure_ascii=False), encoding="utf-8")
     logger.info(
-        "wrote %d rows across %d batches to %s", len(rows), rows[-1]["batch"], BLIND_PATH
+        "[%s] wrote %d rows across %d batches to %s",
+        run, len(rows), rows[-1]["batch"], cfg["blind_path"],
     )
 
 
@@ -101,9 +123,10 @@ def wilson_ci(x: int, n: int, z: float = 1.96) -> tuple[float, float]:
     return (center - adj) / denom, (center + adj) / denom
 
 
-def analyze() -> None:
+def analyze(run: str) -> None:
+    cfg = RUNS[run]
     labeled: list[dict] = []
-    for path in sorted(Path().glob(LABELED_GLOB)):
+    for path in sorted(Path().glob(cfg["labeled_glob"])):
         labeled.extend(json.loads(path.read_text(encoding="utf-8")))
 
     valid_labels = {"VALID", "EXCLUDE_UMBRELLA", "EXCLUDE_CAUSAL_ONLY", "EXCLUDE_OTHER"}
@@ -115,30 +138,31 @@ def analyze() -> None:
     n = len(labeled)
     x = sum(1 for r in labeled if r["label"] == "VALID")
     lo, hi = wilson_ci(x, n)
-    from collections import Counter
 
     result = {
+        "run": run,
         "n_sampled": n,
         "n_false_negatives": x,
         "false_negative_rate": round(x / n, 4),
         "wilson95": [round(lo, 4), round(hi, 4)],
         "label_counts": dict(Counter(r["label"] for r in labeled)),
     }
-    OUTPUT_PATH.write_text(json.dumps(result, indent=2), encoding="utf-8")
+    cfg["output_path"].write_text(json.dumps(result, indent=2), encoding="utf-8")
     logger.info(
-        "false-negative rate: %d/%d = %.1f%%  Wilson95 [%.1f, %.1f]",
-        x, n, 100 * x / n, 100 * lo, 100 * hi,
+        "[%s] false-negative rate: %d/%d = %.1f%%  Wilson95 [%.1f, %.1f]",
+        run, x, n, 100 * x / n, 100 * lo, 100 * hi,
     )
-    logger.info("Wrote %s", OUTPUT_PATH)
+    logger.info("Wrote %s", cfg["output_path"])
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--run", choices=list(RUNS), required=True)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--sample", action="store_true")
     group.add_argument("--analyze", action="store_true")
     args = parser.parse_args()
     if args.sample:
-        build_sample()
+        build_sample(args.run)
     else:
-        analyze()
+        analyze(args.run)

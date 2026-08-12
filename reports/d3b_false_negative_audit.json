@@ -1,4 +1,5 @@
 {
+  "run": "fullcorpus",
   "n_sampled": 40,
   "n_false_negatives": 11,
   "false_negative_rate": 0.275,

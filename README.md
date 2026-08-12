@@ -8,7 +8,7 @@ TriageIQ turns raw GitHub issues into structured triage decisions in under 4 sec
 
 ## Live API
 
-**Base URL:** `https://triageiq-api-242393598566.us-central1.run.app`
+**Base URL:** `https://triageiq-api-1014562031321.us-central1.run.app`
 
 > Served from GCP project `triageiq-prod-260812` (region `us-central1`), a dedicated project under
 > its own GCP identity, still under an IAM-scoped deploy identity with zero project-level grants.
@@ -21,10 +21,10 @@ TriageIQ turns raw GitHub issues into structured triage decisions in under 4 sec
 
 ```bash
 # Service info
-curl https://triageiq-api-242393598566.us-central1.run.app/
+curl https://triageiq-api-1014562031321.us-central1.run.app/
 
 # Triage an issue
-curl -s -X POST https://triageiq-api-242393598566.us-central1.run.app/triage \
+curl -s -X POST https://triageiq-api-1014562031321.us-central1.run.app/triage \
   -H "Content-Type: application/json" \
   -d '{
     "repo": "microsoft/vscode",
@@ -636,7 +636,7 @@ Trigger via GitHub Actions UI: `Actions → Deploy to Cloud Run → Run workflow
 ### Prometheus metrics
 
 ```bash
-curl https://triageiq-api-242393598566.us-central1.run.app/metrics \
+curl https://triageiq-api-1014562031321.us-central1.run.app/metrics \
   -H "Authorization: Bearer $METRICS_TOKEN"
 ```
 

@@ -167,6 +167,17 @@ untracked local artifact from the last `w3_t2` run, never committed) and
 `data/w3_split_v2.parquet` both predate this finding and should be regenerated, not
 reused, if that thread restarts.
 
+**Status update (2026-08-12):** `data/w3_hard_negatives_v2.parquet` remains uncommitted and
+unresolvable on `main` — confirmed via a repo-wide ADR citation sweep (`scripts/
+check_adr_citations.py`). Not regenerated: the W3 fine-tune this artifact backed stayed HELD/
+unshipped per ADR-0027 (banked pending product-task gating data, not rejected), and the
+retrieval fine-tune question it was banked alongside was later independently pursued and closed
+via a different arc entirely (D2/D3, ADR-0034/0035/0048/0049 — expanded, precision-corrected
+training pools, ultimately a stated data-scale ceiling for k8s and a null result for vscode).
+This specific W3 thread was never revived or regenerated. A fresh regeneration now wouldn't be
+the artifact that was actually measured against ADR-0032's findings at the time it was written,
+so the fix here is this annotation (honest, findable provenance), not a backfill.
+
 ## Interpretation — which of the three pre-registered hypotheses is true
 
 1. **"Our retriever is weak"** — **true for k8s.** Pairs are mostly genuine (72%), the

@@ -1,0 +1,52 @@
+{
+  "n_judged": 160,
+  "by_channel": {
+    "kubernetes_kubernetes::k8s_extended_mine::body_related_ext::product": {
+      "n_judged": 50,
+      "n_valid": 27,
+      "precision": 0.54,
+      "wilson95": [
+        0.404,
+        0.6703
+      ],
+      "label_counts": {
+        "VALID": 27,
+        "EXCLUDE_OTHER": 16,
+        "EXCLUDE_CAUSAL_ONLY": 4,
+        "EXCLUDE_UMBRELLA": 3
+      },
+      "sample_note": "sample_50_of_200"
+    },
+    "microsoft_vscode::vscode_body_refs::body_related_ext::product": {
+      "n_judged": 50,
+      "n_valid": 37,
+      "precision": 0.74,
+      "wilson95": [
+        0.6045,
+        0.8413
+      ],
+      "label_counts": {
+        "VALID": 37,
+        "EXCLUDE_OTHER": 7,
+        "EXCLUDE_UMBRELLA": 3,
+        "EXCLUDE_CAUSAL_ONLY": 3
+      },
+      "sample_note": "sample_50_of_206"
+    },
+    "microsoft_vscode::vscode_dup_scrape::dup_comment::gate": {
+      "n_judged": 60,
+      "n_valid": 46,
+      "precision": 0.7667,
+      "wilson95": [
+        0.6456,
+        0.8556
+      ],
+      "label_counts": {
+        "VALID": 46,
+        "EXCLUDE_OTHER": 13,
+        "EXCLUDE_UMBRELLA": 1
+      },
+      "sample_note": "sample_60_of_2242"
+    }
+  }
+}

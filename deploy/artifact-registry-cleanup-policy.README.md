@@ -26,7 +26,8 @@ gcloud artifacts repositories set-cleanup-policies triageiq \
   --no-dry-run
 ```
 
-Already applied to `expense-tracker-498014`'s `triageiq` repo (2026-08-12), alongside a one-time
-manual cleanup of 22 stale images. Needs the same command run against `triageiq-prod-260812` once
-that project has repository access set up — this file exists so that doesn't require relaying the
-JSON through a chat transcript.
+Applied to `expense-tracker-498014`'s `triageiq` repo (2026-08-12), alongside a one-time manual
+cleanup of 22 stale images. Also applied to `triageiq-prod-260812`'s `triageiq` repo (2026-08-12,
+via the `gaurav.gandhi1129@gmail.com` account) — baseline at application time was 3 images
+(~1.29 GiB each, ~3967 MB repository size), well inside the 15-version keep window, so nothing
+needed deleting yet.

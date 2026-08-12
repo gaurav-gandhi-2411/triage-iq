@@ -44,6 +44,15 @@ those 7 is a blanket "modeling doesn't work here" finding — each has a stated 
 volume for W3/D2, latency+corpus-mismatch for reranker, data-scale ceiling for the classifiers).
 
 **What it would cost to re-run the still-open invalid generations, now that the eval is fixed:**
+**Addendum (2026-08-12, on merge): both re-run candidates below have since actually been run.**
+Stronger embedder (5b): re-run against the current live-serving index, no signal either repo
+(k8s -1.5pp CI[-10.6,+7.6], vscode -2.0pp CI[-6.0,+2.5]) — closes that gap with a real,
+correctly-measured null (ADR-0048/`reports/lever3_stronger_embedder_rerun.json`). D2/W3 retry:
+the full D3/D3a/D3b arc (ADR-0047/0048/0049) — expanded k8s pool to 448 pairs, retrained with the
+corrected CLS-pooling/256-seq-len config, found a confirmed harmful regression, disentangled both
+candidate mechanisms, and closed the investigation as a stated data-scale ceiling with an exit
+condition (~1,700-2,000 pairs needed). Neither experiment is open any longer; both sections below
+are historical context for what this correction anticipated, not live backlog items.
 
 - **Stronger embedder (5b) — cheapest, highest-priority gap.** No training: re-embed the corpus
   with `bge-large-en-v1.5` via the current `_build_text()` (token-truncated) and re-run

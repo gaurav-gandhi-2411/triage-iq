@@ -1,0 +1,102 @@
+[
+  {
+    "pair_id": 0,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is a user's local scheduler connection-refused problem while neg is about fixing a flaky RC-expectations unit test; different specific issues with no substantive overlap."
+  },
+  {
+    "pair_id": 1,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query proposes propagating a specific OOM event from cadvisor while neg is a general policy complaint about kubelet emitting too many events for unrelated occurrences (sync failures, container starts); topically adjacent but not the same specific feature."
+  },
+  {
+    "pair_id": 2,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query is explicitly titled 'Umbrella:' and is a tracking issue enumerating the sub-issues needed for 3rd-party cluster extensions, and neg is one such concrete sub-issue (upstreaming OpenShift policy/auth as an extension)."
+  },
+  {
+    "pair_id": 3,
+    "label": "VALID",
+    "reason": "Neg is the streaming exec/port-forwarding implementation PR that explicitly says 'See #3253 for more details', directly implementing the exact proposal described in the query."
+  },
+  {
+    "pair_id": 4,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query proposes in-container exec/port-forwarding while neg is an unrelated proposal to expose host devices to containers; no substantive topical overlap."
+  },
+  {
+    "pair_id": 5,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about needing an API for tearing down external cluster resources while neg is about fixing an accidentally-closed kubectl help doc-generation PR; unrelated topics."
+  },
+  {
+    "pair_id": 6,
+    "label": "VALID",
+    "reason": "Both describe the exact same bug: marking a node unschedulable is broken when kubelet (rather than the node controller) pushes node status updates to master, requiring reconciliation of the two status paths."
+  },
+  {
+    "pair_id": 7,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is a broad architectural design doc for revamping cluster DNS while neg is a narrow, specific PR renaming/labeling the DNS RC/pod/service; same component but not the same specific proposal."
+  },
+  {
+    "pair_id": 8,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query questions etcd read-consistency correctness in the IP allocator repair logic while neg is simply a routine etcd version bump; different specific concerns despite both mentioning etcd."
+  },
+  {
+    "pair_id": 9,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about capping the docker daemon's own resource cgroup due to a docker memory leak causing unrecovered nodes, while neg is about a user's guestbook example container hitting its own memory cgroup limit; different specific bugs."
+  },
+  {
+    "pair_id": 10,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query asks for graceful handling of OpenStack API outages/failures while neg complains about excessive request rate to the OpenStack API; related theme (OpenStack cloud provider robustness) but different specific bugs."
+  },
+  {
+    "pair_id": 11,
+    "label": "VALID",
+    "reason": "Neg is the fix PR that explicitly states 'Fixes https://github.com/kubernetes/kubernetes/issues/14520', directly implementing the status-subresource separation the query (issue 14520) requests."
+  },
+  {
+    "pair_id": 12,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about SkyDNS round-robining between nameservers causing failures while neg is about SkyDNS silently failing after some time; both are SkyDNS reliability issues but distinct specific bugs."
+  },
+  {
+    "pair_id": 13,
+    "label": "VALID",
+    "reason": "Neg is a PR reverting the exact 'SkyDNS is the only NS for Pods with DNSPolicy=ClusterFirst' change that the query is proposing/discussing, i.e. the same specific feature."
+  },
+  {
+    "pair_id": 14,
+    "label": "VALID",
+    "reason": "Both address changing the network plugin interface to be runtime-agnostic (mentioning rkt) instead of docker-container-ID-based, i.e. the same specific proposal (CNI-style generalized plugin interface)."
+  },
+  {
+    "pair_id": 15,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about documenting API backward-compatibility decisions (label selectors, pod security context) while neg is an old, unrelated fix to interface{} usage in api/types; no substantive overlap."
+  },
+  {
+    "pair_id": 16,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query proposes adding an autoscaler creation option to 'kubectl run' while neg merely adds an HPA example manifest; both relate generally to HPA but are different specific features."
+  },
+  {
+    "pair_id": 17,
+    "label": "EXCLUDE_UMBRELLA",
+    "reason": "Query is a checklist/tracking issue enumerating specific disk-accounting work items across components, and neg is a concrete related sub-effort (proof-of-concept disk space monitoring for rkt) falling under that same tracked initiative."
+  },
+  {
+    "pair_id": 18,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is about updating the v1.1 Ubuntu getting-started guide text while neg is about a broken update-api-reference-docs.sh script; both touch 'docs' generally but are different specific issues."
+  },
+  {
+    "pair_id": 19,
+    "label": "EXCLUDE_OTHER",
+    "reason": "Query is a specific fix for an inefficient reflection-based cache access slowing the scheduler while neg is a separate throughput optimization via asynchronous bindings; both are scheduler-performance work but distinct specific fixes."
+  }
+]

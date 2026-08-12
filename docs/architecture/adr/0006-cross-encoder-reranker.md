@@ -99,6 +99,16 @@ technical/infrastructure text. The base model lacks this coverage.
 Decision tree outcome: **CASE D** — no candidate beats baseline on either repo by ≥3pp in the
 final (determinative) screening slate. Drop W1.3. Close PR #1 without merging.
 
+**Where this citation resolves (2026-08-12 addendum):** `src/triage_iq/models/reranker.py`,
+`reports/bge_v2m3_benchmark.json`, and `reports/dup_trained_reranker_screening.json` — cited
+below and never merged to `main` per the decision above — live on branch
+`feat/w1.3-cross-encoder-reranker` (still present on `origin`, PR #1, closed unmerged, exactly
+as this ADR records). Found via a repo-wide ADR citation sweep (`scripts/
+check_adr_citations.py`): a citation resolving to nothing on `main` reads identically whether
+the underlying code was rejected-and-correctly-never-merged or genuinely lost, so this note
+exists to make the former legible without changing the decision — the code stays unmerged, this
+just says where to find it.
+
 The implementation (`src/triage_iq/models/reranker.py`, the `SimilarIssueRetriever.reranker` hook, and
 `loader.py` plumbing) is correct and clean. The failure is not an integration bug. The hypothesis
 was simply wrong: pre-trained cross-encoders without in-domain fine-tuning do not generalise to

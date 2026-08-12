@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# One-time GCP resource setup for TriageIQ, inside an EXISTING billed project
-# (2026-08-05 migration off triageiq-portfolio-495022, whose billing account
-# was closed -- see docs/architecture/adr for the migration writeup). This
-# project is shared with other products (expense-tracker, agentgauge-judge);
-# every grant below is scoped to the specific bucket/repo/service/SA/secret
-# resource, never project-level, so triageiq-deployer cannot touch anything
-# outside these five resources. Auth is WIF-only (scripts/setup_wif.sh) --
+# One-time GCP resource setup for TriageIQ, inside a dedicated billed project
+# (2026-08-12 migration to a fresh project under a new GCP identity, after the
+# prior co-tenant project's billing account went disabled a second time -- see
+# docs/architecture/adr for the migration writeup; the 2026-08-05 migration off
+# triageiq-portfolio-495022 to the since-abandoned expense-tracker-498014 is the
+# prior entry in this same history). Every grant below is still scoped to the
+# specific bucket/repo/service/SA/secret resource, never project-level, even
+# though this project is no longer shared -- least-privilege by default, not
+# only when forced to by co-tenancy. Auth is WIF-only (scripts/setup_wif.sh) --
 # no service account key is ever created.
 # Run once from a machine authenticated with gcloud (gcloud auth login),
 # as a principal with Owner/Editor on the project.
@@ -13,12 +15,12 @@
 
 set -euo pipefail
 
-PROJECT_ID="expense-tracker-498014"
+PROJECT_ID="triageiq-prod-260812"
 REGION="us-central1"
 SA_NAME="triageiq-deployer"
 RUNTIME_SA_NAME="triageiq-api-runtime"
 AR_REPO="triageiq"
-GCS_BUCKET="triageiq-models"
+GCS_BUCKET="triageiq-prod-260812-models"
 SERVICE_NAME="triageiq-api"
 
 gcloud config set project "$PROJECT_ID"

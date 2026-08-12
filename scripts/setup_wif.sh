@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-PROJECT_ID="expense-tracker-498014"
+PROJECT_ID="triageiq-prod-260812"
 REPO="gaurav-gandhi-2411/triage-iq"   # verified from git remote get-url origin
 SA_EMAIL="triageiq-deployer@${PROJECT_ID}.iam.gserviceaccount.com"
 POOL_ID="gh-actions-pool"
@@ -101,10 +101,10 @@ echo "  5. Post-merge: delete GCP_SA_KEY from GitHub Secrets."
 #
 #   gcloud iam workload-identity-pools providers delete gh-actions-provider \
 #     --workload-identity-pool=gh-actions-pool --location=global \
-#     --project=expense-tracker-498014
+#     --project=triageiq-prod-260812
 #
 #   gcloud iam workload-identity-pools delete gh-actions-pool \
-#     --location=global --project=expense-tracker-498014
+#     --location=global --project=triageiq-prod-260812
 #
 # Note: pool deletion is soft-deleted (30-day recovery window).
 # The IAM binding on the SA will be removed automatically when the pool is deleted.

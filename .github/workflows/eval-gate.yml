@@ -11,7 +11,7 @@ concurrency:
 
 env:
   GCP_REGION: us-central1
-  GCP_PROJECT: expense-tracker-498014
+  GCP_PROJECT: triageiq-prod-260812
 
 jobs:
   structural-invariants:
@@ -61,7 +61,7 @@ jobs:
         uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: triageiq-deployer@expense-tracker-498014.iam.gserviceaccount.com
+          service_account: triageiq-deployer@triageiq-prod-260812.iam.gserviceaccount.com
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v3
@@ -70,19 +70,19 @@ jobs:
         run: |
           mkdir -p data/models data/processed
           gsutil -m cp \
-            "gs://triageiq-models/models/component_classifier_microsoft_vscode.pkl" \
-            "gs://triageiq-models/models/component_classifier_kubernetes_kubernetes.pkl" \
-            "gs://triageiq-models/models/resolution_predictor_microsoft_vscode.pkl" \
-            "gs://triageiq-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
-            "gs://triageiq-models/models/cqr_conformal_adjustments.json" \
+            "gs://triageiq-prod-260812-models/models/component_classifier_microsoft_vscode.pkl" \
+            "gs://triageiq-prod-260812-models/models/component_classifier_kubernetes_kubernetes.pkl" \
+            "gs://triageiq-prod-260812-models/models/resolution_predictor_microsoft_vscode.pkl" \
+            "gs://triageiq-prod-260812-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
+            "gs://triageiq-prod-260812-models/models/cqr_conformal_adjustments.json" \
             data/models/
           gsutil -m cp -r \
-            "gs://triageiq-models/models/similar_issue_index_microsoft_vscode_bge" \
-            "gs://triageiq-models/models/similar_issue_index_kubernetes_kubernetes_bge" \
+            "gs://triageiq-prod-260812-models/models/similar_issue_index_microsoft_vscode_bge" \
+            "gs://triageiq-prod-260812-models/models/similar_issue_index_kubernetes_kubernetes_bge" \
             data/models/
           gsutil -m cp \
-            "gs://triageiq-models/processed/microsoft_vscode_temporal_train.parquet" \
-            "gs://triageiq-models/processed/kubernetes_kubernetes_temporal_train.parquet" \
+            "gs://triageiq-prod-260812-models/processed/microsoft_vscode_temporal_train.parquet" \
+            "gs://triageiq-prod-260812-models/processed/kubernetes_kubernetes_temporal_train.parquet" \
             data/processed/
 
       - name: Verify GCS artifacts match MANIFEST.sha256 (drift guard)
@@ -130,7 +130,7 @@ jobs:
         uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: triageiq-deployer@expense-tracker-498014.iam.gserviceaccount.com
+          service_account: triageiq-deployer@triageiq-prod-260812.iam.gserviceaccount.com
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v3
@@ -139,19 +139,19 @@ jobs:
         run: |
           mkdir -p data/models data/processed
           gsutil -m cp \
-            "gs://triageiq-models/models/component_classifier_microsoft_vscode.pkl" \
-            "gs://triageiq-models/models/component_classifier_kubernetes_kubernetes.pkl" \
-            "gs://triageiq-models/models/resolution_predictor_microsoft_vscode.pkl" \
-            "gs://triageiq-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
-            "gs://triageiq-models/models/cqr_conformal_adjustments.json" \
+            "gs://triageiq-prod-260812-models/models/component_classifier_microsoft_vscode.pkl" \
+            "gs://triageiq-prod-260812-models/models/component_classifier_kubernetes_kubernetes.pkl" \
+            "gs://triageiq-prod-260812-models/models/resolution_predictor_microsoft_vscode.pkl" \
+            "gs://triageiq-prod-260812-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
+            "gs://triageiq-prod-260812-models/models/cqr_conformal_adjustments.json" \
             data/models/
           gsutil -m cp -r \
-            "gs://triageiq-models/models/similar_issue_index_microsoft_vscode_bge" \
-            "gs://triageiq-models/models/similar_issue_index_kubernetes_kubernetes_bge" \
+            "gs://triageiq-prod-260812-models/models/similar_issue_index_microsoft_vscode_bge" \
+            "gs://triageiq-prod-260812-models/models/similar_issue_index_kubernetes_kubernetes_bge" \
             data/models/
           gsutil -m cp \
-            "gs://triageiq-models/processed/microsoft_vscode_temporal_train.parquet" \
-            "gs://triageiq-models/processed/kubernetes_kubernetes_temporal_train.parquet" \
+            "gs://triageiq-prod-260812-models/processed/microsoft_vscode_temporal_train.parquet" \
+            "gs://triageiq-prod-260812-models/processed/kubernetes_kubernetes_temporal_train.parquet" \
             data/processed/
 
       - name: Verify GCS artifacts match MANIFEST.sha256 (drift guard)

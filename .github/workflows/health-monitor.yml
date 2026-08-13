@@ -92,22 +92,50 @@ jobs:
           # that ceiling while giving a real cold start comfortable margin. Two attempts (not
           # one) absorb the rare case where the checked instance scales down between connect
           # and response; worst case ~190s total, negligible against the 30min run cadence.
+          #
+          # 2026-08-14: the 20s -> 90s fix above made the check stop false-failing, but left it
+          # binary -- an 85s cold start passed silently and an 91s one read as an outage. So it
+          # answered "did it respond inside 90s", not "is cold-start time drifting", and a
+          # gradually slowing boot (a larger index, a heavier model, an added warm-up step) was
+          # invisible until the moment it crossed the ceiling and looked like a hard failure.
+          # SOFT_LIMIT_S adds the middle state: still a pass, but a visible warning with the
+          # number attached, so a regression shows as a trend before it becomes a page. 45s is
+          # set above the 36s cold start measured 2026-08-10 with enough headroom not to fire on
+          # ordinary variance -- deliberately NOT tight, because a warning that cries wolf decays
+          # into noise exactly like the 20s timeout did.
+          HARD_LIMIT_S=90
+          SOFT_LIMIT_S=45
           check() {
-            RESP=$(curl -sS -w "\n%{http_code}" --max-time 90 "${{ env.SERVICE_URL }}/health")
-            HTTP_CODE=$(echo "$RESP" | tail -1)
+            ATTEMPT="$1"
+            # %{time_total} is curl's own wall-clock for the whole transfer -- the cold start is
+            # inside it, since Cloud Run holds the connection open while the instance boots.
+            RESP=$(curl -sS -w "\n%{http_code} %{time_total}" --max-time "$HARD_LIMIT_S" "${{ env.SERVICE_URL }}/health")
+            META=$(echo "$RESP" | tail -1)
+            HTTP_CODE=${META%% *}
+            ELAPSED=${META##* }
             BODY=$(echo "$RESP" | sed '$d')
-            echo "HTTP $HTTP_CODE"
+            echo "HTTP $HTTP_CODE in ${ELAPSED}s (attempt $ATTEMPT)"
             echo "$BODY"
+            # Greppable marker, same convention as the kill-switch's AUTOMATED_KILLSWITCH_FIRED:
+            # makes latency recoverable from run logs later without adding a metrics backend.
+            echo "HEALTH_LATENCY {\"attempt\":$ATTEMPT,\"seconds\":$ELAPSED,\"http\":$HTTP_CODE}"
             [ "$HTTP_CODE" = "200" ] || return 1
             STATUS=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || echo "")
             [ "$STATUS" = "ok" ] || return 1
+            # Attempt 1 is the only meaningful cold-start sample: if it succeeded, attempt 2
+            # never runs, and if it failed the instance is already warm for the retry. So the
+            # trend warning is scoped to attempt 1 -- warning on a warm retry would measure
+            # nothing and train the reader to ignore the marker.
+            if [ "$ATTEMPT" = "1" ] && awk "BEGIN{exit !($ELAPSED > $SOFT_LIMIT_S)}"; then
+              echo "::warning::/health answered in ${ELAPSED}s, past the ${SOFT_LIMIT_S}s soft limit (hard fail at ${HARD_LIMIT_S}s). The service is UP -- this is a cold-start trend signal, not an outage. Cold start measured 36s on 2026-08-10; investigate what grew before it reaches ${HARD_LIMIT_S}s and starts reading as downtime."
+            fi
           }
-          if check; then
+          if check 1; then
             echo "Health check passed."
             exit 0
           fi
           echo "First attempt failed -- retrying once before alerting."
-          if check; then
+          if check 2; then
             echo "Health check passed on retry."
             exit 0
           fi

@@ -71,12 +71,41 @@ jobs:
 
       - name: Assert billing is enabled
         run: |
-          ENABLED=$(gcloud billing projects describe "${{ env.GCP_PROJECT }}" --format='value(billingEnabled)')
-          echo "billingEnabled=$ENABLED"
-          if [ "$ENABLED" != "True" ]; then
-            echo "::error::Billing is DISABLED on ${{ env.GCP_PROJECT }} -- this is the exact failure mode from ADR-0038 (2026-08-05, undetected 12 days) and ADR-0050 (2026-08-12, caught by chance via CI). Production is still serving its current warm revision but will fail on the next cold start. See ADR-0050 for the recovery procedure (new project + billing account, do not attempt to relink without confirming the account itself is the problem)."
+          # 2026-08-14: this read used to be
+          #     ENABLED=$(gcloud billing projects describe ... --format='value(billingEnabled)')
+          #     if [ "$ENABLED" != "True" ]; then <report DISABLED>; fi
+          # which conflates two completely different facts. If the gcloud call FAILS -- the
+          # monitor SA loses roles/browser, the Cloud Billing API gets disabled, WIF expires,
+          # a network blip -- then $ENABLED is the empty string, and "" != "True", so the guard
+          # announced a confirmed billing outage citing two real incidents and a recovery
+          # runbook. It did exactly that on 2026-08-13/14 while the service was demonstrably
+          # healthy (a 61s COLD START returned 200, and a cold start is impossible without
+          # billing -- the very asymmetry the comment above relies on).
+          #
+          # That is worse than a guard going quiet. This is the alarm for the failure mode that
+          # went undetected for 12 days; teaching its owner that it cries wolf disarms the one
+          # signal that most needs to be believed. Both outcomes below still FAIL CLOSED -- the
+          # job exits non-zero either way -- but they say different things, because the response
+          # differs: UNVERIFIED means go fix the monitor's IAM, DISABLED means go relink billing.
+          set -o pipefail
+          if ! OUT=$(gcloud billing projects describe "${{ env.GCP_PROJECT }}" \
+                       --format='value(billingEnabled)' 2>&1); then
+            echo "::error::UNVERIFIED -- could not read billing state for ${{ env.GCP_PROJECT }}. This is NOT a confirmed outage: the check itself failed, most likely the triageiq-billing-monitor service account losing roles/browser, the Cloud Billing API being disabled, or WIF auth failing. Billing may be perfectly fine. Fix the monitor before drawing any conclusion about production. gcloud said: ${OUT}"
             exit 1
           fi
+          echo "billingEnabled=${OUT}"
+          case "${OUT}" in
+            True)
+              ;;
+            False)
+              echo "::error::Billing is DISABLED on ${{ env.GCP_PROJECT }} -- this is the exact failure mode from ADR-0038 (2026-08-05, undetected 12 days) and ADR-0050 (2026-08-12, caught by chance via CI). Production is still serving its current warm revision but will fail on the next cold start. See ADR-0050 for the recovery procedure (new project + billing account, do not attempt to relink without confirming the account itself is the problem)."
+              exit 1
+              ;;
+            *)
+              echo "::error::UNVERIFIED -- gcloud exited 0 but returned an unexpected billingEnabled value: '${OUT}'. Treated as a failure because an unrecognised answer is not a verified answer. Do not assume production is down; establish what this value means first."
+              exit 1
+              ;;
+          esac
 
   check:
     runs-on: ubuntu-latest

@@ -116,7 +116,7 @@ jobs:
             --concurrency 8 \
             --cpu-throttling \
             --timeout 300 \
-            --startup-probe="httpGet.path=/health,httpGet.port=8080,timeoutSeconds=30,periodSeconds=60,failureThreshold=3" \
+            --startup-probe="httpGet.path=/health,httpGet.port=8080,timeoutSeconds=45,periodSeconds=60,failureThreshold=3" \
             --service-account ${{ env.RUNTIME_SA }} \
             --update-secrets GROQ_API_KEY=groq-api-key:latest,METRICS_TOKEN=metrics-token:latest \
             --update-env-vars ENVIRONMENT=prod \

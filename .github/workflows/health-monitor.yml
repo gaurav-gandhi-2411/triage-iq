@@ -107,6 +107,77 @@ jobs:
               ;;
           esac
 
+  model-availability-check:
+    # Item G1 (2026-08-18): /triage returned 500 on every real request for an unknown period
+    # after Groq deprecated llama-3.1-8b-instant (2026-08-16) -- /health never touched this
+    # code path, so nothing caught it until this session's manual investigation. This job
+    # closes that gap proactively: check Groq's own model catalog daily and fail loudly if
+    # the model this repo is actually configured to call has been removed, BEFORE the next
+    # real /triage request hits the same wall.
+    #
+    # Extracts the configured model from source rather than hardcoding it here -- a hardcoded
+    # copy would itself go stale exactly the way the original bug happened (the model gets
+    # changed in triage.py/triage_eval.py, nobody remembers to also update this check).
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Extract configured model names from source
+        id: models
+        run: |
+          TRIAGE_MODEL=$(grep -oP '(?<=model: str = ")[^"]+' src/triage_iq/models/triage.py | head -1)
+          JUDGE_MODEL=$(grep -oP '(?<=model: str = ")[^"]+' src/triage_iq/evaluation/triage_eval.py | head -1)
+          if [ -z "$TRIAGE_MODEL" ] || [ -z "$JUDGE_MODEL" ]; then
+            echo "::error::Could not extract configured model name(s) from source -- TRIAGE_MODEL='$TRIAGE_MODEL' JUDGE_MODEL='$JUDGE_MODEL'. The grep pattern probably no longer matches the source; fix this check, don't ignore it."
+            exit 1
+          fi
+          echo "triage_model=$TRIAGE_MODEL" >> "$GITHUB_OUTPUT"
+          echo "judge_model=$JUDGE_MODEL" >> "$GITHUB_OUTPUT"
+          echo "Configured triage model: $TRIAGE_MODEL"
+          echo "Configured judge model: $JUDGE_MODEL"
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: triageiq-deployer@${{ env.GCP_PROJECT }}.iam.gserviceaccount.com
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Get Groq API key from Secret Manager
+        run: |
+          KEY=$(gcloud secrets versions access latest \
+            --secret=groq-api-key \
+            --project=${{ env.GCP_PROJECT }})
+          echo "::add-mask::$KEY"
+          echo "GROQ_API_KEY=$KEY" >> "$GITHUB_ENV"
+
+      - name: Confirm both configured models are still live on Groq
+        run: |
+          set -o pipefail
+          RESP=$(curl -sS -w "\n%{http_code}" \
+            -H "Authorization: Bearer $GROQ_API_KEY" \
+            https://api.groq.com/openai/v1/models)
+          HTTP_CODE=$(echo "$RESP" | tail -1)
+          BODY=$(echo "$RESP" | sed '$d')
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::UNVERIFIED -- Groq /models returned HTTP $HTTP_CODE, not 200. This is NOT a confirmed model removal: the check itself failed (bad key, Groq API issue, network blip). Body: $BODY"
+            exit 1
+          fi
+          LIVE_IDS=$(echo "$BODY" | python3 -c "import json,sys; print('\n'.join(m['id'] for m in json.load(sys.stdin)['data']))")
+          FAIL=0
+          for MODEL in "${{ steps.models.outputs.triage_model }}" "${{ steps.models.outputs.judge_model }}"; do
+            if ! echo "$LIVE_IDS" | grep -qxF "$MODEL"; then
+              echo "::error::Model '$MODEL' (configured in src/triage_iq) is no longer in Groq's live model catalog -- it has been deprecated/removed. This is the exact failure mode that broke /triage on 2026-08-16. Check console.groq.com/docs/deprecations for the documented replacement, do not guess a replacement name."
+              FAIL=1
+            fi
+          done
+          exit $FAIL
+
   check:
     runs-on: ubuntu-latest
     steps:

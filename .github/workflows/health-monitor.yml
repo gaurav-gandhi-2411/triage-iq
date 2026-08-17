@@ -29,6 +29,11 @@ on:
     # Every 30 minutes nominal -- see the SECONDARY-check comment above for why the real
     # interval is wider and why that's now covered by the GCP uptime check instead.
     - cron: '*/30 * * * *'
+    # 2026-08-18 addition (Item 271/C6): every 30 minutes is right for /health (process
+    # liveness, no external cost) but not for /triage, which calls Groq for real -- see the
+    # triage-check job below for why this still isn't meaningfully increasing spend. Runs on
+    # its own cron so a change to one cadence doesn't have to touch the other.
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -170,3 +175,43 @@ jobs:
           fi
           echo "::error::/health failed twice in a row -- service may be down (billing, quota, crash-looping, or a bad deploy), or degraded (200 but status != ok)."
           exit 1
+
+  triage-check:
+    # 2026-08-18 addition (Item 271/C6): /health only reports model-store state -- it has
+    # never actually exercised the real user-facing path. Before this, the ONLY thing that
+    # ever hit /triage was deploy.yml's own smoke test, and only at deploy time; between
+    # deploys, a regression in the actual inference path (a broken model file, a Groq API
+    # change, a serialization bug) had no standing check at all. This job closes that gap on
+    # its own 6-hourly schedule (see the second `cron:` entry above) rather than every 30min:
+    # /triage calls Groq for real, unlike /health.
+    #
+    # Cost is not a real concern despite that: this reuses the EXACT SAME synthetic payload
+    # deploy.yml's smoke test has used on every deploy since it was written (repo=
+    # microsoft/vscode, same title/body), and app.py wires an LLMCache keyed on request
+    # content in front of the Groq call (_cache_hits_total/_cache_misses_total). That payload
+    # has almost certainly been cached since the first deploy that ran the smoke test, so this
+    # job's calls are expected to be cache hits, not new billed Groq tokens -- deliberately NOT
+    # varying the payload, precisely to keep hitting that cache instead of generating fresh
+    # spend on every run.
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 */6 * * *' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: POST /triage with a synthetic issue, fail on non-200 or empty prediction
+        run: |
+          RESP=$(curl -sS -w "\n%{http_code}" --max-time 60 -X POST "${{ env.SERVICE_URL }}/triage" \
+            -H "Content-Type: application/json" \
+            -d '{"repo":"microsoft/vscode","title":"Extension host crashes on startup","body":"Every time I open VS Code the extension host process terminates immediately."}')
+          HTTP_CODE=$(echo "$RESP" | tail -1)
+          BODY=$(echo "$RESP" | sed '$d')
+          echo "HTTP $HTTP_CODE"
+          echo "$BODY"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::/triage returned HTTP $HTTP_CODE -- the real user-facing inference path is broken, even if /health is reporting OK."
+            exit 1
+          fi
+          COMPONENT=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin).get('predicted_component',''))" 2>/dev/null || echo "")
+          if [ -z "$COMPONENT" ]; then
+            echo "::error::/triage returned 200 but predicted_component is empty/missing -- degraded, not down. Same failure shape as the /health status!=ok case."
+            exit 1
+          fi
+          echo "Triage check passed -- predicted_component=$COMPONENT"

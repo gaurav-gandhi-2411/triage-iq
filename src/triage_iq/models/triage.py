@@ -1,7 +1,7 @@
 """System 4 — LLM Triage Assistant.
 
 Integrates Systems 1–3 to produce a structured TriagePlan for each incoming
-GitHub issue. Uses Groq (llama-3.1-8b-instant) with 2-shot examples and
+GitHub issue. Uses Groq (openai/gpt-oss-20b) with 2-shot examples and
 Pydantic-validated JSON output.
 """
 
@@ -222,7 +222,10 @@ class TriageAssistant:
         predictor,
         train_df: pd.DataFrame,
         groq_api_key: str | None = None,
-        model: str = "llama-3.1-8b-instant",
+        # Groq deprecated llama-3.1-8b-instant on 2026-08-16 (announced 2026-06-17);
+        # this is their own documented replacement (console.groq.com/docs/deprecations),
+        # same fast/cheap tier, same OpenAI-compatible chat-completions API shape.
+        model: str = "openai/gpt-oss-20b",
         temperature: float = 0.0,
         max_tokens: int = 1024,
         seed: int = 42,

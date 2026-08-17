@@ -1,6 +1,6 @@
 """LLM-as-judge evaluation for System 4 triage plans.
 
-Judge model: llama-3.1-70b-versatile (Groq) or any sufficiently capable model.
+Judge model: openai/gpt-oss-120b (Groq) or any sufficiently capable model.
 Rubric applied per triage plan; results averaged across the gold set.
 """
 
@@ -148,7 +148,7 @@ def retrieval_only_baseline(issue: pd.Series, detector, k: int = 5) -> dict:
 class TriageJudge:
     """LLM-as-judge evaluator.
 
-    Uses a stronger model (llama-3.3-70b-versatile or similar) to score
+    Uses a stronger model (openai/gpt-oss-120b or similar) to score
     each triage plan against the gold standard rubric.
 
     provider="groq"   uses GROQ_API_KEY.
@@ -162,7 +162,10 @@ class TriageJudge:
     def __init__(
         self,
         groq_api_key: str | None = None,
-        model: str = "llama-3.3-70b-versatile",
+        # Groq deprecated llama-3.3-70b-versatile on 2026-08-16; this is their own
+        # documented replacement (console.groq.com/docs/deprecations) in the same
+        # "stronger judge" size class.
+        model: str = "openai/gpt-oss-120b",
         temperature: float = 0.0,
         provider: str = "groq",
         gemini_api_key: str | None = None,

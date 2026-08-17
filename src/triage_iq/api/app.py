@@ -40,8 +40,11 @@ _RESOLUTION_MODEL_BEATS_NAIVE: dict[str, bool] = {
     "kubernetes/kubernetes": True,   # improvement +2.1% vs naive; bucket model 50 rounds
 }
 
-# llama-3.1-8b-instant pricing (per million tokens, as of 2025)
-_GROQ_PRICE_PER_MTOK = 0.27
+# openai/gpt-oss-20b pricing (per million tokens, as of 2026-08 -- Groq's own docs;
+# blended input($0.075)/output($0.30) average used here since this constant is a
+# single rate). Was llama-3.1-8b-instant pricing before Groq deprecated that model
+# 2026-08-16 and triage.py's default model was updated to match (Item G1).
+_GROQ_PRICE_PER_MTOK = 0.1875
 
 # ---------------------------------------------------------------------------
 # Prometheus custom metrics

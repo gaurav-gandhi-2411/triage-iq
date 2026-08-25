@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from triage_iq.models.grounding import verify_plan_grounding
+from triage_iq.models.grounding import verify_declared_attribution, verify_plan_grounding
 
 logger = logging.getLogger(__name__)
 
@@ -282,12 +282,36 @@ class TriageAssistant:
         )
         retrieved_numbers = {s["number"] for s in signals["similar_raw"]}
         report = verify_plan_grounding(plan, signals["classifier_top3"], retrieved_numbers)
+        component_grounded = report.component_grounded
+        component_reason = report.component_reason
+        # ADR-0020 attribution affordance (2026-08-23): a component that deviates from
+        # classifier_top3 is not automatically a fabrication if the model HONESTLY
+        # declared the deviation (component_source="model_override" with a non-empty
+        # component_override_reason) -- that is exactly the "way to declare it
+        # deliberately" the attribution schema exists for. Only takes effect when
+        # declared_attribution is populated (TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1); the
+        # legacy (no-attribution) prompt path leaves plan.declared_attribution None, so
+        # this branch never fires there and an undeclared deviation is still flagged
+        # exactly as before. A DECLARED "classifier_top3" source that turns out false
+        # (verify_declared_attribution's "misattributed" class) is deliberately NOT
+        # rescued here -- that is the model claiming it used the classifier when it
+        # didn't, a real and arguably worse violation, not a false positive to suppress.
+        if not component_grounded and plan.declared_attribution is not None:
+            da_report = verify_declared_attribution(
+                plan, signals["classifier_top3"], retrieved_numbers
+            )
+            if (
+                da_report.component_declaration == "honest_override"
+                and plan.declared_attribution.component_override_reason.strip()
+            ):
+                component_grounded = True
+                component_reason = "model_override (declared)"
         plan.grounding_status = GroundingStatus(
-            component_grounded=report.component_grounded,
-            component_reason=report.component_reason,
+            component_grounded=component_grounded,
+            component_reason=component_reason,
             similar_issue_refs=report.similar_issue_refs,
             ungrounded_refs=report.ungrounded_refs,
-            all_grounded=report.all_grounded,
+            all_grounded=component_grounded and len(report.ungrounded_refs) == 0,
         )
         elapsed = time.perf_counter() - t0
 
@@ -474,11 +498,19 @@ class TriageAssistant:
             build_few_shot_examples_legacy,
         )
 
-        # ADR-0020: attribution prompt is opt-in via TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1, off by
-        # default so eval/cassettes/eval_cassette.json (recorded pre-attribution) and
-        # reports/eval_baseline.json stay valid without re-baselining. See ADR-0020 "Baseline
-        # decision". Same env-var-gated pattern as TRIAGE_PROMPT_INCLUDE_BUCKET above.
-        _include_attribution = os.environ.get("TRIAGE_PROMPT_INCLUDE_ATTRIBUTION") == "1"
+        # ADR-0020 (2026-08-23 update): attribution prompt is now ON by default -- the
+        # openai/gpt-oss-20b synthesis model (Item G1) deviates from classifier_top3 far
+        # more often than the retired llama models did, and without this affordance the
+        # model has no way to declare such a deviation deliberately, so grounding
+        # verification (fabrication_rate) flags every one as a fabrication even when the
+        # model's reasoning is sound. Was opt-in/off-by-default so the pre-attribution
+        # cassette + baseline stayed valid without re-baselining (original ADR-0020
+        # "Baseline decision") -- moot now that both were re-recorded from scratch for the
+        # model swap anyway. TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=0 explicitly opts back into
+        # the frozen legacy prompt (rollback path, e.g. if the attribution schema itself
+        # needs investigating) -- same env-var-gated pattern as TRIAGE_PROMPT_INCLUDE_BUCKET
+        # above, just flipped which value is the default.
+        _include_attribution = os.environ.get("TRIAGE_PROMPT_INCLUDE_ATTRIBUTION", "1") != "0"
         system_prompt = SYSTEM_PROMPT if _include_attribution else SYSTEM_PROMPT_LEGACY
         few_shots = build_few_shot_examples() if _include_attribution else build_few_shot_examples_legacy()
 
@@ -516,7 +548,24 @@ class TriageAssistant:
                                 self._parse_plan(raw2), raw2, usage2, "parse_retry_succeeded", True,
                             )
                         except (json.JSONDecodeError, ValueError):
-                            pass  # retry entry also corrupted — fall through to live call
+                            # BUG FIXED 2026-08-25: both the cached primary AND cached
+                            # retry response are genuinely unparseable -- this is exactly
+                            # the same case record_cassettes.py resolves with
+                            # _make_fallback_plan() below (search "using fallback plan"),
+                            # not a cache miss. The code used to `pass` through here,
+                            # falling all the way to the live `_groq_completion(messages)`
+                            # call further down -- which a strict-mode replay cache has no
+                            # real credentials for, so every one of this run's genuine
+                            # parse-failure cases crashed with a Groq 401 instead of
+                            # reproducing the exact fallback plan that was recorded.
+                            # Found live: cassette replay of the freshly-completed #101
+                            # recording crashed on the first such issue (k8s-13435) with
+                            # groq.AuthenticationError, not CassetteMissError -- proving
+                            # this path, not a real content mismatch.
+                            return (
+                                self._make_fallback_plan(signals), raw2, usage2,
+                                "parse_failure", True,
+                            )
 
         raw, usage = self._groq_completion(messages)
         if cache is not None and cache_key is not None:

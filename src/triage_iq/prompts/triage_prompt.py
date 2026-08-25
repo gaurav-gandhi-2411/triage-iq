@@ -34,6 +34,17 @@ ATTRIBUTION RULES:
 2. Every issue number you cite anywhere in your plan MUST be one of the numbers listed in SYSTEM 2. Never invent issue numbers.
 3. In declared_attribution, cite ONLY the SYSTEM-2 issues that actually support the specific claim. Citing every retrieved issue indiscriminately is wrong. Empty lists are honest when no retrieved issue supports the claim.
 
+RESOLUTION ESTIMATE CONSISTENCY:
+expected_resolution_summary and expected_resolution_lower_days/expected_resolution_upper_days describe
+the SAME estimate and must not contradict each other. expected_resolution_lower_days and
+expected_resolution_upper_days are ALWAYS in days, never weeks or months. Before writing the summary,
+convert any week/month phrasing to days (1 week = 7 days, 1 month = 30 days) and check that the range
+you describe in prose actually overlaps [expected_resolution_lower_days, expected_resolution_upper_days] —
+do not write "1-3 weeks" alongside a days interval of [1, 7]; that is a 7-21 day claim contradicting a
+1-7 day number. If the numeric interval spans multiple weeks, say so in days or explicitly name the
+unit ("10-30 days (roughly 1.5-4 weeks)"), never leave the unit ambiguous in a way that could be misread
+as days when you mean weeks or vice versa.
+
 Schema:
 {
   "predicted_component": "string — the single best component label for this issue",
@@ -45,7 +56,7 @@ Schema:
       "relevance_note": "string — one sentence on why this is related"
     }
   ],
-  "expected_resolution_summary": "string — human-readable estimate (e.g., '2–7 days typical for this component')",
+  "expected_resolution_summary": "string — human-readable estimate IN DAYS, consistent with expected_resolution_lower_days/upper_days below (e.g., '2–7 days typical for this component')",
   "expected_resolution_lower_days": "number — optimistic estimate in days",
   "expected_resolution_upper_days": "number — conservative estimate in days",
   "priority_guess": "one of: low | medium | high",

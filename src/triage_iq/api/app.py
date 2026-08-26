@@ -25,10 +25,11 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from ..config import get_settings
+from ..model_config import TRIAGE_PRICE_PER_MTOK
 from ..models.abstention import compute_abstention_status
 from ..models.triage import ConformalIntervalResult, TriagePlan
 from .loader import ModelStore
-from .schemas import HealthResponse, ServiceInfoResponse, TriageRequest
+from .schemas import DependencyStatus, HealthResponse, ServiceInfoResponse, TriageRequest
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +41,7 @@ _RESOLUTION_MODEL_BEATS_NAIVE: dict[str, bool] = {
     "kubernetes/kubernetes": True,   # improvement +2.1% vs naive; bucket model 50 rounds
 }
 
-# llama-3.1-8b-instant pricing (per million tokens, as of 2025)
-_GROQ_PRICE_PER_MTOK = 0.27
+_GROQ_PRICE_PER_MTOK = TRIAGE_PRICE_PER_MTOK
 
 # ---------------------------------------------------------------------------
 # Prometheus custom metrics
@@ -314,7 +314,11 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
             error=str(exc),
         )
         logger.exception("Triage failed for repo=%s", body.repo)
-        raise HTTPException(status_code=500, detail="Internal server error") from exc
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Internal server error", "request_id": request_id},
+            headers={"X-Request-Id": request_id},
+        ) from exc
 
     # Attach conformal interval — fail-safe (never blocks the response)
     try:
@@ -399,16 +403,59 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     return JSONResponse(content=result)
 
 
+def _check_model_store(store: ModelStore) -> DependencyStatus:
+    if store.repos:
+        return DependencyStatus(
+            name="model_store", healthy=True, detail=f"{len(store.repos)} repo(s) loaded"
+        )
+    return DependencyStatus(name="model_store", healthy=False, detail="no repos loaded")
+
+
+def _check_groq(cfg) -> DependencyStatus:  # noqa: ANN001 -- Settings, avoids importing for a type-only use
+    """Cheap authenticated Groq call — GET /models lists the catalog, costs zero tokens.
+
+    This is deliberately the only thing in this module that proves the Groq key is
+    actually accepted, not just present (see groq_key_present's docstring in schemas.py).
+    The 2026-08-16/26 outages were both invisible to the old /health precisely because
+    it never made this call. See ADR / PR discussion for the incident this closes.
+    """
+    try:
+        from groq import Groq
+
+        client = Groq(api_key=cfg.groq_api_key.get_secret_value(), timeout=5.0)
+        client.models.list()
+        return DependencyStatus(name="groq", healthy=True, detail="model catalog reachable, key accepted")
+    except Exception as exc:
+        return DependencyStatus(name="groq", healthy=False, detail=f"{type(exc).__name__}: {exc}")
+
+
 @app.get("/health", response_model=HealthResponse)
-def health(request: Request) -> HealthResponse:
+def health(request: Request, deps: int = 0) -> HealthResponse | JSONResponse:
+    """Liveness by default (deps=0, always fast, never calls Groq — used by Cloud Run's
+    startupProbe). Pass ?deps=1 for a real readiness check: exercises Groq with a live,
+    zero-cost call and returns 503 if any dependency is unhealthy. Monitoring should call
+    ?deps=1, not the bare liveness form — a check that cannot fail when the product is
+    down is not a health check.
+    """
     cfg = get_settings()
     store: ModelStore = request.app.state.store
-    return HealthResponse(
-        status="ok",
+
+    dependencies: list[DependencyStatus] | None = None
+    all_healthy = True
+    if deps:
+        dependencies = [_check_model_store(store), _check_groq(cfg)]
+        all_healthy = all(d.healthy for d in dependencies)
+
+    resp = HealthResponse(
+        status="ok" if all_healthy else "degraded",
         repos_loaded=store.repos,
         groq_key_present=bool(cfg.groq_api_key.get_secret_value()),
         uptime_s=round(time.monotonic() - store.start_time, 1),
+        dependencies=dependencies,
     )
+    if not all_healthy:
+        return JSONResponse(status_code=503, content=resp.model_dump())
+    return resp
 
 
 @app.get("/eval/summary")

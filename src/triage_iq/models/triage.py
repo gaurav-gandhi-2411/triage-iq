@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from triage_iq.model_config import TRIAGE_MODEL
 from triage_iq.models.grounding import verify_plan_grounding
 
 logger = logging.getLogger(__name__)
@@ -222,7 +223,7 @@ class TriageAssistant:
         predictor,
         train_df: pd.DataFrame,
         groq_api_key: str | None = None,
-        model: str = "llama-3.1-8b-instant",
+        model: str = TRIAGE_MODEL,
         temperature: float = 0.0,
         max_tokens: int = 1024,
         seed: int = 42,

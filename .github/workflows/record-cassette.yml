@@ -136,6 +136,10 @@ jobs:
           echo "::add-mask::$KEY"
           echo "GROQ_API_KEY=$KEY" >> "$GITHUB_ENV"
 
+      - name: Read configured triage model (single source of truth)
+        run: |
+          echo "TRIAGE_MODEL=$(PYTHONPATH=src python -c 'from triage_iq.model_config import TRIAGE_MODEL; print(TRIAGE_MODEL)')" >> "$GITHUB_ENV"
+
       - name: Pre-flight Groq TPD quota check (fail fast on an already-exhausted daily quota)
         run: |
           # CORRECTED 2026-07-25 after run 30148079525 false-aborted: the x-ratelimit-*-tokens
@@ -153,7 +157,7 @@ jobs:
             -X POST https://api.groq.com/openai/v1/chat/completions \
             -H "Authorization: Bearer $GROQ_API_KEY" \
             -H "Content-Type: application/json" \
-            -d '{"model":"llama-3.1-8b-instant","messages":[{"role":"user","content":"hi"}],"max_tokens":1}')
+            -d "{\"model\":\"$TRIAGE_MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],\"max_tokens\":1}")
           HTTP_CODE=$(echo "$RESP" | tail -1)
           BODY=$(echo "$RESP" | sed '$d')
           echo "HTTP $HTTP_CODE"

@@ -11,8 +11,9 @@ single place to change it. This module exists so the next deprecation is a
 one-line change.
 """
 
-TRIAGE_MODEL: str = "llama-3.1-8b-instant"
-JUDGE_MODEL: str = "llama-3.3-70b-versatile"
+TRIAGE_MODEL: str = "openai/gpt-oss-20b"
+JUDGE_MODEL: str = "openai/gpt-oss-120b"
 
-# USD per million tokens, blended in/out. Cost-estimation only; not billing-authoritative.
-TRIAGE_PRICE_PER_MTOK: float = 0.27
+# USD per million tokens, blended in/out (openai/gpt-oss-20b: $0.075 in / $0.30 out,
+# per Groq's own docs as of 2026-08). Cost-estimation only; not billing-authoritative.
+TRIAGE_PRICE_PER_MTOK: float = 0.1875

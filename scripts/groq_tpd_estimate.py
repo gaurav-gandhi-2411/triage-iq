@@ -151,7 +151,7 @@ def live_probe() -> None:
             "-H", f"Authorization: Bearer {key}",
             "-H", "Content-Type: application/json",
             "-d", json.dumps({
-                "model": "llama-3.1-8b-instant",
+                "model": "openai/gpt-oss-20b",
                 "messages": [{"role": "user", "content": "hi"}],
                 "max_tokens": 1,
             }),

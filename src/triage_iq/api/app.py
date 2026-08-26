@@ -367,12 +367,26 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
 
     total_ms = round((time.perf_counter() - t_start) * 1000, 1)
     llm_status = meta.get("llm_status", "ok")
-    req_status = "fallback" if llm_status == "parse_failure" else "success"
+    llm_status_reason = meta.get("llm_status_reason")
+    # Both fallback paths return a TriagePlan built by _make_fallback_plan (no real LLM
+    # synthesis): a JSON-parse failure after retry, and (new) Groq itself being unavailable.
+    # parse_retry_succeeded is NOT degraded -- that plan IS real LLM content, just needed
+    # one retry. See Part A of the 2026-08-27 diagnostic session.
+    is_degraded = llm_status in ("parse_failure", "unavailable")
+    req_status = "fallback" if is_degraded else "success"
 
     _triage_requests_total.labels(repo=body.repo, status=req_status).inc()
     _triage_latency_seconds.observe(total_ms / 1000.0)
     if llm_status != "ok":
         _triage_llm_fallback_total.inc()
+    if is_degraded:
+        # WARNING, not INFO -- this is the line Cloud Logging alerting should filter on.
+        # The regular _log_request call below is INFO and would not trigger a severity-based
+        # alert; see D3 of the 2026-08-27 session for why nothing currently alerts on this.
+        logger.warning(
+            "Degraded /triage response for repo=%s request_id=%s reason=%s (llm_status=%s)",
+            body.repo, request_id, llm_status_reason, llm_status,
+        )
     tokens = (meta.get("groq_tokens_prompt") or 0) + (meta.get("groq_tokens_completion") or 0)
     if tokens:
         _triage_groq_tokens_total.inc(tokens)
@@ -397,10 +411,15 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     result = plan.model_dump()
     result["_request_id"] = request_id
     result["_llm_status"] = llm_status
+    # Explicit, machine-readable degradation signal -- never leave a degraded response
+    # indistinguishable from a full one. See Part A of the 2026-08-27 diagnostic session.
+    result["degraded"] = is_degraded
+    result["llm_status"] = {"state": llm_status, "reason": llm_status_reason}
     result["_llm_cache_hit"] = meta.get("llm_cache_hit")
     result["classifier_top3"] = meta.get("classifier_top3")
     result["resolution_model_beats_naive"] = _RESOLUTION_MODEL_BEATS_NAIVE.get(body.repo, True)
-    return JSONResponse(content=result)
+    headers = {"X-TriageIQ-Degraded": "true"} if is_degraded else {}
+    return JSONResponse(content=result, headers=headers)
 
 
 def _check_model_store(store: ModelStore) -> DependencyStatus:

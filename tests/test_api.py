@@ -195,6 +195,74 @@ def test_triage_propagates_assistant_error(client):
     assert r.status_code == 500
 
 
+def _fake_degraded_plan() -> TriagePlan:
+    """What TriageAssistant.triage_with_metadata now returns (not raises) when Groq is
+    unavailable -- see src/triage_iq/models/triage.py's _make_fallback_plan/_is_groq_unavailable."""
+    return TriagePlan(
+        predicted_component="editor",
+        component_confidence=0.55,
+        similar_issues=[],
+        expected_resolution_summary="Groq unavailable (AuthenticationError); estimate from predictor only.",
+        expected_resolution_lower_days=1.0,
+        expected_resolution_upper_days=7.0,
+        resolution_bucket="days",
+        resolution_confidence_pct=40.0,
+        priority_guess="medium",
+        priority_rationale="Groq unavailable (AuthenticationError) — priority defaulting to medium.",
+        suggested_assignee_class="unknown",
+        suggested_next_steps=["Manual triage required — automated LLM synthesis unavailable."],
+        triage_summary="Automated triage degraded: Groq unavailable (AuthenticationError). "
+                       "Component from TF-IDF only; manual review recommended.",
+    )
+
+
+def _fake_degraded_meta() -> dict:
+    meta = _fake_meta()
+    meta.update({
+        "llm_status": "unavailable",
+        "llm_status_reason": "AuthenticationError",
+        "groq_tokens_prompt": 0,
+        "groq_tokens_completion": 0,
+        "estimated_cost_usd": 0.0,
+        "duplicate_count": 0,
+    })
+    return meta
+
+
+def test_triage_degraded_response_returns_200_with_explicit_flag(client):
+    """This is the behavior Part A adds: a Groq-unavailable /triage call is no longer a
+    500 -- it's a 200 carrying an explicit, machine-readable degradation signal. A degraded
+    response indistinguishable from a full one is the exact failure this test guards against."""
+    app.state.store.get.return_value.assistant.triage_with_metadata.return_value = (
+        _fake_degraded_plan(), _fake_degraded_meta(),
+    )
+    r = client.post("/triage", json={
+        "repo": "microsoft/vscode",
+        "title": "Some issue",
+    })
+    assert r.status_code == 200
+    assert r.headers.get("X-TriageIQ-Degraded") == "true"
+    body = r.json()
+    assert body["degraded"] is True
+    assert body["llm_status"] == {"state": "unavailable", "reason": "AuthenticationError"}
+    # Signals-only content (classifier/resolution) must still be present and real
+    assert body["predicted_component"] == "editor"
+    assert body["similar_issues"] == []
+
+
+def test_triage_non_degraded_response_has_no_degraded_flag(client):
+    """A normal, full response must not carry the degradation header, and degraded=False."""
+    r = client.post("/triage", json={
+        "repo": "microsoft/vscode",
+        "title": "Some issue",
+    })
+    assert r.status_code == 200
+    assert "X-TriageIQ-Degraded" not in r.headers
+    body = r.json()
+    assert body["degraded"] is False
+    assert body["llm_status"] == {"state": "ok", "reason": None}
+
+
 def test_triage_error_carries_request_id(client):
     """The client must be able to correlate a 500 with a server-side log line -- see
     the 2026-08-26 diagnostic session's Part 4 SPOF audit: before this, the error body

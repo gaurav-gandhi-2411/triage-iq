@@ -197,8 +197,50 @@ class TriagePlan(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Main assistant class
+# Graceful degradation — Groq-origin failures that mean "the LLM stage is down"
 # ---------------------------------------------------------------------------
+
+
+def _is_groq_unavailable(exc: BaseException) -> bool:
+    """True for Groq-origin failures that should degrade to a signals-only fallback plan
+    (HTTP 200, degraded=True) rather than propagate to a 500.
+
+    Deliberately EXCLUDES BadRequestError/NotFoundError/PermissionDeniedError/
+    UnprocessableEntityError/ConflictError and a bare APIStatusError on an unmapped code --
+    those mean something is wrong with *this service's* request (a bad payload, a deprecated
+    model string, an access-scope problem), not that Groq itself is unavailable. Silently
+    degrading those would mask a real bug behind an always-200 response instead of surfacing
+    it as the 500 it actually is. See Part A of the 2026-08-27 diagnostic session for the
+    full exception-class verification against the installed groq SDK's status->exception
+    dispatch table (groq/_client.py's _make_status_error).
+    """
+    try:
+        from groq import (
+            APIConnectionError,
+            AuthenticationError,
+            InternalServerError,
+            RateLimitError,
+        )
+    except ImportError:
+        return False
+
+    # APIConnectionError's own subclass APITimeoutError is covered by this isinstance check.
+    return isinstance(exc, (AuthenticationError, APIConnectionError, RateLimitError, InternalServerError))
+
+
+def _is_tpd_error(exc: BaseException) -> bool:
+    """True only for genuine per-day token exhaustion (retrying within the same day is
+    doomed -- Groq's TPD window doesn't roll over on any timescale a request-time retry
+    backoff can bridge). Same detection this codebase already uses in
+    eval/record_cassettes.py's own _is_tpd_error -- moved here as the shared, canonical
+    copy so eval/ imports from src/ instead of duplicating the string-match logic.
+
+    Groq does not expose remaining daily tokens on a successful response at all; a TPD
+    hit is only distinguishable from a TPM hit by the wording in the 429 error body
+    ("... on tokens per day (TPD): Limit 500000, Used ...").
+    """
+    msg = str(exc).lower()
+    return any(kw in msg for kw in ("tokens per day", "daily limit", "tpd"))
 
 
 class TriageAssistant:
@@ -264,7 +306,23 @@ class TriageAssistant:
         """Like triage() but also returns per-system timing and token usage."""
         t0 = time.perf_counter()
         signals = self._collect_signals(issue)
-        plan, raw, usage, llm_status, cache_hit = self._call_llm_verbose(signals)
+
+        llm_status_reason: str | None = None
+        try:
+            plan, raw, usage, llm_status, cache_hit = self._call_llm_verbose(signals)
+        except Exception as exc:
+            if not _is_groq_unavailable(exc):
+                raise  # programming/config errors (bad request, 404 model-not-found, ...) still 500
+            logger.warning(
+                "Groq unavailable for #%s (%s: %s) — degrading to signals-only fallback plan "
+                "(classifier + retrieval + resolution predictor; no LLM synthesis).",
+                issue.get("number", "?"), type(exc).__name__, exc,
+            )
+            llm_status_reason = type(exc).__name__
+            plan = self._make_fallback_plan(signals, reason=f"Groq unavailable ({llm_status_reason})")
+            usage, cache_hit = {}, False
+            llm_status = "unavailable"
+
         # Write back bucket-classifier output — the LLM prompt excludes these by default
         # (TRIAGE_PROMPT_INCLUDE_BUCKET off), so without this the Pydantic field default
         # (33.0) is returned for every request regardless of repo. See ADR-0009.
@@ -337,6 +395,7 @@ class TriageAssistant:
             "resolution_bucket": plan.resolution_bucket,
             "resolution_confidence_pct": plan.resolution_confidence_pct,
             "llm_status": llm_status,
+            "llm_status_reason": llm_status_reason,
             "llm_cache_hit": cache_hit,
             "classifier_top3": signals["classifier_top3"],
         }
@@ -608,24 +667,34 @@ class TriageAssistant:
 
         return plan, raw, usage, llm_status, False
 
-    def _make_fallback_plan(self, signals: dict) -> TriagePlan:
-        """Structured fallback when LLM JSON cannot be parsed after retry."""
+    def _make_fallback_plan(
+        self,
+        signals: dict,
+        reason: str = "LLM response unparseable after retry",
+    ) -> TriagePlan:
+        """Structured fallback built from Systems 1-3 alone (classifier + retrieval +
+        resolution predictor) -- no LLM synthesis. Used both when the LLM's JSON can't be
+        parsed after retry, and (see triage_with_metadata) when Groq itself is unavailable.
+        `reason` must describe the ACTUAL cause -- it lands verbatim in triage_summary and
+        priority_rationale, which a caller reads as-is; a hardcoded "JSON parse failed"
+        string would be wrong and misleading for the Groq-unavailable case.
+        """
         top = (signals.get("classifier_top3") or [{}])[0]
         return TriagePlan(
             predicted_component=str(top.get("label", "unknown")),
             component_confidence=float(top.get("confidence", 0.0)),
             similar_issues=[],
-            expected_resolution_summary="LLM response unparseable; estimate from predictor only.",
+            expected_resolution_summary=f"{reason}; estimate from predictor only.",
             expected_resolution_lower_days=float(signals.get("lo_days", 1.0)),
             expected_resolution_upper_days=float(signals.get("hi_days", 30.0)),
             resolution_bucket=signals.get("resolution_bucket", "days"),
             resolution_confidence_pct=float(signals.get("resolution_conf_pct", 33.0)),
             priority_guess="medium",
-            priority_rationale="LLM parse failure — priority defaulting to medium.",
+            priority_rationale=f"{reason} — priority defaulting to medium.",
             suggested_assignee_class="unknown",
-            suggested_next_steps=["Manual triage required — LLM response parsing failed."],
+            suggested_next_steps=["Manual triage required — automated LLM synthesis unavailable."],
             triage_summary=(
-                "Automated triage degraded: LLM JSON parse failed after retry. "
+                f"Automated triage degraded: {reason}. "
                 "Component from TF-IDF only; manual review recommended."
             ),
         )
@@ -655,8 +724,13 @@ class TriageAssistant:
                         "completion_tokens": resp.usage.completion_tokens,
                     }
                 return content, usage
-            except RateLimitError:
-                if attempt == 5:
+            except RateLimitError as e:
+                # A daily-cap 429 cannot be fixed by a request-time backoff -- the window
+                # doesn't reopen for hours. Burning all 6 attempts (up to ~3.5 minutes) on a
+                # doomed retry before degrading is pure added latency on every request until
+                # the day rolls over. Raise immediately and let triage_with_metadata's
+                # _is_groq_unavailable path degrade right away instead.
+                if attempt == 5 or _is_tpd_error(e):
                     raise
                 jitter = backoff * (0.5 + 0.5 * (attempt / 5))
                 logger.warning("Rate limit hit — sleeping %.1fs (attempt %d/6)", jitter, attempt + 1)

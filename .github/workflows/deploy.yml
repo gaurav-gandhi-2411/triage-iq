@@ -191,7 +191,18 @@ jobs:
             echo "FAILED: predicted_component is empty"
             exit 1
           fi
-          echo "Triage check passed — predicted_component=$COMPONENT"
+          # Part A (2026-08-27): a Groq-unavailable /triage call now returns HTTP 200 with a
+          # signals-only fallback plan (degraded=true), not a 500 -- `curl -sf` alone would
+          # treat that as a passing smoke test and this step would promote a candidate whose
+          # LLM stage is completely dead to 100% live traffic. Must check the body, not just
+          # the status code.
+          DEGRADED=$(echo "$TBODY" | python3 -c "import sys,json; print(json.load(sys.stdin).get('degraded', False))")
+          if [ "$DEGRADED" = "True" ]; then
+            LLM_STATUS=$(echo "$TBODY" | python3 -c "import sys,json; print(json.load(sys.stdin)['llm_status'])")
+            echo "FAILED: /triage returned degraded=true — Groq unavailable: $LLM_STATUS"
+            exit 1
+          fi
+          echo "Triage check passed — predicted_component=$COMPONENT, degraded=false"
 
       - name: Promote candidate to live traffic
         id: promote

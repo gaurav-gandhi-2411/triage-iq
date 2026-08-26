@@ -72,7 +72,7 @@ from frozen_retriever import build_frozen_retrievers
 from triage_iq.models.component_classifier import load_classifier
 from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore, TriageJudge
 from triage_iq.models.resolution import ResolutionTimePredictor
-from triage_iq.models.triage import TriageAssistant
+from triage_iq.models.triage import TriageAssistant, _is_tpd_error
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -112,12 +112,6 @@ JUDGE_PROVIDER = "ollama"
 # other than recovery-speed is actually broken.
 TPD_WAIT_BUFFER = 15.0
 MAX_CONSECUTIVE_STALLS = 20
-
-
-def _is_tpd_error(exc: Exception) -> bool:
-    """True only for genuine per-day token exhaustion (cannot retry same day)."""
-    msg = str(exc).lower()
-    return any(kw in msg for kw in ("tokens per day", "daily limit", "tpd"))
 
 
 def _is_rate_limit_error(exc: Exception) -> bool:
@@ -333,9 +327,64 @@ def main() -> None:
             triage_error = None
             try:
                 plan, meta = assistant.triage_with_metadata(row)
+                if meta.get("llm_status") == "unavailable":
+                    # Part A/B (2026-08-27): triage_with_metadata now swallows Groq-unavailable
+                    # exceptions (auth/connection/rate-limit-exhausted/5xx) into a signals-only
+                    # fallback plan for production's benefit (HTTP 200, degraded=True instead of
+                    # a 500) -- meaning a RateLimitError (TPD or TPM) NO LONGER reaches this
+                    # except block at all; it's caught one layer deeper and returned as a
+                    # normal-looking (plan, meta) pair instead. A recording run must still never
+                    # write that fallback plan into the cassette as if it were real Groq output.
+                    #
+                    # Reason-dependent handling, not a blanket stop: a RateLimitError is exactly
+                    # the per-issue-deferrable case this pass's queue logic already exists for
+                    # (see the tpd_mid_synthesis branch below) -- defer and keep going, don't
+                    # throw away the rest of this pass's queue on a budget condition only THIS
+                    # call hit. Anything else (AuthenticationError/APIConnectionError/
+                    # InternalServerError) is not rate-limit-shaped; deferring won't help, so it
+                    # hard-stops like the connection-lost branch below always has.
+                    reason = meta.get("llm_status_reason", "unknown")
+                    if reason == "RateLimitError":
+                        last_tpd_exc = RuntimeError(f"degraded: {reason}")
+                        logger.warning(
+                            "  %s deferred: Groq rate-limited (%s) mid-synthesis (after %d "
+                            "calls this pass, cassette has %d entries) -- deferring to a later "
+                            "pass rather than burning the rest of this pass's queue.",
+                            issue_id, reason, n_synthesis_recorded, cassette.stats()["entries"],
+                        )
+                        prior = deferred_map.get(issue_id, {})
+                        deferred_map[issue_id] = {
+                            "reason": "rate_limited_mid_synthesis",
+                            "attempts": prior.get("attempts", 0) + 1,
+                            "last_groq_error": reason,
+                        }
+                        checkpoint["deferred"] = deferred_map
+                        save_checkpoint(checkpoint)
+                        deferred_ids_this_pass.append(issue_id)
+                        budget_exhausted_this_pass = True
+                        break
+                    logger.error(
+                        "STOP: Groq unavailable (%s) after %d synthesis calls. Cassette has %d "
+                        "entries. The degraded fallback plan was NOT recorded.",
+                        reason, n_synthesis_recorded, cassette.stats()["entries"],
+                    )
+                    save_checkpoint(checkpoint)
+                    print(f"\n=== GROQ UNAVAILABLE ({reason}) ===")
+                    print(f"Synthesis recorded (this pass): {n_synthesis_recorded}")
+                    print(f"Judge recorded (this pass): {n_judge_recorded}")
+                    print(f"Cassette entries: {cassette.stats()['entries']}")
+                    sys.exit(1)
                 n_synthesis_recorded += 1
                 logger.info("  synthesis → %s (cache_hit=%s)", plan.predicted_component, meta.get("llm_cache_hit"))
             except Exception as exc:
+                # NOTE: with graceful degradation (feat/triage-graceful-degradation) in place,
+                # a RateLimitError/APIConnectionError/AuthenticationError/InternalServerError
+                # raised by _groq_completion is now caught INSIDE triage_with_metadata and
+                # returned as a normal (plan, meta) pair with llm_status="unavailable" -- see
+                # the check above -- so it no longer propagates as an exception here. This
+                # except block is a safety net for anything that still raises directly
+                # (a genuinely unexpected error, or a future code path that bypasses the
+                # degradation wrapping), not the primary TPD-handling path anymore.
                 if _is_tpd_error(exc):
                     last_tpd_exc = exc
                     logger.warning(

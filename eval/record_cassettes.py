@@ -220,6 +220,27 @@ def main() -> None:
         triage_error = None
         try:
             plan, meta = assistant.triage_with_metadata(row)
+            if meta.get("llm_status") == "unavailable":
+                # Part A (2026-08-27): triage_with_metadata now swallows Groq-unavailable
+                # exceptions (auth/connection/rate-limit-exhausted/5xx) into a signals-only
+                # fallback plan, for production's benefit (HTTP 200, degraded=True instead of
+                # a 500). A RECORDING run must never write that fallback plan into the
+                # cassette as if it were real Groq output -- treat it exactly like the raised
+                # exception this used to be, including the same hard-stop this script already
+                # applies to TPD/connection-loss (see the two branches below): the underlying
+                # cause is the same failure class, just now caught one layer deeper.
+                reason = meta.get("llm_status_reason", "unknown")
+                logger.error(
+                    "STOP: Groq unavailable (%s) after %d synthesis calls. Cassette has %d "
+                    "entries. The degraded fallback plan was NOT recorded.",
+                    reason, n_synthesis_recorded, cassette.stats()["entries"],
+                )
+                save_checkpoint({"done": checkpoint.get("done", {})})
+                print(f"\n=== GROQ UNAVAILABLE ({reason}) ===")
+                print(f"Synthesis recorded: {n_synthesis_recorded}")
+                print(f"Judge recorded: {n_judge_recorded}")
+                print(f"Cassette entries: {cassette.stats()['entries']}")
+                sys.exit(1)
             n_synthesis_recorded += 1
             logger.info("  synthesis → %s (cache_hit=%s)", plan.predicted_component, meta.get("llm_cache_hit"))
         except Exception as exc:

@@ -124,6 +124,65 @@ def test_is_groq_unavailable_classification():
     assert not _is_groq_unavailable(ValueError("unrelated"))
 
 
+def test_is_tpd_error_classification():
+    from triage_iq.models.triage import _is_tpd_error
+
+    tpd_msg = (
+        "Error code: 429 - {'error': {'message': 'Rate limit reached for ... on tokens "
+        "per day (TPD): Limit 200000, Used 199500, Requested 900. ...'}}"
+    )
+    tpm_msg = (
+        "Error code: 429 - {'error': {'message': 'Rate limit reached for ... on tokens "
+        "per minute (TPM): Limit 8000, Used 7950, Requested 900. ...'}}"
+    )
+    assert _is_tpd_error(RateLimitError(tpd_msg, response=_fake_response(429), body=None))
+    assert not _is_tpd_error(RateLimitError(tpm_msg, response=_fake_response(429), body=None))
+
+
+def test_groq_completion_does_not_retry_a_tpd_rate_limit():
+    """Part B1: a daily-cap 429 must raise immediately (0 sleeps) -- burning the 6-attempt
+    backoff (up to ~3.5 minutes) on a window that can't reopen until the day rolls over is
+    pure added latency on every request until then."""
+    assistant = _make_assistant()
+    tpd_msg = (
+        "Error code: 429 - {'error': {'message': 'Rate limit reached ... on tokens per "
+        "day (TPD): Limit 200000, Used 200000, Requested 500. ...'}}"
+    )
+    tpd_exc = RateLimitError(tpd_msg, response=_fake_response(429), body=None)
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.side_effect = tpd_exc
+    with (
+        patch("groq.Groq", return_value=mock_client),
+        patch("time.sleep") as mock_sleep,
+        pytest.raises(RateLimitError),
+    ):
+        assistant._groq_completion([{"role": "user", "content": "hi"}])
+    mock_sleep.assert_not_called()
+    assert mock_client.chat.completions.create.call_count == 1
+
+
+def test_groq_completion_still_retries_a_tpm_rate_limit():
+    """A per-minute 429 IS worth retrying -- the window reopens in under a minute."""
+    assistant = _make_assistant()
+    tpm_msg = (
+        "Error code: 429 - {'error': {'message': 'Rate limit reached ... on tokens per "
+        "minute (TPM): Limit 8000, Used 8000, Requested 500. ...'}}"
+    )
+    tpm_exc = RateLimitError(tpm_msg, response=_fake_response(429), body=None)
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.side_effect = tpm_exc
+    with (
+        patch("groq.Groq", return_value=mock_client),
+        patch("time.sleep") as mock_sleep,
+        pytest.raises(RateLimitError),
+    ):
+        assistant._groq_completion([{"role": "user", "content": "hi"}])
+    assert mock_sleep.call_count == 5  # attempts 0-4 sleep, attempt 5 raises
+    assert mock_client.chat.completions.create.call_count == 6
+
+
 def httpx_request():
     import httpx
 

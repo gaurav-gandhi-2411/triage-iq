@@ -39,7 +39,7 @@ from frozen_retriever import build_frozen_retrievers
 from triage_iq.models.component_classifier import load_classifier
 from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore, TriageJudge
 from triage_iq.models.resolution import ResolutionTimePredictor
-from triage_iq.models.triage import TriageAssistant
+from triage_iq.models.triage import TriageAssistant, _is_tpd_error
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -58,12 +58,6 @@ SYNTHESIS_DELAY = 1.5  # seconds between synthesis calls (8B model: high TPM, 1.
 JUDGE_DELAY = 0.0
 JUDGE_MODEL = "qwen3:8b"
 JUDGE_PROVIDER = "ollama"
-
-
-def _is_tpd_error(exc: Exception) -> bool:
-    """True only for genuine per-day token exhaustion (cannot retry same day)."""
-    msg = str(exc).lower()
-    return any(kw in msg for kw in ("tokens per day", "daily limit", "tpd"))
 
 
 def _is_rate_limit_error(exc: Exception) -> bool:

@@ -17,6 +17,7 @@ import pandas as pd
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from triage_iq.model_config import TRIAGE_MODEL
+from triage_iq.models.budget_guard import GroqBudgetExceeded, NoOpBudgetGuard
 from triage_iq.models.grounding import verify_plan_grounding
 
 logger = logging.getLogger(__name__)
@@ -228,6 +229,21 @@ def _is_groq_unavailable(exc: BaseException) -> bool:
     return isinstance(exc, (AuthenticationError, APIConnectionError, RateLimitError, InternalServerError))
 
 
+def _is_tpd_error(exc: BaseException) -> bool:
+    """True only for genuine per-day token exhaustion (retrying within the same day is
+    doomed -- Groq's TPD window doesn't roll over on any timescale a request-time retry
+    backoff can bridge). Same detection this codebase already uses in
+    eval/record_cassettes.py's own _is_tpd_error -- moved here as the shared, canonical
+    copy so eval/ imports from src/ instead of duplicating the string-match logic.
+
+    Groq does not expose remaining daily tokens on a successful response at all; a TPD
+    hit is only distinguishable from a TPM hit by the wording in the 429 error body
+    ("... on tokens per day (TPD): Limit 500000, Used ...").
+    """
+    msg = str(exc).lower()
+    return any(kw in msg for kw in ("tokens per day", "daily limit", "tpd"))
+
+
 class TriageAssistant:
     """Orchestrates Systems 1–3 and calls an LLM to produce a TriagePlan.
 
@@ -255,6 +271,7 @@ class TriageAssistant:
         max_tokens: int = 1024,
         seed: int = 42,
         cache=None,
+        budget_guard=None,
     ) -> None:
         self.repo = repo
         self.classifier = classifier
@@ -266,6 +283,7 @@ class TriageAssistant:
         self.max_tokens = max_tokens
         self.seed = seed
         self._cache = cache  # LLMCache | None
+        self._budget_guard = budget_guard or NoOpBudgetGuard()  # DailyBudgetGuard | None -- see budget_guard.py
 
         key = groq_api_key or os.environ.get("GROQ_API_KEY", "")
         if not key:
@@ -296,7 +314,7 @@ class TriageAssistant:
         try:
             plan, raw, usage, llm_status, cache_hit = self._call_llm_verbose(signals)
         except Exception as exc:
-            if not _is_groq_unavailable(exc):
+            if not (_is_groq_unavailable(exc) or isinstance(exc, GroqBudgetExceeded)):
                 raise  # programming/config errors (bad request, 404 model-not-found, ...) still 500
             logger.warning(
                 "Groq unavailable for #%s (%s: %s) — degrading to signals-only fallback plan "
@@ -636,6 +654,15 @@ class TriageAssistant:
         )
 
     def _groq_completion(self, messages: list[dict]) -> tuple[str, dict]:
+        # Proactive check (Part B2): if today's Firestore-tracked budget is already spent,
+        # don't spend a request's latency finding that out from a live 429 -- degrade now.
+        # NoOpBudgetGuard (the default) always returns False here, so this is inert unless
+        # a real DailyBudgetGuard was wired in at construction time.
+        if self._budget_guard.over_budget():
+            raise GroqBudgetExceeded(
+                f"Daily Groq token budget already exhausted for {self.repo}'s workload."
+            )
+
         try:
             from groq import APIStatusError, Groq, RateLimitError
         except ImportError as e:
@@ -659,9 +686,15 @@ class TriageAssistant:
                         "prompt_tokens": resp.usage.prompt_tokens,
                         "completion_tokens": resp.usage.completion_tokens,
                     }
+                    self._budget_guard.record(usage["prompt_tokens"] + usage["completion_tokens"])
                 return content, usage
-            except RateLimitError:
-                if attempt == 5:
+            except RateLimitError as e:
+                # A daily-cap 429 cannot be fixed by a request-time backoff -- the window
+                # doesn't reopen for hours. Burning all 6 attempts (up to ~3.5 minutes) on a
+                # doomed retry before degrading is pure added latency on every request until
+                # the day rolls over. Raise immediately and let triage_with_metadata's
+                # _is_groq_unavailable path degrade right away instead.
+                if attempt == 5 or _is_tpd_error(e):
                     raise
                 jitter = backoff * (0.5 + 0.5 * (attempt / 5))
                 logger.warning("Rate limit hit — sleeping %.1fs (attempt %d/6)", jitter, attempt + 1)

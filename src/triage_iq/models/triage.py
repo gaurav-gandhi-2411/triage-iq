@@ -17,7 +17,6 @@ import pandas as pd
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from triage_iq.model_config import TRIAGE_MODEL
-from triage_iq.models.budget_guard import GroqBudgetExceeded, NoOpBudgetGuard
 from triage_iq.models.grounding import verify_plan_grounding
 
 logger = logging.getLogger(__name__)
@@ -271,7 +270,6 @@ class TriageAssistant:
         max_tokens: int = 1024,
         seed: int = 42,
         cache=None,
-        budget_guard=None,
     ) -> None:
         self.repo = repo
         self.classifier = classifier
@@ -283,7 +281,6 @@ class TriageAssistant:
         self.max_tokens = max_tokens
         self.seed = seed
         self._cache = cache  # LLMCache | None
-        self._budget_guard = budget_guard or NoOpBudgetGuard()  # DailyBudgetGuard | None -- see budget_guard.py
 
         key = groq_api_key or os.environ.get("GROQ_API_KEY", "")
         if not key:
@@ -314,7 +311,7 @@ class TriageAssistant:
         try:
             plan, raw, usage, llm_status, cache_hit = self._call_llm_verbose(signals)
         except Exception as exc:
-            if not (_is_groq_unavailable(exc) or isinstance(exc, GroqBudgetExceeded)):
+            if not _is_groq_unavailable(exc):
                 raise  # programming/config errors (bad request, 404 model-not-found, ...) still 500
             logger.warning(
                 "Groq unavailable for #%s (%s: %s) — degrading to signals-only fallback plan "
@@ -654,15 +651,6 @@ class TriageAssistant:
         )
 
     def _groq_completion(self, messages: list[dict]) -> tuple[str, dict]:
-        # Proactive check (Part B2): if today's Firestore-tracked budget is already spent,
-        # don't spend a request's latency finding that out from a live 429 -- degrade now.
-        # NoOpBudgetGuard (the default) always returns False here, so this is inert unless
-        # a real DailyBudgetGuard was wired in at construction time.
-        if self._budget_guard.over_budget():
-            raise GroqBudgetExceeded(
-                f"Daily Groq token budget already exhausted for {self.repo}'s workload."
-            )
-
         try:
             from groq import APIStatusError, Groq, RateLimitError
         except ImportError as e:
@@ -686,7 +674,6 @@ class TriageAssistant:
                         "prompt_tokens": resp.usage.prompt_tokens,
                         "completion_tokens": resp.usage.completion_tokens,
                     }
-                    self._budget_guard.record(usage["prompt_tokens"] + usage["completion_tokens"])
                 return content, usage
             except RateLimitError as e:
                 # A daily-cap 429 cannot be fixed by a request-time backoff -- the window

@@ -29,6 +29,13 @@ on:
     # Every 30 minutes nominal -- see the SECONDARY-check comment above for why the real
     # interval is wider and why that's now covered by the GCP uptime check instead.
     - cron: '*/30 * * * *'
+    # 2026-08-27 addition (split out of #100, Item 271/C6): /health alone only ever proved
+    # the model store loaded -- it stayed a clean 200 through both the 2026-08-16 (dead
+    # model, 404) and 2026-08-26 (rejected key, 401) outages because neither touches that
+    # code path. Runs on its own cron (not the 30min one above) purely as a conservative
+    # default -- see the triage-check job below for why this could safely be tightened to
+    # the same 30min cadence as bare /health once landed, since it costs zero Groq tokens.
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -250,3 +257,141 @@ jobs:
           fi
           echo "::error::/health failed twice in a row -- service may be down (billing, quota, crash-looping, or a bad deploy), or degraded (200 but status != ok)."
           exit 1
+
+  triage-check:
+    # Split out of PR #100 (2026-08-27), which bundled this job with a WIF ref-scoping IAM
+    # change. Audit logs (google.iam.v1.WorkloadIdentityPools.UpdateWorkloadIdentityPoolProvider,
+    # 2026-08-17T19:12:41Z / 19:57:02Z) show that change was applied then reverted 44 minutes
+    # later the same day, and #100's body was never updated -- it still claims the narrowing
+    # "is already applied" when live IAM state has not matched that claim for over a week. This
+    # job carries none of that; it is the monitoring half only, off a clean base. See #100's PR
+    # comment for the full drift writeup.
+    #
+    # /health only reports model-store state -- see the on:schedule comment above for why that
+    # missed both outages. Deliberately calls /health?deps=1 (added in #102), NOT the original
+    # design's direct POST to /triage: ?deps=1 makes the exact same real, authenticated Groq
+    # call (a zero-token models.list(), not a completion) that actually exercises the failure
+    # surface, without needing to reason about cache hits/spend or maintain a synthetic issue
+    # payload in two places (this file and deploy.yml's smoke test). Depends on #102 being
+    # deployed to have real teeth -- until then ?deps=1 is silently ignored by the older
+    # /health handler and this job checks liveness only, same as the job above.
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 */6 * * *' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: GET /health?deps=1 -- fail on non-200 or any unhealthy dependency
+        run: |
+          RESP=$(curl -sS -w "\n%{http_code}" --max-time 30 "${{ env.SERVICE_URL }}/health?deps=1")
+          HTTP_CODE=$(echo "$RESP" | tail -1)
+          BODY=$(echo "$RESP" | sed '$d')
+          echo "HTTP $HTTP_CODE"
+          echo "$BODY"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::/health?deps=1 returned HTTP $HTTP_CODE -- a real dependency (Groq) is unavailable, even though bare /health may still report ok. See the response body above for which one and why."
+            exit 1
+          fi
+          echo "Triage-path dependency check passed."
+
+  triage-generation-check:
+    # 2026-08-27 correction (Part C of the same diagnostic session that added the job above):
+    # /health?deps=1 calls Groq's models.list() -- that proves auth and reachability, NOT that
+    # generation works. It would NOT have caught the 2026-08-16 model-deprecation outage (a
+    # models.list() call never references the configured model string) and will NOT catch
+    # completions-endpoint TPD/TPM exhaustion (list endpoints aren't token-metered the same
+    # way, so this class of failure is invisible to every check in this file that stops at
+    # models.list()). Only an actual completion call against the real pipeline closes this.
+    #
+    # Deliberately calls /triage, not a bare Groq completion: /triage is the only endpoint
+    # with a `degraded` field to assert on, so this is also the check that catches a fallback
+    # plan being silently served in production for days -- the same failure class as this
+    # entire outage, just from the opposite direction (a product quietly degraded instead of
+    # quietly dead). Reuses deploy.yml's exact synthetic payload so a normal run is a cache
+    # hit (near-zero incremental Groq spend); a cache miss costs one real request, measured at
+    # ~4,400 tokens / ~$0.0004 at current gpt-oss-20b pricing -- see the token-economics
+    # writeup this session produced, trivial at this job's 6-hourly cadence either way.
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 */6 * * *' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: POST /triage, assert real generation happened and the response is not degraded
+        run: |
+          RESP=$(curl -sS -w "\n%{http_code}" --max-time 60 -X POST "${{ env.SERVICE_URL }}/triage" \
+            -H "Content-Type: application/json" \
+            -d '{"repo":"microsoft/vscode","title":"Extension host crashes on startup","body":"Every time I open VS Code the extension host process terminates immediately."}')
+          HTTP_CODE=$(echo "$RESP" | tail -1)
+          BODY=$(echo "$RESP" | sed '$d')
+          echo "HTTP $HTTP_CODE"
+          echo "$BODY"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::/triage returned HTTP $HTTP_CODE -- the real generation path is broken, even if /health?deps=1 reports Groq reachable (auth working is not the same as generation working)."
+            exit 1
+          fi
+          DEGRADED=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin).get('degraded', False))" 2>/dev/null || echo "True")
+          if [ "$DEGRADED" = "True" ]; then
+            LLM_STATUS=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin).get('llm_status'))" 2>/dev/null || echo "unparseable")
+            echo "::error::/triage returned 200 but degraded=true ($LLM_STATUS) -- production is silently serving fallback plans, no real LLM synthesis is happening. This is the exact failure class this job exists to catch: a product quietly degraded, not quietly dead."
+            exit 1
+          fi
+          COMPONENT=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin).get('predicted_component',''))" 2>/dev/null || echo "")
+          if [ -z "$COMPONENT" ]; then
+            echo "::error::/triage returned 200, degraded=false, but predicted_component is empty -- unexpected response shape."
+            exit 1
+          fi
+          echo "Real generation confirmed, not degraded -- predicted_component=$COMPONENT"
+
+  alert-on-failure:
+    # Part C3: GitHub's default scheduled-workflow-failure email is the ONLY signal today,
+    # and it has proven ineffective -- this exact outage ran 10+ days despite it firing on
+    # every failed run. Cheapest real improvement: a single pinned, auto-updated GitHub Issue
+    # instead of an email that gets buried. Not a Slack/webhook integration -- that needs a
+    # new secret and a destination to configure; this needs nothing but the default
+    # GITHUB_TOKEN, and stays visible in the repo itself rather than an inbox.
+    runs-on: ubuntu-latest
+    needs: [billing-check, model-availability-check, check, triage-check, triage-generation-check]
+    if: always() && contains(needs.*.result, 'failure')
+    permissions:
+      issues: write
+    steps:
+      - name: Create or update the pinned health-monitor failure issue
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const results = ${{ toJson(needs) }};
+            const failedJobs = Object.entries(results)
+              .filter(([, v]) => v.result === 'failure')
+              .map(([k]) => k);
+            const title = "Health Monitor: standing failure";
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              `Failing job(s) as of this run: **${failedJobs.join(', ')}**`,
+              '',
+              `Run: ${runUrl}`,
+              `Time: ${new Date().toISOString()}`,
+              '',
+              'This issue is auto-created/updated by health-monitor.yml. Closing it does not ' +
+              'stop future runs from reopening it if the underlying check keeps failing --' +
+              'fix the cause, don\'t just close this.',
+            ].join('\n');
+
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'health-monitor-alert',
+            });
+
+            if (existing.data.length > 0) {
+              const issue = existing.data[0];
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['health-monitor-alert'],
+              });
+            }

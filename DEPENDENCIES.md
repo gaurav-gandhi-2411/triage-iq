@@ -139,3 +139,35 @@ the runner's Python installation.
 
 **Revisit trigger:** If this repo ever starts building/publishing an sdist (it does not
 today), pin `setuptools>=83.0.0` explicitly as a build dependency at that time.
+
+### PYSEC-2026-3716 — datasets folder-based dataset builder path traversal
+
+- **Suppressed since:** 2026-08-27
+- **Affected package:** `datasets==4.8.5` (`requirements.lock`; declared directly in
+  `requirements.txt` alongside `transformers`/`sentence-transformers`, but never imported
+  directly anywhere in this codebase — `grep -rn "^import datasets\|^from datasets"` across
+  `src/`, `eval/`, `scripts/`, `tests/` returns zero matches; it is pulled in for the
+  HF ecosystem tooling those packages use, not called by TriageIQ's own code)
+- **Fix version:** none published as of this writing for the affected line (fixed upstream
+  at commit `f989ef9`, not yet in a tagged `datasets` release this project can pin to)
+
+**Why suppressed:**
+The vulnerability is in `datasets`' folder-based dataset builders (e.g. the `imagefolder`/
+`audiofolder` builders): a crafted `file_name` metadata field is joined to the dataset
+directory without path-traversal validation, then read and embedded into output when
+`save_to_disk()` or `push_to_hub()` is called on the loaded dataset. Checked directly:
+TriageIQ never calls `datasets.load_dataset()` with a folder-based builder, never calls
+`save_to_disk()`/`push_to_hub()` anywhere, and never loads a dataset folder from an
+untrusted or attacker-suppliable source — all data ingestion in this repo goes through its
+own `pandas`/`parquet`-based pipeline (`src/triage_iq/data/`), not `datasets`' loaders. No
+reachable surface: the vulnerable call chain is never invoked, directly or transitively.
+
+**Why not fixed immediately:** No tagged release with the fix is published yet; the fix
+commit exists upstream but pinning to an untagged commit is not this project's dependency
+convention. Not exploitable in the meantime per the reachability analysis above.
+
+**Revisit trigger:** When `datasets` cuts a release containing commit `f989ef9` (post
+`4.8.5`), bump `requirements.lock` to that version and drop this suppression — no code
+change needed since the package isn't imported directly. If this repo ever starts loading
+externally-supplied dataset folders (it does not today), treat that as an independent
+reason to re-audit regardless of `datasets`' patch status.

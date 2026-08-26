@@ -27,7 +27,7 @@ jobs:
 
       - name: Security audit
         run: |
-          # All 6 suppressions below are justified in DEPENDENCIES.md (unreachable code
+          # All 7 suppressions below are justified in DEPENDENCIES.md (unreachable code
           # paths, verified directly against this codebase's actual usage — not blanket
           # ignores). 22 other CVEs (aiohttp/idna/starlette/pydantic-settings) were FIXED
           # via a surgical requirements.lock bump in the 2026-07-10 hygiene pass, and 8
@@ -62,7 +62,16 @@ jobs:
           # bypass — requires building an sdist on macOS APFS/HFS+. This repo has no
           # MANIFEST.in/setup.py, never builds an sdist, and runs on Linux everywhere.
           #
-          # Transformers findings (all but PYSEC-2026-3447): fix requires
+          # PYSEC-2026-3716: datasets folder-based dataset builder path traversal via an
+          # unsanitized file_name joined to the dataset dir, surfaced through save_to_disk/
+          # push_to_hub. TriageIQ declares datasets>=2.14 (pulled in for the transformers/
+          # sentence-transformers ecosystem) but never imports it directly anywhere in the
+          # codebase, never calls load_dataset() with a folder-based builder, and never
+          # calls save_to_disk()/push_to_hub() — this repo's own data pipeline is
+          # pandas/parquet-based (src/triage_iq/data/), not datasets-based. No reachable
+          # surface.
+          #
+          # Transformers findings (all but PYSEC-2026-3447/3716): fix requires
           # transformers>=5.0.0rc3 (needs sentence-transformers>=5.x, a triple major bump)
           # or, for CVE-2025-3000, no fix version is published at all. Revisit when a
           # planned dependency refresh is scheduled (not bundled into an unrelated PR) —
@@ -73,7 +82,8 @@ jobs:
             --ignore-vuln CVE-2026-4372 \
             --ignore-vuln CVE-2025-3000 \
             --ignore-vuln PYSEC-2026-2290 \
-            --ignore-vuln PYSEC-2026-3447
+            --ignore-vuln PYSEC-2026-3447 \
+            --ignore-vuln PYSEC-2026-3716
 
       - name: Lint (ruff)
         run: ruff check src/ tests/

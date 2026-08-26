@@ -531,3 +531,91 @@ def test_grounding_ratchet_no_new_ungrounded_claims(grounding_reports: list[dict
             f"{repo}: ungrounded claim count regressed: {ungrounded_count} > "
             f"baseline {baseline['ungrounded_count']}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Statistically valid grounding-rate gate (proposal, 2026-08-27 diagnostic session)
+# ---------------------------------------------------------------------------
+#
+# The ratchet above is a raw-count comparison: any single new ungrounded issue fails it,
+# on any eval-set size, with no notion of statistical significance. That's exactly what
+# fired on the openai/gpt-oss-20b model swap (PR #101): 0/11 baseline -> 3/11 new for
+# vscode. A Fisher's exact test on that specific 2x2 table gives p ~= 0.107 -- not
+# significant at the conventional alpha=0.05 threshold. At n=11 per repo, the ratchet
+# cannot distinguish a real regression from a single unlucky draw; a true underlying rate
+# anywhere up to ~27% (the rule-of-three bound) is statistically compatible with having
+# observed 0/11 by chance. See the 2026-08-27 diagnostic session's Part C/E for the full
+# derivation, including the corrected unit of analysis (issue-level, not claim-level --
+# confirmed empirically: all 3 ungrounded vscode issues failed purely on the component
+# claim, zero similar-issue citation hallucination, so they don't cluster and the
+# issue-level effect really is 3/11, not the smaller number a clustering hypothesis would
+# imply).
+#
+# _MIN_N_PER_REPO is not a round number -- it is the sample size needed for 80% power at
+# alpha=0.05 to detect a 10-percentage-point increase in the ungrounded-issue rate from
+# the observed ~0% baseline, computed two ways and cross-checked: 74 via
+# statsmodels.stats.proportion.samplesize_proportions_2indep_onetail(diff=0.10, prop2=0.0,
+# power=0.80, alpha=0.05), ~71 via the standard Fleiss normal-approximation formula. Using
+# the more conservative (larger) of the two, rounded up. vscode's current n=11 is ~7x too
+# small; k8s's n=53 is closer but still short. Until the eval set is expanded to at least
+# this many issues per repo (see ADR/PLAN.md for the tracked expansion work), this test
+# reports UNDERPOWERED rather than pass or fail -- asserting a conclusion this sample size
+# cannot support would be exactly the false-precision problem this test exists to fix.
+# This is deliberately NOT a replacement for the ratchet above yet: removing the coarse
+# gate before the statistical one can actually run at full power would leave zero
+# protection against a real regression in the meantime.
+_MIN_N_PER_REPO_FOR_VALID_GROUNDING_TEST = 75
+_GROUNDING_NON_INFERIORITY_MARGIN_PP = 10.0  # matches the MDE the sample size was computed for
+_GROUNDING_ALPHA = 0.05
+
+
+def test_grounding_rate_non_inferior(grounding_reports: list[dict]) -> None:
+    """Statistically valid successor to test_grounding_ratchet_no_new_ungrounded_claims.
+
+    Fails only when the new ungrounded-ISSUE rate exceeds baseline by more than
+    _GROUNDING_NON_INFERIORITY_MARGIN_PP AND that difference is significant at
+    _GROUNDING_ALPHA (one-sided Fisher's exact test) -- not on any single-issue raw-count
+    increase regardless of sample size, which is what made the ratchet fire on noise at
+    n=11. Skips (does not silently pass) below _MIN_N_PER_REPO_FOR_VALID_GROUNDING_TEST --
+    an underpowered assertion is not a passing one.
+    """
+    from scipy.stats import fisher_exact
+
+    current_hash = _eval_set_hash_guard()
+    assert current_hash == _GROUNDING_BASELINE["eval_set_hash"], _HASH_DRIFT_MSG
+
+    for repo, baseline in _GROUNDING_BASELINE["per_repo"].items():
+        repo_reports = [c for c in grounding_reports if c["repo"] == repo]
+        n = len(repo_reports)
+        if n < _MIN_N_PER_REPO_FOR_VALID_GROUNDING_TEST:
+            pytest.skip(
+                f"{repo}: n={n} is below {_MIN_N_PER_REPO_FOR_VALID_GROUNDING_TEST}, the "
+                f"size needed for 80% power at alpha={_GROUNDING_ALPHA} to detect a "
+                f"{_GROUNDING_NON_INFERIORITY_MARGIN_PP}pp regression. This test cannot "
+                "make a statistically meaningful claim at the current eval-set size -- "
+                "expand eval_set.jsonl before relying on this gate. The ratchet test above "
+                "remains the active safety net in the meantime."
+            )
+
+        baseline_n = baseline["n"]
+        baseline_ungrounded = baseline["ungrounded_count"]
+        new_ungrounded = sum(1 for c in repo_reports if not c["all_grounded"])
+        new_rate = new_ungrounded / n
+        baseline_rate = baseline_ungrounded / baseline_n
+
+        table = [[new_ungrounded, n - new_ungrounded],
+                 [baseline_ungrounded, baseline_n - baseline_ungrounded]]
+        _, p_value = fisher_exact(table, alternative="greater")
+
+        rate_diff_pp = (new_rate - baseline_rate) * 100
+        regressed = (
+            p_value < _GROUNDING_ALPHA
+            and rate_diff_pp > _GROUNDING_NON_INFERIORITY_MARGIN_PP
+        )
+        assert not regressed, (
+            f"{repo}: ungrounded-issue rate regressed significantly: {new_rate:.1%} "
+            f"({new_ungrounded}/{n}) vs baseline {baseline_rate:.1%} "
+            f"({baseline_ungrounded}/{baseline_n}), a {rate_diff_pp:.1f}pp increase "
+            f"(Fisher's exact p={p_value:.4f}, margin={_GROUNDING_NON_INFERIORITY_MARGIN_PP}pp, "
+            f"alpha={_GROUNDING_ALPHA})"
+        )

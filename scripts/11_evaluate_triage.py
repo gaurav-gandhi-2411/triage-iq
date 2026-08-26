@@ -393,13 +393,13 @@ def generate_report(results: dict, sample_plans: list[dict], out_path: Path) -> 
         "├── System 2 (BGE FAISS, ~30ms): top-5 similar issues",
         "└── System 3 (LightGBM, ~4ms): resolution point estimate + 80% CI",
         "         ↓",
-        "   LLM (llama-3.1-8b-instant, 2-shot, T=0, ~1-3s)",
+        "   LLM (openai/gpt-oss-20b, 2-shot, T=0, ~1-3s)",
         "         ↓",
         "   TriagePlan (Pydantic-validated JSON)",
         "```",
         "",
-        "**LLM:** Groq `llama-3.1-8b-instant`, temperature=0.0, max_tokens=1024",
-        "**Judge:** Groq `llama-3.3-70b-versatile`, 6-dim rubric, double-run reliability",
+        "**LLM:** Groq `openai/gpt-oss-20b`, temperature=0.0, max_tokens=1024",
+        "**Judge:** Groq `openai/gpt-oss-120b`, 6-dim rubric, double-run reliability",
         "",
         "### Latency Breakdown",
         "",
@@ -631,7 +631,7 @@ def main():
     parser.add_argument("--clear-judge-checkpoint", action="store_true")
     parser.add_argument(
         "--judge-model",
-        default=os.environ.get("TRIAGE_JUDGE_MODEL", "llama-3.3-70b-versatile"),
+        default=os.environ.get("TRIAGE_JUDGE_MODEL", "openai/gpt-oss-120b"),
         help="Judge model ID (e.g. llama-3.3-70b-versatile, gemma2-9b-it). "
              "Override with env var TRIAGE_JUDGE_MODEL.",
     )
@@ -1114,7 +1114,7 @@ def main():
         "hand_validation": hand_val,
         "judge_model": args.judge_model,
         "judge_provider": args.judge_provider,
-        "triage_model": "llama-3.1-8b-instant",
+        "triage_model": "openai/gpt-oss-20b",
     }
 
     (ROOT / "reports").mkdir(exist_ok=True)

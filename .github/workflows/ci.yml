@@ -115,4 +115,8 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: pip-audit (installed environment)
-        run: pip-audit
+        # PYSEC-2026-3447 (setuptools): same finding, same reachability analysis as the
+        # `test` job's requirements.lock scan above — see DEPENDENCIES.md. This job audits
+        # a freshly-resolved environment (requirements-dev.txt has no setuptools pin), so
+        # it re-surfaces the finding independently of requirements.lock's ignore list.
+        run: pip-audit --ignore-vuln PYSEC-2026-3447

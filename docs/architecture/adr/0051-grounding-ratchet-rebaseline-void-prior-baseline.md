@@ -1,8 +1,42 @@
 # ADR-0051 — Grounding ratchet re-baseline: prior baseline void, new baseline is a degradation
 
-**Status:** Accepted
+**Status:** WITHDRAWN (2026-08-27, same day, superseded by continued investigation — see below)
 **Date:** 2026-08-27
 **Decider:** Gaurav Gandhi
+
+## Withdrawal note (2026-08-27)
+
+This ADR is withdrawn, not corrected. Two independent findings overturned its premise
+before it was ever merged:
+
+1. **The model swap it re-baselines against (`openai/gpt-oss-20b`, PR #101/#106) is
+   halted.** A same-day fallback-plan audit found 68.75% first-attempt JSON-parse failure
+   and a 32% fully-degraded-fallback rate on `kubernetes/kubernetes` — a severe
+   structured-output reliability regression, unrelated to grounding, that is reason enough
+   on its own to not ship the swap. Re-baselining a gate against a model that isn't being
+   deployed is moot.
+2. **The underlying grounding measurement is itself under review.** `scripts/measure_grounding.py`
+   (2026-07-24) predates ADR-0020's "honest override" declared-attribution affordance
+   (2026-08-23) and never applies it — a real eval/production skew. This ADR's "3/11
+   ungrounded, re-baseline to 3" framing assumed the coarse (no-override) check was the
+   thing needing correction. Further review of `verify_declared_attribution()` found the
+   override path itself is **unvalidated self-certification** (any non-empty free-text
+   reason suffices, checked against nothing) — so neither number (3/11 coarse, or a
+   hypothetical 0/11 "corrected" via the override exception) is currently trustworthy
+   as a decision input. Applying the override exception uncritically, as this session
+   first proposed, would have handed the halted model a pass specifically on the 3
+   disputed cases.
+
+`_GROUNDING_BASELINE` is restored to the pre-swap `llama-3.1-8b-instant` values
+(`microsoft/vscode: 0/11`, `kubernetes/kubernetes: 0/53`) in `eval/test_invariants.py`.
+The ratchet mechanism is unchanged. This ADR is kept (not deleted) as the record of why a
+re-baseline was attempted and specifically why it was reversed — see the eval-methodology
+soundness review this same session for the open question on the override check.
+
+---
+
+**Original content below, preserved for the record. Do not treat any of it — including
+the "3/11", "27.3%", or "void baseline" framing — as current state.**
 
 ## Context
 

@@ -77,18 +77,16 @@ _GROUNDING_BASELINE = {
     # reports/eval_baseline.json's fabrication_rate: 0.0 for both repos on the same cassette
     # (same underlying definition -- plan.grounding_status.all_grounded is False).
     #
-    # Re-derived again 2026-08-27 (ADR-0051), microsoft/vscode only: llama-3.1-8b-instant
-    # (the model this baseline was measured against above) is deprecated by Groq and now
-    # returns 404 on every call -- the prior 0/11 baseline is VOID, not held, because there
-    # is no reachable model left to re-verify it against. Re-measured against the
-    # openai/gpt-oss-20b swap (PR #101/#106) on the same cassette/eval set (same hash,
-    # unchanged below): 3/11 ungrounded issues (27.3%), all three on the
-    # predicted_component claim only (zero similar-issue citation hallucination -- the
-    # failures don't cluster). This is a real, absolute-terms degradation versus the old
-    # number, NOT an equivalent or accepted-as-fine baseline -- see ADR-0051 for why a void
-    # baseline still had to move, why the new number is stated plainly as worse, and what
-    # regression magnitude this ratchet can and cannot catch at the new reference point.
-    # kubernetes/kubernetes is unchanged (0/53 on both models).
+    # ADR-0051 (2026-08-27) briefly re-derived this to 3/11 for microsoft/vscode against the
+    # openai/gpt-oss-20b swap (PR #101/#106), reasoning the old llama-3.1-8b-instant baseline
+    # was void (model deprecated, 404s). ADR-0051 is WITHDRAWN the same day: the swap it
+    # re-baselined against is halted (68.75% first-attempt JSON-parse failure, 32% k8s
+    # fallback-plan rate -- see the fallback-plan audit), and separately, the "3 ungrounded"
+    # number itself is contested pending a soundness review of the declared-attribution
+    # honest-override check (verify_declared_attribution) that scripts/measure_grounding.py
+    # doesn't apply -- see ADR-0051's withdrawal note for both reasons. Restored to the
+    # original llama-3.1-8b-instant values below. Do not re-derive this again without a new
+    # ADR and a model that has actually been selected via a real bake-off, not assumed.
     "eval_set_hash": "0c2e57410098ea170f3f65668ff8977d3ce4942936b9a3e2ffb6696a09621bfe",
     "per_repo": {
         "kubernetes/kubernetes": {
@@ -96,7 +94,7 @@ _GROUNDING_BASELINE = {
             "n": 53,
         },
         "microsoft/vscode": {
-            "ungrounded_count": 3,
+            "ungrounded_count": 0,
             "n": 11,
         },
     },

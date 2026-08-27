@@ -39,7 +39,7 @@ from frozen_retriever import build_frozen_retrievers
 from triage_iq.models.component_classifier import load_classifier
 from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore, TriageJudge
 from triage_iq.models.resolution import ResolutionTimePredictor
-from triage_iq.models.triage import TriageAssistant
+from triage_iq.models.triage import TriageAssistant, TruncatedCompletionError
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -222,6 +222,26 @@ def main() -> None:
             plan, meta = assistant.triage_with_metadata(row)
             n_synthesis_recorded += 1
             logger.info("  synthesis → %s (cache_hit=%s)", plan.predicted_component, meta.get("llm_cache_hit"))
+        except TruncatedCompletionError as exc:
+            # 2026-08-28: a truncated completion means max_tokens is too small for this
+            # model -- every subsequent issue is likely to hit the same wall, so this stops
+            # the run loudly rather than silently skipping entries (and burning TPD budget)
+            # under a config already known to be broken. Raise max_tokens and restart --
+            # the resume mechanism picks up from recording_checkpoint.json as usual.
+            logger.error(
+                "STOP: completion truncated after %d synthesis calls "
+                "(completion_tokens=%d, max_tokens=%d). Cassette has %d entries. "
+                "Raise max_tokens and re-run -- resume will continue from checkpoint.",
+                n_synthesis_recorded, exc.completion_tokens, exc.max_tokens,
+                cassette.stats()["entries"],
+            )
+            save_checkpoint({"done": checkpoint.get("done", {})})
+            print("\n=== TRUNCATED COMPLETION ===")
+            print(f"Issue: {issue_id}")
+            print(f"completion_tokens={exc.completion_tokens} max_tokens={exc.max_tokens}")
+            print(f"Synthesis recorded before stop: {n_synthesis_recorded}")
+            print(f"Cassette entries: {cassette.stats()['entries']}")
+            sys.exit(1)  # incomplete recording -- see TPD-exit comment below
         except Exception as exc:
             if _is_tpd_error(exc):
                 logger.error(

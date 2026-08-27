@@ -14,12 +14,38 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from triage_iq.model_config import TRIAGE_MODEL
-from triage_iq.models.grounding import verify_plan_grounding
+from triage_iq.models.grounding import compute_grounding_status
 
 logger = logging.getLogger(__name__)
+
+
+class TruncatedCompletionError(RuntimeError):
+    """Raised when Groq's finish_reason == "length" -- the completion was cut off by
+    max_tokens mid-generation, not a malformed-JSON parse failure.
+
+    2026-08-28: this is the distinct failure mode that hid the actual defect behind this
+    entire engagement -- a truncated completion used to fail silently as a generic JSON
+    parse error, indistinguishable from the model genuinely emitting malformed JSON, so it
+    was never possible to tell "the model is bad at JSON" apart from "max_tokens is too
+    small" without manually inspecting raw content. Raised inside _groq_completion, before
+    the caller ever gets a (content, usage) tuple back -- a truncated completion can
+    therefore never reach cache.set() and can never enter a committed cassette.
+    """
+
+    def __init__(self, completion_tokens: int, max_tokens: int, content_preview: str) -> None:
+        self.completion_tokens = completion_tokens
+        self.max_tokens = max_tokens
+        self.content_preview = content_preview
+        super().__init__(
+            f"Completion truncated: finish_reason='length' at completion_tokens="
+            f"{completion_tokens} (max_tokens={max_tokens}). Raise max_tokens, not a "
+            f"retry -- retrying at the same cap reproduces the same truncation. "
+            f"Content tail: ...{content_preview[-80:]!r}"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Pydantic output schema
@@ -27,6 +53,12 @@ logger = logging.getLogger(__name__)
 
 
 class SimilarIssue(BaseModel):
+    # extra="forbid" on every nested model here (2026-08-28): required for Groq's native
+    # `strict: true` JSON-schema-constrained output, which rejects a schema unless
+    # additionalProperties:false is set on every object -- Pydantic's model_json_schema()
+    # doesn't set this by default on nested $defs.
+    model_config = ConfigDict(extra="forbid")
+
     number: int
     similarity: float = Field(ge=0.0, le=1.0)
     relevance_note: str
@@ -40,6 +72,8 @@ class ConformalIntervalResult(BaseModel):
     This is marginal (not conditional) coverage; temporal data may violate exchangeability.
     See ADR-0010.
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     lower_days: float = Field(ge=0.0)
     upper_days: float = Field(ge=0.0)
@@ -56,6 +90,8 @@ class GroundingAttribution(BaseModel):
     iteration. See ADR-0015.
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     component_source: str
     similar_issue_refs: list[int]
 
@@ -68,6 +104,8 @@ class GroundingStatus(BaseModel):
     request — not verification against world/ground truth.
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     component_grounded: bool
     component_reason: str
     similar_issue_refs: list[int]
@@ -78,6 +116,8 @@ class GroundingStatus(BaseModel):
 class DeclaredAttribution(BaseModel):
     """LLM-emitted source attribution (elicited by the prompt — contrast GroundingAttribution,
     a post-hoc reconstruction of the same plan; ADR-0015/ADR-0020)."""
+
+    model_config = ConfigDict(extra="forbid")
 
     component_source: Literal["classifier_top3", "model_override"]
     component_override_reason: str = ""
@@ -94,6 +134,8 @@ class StageAbstention(BaseModel):
     "wide_interval").
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     abstained: bool
     reason: str = ""
 
@@ -105,6 +147,8 @@ class AbstentionStatus(BaseModel):
     signal anywhere in the pipeline to threshold, unlike component_confidence (ADR-0004)
     or the CQR interval (ADR-0010). See ADR-0021 for why that gap is flagged, not gated.
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     component: StageAbstention
     resolution: StageAbstention
@@ -197,6 +241,58 @@ class TriagePlan(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Groq native structured output (2026-08-28)
+# ---------------------------------------------------------------------------
+
+
+def _force_strict_schema_requirements(node: object) -> None:
+    """Recursively satisfy Groq's `strict: true` JSON-schema requirements.
+
+    Two independent requirements, both confirmed by trial (Groq's 400 response names
+    exactly one violating $defs path at a time, so partial patching just surfaces the
+    next one -- this walks the whole tree once for both instead of two passes):
+    1. additionalProperties:false on every object.
+    2. `required` must list every key in `properties` -- strict mode has no notion of an
+       "optional" property; a Pydantic field with a default (e.g. component_override_reason
+       str = "") is absent from Pydantic's own `required` list but Groq still needs it
+       there. This does NOT change what the model can omit at the value level -- fields
+       with a default still validate fine as their default if the model emits, say, "" or
+       null for them; it only changes what the wire schema declares as present.
+    """
+    if isinstance(node, dict):
+        if node.get("type") == "object" or "properties" in node:
+            node.setdefault("additionalProperties", False)
+            if "properties" in node:
+                node["required"] = list(node["properties"].keys())
+        for v in node.values():
+            _force_strict_schema_requirements(v)
+    elif isinstance(node, list):
+        for v in node:
+            _force_strict_schema_requirements(v)
+
+
+def _build_triage_plan_response_format() -> dict:
+    """Groq response_format payload for native strict schema-constrained decoding.
+
+    TriagePlan itself intentionally does NOT have extra="forbid" (app.py attaches
+    _request_id/_llm_status/etc. to the response after synthesis), but the JSON SCHEMA
+    sent to Groq for constrained decoding still needs additionalProperties:false
+    everywhere per Groq's requirement -- that's a property of the wire schema, not of the
+    Python class's own validation behavior, so patching the schema dict here doesn't
+    conflict with leaving the class itself permissive.
+    """
+    schema = TriagePlan.model_json_schema()
+    _force_strict_schema_requirements(schema)
+    return {
+        "type": "json_schema",
+        "json_schema": {"name": "TriagePlan", "schema": schema, "strict": True},
+    }
+
+
+_TRIAGE_PLAN_RESPONSE_FORMAT = _build_triage_plan_response_format()
+
+
+# ---------------------------------------------------------------------------
 # Main assistant class
 # ---------------------------------------------------------------------------
 
@@ -228,6 +324,8 @@ class TriageAssistant:
         max_tokens: int = 1024,
         seed: int = 42,
         cache=None,
+        use_structured_output: bool = True,
+        enable_validated_override_rescue: bool = False,
     ) -> None:
         self.repo = repo
         self.classifier = classifier
@@ -239,6 +337,14 @@ class TriageAssistant:
         self.max_tokens = max_tokens
         self.seed = seed
         self._cache = cache  # LLMCache | None
+        # 2026-08-28: Groq native strict JSON-schema output as the primary mechanism,
+        # regex-extract retained as fallback only (see _groq_completion). Constructor flag
+        # (not a module constant) so tests/eval scripts can force the legacy path.
+        self.use_structured_output = use_structured_output
+        # 2026-08-28 (Part E2): disabled by default -- see grounding.py's
+        # verify_override_reason_grounded for why the prior self-certifying version
+        # (never merged) was unsound. A caller opts in deliberately, per request.
+        self.enable_validated_override_rescue = enable_validated_override_rescue
 
         key = groq_api_key or os.environ.get("GROQ_API_KEY", "")
         if not key:
@@ -279,13 +385,20 @@ class TriageAssistant:
             similar_issue_refs=[s.number for s in plan.similar_issues],
         )
         retrieved_numbers = {s["number"] for s in signals["similar_raw"]}
-        report = verify_plan_grounding(plan, signals["classifier_top3"], retrieved_numbers)
+        resolved = compute_grounding_status(
+            plan,
+            signals["classifier_top3"],
+            retrieved_numbers,
+            enable_validated_override_rescue=self.enable_validated_override_rescue,
+            issue_title=str(issue.get("title", "")),
+            issue_body=str(issue.get("body_clean", "")),
+        )
         plan.grounding_status = GroundingStatus(
-            component_grounded=report.component_grounded,
-            component_reason=report.component_reason,
-            similar_issue_refs=report.similar_issue_refs,
-            ungrounded_refs=report.ungrounded_refs,
-            all_grounded=report.all_grounded,
+            component_grounded=resolved.component_grounded,
+            component_reason=resolved.component_reason,
+            similar_issue_refs=resolved.similar_issue_refs,
+            ungrounded_refs=resolved.ungrounded_refs,
+            all_grounded=resolved.all_grounded,
         )
         elapsed = time.perf_counter() - t0
 
@@ -590,6 +703,9 @@ class TriageAssistant:
         client = Groq(api_key=self._groq_key)
         backoff = 5.0
         for attempt in range(6):
+            kwargs: dict = {}
+            if self.use_structured_output:
+                kwargs["response_format"] = _TRIAGE_PLAN_RESPONSE_FORMAT
             try:
                 resp = client.chat.completions.create(
                     model=self.model,
@@ -597,14 +713,24 @@ class TriageAssistant:
                     temperature=self.temperature,
                     max_tokens=self.max_tokens,
                     seed=self.seed,
+                    **kwargs,
                 )
                 content = (resp.choices[0].message.content or "").strip()
+                finish_reason = resp.choices[0].finish_reason
                 usage = {}
                 if resp.usage:
                     usage = {
                         "prompt_tokens": resp.usage.prompt_tokens,
                         "completion_tokens": resp.usage.completion_tokens,
                     }
+                usage["finish_reason"] = finish_reason
+                usage["structured_output"] = self.use_structured_output
+                if finish_reason == "length":
+                    raise TruncatedCompletionError(
+                        completion_tokens=usage.get("completion_tokens", -1),
+                        max_tokens=self.max_tokens,
+                        content_preview=content,
+                    )
                 return content, usage
             except RateLimitError:
                 if attempt == 5:
@@ -617,6 +743,22 @@ class TriageAssistant:
                 if e.status_code >= 500 and attempt < 5:
                     time.sleep(backoff)
                     backoff = min(backoff * 2, 60.0)
+                elif (
+                    e.status_code == 400
+                    and self.use_structured_output
+                    and "response_format" in str(e).lower()
+                ):
+                    # Native structured output rejected (e.g. this model/account
+                    # combination doesn't actually support it, or a schema issue slipped
+                    # past _build_triage_plan_response_format). Fall back to the classic
+                    # unconstrained call + regex-extract for the rest of this assistant's
+                    # lifetime -- retrying the same broken response_format every attempt
+                    # would just fail identically each time.
+                    logger.warning(
+                        "Groq rejected structured output (%s) — falling back to "
+                        "regex-extract for the remainder of this session.", e,
+                    )
+                    self.use_structured_output = False
                 else:
                     raise
         raise RuntimeError("Groq completion failed after 6 attempts")

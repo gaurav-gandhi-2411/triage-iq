@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -577,7 +578,9 @@ def test_grounding_rate_non_inferior(grounding_reports: list[dict]) -> None:
     _GROUNDING_ALPHA (one-sided Fisher's exact test) -- not on any single-issue raw-count
     increase regardless of sample size, which is what made the ratchet fire on noise at
     n=11. Skips (does not silently pass) below _MIN_N_PER_REPO_FOR_VALID_GROUNDING_TEST --
-    an underpowered assertion is not a passing one.
+    an underpowered assertion is not a passing one -- and emits a warnings.warn() alongside
+    the skip (ADR-0051) so the underpowered state shows up in every run's output, not just
+    a skip count nobody reads.
     """
     from scipy.stats import fisher_exact
 
@@ -588,14 +591,25 @@ def test_grounding_rate_non_inferior(grounding_reports: list[dict]) -> None:
         repo_reports = [c for c in grounding_reports if c["repo"] == repo]
         n = len(repo_reports)
         if n < _MIN_N_PER_REPO_FOR_VALID_GROUNDING_TEST:
-            pytest.skip(
-                f"{repo}: n={n} is below {_MIN_N_PER_REPO_FOR_VALID_GROUNDING_TEST}, the "
-                f"size needed for 80% power at alpha={_GROUNDING_ALPHA} to detect a "
+            # ADR-0051: a gate that silently skips is not a gate. A plain pytest.skip()'s
+            # reason string is easy to miss -- pytest's default -v output truncates it, and
+            # nothing forces a reader to notice "1 skipped" hides an underpowered safety net.
+            # warnings.warn() forces a "warnings summary" block into every run's output
+            # (pytest shows this by default, no extra flags needed -- verified against this
+            # repo's pytest config, no filterwarnings/-p no:warnings in pyproject.toml),
+            # naming the current n and the required n so the gap can't be missed on any run.
+            msg = (
+                f"GROUNDING PROTECTION DEGRADED: {repo}: n={n} is below "
+                f"{_MIN_N_PER_REPO_FOR_VALID_GROUNDING_TEST}, the size needed for 80% power "
+                f"at alpha={_GROUNDING_ALPHA} to detect a "
                 f"{_GROUNDING_NON_INFERIORITY_MARGIN_PP}pp regression. This test cannot "
                 "make a statistically meaningful claim at the current eval-set size -- "
                 "expand eval_set.jsonl before relying on this gate. The ratchet test above "
-                "remains the active safety net in the meantime."
+                "remains the active safety net in the meantime (see ADR-0051 for what "
+                "regression magnitude it can and cannot catch today)."
             )
+            warnings.warn(msg, UserWarning, stacklevel=2)
+            pytest.skip(msg)
 
         baseline_n = baseline["n"]
         baseline_ungrounded = baseline["ungrounded_count"]

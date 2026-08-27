@@ -518,3 +518,27 @@ def test_grounding_ratchet_no_new_ungrounded_claims(grounding_reports: list[dict
             f"{repo}: ungrounded claim count regressed: {ungrounded_count} > "
             f"baseline {baseline['ungrounded_count']}"
         )
+
+
+def test_no_fallback_plans_in_cassette(grounding_reports: list[dict]) -> None:
+    """A committed cassette must contain zero scored fallback plans.
+
+    2026-08-27 finding: a fallback-plan audit of the openai/gpt-oss-20b re-record found
+    68.75% first-attempt JSON-parse failure and a 32% k8s fallback-plan rate
+    (llm_status == "parse_failure" -- both retry attempts failed to produce parseable
+    JSON, so TriageAssistant._make_fallback_plan() shipped a predictor-only, no-LLM-text
+    plan that the judge then scored as if it were genuine model output). Nothing had ever
+    checked for this; it was found by manual audit, not CI. This is that check, so the
+    next time a model swap's re-recording contains degraded fallback plans, the eval gate
+    fails the recording instead of merging it. Zero tolerance, not a rate threshold --
+    a single scored fallback plan already means the judge scored something the model
+    never actually said.
+    """
+    fallback_cases = [c for c in grounding_reports if c.get("llm_status") == "parse_failure"]
+    assert not fallback_cases, (
+        f"{len(fallback_cases)}/{len(grounding_reports)} cases in this cassette are "
+        "fallback plans (llm_status == 'parse_failure') scored as genuine model output: "
+        f"{[(c['repo'], c['issue_number']) for c in fallback_cases]}. "
+        "Re-record against Groq (not a cassette-side fix) until every entry reflects real "
+        "LLM synthesis output, or the current model/config combination is not viable."
+    )

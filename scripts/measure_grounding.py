@@ -136,7 +136,7 @@ def compute_grounding_reports(
         })
 
         signals = assistant._collect_signals(row)
-        plan, _raw, _usage, _llm_status, _cache_hit = assistant._call_llm_verbose(signals)
+        plan, _raw, _usage, llm_status, _cache_hit = assistant._call_llm_verbose(signals)
 
         retrieved_numbers = {s["number"] for s in signals["similar_raw"]}
         report = verify_plan_grounding(plan, signals["classifier_top3"], retrieved_numbers)
@@ -153,6 +153,13 @@ def compute_grounding_reports(
             "predicted_component": plan.predicted_component,
             "classifier_top3_labels": [e["label"] for e in signals["classifier_top3"]],
             "retrieved_numbers": sorted(retrieved_numbers),
+            # 2026-08-27: llm_status == "parse_failure" means this case is a
+            # _make_fallback_plan() fallback (predictor-only, no real LLM synthesis) --
+            # see eval/test_invariants.py::test_no_fallback_plans_in_cassette, which
+            # asserts this never lands scored in a committed cassette (the defect a
+            # same-day fallback-plan audit found: 32% of a cassette's k8s entries were
+            # scored fallback plans that had never been checked for).
+            "llm_status": llm_status,
         })
 
     return cases

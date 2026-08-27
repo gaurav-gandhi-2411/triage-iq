@@ -19,11 +19,22 @@ class TriageRequest(BaseModel):
     )
 
 
+class DependencyStatus(BaseModel):
+    name: str
+    healthy: bool
+    detail: str
+
+
 class HealthResponse(BaseModel):
     status: str
     repos_loaded: list[str]
     groq_key_present: bool
     uptime_s: float
+    dependencies: list[DependencyStatus] | None = Field(
+        default=None,
+        description="Populated only when ?deps=1 is passed. groq_key_present above only "
+        "proves the env var is non-empty; this proves the key is actually accepted by Groq.",
+    )
 
 
 class ServiceInfoResponse(BaseModel):

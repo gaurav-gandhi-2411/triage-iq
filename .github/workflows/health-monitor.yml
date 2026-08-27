@@ -107,6 +107,86 @@ jobs:
               ;;
           esac
 
+  model-availability-check:
+    # Closes the gap that let /triage return 500 on every real request from 2026-08-16 (Groq
+    # deprecated llama-3.1-8b-instant) through at least 2026-08-26 (a second, distinct failure --
+    # the Groq API key itself started being rejected -- see PR discussion). /health never touched
+    # either code path, so nothing caught it until manual investigation both times.
+    #
+    # Model IDs are read from src/triage_iq/model_config.py -- the single source of truth all
+    # runtime consumers import from -- rather than grepped out of triage.py/triage_eval.py's
+    # source text. A grep-based extraction breaks silently the moment the literal is replaced by
+    # this very import; reading the actual module is the only way this check can't go stale the
+    # same way the thing it monitors just did.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Read configured model names from the single source of truth
+        id: models
+        run: |
+          TRIAGE_MODEL=$(PYTHONPATH=src python -c 'from triage_iq.model_config import TRIAGE_MODEL; print(TRIAGE_MODEL)')
+          JUDGE_MODEL=$(PYTHONPATH=src python -c 'from triage_iq.model_config import JUDGE_MODEL; print(JUDGE_MODEL)')
+          if [ -z "$TRIAGE_MODEL" ] || [ -z "$JUDGE_MODEL" ]; then
+            echo "::error::Could not read TRIAGE_MODEL/JUDGE_MODEL from src/triage_iq/model_config.py -- TRIAGE_MODEL='$TRIAGE_MODEL' JUDGE_MODEL='$JUDGE_MODEL'. Fix this check, don't ignore it."
+            exit 1
+          fi
+          echo "triage_model=$TRIAGE_MODEL" >> "$GITHUB_OUTPUT"
+          echo "judge_model=$JUDGE_MODEL" >> "$GITHUB_OUTPUT"
+          echo "Configured triage model: $TRIAGE_MODEL"
+          echo "Configured judge model: $JUDGE_MODEL"
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: triageiq-deployer@${{ env.GCP_PROJECT }}.iam.gserviceaccount.com
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Get Groq API key from Secret Manager
+        run: |
+          KEY=$(gcloud secrets versions access latest \
+            --secret=groq-api-key \
+            --project=${{ env.GCP_PROJECT }})
+          echo "::add-mask::$KEY"
+          echo "GROQ_API_KEY=$KEY" >> "$GITHUB_ENV"
+
+      - name: Confirm the key is accepted AND both configured models are live on Groq
+        run: |
+          set -o pipefail
+          RESP=$(curl -sS -w "\n%{http_code}" \
+            -H "Authorization: Bearer $GROQ_API_KEY" \
+            https://api.groq.com/openai/v1/models)
+          HTTP_CODE=$(echo "$RESP" | tail -1)
+          BODY=$(echo "$RESP" | sed '$d')
+          if [ "$HTTP_CODE" = "401" ]; then
+            echo "::error::Groq rejected the API key (401 invalid_api_key). This is NOT a model deprecation -- the key itself is no longer accepted by Groq, independent of which model is configured. Check the key's status in the Groq console; rotating it requires a new Secret Manager version (gcloud secrets versions add groq-api-key)."
+            exit 1
+          fi
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::UNVERIFIED -- Groq /models returned HTTP $HTTP_CODE, not 200. This is NOT a confirmed model removal or key issue: the check itself failed (Groq API issue, network blip). Body: $BODY"
+            exit 1
+          fi
+          LIVE_IDS=$(echo "$BODY" | python3 -c "import json,sys; print('\n'.join(m['id'] for m in json.load(sys.stdin)['data']))")
+          FAIL=0
+          for MODEL in "${{ steps.models.outputs.triage_model }}" "${{ steps.models.outputs.judge_model }}"; do
+            if ! echo "$LIVE_IDS" | grep -qxF "$MODEL"; then
+              echo "::error::Model '$MODEL' (configured in src/triage_iq/model_config.py) is no longer in Groq's live model catalog -- it has been deprecated/removed. Check console.groq.com/docs/deprecations for the documented replacement, do not guess a replacement name."
+              FAIL=1
+            fi
+          done
+          exit $FAIL
+
   check:
     runs-on: ubuntu-latest
     steps:

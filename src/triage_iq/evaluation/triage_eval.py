@@ -14,6 +14,8 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field
 
+from triage_iq.model_config import JUDGE_MODEL
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -162,7 +164,7 @@ class TriageJudge:
     def __init__(
         self,
         groq_api_key: str | None = None,
-        model: str = "llama-3.3-70b-versatile",
+        model: str = JUDGE_MODEL,
         temperature: float = 0.0,
         provider: str = "groq",
         gemini_api_key: str | None = None,

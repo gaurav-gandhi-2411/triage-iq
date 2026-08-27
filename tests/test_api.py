@@ -195,6 +195,59 @@ def test_triage_propagates_assistant_error(client):
     assert r.status_code == 500
 
 
+def test_triage_error_carries_request_id(client):
+    """The client must be able to correlate a 500 with a server-side log line -- see
+    the 2026-08-26 diagnostic session's Part 4 SPOF audit: before this, the error body
+    was a bare {"detail": "Internal server error"} with no way to find the matching
+    Cloud Run log entry short of Cloud Run's own auto-added trace header."""
+    app.state.store.get.return_value.assistant.triage_with_metadata.side_effect = RuntimeError("groq down")
+    r = client.post("/triage", json={
+        "repo": "microsoft/vscode",
+        "title": "Some issue",
+    })
+    assert r.status_code == 500
+    assert "X-Request-Id" in r.headers
+    body = r.json()
+    assert body["detail"]["request_id"] == r.headers["X-Request-Id"]
+    assert body["detail"]["message"] == "Internal server error"
+
+
+def test_health_deps_default_unaffected(client):
+    """?deps=1 is opt-in -- the bare /health Cloud Run's startupProbe hits must stay
+    exactly as before: fast, never calls Groq, dependencies omitted."""
+    r = client.get("/health")
+    assert r.status_code == 200
+    assert r.json()["dependencies"] is None
+
+
+def test_health_deps_reports_groq_failure(client):
+    """This is the check that would have caught both 2026-08-16 and 2026-08-26 --
+    /health alone never called Groq, so it stayed 200 through both outages."""
+    with patch("triage_iq.api.app._check_groq") as mock_check:
+        from triage_iq.api.schemas import DependencyStatus
+        mock_check.return_value = DependencyStatus(
+            name="groq", healthy=False, detail="AuthenticationError: 401 Invalid API Key"
+        )
+        r = client.get("/health?deps=1")
+    assert r.status_code == 503
+    body = r.json()
+    assert body["status"] == "degraded"
+    groq_dep = next(d for d in body["dependencies"] if d["name"] == "groq")
+    assert groq_dep["healthy"] is False
+    assert "401" in groq_dep["detail"]
+
+
+def test_health_deps_all_healthy(client):
+    with patch("triage_iq.api.app._check_groq") as mock_check:
+        from triage_iq.api.schemas import DependencyStatus
+        mock_check.return_value = DependencyStatus(name="groq", healthy=True, detail="ok")
+        r = client.get("/health?deps=1")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == "ok"
+    assert all(d["healthy"] for d in body["dependencies"])
+
+
 def test_triage_response_validates_against_schema(client):
     """/triage response must be valid against TriagePlan — locks the OpenAPI contract."""
     r = client.post("/triage", json={

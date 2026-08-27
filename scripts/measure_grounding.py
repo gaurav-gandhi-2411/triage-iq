@@ -26,7 +26,7 @@ import pandas as pd
 from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
 from triage_iq.models.component_classifier import load_classifier
-from triage_iq.models.grounding import verify_plan_grounding
+from triage_iq.models.grounding import compute_grounding_status
 from triage_iq.models.resolution import ResolutionTimePredictor
 from triage_iq.models.triage import TriageAssistant
 
@@ -136,23 +136,50 @@ def compute_grounding_reports(
         })
 
         signals = assistant._collect_signals(row)
-        plan, _raw, _usage, _llm_status, _cache_hit = assistant._call_llm_verbose(signals)
+        plan, _raw, usage, llm_status, _cache_hit = assistant._call_llm_verbose(signals)
 
         retrieved_numbers = {s["number"] for s in signals["similar_raw"]}
-        report = verify_plan_grounding(plan, signals["classifier_top3"], retrieved_numbers)
+        # 2026-08-28 (C6/E1): calls the SAME function triage_with_metadata() calls, with
+        # the SAME assistant.enable_validated_override_rescue setting -- this is the fix
+        # for the actual defect found this session (this script used to call
+        # verify_plan_grounding directly and never exercised the override-rescue branch
+        # production's serving path had grown, so the eval gate silently diverged from
+        # what /triage actually does). One function, one behavior, can't diverge again.
+        resolved = compute_grounding_status(
+            plan,
+            signals["classifier_top3"],
+            retrieved_numbers,
+            enable_validated_override_rescue=getattr(assistant, "enable_validated_override_rescue", False),
+            issue_title=str(issue["title"]),
+            issue_body=str(issue["body"]),
+        )
         ci_match = _diagnostic_ci_match(plan.predicted_component, signals["classifier_top3"])
 
         cases.append({
             "issue_number": issue["number"],
             "repo": repo,
-            "component_grounded": report.component_grounded,
-            "component_reason": report.component_reason,
+            "component_grounded": resolved.component_grounded,
+            "component_reason": resolved.component_reason,
             "case_insensitive_match_diagnostic": ci_match,
-            "ungrounded_refs": report.ungrounded_refs,
-            "all_grounded": report.all_grounded,
+            "ungrounded_refs": resolved.ungrounded_refs,
+            "all_grounded": resolved.all_grounded,
+            "override_applied": resolved.override_applied,
             "predicted_component": plan.predicted_component,
             "classifier_top3_labels": [e["label"] for e in signals["classifier_top3"]],
             "retrieved_numbers": sorted(retrieved_numbers),
+            # 2026-08-27: llm_status == "parse_failure" means this case is a
+            # _make_fallback_plan() fallback (predictor-only, no real LLM synthesis) --
+            # see eval/test_invariants.py::test_no_fallback_plans_in_cassette, which
+            # asserts this never lands scored in a committed cassette (the defect a
+            # same-day fallback-plan audit found: 32% of a cassette's k8s entries were
+            # scored fallback plans that had never been checked for).
+            "llm_status": llm_status,
+            # 2026-08-28: finish_reason == "length" means the cached completion was
+            # truncated by max_tokens -- going forward TruncatedCompletionError prevents
+            # this from ever being cached at all, but this is the defense-in-depth check
+            # for a cassette recorded before that fix landed. See
+            # eval/test_invariants.py::test_no_truncated_completions_in_cassette.
+            "finish_reason": usage.get("finish_reason") if isinstance(usage, dict) else None,
         })
 
     return cases

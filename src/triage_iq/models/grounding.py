@@ -155,3 +155,141 @@ def verify_declared_attribution(
         summary_cited=summary_cited,
         next_steps_cited=next_steps_cited,
     )
+
+
+# ---------------------------------------------------------------------------
+# Validated override reason (2026-08-28, Part C/E of the diagnostic session)
+# ---------------------------------------------------------------------------
+#
+# The version of this check that shipped on PR #106's branch (never merged) accepted
+# ANY non-empty component_override_reason string as sufficient to mark a
+# classifier-top3-deviating component as "grounded" -- self-certification, checked
+# against nothing. Confirmed directly: all 3 of the openai/gpt-oss-20b cassette's
+# "ungrounded" issues were exactly the 3 issues where the model used this declaration,
+# and applying the unsound check would have handed the model a pass on precisely the
+# disputed cases. This replacement requires the reason to be checkably tied to real
+# signal -- a cited retrieved issue number, or a verbatim entity from the issue's own
+# title/body -- not merely present. Still not immune to a model fabricating a
+# plausible, evidence-citing lie, but a real improvement over "any string passes."
+
+_STOPWORDS = frozenset({
+    "the", "a", "an", "is", "are", "was", "were", "this", "that", "these", "those",
+    "and", "or", "but", "not", "with", "from", "into", "onto", "for", "to", "of", "in",
+    "on", "at", "by", "as", "it", "its", "be", "been", "being", "has", "have", "had",
+    "does", "did", "doing", "when", "where", "which", "who", "what", "why", "how",
+})
+
+
+def _significant_words(text: str, min_length: int = 4) -> set[str]:
+    """Lowercased words of at least `min_length` chars, minus common stopwords.
+
+    Deliberately simple (no NLP dependency) -- this only needs to catch a reason that
+    verbatim echoes something specific from the issue, not paraphrase detection.
+    """
+    import re
+
+    words = re.findall(r"[a-zA-Z][a-zA-Z0-9_./-]*", text.lower())
+    return {w for w in words if len(w) >= min_length and w not in _STOPWORDS}
+
+
+@dataclass(frozen=True)
+class ResolvedGroundingStatus:
+    """The single, final grounding verdict for a plan -- component_grounded here already
+    reflects the (optional, disabled-by-default) validated-override rescue, so any caller
+    reading `all_grounded` gets the actual answer, not a partial one they still need to
+    combine with a separate override check themselves.
+
+    This is what both triage_with_metadata() (production) and measure_grounding.py (eval)
+    must call -- not two independent implementations of "compute grounding," which is
+    exactly the class of bug this replaces (measure_grounding.py, unmerged PR #106 found,
+    silently never exercised the override-rescue branch triage_with_metadata() had grown).
+    """
+
+    component_grounded: bool
+    component_reason: str
+    similar_issue_refs: list[int]
+    ungrounded_refs: list[int]
+    all_grounded: bool
+    override_applied: bool
+    override_reason_validated: bool | None  # None when no override was declared at all
+
+
+def compute_grounding_status(
+    plan: Any,
+    classifier_top3: list[dict],
+    retrieved_numbers: set[int],
+    *,
+    enable_validated_override_rescue: bool = False,
+    issue_title: str = "",
+    issue_body: str = "",
+) -> ResolvedGroundingStatus:
+    """Single source of truth for "is this plan grounded" -- shared by production and eval.
+
+    `enable_validated_override_rescue` defaults to False: a component that deviates from
+    classifier_top3 is flagged ungrounded unless the caller explicitly opts into rescuing
+    an honestly-declared, evidence-tied override via `verify_override_reason_grounded`.
+    Disabled by default so nothing self-certifies until a caller makes a deliberate choice
+    to enable it -- see grounding.py's validated-override-reason section for why the prior
+    (self-certifying) version was unsound and is not present here at all.
+    """
+    report = verify_plan_grounding(plan, classifier_top3, retrieved_numbers)
+    component_grounded = report.component_grounded
+    component_reason = report.component_reason
+    override_applied = False
+    override_reason_validated: bool | None = None
+
+    declared = getattr(plan, "declared_attribution", None)
+    if not component_grounded and enable_validated_override_rescue and declared is not None:
+        da_report = verify_declared_attribution(plan, classifier_top3, retrieved_numbers)
+        if da_report.component_declaration == "honest_override":
+            override_reason_validated = verify_override_reason_grounded(
+                declared.component_override_reason, issue_title, issue_body, retrieved_numbers,
+            )
+            if override_reason_validated:
+                component_grounded = True
+                component_reason = "model_override (validated)"
+                override_applied = True
+
+    return ResolvedGroundingStatus(
+        component_grounded=component_grounded,
+        component_reason=component_reason,
+        similar_issue_refs=report.similar_issue_refs,
+        ungrounded_refs=report.ungrounded_refs,
+        all_grounded=component_grounded and len(report.ungrounded_refs) == 0,
+        override_applied=override_applied,
+        override_reason_validated=override_reason_validated,
+    )
+
+
+def verify_override_reason_grounded(
+    reason: str,
+    issue_title: str,
+    issue_body: str,
+    retrieved_numbers: set[int],
+) -> bool:
+    """True if a declared component-override reason is checkably tied to real signal.
+
+    Two independent sufficient conditions (either passes):
+    1. The reason text names a retrieved issue number (e.g. "#12345" or "12345") that
+       is actually in `retrieved_numbers` for this request.
+    2. The reason text contains at least one "significant" word (>=4 chars, not a
+       stopword) that also appears verbatim in the issue's own title or body.
+
+    Does not (cannot) catch a model fabricating a plausible-sounding reason that also
+    happens to reuse issue vocabulary -- it raises the bar from "any non-empty string"
+    to "checkably tied to something real," not to "provably true."
+    """
+    import re
+
+    reason_lower = reason.lower()
+
+    cited_numbers = {int(n) for n in re.findall(r"\d+", reason)}
+    if cited_numbers & retrieved_numbers:
+        return True
+
+    issue_words = _significant_words(issue_title) | _significant_words(issue_body)
+    reason_words = _significant_words(reason)
+    if issue_words & reason_words:
+        return True
+
+    return False

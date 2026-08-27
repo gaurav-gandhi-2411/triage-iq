@@ -139,3 +139,45 @@ the runner's Python installation.
 
 **Revisit trigger:** If this repo ever starts building/publishing an sdist (it does not
 today), pin `setuptools>=83.0.0` explicitly as a build dependency at that time.
+
+### PYSEC-2026-3716 — datasets folder-based dataset builder path traversal
+
+- **Suppressed since:** 2026-08-27
+- **Affected package:** `datasets==4.8.5` (`requirements.lock`; declared directly in
+  `requirements.txt` alongside `transformers`/`sentence-transformers`, but never imported
+  directly anywhere in this codebase — `grep -rn "^import datasets\|^from datasets"` across
+  `src/`, `eval/`, `scripts/`, `tests/` returns zero matches; it is pulled in for the
+  HF ecosystem tooling those packages use, not called by TriageIQ's own code)
+- **Fix version:** `datasets>=5.0.1` (published; not yet pinned here — see below)
+
+**Why suppressed:**
+The vulnerability is in `datasets`' folder-based dataset builders (e.g. the `imagefolder`/
+`audiofolder` builders): a crafted `file_name` metadata field is joined to the dataset
+directory without path-traversal validation, then read and embedded into output when
+`save_to_disk()` or `push_to_hub()` is called on the loaded dataset. Checked directly:
+TriageIQ never calls `datasets.load_dataset()` with a folder-based builder, never calls
+`save_to_disk()`/`push_to_hub()` anywhere, and never loads a dataset folder from an
+untrusted or attacker-suppliable source — all data ingestion in this repo goes through its
+own `pandas`/`parquet`-based pipeline (`src/triage_iq/data/`), not `datasets`' loaders. No
+reachable surface: the vulnerable call chain is never invoked, directly or transitively.
+
+**Why not fixed immediately:** A fixed release (`datasets==5.0.1`) is published, but bumping
+to it is not a safe standalone one-line pin edit right now. `requirements.txt`'s
+`sentence-transformers` floor was already raised to `>=5.7.0,<6.0` by Dependabot PR #69
+(2026-08-11) without a matching `requirements.lock` regeneration — the committed lock still
+has `sentence-transformers==2.7.0`, which no longer satisfies `requirements.txt`'s own
+constraint. Any fresh `pip-compile requirements.txt --output-file=requirements.lock` run
+(even one scoped with `--upgrade-package datasets`) re-resolves against that already-bumped
+floor and silently pulls `sentence-transformers` 2.7.0→5.7.0 and `transformers` 4.57.6→5.16.1
+along with it — the exact triple-major-version refresh that CVE-2026-1839, PYSEC-2025-217,
+CVE-2026-4372, and PYSEC-2026-2290 above are deliberately deferring pending 6+ months of
+`sentence-transformers` 5.x stability and confirmed `.encode()` API compatibility. Bumping
+`datasets` alone requires first resolving the `requirements.txt`/`requirements.lock` drift
+without triggering that refresh (e.g. temporarily re-pinning `sentence-transformers` back to
+its `<3.0` floor for the regen, then restoring the `>=5.7.0` floor once the major refresh is
+actually scheduled) — not something to do as a side effect of one CVE bump.
+
+**Revisit trigger:** (1) Resolve the `requirements.txt`/`requirements.lock` drift on
+`sentence-transformers` as its own reviewed change; (2) then bump `requirements.lock`'s
+`datasets` pin to `>=5.0.1` and drop this suppression — no source code change needed since
+the package isn't imported directly.

@@ -62,7 +62,20 @@ jobs:
           # bypass — requires building an sdist on macOS APFS/HFS+. This repo has no
           # MANIFEST.in/setup.py, never builds an sdist, and runs on Linux everywhere.
           #
-          # Transformers findings (all but PYSEC-2026-3447): fix requires
+          # PYSEC-2026-3716: datasets folder-based dataset builder path traversal via
+          # unsanitized file_name metadata in save_to_disk()/push_to_hub(). datasets==4.8.5
+          # is a transitive-in-practice dependency (declared directly in requirements.txt
+          # but never imported anywhere in this codebase — data ingestion goes through our
+          # own pandas/parquet pipeline, not datasets' loaders). No reachable surface. Fixed
+          # upstream in datasets==5.0.1, but requirements.lock cannot be bumped to it with a
+          # routine `pip-compile --upgrade-package datasets` regen: requirements.txt's
+          # sentence-transformers floor was already bumped to >=5.7.0,<6.0 by Dependabot
+          # PR #69 (2026-08-11) without a matching lock regen, so ANY fresh pip-compile run
+          # right now silently drags in the deferred transformers/sentence-transformers
+          # major-version refresh that CVE-2026-1839 and friends are explicitly waiting on.
+          # See DEPENDENCIES.md.
+          #
+          # Transformers findings (all but PYSEC-2026-3447/3716): fix requires
           # transformers>=5.0.0rc3 (needs sentence-transformers>=5.x, a triple major bump)
           # or, for CVE-2025-3000, no fix version is published at all. Revisit when a
           # planned dependency refresh is scheduled (not bundled into an unrelated PR) —
@@ -73,7 +86,8 @@ jobs:
             --ignore-vuln CVE-2026-4372 \
             --ignore-vuln CVE-2025-3000 \
             --ignore-vuln PYSEC-2026-2290 \
-            --ignore-vuln PYSEC-2026-3447
+            --ignore-vuln PYSEC-2026-3447 \
+            --ignore-vuln PYSEC-2026-3716
 
       - name: Lint (ruff)
         run: ruff check src/ tests/
@@ -115,4 +129,8 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: pip-audit (installed environment)
-        run: pip-audit
+        # PYSEC-2026-3447 (setuptools): same finding, same reachability analysis as the
+        # `test` job's requirements.lock scan above — see DEPENDENCIES.md. This job audits
+        # a freshly-resolved environment (requirements-dev.txt has no setuptools pin), so
+        # it re-surfaces the finding independently of requirements.lock's ignore list.
+        run: pip-audit --ignore-vuln PYSEC-2026-3447

@@ -76,6 +76,19 @@ _GROUNDING_BASELINE = {
     # both repos are now fully grounded (0 ungrounded claims), consistent with
     # reports/eval_baseline.json's fabrication_rate: 0.0 for both repos on the same cassette
     # (same underlying definition -- plan.grounding_status.all_grounded is False).
+    #
+    # Re-derived again 2026-08-27 (ADR-0051), microsoft/vscode only: llama-3.1-8b-instant
+    # (the model this baseline was measured against above) is deprecated by Groq and now
+    # returns 404 on every call -- the prior 0/11 baseline is VOID, not held, because there
+    # is no reachable model left to re-verify it against. Re-measured against the
+    # openai/gpt-oss-20b swap (PR #101/#106) on the same cassette/eval set (same hash,
+    # unchanged below): 3/11 ungrounded issues (27.3%), all three on the
+    # predicted_component claim only (zero similar-issue citation hallucination -- the
+    # failures don't cluster). This is a real, absolute-terms degradation versus the old
+    # number, NOT an equivalent or accepted-as-fine baseline -- see ADR-0051 for why a void
+    # baseline still had to move, why the new number is stated plainly as worse, and what
+    # regression magnitude this ratchet can and cannot catch at the new reference point.
+    # kubernetes/kubernetes is unchanged (0/53 on both models).
     "eval_set_hash": "0c2e57410098ea170f3f65668ff8977d3ce4942936b9a3e2ffb6696a09621bfe",
     "per_repo": {
         "kubernetes/kubernetes": {
@@ -83,7 +96,7 @@ _GROUNDING_BASELINE = {
             "n": 53,
         },
         "microsoft/vscode": {
-            "ungrounded_count": 0,
+            "ungrounded_count": 3,
             "n": 11,
         },
     },

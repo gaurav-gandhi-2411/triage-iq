@@ -65,7 +65,15 @@ def test_groq_completion_does_not_raise_on_stop_finish_reason():
 
 def test_truncated_completion_never_reaches_cache():
     """The defect this whole fix exists for: a truncated completion must never be
-    cache.set() -- it must fail before the caller gets a (content, usage) tuple back."""
+    cache.set() -- it must fail before a (content, usage) tuple is ever cached.
+
+    2026-08-28 (Part B3): _call_llm_verbose no longer lets TruncatedCompletionError
+    propagate to its caller -- it catches it and degrades cleanly to a signals-only
+    fallback plan (llm_status="degraded_truncated"), since an unhandled exception here
+    would otherwise reach app.py as a raw 500 instead of a clean degrade. The original
+    cache-safety property (never cache.set() a truncated completion) still holds and is
+    still asserted here.
+    """
     asst = _make_assistant()
     asst._cache = MagicMock()
     asst._cache.compute_key.return_value = "some-key"
@@ -82,10 +90,19 @@ def test_truncated_completion_never_reaches_cache():
         "hi_days": 30.0,
         "resolution_bucket": "days",
         "resolution_conf_pct": 33.0,
+        "_title": "Something broke",
+        "_body": "It broke.",
+        "_include_bucket": False,
+        "_number": 1,
     }
-    with patch("groq.Groq", return_value=mock_client), pytest.raises(TruncatedCompletionError):
-        asst._call_llm_verbose(signals)
+    with patch("groq.Groq", return_value=mock_client):
+        plan, raw, usage, llm_status, cache_hit = asst._call_llm_verbose(signals)
     asst._cache.set.assert_not_called()
+    assert llm_status == "degraded_truncated"
+    assert cache_hit is False
+    assert usage["finish_reason"] == "length"
+    assert usage["completion_tokens"] == 1024
+    assert "manual review" in plan.triage_summary.lower()
 
 
 # ---------------------------------------------------------------------------

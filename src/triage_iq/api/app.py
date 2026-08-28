@@ -367,7 +367,15 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
 
     total_ms = round((time.perf_counter() - t_start) * 1000, 1)
     llm_status = meta.get("llm_status", "ok")
-    req_status = "fallback" if llm_status == "parse_failure" else "success"
+    # "degraded_*" (Part B, 2026-08-28: insufficient token budget / completion truncated
+    # even at a dynamically-reduced max_tokens) are signals-only fallback plans, same as
+    # parse_failure -- not "success". parse_retry_succeeded is deliberately excluded: that
+    # plan IS real LLM content, just needed a retry.
+    req_status = (
+        "fallback"
+        if llm_status == "parse_failure" or llm_status.startswith("degraded_")
+        else "success"
+    )
 
     _triage_requests_total.labels(repo=body.repo, status=req_status).inc()
     _triage_latency_seconds.observe(total_ms / 1000.0)

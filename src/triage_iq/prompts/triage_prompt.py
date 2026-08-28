@@ -93,12 +93,13 @@ def build_triage_prompt(
     repo: str,
     resolution_bucket: str | None = None,
     resolution_confidence_pct: float | None = None,
+    max_body_chars: int = 800,
 ) -> str:
     """Build the user-turn prompt for the triage assistant.
 
     Args:
         issue_title: Issue title string.
-        issue_body: Cleaned issue body (truncated to 800 chars).
+        issue_body: Cleaned issue body (truncated to `max_body_chars`).
         classifier_top3: Top-3 component predictions from TF-IDF classifier.
             Each dict has keys: label, confidence.
         similar_issues: Top-5 similar issues from BGE retrieval.
@@ -111,11 +112,16 @@ def build_triage_prompt(
             When provided (Config C), appended to System 3 section alongside floats.
             When None (Config A, default), only float signals are shown.
         resolution_confidence_pct: Bucket confidence 0–100%. Used only when bucket provided.
+        max_body_chars: Cap on the body preview length. Default 800 matches historical
+            behavior. Lowered by the token-budget guard (triage.py, Part B) when the
+            default-length prompt wouldn't fit Groq's 8,000 TPM ceiling -- shrinking the
+            already-lossy body preview first, before ever touching retrieved-issue text
+            that declared_attribution citations depend on directly.
 
     Returns:
         Formatted user-turn string.
     """
-    body_preview = issue_body[:800].strip() if issue_body else "(no body)"
+    body_preview = issue_body[:max_body_chars].strip() if issue_body else "(no body)"
 
     classifier_lines = "\n".join(
         f"  {i+1}. {c['label']} (confidence: {c['confidence']:.3f})"

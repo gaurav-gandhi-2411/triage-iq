@@ -35,10 +35,22 @@ class TruncatedCompletionError(RuntimeError):
     therefore never reach cache.set() and can never enter a committed cassette.
     """
 
-    def __init__(self, completion_tokens: int, max_tokens: int, content_preview: str) -> None:
+    def __init__(
+        self,
+        completion_tokens: int,
+        max_tokens: int,
+        content_preview: str,
+        prompt_tokens: int = -1,
+    ) -> None:
         self.completion_tokens = completion_tokens
         self.max_tokens = max_tokens
         self.content_preview = content_preview
+        # 2026-08-28 (Part B): a truncated completion still consumed real, billable
+        # tokens -- the degrade path built on this exception (triage.py's
+        # _call_llm_verbose) needs prompt_tokens to report accurate cost/usage instead
+        # of silently zeroing it out. Optional/defaulted so this stays additive for any
+        # other caller.
+        self.prompt_tokens = prompt_tokens
         super().__init__(
             f"Completion truncated: finish_reason='length' at completion_tokens="
             f"{completion_tokens} (max_tokens={max_tokens}). Raise max_tokens, not a "
@@ -377,6 +389,63 @@ _TRIAGE_PLAN_RESPONSE_FORMAT = _build_triage_plan_response_format()
 
 
 # ---------------------------------------------------------------------------
+# Prompt-token budget guard (2026-08-28, Part A/B)
+#
+# Live-measured against the full 64-issue eval set (tiktoken cl100k, offline, zero quota
+# cost): with the schema-cut prompt (Part A) and a FIXED max_tokens=2048, 13/64 issues
+# (20.3%) would be rejected outright by Groq's TPM preflight (413, prompt+max_tokens >
+# 8000) -- not a rare tail case. A fixed max_tokens cannot be set safely without either
+# capping it so low that normal completions truncate (finish_reason=length, a hard error
+# since PR #113's TruncatedCompletionError) or leaving it high enough to 413 on longer
+# issues. The fix is a per-request budget computed from the ACTUAL measured prompt size.
+# ---------------------------------------------------------------------------
+
+_GROQ_TPM_LIMIT = 8000
+
+# Fit against 5 live-verified gpt-oss-20b calls under the CURRENT (schema-cut) attribution
+# prompt (2026-08-28). NOT a universal tokenizer-efficiency constant: an earlier ratio
+# (1.446) fit against the OLD schema-embedded prompt under-predicted THIS prompt's real
+# tokens by ~172 tokens once the content mix changed (less JSON-schema text, more prose) --
+# tiktoken's cl100k_base tokenizes schema-heavy JSON and natural-language prose at
+# different relative efficiency than gpt-oss's real tokenizer does. Re-derive this ratio
+# from fresh live samples whenever SYSTEM_PROMPT_PROSE/_SCHEMA_BLOCK/few-shot content
+# changes -- it is a property of the current prompt's content mix, not a constant.
+_CL100K_TO_REAL_RATIO = 1.4896
+
+# Leave-one-out cross-validated error on the 5-sample calibration fit above was <=4.2
+# tokens -- tight, but n=5, all mid-length issues (cl100k 3957-3974), not exercised across
+# the full prompt-size range this guard actually has to handle. 100 tokens is ~24x that
+# observed error: enough to absorb small-sample/extrapolation risk without materially
+# eating into the completion budget (worst case in the 64-issue set still leaves >1,700
+# completion tokens after this margin -- see _MIN_VIABLE_COMPLETION_TOKENS below).
+_PROMPT_SIZE_SAFETY_MARGIN = 100
+
+# Below this, a completion is unlikely to hold a complete, valid TriagePlan JSON. The
+# smallest real completion observed in this session's live testing was 1,031 tokens (n=8,
+# gpt-oss-20b, real issues) -- 800 sits below every observed sample with room to spare,
+# without writing off most of the observed range as "too risky to attempt."
+_MIN_VIABLE_COMPLETION_TOKENS = 800
+
+_cl100k_encoding = None  # lazy -- avoid the tiktoken import cost for callers that never hit this
+
+
+def _estimate_prompt_tokens(messages: list[dict]) -> int:
+    """Pre-call estimate of what Groq will report as prompt_tokens for `messages`.
+
+    tiktoken's cl100k_base is a PROXY for gpt-oss's real tokenizer, not the real thing --
+    see _CL100K_TO_REAL_RATIO's docstring for the observed calibration error and why the
+    ratio is prompt-shape-specific rather than universal.
+    """
+    global _cl100k_encoding
+    if _cl100k_encoding is None:
+        import tiktoken
+
+        _cl100k_encoding = tiktoken.get_encoding("cl100k_base")
+    raw = sum(len(_cl100k_encoding.encode(m["content"])) for m in messages)
+    return round(raw * _CL100K_TO_REAL_RATIO)
+
+
+# ---------------------------------------------------------------------------
 # Main assistant class
 # ---------------------------------------------------------------------------
 
@@ -636,6 +705,12 @@ class TriageAssistant:
             "_t_classify": t_classify,
             "_t_retrieve": t_retrieve,
             "_t_predict": t_predict,
+            # Raw fields needed to rebuild "prompt" with a shorter body preview if the
+            # token-budget guard (Part B) finds the default 800-char preview doesn't fit.
+            "_title": title,
+            "_body": body,
+            "_include_bucket": _include_bucket,
+            "_number": issue.get("number", "?"),
         }
 
     # ------------------------------------------------------------------
@@ -668,6 +743,7 @@ class TriageAssistant:
             SYSTEM_PROMPT_PROSE,
             build_few_shot_examples,
             build_few_shot_examples_legacy,
+            build_triage_prompt,
         )
 
         # ADR-0020: attribution prompt is opt-in via TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1, off by
@@ -690,11 +766,86 @@ class TriageAssistant:
         messages.extend(few_shots)
         messages.append({"role": "user", "content": signals["prompt"]})
 
+        # --- Part B: per-request token-budget guard --------------------------------
+        # Compute how much completion budget is actually available under Groq's 8,000
+        # TPM ceiling for THIS request's measured prompt size, instead of sending a
+        # fixed self.max_tokens that either 413s on long prompts or truncates
+        # completions on short ones (live-measured: 13/64 eval-set issues would 413 at
+        # a fixed max_tokens=2048 -- see _GROQ_TPM_LIMIT's module-level comment).
+        estimated_prompt_tokens = _estimate_prompt_tokens(messages)
+        dynamic_max_tokens = min(
+            self.max_tokens,
+            _GROQ_TPM_LIMIT - estimated_prompt_tokens - _PROMPT_SIZE_SAFETY_MARGIN,
+        )
+
+        if dynamic_max_tokens < _MIN_VIABLE_COMPLETION_TOKENS:
+            # The prompt alone leaves too little room for a usable completion even
+            # after shrinking the ask -- shrink the input instead. Issue-body preview
+            # first: it's already a lossy 800-char preview (build_triage_prompt), so
+            # cutting it further is a smaller marginal loss than cutting retrieved-issue
+            # text, which declared_attribution citations depend on directly -- losing
+            # that risks the model citing issues it can no longer see, undermining
+            # grounding rather than just losing scene-setting context.
+            for max_body_chars in (400, 200, 100, 0):
+                logger.warning(
+                    "Prompt too large for #%s (est. %d prompt tokens leaves only %d "
+                    "completion tokens, floor %d) — truncating issue body to %d chars.",
+                    signals.get("_number", "?"), estimated_prompt_tokens,
+                    dynamic_max_tokens, _MIN_VIABLE_COMPLETION_TOKENS, max_body_chars,
+                )
+                shorter_prompt = build_triage_prompt(
+                    issue_title=signals["_title"],
+                    issue_body=signals["_body"],
+                    classifier_top3=signals["classifier_top3"],
+                    similar_issues=signals["similar_raw"],
+                    resolution_point_days=signals["pred_days"],
+                    resolution_lower_days=signals["lo_days"],
+                    resolution_upper_days=signals["hi_days"],
+                    repo=self.repo,
+                    resolution_bucket=(
+                        signals["resolution_bucket"] if signals["_include_bucket"] else None
+                    ),
+                    resolution_confidence_pct=(
+                        signals["resolution_conf_pct"] if signals["_include_bucket"] else None
+                    ),
+                    max_body_chars=max_body_chars,
+                )
+                messages[-1] = {"role": "user", "content": shorter_prompt}
+                estimated_prompt_tokens = _estimate_prompt_tokens(messages)
+                dynamic_max_tokens = min(
+                    self.max_tokens,
+                    _GROQ_TPM_LIMIT - estimated_prompt_tokens - _PROMPT_SIZE_SAFETY_MARGIN,
+                )
+                if dynamic_max_tokens >= _MIN_VIABLE_COMPLETION_TOKENS:
+                    break
+
+        if dynamic_max_tokens < _MIN_VIABLE_COMPLETION_TOKENS:
+            # Truncating input to nothing still didn't leave a viable completion
+            # budget -- should be unreachable given system+few-shot alone is ~4,800
+            # real tokens, but degrade rather than send a request very likely to 413
+            # or truncate mid-completion.
+            logger.error(
+                "Prompt token budget guard exhausted for #%s: even with the issue "
+                "body fully truncated, only %d completion tokens remain (floor %d). "
+                "Degrading without calling Groq.",
+                signals.get("_number", "?"), dynamic_max_tokens, _MIN_VIABLE_COMPLETION_TOKENS,
+            )
+            plan = self._make_fallback_plan(
+                signals, reason="prompt too large for any viable completion token budget"
+            )
+            return (
+                plan, "", {"llm_status_reason": "insufficient_token_budget"},
+                "degraded_insufficient_budget", False,
+            )
+
+        max_tokens = dynamic_max_tokens
+        # --- end budget guard --------------------------------------------------------
+
         cache = getattr(self, "_cache", None)
         cache_key: str | None = None
         if cache is not None:
             cache_key = cache.compute_key(
-                "groq", self.model, messages, self.temperature, self.max_tokens
+                "groq", self.model, messages, self.temperature, max_tokens
             )
             cached = cache.get(cache_key)
             if cached is not None:
@@ -709,7 +860,7 @@ class TriageAssistant:
                     # cache with no real credentials cannot make).
                     retry_messages = self._build_retry_messages(messages, raw)
                     retry_key = cache.compute_key(
-                        "groq", self.model, retry_messages, self.temperature, self.max_tokens,
+                        "groq", self.model, retry_messages, self.temperature, max_tokens,
                     )
                     cached_retry = cache.get(retry_key)
                     if cached_retry is not None:
@@ -722,7 +873,28 @@ class TriageAssistant:
                         except (json.JSONDecodeError, ValueError):
                             pass  # retry entry also corrupted — fall through to live call
 
-        raw, usage = self._groq_completion(messages)
+        try:
+            raw, usage = self._groq_completion(messages, max_tokens=max_tokens)
+        except TruncatedCompletionError as exc:
+            # A dynamically-reduced max_tokens can still legitimately run out mid-
+            # completion on an unusually long response (Part B3). Truncation is a hard
+            # error (raises, never silently corrupts a cached entry) -- but it must
+            # still resolve into a clean degrade here, not an unhandled exception
+            # reaching app.py as a 500.
+            logger.warning(
+                "Completion truncated for #%s at max_tokens=%d (%s) — degrading to "
+                "signals-only fallback plan.",
+                signals.get("_number", "?"), max_tokens, exc,
+            )
+            plan = self._make_fallback_plan(signals, reason=f"completion truncated ({exc})")
+            truncated_usage = {
+                "prompt_tokens": exc.prompt_tokens,
+                "completion_tokens": exc.completion_tokens,
+                "finish_reason": "length",
+                "llm_status_reason": "truncated",
+            }
+            return plan, "", truncated_usage, "degraded_truncated", False
+
         if cache is not None and cache_key is not None:
             cache.set(cache_key, "groq", self.model, messages, {"content": raw, "usage": usage})
         llm_status = "ok"
@@ -737,19 +909,37 @@ class TriageAssistant:
             retry_messages = self._build_retry_messages(messages, raw)
             # Check cache for retry call too
             parse_retry_key: str | None = None
-            if cache is not None:
-                parse_retry_key = cache.compute_key(
-                    "groq", self.model, retry_messages, self.temperature, self.max_tokens,
-                )
-                cached2 = cache.get(parse_retry_key)
-                if cached2 is not None:
-                    raw2 = cached2["content"]
-                    usage = cached2.get("usage", {})
+            try:
+                if cache is not None:
+                    parse_retry_key = cache.compute_key(
+                        "groq", self.model, retry_messages, self.temperature, max_tokens,
+                    )
+                    cached2 = cache.get(parse_retry_key)
+                    if cached2 is not None:
+                        raw2 = cached2["content"]
+                        usage = cached2.get("usage", {})
+                    else:
+                        raw2, usage = self._groq_completion(retry_messages, max_tokens=max_tokens)
+                        cache.set(
+                            parse_retry_key, "groq", self.model, retry_messages,
+                            {"content": raw2, "usage": usage},
+                        )
                 else:
-                    raw2, usage = self._groq_completion(retry_messages)
-                    cache.set(parse_retry_key, "groq", self.model, retry_messages, {"content": raw2, "usage": usage})
-            else:
-                raw2, usage = self._groq_completion(retry_messages)
+                    raw2, usage = self._groq_completion(retry_messages, max_tokens=max_tokens)
+            except TruncatedCompletionError as exc2:
+                logger.warning(
+                    "Completion truncated for #%s on the parse-retry call at "
+                    "max_tokens=%d (%s) — degrading to signals-only fallback plan.",
+                    signals.get("_number", "?"), max_tokens, exc2,
+                )
+                plan = self._make_fallback_plan(signals, reason=f"completion truncated on retry ({exc2})")
+                truncated_usage = {
+                    "prompt_tokens": exc2.prompt_tokens,
+                    "completion_tokens": exc2.completion_tokens,
+                    "finish_reason": "length",
+                    "llm_status_reason": "truncated",
+                }
+                return plan, "", truncated_usage, "degraded_truncated", False
             try:
                 plan = self._parse_plan(raw2)
                 llm_status = "parse_retry_succeeded"
@@ -765,9 +955,27 @@ class TriageAssistant:
 
         return plan, raw, usage, llm_status, False
 
-    def _make_fallback_plan(self, signals: dict) -> TriagePlan:
-        """Structured fallback when LLM JSON cannot be parsed after retry."""
+    def _make_fallback_plan(self, signals: dict, reason: str | None = None) -> TriagePlan:
+        """Structured fallback when the LLM stage cannot produce a usable plan.
+
+        `reason` defaults to the original JSON-parse-failure wording (backward compatible
+        with every existing caller); Part B's token-budget guard passes an explicit reason
+        for the two new degrade paths it introduces (prompt too large to fit any viable
+        completion budget; completion truncated even at a dynamically-reduced max_tokens).
+        """
         top = (signals.get("classifier_top3") or [{}])[0]
+        if reason is None:
+            priority_rationale = "LLM parse failure — priority defaulting to medium."
+            triage_summary = (
+                "Automated triage degraded: LLM JSON parse failed after retry. "
+                "Component from TF-IDF only; manual review recommended."
+            )
+        else:
+            priority_rationale = f"{reason} — priority defaulting to medium."
+            triage_summary = (
+                f"Automated triage degraded: {reason}. "
+                "Component from TF-IDF only; manual review recommended."
+            )
         return TriagePlan(
             predicted_component=str(top.get("label", "unknown")),
             component_confidence=float(top.get("confidence", 0.0)),
@@ -778,20 +986,22 @@ class TriageAssistant:
             resolution_bucket=signals.get("resolution_bucket", "days"),
             resolution_confidence_pct=float(signals.get("resolution_conf_pct", 33.0)),
             priority_guess="medium",
-            priority_rationale="LLM parse failure — priority defaulting to medium.",
+            priority_rationale=priority_rationale,
             suggested_assignee_class="unknown",
             suggested_next_steps=["Manual triage required — LLM response parsing failed."],
-            triage_summary=(
-                "Automated triage degraded: LLM JSON parse failed after retry. "
-                "Component from TF-IDF only; manual review recommended."
-            ),
+            triage_summary=triage_summary,
         )
 
-    def _groq_completion(self, messages: list[dict]) -> tuple[str, dict]:
+    def _groq_completion(self, messages: list[dict], max_tokens: int | None = None) -> tuple[str, dict]:
+        """`max_tokens` overrides `self.max_tokens` for this call only (Part B, dynamic
+        per-request budget) -- defaults to `self.max_tokens` so existing callers/tests
+        that don't pass it keep today's behavior unchanged."""
         try:
             from groq import APIStatusError, Groq, RateLimitError
         except ImportError as e:
             raise ImportError("pip install groq") from e
+
+        effective_max_tokens = self.max_tokens if max_tokens is None else max_tokens
 
         client = Groq(api_key=self._groq_key)
         backoff = 5.0
@@ -804,17 +1014,18 @@ class TriageAssistant:
                     model=self.model,
                     messages=messages,  # type: ignore[arg-type]
                     temperature=self.temperature,
-                    max_tokens=self.max_tokens,
+                    max_tokens=effective_max_tokens,
                     seed=self.seed,
                     **kwargs,
                 )
                 content = (resp.choices[0].message.content or "").strip()
                 finish_reason = resp.choices[0].finish_reason
                 completion_tokens = resp.usage.completion_tokens if resp.usage else -1
+                prompt_tokens = resp.usage.prompt_tokens if resp.usage else -1
                 usage: dict[str, object] = {}
                 if resp.usage:
                     usage = {
-                        "prompt_tokens": resp.usage.prompt_tokens,
+                        "prompt_tokens": prompt_tokens,
                         "completion_tokens": completion_tokens,
                     }
                 usage["finish_reason"] = finish_reason
@@ -822,8 +1033,9 @@ class TriageAssistant:
                 if finish_reason == "length":
                     raise TruncatedCompletionError(
                         completion_tokens=completion_tokens,
-                        max_tokens=self.max_tokens,
+                        max_tokens=effective_max_tokens,
                         content_preview=content,
+                        prompt_tokens=prompt_tokens,
                     )
                 return content, usage
             except RateLimitError:

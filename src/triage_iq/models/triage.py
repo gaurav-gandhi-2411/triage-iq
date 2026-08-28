@@ -271,6 +271,89 @@ def _force_strict_schema_requirements(node: object) -> None:
             _force_strict_schema_requirements(v)
 
 
+def _inline_nullable_object_refs(schema: dict) -> None:
+    """Rewrite `anyOf: [{$ref}, {type: null}]` properties into Groq's `type: [X, "null"]`
+    form (2026-08-28, Part B).
+
+    Pydantic's `model_json_schema()` renders `X | None = Field(default=None)` as an
+    `anyOf` with a `$ref` branch and a `{"type": "null"}` branch. Live-tested against
+    Groq's `strict: true` decoding: this `anyOf`+`$ref` shape was NOT reliably enforced --
+    `grounding`, `grounding_status`, `declared_attribution`, and `abstention_status` (all
+    four of TriagePlan's `X | None` fields) were silently omitted by the model in 2/7
+    calls despite being listed in the schema's own `required` array, producing a 400
+    ("missing properties") rather than a present-with-null value. Groq's own structured-
+    outputs docs demonstrate the `anyOf` form for *array*-typed optional fields but present
+    the `type` array as the primary pattern for optional values generally -- this inlines
+    the referenced object's schema directly and sets `"type": [<object-type>, "null"]`,
+    matching that primary documented form instead of the anyOf/$ref one that failed.
+    Nested $refs *inside* a resolved object (e.g. AbstentionStatus -> StageAbstention) are
+    untouched -- only the top-level optional-field anyOf/$ref/null pattern is rewritten.
+    """
+    defs = schema.get("$defs", {})
+    if not defs:
+        return
+
+    def resolve(ref: str) -> dict:
+        return defs[ref[len("#/$defs/"):]]
+
+    def rewrite(node: object) -> None:
+        if isinstance(node, dict):
+            for key, value in list(node.items()):
+                if isinstance(value, dict) and isinstance(value.get("anyOf"), list):
+                    branches = value["anyOf"]
+                    ref_branch = next((b for b in branches if "$ref" in b), None)
+                    null_branch = next((b for b in branches if b.get("type") == "null"), None)
+                    if ref_branch is not None and null_branch is not None and len(branches) == 2:
+                        target = resolve(ref_branch["$ref"])
+                        merged = dict(target)
+                        merged["type"] = [merged.get("type", "object"), "null"]
+                        for extra_key in ("default", "description"):
+                            if extra_key in value:
+                                merged[extra_key] = value[extra_key]
+                        node[key] = merged
+                        continue
+                rewrite(value)
+        elif isinstance(node, list):
+            for item in node:
+                rewrite(item)
+
+    rewrite(schema.get("properties", {}))
+    _prune_unreferenced_defs(schema)
+
+
+def _prune_unreferenced_defs(schema: dict) -> None:
+    """Drop `$defs` entries no longer reachable from `properties` after inlining.
+
+    Avoids paying prompt tokens twice for the same object schema (once inlined into the
+    optional field, once still sitting in `$defs` unused) -- see rule 15b/quota
+    accounting in ADR-0052-adjacent Part A work. Reachability is transitive: a kept def
+    may itself `$ref` another def (e.g. AbstentionStatus -> StageAbstention).
+    """
+    defs = schema.get("$defs", {})
+    if not defs:
+        return
+    reachable: set[str] = set()
+
+    def visit(node: object) -> None:
+        if isinstance(node, dict):
+            ref = node.get("$ref")
+            if isinstance(ref, str) and ref.startswith("#/$defs/"):
+                name = ref[len("#/$defs/"):]
+                if name not in reachable:
+                    reachable.add(name)
+                    visit(defs.get(name, {}))
+            for v in node.values():
+                visit(v)
+        elif isinstance(node, list):
+            for v in node:
+                visit(v)
+
+    visit(schema.get("properties", {}))
+    for name in list(defs.keys()):
+        if name not in reachable:
+            del defs[name]
+
+
 def _build_triage_plan_response_format() -> dict:
     """Groq response_format payload for native strict schema-constrained decoding.
 
@@ -282,6 +365,7 @@ def _build_triage_plan_response_format() -> dict:
     conflict with leaving the class itself permissive.
     """
     schema = TriagePlan.model_json_schema()
+    _inline_nullable_object_refs(schema)
     _force_strict_schema_requirements(schema)
     return {
         "type": "json_schema",
@@ -581,6 +665,7 @@ class TriageAssistant:
         from triage_iq.prompts.triage_prompt import (
             SYSTEM_PROMPT,
             SYSTEM_PROMPT_LEGACY,
+            SYSTEM_PROMPT_PROSE,
             build_few_shot_examples,
             build_few_shot_examples_legacy,
         )
@@ -590,7 +675,15 @@ class TriageAssistant:
         # reports/eval_baseline.json stay valid without re-baselining. See ADR-0020 "Baseline
         # decision". Same env-var-gated pattern as TRIAGE_PROMPT_INCLUDE_BUCKET above.
         _include_attribution = os.environ.get("TRIAGE_PROMPT_INCLUDE_ATTRIBUTION") == "1"
-        system_prompt = SYSTEM_PROMPT if _include_attribution else SYSTEM_PROMPT_LEGACY
+        if _include_attribution:
+            # 2026-08-28 (Part A): the JSON schema description is redundant prompt text when
+            # native structured output is active -- Groq's response_format enforces it
+            # structurally. Omit it from the prompt in that case; _groq_completion re-adds it
+            # if structured output gets disabled mid-call (schema rejection fallback), since
+            # the regex-extract path has no structural enforcement of its own.
+            system_prompt = SYSTEM_PROMPT_PROSE if self.use_structured_output else SYSTEM_PROMPT
+        else:
+            system_prompt = SYSTEM_PROMPT_LEGACY
         few_shots = build_few_shot_examples() if _include_attribution else build_few_shot_examples_legacy()
 
         messages = [{"role": "system", "content": system_prompt}]
@@ -759,6 +852,19 @@ class TriageAssistant:
                         "regex-extract for the remainder of this session.", e,
                     )
                     self.use_structured_output = False
+                    # This call's `messages` may have been built with the schema
+                    # description omitted (SYSTEM_PROMPT_PROSE, Part A) on the assumption
+                    # that response_format would enforce it structurally. That's no longer
+                    # true for the retry below or any further call on this assistant --
+                    # make sure the schema is actually present before falling back to
+                    # unconstrained decoding, which has no structural enforcement of its own.
+                    from triage_iq.prompts.triage_prompt import _SCHEMA_BLOCK
+                    if (
+                        messages
+                        and messages[0].get("role") == "system"
+                        and "Schema:" not in messages[0]["content"]
+                    ):
+                        messages[0]["content"] += _SCHEMA_BLOCK
                 else:
                     raise
         raise RuntimeError("Groq completion failed after 6 attempts")

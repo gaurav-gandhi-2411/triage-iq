@@ -33,7 +33,21 @@ ATTRIBUTION RULES:
 1. predicted_component should normally be one of the classifier's top-3 predictions. If you deviate, you MUST set component_source to "model_override" and explain why in component_override_reason.
 2. Every issue number you cite anywhere in your plan MUST be one of the numbers listed in SYSTEM 2. Never invent issue numbers.
 3. In declared_attribution, cite ONLY the SYSTEM-2 issues that actually support the specific claim. Citing every retrieved issue indiscriminately is wrong. Empty lists are honest when no retrieved issue supports the claim.
+"""
 
+# 2026-08-28 (Part A, prompt-token reduction): the schema block is now a separate constant,
+# not embedded in SYSTEM_PROMPT unconditionally. When native structured output is active
+# (TriageAssistant.use_structured_output, the default -- see triage.py's
+# _build_triage_plan_response_format), Groq's response_format schema enforces this
+# structurally; describing it again in prose is pure redundancy paid on every call.
+# Measured live (2026-08-28): with the schema prose included, a single gpt-oss-20b request
+# under structured output + max_tokens=2048 was rejected at the TPM preflight (413, never
+# reached the model) at ~8325-8427 requested tokens against an 8000 TPM ceiling -- this cut
+# is not a nice-to-have, it is required for the request to be accepted at all under the
+# current attribution prompt. Kept as a separate constant so the regex-extract fallback path
+# (structured output disabled or rejected) can still get the schema appended -- that path has
+# no structural enforcement and needs the prose description.
+_SCHEMA_BLOCK = """
 Schema:
 {
   "predicted_component": "string — the single best component label for this issue",
@@ -61,6 +75,11 @@ Schema:
   }
 }
 """
+
+# Backward-compatible: SYSTEM_PROMPT still means "prose + schema" for any caller that hasn't
+# switched to the split form (SYSTEM_PROMPT_PROSE + _SCHEMA_BLOCK on demand, see triage.py).
+SYSTEM_PROMPT_PROSE = SYSTEM_PROMPT
+SYSTEM_PROMPT = SYSTEM_PROMPT_PROSE + _SCHEMA_BLOCK
 
 
 def build_triage_prompt(

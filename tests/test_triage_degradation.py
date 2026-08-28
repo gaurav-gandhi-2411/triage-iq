@@ -14,6 +14,7 @@ import pandas as pd
 import pytest
 from groq import (
     APIConnectionError,
+    APIStatusError,
     AuthenticationError,
     BadRequestError,
     InternalServerError,
@@ -21,7 +22,7 @@ from groq import (
     RateLimitError,
 )
 
-from triage_iq.models.triage import TriageAssistant, _is_groq_unavailable
+from triage_iq.models.triage import TriageAssistant, _is_groq_unavailable, _is_request_too_large
 
 
 def _make_assistant() -> TriageAssistant:
@@ -122,6 +123,41 @@ def test_is_groq_unavailable_classification():
     assert not _is_groq_unavailable(BadRequestError("x", response=_fake_response(400), body=None))
     assert not _is_groq_unavailable(NotFoundError("x", response=_fake_response(404), body=None))
     assert not _is_groq_unavailable(ValueError("unrelated"))
+
+
+def test_is_request_too_large_classification():
+    """413 falls through groq's status->exception dispatch table to a bare
+    APIStatusError (confirmed 2026-08-28 against groq/_client.py's _make_status_error --
+    it matches none of the explicit 400/401/403/404/409/422/429/5xx branches). Must be
+    classified true here specifically, without widening to every other unmapped code."""
+    assert _is_request_too_large(
+        APIStatusError("413 request too large", response=_fake_response(413), body=None)
+    )
+    assert not _is_request_too_large(
+        APIStatusError("501 not implemented", response=_fake_response(501), body=None)
+    )
+    assert not _is_request_too_large(BadRequestError("x", response=_fake_response(400), body=None))
+    assert not _is_request_too_large(ValueError("unrelated"))
+
+
+def test_degrades_on_request_too_large():
+    """A 413 (Groq's TPM preflight rejecting an oversized request before it reaches the
+    model) must degrade cleanly, same as the other Groq-unavailable classes -- this is
+    defense-in-depth for triage.py's proactive per-request token-budget guard (Part B),
+    not the primary fix; see _is_request_too_large's docstring for why 413 specifically
+    is carved out of the broader excluded-unmapped-code policy."""
+    assistant = _make_assistant()
+    issue = pd.Series({"number": 42, "title": "t", "body_clean": "b"})
+    exc = APIStatusError("413 request too large", response=_fake_response(413), body=None)
+    with (
+        patch.object(assistant, "_collect_signals", return_value=_fake_signals()),
+        patch.object(assistant, "_call_llm_verbose", side_effect=exc),
+    ):
+        plan, meta = assistant.triage_with_metadata(issue)
+
+    assert meta["llm_status"] == "unavailable"
+    assert meta["llm_status_reason"] == "APIStatusError"
+    assert plan.predicted_component == "editor"
 
 
 def test_is_tpd_error_classification():

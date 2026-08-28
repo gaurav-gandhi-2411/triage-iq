@@ -213,6 +213,10 @@ def _is_groq_unavailable(exc: BaseException) -> bool:
     it as the 500 it actually is. See Part A of the 2026-08-27 diagnostic session for the
     full exception-class verification against the installed groq SDK's status->exception
     dispatch table (groq/_client.py's _make_status_error).
+
+    2026-08-28 addendum: `_is_request_too_large()` below carves out ONE specific unmapped
+    code (413) from that exclusion -- see its own docstring for why that one is different
+    in kind from the rest of the excluded set.
     """
     try:
         from groq import (
@@ -226,6 +230,31 @@ def _is_groq_unavailable(exc: BaseException) -> bool:
 
     # APIConnectionError's own subclass APITimeoutError is covered by this isinstance check.
     return isinstance(exc, (AuthenticationError, APIConnectionError, RateLimitError, InternalServerError))
+
+
+def _is_request_too_large(exc: BaseException) -> bool:
+    """True for a 413 "Request too large" response -- Groq's TPM preflight rejecting a
+    request before it ever reaches the model, because prompt_tokens + max_tokens exceeds
+    the per-minute ceiling.
+
+    2026-08-28: confirmed via groq/_client.py's _make_status_error dispatch table that 413
+    matches none of its explicit branches (400/401/403/404/409/422/429/5xx) and falls
+    through to a bare APIStatusError -- exactly the class `_is_groq_unavailable` excludes
+    on the theory that an unmapped code means a bug in *this service's* request. That
+    theory is right for most unmapped codes but wrong for 413 specifically: a request too
+    large is a capacity/sizing condition, not malformed input or a config error -- the same
+    category RateLimitError (429) is already treated as degradable for. The real fix is
+    proactive (triage.py's per-request token-budget guard, Part B, sizes max_tokens from
+    the actual measured prompt so this shouldn't fire in normal operation) -- this is
+    defense-in-depth for whatever the guard's calibration doesn't catch (estimation error,
+    an unexpectedly large retrieved-issue payload), so a residual 413 degrades cleanly
+    instead of surfacing as a raw 500.
+    """
+    try:
+        from groq import APIStatusError
+    except ImportError:
+        return False
+    return isinstance(exc, APIStatusError) and getattr(exc, "status_code", None) == 413
 
 
 def _is_tpd_error(exc: BaseException) -> bool:
@@ -311,7 +340,7 @@ class TriageAssistant:
         try:
             plan, raw, usage, llm_status, cache_hit = self._call_llm_verbose(signals)
         except Exception as exc:
-            if not _is_groq_unavailable(exc):
+            if not (_is_groq_unavailable(exc) or _is_request_too_large(exc)):
                 raise  # programming/config errors (bad request, 404 model-not-found, ...) still 500
             logger.warning(
                 "Groq unavailable for #%s (%s: %s) — degrading to signals-only fallback plan "

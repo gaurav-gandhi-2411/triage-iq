@@ -810,17 +810,18 @@ class TriageAssistant:
                 )
                 content = (resp.choices[0].message.content or "").strip()
                 finish_reason = resp.choices[0].finish_reason
-                usage = {}
+                completion_tokens = resp.usage.completion_tokens if resp.usage else -1
+                usage: dict[str, object] = {}
                 if resp.usage:
                     usage = {
                         "prompt_tokens": resp.usage.prompt_tokens,
-                        "completion_tokens": resp.usage.completion_tokens,
+                        "completion_tokens": completion_tokens,
                     }
                 usage["finish_reason"] = finish_reason
                 usage["structured_output"] = self.use_structured_output
                 if finish_reason == "length":
                     raise TruncatedCompletionError(
-                        completion_tokens=usage.get("completion_tokens", -1),
+                        completion_tokens=completion_tokens,
                         max_tokens=self.max_tokens,
                         content_preview=content,
                     )

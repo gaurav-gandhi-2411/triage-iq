@@ -281,15 +281,10 @@ def verify_override_reason_grounded(
     """
     import re
 
-    reason_lower = reason.lower()
-
     cited_numbers = {int(n) for n in re.findall(r"\d+", reason)}
     if cited_numbers & retrieved_numbers:
         return True
 
     issue_words = _significant_words(issue_title) | _significant_words(issue_body)
     reason_words = _significant_words(reason)
-    if issue_words & reason_words:
-        return True
-
-    return False
+    return bool(issue_words & reason_words)

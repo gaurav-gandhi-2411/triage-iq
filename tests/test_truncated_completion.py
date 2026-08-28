@@ -42,9 +42,8 @@ def test_groq_completion_raises_on_length_finish_reason():
     mock_client.chat.completions.create.return_value = _mock_groq_response(
         truncated_content, finish_reason="length", completion_tokens=1024
     )
-    with patch("groq.Groq", return_value=mock_client):
-        with pytest.raises(TruncatedCompletionError) as exc_info:
-            asst._groq_completion([{"role": "user", "content": "triage this"}])
+    with patch("groq.Groq", return_value=mock_client), pytest.raises(TruncatedCompletionError) as exc_info:
+        asst._groq_completion([{"role": "user", "content": "triage this"}])
     assert exc_info.value.completion_tokens == 1024
     assert exc_info.value.max_tokens == 1024
     assert "length" in str(exc_info.value).lower() or "truncat" in str(exc_info.value).lower()
@@ -84,9 +83,8 @@ def test_truncated_completion_never_reaches_cache():
         "resolution_bucket": "days",
         "resolution_conf_pct": 33.0,
     }
-    with patch("groq.Groq", return_value=mock_client):
-        with pytest.raises(TruncatedCompletionError):
-            asst._call_llm_verbose(signals)
+    with patch("groq.Groq", return_value=mock_client), pytest.raises(TruncatedCompletionError):
+        asst._call_llm_verbose(signals)
     asst._cache.set.assert_not_called()
 
 

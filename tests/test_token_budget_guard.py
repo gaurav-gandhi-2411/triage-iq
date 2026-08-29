@@ -1,11 +1,17 @@
 """Unit tests for the per-request prompt-token budget guard (2026-08-28, Part A/B).
 
-Live-measured against the full 64-issue eval set: with a FIXED max_tokens=2048, 13/64
-issues (20.3%) would be rejected outright by Groq's TPM preflight (413) before ever
-reaching the model. These tests exercise the fix -- a dynamically-sized max_tokens
-computed from the actual estimated prompt size, input truncation when that still isn't
-enough, and a clean degrade (never calling Groq at all) as the last resort -- against the
-real _call_llm_verbose method, with only the Groq client itself mocked.
+Live-measured against the full 64-issue eval set: with a FIXED max_tokens=2048, 37/64
+issues (57.8%) would be rejected outright by Groq's TPM preflight (413) before ever
+reaching the model. (Corrected 2026-08-29: originally recorded here as 13/64 -- that
+figure applied the 8000 ceiling against prompt+max_tokens alone and dropped the 100-token
+_PROMPT_SIZE_SAFETY_MARGIN from the comparison, understating the real rejection rate by
+nearly 3x. test_documented_413_rate_matches_guard_formula below pins the figure against
+the guard's own formula and constants -- not a hand-copied number -- so this docstring
+cannot silently drift from the code again.) These tests exercise the fix -- a
+dynamically-sized max_tokens computed from the actual estimated prompt size, input
+truncation when that still isn't enough, and a clean degrade (never calling Groq at all)
+as the last resort -- against the real _call_llm_verbose method, with only the Groq
+client itself mocked.
 """
 
 from __future__ import annotations
@@ -145,3 +151,44 @@ def test_degrades_without_calling_groq_when_budget_exhausted_even_after_truncati
     assert cache_hit is False
     assert raw == ""
     assert "manual review" in plan.triage_summary.lower()
+
+
+# Frozen snapshot of _estimate_prompt_tokens(messages) for all 64 eval/eval_set.jsonl issues,
+# measured 2026-08-29 against the real classifier/retriever/predictor pipeline (not mocked)
+# with TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1 (current default prompt: SYSTEM_PROMPT_PROSE +
+# build_few_shot_examples(), 3 examples). Re-freeze this list if SYSTEM_PROMPT_PROSE,
+# _SCHEMA_BLOCK, build_few_shot_examples(), or build_triage_prompt()'s user-turn template
+# change -- it is a snapshot of THIS prompt's token distribution, not a universal constant.
+_EVAL_SET_PROMPT_TOKENS_2026_08_29 = [
+    5902, 5662, 5795, 5918, 6183, 5750, 5897, 5739, 5969, 5948, 5961, 6024, 5970, 5942,
+    5912, 5820, 5896, 5781, 5756, 5765, 5763, 5927, 6018, 5850, 5894, 5741, 5806, 5994,
+    5917, 5708, 5835, 5894, 5820, 5821, 5938, 5873, 5799, 5920, 5809, 5811, 5754, 6091,
+    5798, 6121, 5768, 5714, 5917, 5833, 5798, 5763, 5854, 5914, 5966, 6031, 5964, 5939,
+    5860, 6075, 5887, 5905, 5939, 5875, 5728, 5872,
+]
+
+
+def test_documented_413_rate_matches_guard_formula():
+    """Pin the "37/64 (57.8%)" figure quoted in this module's and triage.py's docstrings
+    to the guard's ACTUAL rejection formula, applied to a frozen real-measurement snapshot
+    -- not a hand-computed number that a docstring can silently drift away from.
+
+    The bug this guards against: the number first recorded here (13/64) applied the 8000
+    ceiling against prompt_tokens + max_tokens alone and dropped _PROMPT_SIZE_SAFETY_MARGIN
+    from that comparison, even though the margin is a real, non-optional part of the
+    guard's own dynamic_max_tokens formula (see _call_llm_verbose). This test uses that
+    same formula, so a future edit to the margin or the ceiling automatically re-checks
+    whether the documented percentage is still accurate.
+    """
+    assert len(_EVAL_SET_PROMPT_TOKENS_2026_08_29) == 64
+    fixed_max_tokens = 2048
+    would_413 = sum(
+        1
+        for prompt_tokens in _EVAL_SET_PROMPT_TOKENS_2026_08_29
+        if prompt_tokens + fixed_max_tokens + _PROMPT_SIZE_SAFETY_MARGIN > _GROQ_TPM_LIMIT
+    )
+    assert would_413 == 37, (
+        f"documented as 37/64 (57.8%) -- guard formula now gives {would_413}/64. "
+        "Update the docstrings in triage.py and this file's module docstring to match, "
+        "or re-freeze _EVAL_SET_PROMPT_TOKENS_2026_08_29 if the prompt itself changed."
+    )

@@ -12,6 +12,7 @@ Usage:
 import argparse
 import hashlib
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -36,6 +37,10 @@ PROCESSED_DIR = ROOT / "data" / "processed"
 EVAL_SET_PATH = ROOT / "eval" / "eval_set.jsonl"
 CASSETTE_PATH = ROOT / "eval" / "cassettes" / "eval_cassette.json"
 BASELINE_PATH = ROOT / "reports" / "eval_baseline.json"
+
+# Same env knob / default as Settings.triage_max_tokens (src/triage_iq/config.py) -- see its
+# comment for why this is no longer a bare TriageAssistant constructor default.
+TRIAGE_MAX_TOKENS = int(os.environ.get("TRIAGE_MAX_TOKENS", "2048"))
 
 REPO_MAP: dict[str, str] = {
     "microsoft/vscode": "microsoft_vscode",
@@ -92,6 +97,7 @@ def _load_models(
         train_df=train_df,
         groq_api_key=CI_API_KEY,
         cache=cassette,
+        max_tokens=TRIAGE_MAX_TOKENS,
     )
     return {
         "classifier": classifier,

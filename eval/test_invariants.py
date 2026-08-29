@@ -518,3 +518,51 @@ def test_grounding_ratchet_no_new_ungrounded_claims(grounding_reports: list[dict
             f"{repo}: ungrounded claim count regressed: {ungrounded_count} > "
             f"baseline {baseline['ungrounded_count']}"
         )
+
+
+def test_no_fallback_plans_in_cassette(grounding_reports: list[dict]) -> None:
+    """A committed cassette must contain zero scored fallback plans.
+
+    2026-08-27 finding: a fallback-plan audit of the openai/gpt-oss-20b re-record found
+    68.75% first-attempt JSON-parse failure and a 32% k8s fallback-plan rate
+    (llm_status == "parse_failure" -- both retry attempts failed to produce parseable
+    JSON, so TriageAssistant._make_fallback_plan() shipped a predictor-only, no-LLM-text
+    plan that the judge then scored as if it were genuine model output). Nothing had ever
+    checked for this; it was found by manual audit, not CI. This is that check, so the
+    next time a model swap's re-recording contains degraded fallback plans, the eval gate
+    fails the recording instead of merging it. Zero tolerance, not a rate threshold --
+    a single scored fallback plan already means the judge scored something the model
+    never actually said.
+    """
+    fallback_cases = [c for c in grounding_reports if c.get("llm_status") == "parse_failure"]
+    assert not fallback_cases, (
+        f"{len(fallback_cases)}/{len(grounding_reports)} cases in this cassette are "
+        "fallback plans (llm_status == 'parse_failure') scored as genuine model output: "
+        f"{[(c['repo'], c['issue_number']) for c in fallback_cases]}. "
+        "Re-record against Groq (not a cassette-side fix) until every entry reflects real "
+        "LLM synthesis output, or the current model/config combination is not viable."
+    )
+
+
+def test_no_truncated_completions_in_cassette(grounding_reports: list[dict]) -> None:
+    """A committed cassette must contain zero completions truncated by max_tokens.
+
+    2026-08-28: going forward, TriageAssistant._groq_completion raises
+    TruncatedCompletionError the moment Groq reports finish_reason == "length" -- before
+    the caller ever gets content back, so a truncated completion can no longer reach
+    cache.set() at all. This test is the defense-in-depth backstop for a cassette recorded
+    before that fix landed (finish_reason wasn't even captured before 2026-08-28, so older
+    entries read as None here, not "length" -- a None is not itself a violation, just an
+    entry this check can't evaluate). Distinct from test_no_fallback_plans_in_cassette:
+    truncation and unparseable-JSON-after-retry are different failure modes that used to
+    be indistinguishable from each other (both surfaced as a generic parse error) -- this
+    is exactly the ambiguity that hid the actual defect for this engagement.
+    """
+    truncated_cases = [c for c in grounding_reports if c.get("finish_reason") == "length"]
+    assert not truncated_cases, (
+        f"{len(truncated_cases)}/{len(grounding_reports)} cases in this cassette were "
+        f"truncated by max_tokens (finish_reason == 'length'): "
+        f"{[(c['repo'], c['issue_number']) for c in truncated_cases]}. "
+        "Raise max_tokens and re-record -- retrying at the same cap reproduces the same "
+        "truncation."
+    )

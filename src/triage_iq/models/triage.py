@@ -14,12 +14,50 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from triage_iq.model_config import TRIAGE_MODEL
-from triage_iq.models.grounding import verify_plan_grounding
+from triage_iq.models.grounding import compute_grounding_status
 
 logger = logging.getLogger(__name__)
+
+
+class TruncatedCompletionError(RuntimeError):
+    """Raised when Groq's finish_reason == "length" -- the completion was cut off by
+    max_tokens mid-generation, not a malformed-JSON parse failure.
+
+    2026-08-28: this is the distinct failure mode that hid the actual defect behind this
+    entire engagement -- a truncated completion used to fail silently as a generic JSON
+    parse error, indistinguishable from the model genuinely emitting malformed JSON, so it
+    was never possible to tell "the model is bad at JSON" apart from "max_tokens is too
+    small" without manually inspecting raw content. Raised inside _groq_completion, before
+    the caller ever gets a (content, usage) tuple back -- a truncated completion can
+    therefore never reach cache.set() and can never enter a committed cassette.
+    """
+
+    def __init__(
+        self,
+        completion_tokens: int,
+        max_tokens: int,
+        content_preview: str,
+        prompt_tokens: int = -1,
+    ) -> None:
+        self.completion_tokens = completion_tokens
+        self.max_tokens = max_tokens
+        self.content_preview = content_preview
+        # 2026-08-28 (Part B): a truncated completion still consumed real, billable
+        # tokens -- the degrade path built on this exception (triage.py's
+        # _call_llm_verbose) needs prompt_tokens to report accurate cost/usage instead
+        # of silently zeroing it out. Optional/defaulted so this stays additive for any
+        # other caller.
+        self.prompt_tokens = prompt_tokens
+        super().__init__(
+            f"Completion truncated: finish_reason='length' at completion_tokens="
+            f"{completion_tokens} (max_tokens={max_tokens}). Raise max_tokens, not a "
+            f"retry -- retrying at the same cap reproduces the same truncation. "
+            f"Content tail: ...{content_preview[-80:]!r}"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Pydantic output schema
@@ -27,6 +65,12 @@ logger = logging.getLogger(__name__)
 
 
 class SimilarIssue(BaseModel):
+    # extra="forbid" on every nested model here (2026-08-28): required for Groq's native
+    # `strict: true` JSON-schema-constrained output, which rejects a schema unless
+    # additionalProperties:false is set on every object -- Pydantic's model_json_schema()
+    # doesn't set this by default on nested $defs.
+    model_config = ConfigDict(extra="forbid")
+
     number: int
     similarity: float = Field(ge=0.0, le=1.0)
     relevance_note: str
@@ -40,6 +84,8 @@ class ConformalIntervalResult(BaseModel):
     This is marginal (not conditional) coverage; temporal data may violate exchangeability.
     See ADR-0010.
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     lower_days: float = Field(ge=0.0)
     upper_days: float = Field(ge=0.0)
@@ -56,6 +102,8 @@ class GroundingAttribution(BaseModel):
     iteration. See ADR-0015.
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     component_source: str
     similar_issue_refs: list[int]
 
@@ -68,6 +116,8 @@ class GroundingStatus(BaseModel):
     request — not verification against world/ground truth.
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     component_grounded: bool
     component_reason: str
     similar_issue_refs: list[int]
@@ -78,6 +128,8 @@ class GroundingStatus(BaseModel):
 class DeclaredAttribution(BaseModel):
     """LLM-emitted source attribution (elicited by the prompt — contrast GroundingAttribution,
     a post-hoc reconstruction of the same plan; ADR-0015/ADR-0020)."""
+
+    model_config = ConfigDict(extra="forbid")
 
     component_source: Literal["classifier_top3", "model_override"]
     component_override_reason: str = ""
@@ -94,6 +146,8 @@ class StageAbstention(BaseModel):
     "wide_interval").
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     abstained: bool
     reason: str = ""
 
@@ -105,6 +159,8 @@ class AbstentionStatus(BaseModel):
     signal anywhere in the pipeline to threshold, unlike component_confidence (ADR-0004)
     or the CQR interval (ADR-0010). See ADR-0021 for why that gap is flagged, not gated.
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     component: StageAbstention
     resolution: StageAbstention
@@ -197,6 +253,205 @@ class TriagePlan(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Groq native structured output (2026-08-28)
+# ---------------------------------------------------------------------------
+
+
+def _force_strict_schema_requirements(node: object) -> None:
+    """Recursively satisfy Groq's `strict: true` JSON-schema requirements.
+
+    Two independent requirements, both confirmed by trial (Groq's 400 response names
+    exactly one violating $defs path at a time, so partial patching just surfaces the
+    next one -- this walks the whole tree once for both instead of two passes):
+    1. additionalProperties:false on every object.
+    2. `required` must list every key in `properties` -- strict mode has no notion of an
+       "optional" property; a Pydantic field with a default (e.g. component_override_reason
+       str = "") is absent from Pydantic's own `required` list but Groq still needs it
+       there. This does NOT change what the model can omit at the value level -- fields
+       with a default still validate fine as their default if the model emits, say, "" or
+       null for them; it only changes what the wire schema declares as present.
+    """
+    if isinstance(node, dict):
+        if node.get("type") == "object" or "properties" in node:
+            node.setdefault("additionalProperties", False)
+            if "properties" in node:
+                node["required"] = list(node["properties"].keys())
+        for v in node.values():
+            _force_strict_schema_requirements(v)
+    elif isinstance(node, list):
+        for v in node:
+            _force_strict_schema_requirements(v)
+
+
+def _inline_nullable_object_refs(schema: dict) -> None:
+    """Rewrite `anyOf: [{$ref}, {type: null}]` properties into Groq's `type: [X, "null"]`
+    form (2026-08-28, Part B).
+
+    Pydantic's `model_json_schema()` renders `X | None = Field(default=None)` as an
+    `anyOf` with a `$ref` branch and a `{"type": "null"}` branch. Live-tested against
+    Groq's `strict: true` decoding: this `anyOf`+`$ref` shape was NOT reliably enforced --
+    `grounding`, `grounding_status`, `declared_attribution`, and `abstention_status` (all
+    four of TriagePlan's `X | None` fields) were silently omitted by the model in 2/7
+    calls despite being listed in the schema's own `required` array, producing a 400
+    ("missing properties") rather than a present-with-null value. Groq's own structured-
+    outputs docs demonstrate the `anyOf` form for *array*-typed optional fields but present
+    the `type` array as the primary pattern for optional values generally -- this inlines
+    the referenced object's schema directly and sets `"type": [<object-type>, "null"]`,
+    matching that primary documented form instead of the anyOf/$ref one that failed.
+    Nested $refs *inside* a resolved object (e.g. AbstentionStatus -> StageAbstention) are
+    untouched -- only the top-level optional-field anyOf/$ref/null pattern is rewritten.
+    """
+    defs = schema.get("$defs", {})
+    if not defs:
+        return
+
+    def resolve(ref: str) -> dict:
+        return defs[ref[len("#/$defs/"):]]
+
+    def rewrite(node: object) -> None:
+        if isinstance(node, dict):
+            for key, value in list(node.items()):
+                if isinstance(value, dict) and isinstance(value.get("anyOf"), list):
+                    branches = value["anyOf"]
+                    ref_branch = next((b for b in branches if "$ref" in b), None)
+                    null_branch = next((b for b in branches if b.get("type") == "null"), None)
+                    if ref_branch is not None and null_branch is not None and len(branches) == 2:
+                        target = resolve(ref_branch["$ref"])
+                        merged = dict(target)
+                        merged["type"] = [merged.get("type", "object"), "null"]
+                        for extra_key in ("default", "description"):
+                            if extra_key in value:
+                                merged[extra_key] = value[extra_key]
+                        node[key] = merged
+                        continue
+                rewrite(value)
+        elif isinstance(node, list):
+            for item in node:
+                rewrite(item)
+
+    rewrite(schema.get("properties", {}))
+    _prune_unreferenced_defs(schema)
+
+
+def _prune_unreferenced_defs(schema: dict) -> None:
+    """Drop `$defs` entries no longer reachable from `properties` after inlining.
+
+    Avoids paying prompt tokens twice for the same object schema (once inlined into the
+    optional field, once still sitting in `$defs` unused) -- see rule 15b/quota
+    accounting in ADR-0052-adjacent Part A work. Reachability is transitive: a kept def
+    may itself `$ref` another def (e.g. AbstentionStatus -> StageAbstention).
+    """
+    defs = schema.get("$defs", {})
+    if not defs:
+        return
+    reachable: set[str] = set()
+
+    def visit(node: object) -> None:
+        if isinstance(node, dict):
+            ref = node.get("$ref")
+            if isinstance(ref, str) and ref.startswith("#/$defs/"):
+                name = ref[len("#/$defs/"):]
+                if name not in reachable:
+                    reachable.add(name)
+                    visit(defs.get(name, {}))
+            for v in node.values():
+                visit(v)
+        elif isinstance(node, list):
+            for v in node:
+                visit(v)
+
+    visit(schema.get("properties", {}))
+    for name in list(defs.keys()):
+        if name not in reachable:
+            del defs[name]
+
+
+def _build_triage_plan_response_format() -> dict:
+    """Groq response_format payload for native strict schema-constrained decoding.
+
+    TriagePlan itself intentionally does NOT have extra="forbid" (app.py attaches
+    _request_id/_llm_status/etc. to the response after synthesis), but the JSON SCHEMA
+    sent to Groq for constrained decoding still needs additionalProperties:false
+    everywhere per Groq's requirement -- that's a property of the wire schema, not of the
+    Python class's own validation behavior, so patching the schema dict here doesn't
+    conflict with leaving the class itself permissive.
+    """
+    schema = TriagePlan.model_json_schema()
+    _inline_nullable_object_refs(schema)
+    _force_strict_schema_requirements(schema)
+    return {
+        "type": "json_schema",
+        "json_schema": {"name": "TriagePlan", "schema": schema, "strict": True},
+    }
+
+
+_TRIAGE_PLAN_RESPONSE_FORMAT = _build_triage_plan_response_format()
+
+
+# ---------------------------------------------------------------------------
+# Prompt-token budget guard (2026-08-28, Part A/B)
+#
+# Live-measured against the full 64-issue eval set (tiktoken cl100k, offline, zero quota
+# cost): with the schema-cut prompt (Part A) and a FIXED max_tokens=2048, 37/64 issues
+# (57.8%) would be rejected outright by Groq's TPM preflight (413, prompt + max_tokens +
+# _PROMPT_SIZE_SAFETY_MARGIN > 8000) -- not a rare tail case, a majority case. (Corrected
+# 2026-08-29: the number first recorded here, 13/64, applied the 8000 ceiling against
+# prompt+max_tokens alone and silently dropped the 100-token safety margin defined below
+# from that same comparison -- see test_documented_413_rate_matches_guard_formula in
+# tests/test_token_budget_guard.py, which now pins this figure against the guard's actual
+# formula so it cannot drift from the code silently again.) A fixed max_tokens cannot be
+# set safely without either capping it so low that normal completions truncate
+# (finish_reason=length, a hard error since PR #113's TruncatedCompletionError) or leaving
+# it high enough to 413 on longer issues. The fix is a per-request budget computed from the
+# ACTUAL measured prompt size.
+# ---------------------------------------------------------------------------
+
+_GROQ_TPM_LIMIT = 8000
+
+# Fit against 5 live-verified gpt-oss-20b calls under the CURRENT (schema-cut) attribution
+# prompt (2026-08-28). NOT a universal tokenizer-efficiency constant: an earlier ratio
+# (1.446) fit against the OLD schema-embedded prompt under-predicted THIS prompt's real
+# tokens by ~172 tokens once the content mix changed (less JSON-schema text, more prose) --
+# tiktoken's cl100k_base tokenizes schema-heavy JSON and natural-language prose at
+# different relative efficiency than gpt-oss's real tokenizer does. Re-derive this ratio
+# from fresh live samples whenever SYSTEM_PROMPT_PROSE/_SCHEMA_BLOCK/few-shot content
+# changes -- it is a property of the current prompt's content mix, not a constant.
+_CL100K_TO_REAL_RATIO = 1.4896
+
+# Leave-one-out cross-validated error on the 5-sample calibration fit above was <=4.2
+# tokens -- tight, but n=5, all mid-length issues (cl100k 3957-3974), not exercised across
+# the full prompt-size range this guard actually has to handle. 100 tokens is ~24x that
+# observed error: enough to absorb small-sample/extrapolation risk without materially
+# eating into the completion budget (worst case in the 64-issue set still leaves >1,700
+# completion tokens after this margin -- see _MIN_VIABLE_COMPLETION_TOKENS below).
+_PROMPT_SIZE_SAFETY_MARGIN = 100
+
+# Below this, a completion is unlikely to hold a complete, valid TriagePlan JSON. The
+# smallest real completion observed in this session's live testing was 1,031 tokens (n=8,
+# gpt-oss-20b, real issues) -- 800 sits below every observed sample with room to spare,
+# without writing off most of the observed range as "too risky to attempt."
+_MIN_VIABLE_COMPLETION_TOKENS = 800
+
+_cl100k_encoding = None  # lazy -- avoid the tiktoken import cost for callers that never hit this
+
+
+def _estimate_prompt_tokens(messages: list[dict]) -> int:
+    """Pre-call estimate of what Groq will report as prompt_tokens for `messages`.
+
+    tiktoken's cl100k_base is a PROXY for gpt-oss's real tokenizer, not the real thing --
+    see _CL100K_TO_REAL_RATIO's docstring for the observed calibration error and why the
+    ratio is prompt-shape-specific rather than universal.
+    """
+    global _cl100k_encoding
+    if _cl100k_encoding is None:
+        import tiktoken
+
+        _cl100k_encoding = tiktoken.get_encoding("cl100k_base")
+    raw = sum(len(_cl100k_encoding.encode(m["content"])) for m in messages)
+    return round(raw * _CL100K_TO_REAL_RATIO)
+
+
+# ---------------------------------------------------------------------------
 # Main assistant class
 # ---------------------------------------------------------------------------
 
@@ -225,9 +480,18 @@ class TriageAssistant:
         groq_api_key: str | None = None,
         model: str = TRIAGE_MODEL,
         temperature: float = 0.0,
-        max_tokens: int = 1024,
+        # 2026-08-29: was a bare 1024 with no caller ever overriding it -- silently below the
+        # observed real-completion range (1,031-1,919 tokens), so every completion needing more
+        # than 1024 tokens truncated in production with no 413 and no visible symptom until
+        # TruncatedCompletionError started raising. This constructor default is now just the
+        # fallback for direct instantiation (tests, notebooks); every real call site reads
+        # Settings.triage_max_tokens / TRIAGE_MAX_TOKENS instead (see config.py), so the
+        # effective value is always visible and overridable, not buried here again.
+        max_tokens: int = 2048,
         seed: int = 42,
         cache=None,
+        use_structured_output: bool = True,
+        enable_validated_override_rescue: bool = False,
     ) -> None:
         self.repo = repo
         self.classifier = classifier
@@ -239,6 +503,14 @@ class TriageAssistant:
         self.max_tokens = max_tokens
         self.seed = seed
         self._cache = cache  # LLMCache | None
+        # 2026-08-28: Groq native strict JSON-schema output as the primary mechanism,
+        # regex-extract retained as fallback only (see _groq_completion). Constructor flag
+        # (not a module constant) so tests/eval scripts can force the legacy path.
+        self.use_structured_output = use_structured_output
+        # 2026-08-28 (Part E2): disabled by default -- see grounding.py's
+        # verify_override_reason_grounded for why the prior self-certifying version
+        # (never merged) was unsound. A caller opts in deliberately, per request.
+        self.enable_validated_override_rescue = enable_validated_override_rescue
 
         key = groq_api_key or os.environ.get("GROQ_API_KEY", "")
         if not key:
@@ -279,13 +551,20 @@ class TriageAssistant:
             similar_issue_refs=[s.number for s in plan.similar_issues],
         )
         retrieved_numbers = {s["number"] for s in signals["similar_raw"]}
-        report = verify_plan_grounding(plan, signals["classifier_top3"], retrieved_numbers)
+        resolved = compute_grounding_status(
+            plan,
+            signals["classifier_top3"],
+            retrieved_numbers,
+            enable_validated_override_rescue=self.enable_validated_override_rescue,
+            issue_title=str(issue.get("title", "")),
+            issue_body=str(issue.get("body_clean", "")),
+        )
         plan.grounding_status = GroundingStatus(
-            component_grounded=report.component_grounded,
-            component_reason=report.component_reason,
-            similar_issue_refs=report.similar_issue_refs,
-            ungrounded_refs=report.ungrounded_refs,
-            all_grounded=report.all_grounded,
+            component_grounded=resolved.component_grounded,
+            component_reason=resolved.component_reason,
+            similar_issue_refs=resolved.similar_issue_refs,
+            ungrounded_refs=resolved.ungrounded_refs,
+            all_grounded=resolved.all_grounded,
         )
         elapsed = time.perf_counter() - t0
 
@@ -439,6 +718,12 @@ class TriageAssistant:
             "_t_classify": t_classify,
             "_t_retrieve": t_retrieve,
             "_t_predict": t_predict,
+            # Raw fields needed to rebuild "prompt" with a shorter body preview if the
+            # token-budget guard (Part B) finds the default 800-char preview doesn't fit.
+            "_title": title,
+            "_body": body,
+            "_include_bucket": _include_bucket,
+            "_number": issue.get("number", "?"),
         }
 
     # ------------------------------------------------------------------
@@ -468,8 +753,10 @@ class TriageAssistant:
         from triage_iq.prompts.triage_prompt import (
             SYSTEM_PROMPT,
             SYSTEM_PROMPT_LEGACY,
+            SYSTEM_PROMPT_PROSE,
             build_few_shot_examples,
             build_few_shot_examples_legacy,
+            build_triage_prompt,
         )
 
         # ADR-0020: attribution prompt is opt-in via TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1, off by
@@ -477,18 +764,101 @@ class TriageAssistant:
         # reports/eval_baseline.json stay valid without re-baselining. See ADR-0020 "Baseline
         # decision". Same env-var-gated pattern as TRIAGE_PROMPT_INCLUDE_BUCKET above.
         _include_attribution = os.environ.get("TRIAGE_PROMPT_INCLUDE_ATTRIBUTION") == "1"
-        system_prompt = SYSTEM_PROMPT if _include_attribution else SYSTEM_PROMPT_LEGACY
+        if _include_attribution:
+            # 2026-08-28 (Part A): the JSON schema description is redundant prompt text when
+            # native structured output is active -- Groq's response_format enforces it
+            # structurally. Omit it from the prompt in that case; _groq_completion re-adds it
+            # if structured output gets disabled mid-call (schema rejection fallback), since
+            # the regex-extract path has no structural enforcement of its own.
+            system_prompt = SYSTEM_PROMPT_PROSE if self.use_structured_output else SYSTEM_PROMPT
+        else:
+            system_prompt = SYSTEM_PROMPT_LEGACY
         few_shots = build_few_shot_examples() if _include_attribution else build_few_shot_examples_legacy()
 
         messages = [{"role": "system", "content": system_prompt}]
         messages.extend(few_shots)
         messages.append({"role": "user", "content": signals["prompt"]})
 
+        # --- Part B: per-request token-budget guard --------------------------------
+        # Compute how much completion budget is actually available under Groq's 8,000
+        # TPM ceiling for THIS request's measured prompt size, instead of sending a
+        # fixed self.max_tokens that either 413s on long prompts or truncates
+        # completions on short ones (live-measured: 37/64 eval-set issues would 413 at
+        # a fixed max_tokens=2048 -- see _GROQ_TPM_LIMIT's module-level comment).
+        estimated_prompt_tokens = _estimate_prompt_tokens(messages)
+        dynamic_max_tokens = min(
+            self.max_tokens,
+            _GROQ_TPM_LIMIT - estimated_prompt_tokens - _PROMPT_SIZE_SAFETY_MARGIN,
+        )
+
+        if dynamic_max_tokens < _MIN_VIABLE_COMPLETION_TOKENS:
+            # The prompt alone leaves too little room for a usable completion even
+            # after shrinking the ask -- shrink the input instead. Issue-body preview
+            # first: it's already a lossy 800-char preview (build_triage_prompt), so
+            # cutting it further is a smaller marginal loss than cutting retrieved-issue
+            # text, which declared_attribution citations depend on directly -- losing
+            # that risks the model citing issues it can no longer see, undermining
+            # grounding rather than just losing scene-setting context.
+            for max_body_chars in (400, 200, 100, 0):
+                logger.warning(
+                    "Prompt too large for #%s (est. %d prompt tokens leaves only %d "
+                    "completion tokens, floor %d) — truncating issue body to %d chars.",
+                    signals.get("_number", "?"), estimated_prompt_tokens,
+                    dynamic_max_tokens, _MIN_VIABLE_COMPLETION_TOKENS, max_body_chars,
+                )
+                shorter_prompt = build_triage_prompt(
+                    issue_title=signals["_title"],
+                    issue_body=signals["_body"],
+                    classifier_top3=signals["classifier_top3"],
+                    similar_issues=signals["similar_raw"],
+                    resolution_point_days=signals["pred_days"],
+                    resolution_lower_days=signals["lo_days"],
+                    resolution_upper_days=signals["hi_days"],
+                    repo=self.repo,
+                    resolution_bucket=(
+                        signals["resolution_bucket"] if signals["_include_bucket"] else None
+                    ),
+                    resolution_confidence_pct=(
+                        signals["resolution_conf_pct"] if signals["_include_bucket"] else None
+                    ),
+                    max_body_chars=max_body_chars,
+                )
+                messages[-1] = {"role": "user", "content": shorter_prompt}
+                estimated_prompt_tokens = _estimate_prompt_tokens(messages)
+                dynamic_max_tokens = min(
+                    self.max_tokens,
+                    _GROQ_TPM_LIMIT - estimated_prompt_tokens - _PROMPT_SIZE_SAFETY_MARGIN,
+                )
+                if dynamic_max_tokens >= _MIN_VIABLE_COMPLETION_TOKENS:
+                    break
+
+        if dynamic_max_tokens < _MIN_VIABLE_COMPLETION_TOKENS:
+            # Truncating input to nothing still didn't leave a viable completion
+            # budget -- should be unreachable given system+few-shot alone is ~4,800
+            # real tokens, but degrade rather than send a request very likely to 413
+            # or truncate mid-completion.
+            logger.error(
+                "Prompt token budget guard exhausted for #%s: even with the issue "
+                "body fully truncated, only %d completion tokens remain (floor %d). "
+                "Degrading without calling Groq.",
+                signals.get("_number", "?"), dynamic_max_tokens, _MIN_VIABLE_COMPLETION_TOKENS,
+            )
+            plan = self._make_fallback_plan(
+                signals, reason="prompt too large for any viable completion token budget"
+            )
+            return (
+                plan, "", {"llm_status_reason": "insufficient_token_budget"},
+                "degraded_insufficient_budget", False,
+            )
+
+        max_tokens = dynamic_max_tokens
+        # --- end budget guard --------------------------------------------------------
+
         cache = getattr(self, "_cache", None)
         cache_key: str | None = None
         if cache is not None:
             cache_key = cache.compute_key(
-                "groq", self.model, messages, self.temperature, self.max_tokens
+                "groq", self.model, messages, self.temperature, max_tokens
             )
             cached = cache.get(cache_key)
             if cached is not None:
@@ -503,7 +873,7 @@ class TriageAssistant:
                     # cache with no real credentials cannot make).
                     retry_messages = self._build_retry_messages(messages, raw)
                     retry_key = cache.compute_key(
-                        "groq", self.model, retry_messages, self.temperature, self.max_tokens,
+                        "groq", self.model, retry_messages, self.temperature, max_tokens,
                     )
                     cached_retry = cache.get(retry_key)
                     if cached_retry is not None:
@@ -516,7 +886,28 @@ class TriageAssistant:
                         except (json.JSONDecodeError, ValueError):
                             pass  # retry entry also corrupted — fall through to live call
 
-        raw, usage = self._groq_completion(messages)
+        try:
+            raw, usage = self._groq_completion(messages, max_tokens=max_tokens)
+        except TruncatedCompletionError as exc:
+            # A dynamically-reduced max_tokens can still legitimately run out mid-
+            # completion on an unusually long response (Part B3). Truncation is a hard
+            # error (raises, never silently corrupts a cached entry) -- but it must
+            # still resolve into a clean degrade here, not an unhandled exception
+            # reaching app.py as a 500.
+            logger.warning(
+                "Completion truncated for #%s at max_tokens=%d (%s) — degrading to "
+                "signals-only fallback plan.",
+                signals.get("_number", "?"), max_tokens, exc,
+            )
+            plan = self._make_fallback_plan(signals, reason=f"completion truncated ({exc})")
+            truncated_usage = {
+                "prompt_tokens": exc.prompt_tokens,
+                "completion_tokens": exc.completion_tokens,
+                "finish_reason": "length",
+                "llm_status_reason": "truncated",
+            }
+            return plan, "", truncated_usage, "degraded_truncated", False
+
         if cache is not None and cache_key is not None:
             cache.set(cache_key, "groq", self.model, messages, {"content": raw, "usage": usage})
         llm_status = "ok"
@@ -531,19 +922,37 @@ class TriageAssistant:
             retry_messages = self._build_retry_messages(messages, raw)
             # Check cache for retry call too
             parse_retry_key: str | None = None
-            if cache is not None:
-                parse_retry_key = cache.compute_key(
-                    "groq", self.model, retry_messages, self.temperature, self.max_tokens,
-                )
-                cached2 = cache.get(parse_retry_key)
-                if cached2 is not None:
-                    raw2 = cached2["content"]
-                    usage = cached2.get("usage", {})
+            try:
+                if cache is not None:
+                    parse_retry_key = cache.compute_key(
+                        "groq", self.model, retry_messages, self.temperature, max_tokens,
+                    )
+                    cached2 = cache.get(parse_retry_key)
+                    if cached2 is not None:
+                        raw2 = cached2["content"]
+                        usage = cached2.get("usage", {})
+                    else:
+                        raw2, usage = self._groq_completion(retry_messages, max_tokens=max_tokens)
+                        cache.set(
+                            parse_retry_key, "groq", self.model, retry_messages,
+                            {"content": raw2, "usage": usage},
+                        )
                 else:
-                    raw2, usage = self._groq_completion(retry_messages)
-                    cache.set(parse_retry_key, "groq", self.model, retry_messages, {"content": raw2, "usage": usage})
-            else:
-                raw2, usage = self._groq_completion(retry_messages)
+                    raw2, usage = self._groq_completion(retry_messages, max_tokens=max_tokens)
+            except TruncatedCompletionError as exc2:
+                logger.warning(
+                    "Completion truncated for #%s on the parse-retry call at "
+                    "max_tokens=%d (%s) — degrading to signals-only fallback plan.",
+                    signals.get("_number", "?"), max_tokens, exc2,
+                )
+                plan = self._make_fallback_plan(signals, reason=f"completion truncated on retry ({exc2})")
+                truncated_usage = {
+                    "prompt_tokens": exc2.prompt_tokens,
+                    "completion_tokens": exc2.completion_tokens,
+                    "finish_reason": "length",
+                    "llm_status_reason": "truncated",
+                }
+                return plan, "", truncated_usage, "degraded_truncated", False
             try:
                 plan = self._parse_plan(raw2)
                 llm_status = "parse_retry_succeeded"
@@ -559,9 +968,27 @@ class TriageAssistant:
 
         return plan, raw, usage, llm_status, False
 
-    def _make_fallback_plan(self, signals: dict) -> TriagePlan:
-        """Structured fallback when LLM JSON cannot be parsed after retry."""
+    def _make_fallback_plan(self, signals: dict, reason: str | None = None) -> TriagePlan:
+        """Structured fallback when the LLM stage cannot produce a usable plan.
+
+        `reason` defaults to the original JSON-parse-failure wording (backward compatible
+        with every existing caller); Part B's token-budget guard passes an explicit reason
+        for the two new degrade paths it introduces (prompt too large to fit any viable
+        completion budget; completion truncated even at a dynamically-reduced max_tokens).
+        """
         top = (signals.get("classifier_top3") or [{}])[0]
+        if reason is None:
+            priority_rationale = "LLM parse failure — priority defaulting to medium."
+            triage_summary = (
+                "Automated triage degraded: LLM JSON parse failed after retry. "
+                "Component from TF-IDF only; manual review recommended."
+            )
+        else:
+            priority_rationale = f"{reason} — priority defaulting to medium."
+            triage_summary = (
+                f"Automated triage degraded: {reason}. "
+                "Component from TF-IDF only; manual review recommended."
+            )
         return TriagePlan(
             predicted_component=str(top.get("label", "unknown")),
             component_confidence=float(top.get("confidence", 0.0)),
@@ -572,39 +999,57 @@ class TriageAssistant:
             resolution_bucket=signals.get("resolution_bucket", "days"),
             resolution_confidence_pct=float(signals.get("resolution_conf_pct", 33.0)),
             priority_guess="medium",
-            priority_rationale="LLM parse failure — priority defaulting to medium.",
+            priority_rationale=priority_rationale,
             suggested_assignee_class="unknown",
             suggested_next_steps=["Manual triage required — LLM response parsing failed."],
-            triage_summary=(
-                "Automated triage degraded: LLM JSON parse failed after retry. "
-                "Component from TF-IDF only; manual review recommended."
-            ),
+            triage_summary=triage_summary,
         )
 
-    def _groq_completion(self, messages: list[dict]) -> tuple[str, dict]:
+    def _groq_completion(self, messages: list[dict], max_tokens: int | None = None) -> tuple[str, dict]:
+        """`max_tokens` overrides `self.max_tokens` for this call only (Part B, dynamic
+        per-request budget) -- defaults to `self.max_tokens` so existing callers/tests
+        that don't pass it keep today's behavior unchanged."""
         try:
             from groq import APIStatusError, Groq, RateLimitError
         except ImportError as e:
             raise ImportError("pip install groq") from e
 
+        effective_max_tokens = self.max_tokens if max_tokens is None else max_tokens
+
         client = Groq(api_key=self._groq_key)
         backoff = 5.0
         for attempt in range(6):
+            kwargs: dict = {}
+            if self.use_structured_output:
+                kwargs["response_format"] = _TRIAGE_PLAN_RESPONSE_FORMAT
             try:
                 resp = client.chat.completions.create(
                     model=self.model,
                     messages=messages,  # type: ignore[arg-type]
                     temperature=self.temperature,
-                    max_tokens=self.max_tokens,
+                    max_tokens=effective_max_tokens,
                     seed=self.seed,
+                    **kwargs,
                 )
                 content = (resp.choices[0].message.content or "").strip()
-                usage = {}
+                finish_reason = resp.choices[0].finish_reason
+                completion_tokens = resp.usage.completion_tokens if resp.usage else -1
+                prompt_tokens = resp.usage.prompt_tokens if resp.usage else -1
+                usage: dict[str, object] = {}
                 if resp.usage:
                     usage = {
-                        "prompt_tokens": resp.usage.prompt_tokens,
-                        "completion_tokens": resp.usage.completion_tokens,
+                        "prompt_tokens": prompt_tokens,
+                        "completion_tokens": completion_tokens,
                     }
+                usage["finish_reason"] = finish_reason
+                usage["structured_output"] = self.use_structured_output
+                if finish_reason == "length":
+                    raise TruncatedCompletionError(
+                        completion_tokens=completion_tokens,
+                        max_tokens=effective_max_tokens,
+                        content_preview=content,
+                        prompt_tokens=prompt_tokens,
+                    )
                 return content, usage
             except RateLimitError:
                 if attempt == 5:
@@ -617,6 +1062,35 @@ class TriageAssistant:
                 if e.status_code >= 500 and attempt < 5:
                     time.sleep(backoff)
                     backoff = min(backoff * 2, 60.0)
+                elif (
+                    e.status_code == 400
+                    and self.use_structured_output
+                    and "response_format" in str(e).lower()
+                ):
+                    # Native structured output rejected (e.g. this model/account
+                    # combination doesn't actually support it, or a schema issue slipped
+                    # past _build_triage_plan_response_format). Fall back to the classic
+                    # unconstrained call + regex-extract for the rest of this assistant's
+                    # lifetime -- retrying the same broken response_format every attempt
+                    # would just fail identically each time.
+                    logger.warning(
+                        "Groq rejected structured output (%s) — falling back to "
+                        "regex-extract for the remainder of this session.", e,
+                    )
+                    self.use_structured_output = False
+                    # This call's `messages` may have been built with the schema
+                    # description omitted (SYSTEM_PROMPT_PROSE, Part A) on the assumption
+                    # that response_format would enforce it structurally. That's no longer
+                    # true for the retry below or any further call on this assistant --
+                    # make sure the schema is actually present before falling back to
+                    # unconstrained decoding, which has no structural enforcement of its own.
+                    from triage_iq.prompts.triage_prompt import _SCHEMA_BLOCK
+                    if (
+                        messages
+                        and messages[0].get("role") == "system"
+                        and "Schema:" not in messages[0]["content"]
+                    ):
+                        messages[0]["content"] += _SCHEMA_BLOCK
                 else:
                     raise
         raise RuntimeError("Groq completion failed after 6 attempts")

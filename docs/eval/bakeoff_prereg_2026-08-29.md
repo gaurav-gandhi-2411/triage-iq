@@ -243,3 +243,184 @@ removes the quota half of it.** The human-labeling precondition (GG labeling the
 never the binding constraint on *starting* the expansion, only on *finishing* the
 synthesis-generation step once labels exist. Reported here so the affordability claim
 isn't overstated as "this unblocks W5" when it only partially does.
+
+---
+
+## Addendum, 2026-08-30 — amendments made after Part A/B validation calls, before the
+## 20-issue screen's first real call. Per this doc's own rule, nothing above is edited;
+## everything below is dated and additive.
+
+### A1. Arm D dropped — ELIMINATED ON TOKENIZER FOOTPRINT AGAINST THE FREE-TIER TPM
+### CEILING (pre-registered elimination on a real constraint, decided before the screen)
+
+Two live calls against `qwen/qwen3.6-27b` (k8s #14054, the *shortest* prompt in the
+64-issue eval set) both hit a hard 413 ("Request too large... Limit 8000, Requested
+8073" at margin=100, "Requested 8056" after resizing the margin to 200 — see A2 below).
+Root cause, not just a tail case: qwen's real tokenizer counts ~260–350 more tokens than
+gpt-oss's for identical content. gpt-oss-20b and gpt-oss-120b were confirmed (this
+session) to produce **identical** real `prompt_tokens` for the same input (5750 both) --
+same tokenizer family. qwen does not share that family, and the gap is large enough that
+even the guard's "capped, no shrink needed" branch (which applies zero margin, since the
+cap is `self.max_tokens` not the shrink formula) still overflows the 8,000 TPM ceiling on
+the single shortest issue in the set. No margin resize closes this — the margin only
+protects the shrink branch; this failure is upstream of that branch's own logic. Fixing
+it for real needs a qwen-specific `_CL100K_TO_REAL_RATIO`, which needs its own live
+calibration sweep across the length distribution — out of proportion to what a screen
+elimination decision requires. **Decision (2026-08-30): do not calibrate qwen. Screen is
+3 arms: A (gpt-oss-20b few-shot), B (gpt-oss-20b no few-shot), C (gpt-oss-120b
+few-shot).**
+
+### A2. Token-budget margin resized 100→200 (already applied, `src/triage_iq/models/triage.py`)
+
+Two live extreme-point calls (k8s #14054 shortest, #13435 longest) measured real
+out-of-sample extrapolation error of +88 tokens (under-predicted) and −74 tokens
+(over-predicted) against the guard's gpt-oss-20b calibration — ~21x the 5-sample
+interpolation error (≤4.2 tokens) the original 100-token margin was sized against.
+200 covers the largest observed error with >2x headroom and independently would have
+prevented the qwen 413 above (7973 < 8000 vs the actual 8073 at margin=100). The
+"37/64 issues would 413 at a fixed max_tokens=2048" figure quoted in triage.py and its
+tests is now 57/64 at margin=200 — expected: a stricter margin makes the *hypothetical
+fixed-budget* rejection count worse, which is the whole reason the dynamic guard exists.
+
+### A3. TriagePlan schema/prompt audit — see the companion report for full detail; summary here
+
+A field description read "k8s 76.6% [74.0%, 79.1%]" (percent language) while its own
+schema constrained the value to [0,1] (fraction) — the model filled a repo-constant,
+non-derivable field with a plausible-looking value that then failed Groq's strict-mode
+bounds check, a hard 400. Audited every `TriagePlan`-tree field against its own
+constraint: **6 fields are always or conditionally overwritten post-synthesis and were
+never told so** (`resolution_interval_conformal`, `resolution_bucket`,
+`resolution_confidence_pct`, `grounding`, `grounding_status`, `abstention_status`) — two
+of them (`grounding`, `grounding_status`) had *no description text at all*. All 6 now
+explicitly instruct the model not to fabricate a value (null where the type permits it,
+the exact Pydantic default otherwise, since `resolution_bucket`/`resolution_confidence_pct`
+are non-Optional). Added `tests/test_schema_description_consistency.py`: a
+percent-vs-fraction check, an explicit-numeric-range-vs-constraint check, and a check
+that all 6 non-derivable fields' descriptions instruct against fabrication — a future
+field like the original bug cannot land silently. **Checked whether any of these 6 fields
+ever fed a published metric: no.** Four are unconditionally overwritten before any
+consumer (judge, cassette, published metric) reads `plan` in both the eval harness and
+production. The other two (`declared_attribution`, `abstention_status` in the eval path)
+are explicitly `exclude`d from what's cached/judge-scored (`eval/run_eval.py`,
+`eval/record_cassettes.py`) specifically because they're unconditional-on-`TriagePlan`
+fields the harness never populates. README/ADR-0044's 0.0% fabrication-rate claims are
+computed from the deterministic post-hoc `grounding_status` overwrite, never from the
+model's own raw (possibly fabricated) output for that field.
+
+### B1. TPD/TPM header gap — methodology cannot resolve this as planned (real gap, recorded)
+
+§7's plan to answer per-model-vs-org-pool "empirically off the `x-ratelimit-remaining-*`
+headers" cannot work as stated: Groq's response headers (VERIFIED, captured live, several
+calls, both models) expose only **TPM/RPM state**
+(`x-ratelimit-{limit,remaining,reset}-{requests,tokens}`) — there is no day-scoped header
+in the response at all. The original §7 "BELIEVED per-model... will be checked
+empirically... via headers" claim cannot be settled that way; downgrading to BELIEVED
+with conservative pacing per B2.
+
+### B2. Per-model-pool inference downgraded to BELIEVED; pacing now assumes a SHARED pool
+
+The earlier session's inference (gpt-oss-120b's remaining-tokens, 202, higher than
+gpt-oss-20b's immediately-preceding 122) is TPM-window evidence, read at different points
+in a rolling per-minute cycle — not TPD state, and not strong enough to plan a multi-day
+quota schedule against. **Revised default: assume ONE shared 200,000 TPD pool across all
+three models until proven otherwise.** This changes the plan materially — see A5 below.
+
+**Proposed (not run) decisive test:** RPD/RPM are also per-account limits and far cheaper
+to exhaust than TPD — 30 tiny (near-zero-content) requests to one model would hit its
+30 RPM ceiling in well under a minute at negligible token cost. Immediately following
+with one call to a *different* model: if that model's `x-ratelimit-remaining-requests`
+is also depleted, the account-level pools are shared (implying token pools likely are
+too, same quota architecture); if it shows a fresh ~1000/30, the pools are separate per
+model. This tests the *requests* dimension directly and cheaply, and is suggestive (not
+proof) for the *tokens* dimension by architectural inference. Not run this session —
+proposed per the working agreement's "propose, don't run" instruction.
+
+### A4 (renumbered from the interrupted validation pass). Arm B's actual configuration —
+### a harness bug caught before it touched the real 20-issue screen, not shipped in
+### production code
+
+v1 of the harness set `TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=0` for Arm B, which switches
+BOTH the system prompt (to `SYSTEM_PROMPT_LEGACY`, not `SYSTEM_PROMPT_PROSE`) AND the
+few-shot set (to the legacy 4-shot set, not zero) — there is no existing "zero few-shot"
+code path anywhere in `triage.py`. Caught before any of the 20-issue screen ran: v1's own
+validation call for k8s #14054 arm B showed `prompt_tokens=5713`, nearly identical to arm
+A's 5750 — nowhere near "no few-shot." That data point is discarded, not counted anywhere
+in this document or any result. **Fixed (harness-only, no production code touched):**
+keep `TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1` (same `SYSTEM_PROMPT_PROSE` system prompt as
+Arm A, per §1's own "same system prompt, no few-shot examples") and monkeypatch
+`triage_prompt.build_few_shot_examples` to return `[]` only for Arm B's calls. Real
+corrected prompt tokens for Arm B: 2,923–2,996 across 3 issues tested (not the ~1,625
+p50 §7 originally estimated — that number was computed against the shorter LEGACY system
+prompt, not "the same system prompt as Arm A" the arm actually requires; §7's Arm B
+row is superseded by A5 below).
+
+**A genuinely important reliability finding surfaced during this fix, not a config
+artifact:** on k8s #14054, Arm B's corrected (zero-few-shot, same system prompt) config
+produced a completion that stopped generating after `similar_issues` (field 3 of 18),
+never emitting the other 15 required fields — Groq's structured-output validator
+rejected it as `missing properties: [15 field names]`. Two more issues (k8s #12277,
+vscode #4993) completed cleanly (`finish_reason: stop`, full schema). **n=1/3 so far** —
+not enough to call systematic, but a real, reproducible-shape failure distinct from a
+quality difference: the model can apparently forget to finish the schema at all without
+few-shot examples demonstrating the full shape. This is exactly the kind of result §4's
+guard exists for — it is evidence about *prompt fit*, not evidence to fold into "few-shot
+is worse," and it is now tracked as part of the parse-success-rate metric (§2 metric 4),
+not silently absorbed into a judge-mean comparison. Separately: this exact 400 shape
+(`missing properties`, no "response_format" substring) is **not** caught by
+`_groq_completion`'s existing fallback branch (which only matches a literal
+"response_format" substring) — it propagates uncaught, same reliability gap the
+`resolution_interval_conformal` bug had. Flagged, not fixed this session (fixing
+`_call_llm_verbose`'s degrade path to catch this class generally is a real, separate
+change — noted for the defensibility report, not applied here to keep this session's
+diff scoped to what the screen actually needs).
+
+### C1-C3. New pre-registered metrics (added before the screen's first real call, per the
+### working agreement)
+
+Added to §2's metric list, not informational-only:
+7. **Completion-token distribution per arm** (mean/p50/max `completion_tokens`) —
+   pre-registered, not descriptive-only. Motivation: this session's own extreme-point and
+   validation calls put gpt-oss-20b's few-shot completions at 1,172–1,919 tokens vs.
+   `llama-3.1-8b-instant`'s historical ≤~600 (Part C of the prior session, verified by
+   direct cassette inspection) — a 2-3x verbosity gap that is the root driver of every
+   budget problem in this engagement and should be measured, not accepted as fixed.
+8. **Quality-per-completion-token** — judge mean and grounding rate divided by mean
+   completion length, computed per arm. A model producing equal judge/grounding scores at
+   materially fewer tokens is strictly better on this tier's economics and the screen
+   must say so explicitly, not leave it implicit in the raw judge-mean comparison.
+9. **Few-shot's effect on verbosity specifically** (Arm A vs Arm B completion-token
+   distributions, paired per issue) — few-shot examples may be teaching output *length*
+   as much as *format*; this is checked as its own comparison, not folded into the
+   overall judge-mean question.
+
+### A5. Revised 3-arm quota plan (supersedes §7's per-model-pool table)
+
+Real per-call costs, this session (n=3 Arm A, n=3 Arm B post-fix, n=1 Arm C — small
+samples, will be refined by the screen itself):
+
+| Arm | model | mean tokens/call (n) | max observed |
+|---|---|---:|---:|
+| A (few-shot) | gpt-oss-20b | 7,269 (n=3) | 7,693 |
+| B (no few-shot) | gpt-oss-20b | 4,520 (n=2 completed; 1 failed pre-completion, excluded) | 4,774 |
+| C (few-shot) | gpt-oss-120b | 7,288 (n=1) | 7,288 |
+
+Per-issue round-robin triplet (A+B+C, one issue, all 3 arms): ~19,100 tokens.
+
+**Under the now-conservative shared-pool assumption (B2), all three arms draw from ONE
+200,000 TPD pool, not three independent 200K pools.** Reserving the same 20% diagnostic
+headroom (a prior session burned 196K/200K on diagnostics before its real measurement
+ran) leaves 160,000 usable tokens/day → **160,000 / 19,100 ≈ 8 issue-triplets/day.**
+
+**Revised day-split plan (replaces §7's "single day, maybe 2" estimate):**
+- Day 1: issues 1–8 of §6's table, all 3 arms each, round-robin interleaved within the
+  day (A, B, C per issue, issue 1 through issue 8).
+- Day 2: issues 9–16, same structure.
+- Day 3: issues 17–20 (4 issues × 3 arms = 12 calls), same structure.
+- Per D2's amended instruction (2026-08-30): do **not** reduce n=20 to fit fewer days —
+  a smaller n makes the screen unable to discriminate (the exact underpowered-gate
+  mistake as the 11-issue grounding arm). Days are free; statistical power is not.
+- If a decisive test (B2) is later run and confirms per-model pools are actually
+  independent, this collapses back toward §7's faster estimate — but the plan executes
+  against the conservative 3-day estimate unless and until that's confirmed, not before.
+
+This plan is reported here, before Day 1's first call, per the working agreement.

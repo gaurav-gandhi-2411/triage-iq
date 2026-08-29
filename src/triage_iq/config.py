@@ -33,6 +33,15 @@ class Settings(BaseSettings):
     metrics_token: SecretStr | None = None
     llm_cache_enabled: bool = False
     llm_cache_path: Path = _PROJECT_ROOT / "data" / "llm_cache.sqlite"
+    # 2026-08-29: single source of truth for the triage LLM's completion budget. Previously a
+    # bare constructor default (1024) in TriageAssistant that no caller overrode -- silently
+    # below the observed real-completion range (1,031-1,919 tokens), so it truncated most
+    # completions with no visible symptom until TruncatedCompletionError started raising. Now
+    # env-controlled (TRIAGE_MAX_TOKENS) so it is always visible and overridable, never buried
+    # in a constructor signature again. The per-request token-budget guard (triage.py,
+    # _GROQ_TPM_LIMIT) shrinks this dynamically per-request; this is the ceiling it shrinks
+    # from, not a fixed value sent unmodified.
+    triage_max_tokens: int = 2048
 
     @field_validator("groq_api_key", mode="after")
     @classmethod

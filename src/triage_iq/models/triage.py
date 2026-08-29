@@ -392,12 +392,18 @@ _TRIAGE_PLAN_RESPONSE_FORMAT = _build_triage_plan_response_format()
 # Prompt-token budget guard (2026-08-28, Part A/B)
 #
 # Live-measured against the full 64-issue eval set (tiktoken cl100k, offline, zero quota
-# cost): with the schema-cut prompt (Part A) and a FIXED max_tokens=2048, 13/64 issues
-# (20.3%) would be rejected outright by Groq's TPM preflight (413, prompt+max_tokens >
-# 8000) -- not a rare tail case. A fixed max_tokens cannot be set safely without either
-# capping it so low that normal completions truncate (finish_reason=length, a hard error
-# since PR #113's TruncatedCompletionError) or leaving it high enough to 413 on longer
-# issues. The fix is a per-request budget computed from the ACTUAL measured prompt size.
+# cost): with the schema-cut prompt (Part A) and a FIXED max_tokens=2048, 37/64 issues
+# (57.8%) would be rejected outright by Groq's TPM preflight (413, prompt + max_tokens +
+# _PROMPT_SIZE_SAFETY_MARGIN > 8000) -- not a rare tail case, a majority case. (Corrected
+# 2026-08-29: the number first recorded here, 13/64, applied the 8000 ceiling against
+# prompt+max_tokens alone and silently dropped the 100-token safety margin defined below
+# from that same comparison -- see test_documented_413_rate_matches_guard_formula in
+# tests/test_token_budget_guard.py, which now pins this figure against the guard's actual
+# formula so it cannot drift from the code silently again.) A fixed max_tokens cannot be
+# set safely without either capping it so low that normal completions truncate
+# (finish_reason=length, a hard error since PR #113's TruncatedCompletionError) or leaving
+# it high enough to 413 on longer issues. The fix is a per-request budget computed from the
+# ACTUAL measured prompt size.
 # ---------------------------------------------------------------------------
 
 _GROQ_TPM_LIMIT = 8000
@@ -474,7 +480,14 @@ class TriageAssistant:
         groq_api_key: str | None = None,
         model: str = TRIAGE_MODEL,
         temperature: float = 0.0,
-        max_tokens: int = 1024,
+        # 2026-08-29: was a bare 1024 with no caller ever overriding it -- silently below the
+        # observed real-completion range (1,031-1,919 tokens), so every completion needing more
+        # than 1024 tokens truncated in production with no 413 and no visible symptom until
+        # TruncatedCompletionError started raising. This constructor default is now just the
+        # fallback for direct instantiation (tests, notebooks); every real call site reads
+        # Settings.triage_max_tokens / TRIAGE_MAX_TOKENS instead (see config.py), so the
+        # effective value is always visible and overridable, not buried here again.
+        max_tokens: int = 2048,
         seed: int = 42,
         cache=None,
         use_structured_output: bool = True,
@@ -770,7 +783,7 @@ class TriageAssistant:
         # Compute how much completion budget is actually available under Groq's 8,000
         # TPM ceiling for THIS request's measured prompt size, instead of sending a
         # fixed self.max_tokens that either 413s on long prompts or truncates
-        # completions on short ones (live-measured: 13/64 eval-set issues would 413 at
+        # completions on short ones (live-measured: 37/64 eval-set issues would 413 at
         # a fixed max_tokens=2048 -- see _GROQ_TPM_LIMIT's module-level comment).
         estimated_prompt_tokens = _estimate_prompt_tokens(messages)
         dynamic_max_tokens = min(

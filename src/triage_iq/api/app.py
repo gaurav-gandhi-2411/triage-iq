@@ -198,6 +198,7 @@ async def lifespan(app: FastAPI):
         data_dir=cfg.data_dir,
         groq_api_key=cfg.groq_api_key.get_secret_value(),
         cache=app.state.cache,
+        max_tokens=cfg.triage_max_tokens,
     )
     logger.info("Models ready: %s", app.state.store.repos)
     _token_set = bool(cfg.metrics_token and cfg.metrics_token.get_secret_value())

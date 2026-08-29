@@ -424,3 +424,23 @@ ran) leaves 160,000 usable tokens/day → **160,000 / 19,100 ≈ 8 issue-triplet
   against the conservative 3-day estimate unless and until that's confirmed, not before.
 
 This plan is reported here, before Day 1's first call, per the working agreement.
+
+### B3 (2026-08-30, after the diagnostic screen ran). Per-model-pool question resolved
+### empirically, not by the proposed test in B2 -- an emergent finding from real usage
+
+The full 3-arm diagnostic screen (48 calls) plus a partial re-run (10 calls, needed to
+capture judge-scorable plan content the harness had failed to persist -- see the
+companion report) consumed **168,970 tokens against `openai/gpt-oss-20b` and 177,326
+against `openai/gpt-oss-120b` on the same calendar day.** `gpt-oss-20b` calls then began
+failing with `RateLimitError` (exhausted after 4 backoff retries); `gpt-oss-120b` calls
+kept succeeding well past the point where a single shared 200,000 TPD pool would already
+have been exhausted by the combined total (~30 calls in). **If B2's conservative
+shared-pool assumption were correct, both models would have failed together once the
+combined total crossed 200,000 -- they didn't.** This is direct, if incidental, evidence
+that TPD pools are per-model, not org-wide shared, consistent with §7's original belief
+and against this addendum's own B2 downgrade. Not a designed decisive test (B2's proposed
+RPM-exhaustion test was not run), but real usage data is stronger evidence than the
+proposed test would have been. Reinstating the per-model-pool assumption for planning any
+further calls; `gpt-oss-20b`'s real daily ceiling appears to sit somewhere below the
+documented 200,000 (observed failure at 168,970 consumed) -- pace future gpt-oss-20b work
+against ~160,000/day to be safe, not the full 200,000.

@@ -1,13 +1,16 @@
 """Unit tests for the per-request prompt-token budget guard (2026-08-28, Part A/B).
 
-Live-measured against the full 64-issue eval set: with a FIXED max_tokens=2048, 37/64
-issues (57.8%) would be rejected outright by Groq's TPM preflight (413) before ever
-reaching the model. (Corrected 2026-08-29: originally recorded here as 13/64 -- that
-figure applied the 8000 ceiling against prompt+max_tokens alone and dropped the 100-token
-_PROMPT_SIZE_SAFETY_MARGIN from the comparison, understating the real rejection rate by
-nearly 3x. test_documented_413_rate_matches_guard_formula below pins the figure against
-the guard's own formula and constants -- not a hand-copied number -- so this docstring
-cannot silently drift from the code again.) These tests exercise the fix -- a
+Live-measured against the full 64-issue eval set: with a FIXED max_tokens=2048, 57/64
+issues (89.1%) would be rejected outright by Groq's TPM preflight (413) before ever
+reaching the model, at the current margin=200 (2026-08-29 Part A2 resize -- see
+_PROMPT_SIZE_SAFETY_MARGIN's docstring in triage.py for the extreme-point calibration and
+live cross-model 413 that motivated it). (Corrected 2026-08-29: originally recorded here
+as 13/64 -- that figure applied the 8000 ceiling against prompt+max_tokens alone and
+dropped the safety margin from the comparison, understating the real rejection rate.
+Updated again same day when the margin itself moved 100->200 (37/64 -> 57/64).
+test_documented_413_rate_matches_guard_formula below pins the figure against the guard's
+own formula and constants -- not a hand-copied number -- so this docstring cannot
+silently drift from the code again.) These tests exercise the fix -- a
 dynamically-sized max_tokens computed from the actual estimated prompt size, input
 truncation when that still isn't enough, and a clean degrade (never calling Groq at all)
 as the last resort -- against the real _call_llm_verbose method, with only the Groq
@@ -187,8 +190,9 @@ def test_documented_413_rate_matches_guard_formula():
         for prompt_tokens in _EVAL_SET_PROMPT_TOKENS_2026_08_29
         if prompt_tokens + fixed_max_tokens + _PROMPT_SIZE_SAFETY_MARGIN > _GROQ_TPM_LIMIT
     )
-    assert would_413 == 37, (
-        f"documented as 37/64 (57.8%) -- guard formula now gives {would_413}/64. "
-        "Update the docstrings in triage.py and this file's module docstring to match, "
-        "or re-freeze _EVAL_SET_PROMPT_TOKENS_2026_08_29 if the prompt itself changed."
+    assert would_413 == 57, (
+        f"documented as 57/64 (89.1%) at margin=200 (2026-08-29 Part A2 resize) -- guard "
+        f"formula now gives {would_413}/64. Update the docstrings in triage.py and this "
+        "file's module docstring to match, or re-freeze _EVAL_SET_PROMPT_TOKENS_2026_08_29 "
+        "if the prompt itself changed."
     )

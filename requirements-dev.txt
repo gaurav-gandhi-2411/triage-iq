@@ -2,8 +2,23 @@
 # Includes all runtime deps plus tooling for testing, linting, eval, and reporting.
 # Install with: pip install -r requirements-dev.txt
 # (torch must be pre-installed separately — see requirements.txt header)
+#
+# Pinned to requirements.lock, not requirements.txt (2026-08-27): eval-gate.yml and
+# record-cassette.yml both install via this file, and both need the SAME pinned runtime
+# environment ci.yml's test job already uses -- a cassette recorded in one unpinned,
+# floating environment and replayed in a different one is exactly what produced a 1-ULP
+# floating-point difference (LightGBM/sklearn/pandas resolution-predictor path) that broke
+# a cache key and cost a multi-session investigation to root-cause. Verified directly: a
+# container pinned to requirements.lock reproduces today's real CI resolution exactly (same
+# cassette-miss key as the actual CI failure), despite requirements.lock's
+# sentence-transformers==2.7.0 nominally contradicting requirements.txt's >=5.7.0 floor
+# (a separate, already-flagged, deliberately-parked drift -- see DEPENDENCIES.md and the
+# PYSEC-2026-3716 entry). The lock is not "the wrong environment" for this purpose; it's
+# demonstrably what CI already resolves to today, just made reproducible instead of
+# floating. Dev-only tooling below (matplotlib, pytest, ruff, ...) stays unpinned --
+# these never touch a hashed cache key.
 
--r requirements.txt
+-r requirements.lock
 
 # Eval + reporting (local only — not shipped in Docker)
 matplotlib>=3.7

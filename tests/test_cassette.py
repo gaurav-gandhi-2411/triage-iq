@@ -21,14 +21,14 @@ def cassette_path(tmp_path: Path) -> Path:
 
 
 def test_set_then_get_round_trips(cassette_path: Path):
-    c = CassettePlayer(cassette_path, strict=True)
+    c = CassettePlayer(cassette_path, strict=True, allow_record=True)
     key = c.compute_key("groq", "m", _MESSAGES)
     c.set(key, "groq", "m", _MESSAGES, {"content": "hi", "usage": {}})
     assert c.get(key) == {"content": "hi", "usage": {}}
 
 
 def test_get_request_returns_stored_messages(cassette_path: Path):
-    c = CassettePlayer(cassette_path, strict=True)
+    c = CassettePlayer(cassette_path, strict=True, allow_record=True)
     key = c.compute_key("groq", "m", _MESSAGES)
     c.set(key, "groq", "m", _MESSAGES, {"content": "hi", "usage": {}})
     req = c.get_request(key)
@@ -49,6 +49,36 @@ def test_non_strict_miss_returns_none(cassette_path: Path):
     assert c.get("nonexistent-key") is None
 
 
+def test_non_strict_without_allow_record_refuses_write(cassette_path: Path):
+    """2026-08-29 incident guard: strict=False (non-crashing reads) must NOT imply write
+    access. An ad hoc audit script that only wants to survive a miss should not be able to
+    silently persist a fake/live entry into a committed cassette."""
+    c = CassettePlayer(cassette_path, strict=False)
+    key = c.compute_key("groq", "m", _MESSAGES)
+    with pytest.raises(RuntimeError, match="allow_record"):
+        c.set(key, "groq", "m", _MESSAGES, {"content": "hi", "usage": {}})
+    assert not cassette_path.exists(), "refused write must not touch disk at all"
+
+
+def test_strict_true_without_allow_record_also_refuses_write(cassette_path: Path):
+    """allow_record gates writes independent of strict -- a replay-mode instance that
+    somehow reaches set() (e.g. a future code path) must not be able to write either."""
+    c = CassettePlayer(cassette_path, strict=True)
+    key = c.compute_key("groq", "m", _MESSAGES)
+    with pytest.raises(RuntimeError, match="allow_record"):
+        c.set(key, "groq", "m", _MESSAGES, {"content": "hi", "usage": {}})
+
+
+def test_allow_record_true_permits_write(cassette_path: Path):
+    """The one sanctioned path (eval/record_cassettes.py) explicitly opts in and must
+    still work exactly as before."""
+    c = CassettePlayer(cassette_path, strict=False, allow_record=True)
+    key = c.compute_key("groq", "m", _MESSAGES)
+    c.set(key, "groq", "m", _MESSAGES, {"content": "hi", "usage": {}})
+    assert c.get(key) == {"content": "hi", "usage": {}}
+    assert cassette_path.exists()
+
+
 def test_backward_compat_reads_pre_schema_entry(cassette_path: Path):
     """A cassette written before the request-storage addition stores the response dict
     directly (no wrapper) -- get() must still return it correctly."""
@@ -65,7 +95,7 @@ def test_backward_compat_reads_pre_schema_entry(cassette_path: Path):
 
 
 def test_persists_across_reload(cassette_path: Path):
-    c = CassettePlayer(cassette_path, strict=True)
+    c = CassettePlayer(cassette_path, strict=True, allow_record=True)
     key = c.compute_key("groq", "m", _MESSAGES)
     c.set(key, "groq", "m", _MESSAGES, {"content": "hi", "usage": {}})
 
@@ -75,7 +105,7 @@ def test_persists_across_reload(cassette_path: Path):
 
 
 def test_diff_against_nearest_finds_closest_entry(cassette_path: Path):
-    c = CassettePlayer(cassette_path, strict=True)
+    c = CassettePlayer(cassette_path, strict=True, allow_record=True)
     close_messages = [{"role": "user", "content": "The quick brown fox jumps over the lazy dog A"}]
     far_messages = [{"role": "user", "content": "completely unrelated text"}]
     c.set(c.compute_key("groq", "m", close_messages), "groq", "m", close_messages, {"content": "r1"})

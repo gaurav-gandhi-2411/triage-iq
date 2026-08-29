@@ -18,11 +18,22 @@ class CassetteMissError(RuntimeError):
 class CassettePlayer:
     """JSON-backed cassette for LLM replay in CI.
 
-    In record mode (strict=False): cache miss falls through to the live LLM call,
-    then the response is stored. Use for the one-time recording pass.
+    In record mode (strict=False, allow_record=True): cache miss falls through to the
+    live LLM call, then the response is stored. Use only for the one sanctioned recording
+    pass (eval/record_cassettes.py).
 
     In replay mode (strict=True, default): cache miss raises CassetteMissError.
     Use in CI — no live LLM calls permitted.
+
+    `strict` and `allow_record` are deliberately separate flags, not one. 2026-08-29
+    incident: an ad hoc audit script instantiated CassettePlayer(strict=False) intending
+    only "don't crash on a miss, keep auditing" -- but strict=False also silently let any
+    subsequent cache.set() (e.g. from TriageAssistant's live-call fallback on a miss)
+    persist straight to the committed cassette file, writing ~1,024 unvetted entries into
+    it. Caught by git status before commit, not by any guard. allow_record now gates
+    set() independently: strict=False alone gives a non-crashing, still READ-ONLY replay
+    -- set() raises unless allow_record=True is passed explicitly, which only
+    eval/record_cassettes.py's sanctioned recording pass does.
 
     The cassette uses the same SHA-256 key computation as LLMCache
     (triage_iq.cache.llm_cache) so recorded keys are compatible.
@@ -30,9 +41,10 @@ class CassettePlayer:
     Storage format: JSON (human-readable, diff-friendly for PR review).
     """
 
-    def __init__(self, path: Path | str, strict: bool = True) -> None:
+    def __init__(self, path: Path | str, strict: bool = True, allow_record: bool = False) -> None:
         self._path = Path(path)
         self._strict = strict
+        self._allow_record = allow_record
         self._entries: dict[str, Any] = {}
         if self._path.exists():
             self._load()
@@ -166,7 +178,18 @@ class CassettePlayer:
         (matching LLMCache's storage contract). `request` (the messages list passed to
         compute_key) is stored alongside it so a future miss can be diffed against the
         nearest committed entry instead of just a hash prefix.
+
+        Raises RuntimeError unless this instance was constructed with allow_record=True
+        -- see the class docstring's 2026-08-29 incident note. `strict=False` alone is
+        not sufficient to write; recording is an explicit, separate opt-in.
         """
+        if not self._allow_record:
+            raise RuntimeError(
+                f"Refusing to write cassette entry to {self._path}: this CassettePlayer "
+                "was not constructed with allow_record=True. Recording into a committed "
+                "cassette is sanctioned only via eval/record_cassettes.py. If this is a "
+                "genuine new recording pass, pass allow_record=True explicitly."
+            )
         self._entries[key] = {
             "provider": provider,
             "model": model,
@@ -184,6 +207,7 @@ class CassettePlayer:
             "entries": len(self._entries),
             "path": str(self._path),
             "strict": self._strict,
+            "allow_record": self._allow_record,
         }
 
     # ------------------------------------------------------------------

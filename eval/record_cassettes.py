@@ -117,8 +117,9 @@ def main() -> None:
                 ", ".join(f"{r}: {sum(1 for i in issues if i['repo']==r)}"
                           for r in sorted(set(i['repo'] for i in issues))))
 
-    # Load cassette in record mode (strict=False)
-    cassette = CassettePlayer(CASSETTE_PATH, strict=False)
+    # Load cassette in record mode (strict=False, allow_record=True -- the one sanctioned
+    # recording pass; see eval/cassette.py's class docstring for why these are separate).
+    cassette = CassettePlayer(CASSETTE_PATH, strict=False, allow_record=True)
     logger.info("Cassette: %d entries already recorded at %s", cassette.stats()["entries"], CASSETTE_PATH)
 
     # Load checkpoint

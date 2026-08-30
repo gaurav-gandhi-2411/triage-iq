@@ -28,6 +28,16 @@ import time
 import types
 from pathlib import Path
 
+# 2026-08-30: a model-generated error payload containing a non-ASCII character (a Unicode
+# non-breaking hyphen, U+2011, inside "test-infra") crashed the whole process on Windows'
+# default cp1252 console encoding -- the row was already durably written to OUT_PATH
+# before the print that crashed, so no data was lost, but the crash still killed 23
+# remaining calls' progress for the session. Reconfigure stdout/stderr to UTF-8 with
+# replacement so any future model-generated content (which is untrusted, arbitrary text)
+# can never crash the harness on a print statement again.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 os.environ.setdefault("TRIAGE_PROMPT_INCLUDE_ATTRIBUTION", "1")
 
 sys.path.insert(0, "src")

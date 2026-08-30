@@ -510,8 +510,32 @@ p99-derived cap from this sample buys roughly 0.5% fewer reserved tokens/call, n
 dynamic guard's own margin-based over-provisioning on clamped calls -- a separate,
 more invasive change, not implemented this session.
 
-### D7 (2026-08-30). Quota behaves like a short rolling window, not a strict 24h reset --
-### observed directly, not modeled
+### D7 (2026-08-30). CORRECTED same day: the "recovery" was a misread, not a short
+### rolling window -- quota is still genuinely exhausted
+
+Original version of this entry (below, struck through in spirit not in markdown) claimed
+a single successful probe call an hour after the first exhaustion was evidence of a short
+rolling/partially-replenishing window. **That conclusion does not survive the next data
+point and is retracted.** After that probe, the v3 20-issue re-run got 9 more Arm A
+successes and 19 Arm C successes through -- consistent with genuine leftover headroom
+being spent down, not a reset. A second retry of the 11 still-missing Arm A issues and
+the 1 still-missing Arm C issue, run after further wall-clock time, produced **zero new
+successes -- all 11 Arm A attempts and the 1 Arm C attempt failed identically
+(`RuntimeError: exhausted retries`) again.** The "probe succeeded" observation was really
+just "the first call in a fresh script invocation happened to fit in remaining headroom
+that hadn't been spent yet" -- not evidence of the window itself refreshing. Corrected
+read: **both models' daily quotas are genuinely near/at exhaustion for today**, consistent
+with a real ~24h (or longer, unconfirmed) reset rather than a short rolling window.
+Retracting the earlier framing rather than leaving a wrong claim standing. Pacing plan:
+stop retrying today -- further attempts would just fail identically and burn wall-clock
+time for no benefit. Resume once real time (likely a full day) has passed; do not
+convert this into reduced-n per D1's explicit rejection of that tradeoff.
+
+<details><summary>Original (retracted) entry, kept for the record per this doc's
+append-only rule</summary>
+
+Quota behaves like a short rolling window, not a strict 24h reset -- observed directly,
+not modeled.
 
 gpt-oss-20b exhausted (`RuntimeError: exhausted retries` after repeated `RateLimitError`)
 partway through the diagnostic-plus-partial-rerun work. A single probe call roughly an
@@ -523,3 +547,5 @@ window. Pacing plan for the remainder: let real wall-clock time pass (doing othe
 non-quota work in the meantime, not idle polling) and retry outstanding calls
 periodically rather than committing to a fixed multi-day schedule the observed behavior
 doesn't actually match.
+
+</details>

@@ -444,3 +444,82 @@ proposed test would have been. Reinstating the per-model-pool assumption for pla
 further calls; `gpt-oss-20b`'s real daily ceiling appears to sit somewhere below the
 documented 200,000 (observed failure at 168,970 consumed) -- pace future gpt-oss-20b work
 against ~160,000/day to be safe, not the full 200,000.
+
+### B4 (2026-08-30). Arm B eliminated -- final, recorded per B3's rule; few-shot decision
+### moved to ADR-0053
+
+Arm B (no-few-shot): 3/8 parse failures on the diagnostic screen (62.5% success).
+Applying §3's elimination rule as written -- *"Parse-success rate below 90%"* -- a
+90%-of-20 floor is mathematically unreachable from 5/8 even with a perfect remaining
+12/12 (best case 17/20 = 85%). **Eliminated, not re-run further.** Screen is 2 arms: A
+(gpt-oss-20b few-shot), C (gpt-oss-120b few-shot). All 4 observed failures (3 in Arm B, 1
+in Arm A) share one shape: syntactically valid JSON that stops early, missing 5-15 of 18
+required fields -- not a Groq-side content rejection, not malformed syntax, the model's
+own generation stopping before the schema completes. This promotes few-shot from
+precedent (ADR-0020/0037) to measured evidence: see **ADR-0053** for the full record and
+its stated consequence (gpt-oss-20b with few-shot does not fit the free tier with
+headroom -- a tier finding, not license to drop few-shot).
+
+### A6 (2026-08-30). Harness plan-content bug -- v1/v2 discarded as measurements, v3
+### rebuilds from scratch with a mandatory dry-run gate
+
+v1 and v2 of the screen harness (never committed, scratch) persisted only diagnostic
+metadata per call -- never the generated plan content, issue context, or gold data
+needed for judge scoring. 33 of 39 successful v1/v2 calls (19 Arm A, 20 Arm C, minus 6
+recovered by a partial re-run) are confirmed unrecoverable: no cache (`cache=None`
+throughout, by design), no log (stdout only ever printed the diagnostic `usage` dict, not
+plan content -- verified by grepping all captured logs for plan-shaped field names; the
+only hits are inside *error* rows' `failed_generation` payloads, already captured
+separately), no server-side history (Groq's API is stateless). This is the third
+measurement in this engagement invalidated by instrumentation found only after the
+spend. v1/v2 result files are retained on disk as debugging record only, not reused as
+measurements.
+
+**v3** (`scripts/bakeoff_screen_harness.py`, now committed -- not scratch) fixes the
+persistence gap and adds `dry_run_self_check()`: a zero-quota, zero-network check against
+a mocked Groq client that asserts every field every pre-registered metric needs is
+present in the artifact a real run would produce, covering both the normal-completion and
+truncated-completion paths. `main()` always calls it first -- there is no other
+entrypoint, so it cannot be bypassed. Verified to actually catch the v1/v2 bug class by
+deliberately reintroducing it (dropping `plan`/`issue_title` from a row) and confirming
+the gate fails loudly before any live call would be attempted.
+
+Both surviving arms (A, C) are being re-run from scratch on all 20 issues under v3 --
+the 1 Arm A and 5 Arm C results v2 did manage to capture are not merged into this
+dataset (kept as debugging record only), per the decision not to mix pre-fix and
+post-fix data from a harness with an unknown surface of other defects.
+
+### C4 (2026-08-30). Reserved-vs-actual TPD billing: tested, inconclusive
+
+Tested two ways against captured data (zero new calls): (1) per-call TPM header deltas --
+uninformative, calls are spaced far enough apart that most consecutive same-model pairs
+straddle a 60s TPM window reset, swamping the signal; (2) aggregate reconciliation --
+gpt-oss-20b's 25 successful calls on the diagnostic day summed to 168,970 actual tokens
+(prompt+completion) vs 182,338 reserved tokens (prompt+max_tokens_sent) against a
+documented 200,000 ceiling. Reserved accounting lands closer (gap 17,662 vs 31,030) --
+directionally consistent with reserved-basis billing, not conclusive (neither hits
+200,000 exactly; confounded by earlier same-model calls from elsewhere in this
+engagement whose exact daily-window attribution is uncertain). **BELIEVED, not
+VERIFIED.** Separately: the achievable-calls lever this would unlock is smaller than the
+original ballpark estimate -- Arm A's observed completion-token max (2038) sits right at
+the current 2048 ceiling with `finish_reason: stop` throughout (right-censored, not a
+clean measurement of the model's true verbosity ceiling), and most calls are already
+clamped below 2048 by the existing dynamic guard before the fixed ceiling ever binds. A
+p99-derived cap from this sample buys roughly 0.5% fewer reserved tokens/call, not the
+~10% the ballpark suggested. The real lever, if reserved billing holds, is tightening the
+dynamic guard's own margin-based over-provisioning on clamped calls -- a separate,
+more invasive change, not implemented this session.
+
+### D7 (2026-08-30). Quota behaves like a short rolling window, not a strict 24h reset --
+### observed directly, not modeled
+
+gpt-oss-20b exhausted (`RuntimeError: exhausted retries` after repeated `RateLimitError`)
+partway through the diagnostic-plus-partial-rerun work. A single probe call roughly an
+hour of wall-clock time later succeeded cleanly. The v3 20-issue re-run then hit the same
+wall again after 9 more successful Arm A calls (and, separately, gpt-oss-120b hit it too
+after 19/20 calls). This is inconsistent with a simple "200,000 tokens, resets once every
+24h" model -- the actual behavior looks like a shorter rolling or partially-replenishing
+window. Pacing plan for the remainder: let real wall-clock time pass (doing other
+non-quota work in the meantime, not idle polling) and retry outstanding calls
+periodically rather than committing to a fixed multi-day schedule the observed behavior
+doesn't actually match.

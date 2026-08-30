@@ -221,6 +221,34 @@ def main() -> None:
         triage_error = None
         try:
             plan, meta = assistant.triage_with_metadata(row)
+            # 2026-08-30: TruncatedCompletionError is caught INSIDE _call_llm_verbose (Part
+            # B3's degrade path, PR #113) and converted to a clean fallback plan before it
+            # ever reaches this caller -- confirmed by a zero-quota dry run
+            # (scripts/record_cassettes_dry_run_check.py) that this except-TruncatedCompletion
+            # -Error block below never fires anymore. Without this check, a truncated (or
+            # otherwise degraded) completion would silently proceed to judging and get
+            # checkpointed as "done" with no synthesis entry ever reaching the cassette
+            # (_call_llm_verbose returns before cache.set() on that path) -- a permanent,
+            # silent mismatch between the checkpoint (says done) and the cassette (has
+            # nothing for that issue), invisible until some later replay hits a
+            # CassetteMissError with no link back to this run. Same failure shape as this
+            # engagement's other instrumentation-found-after-the-spend incidents; catch it
+            # here, at the one place that knows llm_status, not downstream.
+            llm_status = meta.get("llm_status")
+            if llm_status not in ("ok", "parse_retry_succeeded"):
+                logger.error(
+                    "STOP: synthesis degraded (llm_status=%s) after %d synthesis calls. "
+                    "Cassette has %d entries. This issue is NOT marked done -- re-running "
+                    "will retry it, not skip it.",
+                    llm_status, n_synthesis_recorded, cassette.stats()["entries"],
+                )
+                save_checkpoint({"done": checkpoint.get("done", {})})
+                print("\n=== SYNTHESIS DEGRADED (not a genuine completion) ===")
+                print(f"Issue: {issue_id}")
+                print(f"llm_status={llm_status}")
+                print(f"Synthesis recorded before stop: {n_synthesis_recorded}")
+                print(f"Cassette entries: {cassette.stats()['entries']}")
+                sys.exit(1)
             n_synthesis_recorded += 1
             logger.info("  synthesis → %s (cache_hit=%s)", plan.predicted_component, meta.get("llm_cache_hit"))
         except TruncatedCompletionError as exc:

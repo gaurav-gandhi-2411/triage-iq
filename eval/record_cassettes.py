@@ -272,10 +272,22 @@ def main() -> None:
             print(f"Cassette entries: {cassette.stats()['entries']}")
             sys.exit(1)  # incomplete recording -- see TPD-exit comment below
         except Exception as exc:
-            if _is_tpd_error(exc):
+            # 2026-08-30: was `if _is_tpd_error(exc)` only -- too narrow. _groq_completion
+            # already retries a RateLimitError internally (6 attempts, exponential
+            # backoff) before this exception ever reaches here, so by the time we see one,
+            # it has already survived real backoff and is not a transient blip. But its
+            # message does not reliably contain "daily"/"tpd" (Groq's rate-limit body uses
+            # 'code': 'rate_limit_exceeded' whether the underlying cause is a per-minute or
+            # per-day ceiling -- confirmed directly from this session's captured raw Groq
+            # error bodies). Under the old check, a sustained-but-not-explicitly-"daily"
+            # rate limit fell through to the generic except branch below and got recorded
+            # as a permanent per-issue failure (checkpointed done, never retried) -- the
+            # same silent-mismatch shape the llm_status check above this block exists to
+            # prevent, just for a different trigger. _is_rate_limit_error covers both.
+            if _is_rate_limit_error(exc):
                 logger.error(
-                    "STOP: Groq TPD (daily quota) hit after %d synthesis calls. "
-                    "Cassette has %d entries. Groq error: %s",
+                    "STOP: Groq rate limit (TPD or sustained TPM) hit after %d synthesis "
+                    "calls. Cassette has %d entries. Groq error: %s",
                     n_synthesis_recorded, cassette.stats()["entries"], exc,
                 )
                 save_checkpoint({"done": checkpoint.get("done", {})})

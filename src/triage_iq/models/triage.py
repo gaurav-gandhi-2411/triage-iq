@@ -1184,7 +1184,7 @@ class TriageAssistant:
         per-request budget) -- defaults to `self.max_tokens` so existing callers/tests
         that don't pass it keep today's behavior unchanged."""
         try:
-            from groq import APIStatusError, Groq, RateLimitError
+            from groq import APIConnectionError, APIStatusError, Groq, RateLimitError
         except ImportError as e:
             raise ImportError("pip install groq") from e
 
@@ -1230,6 +1230,27 @@ class TriageAssistant:
                     raise
                 jitter = backoff * (0.5 + 0.5 * (attempt / 5))
                 logger.warning("Rate limit hit — sleeping %.1fs (attempt %d/6)", jitter, attempt + 1)
+                time.sleep(jitter)
+                backoff = min(backoff * 2, 60.0)
+            except APIConnectionError as e:
+                # 2026-09-03 (ADR-0055 Part P1c/5): found by the error-shape audit --
+                # APIConnectionError/APITimeoutError are NOT subclasses of APIStatusError
+                # or RateLimitError (groq/_exceptions.py), so before this fix neither
+                # except clause here ever caught them: a transient network blip or DNS
+                # hiccup propagated immediately, with ZERO retries, unlike every other
+                # propagating case in this method (which all get 6 attempts first). A
+                # blip that would have resolved itself on retry instead surfaced straight
+                # through _call_llm_verbose (no catch there either) to app.py's broad
+                # except-Exception as a live HTTP 500. Same backoff schedule as
+                # RateLimitError -- a network hiccup deserves the same patience as a rate
+                # limit, not zero.
+                if attempt == 5:
+                    raise
+                jitter = backoff * (0.5 + 0.5 * (attempt / 5))
+                logger.warning(
+                    "Connection error — sleeping %.1fs (attempt %d/6): %s",
+                    jitter, attempt + 1, e,
+                )
                 time.sleep(jitter)
                 backoff = min(backoff * 2, 60.0)
             except APIStatusError as e:

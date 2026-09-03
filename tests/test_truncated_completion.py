@@ -222,6 +222,48 @@ def test_schema_validation_error_on_parse_retry_call_also_degrades():
     assert "manual review" in plan.triage_summary.lower()
 
 
+def test_connection_error_retries_with_backoff_then_succeeds():
+    """2026-09-03 (ADR-0055 Part P1c/5): found by the error-shape audit --
+    APIConnectionError/APITimeoutError are not subclasses of APIStatusError or
+    RateLimitError, so before this fix neither except clause caught them: a transient
+    network blip propagated with ZERO retries, unlike every other case in this method.
+    Must now retry with the same backoff schedule as RateLimitError."""
+    import groq
+    import httpx
+
+    asst = _make_assistant()
+    req = httpx.Request("POST", "https://api.groq.com/openai/v1/chat/completions")
+    conn_error = groq.APIConnectionError(request=req)
+    ok_response = _mock_groq_response(
+        '{"predicted_component": "kubectl"}', finish_reason="stop", completion_tokens=50
+    )
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.side_effect = [conn_error, conn_error, ok_response]
+
+    with patch("groq.Groq", return_value=mock_client), patch("time.sleep"):
+        content, usage = asst._groq_completion([{"role": "user", "content": "x"}])
+
+    assert content == '{"predicted_component": "kubectl"}'
+    assert mock_client.chat.completions.create.call_count == 3
+
+
+def test_connection_error_raises_after_six_attempts():
+    import groq
+    import httpx
+
+    asst = _make_assistant()
+    req = httpx.Request("POST", "https://api.groq.com/openai/v1/chat/completions")
+    conn_error = groq.APIConnectionError(request=req)
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.side_effect = conn_error
+
+    with patch("groq.Groq", return_value=mock_client), patch("time.sleep"), pytest.raises(
+        groq.APIConnectionError
+    ):
+        asst._groq_completion([{"role": "user", "content": "x"}])
+    assert mock_client.chat.completions.create.call_count == 6
+
+
 def test_response_format_rejection_not_misclassified_as_schema_validation_error():
     """Regression: json_validate_failed detection (checked first, via structured
     e.body access) must not swallow the DIFFERENT response_format-rejection 400 (the

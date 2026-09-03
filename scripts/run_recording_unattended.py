@@ -67,6 +67,11 @@ HARD_STOP_MARKERS = [
     "TRUNCATED COMPLETION",
     "predates the (issue_id, model, prompt_hash) keying fix",
     "GROQ_API_KEY not set",
+    # 2026-09-03 (ADR-0055 Part P1a/2c): a FIRST degraded_schema_invalid on an issue is
+    # NOT a hard stop -- it's logged and the run continues (see record_cassettes.py),
+    # so it deliberately does not appear here. Only a REPRODUCED failure (2nd
+    # occurrence on the same issue) is a hard stop.
+    "SCHEMA VALIDATION FAILURE REPRODUCED",
 ]
 
 
@@ -106,7 +111,12 @@ def _checkpoint_progress(model: str, prompt_hash: str) -> tuple[int, int, list[s
             continue
         if rec.get("judge_score") is not None:
             resolved += 1
-        elif rec.get("plan") is None and not rec.get("tpd_hit"):
+        # tpd_hit AND schema_invalid_retry entries are excluded from "dead" (2026-09-03,
+        # ADR-0055 Part P1a/2c) -- both are retryable on a later resume (record_cassettes.py
+        # excludes them from done_ids the same way), not permanently skipped. Counting
+        # either as dead here would let the terminal-stop check below (resolved+dead ==
+        # TOTAL_ISSUES) fire before a retryable issue was ever actually retried.
+        elif rec.get("plan") is None and not rec.get("tpd_hit") and not rec.get("schema_invalid_retry"):
             dead.append(rec.get("issue_id", "?"))
     return resolved, len(dead), dead
 

@@ -16,6 +16,7 @@ Exit codes:
     1 — unexpected error
 """
 
+import hashlib
 import json
 import logging
 import numpy as np
@@ -36,6 +37,7 @@ import os
 
 from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
+from triage_iq.model_config import TRIAGE_MODEL
 from triage_iq.models.component_classifier import load_classifier
 from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore, TriageJudge
 from triage_iq.models.resolution import ResolutionTimePredictor
@@ -78,12 +80,91 @@ def _is_connection_error(exc: Exception) -> bool:
                                     "connecterror", "apiconnectionerror", "timed out", "timeout"))
 
 
-def load_checkpoint() -> dict:
-    if CHECKPOINT_PATH.exists():
-        data = json.loads(CHECKPOINT_PATH.read_text(encoding="utf-8"))
-        logger.info("Checkpoint: %d issues already recorded", len(data.get("done", {})))
-        return data
-    return {"done": {}}
+def _compute_prompt_hash() -> str:
+    """Fingerprint of the exact system prompt + few-shot messages this run will send,
+    mirroring TriageAssistant._call_llm_verbose's prompt-selection (triage.py) so a prompt
+    change is caught by the checkpoint the same way a model change is caught by
+    TRIAGE_MODEL. Does not cover use_structured_output's SYSTEM_PROMPT/_PROSE branch --
+    that branch is only reachable when TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1, which this
+    script never sets."""
+    from triage_iq.prompts.triage_prompt import (
+        SYSTEM_PROMPT_LEGACY,
+        SYSTEM_PROMPT_PROSE,
+        build_few_shot_examples,
+        build_few_shot_examples_legacy,
+    )
+
+    if os.environ.get("TRIAGE_PROMPT_INCLUDE_ATTRIBUTION") == "1":
+        system_prompt = SYSTEM_PROMPT_PROSE
+        few_shots = build_few_shot_examples()
+    else:
+        system_prompt = SYSTEM_PROMPT_LEGACY
+        few_shots = build_few_shot_examples_legacy()
+    payload = json.dumps({"system_prompt": system_prompt, "few_shots": few_shots}, sort_keys=True)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+
+
+def _checkpoint_key(issue_id: str, model: str, prompt_hash: str) -> str:
+    return f"{issue_id}::{model}::{prompt_hash}"
+
+
+def _record_done(checkpoint: dict, issue_id: str, record: dict, model: str, prompt_hash: str) -> dict:
+    """Tag and store a done-entry under a composite (issue_id, model, prompt_hash) key so a
+    model or prompt change can never be silently mistaken for "already recorded". Fixes the
+    2026-08-31 incident: a stale checkpoint recorded under the retired llama-3.1-8b-instant,
+    keyed by bare issue_id, was silently accepted as complete for openai/gpt-oss-120b and
+    printed "RECORDING COMPLETE" with the old model's judge means after zero live calls."""
+    tagged = {**record, "issue_id": issue_id, "model": model, "prompt_hash": prompt_hash}
+    checkpoint["done"][_checkpoint_key(issue_id, model, prompt_hash)] = tagged
+    return tagged
+
+
+def load_checkpoint(current_model: str, current_prompt_hash: str) -> tuple[dict, dict[str, dict]]:
+    """Load the checkpoint file and partition its done-entries into those matching the
+    currently configured (model, prompt_hash) vs. everything else. Any entry missing a
+    model/prompt_hash tag (i.e. written before this composite-key fix) is treated as
+    untrustworthy and halts the run -- it cannot be proven to belong to the current model,
+    which is exactly the silent-reuse failure this keying scheme exists to prevent."""
+    if not CHECKPOINT_PATH.exists():
+        return {"done": {}}, {}
+
+    data = json.loads(CHECKPOINT_PATH.read_text(encoding="utf-8"))
+    all_done = data.get("done", {})
+
+    current_done: dict[str, dict] = {}
+    stale_by_model: dict[str, int] = {}
+    for key, rec in all_done.items():
+        rec_model = rec.get("model")
+        rec_hash = rec.get("prompt_hash")
+        if rec_model is None or rec_hash is None:
+            logger.error(
+                "STOP: recording_checkpoint.json entry %r has no model/prompt_hash tag -- "
+                "it predates the (issue_id, model, prompt_hash) keying fix and cannot be "
+                "trusted to belong to the currently configured model (%s). Refusing to "
+                "resume silently. Archive or delete this checkpoint file to start fresh "
+                "under the current model, or manually re-tag its entries if you can confirm "
+                "which model actually recorded them.",
+                key, current_model,
+            )
+            sys.exit(1)
+        if rec_model == current_model and rec_hash == current_prompt_hash:
+            current_done[rec["issue_id"]] = rec
+        else:
+            stale_by_model[f"{rec_model}@{rec_hash[:8]}"] = (
+                stale_by_model.get(f"{rec_model}@{rec_hash[:8]}", 0) + 1
+            )
+
+    logger.info(
+        "Checkpoint recorded under configured model=%s prompt_hash=%s: %d issue(s) already done.",
+        current_model, current_prompt_hash, len(current_done),
+    )
+    if stale_by_model:
+        logger.warning(
+            "Checkpoint also holds %d entries recorded under a DIFFERENT model/prompt -- "
+            "ignored for resume, not deleted: %s",
+            sum(stale_by_model.values()), stale_by_model,
+        )
+    return data, current_done
 
 
 def save_checkpoint(data: dict) -> None:
@@ -122,13 +203,16 @@ def main() -> None:
     cassette = CassettePlayer(CASSETTE_PATH, strict=False, allow_record=True)
     logger.info("Cassette: %d entries already recorded at %s", cassette.stats()["entries"], CASSETTE_PATH)
 
-    # Load checkpoint
-    checkpoint = load_checkpoint()
-    _done_entries = checkpoint.get("done", {})
+    current_model = TRIAGE_MODEL
+    current_prompt_hash = _compute_prompt_hash()
+    logger.info("Configured for this run: model=%s prompt_hash=%s", current_model, current_prompt_hash)
+
+    # Load checkpoint, filtered to entries matching the CURRENT model+prompt only.
+    checkpoint, current_done = load_checkpoint(current_model, current_prompt_hash)
     # Exclude tpd_hit entries so they are retried — their synthesis is cached, only the judge reruns.
-    done_ids = {k for k, v in _done_entries.items() if not v.get("tpd_hit")}
-    n_tpd_retry = len(_done_entries) - len(done_ids)
-    logger.info("Checkpoint: %d issues already processed (%d tpd_hit will retry)",
+    done_ids = {k for k, v in current_done.items() if not v.get("tpd_hit")}
+    n_tpd_retry = len(current_done) - len(done_ids)
+    logger.info("Checkpoint: %d issues already processed under current model+prompt (%d tpd_hit will retry)",
                 len(done_ids), n_tpd_retry)
 
     # Build frozen retrievers — deterministic prompts regardless of hardware
@@ -199,7 +283,7 @@ def main() -> None:
 
         if issue_id in done_ids:
             logger.info("[%d/%d] %s — skipped (checkpoint)", i + 1, len(issues), issue_id)
-            results[issue_id] = checkpoint["done"][issue_id]
+            results[issue_id] = current_done[issue_id]
             n_skipped += 1
             continue
 
@@ -319,7 +403,7 @@ def main() -> None:
 
         if plan is None:
             results[issue_id] = {"error": triage_error, "plan": None, "judge_score": None}
-            checkpoint["done"][issue_id] = results[issue_id]
+            _record_done(checkpoint, issue_id, results[issue_id], current_model, current_prompt_hash)
             save_checkpoint(checkpoint)
             continue
 
@@ -391,7 +475,7 @@ def main() -> None:
                 "judge_score": None,
                 "tpd_hit": True,
             }
-            checkpoint["done"][issue_id] = results[issue_id]
+            _record_done(checkpoint, issue_id, results[issue_id], current_model, current_prompt_hash)
             save_checkpoint(checkpoint)
             print(f"\n=== TPD HIT (during judge) ===")
             print(f"Synthesis recorded: {n_synthesis_recorded}")
@@ -405,15 +489,17 @@ def main() -> None:
             "error": triage_error,
         }
         results[issue_id] = rec
-        checkpoint["done"][issue_id] = rec
+        _record_done(checkpoint, issue_id, rec, current_model, current_prompt_hash)
         save_checkpoint(checkpoint)
 
     # --- Summary ---
     completed = [v for v in results.values() if v.get("judge_score") is not None]
-    if completed:
+    if completed and n_synthesis_recorded > 0:
         scores = [JudgeScore.model_validate(v["judge_score"]) for v in completed]
         total_scores = [s.total() for s in scores]
         print(f"\n=== RECORDING COMPLETE ===")
+        print(f"Model:              {current_model}")
+        print(f"Prompt hash:        {current_prompt_hash}")
         print(f"Issues processed:   {len(results)}")
         print(f"Skipped (cached):   {n_skipped}")
         print(f"Synthesis recorded: {n_synthesis_recorded}")
@@ -431,8 +517,22 @@ def main() -> None:
                 )
         for repo, repo_scores in by_repo.items():
             print(f"  {repo}: n={len(repo_scores)}, mean={np.mean(repo_scores):.2f}/15")
+    elif completed and n_synthesis_recorded == 0:
+        # All entries came from the checkpoint (0 live synthesis calls this invocation).
+        # Never report this as "RECORDING COMPLETE" -- that phrase must mean this run did
+        # genuine live work, not that it silently reused whatever a checkpoint claimed. If
+        # every issue really is done, inspect the checkpoint/cassette directly rather than
+        # trusting this run's exit.
+        print(f"\n=== NOT RECORDING COMPLETE (zero live synthesis calls this run) ===")
+        print(f"Model:            {current_model}")
+        print(f"Prompt hash:      {current_prompt_hash}")
+        print(f"Issues skipped (checkpoint): {n_skipped}/{len(issues)}")
+        print(f"Cassette entries: {cassette.stats()['entries']}")
+        sys.exit(1)
     else:
         print(f"\n=== RECORDING INCOMPLETE — no judge scores ===")
+        print(f"Model:            {current_model}")
+        print(f"Prompt hash:      {current_prompt_hash}")
         print(f"Cassette entries: {cassette.stats()['entries']}")
 
     # --- Completeness assertion ---

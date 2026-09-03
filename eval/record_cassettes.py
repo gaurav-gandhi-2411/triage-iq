@@ -81,18 +81,28 @@ def _is_connection_error(exc: Exception) -> bool:
 
 
 def _compute_prompt_hash() -> str:
-    """Fingerprint of the exact system prompt + few-shot messages this run will send,
-    mirroring TriageAssistant._call_llm_verbose's prompt-selection (triage.py) so a prompt
-    change is caught by the checkpoint the same way a model change is caught by
-    TRIAGE_MODEL. Does not cover use_structured_output's SYSTEM_PROMPT/_PROSE branch --
-    that branch is only reachable when TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1, which this
-    script never sets."""
+    """Fingerprint of the exact system prompt + few-shot messages + wire JSON schema this
+    run will send, mirroring TriageAssistant._call_llm_verbose's prompt-selection
+    (triage.py) so a prompt OR schema change is caught by the checkpoint the same way a
+    model change is caught by TRIAGE_MODEL. Does not cover use_structured_output's
+    SYSTEM_PROMPT/_PROSE branch -- that branch is only reachable when
+    TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1, which this script never sets.
+
+    2026-09-03 (ADR-0054/0055): the wire schema (TriagePlan's response_format, via
+    _build_triage_plan_response_format) was NOT part of this hash until now -- the
+    schema-reduction fix changed which fields Groq's strict decoding demands without
+    touching the prompt text at all, which this hash would have silently missed,
+    letting a resume reuse pre-schema-change checkpoint entries as if they were
+    recorded under the new contract. They are not comparable: a synthesis call made
+    under the old (18-required-field) schema is a different request than one made
+    under the new (11-required-field) schema, even with identical prompt text."""
     from triage_iq.prompts.triage_prompt import (
         SYSTEM_PROMPT_LEGACY,
         SYSTEM_PROMPT_PROSE,
         build_few_shot_examples,
         build_few_shot_examples_legacy,
     )
+    from triage_iq.models.triage import _TRIAGE_PLAN_RESPONSE_FORMAT
 
     if os.environ.get("TRIAGE_PROMPT_INCLUDE_ATTRIBUTION") == "1":
         system_prompt = SYSTEM_PROMPT_PROSE
@@ -100,7 +110,14 @@ def _compute_prompt_hash() -> str:
     else:
         system_prompt = SYSTEM_PROMPT_LEGACY
         few_shots = build_few_shot_examples_legacy()
-    payload = json.dumps({"system_prompt": system_prompt, "few_shots": few_shots}, sort_keys=True)
+    payload = json.dumps(
+        {
+            "system_prompt": system_prompt,
+            "few_shots": few_shots,
+            "wire_schema": _TRIAGE_PLAN_RESPONSE_FORMAT,
+        },
+        sort_keys=True,
+    )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 

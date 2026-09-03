@@ -48,6 +48,75 @@ below). A background wait-then-retry was in flight when this note was written; c
 `recording_checkpoint.json`'s `done` count to see if it made further progress before the
 session ended.
 
+## 2026-09-03 update: reconciliation findings + unattended recorder running
+
+**Checkpoint-keying fix is now committed** (`d2b2b96`, includes the 36/64 issues recorded
+under it so far). The fix works as designed: the **main repo checkout**
+(`C:\Users\gaura\ml-projects\triage-iq`)'s `eval/cassettes/recording_checkpoint.json`
+still holds 64 untagged (pre-fix) entries — verified directly (`model`/`prompt_hash` keys
+absent on every entry). Any `record_cassettes.py` run started from that checkout will
+hit `load_checkpoint()`'s `sys.exit(1)` ("STOP: ... predates the (issue_id, model,
+prompt_hash) keying fix") immediately. **That is the fix working, not a bug** — do not
+delete or re-tag that file to make it pass; it correctly cannot be trusted to belong to
+`openai/gpt-oss-120b`.
+
+**Early-termination reconciliation against ADR-0054 (Priority 1) — reported, not
+resolved unilaterally, per the working agreement:**
+- 3/36 record-time early terminations so far: `k8s-12224`, `vscode-4996`, `k8s-12477`
+  (all `plan=None`, schema-incomplete JSON — same defect class as ADR-0053).
+- Sample membership (VERIFIED against `docs/eval/bakeoff_prereg_2026-08-29.md` §6, read
+  from the `docs/bakeoff-prereg` branch — that file is not on this branch's history):
+  **`vscode-4996` IS one of the screen's 20 pre-registered issues** (repo=vscode,
+  number=4996, row present in §6's table). **`k8s-12224` and `k8s-12477` are NOT** in
+  that sample — easy to mis-scan against `k8s-12254`, which is a different, in-sample
+  issue. So the screen's sample was not representative of 2 of these 3 failures by
+  construction (never tested), but it *did* include `vscode-4996`.
+- **Request shape unchanged between screen and record** (VERIFIED via `git log`):
+  `_PROMPT_SIZE_SAFETY_MARGIN=200` and the schema-field-description fixes landed at
+  `1564293` (2026-08-30 00:11), *before* the v3 harness commit (`acc2d7d`, 09:36) that
+  produced the screen's Arm C numbers — both used the current, fixed request shape.
+  Nothing under `src/triage_iq/` changed between ADR-0054's acceptance (`99c9799`,
+  13:48) and now, other than the checkpoint-keying fix itself (bookkeeping only, no
+  request-shape effect).
+- **ADR-0054's "44/44 (100%)" figure has no committed artifact backing it** — searched
+  every branch for a results JSON/log; none exists. The `docs/bakeoff-prereg` branch's
+  own append-only log stops at 10:53 (`479b022`) recording Arm C at **19/20, 1 issue
+  still missing**, with D7's explicit note that further retries that day "would just
+  fail identically." ADR-0054 (`685934e`, 12:41) then reports 44/44 complete ~1h48m
+  later with no intervening commit recording how the gap closed. **BELIEVED, not
+  VERIFIED** — flagging per rule 65b, not asserting the number is wrong, only that it
+  isn't traceable to a committed artifact the way this engagement's own working
+  agreement calls for.
+- **Pooled rate, taking ADR-0054's 44/44 at face value:** gpt-oss-120b 3/80 = 3.75%
+  (95% Wald CI [0.00%, 7.91%]) vs gpt-oss-20b (Arm A, screen only, per ADR) 2/31 = 6.45%
+  (95% CI [0.00%, 15.10%]) — **the intervals overlap almost completely; not resolved.**
+  Taking the record-only rate alone (no benefit of the unverified screen figure):
+  gpt-oss-120b is 3/36 = 8.33%, *higher* than gpt-oss-20b's screen-measured 6.45%.
+  **Read: the parse-success/early-termination gap ADR-0054 called "categorically
+  resolved" does not survive the record data — at these sample sizes the two models
+  are not distinguishable on this metric either, the same underpowered-comparison shape
+  the ADR itself used to disqualify judge mean.** Not re-opening the model selection —
+  reporting this for GG to decide, per the working agreement.
+
+**Unattended recorder running** (Priority 2): `scripts/run_recording_unattended.py`,
+launched as a detached background process (verified orphaned from its launcher — will
+survive this CC session or terminal closing; **not** verified to survive the machine
+sleeping or shutting down — `powercfg` on this machine exposes no lid-close-action
+setting to check, state this as unconfirmed rather than assumed). It re-invokes
+`record_cassettes.py`, waits out Groq's stated rate-limit window (parsed from the error
+text, +60s buffer, falling back to 30 min if unparseable) on a TPD/rate-limit hit, and
+hard-stops (no retry) on a degraded/fallback synthesis, a truncated completion, a
+checkpoint/model mismatch, or any subprocess outcome it doesn't recognize — fail-closed,
+per this engagement's own guard-design rule. It computes "done" from the checkpoint file
+directly (resolved + permanently-dead == 64), not from the subprocess's exit code, since
+`record_cassettes.py` itself exits 1 forever once the only issues left are the
+permanently-skipped dead ones — reading that literally would be an infinite retry trap.
+Status file: `eval/cassettes/RECORDING_STATUS.txt` (plain text, human-readable, updated
+every iteration — check it directly, no CC session needed). Per-iteration logs:
+`eval/cassettes/unattended_logs/`. PID file: `eval/cassettes/unattended_recorder.pid`.
+
+To stop it manually: `Stop-Process -Id (Get-Content eval/cassettes/unattended_recorder.pid)`.
+
 ## A known issue you'll need to decide on: `k8s-12224`
 
 This issue got a genuine early-termination failure from gpt-oss-120b (schema-incomplete

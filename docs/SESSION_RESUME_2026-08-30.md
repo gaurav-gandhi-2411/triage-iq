@@ -5,6 +5,37 @@ first, then resume exactly as described below.** Production has been down since
 ~2026-08-16 (Groq retired `llama-3.1-8b-instant`); this session got as far as selecting
 a replacement and is mid-way through re-recording the eval cassette against it.
 
+## 2026-09-03 (still later same day): 8/9 confirmed, 1 pending, do not start re-record yet
+
+**vscode-4993's new failure mode diagnosed (ADR-0055 Part A):** malformed key
+(`"triage_summary layman"` instead of `triage_summary`). Confirmed via direct
+`jsonschema` validation against our own schema (installed into `.venv` for this check
+only, not a new project dependency) that our schema is valid and correctly rejects
+this payload for TWO reasons (missing required key + disallowed additional
+property) — Groq's `strict: true` constrained decoding is not fully constraining
+property *names* at the token level (a Groq-side limit), not a bug in our schema or
+parser. **Not reproducible**: retried `vscode-4993` itself (succeeded) plus 2 other
+vscode issues (both succeeded) — 1 fail in 2 live attempts on the same issue, looks
+like a rare stochastic decoding glitch, not systematic. Not special-cased —
+`record_cassettes.py` already fails closed on any schema-validation failure
+regardless of cause.
+
+**Validation status: 8/9 of the original early-termination issues confirmed
+genuinely live under the reduced schema** (`k8s-12224`, `vscode-4996`, `k8s-12477`,
+`k8s-12248`, `k8s-13508`, `k8s-12287`, `k8s-12254` all succeed;`vscode-4993` succeeds
+1/2 with the new rare failure mode above). **`k8s-14835` is the ONLY one still
+unconfirmed** — blocked by Groq TPD exhaustion three separate times today (429s, not
+schema errors), most recently `Used 199737/200000`. A final background retry is
+queued for it alone; check `eval/cassettes/unattended_logs/`-adjacent scratch output
+or just re-run `scripts/scratch/validate_9_early_terminations.py` (TARGET_IDS already
+set to just `k8s-14835`) once quota allows.
+
+**Do NOT start the full 64-issue re-record until `k8s-14835` is confirmed** (per the
+working agreement's explicit B3 gate — report READY only after A and B are both
+complete). If it succeeds: 9/9 effectively resolved (the one new failure mode is a
+rare residual rate, not a blocker per A5). If it fails with a genuine schema error
+(not TPD): report immediately, do not proceed.
+
 ## 2026-09-03 (later same day): schema fix implemented, live-validated, quota exhausted mid-validation
 
 **Model selection is now settled** (GG approved, ADR-0054): `openai/gpt-oss-120b` on

@@ -16,7 +16,11 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from triage_iq.model_config import TRIAGE_MODEL
+from triage_iq.model_config import (
+    TRIAGE_MODEL,
+    TRIAGE_PRICE_COMPLETION_PER_MTOK,
+    TRIAGE_PRICE_PROMPT_PER_MTOK,
+)
 from triage_iq.models.grounding import compute_grounding_status
 
 logger = logging.getLogger(__name__)
@@ -387,6 +391,47 @@ def _prune_unreferenced_defs(schema: dict) -> None:
             del defs[name]
 
 
+def _strip_post_hoc_fields(schema: dict, model_cls: type[BaseModel]) -> None:
+    """Remove top-level properties whose Pydantic field carries an explicit `default`
+    (not `default_factory`) from the wire schema entirely -- Groq's `strict: true` mode
+    has no notion of an optional property (`_force_strict_schema_requirements` above
+    forces `required` to equal every remaining key in `properties`), so the only way to
+    stop demanding a field from the model is to never offer it as a schema slot at all.
+
+    2026-09-03 (ADR-0054/0055): root cause of the early-termination defect measured
+    identically across both bake-off arms. All 9 examined failures were missing a
+    subset of exactly these 7 fields -- resolution_bucket, resolution_confidence_pct,
+    resolution_interval_conformal, grounding, grounding_status, declared_attribution,
+    abstention_status -- every one of which is either overwritten post-hoc by
+    triage_with_metadata/app.py regardless of what the model emits, or already
+    null-tolerant by design (declared_attribution's tolerant_attribution validator
+    below treats a missing/malformed value as a compliance failure, never a request
+    failure). Forcing them into `required` asked the model to spend generation budget
+    (and risk a 400) on values nothing downstream consumes.
+
+    `default_factory` fields (e.g. `similar_issues: list = Field(default_factory=list)`)
+    are deliberately NOT stripped -- that mechanism means "the model should try, an
+    empty result is an acceptable fallback", a different semantic from "a fixed/derived
+    value the model can't affect either way". `similar_issues` carries real
+    model-derived signal and was present in every one of the 9 examined failures,
+    never among the missing fields -- confirmed empirically, not assumed.
+
+    Only inspects `model_cls`'s own top-level fields -- nested $defs (SimilarIssue
+    etc.) are untouched. Run this BEFORE `_inline_nullable_object_refs` so any
+    now-orphaned $defs (ConformalIntervalResult, GroundingAttribution, GroundingStatus,
+    DeclaredAttribution, AbstentionStatus, StageAbstention) get pruned by that
+    function's existing reachability pass rather than needing a second one here.
+    """
+    from pydantic_core import PydanticUndefined
+
+    properties = schema.get("properties")
+    if not properties:
+        return
+    for name, field_info in model_cls.model_fields.items():
+        if field_info.default is not PydanticUndefined and name in properties:
+            del properties[name]
+
+
 def _build_triage_plan_response_format() -> dict:
     """Groq response_format payload for native strict schema-constrained decoding.
 
@@ -398,6 +443,7 @@ def _build_triage_plan_response_format() -> dict:
     conflict with leaving the class itself permissive.
     """
     schema = TriagePlan.model_json_schema()
+    _strip_post_hoc_fields(schema, TriagePlan)
     _inline_nullable_object_refs(schema)
     _force_strict_schema_requirements(schema)
     return {
@@ -617,8 +663,18 @@ class TriageAssistant:
             "total_latency_ms": round(elapsed * 1000, 1),
             "groq_tokens_prompt": usage.get("prompt_tokens", 0),
             "groq_tokens_completion": usage.get("completion_tokens", 0),
+            # 2026-09-03: was a hardcoded 0.27 for both terms (the retired
+            # llama-3.1-8b-instant blended rate, duplicated inline instead of reading
+            # model_config.py's constant -- that constant was itself stale and, separately,
+            # never actually imported here). Now uses TRIAGE_MODEL's real published
+            # per-token rates, input and output priced separately (Groq's gpt-oss-120b:
+            # 4x higher output than input -- a blended constant hides real error at this
+            # ratio). See model_config.py for source/date.
             "estimated_cost_usd": round(
-                (usage.get("prompt_tokens", 0) * 0.27 + usage.get("completion_tokens", 0) * 0.27)
+                (
+                    usage.get("prompt_tokens", 0) * TRIAGE_PRICE_PROMPT_PER_MTOK
+                    + usage.get("completion_tokens", 0) * TRIAGE_PRICE_COMPLETION_PER_MTOK
+                )
                 / 1_000_000,
                 8,
             ),

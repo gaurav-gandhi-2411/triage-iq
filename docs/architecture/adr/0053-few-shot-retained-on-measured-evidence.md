@@ -1,6 +1,17 @@
 # ADR-0053: Few-shot examples retained on measured evidence, not precedent
 
-Status: Accepted
+Status: Accepted -- **basis confounded, re-measurement needed before this decision can
+be trusted on its stated evidence; decision NOT reopened, reliability question flagged
+for a future session.** See ADR-0055: Arm B's 3 failures (the entire basis for this
+ADR) were examined directly and show the identical schema-field-omission pattern
+ADR-0055 fixes -- not confirmed to be specific to the no-few-shot condition. ADR-0055's
+fix was NOT re-tested against a no-few-shot arm (out of scope, explicitly not
+reopened). Re-measuring costs roughly a full Arm B re-run (n=8, matching the original,
+~0.3-0.4 days of quota at the ~20-25 calls/day pace observed elsewhere in this
+engagement; n=20 for a comparison as robust as Arm A's original, ~1 day) under the
+reduced schema. Until re-measured, treat this ADR's few-shot-is-necessary conclusion
+as unconfirmed, not false -- the original observation (95% vs 62.5%) is real and
+unretracted; only its causal attribution (few-shot vs. schema) is now in question.
 Date: 2026-08-30
 
 ## Context

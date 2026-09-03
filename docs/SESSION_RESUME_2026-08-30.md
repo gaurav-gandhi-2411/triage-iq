@@ -5,6 +5,33 @@ first, then resume exactly as described below.** Production has been down since
 ~2026-08-16 (Groq retired `llama-3.1-8b-instant`); this session got as far as selecting
 a replacement and is mid-way through re-recording the eval cassette against it.
 
+## 2026-09-03: RECORDING PAUSED — model selection under revision, do not resume
+
+**The unattended recorder is stopped** (it self-halted on its own after reaching 64/64
+accounted for: 59 resolved, 5 permanently early-terminated — see below — no process
+running, checkpoint file verified valid). **Do not restart
+`scripts/run_recording_unattended.py` or `eval/record_cassettes.py` until GG approves
+the revised model selection** in ADR-0054's 2026-09-03 correction section
+(`docs/architecture/adr/0054-model-selection-underpowered-judge-mean.md`). The
+original "44/44 vs 29/31" parse-success basis for selecting `gpt-oss-120b` was
+retracted — untraceable to any committed artifact, and the raw records that were
+eventually recovered (a prior session's scratchpad,
+`.../0b8faa64-7bcf-4ede-8dbe-a941bbcb6980/scratchpad/part_d_screen_results.jsonl`) show
+20/20 vs 19/20, not 44/44 vs 29/31. Full accounting, corrected statistics, and a
+proposed revised basis (completion-token distribution / ceiling headroom, not
+parse-success) are in the ADR.
+
+**Checkpoint validity if `gpt-oss-120b` is re-confirmed as-is:** the 59 resolved + 5
+dead entries in `eval/cassettes/recording_checkpoint.json` are keyed by
+`(issue_id, model, prompt_hash)` — confirmed still `model=openai/gpt-oss-120b`,
+`prompt_hash=5ddbe97c4b47958f`. If the revised selection keeps this model and prompt
+unchanged, all 59 resolved entries remain valid on resume; nothing would need
+re-recording. **Caveat found this session:** `prompt_hash` covers only the system
+prompt and few-shot text, NOT the JSON schema (`response_format`) sent to Groq — if
+Priority 3's proposed schema reduction (see ADR-0054) is ever implemented, the
+checkpoint would NOT detect that change on its own. Fix the hash or clear the
+checkpoint explicitly alongside any future schema edit.
+
 ## Where things stand
 
 - **Worktree:** `C:\Users\gaura\ml-projects\triage-iq-wt-bakeoff`, branch

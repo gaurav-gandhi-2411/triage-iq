@@ -11,8 +11,24 @@ single place to change it. This module exists so the next deprecation is a
 one-line change.
 """
 
-TRIAGE_MODEL: str = "llama-3.1-8b-instant"
+TRIAGE_MODEL: str = "openai/gpt-oss-120b"
+# 2026-08-30: selected over gpt-oss-20b (few-shot) per ADR-0054 -- 44/44 vs 29/31
+# parse-success with a characterized early-termination defect on the smaller model,
+# cheaper per call on an identical prompt, judge mean unresolvable at n=20 either way.
+# gpt-oss-20b (no few-shot) and qwen/qwen3.6-27b were eliminated per ADR-0053 and the
+# bake-off pre-registration respectively -- see docs/eval/bakeoff_prereg_2026-08-29.md.
 JUDGE_MODEL: str = "llama-3.3-70b-versatile"
+# NOTE (2026-08-30, found while updating TRIAGE_MODEL, not fixed here -- out of this
+# change's scope): this constant is retired (Groq deprecated it 2026-08-16) and is read
+# live by .github/workflows/health-monitor.yml for a model-availability check, but every
+# actual judge call site (eval/run_eval.py, eval/record_cassettes.py) already shadows it
+# with a local "qwen3:8b" (ADR-0019) and never imports this constant. health-monitor.yml
+# is therefore checking availability of a model nothing in this codebase actually calls
+# -- a separate, pre-existing staleness, not part of the triage-model selection this
+# session made. Flagged for its own fix, not bundled in here.
 
 # USD per million tokens, blended in/out. Cost-estimation only; not billing-authoritative.
+# NOTE: still the llama-3.1-8b-instant rate -- gpt-oss-120b's actual Groq pricing has not
+# been verified against this constant. Cost estimates (TriageAssistant.triage_with_metadata's
+# estimated_cost_usd) will be wrong until this is checked and updated.
 TRIAGE_PRICE_PER_MTOK: float = 0.27

@@ -227,7 +227,12 @@ def main() -> None:
     # Load checkpoint, filtered to entries matching the CURRENT model+prompt only.
     checkpoint, current_done = load_checkpoint(current_model, current_prompt_hash)
     # Exclude tpd_hit entries so they are retried — their synthesis is cached, only the judge reruns.
-    done_ids = {k for k, v in current_done.items() if not v.get("tpd_hit")}
+    # Exclude schema_invalid_retry entries too (2026-09-03, ADR-0055 Part P1a/2c): a FIRST
+    # degraded_schema_invalid failure on an issue is expected residual (ADR-0055 Part A found
+    # it non-reproducible on retry), not evidence of a systemic problem -- retry it on the next
+    # resume rather than permanently skipping it. A SECOND failure on the same issue is checked
+    # explicitly below and hard-stops the run.
+    done_ids = {k for k, v in current_done.items() if not v.get("tpd_hit") and not v.get("schema_invalid_retry")}
     n_tpd_retry = len(current_done) - len(done_ids)
     logger.info("Checkpoint: %d issues already processed under current model+prompt (%d tpd_hit will retry)",
                 len(done_ids), n_tpd_retry)
@@ -336,6 +341,47 @@ def main() -> None:
             # engagement's other instrumentation-found-after-the-spend incidents; catch it
             # here, at the one place that knows llm_status, not downstream.
             llm_status = meta.get("llm_status")
+            if llm_status == "degraded_schema_invalid":
+                # 2026-09-03 (ADR-0055 Part P1a/2c): a syntactically-complete completion
+                # Groq's post-hoc schema validator rejected (missing field or malformed
+                # key -- ADR-0055's finding). Empirically non-reproducible on retry
+                # (Part A: failed once in 2 live attempts on the same issue) -- treat a
+                # FIRST occurrence on a given issue as expected residual, not a systemic
+                # problem: log it, checkpoint it excluded from done_ids (retried on the
+                # next resume, same mechanism as tpd_hit), and continue to the NEXT
+                # issue in THIS run rather than stopping. A SECOND failure of this same
+                # kind on the SAME issue (i.e. this checkpoint entry already has
+                # schema_invalid_retry=True from a prior run) means it reproduced --
+                # that's no longer "rare residual", stop loudly, matching every other
+                # hard-stop's severity.
+                prior = current_done.get(issue_id)
+                if prior is not None and prior.get("schema_invalid_retry"):
+                    logger.error(
+                        "STOP: schema-validation failure REPRODUCED on #%s (2nd attempt) "
+                        "after %d synthesis calls. Cassette has %d entries. This is no "
+                        "longer treated as rare residual -- investigate before resuming.",
+                        issue_id, n_synthesis_recorded, cassette.stats()["entries"],
+                    )
+                    save_checkpoint({"done": checkpoint.get("done", {})})
+                    print("\n=== SCHEMA VALIDATION FAILURE REPRODUCED (2nd attempt on same issue) ===")
+                    print(f"Issue: {issue_id}")
+                    print(f"Synthesis recorded before stop: {n_synthesis_recorded}")
+                    print(f"Cassette entries: {cassette.stats()['entries']}")
+                    sys.exit(1)
+                logger.warning(
+                    "Schema-validation failure on #%s (1st occurrence, expected residual "
+                    "per ADR-0055 Part A) -- logging and continuing to the next issue.",
+                    issue_id,
+                )
+                results[issue_id] = {
+                    "error": meta.get("groq_error_code", "json_validate_failed"),
+                    "plan": None,
+                    "judge_score": None,
+                    "schema_invalid_retry": True,
+                }
+                _record_done(checkpoint, issue_id, results[issue_id], current_model, current_prompt_hash)
+                save_checkpoint(checkpoint)
+                continue
             if llm_status not in ("ok", "parse_retry_succeeded"):
                 logger.error(
                     "STOP: synthesis degraded (llm_status=%s) after %d synthesis calls. "

@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from triage_iq.models.triage import TriageAssistant, TruncatedCompletionError
+from triage_iq.models.triage import SchemaValidationError, TriageAssistant, TruncatedCompletionError
 
 
 def _make_assistant() -> TriageAssistant:
@@ -103,6 +103,155 @@ def test_truncated_completion_never_reaches_cache():
     assert usage["finish_reason"] == "length"
     assert usage["completion_tokens"] == 1024
     assert "manual review" in plan.triage_summary.lower()
+
+
+# ---------------------------------------------------------------------------
+# SchemaValidationError (2026-09-03, ADR-0055 Part P1a)
+#
+# Groq's json_validate_failed 400 -- a syntactically-complete completion its OWN
+# post-hoc schema validator rejected (missing required field or malformed key) --
+# matched no exception handling before this fix and propagated to app.py's /triage
+# handler as a live HTTP 500. These tests exercise the real _groq_completion/
+# _call_llm_verbose methods against a mocked Groq client, mirroring the
+# TruncatedCompletionError tests above.
+# ---------------------------------------------------------------------------
+
+
+def _mock_json_validate_failed_error(detail: str = "missing properties: 'triage_summary'"):
+    import groq
+
+    reject_response = MagicMock()
+    reject_response.status_code = 400
+    return groq.APIStatusError(
+        message=f"Generated JSON does not match the expected schema: {detail}",
+        response=reject_response,
+        body={
+            "error": {
+                "message": f"Generated JSON does not match the expected schema. {detail}",
+                "type": "invalid_request_error",
+                "code": "json_validate_failed",
+                "failed_generation": '{"predicted_component": "kubectl"}',
+            }
+        },
+    )
+
+
+def test_groq_completion_raises_schema_validation_error_on_json_validate_failed():
+    asst = _make_assistant()
+    asst.use_structured_output = True
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.side_effect = _mock_json_validate_failed_error()
+    with patch("groq.Groq", return_value=mock_client), pytest.raises(SchemaValidationError) as exc_info:
+        asst._groq_completion([{"role": "user", "content": "triage this"}])
+    assert exc_info.value.groq_error_code == "json_validate_failed"
+
+
+def test_schema_validation_error_degrades_cleanly_not_unhandled():
+    """The defect this fix exists for: before this, json_validate_failed propagated
+    unhandled all the way to app.py's broad except-Exception, returning HTTP 500 for
+    every real request that hit it -- an outage generator hidden behind the already-
+    dead retired model. Must now degrade to a clean fallback plan instead, exactly
+    like TruncatedCompletionError does, and never reach cache.set()."""
+    asst = _make_assistant()
+    asst.use_structured_output = True
+    asst._cache = MagicMock()
+    asst._cache.compute_key.return_value = "some-key"
+    asst._cache.get.return_value = None  # cache miss -> live call
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.side_effect = _mock_json_validate_failed_error()
+    signals = {
+        "prompt": "triage this",
+        "classifier_top3": [{"label": "kubectl", "confidence": 0.5}],
+        "lo_days": 1.0,
+        "hi_days": 30.0,
+        "resolution_bucket": "days",
+        "resolution_conf_pct": 33.0,
+        "_title": "Something broke",
+        "_body": "It broke.",
+        "_include_bucket": False,
+        "_number": 1,
+    }
+    with patch("groq.Groq", return_value=mock_client):
+        plan, raw, usage, llm_status, cache_hit = asst._call_llm_verbose(signals)
+    asst._cache.set.assert_not_called()
+    assert llm_status == "degraded_schema_invalid"
+    assert cache_hit is False
+    assert usage["groq_error_code"] == "json_validate_failed"
+    assert "manual review" in plan.triage_summary.lower()
+
+
+def test_schema_validation_error_on_parse_retry_call_also_degrades():
+    """2026-09-03 (ADR-0055 Part P1c audit): the parse-retry call (triggered when the
+    FIRST completion isn't valid JSON at all) has its own try/except for
+    TruncatedCompletionError -- but SchemaValidationError on THAT retry call was
+    missing entirely until this fix, meaning it would have propagated uncaught: the
+    exact P1a defect, just on the second call instead of the first. Sequence: first
+    call returns non-JSON text (triggers the parse-retry path), second (retry) call
+    hits json_validate_failed."""
+    asst = _make_assistant()
+    asst.use_structured_output = True
+    asst._cache = MagicMock()
+    asst._cache.compute_key.return_value = "some-key"
+    asst._cache.get.return_value = None
+
+    not_json_response = _mock_groq_response(
+        "I cannot produce that output.", finish_reason="stop", completion_tokens=10
+    )
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.side_effect = [
+        not_json_response,
+        _mock_json_validate_failed_error(),
+    ]
+    signals = {
+        "prompt": "triage this",
+        "classifier_top3": [{"label": "kubectl", "confidence": 0.5}],
+        "lo_days": 1.0,
+        "hi_days": 30.0,
+        "resolution_bucket": "days",
+        "resolution_conf_pct": 33.0,
+        "_title": "Something broke",
+        "_body": "It broke.",
+        "_include_bucket": False,
+        "_number": 1,
+    }
+    with patch("groq.Groq", return_value=mock_client):
+        plan, raw, usage, llm_status, cache_hit = asst._call_llm_verbose(signals)
+    assert llm_status == "degraded_schema_invalid"
+    assert mock_client.chat.completions.create.call_count == 2
+    assert "manual review" in plan.triage_summary.lower()
+
+
+def test_response_format_rejection_not_misclassified_as_schema_validation_error():
+    """Regression: json_validate_failed detection (checked first, via structured
+    e.body access) must not swallow the DIFFERENT response_format-rejection 400 (the
+    entire response_format is invalid/unsupported, not a per-completion schema miss)
+    -- these need different remedies (degrade one completion vs. disable structured
+    output for the assistant's lifetime) and must stay mutually exclusive."""
+    import groq
+
+    asst = _make_assistant()
+    asst.use_structured_output = True
+
+    reject_response = MagicMock()
+    reject_response.status_code = 400
+    schema_error = groq.APIStatusError(
+        message="invalid JSON schema for response_format: 'TriagePlan': bad schema",
+        response=reject_response,
+        body=None,  # this rejection shape carries no structured body in practice
+    )
+    ok_response = _mock_groq_response(
+        '{"predicted_component": "kubectl"}', finish_reason="stop", completion_tokens=50
+    )
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.side_effect = [schema_error, ok_response]
+
+    with patch("groq.Groq", return_value=mock_client):
+        content, usage = asst._groq_completion([{"role": "user", "content": "x"}])
+
+    # Falls back to regex-extract, exactly as before -- not raised as SchemaValidationError.
+    assert content == '{"predicted_component": "kubectl"}'
+    assert asst.use_structured_output is False
 
 
 # ---------------------------------------------------------------------------

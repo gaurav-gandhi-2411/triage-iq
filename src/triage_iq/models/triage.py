@@ -63,6 +63,40 @@ class TruncatedCompletionError(RuntimeError):
         )
 
 
+class SchemaValidationError(RuntimeError):
+    """Raised when Groq's structured-output decoder ACCEPTS our response_format as a
+    valid schema but the model's specific completion for THIS request doesn't satisfy
+    it -- a 400 with body.error.code == "json_validate_failed" (a genuine,
+    syntactically-complete JSON object that omits a required field or emits a
+    malformed key, NOT the same thing as response_format itself being rejected --
+    see _groq_completion's ordering of these two checks).
+
+    2026-09-03 (ADR-0055 Part P1a): this error shape matched NO exception handling
+    anywhere in the call chain before this fix -- not TruncatedCompletionError, not
+    the response_format-rejection branch (Groq's error text for this case never
+    contains "response_format"), not a >=500 retry. It propagated unhandled through
+    _call_llm_verbose, through TriageAssistant.triage_with_metadata (no catch), to
+    app.py's /triage handler's broad except-Exception, which returns HTTP 500. This
+    means the exact defect ADR-0055 found and fixed (7 forced-required fields the
+    model reliably dropped a subset of) was, before that fix, generating live 500s
+    in production every time it fired -- an outage generator hidden behind the
+    already-dead retired model, not merely a recording-time inconvenience.
+
+    Raised inside _groq_completion, mirroring TruncatedCompletionError -- caught in
+    _call_llm_verbose and degraded to a clean fallback plan (llm_status=
+    "degraded_schema_invalid") before it can reach a caller as an unhandled
+    exception.
+    """
+
+    def __init__(self, groq_error_code: str, detail: str, prompt_tokens: int = -1) -> None:
+        self.groq_error_code = groq_error_code
+        self.prompt_tokens = prompt_tokens
+        super().__init__(
+            f"Groq schema validation rejected the completion (code={groq_error_code}): "
+            f"{detail}"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Pydantic output schema
 # ---------------------------------------------------------------------------
@@ -683,6 +717,10 @@ class TriageAssistant:
             "resolution_bucket": plan.resolution_bucket,
             "resolution_confidence_pct": plan.resolution_confidence_pct,
             "llm_status": llm_status,
+            # None for every status except degraded_schema_invalid (SchemaValidationError's
+            # groq_error_code, e.g. "json_validate_failed") -- surfaced for
+            # record_cassettes.py's checkpoint/diagnostics, not used elsewhere.
+            "groq_error_code": usage.get("groq_error_code"),
             "llm_cache_hit": cache_hit,
             "classifier_top3": signals["classifier_top3"],
         }
@@ -998,6 +1036,29 @@ class TriageAssistant:
                 "llm_status_reason": "truncated",
             }
             return plan, "", truncated_usage, "degraded_truncated", False
+        except SchemaValidationError as exc:
+            # 2026-09-03 (ADR-0055 Part P1a): a syntactically-complete completion that
+            # Groq's own post-hoc schema validator rejected (missing required field or
+            # a malformed key -- ADR-0055's field-omission defect and the separate
+            # malformed-key defect it surfaced are BOTH this shape). Before this catch,
+            # this propagated unhandled all the way to app.py's /triage handler as a
+            # live HTTP 500 -- confirmed empirically non-reproducible/rare (ADR-0055
+            # Part A: failed once in 2 live attempts on the same issue), so degrading
+            # this ONE completion rather than treating it as a systemic problem (the
+            # way TruncatedCompletionError above does) is the correct severity.
+            logger.warning(
+                "Schema validation rejected completion for #%s (%s) — degrading to "
+                "signals-only fallback plan.",
+                signals.get("_number", "?"), exc,
+            )
+            plan = self._make_fallback_plan(signals, reason=f"schema validation failed ({exc})")
+            schema_invalid_usage = {
+                "prompt_tokens": exc.prompt_tokens,
+                "completion_tokens": -1,  # not reported in this Groq error shape
+                "llm_status_reason": "schema_invalid",
+                "groq_error_code": exc.groq_error_code,
+            }
+            return plan, "", schema_invalid_usage, "degraded_schema_invalid", False
 
         if cache is not None and cache_key is not None:
             cache.set(cache_key, "groq", self.model, messages, {"content": raw, "usage": usage})
@@ -1044,6 +1105,28 @@ class TriageAssistant:
                     "llm_status_reason": "truncated",
                 }
                 return plan, "", truncated_usage, "degraded_truncated", False
+            except SchemaValidationError as exc2:
+                # 2026-09-03 (ADR-0055 Part P1c audit): the retry call above can reach
+                # _groq_completion with use_structured_output still True (e.g. the
+                # first call's JSONDecodeError happened under unconstrained mode for
+                # an unrelated reason, or structured output was never disabled) and
+                # itself get schema-rejected -- this branch was missing entirely
+                # before the audit found it, meaning a SchemaValidationError on the
+                # retry call would have propagated uncaught, the exact P1a defect
+                # this fix closes, just on the second call instead of the first.
+                logger.warning(
+                    "Schema validation rejected the parse-retry completion for #%s "
+                    "(%s) — degrading to signals-only fallback plan.",
+                    signals.get("_number", "?"), exc2,
+                )
+                plan = self._make_fallback_plan(signals, reason=f"schema validation failed on retry ({exc2})")
+                schema_invalid_usage2 = {
+                    "prompt_tokens": exc2.prompt_tokens,
+                    "completion_tokens": -1,
+                    "llm_status_reason": "schema_invalid",
+                    "groq_error_code": exc2.groq_error_code,
+                }
+                return plan, "", schema_invalid_usage2, "degraded_schema_invalid", False
             try:
                 plan = self._parse_plan(raw2)
                 llm_status = "parse_retry_succeeded"
@@ -1101,7 +1184,7 @@ class TriageAssistant:
         per-request budget) -- defaults to `self.max_tokens` so existing callers/tests
         that don't pass it keep today's behavior unchanged."""
         try:
-            from groq import APIStatusError, Groq, RateLimitError
+            from groq import APIConnectionError, APIStatusError, Groq, RateLimitError
         except ImportError as e:
             raise ImportError("pip install groq") from e
 
@@ -1149,10 +1232,54 @@ class TriageAssistant:
                 logger.warning("Rate limit hit — sleeping %.1fs (attempt %d/6)", jitter, attempt + 1)
                 time.sleep(jitter)
                 backoff = min(backoff * 2, 60.0)
+            except APIConnectionError as e:
+                # 2026-09-03 (ADR-0055 Part P1c/5): found by the error-shape audit --
+                # APIConnectionError/APITimeoutError are NOT subclasses of APIStatusError
+                # or RateLimitError (groq/_exceptions.py), so before this fix neither
+                # except clause here ever caught them: a transient network blip or DNS
+                # hiccup propagated immediately, with ZERO retries, unlike every other
+                # propagating case in this method (which all get 6 attempts first). A
+                # blip that would have resolved itself on retry instead surfaced straight
+                # through _call_llm_verbose (no catch there either) to app.py's broad
+                # except-Exception as a live HTTP 500. Same backoff schedule as
+                # RateLimitError -- a network hiccup deserves the same patience as a rate
+                # limit, not zero.
+                if attempt == 5:
+                    raise
+                jitter = backoff * (0.5 + 0.5 * (attempt / 5))
+                logger.warning(
+                    "Connection error — sleeping %.1fs (attempt %d/6): %s",
+                    jitter, attempt + 1, e,
+                )
+                time.sleep(jitter)
+                backoff = min(backoff * 2, 60.0)
             except APIStatusError as e:
+                # 2026-09-03 (ADR-0055 Part P1a): structured access via e.body, not string
+                # matching on str(e) -- the groq SDK decodes a valid JSON error body onto
+                # this attribute (groq/_exceptions.py:APIError.body), so checking the
+                # actual error code is exactly as reliable as the SDK's own error
+                # classification and doesn't depend on the exact wording of a message
+                # Groq could change without notice. Must be checked BEFORE the
+                # response_format-rejection elif below: these are two DIFFERENT 400
+                # sub-cases needing different remedies (this one is per-request and
+                # transient -- degrade this one completion; response_format rejection
+                # below is structural -- stop sending response_format for the rest of
+                # this assistant's lifetime). They are mutually exclusive in practice
+                # (json_validate_failed's message never contains "response_format",
+                # confirmed from captured live error bodies) but check order still
+                # matters for correctness, not just today's observed wording.
+                error_code = None
+                if isinstance(e.body, dict):
+                    error_code = e.body.get("error", {}).get("code")
                 if e.status_code >= 500 and attempt < 5:
                     time.sleep(backoff)
                     backoff = min(backoff * 2, 60.0)
+                elif e.status_code == 400 and error_code == "json_validate_failed":
+                    raise SchemaValidationError(
+                        groq_error_code=error_code,
+                        detail=str(e),
+                        prompt_tokens=-1,  # not reported in this error shape; see docstring
+                    ) from e
                 elif (
                     e.status_code == 400
                     and self.use_structured_output

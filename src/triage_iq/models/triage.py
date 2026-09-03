@@ -186,20 +186,25 @@ class TriagePlan(BaseModel):
     expected_resolution_upper_days: float = Field(ge=0.0)
     resolution_bucket: str = Field(
         default="days",
-        description="Coarse bucket from ordinal classifier: hours/days/weeks/months/long. "
-                    "Supplemental to the float fields; k8s passes 60% obo threshold, "
-                    "vscode uses naive prior (low confidence). See ADR-0009.",
+        description="Always emit exactly \"days\" for this field. It is computed by a "
+                    "separate bucket classifier and overwritten after synthesis "
+                    "(triage_with_metadata) -- you cannot derive it from this request, "
+                    "so there is no point trying. See ADR-0009.",
     )
     resolution_confidence_pct: float = Field(
         default=33.0, ge=0.0, le=100.0,
-        description="Bucket classifier confidence (0–100%). Below 40% = low signal.",
+        description="Always emit exactly 33.0 for this field. It is bucket classifier "
+                    "confidence (0-100%), computed separately and overwritten after "
+                    "synthesis (triage_with_metadata) -- you cannot derive it from this "
+                    "request, so there is no point trying.",
     )
     resolution_interval_conformal: ConformalIntervalResult | None = Field(
         default=None,
         description=(
-            "CQR-adjusted interval. Empirical marginal coverage under temporal drift: "
-            "k8s 76.6% [74.0%, 79.1%], vscode 74.1% [69.4%, 78.3%]. "
-            "None when conformal adjustments are unavailable. See ADR-0010."
+            "Always emit null (JSON null) for this field. It is a fixed per-repo "
+            "calibration statistic that the application attaches after synthesis "
+            "(app.py) -- you cannot derive it from this request and must not guess a "
+            "value for it. See ADR-0010."
         ),
     )
     priority_guess: Literal["low", "medium", "high"]
@@ -207,8 +212,21 @@ class TriagePlan(BaseModel):
     suggested_assignee_class: str
     suggested_next_steps: list[str] = Field(min_length=1)
     triage_summary: str
-    grounding: GroundingAttribution | None = Field(default=None)
-    grounding_status: GroundingStatus | None = Field(default=None)
+    grounding: GroundingAttribution | None = Field(
+        default=None,
+        description="Always emit null (JSON null) for this field. It is a reconstruction "
+                    "of your own component/similar-issue claims that the application "
+                    "builds and this value is overwritten after synthesis "
+                    "(triage_with_metadata) -- you cannot derive it from this request "
+                    "and must not guess a value. See ADR-0015.",
+    )
+    grounding_status: GroundingStatus | None = Field(
+        default=None,
+        description="Always emit null (JSON null) for this field. It is a deterministic "
+                    "verification computed against classifier/retrieval outputs and "
+                    "overwritten after synthesis (triage_with_metadata) -- you cannot "
+                    "derive it from this request and must not guess a value. See ADR-0015.",
+    )
     declared_attribution: DeclaredAttribution | None = Field(
         default=None,
         description="LLM-declared source attribution (ADR-0020). None when the model omitted "
@@ -217,8 +235,11 @@ class TriagePlan(BaseModel):
     )
     abstention_status: AbstentionStatus | None = Field(
         default=None,
-        description="Selective-prediction gate (ADR-0021). None when conformal adjustments "
-                    "are unavailable for this repo (same fail-open policy as "
+        description="Always emit null (JSON null) for this field. It is a deterministic "
+                    "selective-prediction gate (ADR-0021) computed and overwritten after "
+                    "synthesis when enabled -- you cannot derive it from this request and "
+                    "must not guess a value. None when conformal adjustments are "
+                    "unavailable for this repo (same fail-open policy as "
                     "resolution_interval_conformal) — never blocks the response.",
     )
 
@@ -392,14 +413,16 @@ _TRIAGE_PLAN_RESPONSE_FORMAT = _build_triage_plan_response_format()
 # Prompt-token budget guard (2026-08-28, Part A/B)
 #
 # Live-measured against the full 64-issue eval set (tiktoken cl100k, offline, zero quota
-# cost): with the schema-cut prompt (Part A) and a FIXED max_tokens=2048, 37/64 issues
-# (57.8%) would be rejected outright by Groq's TPM preflight (413, prompt + max_tokens +
-# _PROMPT_SIZE_SAFETY_MARGIN > 8000) -- not a rare tail case, a majority case. (Corrected
-# 2026-08-29: the number first recorded here, 13/64, applied the 8000 ceiling against
-# prompt+max_tokens alone and silently dropped the 100-token safety margin defined below
-# from that same comparison -- see test_documented_413_rate_matches_guard_formula in
-# tests/test_token_budget_guard.py, which now pins this figure against the guard's actual
-# formula so it cannot drift from the code silently again.) A fixed max_tokens cannot be
+# cost): with the schema-cut prompt (Part A) and a FIXED max_tokens=2048, 57/64 issues
+# (89.1%) would be rejected outright by Groq's TPM preflight (413, prompt + max_tokens +
+# _PROMPT_SIZE_SAFETY_MARGIN > 8000) at the current margin=200 -- not a rare tail case, a
+# large majority. (Corrected 2026-08-29: the number first recorded here, 13/64, applied
+# the 8000 ceiling against prompt+max_tokens alone and silently dropped the safety margin
+# defined below from that same comparison -- see test_documented_413_rate_matches_guard_
+# formula in tests/test_token_budget_guard.py, which pins this figure against the guard's
+# actual formula so it cannot drift from the code silently again. Updated again same day
+# 37/64->57/64 when the margin itself moved 100->200, see _PROMPT_SIZE_SAFETY_MARGIN's
+# docstring below for why.) A fixed max_tokens cannot be
 # set safely without either capping it so low that normal completions truncate
 # (finish_reason=length, a hard error since PR #113's TruncatedCompletionError) or leaving
 # it high enough to 413 on longer issues. The fix is a per-request budget computed from the
@@ -418,13 +441,25 @@ _GROQ_TPM_LIMIT = 8000
 # changes -- it is a property of the current prompt's content mix, not a constant.
 _CL100K_TO_REAL_RATIO = 1.4896
 
-# Leave-one-out cross-validated error on the 5-sample calibration fit above was <=4.2
-# tokens -- tight, but n=5, all mid-length issues (cl100k 3957-3974), not exercised across
-# the full prompt-size range this guard actually has to handle. 100 tokens is ~24x that
-# observed error: enough to absorb small-sample/extrapolation risk without materially
-# eating into the completion budget (worst case in the 64-issue set still leaves >1,700
-# completion tokens after this margin -- see _MIN_VIABLE_COMPLETION_TOKENS below).
-_PROMPT_SIZE_SAFETY_MARGIN = 100
+# 2026-08-29 (Part A2 extreme-point calibration + Part D validation): the original 100
+# was fit purely on interpolation error (LOO <=4.2 tokens, n=5 near-identical mid-length
+# samples, cl100k 3957-3974) and never tested against real extrapolation. Two live
+# extreme-point calls against gpt-oss-20b (k8s #14054, the shortest eval-set prompt, and
+# #13435, the longest) measured real out-of-sample error of +88 tokens (under-predicted,
+# short end) and -74 tokens (over-predicted, long end) -- ~21x the interpolation error,
+# and #14054's +88 alone would already have consumed 88% of the old 100-token margin.
+# Separately and independently, the FIRST live Part D screen call against a different
+# tokenizer family (qwen/qwen3.6-27b, same prompt shape as gpt-oss) hit a real 413 at
+# margin=100 ("Requested 8073" vs the 8000 TPM ceiling, 73 tokens over) -- direct proof
+# this ratio does not generalize across tokenizers, not just across prompt lengths within
+# one model. 200 covers the largest single observed error (88) with >2x headroom and
+# would have prevented the qwen 413 (8073 - 100 additional margin = 7973, under 8000).
+# Still cheap: worst case in the 64-issue eval set leaves >1,600 completion tokens after
+# this margin -- see _MIN_VIABLE_COMPLETION_TOKENS below. Re-derive per-model if a model
+# whose tokenizer is not gpt-oss-family becomes the shipped default (gpt-oss-20b and
+# gpt-oss-120b were confirmed, this session, to share identical real prompt_tokens for
+# the same input -- same tokenizer family, only the 4th bake-off arm's tokenizer diverged).
+_PROMPT_SIZE_SAFETY_MARGIN = 200
 
 # Below this, a completion is unlikely to hold a complete, valid TriagePlan JSON. The
 # smallest real completion observed in this session's live testing was 1,031 tokens (n=8,
@@ -783,7 +818,7 @@ class TriageAssistant:
         # Compute how much completion budget is actually available under Groq's 8,000
         # TPM ceiling for THIS request's measured prompt size, instead of sending a
         # fixed self.max_tokens that either 413s on long prompts or truncates
-        # completions on short ones (live-measured: 37/64 eval-set issues would 413 at
+        # completions on short ones (live-measured: 57/64 eval-set issues would 413 at
         # a fixed max_tokens=2048 -- see _GROQ_TPM_LIMIT's module-level comment).
         estimated_prompt_tokens = _estimate_prompt_tokens(messages)
         dynamic_max_tokens = min(

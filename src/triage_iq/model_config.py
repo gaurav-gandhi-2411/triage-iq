@@ -12,11 +12,16 @@ one-line change.
 """
 
 TRIAGE_MODEL: str = "openai/gpt-oss-120b"
-# 2026-08-30: selected over gpt-oss-20b (few-shot) per ADR-0054 -- 44/44 vs 29/31
-# parse-success with a characterized early-termination defect on the smaller model,
-# cheaper per call on an identical prompt, judge mean unresolvable at n=20 either way.
-# gpt-oss-20b (no few-shot) and qwen/qwen3.6-27b were eliminated per ADR-0053 and the
-# bake-off pre-registration respectively -- see docs/eval/bakeoff_prereg_2026-08-29.md.
+# 2026-08-30, corrected 2026-09-03: selected over gpt-oss-20b (few-shot) per ADR-0054.
+# The ADR's original "44/44 vs 29/31" parse-success figures were never traceable to a
+# committed artifact and did not match the raw per-call records recovered afterward
+# (verified: 20/20 vs 19/20 on the pre-registered 20-issue sample) -- see ADR-0054's
+# 2026-09-03 correction for the full accounting and the revised basis for this
+# selection (completion-token distribution and ceiling headroom, not parse-success,
+# which does not cleanly resolve between the two models on the corrected numbers
+# either). gpt-oss-20b (no few-shot) and qwen/qwen3.6-27b were eliminated per
+# ADR-0053 and the bake-off pre-registration respectively -- see
+# docs/eval/bakeoff_prereg_2026-08-29.md.
 JUDGE_MODEL: str = "llama-3.3-70b-versatile"
 # NOTE (2026-08-30, found while updating TRIAGE_MODEL, not fixed here -- out of this
 # change's scope): this constant is retired (Groq deprecated it 2026-08-16) and is read

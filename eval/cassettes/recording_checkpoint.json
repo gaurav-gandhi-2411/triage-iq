@@ -2424,6 +2424,1927 @@
       "issue_id": "k8s-14553",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-14756::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "kube-proxy",
+        "component_confidence": 0.58,
+        "similar_issues": [
+          {
+            "number": 14719,
+            "similarity": 0.846,
+            "relevance_note": "Direct request to increase allowed memory usage for kube-proxy, matching the current proposal."
+          },
+          {
+            "number": 8891,
+            "similarity": 0.836,
+            "relevance_note": "Reports high memory usage of kube-proxy, indicating the need to revisit defaults."
+          },
+          {
+            "number": 16103,
+            "similarity": 0.828,
+            "relevance_note": "Discussion of concerning memory usage after upgrade, similar context."
+          }
+        ],
+        "expected_resolution_summary": "Simple configuration adjustment; typically resolved within a few days once the default limit is updated and tests are modified.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 138.6,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 45.1,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "Changing the default memory limit and improving test output does not block functionality; it is a non‑critical enhancement with a straightforward implementation.",
+        "suggested_assignee_class": "kube-proxy team",
+        "suggested_next_steps": [
+          "Locate the constant or flag that defines the kube-proxy memory limit and raise it to 30 MiB.",
+          "Update any related unit/integration tests to reflect the new limit and improve failure output.",
+          "Run the full test suite to ensure no regressions and verify the updated memory usage.",
+          "Document the change in the kube-proxy design docs and release notes."
+        ],
+        "triage_summary": "The issue requests raising the default kube-proxy memory footprint to 30 MiB and enhancing test failure messages. Similar past issues exist, indicating this is a known configuration tweak. Low priority; assign to the kube-proxy team.",
+        "grounding": {
+          "component_source": "kube-proxy",
+          "similar_issue_refs": [
+            14719,
+            8891,
+            16103
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14719,
+            8891,
+            16103
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, correct priority, actionable next steps, and a clear, well-structured summary."
+      },
+      "error": null,
+      "issue_id": "k8s-14756",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-12703::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "ui",
+        "component_confidence": 0.54,
+        "similar_issues": [
+          {
+            "number": 14389,
+            "similarity": 0.843,
+            "relevance_note": "Dashboard only shows resources from the default namespace, matching the observed blank UI for kube-system."
+          },
+          {
+            "number": 26479,
+            "similarity": 0.764,
+            "relevance_note": "Entire kube-ui dashboard appears blank after cluster setup, similar symptom."
+          },
+          {
+            "number": 11684,
+            "similarity": 0.78,
+            "relevance_note": "Endpoints missing in UI after upgrade, indicating possible version‑specific UI regression."
+          },
+          {
+            "number": 19525,
+            "similarity": 0.761,
+            "relevance_note": "Namespaced service listing failure in UI, directly related to missing services display."
+          }
+        ],
+        "expected_resolution_summary": "UI rendering regression affecting namespace‑scoped resources; typical fix time 1–3 weeks once root cause is identified.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 324.7,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 23.7,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The dashboard shows no resources, degrading visibility for operators, but cluster functionality remains usable via kubectl; a manual workaround exists, so not high‑priority.",
+        "suggested_assignee_class": "ui team",
+        "suggested_next_steps": [
+          "Reproduce the issue on a fresh cluster with the same version and capture UI network requests.",
+          "Compare the API responses for kube-system resources against those for the default namespace to spot missing fields.",
+          "Check recent UI code changes for namespace filtering logic or API version mismatches.",
+          "Add an automated e2e test that verifies resources appear in the UI for a non‑default namespace."
+        ],
+        "triage_summary": "Kube‑ui dashboard fails to display any resources from the kube-system namespace while kubectl works, indicating a UI rendering regression. Several prior reports of similar blank dashboards exist. Assign to the UI team with medium priority; expected fix within a few weeks.",
+        "grounding": {
+          "component_source": "ui",
+          "similar_issue_refs": [
+            14389,
+            26479,
+            11684,
+            19525
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14389,
+            26479,
+            11684,
+            19525
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, actionable next steps, and a reasonable resolution estimate despite the wide interval. It could be shipped directly to the triage queue."
+      },
+      "error": null,
+      "issue_id": "k8s-12703",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-12248::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "error": "Error code: 400 - {'error': {'message': \"Generated JSON does not match the expected schema. Please adjust your prompt. See 'failed_generation' for more details. Error: jsonschema: '' does not validate with /required: missing properties: 'resolution_bucket', 'resolution_confidence_pct', 'resolution_interval_conformal', 'grounding', 'grounding_status', 'declared_attribution', 'abstention_status'\", 'type': 'invalid_request_error', 'code': 'json_validate_failed', 'failed_generation': '{\\n  \"predicted_component\": \"kubectl\",\\n  \"component_confidence\": 0.58,\\n  \"similar_issues\": [\\n    {\"number\": 24365, \"similarity\": 0.909, \"relevance_note\": \"Directly discusses deprecating the -t shorthand for --tty, matching this request.\"},\\n    {\"number\": 15471, \"similarity\": 0.808, \"relevance_note\": \"Calls for removal of deprecated shorthand flags in kubectl, same scope.\"}\\n  ],\\n  \"expected_resolution_summary\": \"Flag deprecation and repurposing; typically 1–2 weeks of work including docs and tests.\",\\n  \"expected_resolution_lower_days\": 0.2,\\n  \"expected_resolution_upper_days\": 369.6,\\n  \"priority_guess\": \"low\",\\n  \"priority_rationale\": \"Only a usability change; no crash or data loss, and existing workflows can continue using the long form flag. Deprecation can be communicated via release notes.\",\\n  \"suggested_assignee_class\": \"kubectl team\",\\n  \"suggested_next_steps\": [\\n    \"Search the codebase for all usages of the -t flag and confirm they map to --tty.\",\\n    \"Create a deprecation proposal in the kubectl docs and add a warning to the flag help output.\",\\n    \"Implement the flag change to repurpose -t for the new behavior, updating tests accordingly.\",\\n    \"Add a regression test that ensures the old shorthand no longer works and the new flag behaves as expected.\"\\n  ],\\n  \"triage_summary\": \"The issue proposes deprecating the -t shorthand in kubectl and repurposing it for --tty. Similar prior discussions exist. This is a low‑priority usability change that can be addressed in a short development cycle.\"\\n}'}}",
+      "plan": null,
+      "judge_score": null,
+      "issue_id": "k8s-12248",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-14785::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "build-release",
+        "component_confidence": 0.52,
+        "similar_issues": [
+          {
+            "number": 14835,
+            "similarity": 0.875,
+            "relevance_note": "Direct suggestion to use publish_latest_official logic in mark-stable-release.sh, matching the consolidation request."
+          },
+          {
+            "number": 16773,
+            "similarity": 0.824,
+            "relevance_note": "Discusses consolidating release‑mechanics scripts, indicating a broader effort to unify similar logic."
+          }
+        ],
+        "expected_resolution_summary": "Minor refactor to share logic between scripts; typically resolved within a few days once a PR is opened.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 258.9,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 44.2,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The change is purely a code‑cleanup with no functional impact; it does not block any user workflow and has a straightforward implementation path.",
+        "suggested_assignee_class": "build-release team",
+        "suggested_next_steps": [
+          "Confirm that mark-stable-release.sh and kube::release::gcs::publish_latest_official perform identical steps.",
+          "Create a design note outlining the shared function or module to be extracted.",
+          "Implement the shared logic and update both scripts to call it.",
+          "Run the release‑pipeline CI jobs to verify no regressions."
+        ],
+        "triage_summary": "The issue proposes consolidating duplicate logic between mark-stable-release.sh and the publish_latest_official function. It is a low‑priority refactor for the build‑release area. Assign to the build‑release team and follow the outlined steps to merge a shared implementation.",
+        "grounding": {
+          "component_source": "build-release",
+          "similar_issue_refs": [
+            14835,
+            16773
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14835,
+            16773
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, correct priority, actionable next steps, and a clear, ready-to-use summary."
+      },
+      "error": null,
+      "issue_id": "k8s-14785",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-13470::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "kubelet",
+        "component_confidence": 0.54,
+        "similar_issues": [
+          {
+            "number": 482,
+            "similarity": 0.816,
+            "relevance_note": "Discusses adding client code to use the kubelet API, indicating interest in documentation."
+          },
+          {
+            "number": 12386,
+            "similarity": 0.808,
+            "relevance_note": "Mentions usage of a kubelet flag, showing gaps in user guidance."
+          }
+        ],
+        "expected_resolution_summary": "Add or improve documentation for the kubelet API; typically a few days of work.",
+        "expected_resolution_lower_days": 0.0,
+        "expected_resolution_upper_days": 68.9,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 58.3,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The issue is a request for documentation; it does not block any functionality and has a simple workaround (searching code or existing docs).",
+        "suggested_assignee_class": "documentation team",
+        "suggested_next_steps": [
+          "Search the current repository for any existing kubelet API docs to confirm they are missing.",
+          "Identify the appropriate docs location (e.g., website, API reference) and draft the missing sections.",
+          "Create a PR adding the documentation with examples and links to related resources.",
+          "Link this issue to the new documentation PR once merged."
+        ],
+        "triage_summary": "User asks for documentation on how to use the kubelet API. No existing docs were found, and similar issues show a pattern of missing guidance. Assign to the documentation team with low priority; expected resolution within a few days.",
+        "grounding": {
+          "component_source": "kubelet",
+          "similar_issue_refs": [
+            482,
+            12386
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            482,
+            12386
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, correct priority, actionable next steps, and a clear, well-structured summary."
+      },
+      "error": null,
+      "issue_id": "k8s-13470",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-12784::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "apiserver",
+        "component_confidence": 0.49,
+        "similar_issues": [
+          {
+            "number": 10530,
+            "similarity": 0.823,
+            "relevance_note": "kube-dns fails to connect to the API server, same symptom as kube2sky."
+          },
+          {
+            "number": 24842,
+            "similarity": 0.779,
+            "relevance_note": "kube2sky times out waiting for the default/kubernetes service, indicating connectivity problems."
+          },
+          {
+            "number": 24812,
+            "similarity": 0.776,
+            "relevance_note": "kube2sky cannot connect due to TLS issues, showing the component area of API server connectivity."
+          },
+          {
+            "number": 10265,
+            "similarity": 0.771,
+            "relevance_note": "kube2sky cannot resolve the Kubernetes service DNS name, a downstream effect of the same connection failure."
+          }
+        ],
+        "expected_resolution_summary": "Connectivity regression between kube2sky and the API server; typical fix time 1–3 weeks once the root cause (e.g., address/port config or TLS) is identified.",
+        "expected_resolution_lower_days": 1.6,
+        "expected_resolution_upper_days": 521.3,
+        "resolution_bucket": "long",
+        "resolution_confidence_pct": 28.9,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The issue prevents DNS pods from functioning, breaking service discovery for workloads, but a manual workaround (e.g., restarting components) exists, so it is not a total block.",
+        "suggested_assignee_class": "apiserver team",
+        "suggested_next_steps": [
+          "Verify that the API server endpoint (http://localhost:8080) is reachable from the kube2sky pod/container.",
+          "Check etcd and API server logs for authentication or TLS errors that could reject kube2sky connections.",
+          "Confirm that the --master flag or KUBERNETES_MASTER environment variable is correctly set for kube2sky in the current setup.",
+          "Create a minimal reproducer and add a regression test to catch the connectivity failure."
+        ],
+        "triage_summary": "kube2sky cannot connect to the Kubernetes API server after upgrading to v1.0.3, causing DNS pods to fail. Multiple similar reports exist, pointing to API server connectivity or configuration issues. Assign to the apiserver team with medium priority.",
+        "grounding": {
+          "component_source": "apiserver",
+          "similar_issue_refs": [
+            10530,
+            24842,
+            24812,
+            10265
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            10530,
+            24842,
+            24812,
+            10265
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 1,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid and actionable, with relevant similar issues and actionable next steps. However, the resolution estimate is imprecise and the component label is plausible but not the gold label."
+      },
+      "error": null,
+      "issue_id": "k8s-12784",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-13508::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "error": "Error code: 400 - {'error': {'message': \"Generated JSON does not match the expected schema. Please adjust your prompt. See 'failed_generation' for more details. Error: jsonschema: '' does not validate with /required: missing properties: 'resolution_bucket', 'resolution_confidence_pct', 'resolution_interval_conformal', 'grounding', 'grounding_status', 'declared_attribution', 'abstention_status'\", 'type': 'invalid_request_error', 'code': 'json_validate_failed', 'failed_generation': '{\\n  \"predicted_component\": \"cloudprovider\",\\n  \"component_confidence\": 0.48,\\n  \"similar_issues\": [\\n    {\"number\": 23383, \"similarity\": 0.801, \"relevance_note\": \"Nodes on AWS run out of resources after instance size change, similar disk‑space exhaustion scenario.\"},\\n    {\"number\": 13174, \"similarity\": 0.776, \"relevance_note\": \"Fresh AWS cluster runs out of space on first image pull, indicating default volume sizing issues.\"},\\n    {\"number\": 26566, \"similarity\": 0.776, \"relevance_note\": \"Kubelet incorrectly reports disk sufficiency leading to node out‑of‑space, directly related to nodecontroller behavior.\"}\\n  ],\\n  \"expected_resolution_summary\": \"Disk‑space exhaustion on AWS nodes; typical fix involves adjusting volume size, kubelet eviction thresholds, or log cleanup. Historically resolved within a few days to a couple of weeks.\",\\n  \"expected_resolution_lower_days\": 0.1,\\n  \"expected_resolution_upper_days\": 356.8,\\n  \"priority_guess\": \"medium\",\\n  \"priority_rationale\": \"Node failure due to full /mnt/ephemeral disrupts workloads and requires manual instance replacement, but a temporary workaround (kill and recreate node) exists, so it is not a total block.\",\\n  \"suggested_assignee_class\": \"cloudprovider team\",\\n  \"suggested_next_steps\": [\\n    \"Collect node logs (kubelet, docker, systemd) to pinpoint what fills /mnt/ephemeral.\",\\n    \"Check default EBS volume size for the m3.large instance and compare with actual usage patterns.\",\\n    \"Validate kubelet eviction thresholds and enable image garbage collection if not already active.\",\\n    \"Propose a configuration change or documentation update to increase the mount size or add log rotation.\"\\n  ],\\n  \"triage_summary\": \"AWS nodes running Kubernetes 1.0.3 exhaust the /mnt/ephemeral disk after a few days, causing node failure. The issue aligns with prior reports of AWS disk‑space problems. Assign to the cloudprovider team with medium priority; resolution likely involves storage sizing or eviction settings.\"\\n}'}}",
+      "plan": null,
+      "judge_score": null,
+      "issue_id": "k8s-13508",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-14078::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "test-infra",
+        "component_confidence": 0.6,
+        "similar_issues": [
+          {
+            "number": 25657,
+            "similarity": 0.864,
+            "relevance_note": "Same flaky e2e test for 'kubectl expose' creating services for RC."
+          },
+          {
+            "number": 29227,
+            "similarity": 0.855,
+            "relevance_note": "Identical test failure pattern in the conformance suite."
+          },
+          {
+            "number": 26209,
+            "similarity": 0.847,
+            "relevance_note": "Repeated reports of the same flaky expose‑rc test."
+          }
+        ],
+        "expected_resolution_summary": "Flaky e2e test; typical fix (stabilize timing, add retries) takes 1–2 weeks.",
+        "expected_resolution_lower_days": 0.6,
+        "expected_resolution_upper_days": 561.4,
+        "resolution_bucket": "months",
+        "resolution_confidence_pct": 24.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The flakiness only affects CI reliability, not end‑user functionality; it degrades merge confidence but has a manual workaround (re‑run the test).",
+        "suggested_assignee_class": "test-infra team",
+        "suggested_next_steps": [
+          "Reproduce the failure locally with a minimal cluster and the same expose command.",
+          "Add explicit wait or retry logic in the test to account for service creation latency.",
+          "Investigate recent changes to the expose controller or service provisioning that could introduce timing races.",
+          "Mark the issue as duplicate of #25657 if confirmed, otherwise update the test and CI."
+        ],
+        "triage_summary": "A flaky e2e test where 'kubectl expose' intermittently fails to create a service for a replication controller. Multiple similar reports exist, indicating a timing race. Assign to test‑infra team with medium priority; fix expected within a few weeks.",
+        "grounding": {
+          "component_source": "test-infra",
+          "similar_issue_refs": [
+            25657,
+            29227,
+            26209
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            25657,
+            29227,
+            26209
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 1,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid but has a misaligned priority. It correctly identifies the component and provides actionable next steps, relevant similar issues, and a reasonable resolution estimate. However, the priority is marked as 'medium' while the gold standard indicates 'low', which is a significant discrepancy."
+      },
+      "error": null,
+      "issue_id": "k8s-14078",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-14424::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "test-infra",
+        "component_confidence": 0.67,
+        "similar_issues": [
+          {
+            "number": 7008,
+            "similarity": 0.766,
+            "relevance_note": "E2E tests being unintentionally skipped, similar CI breakage pattern."
+          },
+          {
+            "number": 20631,
+            "similarity": 0.746,
+            "relevance_note": "Specific timeout of Services e2e test, same symptom of flaky timeout."
+          },
+          {
+            "number": 10322,
+            "similarity": 0.744,
+            "relevance_note": "General discussion of unhelpful timeout errors in e2e tests."
+          }
+        ],
+        "expected_resolution_summary": "Flaky e2e service test timeout; typical fix involves stabilizing the test or adjusting timeout thresholds, usually resolved within a few days.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 53.1,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 54.2,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The test failure breaks CI builds, but a temporary skip works as a workaround. It impacts reliability but does not block core functionality, so medium priority.",
+        "suggested_assignee_class": "test-infra team",
+        "suggested_next_steps": [
+          "Reproduce the timeout locally with the same test configuration to capture logs.",
+          "Investigate recent changes to the Services e2e test or underlying infra that could cause longer runtimes.",
+          "Add or adjust explicit wait/retry logic or increase the test timeout if the duration is expected.",
+          "Update CI to automatically retry the flaky test or mark it as flaky until a permanent fix is merged."
+        ],
+        "triage_summary": "A service e2e test is intermittently timing out, causing CI failures. The issue is similar to prior flaky timeout reports. Assign to the test‑infra team with medium priority; a temporary skip is in place, but a stable fix is needed.",
+        "grounding": {
+          "component_source": "test-infra",
+          "similar_issue_refs": [
+            7008,
+            20631,
+            10322
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            7008,
+            20631,
+            10322
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 1,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid but has a misaligned priority. The component and similar issues are correctly identified, next steps are actionable, and the resolution estimate is reasonable but not precise. The priority is set to medium, which is inconsistent with the high priority of the gold standard."
+      },
+      "error": null,
+      "issue_id": "k8s-14424",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-12828::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "kubectl",
+        "component_confidence": 0.57,
+        "similar_issues": [
+          {
+            "number": 18964,
+            "similarity": 0.85,
+            "relevance_note": "Direct complaint about naive --env parsing in kubectl run."
+          },
+          {
+            "number": 13422,
+            "similarity": 0.837,
+            "relevance_note": "Previous request to add multi‑env support for kubectl run (references #12828)."
+          },
+          {
+            "number": 28734,
+            "similarity": 0.819,
+            "relevance_note": "Edge case where empty env vars are rejected, highlighting parsing limitations."
+          }
+        ],
+        "expected_resolution_summary": "CLI feature addition; typically resolved within a few days to a couple of weeks depending on design review.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 162.7,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 42.0,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Missing ability to pass multiple environment variables blocks a common workflow for developers, but there is a clear workaround (using a pod manifest). Hence not critical but worth addressing promptly.",
+        "suggested_assignee_class": "kubectl team",
+        "suggested_next_steps": [
+          "Gather additional user feedback to confirm demand and edge‑case requirements.",
+          "Design a robust flag syntax (e.g., repeatable --env KEY=VAL) and update the usage docs.",
+          "Implement parsing changes in the kubectl run command and add unit tests for multiple and empty values.",
+          "Add e2e tests that verify pods receive the specified environment variables."
+        ],
+        "triage_summary": "Feature request to allow multiple --env flags (and empty values) in `kubectl run`. Several similar issues already exist, indicating a recurring need. Assign to the kubectl team with medium priority; expected fix time is short.",
+        "grounding": {
+          "component_source": "kubectl",
+          "similar_issue_refs": [
+            18964,
+            13422,
+            28734
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            18964,
+            13422,
+            28734
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 1,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid but has a misaligned priority. The plan correctly identifies the component and retrieves highly relevant issues, provides actionable next steps, and has a reasonable resolution estimate. However, the priority is marked as 'medium' while the gold standard indicates 'low', which is a significant discrepancy."
+      },
+      "error": null,
+      "issue_id": "k8s-12828",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-12737::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "api",
+        "component_confidence": 0.55,
+        "similar_issues": [
+          {
+            "number": 11181,
+            "similarity": 0.759,
+            "relevance_note": "Unnamespaced POST for namespaced objects returns incorrect error, same API path issue."
+          },
+          {
+            "number": 11218,
+            "similarity": 0.752,
+            "relevance_note": "Posting a pod without namespace yields wrong response, mirroring the ReplicationController case."
+          },
+          {
+            "number": 12446,
+            "similarity": 0.765,
+            "relevance_note": "Namespace creation/documentation problems indicate broader API namespace handling confusion."
+          }
+        ],
+        "expected_resolution_summary": "Fix API server validation to return a proper BadRequest (400) when namespace is omitted for namespaced resources; typical turnaround 1–5 days.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 268.5,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 30.6,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Incorrect 403 error misleads users and breaks automation that expects a 400 BadRequest, but a manual workaround (specifying a namespace) exists and the issue does not crash the server.",
+        "suggested_assignee_class": "apiserver team",
+        "suggested_next_steps": [
+          "Create a minimal reproducer posting a ReplicationController without a namespace and capture the exact validation path.",
+          "Update the API server validation logic to emit a BadRequest with a clear message when namespace is missing.",
+          "Add an integration test covering unnamespaced POST for all namespaced resources.",
+          "Document the expected behavior in the API reference."
+        ],
+        "triage_summary": "POSTing a namespaced resource without specifying a namespace returns a 403 Forbidden instead of a proper BadRequest, confusing users. Two closely related prior issues confirm the pattern. Assign to the apiserver team with medium priority; fix expected within a few days.",
+        "grounding": {
+          "component_source": "api",
+          "similar_issue_refs": [
+            11181,
+            11218,
+            12446
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            11181,
+            11218,
+            12446
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with correct component labeling, highly relevant similar issues, reasonable resolution estimate, appropriate priority, actionable next steps, and overall quality suitable for direct use in triage."
+      },
+      "error": null,
+      "issue_id": "k8s-12737",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-12122::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "cloudprovider",
+        "component_confidence": 0.56,
+        "similar_issues": [
+          {
+            "number": 10032,
+            "similarity": 0.758,
+            "relevance_note": "Adds debugging transport for client, similar approach to logging AWS calls."
+          },
+          {
+            "number": 12121,
+            "similarity": 0.748,
+            "relevance_note": "Discusses rate limiting AWS API calls, indicating existing concerns about AWS interactions."
+          },
+          {
+            "number": 26595,
+            "similarity": 0.753,
+            "relevance_note": "General addition of logs for debugging, relevant pattern for introducing higher‑level logs."
+          }
+        ],
+        "expected_resolution_summary": "Feature addition to emit AWS API call logs at a higher verbosity level; typically a few days to a couple of weeks of work.",
+        "expected_resolution_lower_days": 0.3,
+        "expected_resolution_upper_days": 344.5,
+        "resolution_bucket": "days",
+        "resolution_confidence_pct": 30.8,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The request is a non‑blocking feature enhancement; it does not affect existing functionality and has no workaround need.",
+        "suggested_assignee_class": "cloudprovider team",
+        "suggested_next_steps": [
+          "Open a design discussion in the cloud‑provider SIG to agree on log level and flag semantics.",
+          "Add V(2)/V(4) log statements around each AWS SDK call in the cloudprovider implementation.",
+          "Introduce a configurable flag (e.g., --cloud-provider-aws-log) to enable the verbose logging.",
+          "Update documentation and add unit tests to verify logging can be toggled."
+        ],
+        "triage_summary": "Feature request to add optional verbose logging of AWS API calls for debugging. Relevant prior issues show similar logging enhancements. Low priority, assign to cloudprovider team.",
+        "grounding": {
+          "component_source": "cloudprovider",
+          "similar_issue_refs": [
+            10032,
+            12121,
+            26595
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            10032,
+            12121,
+            26595
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with correct component labeling, highly relevant similar issues, reasonable resolution estimate, appropriate priority, and actionable next steps that align well with the gold standard."
+      },
+      "error": null,
+      "issue_id": "k8s-12122",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-12284::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "cloudprovider",
+        "component_confidence": 0.55,
+        "similar_issues": [
+          {
+            "number": 12589,
+            "similarity": 0.881,
+            "relevance_note": "Previous PR adding floating IP allocation for OpenStack LB aligns directly with the requested feature."
+          },
+          {
+            "number": 12288,
+            "similarity": 0.866,
+            "relevance_note": "Fixes external LB IP assignment in OpenStack, a prerequisite for floating IP support."
+          },
+          {
+            "number": 12287,
+            "similarity": 0.786,
+            "relevance_note": "Describes the current nil IP behavior when no IP is specified, highlighting the missing feature."
+          }
+        ],
+        "expected_resolution_summary": "Feature request to expose a floating‑IP pool option for OpenStack load‑balancer VIPs; typically resolved in weeks to months depending on implementation and review cycles.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 356.8,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 30.6,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The issue is a non‑blocking feature request with no current regression; it improves usability but does not affect existing functionality.",
+        "suggested_assignee_class": "cloudprovider team",
+        "suggested_next_steps": [
+          "Review the existing PRs #12589, #12288, and #12287 to understand prior work and any open patches.",
+          "Design a new cloud‑config option (e.g., floatingIPPool) and update the OpenStack cloudprovider implementation to allocate a floating IP from that pool for LB VIPs.",
+          "Add unit and e2e tests covering the new option and the end‑to‑end LB creation flow on OpenStack.",
+          "Document the new configuration flag in the cloud‑provider documentation and update release notes."
+        ],
+        "triage_summary": "The request adds floating‑IP support for OpenStack load‑balancer VIPs, a usability enhancement rather than a bug. Several related PRs already exist, making the implementation path clearer. Assign to the cloudprovider team with low priority.",
+        "grounding": {
+          "component_source": "cloudprovider",
+          "similar_issue_refs": [
+            12589,
+            12288,
+            12287
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            12589,
+            12288,
+            12287
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 1,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, correct priority, actionable next steps, and a clear, well-structured summary."
+      },
+      "error": null,
+      "issue_id": "k8s-12284",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-14281::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "kubectl",
+        "component_confidence": 0.55,
+        "similar_issues": [
+          {
+            "number": 8827,
+            "similarity": 0.803,
+            "relevance_note": "User reports same error when using rolling-update with a manifest; identical symptom."
+          },
+          {
+            "number": 13350,
+            "similarity": 0.778,
+            "relevance_note": "Error \"resource name may not be empty\" appears for rolling-update, matching the reported failure."
+          },
+          {
+            "number": 13486,
+            "similarity": 0.777,
+            "relevance_note": "Fix referenced for rolling-update error when using generateName, directly related to name handling."
+          },
+          {
+            "number": 13469,
+            "similarity": 0.77,
+            "relevance_note": "Continuation of the same bug fix discussion for generateName handling in rolling-update."
+          },
+          {
+            "number": 4696,
+            "similarity": 0.756,
+            "relevance_note": "Namespace handling nuance in rolling-update, showing the command’s broader edge‑case behavior."
+          }
+        ],
+        "expected_resolution_summary": "Bug in kubectl rolling-update name handling; typical fix within a few days once the command parsing is corrected.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 379.4,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 40.6,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Reproducible regression that prevents using rolling-update with a manifest without a unique name; a workaround (renaming) exists but the workflow is hindered for many users.",
+        "suggested_assignee_class": "kubectl team",
+        "suggested_next_steps": [
+          "Create a minimal reproducer using a manifest without a name and run `kubectl rolling-update`.",
+          "Inspect the command's validation logic for name generation and compare with generateName handling.",
+          "Add a unit test that verifies rolling-update succeeds when a manifest provides a generateName field.",
+          "Reference duplicate issues (#13350, #13486) and close if this issue is subsumed."
+        ],
+        "triage_summary": "kubectl rolling-update fails when a manifest lacks an explicit name, requiring a unique name similar to the inline‑code case. Several prior issues report the same error. Assign to the kubectl team with medium priority; fix expected within days.",
+        "grounding": {
+          "component_source": "kubectl",
+          "similar_issue_refs": [
+            8827,
+            13350,
+            13486,
+            13469,
+            4696
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            8827,
+            13350,
+            13486,
+            13469,
+            4696
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 0,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 0,
+        "next_steps_actionability": 2,
+        "overall_quality": 1,
+        "judge_rationale": "The triage plan has a wrong component label (predicted_component: kubectl vs gold: app-lifecycle), which significantly impacts the overall quality. However, the similar issues are highly relevant and the next steps are actionable, though the resolution estimate and priority are misaligned with the gold standard."
+      },
+      "error": null,
+      "issue_id": "k8s-14281",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-12615::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "api",
+        "component_confidence": 0.55,
+        "similar_issues": [
+          {
+            "number": 12894,
+            "similarity": 0.894,
+            "relevance_note": "Directly adds LastTransitionTime to PodCondition, matching the requested enhancement."
+          },
+          {
+            "number": 14767,
+            "similarity": 0.834,
+            "relevance_note": "Implements Reason and Message fields for ready PodCondition, same scope of change."
+          }
+        ],
+        "expected_resolution_summary": "Small API enhancement adding three fields to PodCondition; typically resolved within a few days to a week.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 274.5,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 38.8,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "Feature request that does not block existing functionality; a TODO already exists and the change is limited to API structs.",
+        "suggested_assignee_class": "api team",
+        "suggested_next_steps": [
+          "Review the existing TODO in types.go and design the struct changes for LastTransitionTime, Reason, and Message.",
+          "Implement the fields in the v1.PodCondition struct and update conversion functions and deep copy logic.",
+          "Add unit tests and e2e tests to verify the new fields are correctly populated and persisted.",
+          "Update API documentation and release notes to reflect the new fields."
+        ],
+        "triage_summary": "Enhancement to add LastTransitionTime, Reason, and Message to PodCondition for better readiness tracking. Two closely related prior issues exist, indicating low novelty. Assign to the API team with low priority.",
+        "grounding": {
+          "component_source": "api",
+          "similar_issue_refs": [
+            12894,
+            14767
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            12894,
+            14767
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 1,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan has actionable next steps and relevant similar issues, but the priority is misaligned with the gold standard's high priority. The resolution estimate is imprecise and the component is plausible but not the gold label."
+      },
+      "error": null,
+      "issue_id": "k8s-12615",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-14009::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "monitoring",
+        "component_confidence": 0.58,
+        "similar_issues": [
+          {
+            "number": 19020,
+            "similarity": 0.764,
+            "relevance_note": "Proposal to update cluster‑monitoring addon, similar scope of upgrading monitoring components."
+          },
+          {
+            "number": 28279,
+            "similarity": 0.752,
+            "relevance_note": "Direct prior upgrade of InfluxDB to a newer version within the repo."
+          },
+          {
+            "number": 18826,
+            "similarity": 0.732,
+            "relevance_note": "Update of InfluxDB client library, indicating interest in newer InfluxDB versions."
+          }
+        ],
+        "expected_resolution_summary": "Upgrade proposal for monitoring stack; typically resolved in 1–2 weeks after design approval.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 250.9,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 40.3,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The change is a non‑blocking improvement to the monitoring stack; no current breakage and a manual upgrade path exists, so it is low priority.",
+        "suggested_assignee_class": "monitoring team",
+        "suggested_next_steps": [
+          "Open a design discussion in SIG‑Monitoring to evaluate impact of InfluxDB v0.9 on the cluster‑monitoring addon.",
+          "Create a prototype manifest updating the InfluxDB image/tag and run integration tests in a staging cluster.",
+          "Document any required changes to metrics collection or alerting rules due to the new version.",
+          "Submit a PR to the cluster‑monitoring addon once testing is successful."
+        ],
+        "triage_summary": "A proposal to upgrade the InfluxDB component of the monitoring stack to v0.9+. Similar upgrade proposals exist. Low priority, assign to the monitoring team for design review and staged rollout.",
+        "grounding": {
+          "component_source": "monitoring",
+          "similar_issue_refs": [
+            19020,
+            28279,
+            18826
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            19020,
+            28279,
+            18826
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid but requires edits to align with the gold standard's high priority. The component, similar issues, and next steps are well-aligned, but the priority is misclassified."
+      },
+      "error": null,
+      "issue_id": "k8s-14009",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-12853::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "os/coreos",
+        "component_confidence": 0.57,
+        "similar_issues": [
+          {
+            "number": 11869,
+            "similarity": 0.777,
+            "relevance_note": "Openshift Origin install fails while listing Kubernetes items – similar environment and failure during setup."
+          },
+          {
+            "number": 11661,
+            "similarity": 0.771,
+            "relevance_note": "Openshift Origin example broken due to CLI changes – same kind of installation‑script incompatibility."
+          },
+          {
+            "number": 18239,
+            "similarity": 0.766,
+            "relevance_note": "Containerized cluster cannot mount default secrets – directly related to secret packaging failure."
+          }
+        ],
+        "expected_resolution_summary": "Installation‑pipeline bug affecting secret packaging on CoreOS; typical fix time 1–2 weeks once root cause is isolated.",
+        "expected_resolution_lower_days": 0.4,
+        "expected_resolution_upper_days": 318.3,
+        "resolution_bucket": "months",
+        "resolution_confidence_pct": 26.2,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The failure blocks Openshift installation on a specific platform (CoreOS) but does not affect core Kubernetes functionality; a manual workaround (different OS or manual secret handling) exists, so impact is limited to this use‑case.",
+        "suggested_assignee_class": "openshift integration team",
+        "suggested_next_steps": [
+          "Reproduce the failure on a fresh CoreOS VM following the exact steps and capture the exact error output when packaging secrets.",
+          "Inspect the secret‑packaging code path in the OpenShift installer for assumptions about the underlying OS or kubeconfig location.",
+          "Compare the environment with the successful cases in similar issues (#11869, #18239) to identify missing configuration or API version mismatches.",
+          "Add a test case to the OpenShift installer CI that runs the install on a CoreOS node and validates secret creation."
+        ],
+        "triage_summary": "Openshift installation on a Kubernetes cluster running on CoreOS fails during secret packaging, preventing deployment. The problem mirrors several existing installer‑related issues and is likely a platform‑specific bug. Assign to the OpenShift integration team with medium priority; expected fix within a few weeks.",
+        "grounding": {
+          "component_source": "os/coreos",
+          "similar_issue_refs": [
+            11869,
+            11661,
+            18239
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            11869,
+            11661,
+            18239
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid and actionable, with correct component labeling and highly relevant similar issues. However, the priority is misaligned as the gold standard indicates a low priority, suggesting the issue is not urgent."
+      },
+      "error": null,
+      "issue_id": "k8s-12853",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-12818::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "test-infra",
+        "component_confidence": 0.48,
+        "similar_issues": [
+          {
+            "number": 15396,
+            "similarity": 0.795,
+            "relevance_note": "Discusses disabling panic_on_oom and related node‑level kernel panic handling."
+          },
+          {
+            "number": 15091,
+            "similarity": 0.728,
+            "relevance_note": "Kubelet behavior around node panic on OOM, directly related to kernel panic settings."
+          },
+          {
+            "number": 8784,
+            "similarity": 0.705,
+            "relevance_note": "Adds an e2e test that deliberately triggers a kernel panic on a node."
+          }
+        ],
+        "expected_resolution_summary": "Configuration/feature change plus e2e test addition; typically resolved within 1–4 weeks.",
+        "expected_resolution_lower_days": 0.4,
+        "expected_resolution_upper_days": 556.2,
+        "resolution_bucket": "long",
+        "resolution_confidence_pct": 24.1,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Node loss due to missing panic_on_oops is a reliability regression affecting cluster stability, but a manual kernel parameter tweak works as a workaround, so not a full block.",
+        "suggested_assignee_class": "test-infra team",
+        "suggested_next_steps": [
+          "Reproduce the issue on a test node and confirm that setting /proc/sys/kernel/panic_on_oops=1 prevents the AWOL behavior.",
+          "Design a Kubelet or node‑bootstrap flag to enable panic_on_oops by default for clusters.",
+          "Add an e2e test that triggers an oops and verifies the node is rebooted or marked NotReady.",
+          "Update documentation to guide operators on the required kernel sysctl."
+        ],
+        "triage_summary": "Nodes currently ignore kernel oops, causing them to disappear from the cluster. The issue is a reliability regression that can be mitigated by a sysctl tweak. Assign to test‑infra for a config/feature change and e2e coverage; medium priority.",
+        "grounding": {
+          "component_source": "test-infra",
+          "similar_issue_refs": [
+            15396,
+            15091,
+            8784
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            15396,
+            15091,
+            8784
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 0,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 0,
+        "next_steps_actionability": 2,
+        "overall_quality": 1,
+        "judge_rationale": "The triage plan has highly relevant similar issues but incorrectly assigns the component to 'test-infra' instead of 'reliability'. The resolution estimate is order-of-magnitude correct but imprecise, and the priority is misaligned with the gold standard's 'low' priority. The next steps are concrete but could be more actionable."
+      },
+      "error": null,
+      "issue_id": "k8s-12818",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-14711::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "usability",
+        "component_confidence": 0.52,
+        "similar_issues": [
+          {
+            "number": 25012,
+            "similarity": 0.696,
+            "relevance_note": "Shells created via kubectl exec show wonky readline behavior, matching the vim display problem."
+          },
+          {
+            "number": 7587,
+            "similarity": 0.698,
+            "relevance_note": "Exec-related issue (LivenessProbe) indicates exec handling bugs that may be related to terminal I/O."
+          }
+        ],
+        "expected_resolution_summary": "Terminal exec display regression; typical fix time 1–3 weeks once the underlying tty handling bug is isolated.",
+        "expected_resolution_lower_days": 0.3,
+        "expected_resolution_upper_days": 470.0,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 25.0,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The bug only affects vim display when using kubectl exec; a workaround exists (docker exec) and core functionality remains usable, so impact is limited.",
+        "suggested_assignee_class": "usability team",
+        "suggested_next_steps": [
+          "Reproduce the issue on the latest release with a minimal Ubuntu pod and vim, capturing terminal escape sequences.",
+          "Determine whether the problem lies in the kubelet's PTY allocation or the client-side terminal rendering.",
+          "Add a regression test that runs vim via kubectl exec and checks for proper cursor/refresh behavior."
+        ],
+        "triage_summary": "Vim display glitches appear when using `kubectl exec -ti` on GKE pods, but not with docker exec. The issue is likely a terminal/PTY handling regression, low priority due to existing workarounds. Assign to the usability team.",
+        "grounding": {
+          "component_source": "usability",
+          "similar_issue_refs": [
+            25012,
+            7587
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            25012,
+            7587
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 1,
+        "similar_issues_relevance": 2,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with actionable next steps, relevant similar issues, reasonable resolution estimate, and correct priority alignment. It could be shipped directly to the triage queue."
+      },
+      "error": null,
+      "issue_id": "k8s-14711",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-14552::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "test-infra",
+        "component_confidence": 0.56,
+        "similar_issues": [
+          {
+            "number": 19773,
+            "similarity": 0.799,
+            "relevance_note": "Latency spike in a 100‑node scalability test, similar metric focus."
+          },
+          {
+            "number": 10607,
+            "similarity": 0.792,
+            "relevance_note": "Discussion about latency metric limits in capacity load tests, same performance domain."
+          },
+          {
+            "number": 19743,
+            "similarity": 0.785,
+            "relevance_note": "API call latency threshold regression observed in scalability runs, directly comparable."
+          },
+          {
+            "number": 14554,
+            "similarity": 0.772,
+            "relevance_note": "Performance regression in small‑cluster scalability tests, indicating a broader test‑infra issue."
+          }
+        ],
+        "expected_resolution_summary": "Typical test‑infra performance regression; once the offending change is identified, fix and re‑run scalability jobs (usually 1–2 weeks).",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 268.9,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 28.8,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The latency regression degrades scalability testing and may hide real performance issues, but it does not block core cluster operation; a workaround is to ignore the affected runs.",
+        "suggested_assignee_class": "test-infra team",
+        "suggested_next_steps": [
+          "Identify the commit range between the last good run and the first bad run using git bisect on the test‑infra repository.",
+          "Run the same scalability test locally with detailed profiling (e.g., pprof) to pinpoint the slow path.",
+          "Add a regression test or metric guard that fails if API call latency exceeds 300 ms in future runs."
+        ],
+        "triage_summary": "Scalability tests show a sharp API call latency regression (>200 ms → >500 ms) across several recent runs with no obvious code merges. Multiple similar latency‑related issues exist, pointing to a test‑infra performance problem. Assign to the test‑infra team with medium priority.",
+        "grounding": {
+          "component_source": "test-infra",
+          "similar_issue_refs": [
+            19773,
+            10607,
+            19743,
+            14554
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            19773,
+            10607,
+            19743,
+            14554
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 1,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid but has a misaligned priority. The component and similar issues are well-aligned with the gold standard, and the next steps are actionable. However, the priority is rated as medium, while the gold standard indicates high priority, which reduces the overall quality."
+      },
+      "error": null,
+      "issue_id": "k8s-14552",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-13062::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "test-infra",
+        "component_confidence": 0.61,
+        "similar_issues": [
+          {
+            "number": 14224,
+            "similarity": 0.75,
+            "relevance_note": "Discusses excluding slow e2e tests from parallel runs, directly related to test partitioning."
+          },
+          {
+            "number": 6847,
+            "similarity": 0.739,
+            "relevance_note": "Mentions reorganizing e2e tests to avoid interference, relevant to grouping slow tests."
+          },
+          {
+            "number": 20068,
+            "similarity": 0.735,
+            "relevance_note": "Questions the meaning of \"Slow Test\" results, indicating awareness of slow test handling."
+          }
+        ],
+        "expected_resolution_summary": "Refactor test job partitioning to separate inherently slow e2e tests from flaky/optimizable ones; typical effort 1–3 weeks.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 516.3,
+        "resolution_bucket": "long",
+        "resolution_confidence_pct": 24.7,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The issue degrades CI throughput and causes timeouts, impacting many contributors, but does not block functional work; a workaround is to run tests longer.",
+        "suggested_assignee_class": "test-infra team",
+        "suggested_next_steps": [
+          "Create a design doc outlining criteria for \"slow by necessity\" vs \"optimizable\" tests.",
+          "Add labels (e.g., slow, quarantine) to existing e2e tests and update the test job generator to respect them.",
+          "Implement a pilot partition in CI that runs slow‑by‑necessity tests in a dedicated job and measure impact on total runtime."
+        ],
+        "triage_summary": "The proposal seeks to improve e2e test partitioning so that inherently slow tests no longer delay faster ones, addressing frequent CI timeouts. Assign to the test‑infra team; medium priority given the CI efficiency impact.",
+        "grounding": {
+          "component_source": "test-infra",
+          "similar_issue_refs": [
+            14224,
+            6847,
+            20068
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14224,
+            6847,
+            20068
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with correct component labeling, highly relevant similar issues, reasonable resolution estimate, appropriate priority, actionable next steps, and could be shipped directly to the triage queue."
+      },
+      "error": null,
+      "issue_id": "k8s-13062",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-14762::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "kubelet",
+        "component_confidence": 0.48,
+        "similar_issues": [
+          {
+            "number": 15444,
+            "similarity": 0.833,
+            "relevance_note": "Discusses missing memory statistics from kubelet/heapster, similar symptom."
+          },
+          {
+            "number": 18515,
+            "similarity": 0.805,
+            "relevance_note": "High CPU usage reports from kubelet; same component and metrics collection path."
+          },
+          {
+            "number": 29244,
+            "similarity": 0.795,
+            "relevance_note": "Kubelet RSS memory usage anomalies, indicating metric collection problems."
+          },
+          {
+            "number": 22542,
+            "similarity": 0.794,
+            "relevance_note": "Talks about using the summary API with heapster, relevant to stats exposure."
+          },
+          {
+            "number": 27194,
+            "similarity": 0.793,
+            "relevance_note": "cAdvisor /stats/summary endpoint returns incorrect numbers, directly related to missing stats."
+          }
+        ],
+        "expected_resolution_summary": "Metrics collection regression in kubelet on Ubuntu 15.04; typical fix time a few days but may extend if platform-specific.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 286.9,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 33.9,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Missing kubelet stats degrade monitoring but do not crash the cluster; a manual workaround (ignoring metrics) exists, so not high priority.",
+        "suggested_assignee_class": "kubelet team",
+        "suggested_next_steps": [
+          "Reproduce on a fresh Ubuntu 15.04 node with the same Kubernetes 1.6 version and verify cAdvisor stats are zero.",
+          "Check kubelet and heapster logs for errors related to cAdvisor or the summary API on that OS.",
+          "Determine if the issue is caused by a missing kernel feature or library version on Ubuntu 15.04.",
+          "Create a minimal test case and add a regression test to prevent future metric‑collection regressions."
+        ],
+        "triage_summary": "Kubelet reports zero memory/cpu stats on Ubuntu 15.04 nodes, likely a metrics‑collection regression. Several prior issues show similar symptom patterns. Assign to the kubelet team with medium priority.",
+        "grounding": {
+          "component_source": "kubelet",
+          "similar_issue_refs": [
+            15444,
+            18515,
+            29244,
+            22542,
+            27194
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            15444,
+            18515,
+            29244,
+            22542,
+            27194
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 1,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan has actionable next steps and relevant similar issues, but the component is incorrectly labeled as kubelet instead of cadvisor, and the priority is misaligned with the gold standard."
+      },
+      "error": null,
+      "issue_id": "k8s-14762",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-14895::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "kubectl",
+        "component_confidence": 0.53,
+        "similar_issues": [
+          {
+            "number": 14893,
+            "similarity": 0.813,
+            "relevance_note": "Temporarily disables the warning message in NegotiateVersion, directly related to the current regression."
+          },
+          {
+            "number": 13794,
+            "similarity": 0.786,
+            "relevance_note": "Discusses NegotiateVersion being invoked too often, indicating broader concerns with its logic."
+          },
+          {
+            "number": 14951,
+            "similarity": 0.763,
+            "relevance_note": "Mentions splitting the NegotiateVersion fix from #14592, matching the need for a smaller reviewable piece."
+          }
+        ],
+        "expected_resolution_summary": "Fixing NegotiateVersion logic and restoring the warning; typical turnaround 1–2 weeks, though uncertainty can extend longer.",
+        "expected_resolution_lower_days": 0.3,
+        "expected_resolution_upper_days": 370.4,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 25.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The bug causes incorrect version negotiation and missing warnings, impacting reliability of kubectl but does not crash the client; a manual workaround (re‑enabling the warning) exists, so it is not blocking.",
+        "suggested_assignee_class": "kubectl team",
+        "suggested_next_steps": [
+          "Create a minimal reproducer that runs kubectl against a cluster with multiple API groups and observes the warning behavior.",
+          "Review #14592 and split the changes into smaller, reviewable PRs as suggested.",
+          "Re‑enable the warning message and add unit tests for group/version discovery at /apis."
+        ],
+        "triage_summary": "NegotiateVersion fails to validate group/versions and mishandles client.Config.Version, with a temporary warning suppression in place. The issue is tied to recent changes (#14592) and has several related reports. Assign to the kubectl team with medium priority; expected fix within a couple of weeks.",
+        "grounding": {
+          "component_source": "kubectl",
+          "similar_issue_refs": [
+            14893,
+            13794,
+            14951
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14893,
+            13794,
+            14951
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 0,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 0,
+        "next_steps_actionability": 2,
+        "overall_quality": 1,
+        "judge_rationale": "The triage plan has significant misalignment in component labeling, incorrect priority assessment, and an unreasonable resolution estimate, which lowers the overall quality."
+      },
+      "error": null,
+      "issue_id": "k8s-14895",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-14363::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "cloudprovider",
+        "component_confidence": 0.46,
+        "similar_issues": [
+          {
+            "number": 14366,
+            "similarity": 0.822,
+            "relevance_note": "Same vsphere cloud provider failure with missing authentication/environment configuration."
+          },
+          {
+            "number": 14368,
+            "similarity": 0.806,
+            "relevance_note": "Related vsphere provider script deletes .vmdk due to missing flags, indicating documentation gaps."
+          }
+        ],
+        "expected_resolution_summary": "Documentation and validation fix for vsphere cloud provider when multiple ESX networks are present; typical turnaround 1–3 weeks.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 475.7,
+        "resolution_bucket": "long",
+        "resolution_confidence_pct": 28.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The issue blocks cluster creation for users of the vsphere provider until they discover missing env vars; a workaround exists (setting the flag) but the missing documentation causes friction.",
+        "suggested_assignee_class": "cloudprovider team",
+        "suggested_next_steps": [
+          "Add the missing environment variable documentation to the vsphere provider README.",
+          "Implement a pre‑flight check in the provider that warns if multiple networks are detected without the required flag.",
+          "Add a unit/integration test that simulates multiple ESX networks and verifies the provider fails with a clear error message."
+        ],
+        "triage_summary": "Creating a cluster with the vsphere cloud provider fails when multiple ESX networks exist because required env vars are undocumented. Two similar issues confirm a pattern of missing configuration guidance. Assign to the cloudprovider team with medium priority; fix involves documentation and validation improvements.",
+        "grounding": {
+          "component_source": "cloudprovider",
+          "similar_issue_refs": [
+            14366,
+            14368
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14366,
+            14368
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, appropriate priority, actionable next steps, and a clear, well-structured summary."
+      },
+      "error": null,
+      "issue_id": "k8s-14363",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-13057::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "api",
+        "component_confidence": 0.494,
+        "similar_issues": [
+          {
+            "number": 25775,
+            "similarity": 0.78,
+            "relevance_note": "Discusses inconsistencies in registry code similar to mismatched abstractions in storage.Interface."
+          },
+          {
+            "number": 22093,
+            "similarity": 0.773,
+            "relevance_note": "Mentions moving generic apiserver code, relevant to abstracting storage error handling."
+          },
+          {
+            "number": 29993,
+            "similarity": 0.767,
+            "relevance_note": "Talks about removing default etcd validation, which touches error propagation in storage layer."
+          }
+        ],
+        "expected_resolution_summary": "Design/implementation change to surface underlying storage errors through the storage.Interface abstraction; typical turnaround 1–3 weeks.",
+        "expected_resolution_lower_days": 0.4,
+        "expected_resolution_upper_days": 538.3,
+        "resolution_bucket": "long",
+        "resolution_confidence_pct": 40.4,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The issue is about improving error abstraction and does not cause crashes or data loss; it impacts developer ergonomics but has a clear workaround of handling raw etcd errors.",
+        "suggested_assignee_class": "api team",
+        "suggested_next_steps": [
+          "Create a minimal reproducer showing the current error leakage through storage.Interface.",
+          "Discuss with the storage maintainers whether to add error wrapping helpers or adjust the interface contract.",
+          "Add unit tests that verify higher‑level callers receive the expected wrapped errors."
+        ],
+        "triage_summary": "storage.Interface currently leaks lower‑level etcd errors instead of exposing higher‑level abstractions, affecting callers that expect consistent error types. The problem is non‑blocking and mainly a usability concern, so it is low priority and should be routed to the API/storage team.",
+        "grounding": {
+          "component_source": "api",
+          "similar_issue_refs": [
+            25775,
+            22093,
+            29993
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            25775,
+            22093,
+            29993
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 0,
+        "similar_issues_relevance": 2,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 0,
+        "next_steps_actionability": 2,
+        "overall_quality": 1,
+        "judge_rationale": "The triage plan incorrectly assigns the component as 'api' instead of 'etcd', which is the gold standard. While the similar issues are somewhat relevant, the resolution estimate is off by an order of magnitude, and the priority is misaligned with the high severity of the issue."
+      },
+      "error": null,
+      "issue_id": "k8s-13057",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-14190::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "api",
+        "component_confidence": 0.55,
+        "similar_issues": [
+          {
+            "number": 2123,
+            "similarity": 0.79,
+            "relevance_note": "Swagger schema declares ServicePort fields with wrong types, similar mismatch."
+          },
+          {
+            "number": 9656,
+            "similarity": 0.788,
+            "relevance_note": "TargetPort incorrectly defined as string in swagger spec of v1beta3/v1."
+          },
+          {
+            "number": 9655,
+            "similarity": 0.75,
+            "relevance_note": "Minor fix note that targetPort should be int32, matching this issue."
+          }
+        ],
+        "expected_resolution_summary": "Fix the OpenAPI/Swagger schema for ServicePort.TargetPort to use integer type; typical turnaround 1–3 weeks.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 469.4,
+        "resolution_bucket": "long",
+        "resolution_confidence_pct": 28.1,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Incorrect schema breaks generated clients for statically typed languages, but does not affect runtime functionality; a workaround is to manually adjust generated code.",
+        "suggested_assignee_class": "api team",
+        "suggested_next_steps": [
+          "Create a minimal reproduction showing the mismatched TargetPort type in the generated OpenAPI spec.",
+          "Update the OpenAPI schema generation code to emit integer for TargetPort.",
+          "Add a unit test that validates the schema type for ServicePort.TargetPort.",
+          "Close duplicate issues (#2123, #9656, #9655) if this fix resolves them."
+        ],
+        "triage_summary": "The ServicePort.TargetPort field is documented as a string but the API returns an integer, breaking code generation. Several similar schema‑type bugs exist. Assign to the API team with medium priority; fix expected within a few weeks.",
+        "grounding": {
+          "component_source": "api",
+          "similar_issue_refs": [
+            2123,
+            9656,
+            9655
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            2123,
+            9656,
+            9655
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 1,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, appropriate priority, actionable next steps, and could be directly used in triage."
+      },
+      "error": null,
+      "issue_id": "k8s-14190",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-13276::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "ui",
+        "component_confidence": 0.6,
+        "similar_issues": [
+          {
+            "number": 14389,
+            "similarity": 0.781,
+            "relevance_note": "Same limitation: UI only shows resources in the default namespace."
+          },
+          {
+            "number": 9311,
+            "similarity": 0.763,
+            "relevance_note": "Requests support for namespace‑specific views in the dashboard."
+          },
+          {
+            "number": 24714,
+            "similarity": 0.733,
+            "relevance_note": "Related discussion about dashboard errors when non‑default namespaces are used."
+          }
+        ],
+        "expected_resolution_summary": "Feature gap in the dashboard UI; typical fix time is a few days to a couple of weeks depending on UI redesign scope.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 134.1,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 48.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The issue is a missing UI capability that does not block cluster usage; users can still operate via kubectl or other tools, making it a non‑critical usability gap.",
+        "suggested_assignee_class": "ui team",
+        "suggested_next_steps": [
+          "Verify whether the dashboard can already filter by namespace via URL parameters or API calls.",
+          "Create a minimal reproducible test case showing the UI limitation.",
+          "File a design/feature request to add a namespace selector to the dashboard.",
+          "Link this issue to #14389 and #9311 if they are duplicates."
+        ],
+        "triage_summary": "The Kubernetes dashboard UI appears to be limited to the default namespace, preventing users from viewing resources in other namespaces. This is a non‑blocking usability issue with existing CLI workarounds. Assign to the UI team with low priority and follow the outlined steps.",
+        "grounding": {
+          "component_source": "ui",
+          "similar_issue_refs": [
+            14389,
+            9311,
+            24714
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14389,
+            9311,
+            24714
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid but has a critical misalignment in priority. The issue is labeled as low priority, but the gold standard indicates high priority, which significantly impacts the overall quality."
+      },
+      "error": null,
+      "issue_id": "k8s-13276",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
+    },
+    "k8s-12123::openai/gpt-oss-120b::5ddbe97c4b47958f": {
+      "plan": {
+        "predicted_component": "kubectl",
+        "component_confidence": 0.603,
+        "similar_issues": [
+          {
+            "number": 4343,
+            "similarity": 0.799,
+            "relevance_note": "Discusses extending -f to accept multiple files, directly related to glob handling."
+          },
+          {
+            "number": 7152,
+            "similarity": 0.777,
+            "relevance_note": "Reports that kubectl create -f on a directory does not pick up .yml files, same limitation."
+          },
+          {
+            "number": 10853,
+            "similarity": 0.776,
+            "relevance_note": "General breakage of -f filename handling, indicating broader CLI parsing concerns."
+          }
+        ],
+        "expected_resolution_summary": "Minor CLI usability enhancement; typical fix within a few days once the parsing change is scoped.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 285.1,
+        "resolution_bucket": "days",
+        "resolution_confidence_pct": 30.1,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The issue is a convenience request (glob-friendly -f) that does not block existing workflows; a workaround (listing files manually) exists, so it is low priority.",
+        "suggested_assignee_class": "kubectl team",
+        "suggested_next_steps": [
+          "Create a minimal reproducible example showing current -f parsing failure with a glob pattern.",
+          "Discuss with the CLI maintainers whether to add support for directory expansion or glob patterns in -f.",
+          "Add a unit test for the new parsing behavior and update documentation accordingly."
+        ],
+        "triage_summary": "Users cannot use glob patterns or directories with `kubectl create -f`/`kubectl delete -f`, requiring manual file lists. Similar issues exist, indicating a known limitation. Assign to the kubectl team with low priority; fix is a small CLI parsing change.",
+        "grounding": {
+          "component_source": "kubectl",
+          "similar_issue_refs": [
+            4343,
+            7152,
+            10853
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            4343,
+            7152,
+            10853
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": null,
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, correct priority, actionable next steps, and a clear, well-structured summary."
+      },
+      "error": null,
+      "issue_id": "k8s-12123",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5ddbe97c4b47958f"
     }
   }
 }

@@ -1,7 +1,112 @@
 # ADR-0054: Model selection rests on parse-success -- a pre-registered elimination gate promoted to decision authority, not a new metric
 
-Status: Accepted
+Status: Accepted 2026-08-30 -- **under revision 2026-09-03, pending GG approval of the
+corrected basis below.** Do not treat this ADR as settled until that approval lands;
+recording against `openai/gpt-oss-120b` is paused for the same reason.
 Date: 2026-08-30
+
+## Correction (2026-09-03)
+
+**The "44/44 (100%) vs 29/31 (93.5%)" parse-success figures below are retracted as
+stated.** They were never traceable to a committed artifact -- an exhaustive search of
+this repo's full git history (every branch) and the authoring session's own scratchpad
+found no results file, log, or computation supporting 44 or 31 as the attempt count for
+either arm. Recovered instead: the raw per-call JSONL that actually produced this
+screen (`part_d_screen_results.jsonl`, a prior session's scratchpad, cross-checked
+issue-by-issue against §6's pre-registered sample table -- full match, 20/20 issues
+present for each arm).
+
+**Verified parse-success on the pre-registered 20-issue sample, from those raw
+records:**
+- Arm C (`openai/gpt-oss-120b`, few-shot): **20/20 (100%)**, zero failures.
+- Arm A (`openai/gpt-oss-20b`, few-shot): **19/20 (95%)**, one failure (#12254,
+  confirmed early-termination -- matches this ADR's own account of excluding #12254
+  from the biased 11.80 judge-mean figure below, which is unaffected by this
+  correction).
+
+The direction of the original claim survives (Arm C still has a lower failure rate on
+the pre-registered sample) but the **denominator was wrong by more than 2x for both
+arms**, and the true counts are small enough that the conclusion changes. **Pooled
+against the subsequent 64-issue re-record** (also raw, checkpoint-verified: 59/64
+resolved, 5/64 permanently early-terminated under `openai/gpt-oss-120b` --
+`k8s-12224`, `vscode-4996`, `k8s-12477`, `k8s-12248`, `k8s-13508`; `vscode-4996` is the
+one re-record failure that was also in the screen sample, where it had succeeded --
+non-determinism across separate live calls, not a contradiction):
+
+| | failures / n | rate | 95% Wald CI |
+|---|---:|---:|---|
+| Arm C, screen only | 0/20 | 0% | [0%, 0%]\* |
+| Arm C, record only | 5/64 | 7.81% | [1.24%, 14.39%] |
+| **Arm C, pooled** | **5/84** | **5.95%** | **[0.89%, 11.01%]** |
+| Arm A, screen only (no record exists) | 1/20 | 5.00% | [0%, 14.55%] |
+
+\*Wald CI is degenerate at 0 successes; a Wilson/Jeffreys interval would show a
+non-zero upper bound, not materially changing the overlap conclusion below.
+
+**The pooled Arm C rate and Arm A's screen-only rate overlap almost completely.**
+Parse-success does **not** cleanly resolve between the two models on the corrected,
+verified numbers -- the same underpowered-comparison shape this ADR already used to
+disqualify judge mean. **This ADR's Decision section's parse-success-as-tie-breaker
+reasoning no longer holds as stated.** See the companion session's Priority 4 findings
+for a revised basis (completion-token distribution and ceiling headroom, both
+verified directly from raw `usage` data and *not* subject to the same small-n problem
+as parse-success or judge mean) and Priority 3 findings for a separate, load-bearing
+observation: **all 9 early-termination failures examined across both arms (5 from the
+gpt-oss-120b re-record, 4 from this screen) fail on the identical set of fields** --
+`grounding`, `grounding_status`, `declared_attribution`, `abstention_status` (100%,
+9/9) and usually also `resolution_bucket`, `resolution_confidence_pct`,
+`resolution_interval_conformal` (89%, 8/9) -- every one of which is either overwritten
+post-hoc by `app.py` regardless of what the model emits, or already null-tolerant by
+design (`TriagePlan`'s own field descriptions, `src/triage_iq/models/triage.py:187-244`).
+This looks like a property of the output contract under Groq's `strict:true` decoding,
+not a difference between the two models -- see the full writeup for the field-by-field
+evidence.
+
+### Revised decision (proposed 2026-09-03, NOT yet approved)
+
+Re-grounded on the metrics that are direct measurements, not derived rates at n=20/31 --
+computed independently from the same raw `part_d_screen_results.jsonl`, cross-checked
+against this ADR's original figures (which are close but not exact matches; treating
+the independently recomputed numbers below as authoritative since they're reproducible
+from the raw file):
+
+| metric | gpt-oss-120b | gpt-oss-20b | resolved? |
+|---|---:|---:|---|
+| Completion tokens, p50 (n=20/19) | 1,105 | 1,376 | **Yes** -- paired, same prompts, low-variance count data, no judge involved. |
+| Completion tokens, max | 1,459 | 2,038 | **Yes** -- same reasoning. |
+| Headroom vs. 2,048 cap (worst case) | 589 tokens | 10 tokens | **Yes** -- 20b's worst observed call in this sample was 10 tokens from the truncation cliff. |
+| Quality per 1K completion tokens | 10.12 | 8.46 | **Partially** -- the token-count denominator is solid, but the judge-score numerator carries the same n=20/n=10 noise already shown insufficient to resolve raw judge mean. The *direction* is consistent with the token-count gap driving most of the ratio, not judge noise alone, but this is not an independently powered result -- treat as corroborating, not decisive on its own. |
+| Cost per call (USD) | unverified | unverified | **No** -- `TRIAGE_PRICE_PER_MTOK` in `model_config.py` is still the retired `llama-3.1-8b-instant` rate; neither gpt-oss model's actual Groq pricing has been checked against it. Token count is a directional proxy only, not a verified dollar figure, and larger models often carry a higher per-token rate that could partly or fully offset a token-count advantage -- this has NOT been ruled out. |
+
+**Proposed revised basis for keeping `openai/gpt-oss-120b`:** not parse-success (does
+not resolve) and not judge-mean quality (does not resolve, already established) --
+**operational safety margin.** gpt-oss-20b's worst-case completion in this sample sat
+10 tokens from the hard truncation ceiling; gpt-oss-120b's sat 589 tokens away. That
+gap is a direct, low-noise measurement, and it matters mechanically: a completion that
+hits the ceiling raises `TruncatedCompletionError` (PR #113) in production, not just in
+this eval. Quality-per-token is directionally consistent with keeping 120b but is not,
+on its own, an independently powered result. Cost is explicitly unresolved and should
+be checked (real Groq pricing for both models against `TRIAGE_PRICE_PER_MTOK`) before
+this is called complete.
+
+**Separately, and independent of which model ships:** Priority 3's finding --
+early termination concentrates on fields the schema forces as `required` under Groq's
+`strict:true` mode but that are either overwritten post-hoc or already null-tolerant by
+design -- suggests the more durable fix is schema-side (stop asking the model to emit
+placeholder values for fields it never gets to keep), not model-side. If implemented,
+that would very plausibly reduce or eliminate this defect class for *either* model,
+which would make the parse-success/early-termination question moot for model selection
+going forward. Design only in this pass, not implemented -- see companion session
+notes for the specific field-removal proposal.
+
+**A gap this correction surfaces in the checkpoint-keying fix (`d2b2b96`):**
+`_compute_prompt_hash()` hashes only the system prompt and few-shot messages -- it does
+NOT cover `TriagePlan`'s JSON schema (the `response_format` sent to Groq). If the
+schema-reduction proposal above is ever implemented without also changing the prompt
+text, the checkpoint would NOT detect the schema change and could silently treat
+old, pre-schema-change recordings as still valid under the new schema. Flagging for
+whoever implements that change -- the hash needs to cover the schema too, not just the
+prompt, or the checkpoint needs to be cleared explicitly alongside any schema edit.
 
 ## Context
 

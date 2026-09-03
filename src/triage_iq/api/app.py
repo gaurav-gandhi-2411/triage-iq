@@ -25,7 +25,6 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from ..config import get_settings
-from ..model_config import TRIAGE_PRICE_PER_MTOK
 from ..models.abstention import compute_abstention_status
 from ..models.triage import ConformalIntervalResult, TriagePlan
 from .loader import ModelStore
@@ -40,8 +39,6 @@ _RESOLUTION_MODEL_BEATS_NAIVE: dict[str, bool] = {
     "microsoft/vscode": False,       # improvement −70.5% vs naive; no creation-time signal
     "kubernetes/kubernetes": True,   # improvement +2.1% vs naive; bucket model 50 rounds
 }
-
-_GROQ_PRICE_PER_MTOK = TRIAGE_PRICE_PER_MTOK
 
 # ---------------------------------------------------------------------------
 # Prometheus custom metrics

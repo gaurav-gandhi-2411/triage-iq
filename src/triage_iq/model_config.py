@@ -32,8 +32,15 @@ JUDGE_MODEL: str = "llama-3.3-70b-versatile"
 # -- a separate, pre-existing staleness, not part of the triage-model selection this
 # session made. Flagged for its own fix, not bundled in here.
 
-# USD per million tokens, blended in/out. Cost-estimation only; not billing-authoritative.
-# NOTE: still the llama-3.1-8b-instant rate -- gpt-oss-120b's actual Groq pricing has not
-# been verified against this constant. Cost estimates (TriageAssistant.triage_with_metadata's
-# estimated_cost_usd) will be wrong until this is checked and updated.
-TRIAGE_PRICE_PER_MTOK: float = 0.27
+# USD per million tokens, separate input/output rates -- Groq's published rate for the
+# current TRIAGE_MODEL varies enough between input and output (4x) that a single blended
+# constant hides real error. Cost-estimation only; not billing-authoritative.
+# 2026-09-03: corrected from a stale blended 0.27 (the retired llama-3.1-8b-instant
+# rate, itself never actually wired to the cost formula below -- see the same date's
+# fix in models/triage.py:triage_with_metadata, which had its own hardcoded 0.27
+# duplicate that ignored this constant entirely). Source: Groq's own published pricing,
+# https://console.groq.com/docs/model/openai/gpt-oss-120b (fetched 2026-09-03) --
+# $0.15/M input tokens, $0.60/M output tokens. Re-verify if TRIAGE_MODEL changes; these
+# rates are model-specific, not a platform-wide constant.
+TRIAGE_PRICE_PROMPT_PER_MTOK: float = 0.15
+TRIAGE_PRICE_COMPLETION_PER_MTOK: float = 0.60

@@ -403,6 +403,15 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     result = plan.model_dump()
     result["_request_id"] = request_id
     result["_llm_status"] = llm_status
+    # 2026-09-03 (ADR-0055 Part P1b): explicit boolean, same logic as req_status above --
+    # added because the deploy smoke test had no field it could assert on to catch a
+    # revision where every request silently falls back to a classifier-only plan
+    # (predicted_component stays non-empty either way, so that alone was never a
+    # sufficient check). _llm_status already carried this information as a string, but
+    # a smoke test (or any other consumer) parsing specific status string values to
+    # infer degradation is exactly the kind of narrower-than-it-looks check this
+    # engagement keeps finding -- an explicit boolean is the field a gate should assert.
+    result["_degraded"] = req_status == "fallback"
     result["_llm_cache_hit"] = meta.get("llm_cache_hit")
     result["classifier_top3"] = meta.get("classifier_top3")
     result["resolution_model_beats_naive"] = _RESOLUTION_MODEL_BEATS_NAIVE.get(body.repo, True)

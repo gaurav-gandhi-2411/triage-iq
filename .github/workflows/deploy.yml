@@ -178,6 +178,14 @@ jobs:
           fi
 
           # 3. Triage endpoint — synthetic issue
+          #
+          # 2026-09-03 (ADR-0055 Part P1b): predicted_component alone was NOT a
+          # sufficient check -- it stays non-empty even when the LLM is fully dead and
+          # every request silently degrades to a classifier-only fallback plan (the
+          # exact failure mode PR #103's graceful-degradation change can produce). A
+          # build where the LLM never actually answers would have passed this smoke
+          # test undetected and shipped to 100% traffic. Now also asserts _degraded is
+          # false and triage_summary is a real, non-empty string.
           echo "=== /triage ==="
           TBODY=$(curl -sf -X POST "$URL/triage" \
             -H "Content-Type: application/json" \
@@ -186,12 +194,31 @@ jobs:
             echo "FAILED: /triage returned non-200"
             exit 1
           fi
-          COMPONENT=$(echo "$TBODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['predicted_component'])")
-          if [ -z "$COMPONENT" ]; then
-            echo "FAILED: predicted_component is empty"
+          # Piped via stdin, not interpolated into the Python source -- $TBODY is
+          # model-generated text (untrusted) and must never be embedded directly into
+          # a script literal.
+          echo "$TBODY" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          component = d.get('predicted_component')
+          degraded = d.get('_degraded')
+          summary = d.get('triage_summary')
+          llm_status = d.get('_llm_status')
+          failures = []
+          if not component:
+              failures.append('predicted_component is empty')
+          if degraded is not False:
+              failures.append(f'_degraded is {degraded!r}, expected False -- llm_status={llm_status!r}')
+          if not summary or not summary.strip():
+              failures.append('triage_summary is empty')
+          if failures:
+              print('FAILED:', '; '.join(failures))
+              sys.exit(1)
+          print(f'Triage check passed — predicted_component={component} degraded={degraded} llm_status={llm_status}')
+          "
+          if [ $? -ne 0 ]; then
             exit 1
           fi
-          echo "Triage check passed — predicted_component=$COMPONENT"
 
       - name: Promote candidate to live traffic
         id: promote

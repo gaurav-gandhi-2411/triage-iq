@@ -5,6 +5,21 @@ first, then resume exactly as described below.** Production has been down since
 ~2026-08-16 (Groq retired `llama-3.1-8b-instant`); this session got as far as selecting
 a replacement and is mid-way through re-recording the eval cassette against it.
 
+## 2026-09-03 (final): 9/9 confirmed — READY to start the full re-record, NOT started
+
+`k8s-14835` (the last unconfirmed issue) succeeded on retry — genuinely live,
+`cache_hit=False`. **All 9 original early-termination issues are now confirmed under
+the reduced schema:** 8/8 clean, 1 (`vscode-4993`) at 1 fail / 2 live attempts (the
+rare, non-reproducible malformed-key defect diagnosed in ADR-0055 Part A — not a
+blocker per A5, carried forward as a residual rate).
+
+**Parts A and B are both complete. READY to start the full 64-issue re-record.**
+Per the explicit working agreement (D4/B3), this session reports readiness and STOPS
+— does not start it. Next session/explicit approval: run
+`scripts/run_recording_unattended.py` (already built and tested, currently paused).
+Expect 3-4 days of quota-paced wall-clock per the D2 estimate in this session's report
+— today's quota is exhausted (confirm via a probe call before assuming it has reset).
+
 ## 2026-09-03 (still later same day): 8/9 confirmed, 1 pending, do not start re-record yet
 
 **vscode-4993's new failure mode diagnosed (ADR-0055 Part A):** malformed key

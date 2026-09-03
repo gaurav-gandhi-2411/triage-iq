@@ -229,6 +229,24 @@ def main() -> None:
             time.sleep(CONNECTION_WAIT_S)
             continue
 
+        if proc.returncode == 0 and "=== RECORDING COMPLETE ===" in output:
+            # 2026-09-03: found live -- a run that goes from 0 to 64/64 in a SINGLE
+            # iteration (e.g. because same-day validation testing had already warmed
+            # the cassette for most issues) never hits the checkpoint-based terminal
+            # check at the TOP of the loop, since that only runs BEFORE each
+            # iteration. Recognize the script's own success summary directly instead
+            # of falling through to the generic unrecognized-outcome bucket.
+            resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash)
+            _write_status([
+                f"DONE (recording complete): {_now()}",
+                f"Model: {model}  Prompt hash: {prompt_hash}",
+                f"Resolved: {resolved}/{TOTAL_ISSUES}  Dead: {dead_count} {dead_ids}",
+                f"Full log: {log_path}",
+                f"Iterations run: {iteration}",
+            ])
+            print("DONE: recording complete this iteration, see RECORDING_STATUS.txt")
+            return
+
         # Anything else (including exit 0 mid-run, or an exit 1 this wrapper doesn't
         # recognize) is a fail-closed stop -- never loop silently on an unknown outcome.
         resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash)

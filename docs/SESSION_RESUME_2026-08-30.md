@@ -5,6 +5,43 @@ first, then resume exactly as described below.** Production has been down since
 ~2026-08-16 (Groq retired `llama-3.1-8b-instant`); this session got as far as selecting
 a replacement and is mid-way through re-recording the eval cassette against it.
 
+## 2026-09-03 (later same day): schema fix implemented, live-validated, quota exhausted mid-validation
+
+**Model selection is now settled** (GG approved, ADR-0054): `openai/gpt-oss-120b` on
+truncation headroom. **Schema fix implemented and mostly validated** (ADR-0055):
+`_strip_post_hoc_fields` (`src/triage_iq/models/triage.py`) removes 7 fields from the
+wire schema, 18 → 11 required. Checkpoint `prompt_hash` now covers the schema too
+(`eval/record_cassettes.py`) — confirmed this correctly invalidates the 64 entries
+recorded under the old schema (hash `5ddbe97c...` → `0a15adc0...`; a fresh resume
+would need to re-record all 64 from scratch under the new schema).
+
+**Do NOT start the full 64-issue re-record yet.** Live validation (cache bypassed to
+force genuinely new calls) found:
+- **All 5 real `gpt-oss-120b` re-record failures now succeed** (`k8s-12224`,
+  `vscode-4996`, `k8s-12477`, `k8s-12248`, `k8s-13508`) — confirmed via genuinely new
+  cassette entries, not stale replays.
+- **`vscode-4993` still fails — a NEW, different failure mode** (a malformed field
+  name, `"triage_summary layman"` instead of `triage_summary`, not a missing field).
+  Reproduced twice independently. Not fixed by this change.
+- **3 issues unconfirmed** (`k8s-12287`, `k8s-14835`, `k8s-12254`) — Groq's daily
+  quota was exhausted mid-validation (`TPD: Limit 200000, Used 197689+`,
+  2026-09-03 ~12:08). Their earlier apparent "success" was a stale cache replay under
+  the OLD schema (the cassette's own cache key also doesn't cover `response_format` —
+  a separate, real gap, not yet fixed, see ADR-0055), not a genuine test.
+
+**To resume validation once quota resets** (a fresh day, or check Groq's stated wait):
+`scripts/scratch/validate_9_early_terminations.py` (gitignored, scratch — re-create
+from this session's transcript if needed, or write a fresh one) with `cache=None` to
+force genuinely live calls. Confirm the 3 remaining issues, decide what to do about
+`vscode-4993`'s new failure mode (accept as a residual rate and proceed, or
+investigate further), THEN start the real 64-issue re-record via
+`scripts/run_recording_unattended.py` (already built, paused — should work unchanged
+against the new schema/hash).
+
+**GROQ_API_KEY note:** this worktree has no `.env` — load it from the main repo
+(`C:\Users\gaura\ml-projects\triage-iq\.env`) before any live script, e.g.:
+`export GROQ_API_KEY=$(grep "^GROQ_API_KEY=" /c/Users/gaura/ml-projects/triage-iq/.env | cut -d= -f2-)`
+
 ## 2026-09-03: RECORDING PAUSED — model selection under revision, do not resume
 
 **The unattended recorder is stopped** (it self-halted on its own after reaching 64/64

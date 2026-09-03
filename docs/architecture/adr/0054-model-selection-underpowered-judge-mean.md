@@ -1,8 +1,12 @@
 # ADR-0054: Model selection rests on parse-success -- a pre-registered elimination gate promoted to decision authority, not a new metric
 
-Status: Accepted 2026-08-30 -- **under revision 2026-09-03, pending GG approval of the
-corrected basis below.** Do not treat this ADR as settled until that approval lands;
-recording against `openai/gpt-oss-120b` is paused for the same reason.
+Status: Accepted 2026-08-30, corrected and RE-ACCEPTED on a revised basis 2026-09-03
+(GG approved). **Selection unchanged (`openai/gpt-oss-120b`); its justification
+changed** -- from parse-success (retracted, see below) to truncation headroom (a
+direct, low-variance measurement -- see "Revised decision" below). See ADR-0055 for
+the separate, larger finding this correction led to: the early-termination defect
+itself was substantially a schema/output-contract defect, not a model quality
+difference, and is now fixed for the model this ADR selects (ADR-0055 Part A/C).
 Date: 2026-08-30
 
 ## Correction (2026-09-03)
@@ -62,7 +66,13 @@ This looks like a property of the output contract under Groq's `strict:true` dec
 not a difference between the two models -- see the full writeup for the field-by-field
 evidence.
 
-### Revised decision (proposed 2026-09-03, NOT yet approved)
+### Revised decision (2026-09-03, GG APPROVED -- this is now the operative basis)
+
+**Selection: KEEP `openai/gpt-oss-120b`, on truncation headroom.** Parse-success
+(5.95% pooled vs 5% -- does not resolve) and quality-per-1K-tokens (numerator carries
+the same small-n noise already rejected as a basis elsewhere in this engagement) are
+explicitly DROPPED from the stated basis, not merely de-emphasized -- selection stands,
+justification changes to what's below.
 
 Re-grounded on the metrics that are direct measurements, not derived rates at n=20/31 --
 computed independently from the same raw `part_d_screen_results.jsonl`, cross-checked
@@ -76,37 +86,38 @@ from the raw file):
 | Completion tokens, max | 1,459 | 2,038 | **Yes** -- same reasoning. |
 | Headroom vs. 2,048 cap (worst case) | 589 tokens | 10 tokens | **Yes** -- 20b's worst observed call in this sample was 10 tokens from the truncation cliff. |
 | Quality per 1K completion tokens | 10.12 | 8.46 | **Partially** -- the token-count denominator is solid, but the judge-score numerator carries the same n=20/n=10 noise already shown insufficient to resolve raw judge mean. The *direction* is consistent with the token-count gap driving most of the ratio, not judge noise alone, but this is not an independently powered result -- treat as corroborating, not decisive on its own. |
-| Cost per call (USD) | unverified | unverified | **No** -- `TRIAGE_PRICE_PER_MTOK` in `model_config.py` is still the retired `llama-3.1-8b-instant` rate; neither gpt-oss model's actual Groq pricing has been checked against it. Token count is a directional proxy only, not a verified dollar figure, and larger models often carry a higher per-token rate that could partly or fully offset a token-count advantage -- this has NOT been ruled out. |
+| Cost per call (USD) | $0.15/M in, $0.60/M out (verified 2026-09-03, Groq's published pricing) | not verified for this model -- gpt-oss-20b's actual rate has not been checked | **Partially** -- gpt-oss-120b's own rate is now correct in `model_config.py` (`TRIAGE_PRICE_PROMPT_PER_MTOK`/`TRIAGE_PRICE_COMPLETION_PER_MTOK`, corrected from a stale blended 0.27 that wasn't even wired to the cost formula it was meant to feed -- see ADR-0055). gpt-oss-20b's rate is still unchecked, so a head-to-head dollar comparison remains unverified; not load-bearing for this decision since parse-success/cost were already dropped from the basis. |
 
-**Proposed revised basis for keeping `openai/gpt-oss-120b`:** not parse-success (does
-not resolve) and not judge-mean quality (does not resolve, already established) --
+**Approved basis for keeping `openai/gpt-oss-120b` (2026-09-03):** not parse-success
+(does not resolve) and not judge-mean/quality-per-token (does not resolve, carries the
+same small-n noise already rejected elsewhere in this engagement) --
 **operational safety margin.** gpt-oss-20b's worst-case completion in this sample sat
 10 tokens from the hard truncation ceiling; gpt-oss-120b's sat 589 tokens away. That
 gap is a direct, low-noise measurement, and it matters mechanically: a completion that
 hits the ceiling raises `TruncatedCompletionError` (PR #113) in production, not just in
-this eval. Quality-per-token is directionally consistent with keeping 120b but is not,
-on its own, an independently powered result. Cost is explicitly unresolved and should
-be checked (real Groq pricing for both models against `TRIAGE_PRICE_PER_MTOK`) before
-this is called complete.
+this eval. Selection stands; this is the full and only basis going forward.
 
-**Separately, and independent of which model ships:** Priority 3's finding --
-early termination concentrates on fields the schema forces as `required` under Groq's
-`strict:true` mode but that are either overwritten post-hoc or already null-tolerant by
-design -- suggests the more durable fix is schema-side (stop asking the model to emit
-placeholder values for fields it never gets to keep), not model-side. If implemented,
-that would very plausibly reduce or eliminate this defect class for *either* model,
-which would make the parse-success/early-termination question moot for model selection
-going forward. Design only in this pass, not implemented -- see companion session
-notes for the specific field-removal proposal.
+**Separately, and independent of which model ships -- now IMPLEMENTED, see ADR-0055:**
+Priority 3's finding that early termination concentrates on fields the schema forces
+as `required` under Groq's `strict:true` mode but that are either overwritten post-hoc
+or already null-tolerant by design led to a schema-reduction fix
+(`_strip_post_hoc_fields`, `src/triage_iq/models/triage.py`) that removed all 7 such
+fields from the wire schema (18 -> 11 required). Live-validated 2026-09-03: all 5 of
+the real `gpt-oss-120b` early-termination failures from the 64-issue re-record
+succeeded on a genuine, cache-bypassed re-test under the reduced schema. A separate,
+new failure mode was found on one issue (a mangled field name, not a missing field) --
+the original defect class does not fully generalize to "zero failures ever," but the
+specific defect this ADR's parse-success comparison was built on is resolved for the
+model this ADR selects. Full detail, including why this doesn't reopen model selection
+or ADR-0053's few-shot decision, in ADR-0055.
 
-**A gap this correction surfaces in the checkpoint-keying fix (`d2b2b96`):**
-`_compute_prompt_hash()` hashes only the system prompt and few-shot messages -- it does
-NOT cover `TriagePlan`'s JSON schema (the `response_format` sent to Groq). If the
-schema-reduction proposal above is ever implemented without also changing the prompt
-text, the checkpoint would NOT detect the schema change and could silently treat
-old, pre-schema-change recordings as still valid under the new schema. Flagging for
-whoever implements that change -- the hash needs to cover the schema too, not just the
-prompt, or the checkpoint needs to be cleared explicitly alongside any schema edit.
+**A gap this correction surfaced in the checkpoint-keying fix (`d2b2b96`) -- now FIXED:**
+`_compute_prompt_hash()` hashed only the system prompt and few-shot messages, not
+`TriagePlan`'s JSON schema (the `response_format` sent to Groq). Fixed 2026-09-03 (Part
+B, ADR-0055) to include the serialized wire schema in the hash -- confirmed this
+correctly invalidates the 59 entries recorded under the pre-schema-reduction contract
+(hash changed `5ddbe97c...` -> `0a15adc0...`; `load_checkpoint()` now treats all 64 old
+entries as belonging to a different, non-comparable configuration).
 
 ## Context
 

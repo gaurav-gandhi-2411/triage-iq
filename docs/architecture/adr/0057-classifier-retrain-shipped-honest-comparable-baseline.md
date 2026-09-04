@@ -249,6 +249,105 @@ Phase 4, against a real re-recorded cassette, not this diagnostic workaround.
 Artifacts: `scripts/measure_grounding_new_classifier.py`,
 `reports/grounding_measurement_new_classifier.json`.
 
+## Phase 3 addendum (2026-09-04, same session): declared_attribution restored, live-validated
+
+**Working agreement Phase 3 asked to land `declared_attribution` — restore it to the wire
+schema as optional (never a hard `required`-with-no-escape), fix the prompt-variant gap
+that left it permanently null, and validate on the 4 known override issues.**
+
+**3a — schema restoration.** `declared_attribution` had `default=None` like the 6 truly
+post-hoc fields (`resolution_bucket`, etc.), so ADR-0055's generic
+default-vs-default_factory `_strip_post_hoc_fields` mechanism stripped it too — correctly
+by that mechanism's own logic, but wrongly in effect: unlike the other 6 (fixed values the
+app overwrites regardless of what the model emits), `declared_attribution` is real,
+LLM-elicited signal (ADR-0020) with no other source. Added an explicit carve-out,
+`_NEVER_STRIP_DESPITE_DEFAULT = frozenset({"declared_attribution"})`
+(`src/triage_iq/models/triage.py`), rather than weakening the general mechanism for the
+other 6 or changing `declared_attribution`'s Pydantic default (which would also weaken its
+parsing-safety contract). Result: 11 → 12 required fields; `declared_attribution` is back
+in `properties` as `type: [object, "null"]` (Groq's strict mode still forces `required` to
+equal every property — there is no way to make a key literally absent from `required` and
+still send it — "optional" here means the model can satisfy that requirement with `null`,
+exactly the pattern the other four `X | None` fields used before ADR-0055). `$defs` stays
+`{SimilarIssue}` only: `DeclaredAttribution`'s own $def becomes unreachable once its schema
+is inlined into the property (it has no nested BaseModel refs of its own), confirmed
+directly rather than assumed. `tests/test_wire_schema_excludes_post_hoc_fields.py` updated:
+6 fields still stripped (was 7), a new `test_declared_attribution_restored_as_nullable_object`
+pins the restored shape, required-count pin moved 11→12. Full suite: 309/309 pass.
+
+**3b — the prompt-variant gap.** `TRIAGE_PROMPT_INCLUDE_ATTRIBUTION` (ADR-0020) defaults
+off — the 64-issue re-record ran without it, so every response used `SYSTEM_PROMPT_LEGACY`
+(no attribution instructions, no attribution few-shot exemplars) regardless of the schema
+change, which is why `declared_attribution` was `None` on all 64 entries even before 3a's
+schema fix was diagnosed. **Not a bug**: ADR-0020 designed this default deliberately
+("What reaches production: nothing, until `TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1` is
+explicitly set... a separate, deliberate deploy decision, not part of this ADR"). This
+session does not flip that default in code — doing so would silently change what every
+future synthesis call sends without a corresponding Cloud Run env var change, which is a
+live-production-behavior change gated to Phase 5 approval, not a Phase 3 modeling
+decision. Instead: the flag is set explicitly (`TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1`) for
+this session's own validation call and will need the same explicit setting for Phase 4's
+real re-record — a local/CI-invocation choice, not a code or Cloud Run change.
+`eval/record_cassettes.py`'s `_compute_prompt_hash()` already reads this same env var
+(confirmed by direct code read, no change needed) — the checkpoint-hash mechanism already
+correctly distinguishes an attribution-on recording from an attribution-off one.
+
+**Token cost, measured offline (zero live calls, `scripts/measure_attribution_token_cost.py`,
+same estimator the live per-request guard uses):** mean +46.2 prompt tokens/call (min 46,
+max 47) — the attribution-rules prompt section + extended few-shot exemplars. Against the
+guard's actual ceiling (8,000 TPM, 200-token margin, 800-token completion floor): **0/64
+issues cross the input-shrinking threshold either with or without attribution** — this cost
+is small relative to the ~500-600 tokens of headroom `gpt-oss-120b` carries per ADR-0054,
+not a comparability break on the token-budget dimension.
+
+**Is it a comparability break, more broadly?** Yes, but not a NEW one: Phase 4's full
+re-record already invalidates every existing baseline on three independent axes (model,
+schema, classifier — ADR-0054/0055/0057). Turning attribution on for that same re-record
+adds a fourth axis of change happening in the same event, not a separate incomparability to
+manage on its own. Nothing currently comparable is broken by this, because nothing
+currently exists that this change would need to stay comparable to (ADR-0052: no valid
+baseline exists yet).
+
+**3c — live validation on the 4 known override issues** (vscode #239838, #311284,
+#311878, #311836), current production path (`openai/gpt-oss-120b`, new 47-class
+classifier, restored schema, `TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1`), `cache=None` to force
+genuinely new calls (`scripts/scratch/validate_declared_attribution_4_overrides.py`,
+gitignored scratch, one-time validation):
+
+| Issue | predicted_component (this live draw) | declared_attribution | component_source | component_override_reason |
+|---|---|---|---|---|
+| #311284 | scm | non-null | classifier_top3 | "" |
+| #311836 | api | non-null | classifier_top3 | "" |
+| #311878 | terminal | non-null | classifier_top3 | "" |
+| #239838 | terminal | non-null | classifier_top3 | "" |
+
+**declared_attribution non-null: 4/4 (100%).** The restoration mechanism works end to end
+— schema + prompt fix together produce well-formed, non-null attribution on every call.
+
+**All 4 reasons are verbatim empty strings — expected, not a gap.** Per `DeclaredAttribution`
+(ADR-0020), `component_override_reason` is populated only when `component_source ==
+"model_override"`; all 4 calls declared `"classifier_top3"` instead. This is consistent
+with — not contradicting — Phase 2's finding: the new classifier now places 3 of these 4
+issues' correct predictions inside its own top-3 (`#239838`, `#311284`, `#311878`), so the
+model is not overriding anything on this draw and correctly self-reports `classifier_top3`
+sourcing. `#311836` drew `api` this time (a different live sample than the earlier
+cached `webview` — Groq synthesis has documented replica-level nondeterminism even at
+`seed=42`, ADR-0019/0020) — `api` also happens to sit in the new classifier's top-3
+(`[ux, extensions, api]`, per Phase 2's measurement), so it too self-reports
+`classifier_top3`, not `model_override`. **The working agreement's framing anticipated
+these as override cases; the classifier retrain already resolved most of them out of that
+category before this validation ran** — a real, coherent convergence across phases, not a
+validation gap. The `model_override` branch (and non-empty
+`component_override_reason` text) remains untested by this specific 4-issue draw; it is
+exercised by `#311836`'s gold-mismatch class more generally (whichever component the model
+guesses that ISN'T in top-3 on a given draw) and by ADR-0020's original n=65 measurement
+(2 misattributed cases out of 65, both pre-existing classifier misses), not newly at risk
+here.
+
+Artifacts: `scripts/measure_attribution_token_cost.py`, `reports/attribution_token_cost.json`,
+`scripts/scratch/validate_declared_attribution_4_overrides.py`,
+`reports/declared_attribution_4_override_validation.json`.
+
 ## Alternatives considered
 
 - **Accept ADR-0056's framing (small regression, large reachability gain) and ship on that

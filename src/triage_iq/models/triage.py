@@ -425,6 +425,12 @@ def _prune_unreferenced_defs(schema: dict) -> None:
             del defs[name]
 
 
+#: Fields excluded from the generic default-based strip below despite carrying an
+#: explicit Pydantic `default` -- see _strip_post_hoc_fields's docstring for why
+#: `declared_attribution` is not like the other 6 (ADR-0057 Phase 3).
+_NEVER_STRIP_DESPITE_DEFAULT = frozenset({"declared_attribution"})
+
+
 def _strip_post_hoc_fields(schema: dict, model_cls: type[BaseModel]) -> None:
     """Remove top-level properties whose Pydantic field carries an explicit `default`
     (not `default_factory`) from the wire schema entirely -- Groq's `strict: true` mode
@@ -442,6 +448,18 @@ def _strip_post_hoc_fields(schema: dict, model_cls: type[BaseModel]) -> None:
     below treats a missing/malformed value as a compliance failure, never a request
     failure). Forcing them into `required` asked the model to spend generation budget
     (and risk a 400) on values nothing downstream consumes.
+
+    2026-09-04 (ADR-0057 Phase 3): `declared_attribution` is carved back OUT of this
+    strip (`_NEVER_STRIP_DESPITE_DEFAULT`), restoring it to `properties`. It was grouped
+    with the other 6 by the generic default-vs-default_factory heuristic, but it is not
+    like them -- `default=None` here means "safe to parse as absent," a Pydantic/product
+    concern, not "the model has nothing to contribute." Unlike the other 6 (fixed values
+    the app overwrites post-hoc or never asks the model to derive), declared_attribution
+    is real, LLM-elicited signal (ADR-0020: component-override reasoning + citation
+    lists) -- the model is the only source for it. Restored as an explicit carve-out,
+    not by changing its Pydantic default (which would also weaken its parsing-safety
+    contract), and not by weakening the general mechanism for the other 6, which stays
+    exactly as ADR-0055 designed it.
 
     `default_factory` fields (e.g. `similar_issues: list = Field(default_factory=list)`)
     are deliberately NOT stripped -- that mechanism means "the model should try, an
@@ -462,6 +480,8 @@ def _strip_post_hoc_fields(schema: dict, model_cls: type[BaseModel]) -> None:
     if not properties:
         return
     for name, field_info in model_cls.model_fields.items():
+        if name in _NEVER_STRIP_DESPITE_DEFAULT:
+            continue
         if field_info.default is not PydanticUndefined and name in properties:
             del properties[name]
 

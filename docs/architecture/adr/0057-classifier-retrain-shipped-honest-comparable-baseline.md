@@ -166,6 +166,89 @@ to report, not fix, at this phase.
   genuine re-baseline after the full 64-issue re-record (Phase 4, ADR-0052); k8s
   `system-requirement` remains uncovered by any classifier trainable on the current corpus.
 
+## Phase 2 addendum (2026-09-04, same session): grounding metric re-confirmed, one new genuine catch found
+
+**Working agreement Phase 2 asked to confirm the new classifier resolves 3 of the 4 known
+vscode override cases while `#311836` (the genuine error) stays flagged, and to report
+whether the metric needs redesigning.**
+
+**Mechanism problem found first, before any result:** `scripts/measure_grounding.py`
+re-invokes the full synthesis pipeline (`_collect_signals` → `_call_llm_verbose`), and the
+LLM's prompt embeds `classifier_top3` as text — since the classifier changed, that text no
+longer matches the committed cassette's recorded requests, so every replay hits
+`CassetteMissError`. This is the guard working correctly (failing closed on a real content
+change, not silently returning stale data) — not a bug to route around by weakening the
+cassette's strictness. Built `scripts/measure_grounding_new_classifier.py` instead: it
+reconstructs the request against the OLD (archived) classifier specifically to get a
+cassette hit and recover the LLM's already-recorded plan (the model's synthesis judgment
+doesn't need a new call just because a downstream feature classifier changed), then
+separately computes the NEW classifier's top-3 for the same issue text and re-runs
+`compute_grounding_status` — the same function production and `measure_grounding.py` both
+use — against that. Zero live calls. `enable_validated_override_rescue` explicitly held at
+`False` (working agreement 2d — not this session's decision to make).
+
+**Result, full 64-issue eval set, not just the 4 previously-known cases:**
+
+| | before (old classifier, this ADR's Phase 1 baseline) | after (new classifier) |
+|---|---:|---:|
+| vscode component-ungrounded | 4/11 (36.36%) | **1/11 (9.09%)** |
+| k8s component-ungrounded | 0/53 (0%) | **1/53 (1.89%)** |
+| overall | 4/64 (6.25%) | **2/64 (3.12%)** |
+
+**vscode: confirmed exactly as expected.** `#239838`, `#311284`, `#311878` all resolve — the
+LLM's own (unchanged) prediction now lands inside the new classifier's top-3. `#311836` stays
+flagged: predicted `webview`, new top-3 `[ux, extensions, api]`, gold `perf` — a genuine
+model error, not a taxonomy artifact, matches ADR-0056's addendum exactly.
+
+**k8s: one new, previously-unflagged case appeared — `#14711`.** Not one of the working
+agreement's 4 anticipated cases. Investigated directly: gold component is `kubectl`. Old
+classifier's top-3 for this issue was `[introspection, logging, usability]` — the LLM
+predicted `usability`, which happened to be in that top-3, so the case registered as
+grounded even though `usability` does not match gold. The new classifier's top-3 is
+`[kubectl, introspection, monitoring]` — gold (`kubectl`) is now correctly in top-3, but the
+LLM's prediction (still `usability`, unchanged, an unchanged genuine wrong answer) no longer
+matches any of the three, so it is now correctly flagged ungrounded. **This is the metric
+catching a real LLM error that the OLD, less accurate classifier was accidentally masking**
+— the new classifier didn't introduce a new failure, it removed a false negative. Strengthens
+the case that the metric is functioning correctly, not evidence against the retrain.
+
+**2b: no metric redesign needed — confirmed, reported plainly.** Both post-retrain ungrounded
+cases (`#311836`, `#14711`) are genuine model errors (LLM prediction matches neither gold nor
+either classifier's top-3), and the metric correctly separates them from the 3 vscode cases
+that were classifier-reachability artifacts. `verify_plan_grounding`'s existing definition
+does exactly what ADR-0056 said it does — no change to the function itself is warranted by
+this data.
+
+**2c: vscode's n=11 arm still cannot support a hard zero-tolerance gate — reporting the n
+needed, as instructed, not deciding to change the gate.** Current observed rate 1/11 = 9.09%,
+Wilson 95% CI **[1.6%, 37.7%]** — wide enough that this single observation is consistent with
+a true rate anywhere from "very rare" to "over a third of cases," not actionable as a signal
+on its own. Computed the sample size a **zero-failure observation** would need to bound the
+true rate with reasonable confidence (Wilson upper bound, 95%):
+
+| Target ceiling on true rate | n needed (0 observed failures) |
+|---|---:|
+| ≤20% | 16 |
+| ≤10% | 35 |
+| ≤5% | 73 |
+| ≤2% | 189 |
+
+vscode's current n=11 doesn't clear even the loosest useful ceiling (20% needs n=16). k8s's
+n=53 clears the 10% ceiling (35) but not the 5% one (73) — its 1/53 result (CI [0.3%, 9.9%])
+is a materially more informative signal than vscode's, though neither is fully resolved at a
+5% ceiling. This is the same eval-set-expansion gap ADR-0056 already flagged as a
+precondition for a defensible vscode gate — not a new finding, but now with a concrete
+target (n≈60-75 for a 5%-ceiling gate, matching this project's other statistical bars) rather
+than a qualitative "too small."
+
+**Explicitly not done: no gate was loosened, tightened, or redefined.** `_GROUNDING_BASELINE`
+in `eval/test_invariants.py` is untouched by this addendum — it remains stale (ratcheted
+against the old classifier and a pre-current cassette) and will be re-derived properly in
+Phase 4, against a real re-recorded cassette, not this diagnostic workaround.
+
+Artifacts: `scripts/measure_grounding_new_classifier.py`,
+`reports/grounding_measurement_new_classifier.json`.
+
 ## Alternatives considered
 
 - **Accept ADR-0056's framing (small regression, large reachability gain) and ship on that

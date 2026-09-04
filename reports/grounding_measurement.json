@@ -2,39 +2,64 @@
   "per_repo": {
     "microsoft/vscode": {
       "n": 11,
-      "component_ungrounded_count": 1,
-      "component_ungrounded_pct": 9.09,
+      "component_ungrounded_count": 4,
+      "component_ungrounded_pct": 36.36,
       "component_ungrounded_ci_recoverable_count": 0,
       "component_ungrounded_ci_recoverable_pct_of_ungrounded": 0.0,
       "similar_issue_ungrounded_count": 0,
       "similar_issue_ungrounded_pct": 0.0,
-      "all_grounded_false_count": 1,
-      "all_grounded_false_pct": 9.09
+      "all_grounded_false_count": 4,
+      "all_grounded_false_pct": 36.36
     },
     "kubernetes/kubernetes": {
-      "n": 54,
-      "component_ungrounded_count": 1,
-      "component_ungrounded_pct": 1.85,
+      "n": 53,
+      "component_ungrounded_count": 0,
+      "component_ungrounded_pct": 0.0,
       "component_ungrounded_ci_recoverable_count": 0,
       "component_ungrounded_ci_recoverable_pct_of_ungrounded": 0.0,
       "similar_issue_ungrounded_count": 0,
       "similar_issue_ungrounded_pct": 0.0,
-      "all_grounded_false_count": 1,
-      "all_grounded_false_pct": 1.85
+      "all_grounded_false_count": 0,
+      "all_grounded_false_pct": 0.0
     }
   },
   "overall": {
-    "n": 65,
-    "component_ungrounded_count": 2,
-    "component_ungrounded_pct": 3.08,
+    "n": 64,
+    "component_ungrounded_count": 4,
+    "component_ungrounded_pct": 6.25,
     "component_ungrounded_ci_recoverable_count": 0,
     "component_ungrounded_ci_recoverable_pct_of_ungrounded": 0.0,
     "similar_issue_ungrounded_count": 0,
     "similar_issue_ungrounded_pct": 0.0,
-    "all_grounded_false_count": 2,
-    "all_grounded_false_pct": 3.08
+    "all_grounded_false_count": 4,
+    "all_grounded_false_pct": 6.25
   },
   "ungrounded_cases": [
+    {
+      "issue_number": 311284,
+      "repo": "microsoft/vscode",
+      "component_grounded": false,
+      "component_reason": "not in classifier_top3",
+      "case_insensitive_match_diagnostic": false,
+      "ungrounded_refs": [],
+      "all_grounded": false,
+      "override_applied": false,
+      "predicted_component": "scm",
+      "classifier_top3_labels": [
+        "api",
+        "tasks",
+        "typescript"
+      ],
+      "retrieved_numbers": [
+        311282,
+        311706,
+        311990,
+        312150,
+        312211
+      ],
+      "llm_status": "ok",
+      "finish_reason": "stop"
+    },
     {
       "issue_number": 311836,
       "repo": "microsoft/vscode",
@@ -43,41 +68,72 @@
       "case_insensitive_match_diagnostic": false,
       "ungrounded_refs": [],
       "all_grounded": false,
+      "override_applied": false,
       "predicted_component": "webview",
       "classifier_top3_labels": [
-        "suggest",
-        "accessibility",
-        "debug"
+        "ux",
+        "debug",
+        "accessibility"
       ],
       "retrieved_numbers": [
-        227,
-        2006,
+        43049,
+        83645,
         311844,
         312020,
         312490
-      ]
+      ],
+      "llm_status": "ok",
+      "finish_reason": "stop"
     },
     {
-      "issue_number": 13057,
-      "repo": "kubernetes/kubernetes",
+      "issue_number": 311878,
+      "repo": "microsoft/vscode",
       "component_grounded": false,
       "component_reason": "not in classifier_top3",
       "case_insensitive_match_diagnostic": false,
       "ungrounded_refs": [],
       "all_grounded": false,
-      "predicted_component": "storage",
+      "override_applied": false,
+      "predicted_component": "terminal",
       "classifier_top3_labels": [
-        "provider/gcp",
-        "kubectl",
-        "security"
+        "api",
+        "javascript",
+        "debug"
       ],
       "retrieved_numbers": [
-        2269,
-        4899,
-        5684,
-        7559,
-        9721
-      ]
+        438,
+        1037,
+        2575,
+        68689,
+        175049
+      ],
+      "llm_status": "ok",
+      "finish_reason": "stop"
+    },
+    {
+      "issue_number": 239838,
+      "repo": "microsoft/vscode",
+      "component_grounded": false,
+      "component_reason": "not in classifier_top3",
+      "case_insensitive_match_diagnostic": false,
+      "ungrounded_refs": [],
+      "all_grounded": false,
+      "override_applied": false,
+      "predicted_component": "terminal",
+      "classifier_top3_labels": [
+        "typescript",
+        "install-update",
+        "javascript"
+      ],
+      "retrieved_numbers": [
+        239946,
+        240002,
+        240006,
+        240064,
+        240145
+      ],
+      "llm_status": "ok",
+      "finish_reason": "stop"
     }
   ]
 }

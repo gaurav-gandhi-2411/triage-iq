@@ -115,6 +115,35 @@ transformers findings (`transformers>=5.x` requires `sentence-transformers>=5.x`
 **Revisit trigger:** Same as the other transformers findings above — bundled into the
 same future major-version dependency refresh.
 
+### CVE-2026-9856 — transformers `save_pretrained()` path traversal via `chat_template` keys
+
+- **Suppressed since:** 2026-09-05
+- **Affected package:** `transformers==4.57.6`
+- **Fix version:** `transformers>=5.10.0` (same constraint as the other open transformers
+  findings above)
+
+**Why suppressed:**
+The vulnerability is in `PreTrainedTokenizerBase.save_pretrained()` / `ProcessorMixin.
+save_pretrained()`: dictionary keys from a loaded `chat_template` are used directly as
+output filenames without path-traversal validation. A malicious Hugging Face Hub
+repository's `tokenizer_config.json` can supply a `chat_template` dict whose keys escape
+the intended save directory (e.g. `../../`-style keys), so calling `save_pretrained()` on
+a tokenizer/processor loaded from that repo can write attacker-controlled content to an
+attacker-chosen path. Checked directly: the only `.save_pretrained()` call sites anywhere
+in this codebase are in four offline training scripts (`scripts/d2_train.py`,
+`scripts/d3_train.py`, `scripts/deberta_train.py`, `scripts/w3_t4_train.py`), and every one
+loads its tokenizer via a hardcoded `BASE_MODEL` constant (`BAAI/bge-base-en-v1.5` or
+`microsoft/deberta-v3-base`) — never a dynamic, configurable, or attacker-suppliable model
+ID. `src/triage_iq/models/similar_issues.py` loads a tokenizer via `SentenceTransformer`
+for inference only and never calls `save_pretrained()`. No reachable surface: this
+codebase never saves a tokenizer/processor loaded from an untrusted repository.
+
+**Why not fixed immediately:** Same triple-major-version-bump blocker as the other open
+transformers findings (`transformers>=5.x` requires `sentence-transformers>=5.x`).
+
+**Revisit trigger:** Same as the other transformers findings above — bundled into the
+same future major-version dependency refresh.
+
 ### PYSEC-2026-3447 — setuptools `FileList` MANIFEST.in exclude-pattern Unicode-normalization bypass
 
 - **Suppressed since:** 2026-07-16

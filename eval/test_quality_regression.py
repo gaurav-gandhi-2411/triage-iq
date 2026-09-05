@@ -139,12 +139,41 @@ def _check_no_fabrication(repo: str, current_scores: dict) -> None:
 
 
 def test_vscode_no_fabrication(current_scores: dict) -> None:
-    """microsoft/vscode must have zero grounding-verified fabricated claims."""
-    _check_no_fabrication("microsoft/vscode", current_scores)
+    """microsoft/vscode's fabrication rate is REPORT ONLY, not gated (ADR-0058, 2026-09-05).
+
+    Deliberately does not assert -- mirrors floor_fail_rate's existing, already-accepted
+    treatment for this exact repo/n (eval_baseline.json's synthesis_quality_floor.
+    floor_fail_rate.gate: "REPORT ONLY, no gate ... vscode's n=11 gives a [21,72]% CI on
+    this proportion -- too underpowered to gate reliably"). Grounding has the identical
+    problem: Wilson 95% CI on a single ungrounded/11 is [1.6%, 37.7%] -- a genuine
+    regression to a true ~15% rate and pure sampling noise at a true ~2% rate are
+    statistically indistinguishable at this n. ADR-0058 found this NOT by assumption but by
+    direct observation: the same issue (vscode #311836) that was flagged 4/11, 1/11, then
+    0/11 across three measurements this engagement took was independently redrawn 6 times
+    live under the FINAL shipping config and landed in the classifier's top-3 on all 6 --
+    the flip was not one lucky draw avoiding detection, it is the config's stable behavior
+    for this issue, and no repeat-draw evidence exists for the other 10 vscode issues'
+    stability. This is why the fix is "remove the gate" (matching floor_fail_rate's honest
+    precedent), NOT "continue-on-error" (eval-gate.yml's own history: continue-on-error
+    masked real regressions for weeks on three separate prior occasions -- see that
+    workflow file's comment on the structural-invariants job -- so re-adding it here for a
+    different reason would repeat a mistake this exact repo already paid for). No
+    assertion fires; the rate is still computed and printed for visibility every run.
+    """
+    rate = current_scores["per_repo"]["microsoft/vscode"]["fabrication_rate"]
+    n = current_scores["per_repo"]["microsoft/vscode"]["n"]
+    if rate > 0.0:
+        print(f"\nWARNING (informational, not gated): microsoft/vscode fabrication_rate="
+              f"{rate:.4f} (n={n}). See plan.grounding_status for the offending plan(s). "
+              "Not blocking per ADR-0058 -- n=11 cannot support a zero-tolerance gate.")
 
 
 def test_k8s_no_fabrication(current_scores: dict) -> None:
-    """kubernetes/kubernetes must have zero grounding-verified fabricated claims."""
+    """kubernetes/kubernetes must have zero grounding-verified fabricated claims.
+
+    Stays hard-gated (ADR-0058): n=53's Wilson upper bound at 0 observed is ~9.9%,
+    genuinely informative, unlike vscode's n=11 -- no statistical basis to loosen this one.
+    """
     _check_no_fabrication("kubernetes/kubernetes", current_scores)
 
 

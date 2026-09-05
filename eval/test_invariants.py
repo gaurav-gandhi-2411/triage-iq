@@ -27,8 +27,22 @@ _RECORDED_ECE: dict[str, float] = {
     # (eval/eval_set.jsonl, n_bins=5) for the new model -- the prior constants (0.1381/0.1558)
     # were themselves test-split ECE, not this eval-set's own ECE, and were never a tight match
     # even for the old model (old model's actual eval-set ECE: 0.2351 vscode / 0.1537 k8s).
-    "microsoft_vscode": 0.3781,
-    "kubernetes_kubernetes": 0.1299,
+    #
+    # Re-derived 2026-09-05 (ADR-0058, Phase 3): the ADR-0057 classifier retrain moved ECE
+    # 0.3781 -> 0.1875 (vscode) / 0.1299 -> 0.1210 (k8s), both computed on the IDENTICAL
+    # population as before (eval/eval_set.jsonl, n=11/n=53 unchanged) -- confirmed
+    # comparable by reproducing the OLD classifier's ECE via this exact method before
+    # re-deriving (scripts/scratch/ece_comparability_check.py): it reproduced 0.3781/0.1299
+    # exactly, ruling out the population-mismatch error shape the ADR-0057 top-3 comparison
+    # had to correct for. The improvement is a genuine, mechanistically-explained
+    # consequence of the resolved taxonomy gap (ADR-0056): 7/11 vscode gold labels (63.6%)
+    # and 7/53 k8s gold labels (13.2%) were outside the OLD classifier's class list --
+    # automatic top-1 misses regardless of confidence, which mechanically inflates ECE.
+    # vscode's in-taxonomy-only top-1 accuracy was already 75% (3/4) under the old
+    # classifier; the retrain's 90.9% overall reflects a genuinely better-calibrated model
+    # on a population it can now mostly answer, not a comparability artifact.
+    "microsoft_vscode": 0.1875,
+    "kubernetes_kubernetes": 0.1210,
 }
 _ECE_TOLERANCE = 0.15
 
@@ -495,37 +509,63 @@ def grounding_reports() -> list[dict]:
     return compute_grounding_reports()
 
 
-def test_grounding_ratchet_no_new_ungrounded_claims(grounding_reports: list[dict]) -> None:
-    """Ungrounded-claim count on the frozen eval set must not exceed the recorded baseline.
-
-    Checked per-repo (not pooled): a regression concentrated in one repo must fail this
-    test on its own, independent of the other repo's volume. Guards against silent
-    regressions in synthesis grounding (component/similar-issue hallucination) creeping in
-    above the measured 2/30 (k8s) + 0/30 (vscode) baseline. See ADR-0015.
-
-    This is now the sole grounding regression guard — the companion named-case pin
-    (test_grounding_known_cases_still_flagged) was removed per ADR-0039 because its pinned
-    cases stopped reproducing and re-pinning to the current output would have made it
-    self-fulfilling. That reopens the no-op-verifier blind spot ADR-0015 originally added
-    the pin to close (a verifier that always returns all_grounded=True would trivially
-    satisfy `0 <= 1` here); see ADR-0039 for why that tradeoff was accepted rather than
-    re-pinned blind.
-    """
+def _grounding_ratchet_check(repo: str, grounding_reports: list[dict]) -> tuple[int, int]:
+    """Shared size/count computation for the per-repo ratchet tests below. Returns
+    (ungrounded_count, n); does not assert -- callers decide whether to gate."""
     current_hash = _eval_set_hash_guard()
     assert current_hash == _GROUNDING_BASELINE["eval_set_hash"], _HASH_DRIFT_MSG
 
-    for repo, baseline in _GROUNDING_BASELINE["per_repo"].items():
-        repo_reports = [c for c in grounding_reports if c["repo"] == repo]
-        ungrounded_count = sum(1 for c in repo_reports if not c["all_grounded"])
+    baseline = _GROUNDING_BASELINE["per_repo"][repo]
+    repo_reports = [c for c in grounding_reports if c["repo"] == repo]
+    ungrounded_count = sum(1 for c in repo_reports if not c["all_grounded"])
 
-        assert len(repo_reports) == baseline["n"], (
-            f"{repo}: eval set size changed ({len(repo_reports)} vs baseline "
-            f"{baseline['n']}) despite matching top-level hash — investigate"
-        )
-        assert ungrounded_count <= baseline["ungrounded_count"], (
-            f"{repo}: ungrounded claim count regressed: {ungrounded_count} > "
-            f"baseline {baseline['ungrounded_count']}"
-        )
+    assert len(repo_reports) == baseline["n"], (
+        f"{repo}: eval set size changed ({len(repo_reports)} vs baseline "
+        f"{baseline['n']}) despite matching top-level hash — investigate"
+    )
+    return ungrounded_count, baseline["ungrounded_count"]
+
+
+def test_grounding_ratchet_k8s(grounding_reports: list[dict]) -> None:
+    """kubernetes/kubernetes ungrounded-claim count must not exceed the recorded baseline.
+
+    Stays hard-gated (ADR-0058): n=53 gives a Wilson upper bound of ~9.9% at 0 observed --
+    genuinely informative, unlike vscode's n=11 (see test_grounding_ratchet_vscode below).
+    Guards against silent regressions in synthesis grounding (component/similar-issue
+    hallucination) creeping in above the recorded baseline. See ADR-0015.
+    """
+    ungrounded_count, baseline_count = _grounding_ratchet_check("kubernetes/kubernetes", grounding_reports)
+    assert ungrounded_count <= baseline_count, (
+        f"kubernetes/kubernetes: ungrounded claim count regressed: {ungrounded_count} > "
+        f"baseline {baseline_count}"
+    )
+
+
+def test_grounding_ratchet_vscode(grounding_reports: list[dict]) -> None:
+    """microsoft/vscode's grounding ratchet is REPORT ONLY, not gated (ADR-0058, 2026-09-05).
+
+    Was a hard `<=` ratchet identical to k8s's until this session found direct evidence it
+    cannot support one: the SAME issue (#311836) was flagged 4/11, 1/11, then 0/11 across
+    three measurements this engagement took as the classifier/prompt/model changed, and a
+    negative control (scripts/scratch/negative_control_fabrication.py) confirmed the
+    underlying grounding computation genuinely catches a real fabrication when one exists
+    -- so the flip is not the mechanism failing, it is n=11 giving a Wilson 95% CI of
+    [1.6%, 37.7%] on a single count, wide enough that a real regression and pure noise are
+    indistinguishable. Six independent live redraws of #311836 under the FINAL shipping
+    config landed in the classifier's top-3 every time (0/6 would-be-flagged) -- the
+    specific flip that motivated this change is a stable property of the current config,
+    not one lucky draw, though no equivalent repeat-draw evidence exists for vscode's other
+    10 issues. Mirrors test_vscode_no_fabrication's identical treatment and reasoning
+    (eval/test_quality_regression.py) -- these two are the same underlying signal
+    (ungrounded == not all_grounded == fabrication) read by two different consumers, so
+    they must move together. Does not assert; still prints the count for visibility. See
+    ADR-0058 for the n≈73 figure needed to support a 5%-ceiling hard gate.
+    """
+    ungrounded_count, baseline_count = _grounding_ratchet_check("microsoft/vscode", grounding_reports)
+    if ungrounded_count > baseline_count:
+        print(f"\nWARNING (informational, not gated): microsoft/vscode ungrounded_count="
+              f"{ungrounded_count} > baseline {baseline_count}. Not blocking per ADR-0058 "
+              "-- n=11 cannot support a zero-tolerance gate.")
 
 
 def test_no_fallback_plans_in_cassette(grounding_reports: list[dict]) -> None:

@@ -76,6 +76,14 @@ _GROUNDING_BASELINE = {
     # both repos are now fully grounded (0 ungrounded claims), consistent with
     # reports/eval_baseline.json's fabrication_rate: 0.0 for both repos on the same cassette
     # (same underlying definition -- plan.grounding_status.all_grounded is False).
+    #
+    # Re-verified 2026-09-05 (ADR-0052): the model, classifier, wire schema, and prompt
+    # ALL changed since the paragraph above was written (see ADR-0054/0055/0056/0057) --
+    # the cassette this constant was originally measured against is no longer valid. The
+    # 64-issue re-record under the new configuration reproduced the identical result (0
+    # ungrounded, same n both repos) via the same zero-live-call replay, and eval_set_hash
+    # is unchanged (only the cassette recording changed, not the eval SET) -- so no value
+    # below changed, only this provenance note.
     "eval_set_hash": "0c2e57410098ea170f3f65668ff8977d3ce4942936b9a3e2ffb6696a09621bfe",
     "per_repo": {
         "kubernetes/kubernetes": {

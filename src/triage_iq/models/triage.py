@@ -627,6 +627,7 @@ class TriageAssistant:
         cache=None,
         use_structured_output: bool = True,
         enable_validated_override_rescue: bool = False,
+        artifact_hashes: dict[str, str] | None = None,
     ) -> None:
         self.repo = repo
         self.classifier = classifier
@@ -646,6 +647,12 @@ class TriageAssistant:
         # verify_override_reason_grounded for why the prior self-certifying version
         # (never merged) was unsound. A caller opts in deliberately, per request.
         self.enable_validated_override_rescue = enable_validated_override_rescue
+        # ADR-0059: SHA-256 of this assistant's own classifier/predictor/retrieval-index/
+        # conformal-store artifacts (eval/artifact_fingerprint.py), stamped onto cassette
+        # entries at recording time so a cassette entry records which artifacts produced its
+        # prompt, not just what the prompt said. None in production (LLMCache has no
+        # set_provenance to call) and for any caller that doesn't pass it explicitly.
+        self._artifact_hashes = artifact_hashes
 
         key = groq_api_key or os.environ.get("GROQ_API_KEY", "")
         if not key:
@@ -897,6 +904,19 @@ class TriageAssistant:
             },
         ]
 
+    def _tag_cache_provenance(self, cache, key: str) -> None:
+        """Stamp this assistant's artifact_hashes onto a just-written cassette entry, if the
+        cache supports it (ADR-0059). Silent no-op for production LLMCache (no
+        set_provenance method) and whenever artifact_hashes wasn't supplied.
+
+        getattr(..., None), not self._artifact_hashes directly: several existing tests build
+        a TriageAssistant via __new__ (bypassing __init__) and hand-set only the attributes
+        they need -- same reason self._cache is read via getattr elsewhere in this method's
+        caller, not assumed present."""
+        artifact_hashes = getattr(self, "_artifact_hashes", None)
+        if artifact_hashes and hasattr(cache, "set_provenance"):
+            cache.set_provenance(key, artifact_hashes)
+
     def _call_llm_verbose(self, signals: dict) -> tuple[TriagePlan, str, dict, str, bool]:
         """Return (plan, raw, usage, llm_status, cache_hit)."""
         from triage_iq.prompts.triage_prompt import (
@@ -1082,6 +1102,7 @@ class TriageAssistant:
 
         if cache is not None and cache_key is not None:
             cache.set(cache_key, "groq", self.model, messages, {"content": raw, "usage": usage})
+            self._tag_cache_provenance(cache, cache_key)
         llm_status = "ok"
 
         try:
@@ -1109,6 +1130,7 @@ class TriageAssistant:
                             parse_retry_key, "groq", self.model, retry_messages,
                             {"content": raw2, "usage": usage},
                         )
+                        self._tag_cache_provenance(cache, parse_retry_key)
                 else:
                     raw2, usage = self._groq_completion(retry_messages, max_tokens=max_tokens)
             except TruncatedCompletionError as exc2:

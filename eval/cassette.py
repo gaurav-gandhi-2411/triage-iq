@@ -198,6 +198,44 @@ class CassettePlayer:
         }
         self._save()
 
+    def set_provenance(self, key: str, artifact_hashes: dict[str, str]) -> None:
+        """Attach model-artifact provenance (ADR-0059) to an already-written entry.
+
+        Called by TriageAssistant right after `set()` writes the synthesis response, so a
+        cassette entry records not just WHAT the model was asked but WHICH classifier /
+        resolution-predictor / retrieval-index / conformal-store artifacts produced the
+        prompt it was asked with. This is per-entry, not per-file, deliberately: a
+        resumable, multi-day recording pass can legitimately have entries written under
+        different artifact states over time (e.g. a classifier retrain landing mid-campaign)
+        -- a single file-level stamp would hide that. See eval/artifact_fingerprint.py and
+        eval/test_invariants.py's test_cassette_provenance_matches_current_artifacts, which
+        this field exists to make checkable.
+
+        Same allow_record discipline as set() -- this only ever runs during the one
+        sanctioned recording pass.
+        """
+        if not self._allow_record:
+            raise RuntimeError(
+                f"Refusing to write provenance to {self._path}: this CassettePlayer was not "
+                "constructed with allow_record=True."
+            )
+        entry = self._entries.get(key)
+        if entry is None or not isinstance(entry, dict) or "response" not in entry:
+            raise KeyError(
+                f"No writable cassette entry for key {key[:16]}… to attach provenance to -- "
+                "call set() first."
+            )
+        entry["artifact_hashes"] = artifact_hashes
+        self._save()
+
+    def get_provenance(self, key: str) -> dict[str, str] | None:
+        """Return the stored artifact_hashes for `key`, or None if the entry predates
+        provenance stamping (ADR-0059) or has none recorded."""
+        entry = self._entries.get(key)
+        if isinstance(entry, dict):
+            return entry.get("artifact_hashes")
+        return None
+
     # ------------------------------------------------------------------
     # Stats
     # ------------------------------------------------------------------

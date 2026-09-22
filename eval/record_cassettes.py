@@ -35,6 +35,7 @@ load_dotenv(ROOT / ".env")
 
 import os
 
+import artifact_fingerprint
 from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
 from triage_iq.model_config import TRIAGE_MODEL
@@ -49,6 +50,15 @@ logger = logging.getLogger(__name__)
 EVAL_SET = ROOT / "eval" / "eval_set.jsonl"
 CASSETTE_PATH = ROOT / "eval" / "cassettes" / "eval_cassette.json"
 CHECKPOINT_PATH = ROOT / "eval" / "cassettes" / "recording_checkpoint.json"
+
+# ADR-0059: the 2026-09-05 incident that made artifact fingerprinting necessary was this
+# exact checkout being resolved as ROOT by a script actually invoked from it (ROOT is always
+# `Path(__file__).parent.parent`, so an accidental main-checkout invocation is
+# indistinguishable from a legitimate one by any check confined to THIS worktree's own code).
+# The general fix is the expected-artifact-hash gate below, which catches ANY wrong-checkout
+# or wrong-artifact-version mistake, not just this one -- this constant is a cheap, specific
+# tripwire for the exact incident pattern, defense in depth on top of that general gate.
+_KNOWN_OTHER_CHECKOUT = Path(r"C:\Users\gaura\ml-projects\triage-iq")
 
 REPO_MAP = {
     "microsoft/vscode": "microsoft_vscode",
@@ -121,27 +131,39 @@ def _compute_prompt_hash() -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 
-def _checkpoint_key(issue_id: str, model: str, prompt_hash: str) -> str:
-    return f"{issue_id}::{model}::{prompt_hash}"
+def _checkpoint_key(issue_id: str, model: str, prompt_hash: str, artifact_hash: str) -> str:
+    return f"{issue_id}::{model}::{prompt_hash}::{artifact_hash}"
 
 
-def _record_done(checkpoint: dict, issue_id: str, record: dict, model: str, prompt_hash: str) -> dict:
-    """Tag and store a done-entry under a composite (issue_id, model, prompt_hash) key so a
-    model or prompt change can never be silently mistaken for "already recorded". Fixes the
-    2026-08-31 incident: a stale checkpoint recorded under the retired llama-3.1-8b-instant,
-    keyed by bare issue_id, was silently accepted as complete for openai/gpt-oss-120b and
-    printed "RECORDING COMPLETE" with the old model's judge means after zero live calls."""
-    tagged = {**record, "issue_id": issue_id, "model": model, "prompt_hash": prompt_hash}
-    checkpoint["done"][_checkpoint_key(issue_id, model, prompt_hash)] = tagged
+def _record_done(
+    checkpoint: dict, issue_id: str, record: dict, model: str, prompt_hash: str, artifact_hash: str,
+) -> dict:
+    """Tag and store a done-entry under a composite (issue_id, model, prompt_hash,
+    artifact_hash) key so a model, prompt, OR classifier/predictor/index/conformal-store
+    change can never be silently mistaken for "already recorded". model/prompt_hash fixes the
+    2026-08-31 incident (a stale checkpoint recorded under the retired llama-3.1-8b-instant,
+    keyed by bare issue_id, was silently accepted as complete for openai/gpt-oss-120b).
+    artifact_hash fixes the 2026-09-05 incident (ADR-0059): a classifier retrain changed what
+    every prompt actually said without changing the model name or prompt/schema text at all --
+    the two dimensions this key already covered -- so it was invisible to this exact
+    resume-safety mechanism until now."""
+    tagged = {
+        **record, "issue_id": issue_id, "model": model,
+        "prompt_hash": prompt_hash, "artifact_hash": artifact_hash,
+    }
+    checkpoint["done"][_checkpoint_key(issue_id, model, prompt_hash, artifact_hash)] = tagged
     return tagged
 
 
-def load_checkpoint(current_model: str, current_prompt_hash: str) -> tuple[dict, dict[str, dict]]:
+def load_checkpoint(
+    current_model: str, current_prompt_hash: str, current_artifact_hash: str,
+) -> tuple[dict, dict[str, dict]]:
     """Load the checkpoint file and partition its done-entries into those matching the
-    currently configured (model, prompt_hash) vs. everything else. Any entry missing a
-    model/prompt_hash tag (i.e. written before this composite-key fix) is treated as
-    untrustworthy and halts the run -- it cannot be proven to belong to the current model,
-    which is exactly the silent-reuse failure this keying scheme exists to prevent."""
+    currently configured (model, prompt_hash, artifact_hash) vs. everything else. Any entry
+    missing one of these three tags (i.e. written before that tag existed) is treated as
+    untrustworthy and halts the run -- it cannot be proven to belong to the current
+    configuration, which is exactly the silent-reuse failure this keying scheme exists to
+    prevent."""
     if not CHECKPOINT_PATH.exists():
         return {"done": {}}, {}
 
@@ -149,37 +171,42 @@ def load_checkpoint(current_model: str, current_prompt_hash: str) -> tuple[dict,
     all_done = data.get("done", {})
 
     current_done: dict[str, dict] = {}
-    stale_by_model: dict[str, int] = {}
+    stale_by_config: dict[str, int] = {}
     for key, rec in all_done.items():
         rec_model = rec.get("model")
         rec_hash = rec.get("prompt_hash")
-        if rec_model is None or rec_hash is None:
+        rec_artifact_hash = rec.get("artifact_hash")
+        if rec_model is None or rec_hash is None or rec_artifact_hash is None:
             logger.error(
-                "STOP: recording_checkpoint.json entry %r has no model/prompt_hash tag -- "
-                "it predates the (issue_id, model, prompt_hash) keying fix and cannot be "
-                "trusted to belong to the currently configured model (%s). Refusing to "
-                "resume silently. Archive or delete this checkpoint file to start fresh "
-                "under the current model, or manually re-tag its entries if you can confirm "
-                "which model actually recorded them.",
-                key, current_model,
+                "STOP: recording_checkpoint.json entry %r is missing a model/prompt_hash/"
+                "artifact_hash tag -- it predates the composite-key fix (ADR-0058/ADR-0059) "
+                "and cannot be trusted to belong to the currently configured model+artifacts "
+                "(%s, artifact_hash=%s). Refusing to resume silently. Archive or delete this "
+                "checkpoint file to start fresh, or manually re-tag its entries if you can "
+                "confirm what actually recorded them.",
+                key, current_model, current_artifact_hash,
             )
             sys.exit(1)
-        if rec_model == current_model and rec_hash == current_prompt_hash:
+        if (
+            rec_model == current_model
+            and rec_hash == current_prompt_hash
+            and rec_artifact_hash == current_artifact_hash
+        ):
             current_done[rec["issue_id"]] = rec
         else:
-            stale_by_model[f"{rec_model}@{rec_hash[:8]}"] = (
-                stale_by_model.get(f"{rec_model}@{rec_hash[:8]}", 0) + 1
-            )
+            config_id = f"{rec_model}@{rec_hash[:8]}@{rec_artifact_hash[:8]}"
+            stale_by_config[config_id] = stale_by_config.get(config_id, 0) + 1
 
     logger.info(
-        "Checkpoint recorded under configured model=%s prompt_hash=%s: %d issue(s) already done.",
-        current_model, current_prompt_hash, len(current_done),
+        "Checkpoint recorded under configured model=%s prompt_hash=%s artifact_hash=%s: "
+        "%d issue(s) already done.",
+        current_model, current_prompt_hash, current_artifact_hash, len(current_done),
     )
-    if stale_by_model:
+    if stale_by_config:
         logger.warning(
-            "Checkpoint also holds %d entries recorded under a DIFFERENT model/prompt -- "
-            "ignored for resume, not deleted: %s",
-            sum(stale_by_model.values()), stale_by_model,
+            "Checkpoint also holds %d entries recorded under a DIFFERENT model/prompt/"
+            "artifact configuration -- ignored for resume, not deleted: %s",
+            sum(stale_by_config.values()), stale_by_config,
         )
     return data, current_done
 
@@ -203,11 +230,72 @@ def load_eval_set() -> list[dict]:
     return issues
 
 
+def _resolve_and_verify_artifacts() -> dict[str, str]:
+    """ADR-0059: print exactly which checkout and which artifact files this run resolved,
+    and refuse to proceed unless they match the committed expected-hash file. This is the
+    check that would have caught the 2026-09-05 incident immediately, at the top of the run,
+    instead of hours later as an unexplained CassetteMissError on replay."""
+    resolved_root = ROOT.resolve()
+    logger.info("Resolved ROOT for this invocation: %s", resolved_root)
+    try:
+        other = _KNOWN_OTHER_CHECKOUT.resolve()
+    except OSError:
+        other = None
+    if other is not None and resolved_root == other:
+        logger.error(
+            "STOP: this invocation resolved ROOT to %s -- the known OTHER TriageIQ checkout, "
+            "not this worktree. That is exactly the 2026-09-05 incident shape (a script "
+            "executed against the wrong checkout's classifier/artifacts). Run this script "
+            "from the intended worktree, not %s.",
+            resolved_root, resolved_root,
+        )
+        sys.exit(1)
+
+    current_hashes = artifact_fingerprint.compute_artifact_hashes(ROOT)
+    logger.info("Model artifacts resolved for this run:")
+    for rel, h in sorted(current_hashes.items()):
+        abs_path = (ROOT / rel).resolve()
+        logger.info("  %s  %s  (%s)", h[:16], rel, abs_path)
+        if h == "MISSING":
+            logger.error("STOP: artifact missing on disk: %s", abs_path)
+            sys.exit(1)
+
+    expected = artifact_fingerprint.load_expected_hashes(ROOT)
+    expected_path = artifact_fingerprint.expected_hashes_path(ROOT)
+    if expected is None:
+        logger.error(
+            "STOP: %s does not exist. This file is the explicit, committed statement of "
+            "which artifacts this branch intends to record against (ADR-0059) -- a missing "
+            "file is refused, never treated as 'no expectation, proceed anyway' (rule 98a: "
+            "fail closed, not open). Create it deliberately "
+            "(artifact_fingerprint.save_expected_hashes) once you've confirmed the resolved "
+            "artifacts above are the ones you actually intend to record against.",
+            expected_path,
+        )
+        sys.exit(1)
+
+    mismatches = artifact_fingerprint.diff_against_expected(current_hashes, expected)
+    if mismatches:
+        logger.error(
+            "STOP: resolved artifacts do not match %s. Refusing to record -- a mismatch "
+            "here means either the wrong checkout executed this script, or the artifacts "
+            "changed without a deliberate update to the expected-hash file:\n%s",
+            expected_path, "\n".join(mismatches),
+        )
+        sys.exit(1)
+
+    logger.info("Artifact check: resolved artifacts match %s -- proceeding.", expected_path)
+    return current_hashes
+
+
 def main() -> None:
     groq_key = os.environ.get("GROQ_API_KEY", "")
     if not groq_key:
         logger.error("GROQ_API_KEY not set. Add it to .env or export it.")
         sys.exit(1)
+
+    current_artifact_hashes = _resolve_and_verify_artifacts()
+    current_artifact_hash = artifact_fingerprint.combined_hash(current_artifact_hashes)
 
     issues = load_eval_set()
     logger.info("Eval set: %d issues (%s)",
@@ -222,10 +310,13 @@ def main() -> None:
 
     current_model = TRIAGE_MODEL
     current_prompt_hash = _compute_prompt_hash()
-    logger.info("Configured for this run: model=%s prompt_hash=%s", current_model, current_prompt_hash)
+    logger.info(
+        "Configured for this run: model=%s prompt_hash=%s artifact_hash=%s",
+        current_model, current_prompt_hash, current_artifact_hash,
+    )
 
-    # Load checkpoint, filtered to entries matching the CURRENT model+prompt only.
-    checkpoint, current_done = load_checkpoint(current_model, current_prompt_hash)
+    # Load checkpoint, filtered to entries matching the CURRENT model+prompt+artifacts only.
+    checkpoint, current_done = load_checkpoint(current_model, current_prompt_hash, current_artifact_hash)
     # Exclude tpd_hit entries so they are retried — their synthesis is cached, only the judge reruns.
     # Exclude schema_invalid_retry entries too (2026-09-03, ADR-0055 Part P1a/2c): a FIRST
     # degraded_schema_invalid failure on an issue is expected residual (ADR-0055 Part A found
@@ -256,6 +347,9 @@ def main() -> None:
                 str(models_dir / f"resolution_predictor_{slug}.pkl")
             )
             train_df = pd.read_parquet(processed_dir / f"{slug}_temporal_train.parquet")
+            # ADR-0059: only THIS repo's own artifacts, so a cassette entry's provenance
+            # names exactly what fed its prompt (not the other repo's classifier too).
+            repo_artifact_hashes = artifact_fingerprint.compute_artifact_hashes(ROOT, repo=repo)
             assistant = TriageAssistant(
                 repo=repo,
                 classifier=classifier,
@@ -264,6 +358,7 @@ def main() -> None:
                 train_df=train_df,
                 groq_api_key=groq_key,
                 cache=cassette,
+                artifact_hashes=repo_artifact_hashes,
             )
             models[repo] = {
                 "classifier": classifier,
@@ -379,7 +474,10 @@ def main() -> None:
                     "judge_score": None,
                     "schema_invalid_retry": True,
                 }
-                _record_done(checkpoint, issue_id, results[issue_id], current_model, current_prompt_hash)
+                _record_done(
+                    checkpoint, issue_id, results[issue_id],
+                    current_model, current_prompt_hash, current_artifact_hash,
+                )
                 save_checkpoint(checkpoint)
                 continue
             if llm_status not in ("ok", "parse_retry_succeeded"):
@@ -466,7 +564,10 @@ def main() -> None:
 
         if plan is None:
             results[issue_id] = {"error": triage_error, "plan": None, "judge_score": None}
-            _record_done(checkpoint, issue_id, results[issue_id], current_model, current_prompt_hash)
+            _record_done(
+                checkpoint, issue_id, results[issue_id],
+                current_model, current_prompt_hash, current_artifact_hash,
+            )
             save_checkpoint(checkpoint)
             continue
 
@@ -538,7 +639,10 @@ def main() -> None:
                 "judge_score": None,
                 "tpd_hit": True,
             }
-            _record_done(checkpoint, issue_id, results[issue_id], current_model, current_prompt_hash)
+            _record_done(
+                checkpoint, issue_id, results[issue_id],
+                current_model, current_prompt_hash, current_artifact_hash,
+            )
             save_checkpoint(checkpoint)
             print(f"\n=== TPD HIT (during judge) ===")
             print(f"Synthesis recorded: {n_synthesis_recorded}")
@@ -552,7 +656,7 @@ def main() -> None:
             "error": triage_error,
         }
         results[issue_id] = rec
-        _record_done(checkpoint, issue_id, rec, current_model, current_prompt_hash)
+        _record_done(checkpoint, issue_id, rec, current_model, current_prompt_hash, current_artifact_hash)
         save_checkpoint(checkpoint)
 
     # --- Summary ---

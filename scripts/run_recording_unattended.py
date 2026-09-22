@@ -4,7 +4,8 @@ from __future__ import annotations
 resumes automatically, without a human/CC session babysitting it.
 
 This is a wrapper, not a replacement: record_cassettes.py's own checkpoint (keyed by
-(issue_id, model, prompt_hash) as of the 2026-08-30 fix) is still the source of truth for
+(issue_id, model, prompt_hash) as of the 2026-08-30 fix, extended to (issue_id, model,
+prompt_hash, artifact_hash) by ADR-0059 on 2026-09-06) is still the source of truth for
 what's actually recorded. This script only decides WHEN to re-invoke it and WHETHER an
 exit is "wait and retry" vs "stop, a human needs to look at this."
 
@@ -65,7 +66,10 @@ _TPD_WAIT_RE = re.compile(r"try again in\s+(?:(\d+)m)?\s*(?:([\d.]+)s)?", re.IGN
 HARD_STOP_MARKERS = [
     "SYNTHESIS DEGRADED (not a genuine completion)",
     "TRUNCATED COMPLETION",
-    "predates the (issue_id, model, prompt_hash) keying fix",
+    "predates the composite-key fix",
+    "resolved ROOT to",  # ADR-0059: wrong-checkout tripwire in record_cassettes.py
+    "does not exist. This file is the explicit, committed statement",  # missing expected-hash file
+    "resolved artifacts do not match",  # ADR-0059: artifact mismatch against expected hashes
     "GROQ_API_KEY not set",
     # 2026-09-03 (ADR-0055 Part P1a/2c): a FIRST degraded_schema_invalid on an issue is
     # NOT a hard stop -- it's logged and the run continues (see record_cassettes.py),
@@ -89,25 +93,34 @@ def _load_groq_key() -> str:
     raise RuntimeError(f"GROQ_API_KEY not found in {MAIN_REPO_ENV}")
 
 
-def _current_model_and_hash() -> tuple[str, str]:
+def _current_model_and_hash() -> tuple[str, str, str]:
     """Import record_cassettes.py's own hashing logic rather than re-deriving it, so this
-    wrapper can never drift out of sync with what a real invocation would compute."""
+    wrapper can never drift out of sync with what a real invocation would compute. Includes
+    artifact_hash (ADR-0059) alongside model/prompt_hash -- this wrapper's own terminal-state
+    check below must key on all three or it can silently declare "done" against a checkpoint
+    recorded under different classifier/predictor/index/conformal artifacts."""
     sys.path.insert(0, str(WORKTREE_ROOT / "src"))
     sys.path.insert(0, str(RECORD_SCRIPT.parent))
     import record_cassettes as rc  # noqa: E402
+    import artifact_fingerprint  # noqa: E402
 
-    return rc.TRIAGE_MODEL, rc._compute_prompt_hash()
+    artifact_hashes = artifact_fingerprint.compute_artifact_hashes(WORKTREE_ROOT)
+    return rc.TRIAGE_MODEL, rc._compute_prompt_hash(), artifact_fingerprint.combined_hash(artifact_hashes)
 
 
-def _checkpoint_progress(model: str, prompt_hash: str) -> tuple[int, int, list[str]]:
-    """(resolved, dead, dead_issue_ids) among entries matching (model, prompt_hash)."""
+def _checkpoint_progress(model: str, prompt_hash: str, artifact_hash: str) -> tuple[int, int, list[str]]:
+    """(resolved, dead, dead_issue_ids) among entries matching (model, prompt_hash, artifact_hash)."""
     if not CHECKPOINT_PATH.exists():
         return 0, 0, []
     data = json.loads(CHECKPOINT_PATH.read_text(encoding="utf-8"))
     resolved = 0
     dead: list[str] = []
     for rec in data.get("done", {}).values():
-        if rec.get("model") != model or rec.get("prompt_hash") != prompt_hash:
+        if (
+            rec.get("model") != model
+            or rec.get("prompt_hash") != prompt_hash
+            or rec.get("artifact_hash") != artifact_hash
+        ):
             continue
         if rec.get("judge_score") is not None:
             resolved += 1
@@ -140,7 +153,7 @@ def main() -> None:
     PID_PATH.write_text(str(__import__("os").getpid()), encoding="utf-8")
 
     groq_key = _load_groq_key()
-    model, prompt_hash = _current_model_and_hash()
+    model, prompt_hash, artifact_hash = _current_model_and_hash()
 
     import os
 
@@ -150,12 +163,12 @@ def main() -> None:
     iteration = 0
     while True:
         iteration += 1
-        resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash)
+        resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash, artifact_hash)
 
         if resolved + dead_count >= TOTAL_ISSUES:
             _write_status([
                 f"STOPPED (terminal): {_now()}",
-                f"Model: {model}  Prompt hash: {prompt_hash}",
+                f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
                 f"Resolved: {resolved}/{TOTAL_ISSUES}  Permanently dead (early-termination): {dead_count}",
                 f"Dead issue ids: {dead_ids}",
                 "All 64 issues are accounted for -- nothing left for a retry to accomplish.",
@@ -168,7 +181,7 @@ def main() -> None:
 
         _write_status([
             f"RUNNING: {_now()}",
-            f"Model: {model}  Prompt hash: {prompt_hash}",
+            f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
             f"Resolved: {resolved}/{TOTAL_ISSUES}  Permanently dead so far: {dead_count} {dead_ids}",
             f"Iteration {iteration}: invoking record_cassettes.py now...",
         ])
@@ -188,11 +201,11 @@ def main() -> None:
 
         hard_stop = next((m for m in HARD_STOP_MARKERS if m in output), None)
         if hard_stop:
-            resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash)
+            resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash, artifact_hash)
             _write_status([
                 f"BLOCKED (hard stop): {_now()}",
                 f"Reason: {hard_stop!r} found in subprocess output.",
-                f"Model: {model}  Prompt hash: {prompt_hash}",
+                f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
                 f"Resolved: {resolved}/{TOTAL_ISSUES}  Dead: {dead_count} {dead_ids}",
                 f"Full log: {log_path}",
                 f"Iterations run: {iteration}",
@@ -202,11 +215,11 @@ def main() -> None:
 
         if "=== TPD HIT" in output:
             wait_s = _parse_tpd_wait(output) + RETRY_BUFFER_S
-            resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash)
+            resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash, artifact_hash)
             resume_at = datetime.now(timezone.utc).timestamp() + wait_s
             _write_status([
                 f"WAITING (rate limit): {_now()}",
-                f"Model: {model}  Prompt hash: {prompt_hash}",
+                f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
                 f"Resolved: {resolved}/{TOTAL_ISSUES}  Dead: {dead_count} {dead_ids}",
                 f"Sleeping {wait_s}s (~{wait_s // 60}m), resuming at "
                 f"{datetime.fromtimestamp(resume_at, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}.",
@@ -217,10 +230,10 @@ def main() -> None:
             continue
 
         if "=== CONNECTION LOST" in output:
-            resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash)
+            resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash, artifact_hash)
             _write_status([
                 f"WAITING (connection error): {_now()}",
-                f"Model: {model}  Prompt hash: {prompt_hash}",
+                f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
                 f"Resolved: {resolved}/{TOTAL_ISSUES}  Dead: {dead_count} {dead_ids}",
                 f"Sleeping {CONNECTION_WAIT_S}s (~{CONNECTION_WAIT_S // 60}m) then retrying.",
                 f"Full log: {log_path}",
@@ -236,10 +249,10 @@ def main() -> None:
             # check at the TOP of the loop, since that only runs BEFORE each
             # iteration. Recognize the script's own success summary directly instead
             # of falling through to the generic unrecognized-outcome bucket.
-            resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash)
+            resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash, artifact_hash)
             _write_status([
                 f"DONE (recording complete): {_now()}",
-                f"Model: {model}  Prompt hash: {prompt_hash}",
+                f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
                 f"Resolved: {resolved}/{TOTAL_ISSUES}  Dead: {dead_count} {dead_ids}",
                 f"Full log: {log_path}",
                 f"Iterations run: {iteration}",
@@ -249,11 +262,11 @@ def main() -> None:
 
         # Anything else (including exit 0 mid-run, or an exit 1 this wrapper doesn't
         # recognize) is a fail-closed stop -- never loop silently on an unknown outcome.
-        resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash)
+        resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash, artifact_hash)
         _write_status([
             f"BLOCKED (unrecognized outcome): {_now()}",
             f"Subprocess exit code: {proc.returncode}",
-            f"Model: {model}  Prompt hash: {prompt_hash}",
+            f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
             f"Resolved: {resolved}/{TOTAL_ISSUES}  Dead: {dead_count} {dead_ids}",
             f"Full log: {log_path}",
             "This wrapper does not retry an outcome it doesn't recognize -- inspect the",

@@ -479,6 +479,92 @@ def test_model_manifest_clean() -> None:
     )
 
 
+def test_cassette_provenance_matches_current_artifacts() -> None:
+    """Every eval_cassette.json entry's stamped artifact_hashes (ADR-0059) must match the
+    classifier/predictor/index/conformal-store files actually on disk in this checkout.
+
+    Guards against the 2026-09-05 incident this test exists to make impossible: a cassette
+    recorded against one checkout's classifier files got committed while a DIFFERENT
+    (retrained) classifier lived in this worktree's data/models -- record_cassettes.py's own
+    model/prompt_hash checkpoint tagging had no way to detect this, because neither the model
+    name nor the prompt text changed, only the classifier's fitted parameters did. A mismatch
+    here means either the cassette needs re-recording (eval/record_cassettes.py) against the
+    artifacts currently on disk, or the artifacts on disk are wrong for this cassette.
+
+    Entries with no artifact_hashes at all (recorded before ADR-0059) are reported as a
+    distinct failure category, not silently skipped -- an unstamped entry is exactly as
+    unverifiable as a mismatched one, just for a different reason.
+    """
+    import sys as _sys
+
+    _sys.path.insert(0, str(ROOT / "eval"))
+    import artifact_fingerprint
+
+    cassette_path = ROOT / "eval" / "cassettes" / "eval_cassette.json"
+    if not cassette_path.exists():
+        pytest.skip(reason="eval_cassette.json not found")
+
+    raw = json.loads(cassette_path.read_text(encoding="utf-8"))
+    entries = raw.get("entries", {})
+    if not entries:
+        pytest.skip(reason="eval_cassette.json has no entries")
+
+    current_by_repo = {
+        repo: artifact_fingerprint.compute_artifact_hashes(ROOT, repo=repo) for repo in REPOS
+    }
+
+    unstamped: list[str] = []
+    mismatched: list[str] = []
+    checked = 0
+    for key, entry in entries.items():
+        if not (isinstance(entry, dict) and "response" in entry):
+            continue  # legacy/pre-request-storage entry shape, not this check's concern
+        provenance = entry.get("artifact_hashes")
+        if not provenance:
+            unstamped.append(key[:16])
+            continue
+        checked += 1
+        # A provenance dict was recorded against ONE repo's artifact set (ADR-0059 stamps
+        # only the triaged issue's own repo, not both) -- match it against whichever repo's
+        # current hashes it's a subset of, rather than assuming which repo this key belongs
+        # to (the cassette key is an opaque LLM-request hash, not itself repo-labeled).
+        matched_repo = next(
+            (
+                repo for repo, current in current_by_repo.items()
+                if all(current.get(p) == h for p, h in provenance.items())
+            ),
+            None,
+        )
+        if matched_repo is None:
+            best_repo = max(
+                current_by_repo,
+                key=lambda r: sum(
+                    1 for p, h in provenance.items() if current_by_repo[r].get(p) == h
+                ),
+            )
+            diff = artifact_fingerprint.diff_against_expected(current_by_repo[best_repo], provenance)
+            mismatched.append(f"{key[:16]} (closest match {best_repo}):\n" + "\n".join(diff))
+
+    errors: list[str] = []
+    if unstamped:
+        errors.append(
+            f"{len(unstamped)}/{checked + len(unstamped)} entries have no artifact_hashes "
+            f"(recorded before ADR-0059, or by a path that doesn't stamp provenance): "
+            f"{unstamped[:10]}{' ...' if len(unstamped) > 10 else ''}"
+        )
+    if mismatched:
+        errors.append(
+            f"{len(mismatched)}/{checked} stamped entries do NOT match the artifacts "
+            f"currently on disk:\n" + "\n\n".join(mismatched[:5])
+            + (f"\n... and {len(mismatched) - 5} more" if len(mismatched) > 5 else "")
+        )
+
+    assert not errors, (
+        "Cassette provenance drift detected — re-run eval/record_cassettes.py against the "
+        "current artifacts and commit the updated cassette:\n\n" + "\n\n".join(errors)
+    )
+
+
 def _eval_set_hash_guard() -> str:
     """Compute eval_set.jsonl's sha256 and return a loud failure message if it has drifted.
 

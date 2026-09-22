@@ -1,3 +1,1901 @@
 {
-  "done": {}
+  "done": {
+    "k8s-13257::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "test-infra",
+        "component_confidence": 0.605,
+        "similar_issues": [
+          {
+            "number": 21839,
+            "similarity": 0.871,
+            "relevance_note": "Identical flaky e2e test for the same PD scenario at head."
+          },
+          {
+            "number": 21830,
+            "similarity": 0.869,
+            "relevance_note": "Flake of a related PD test, indicating possible shared underlying issue."
+          },
+          {
+            "number": 28214,
+            "similarity": 0.849,
+            "relevance_note": "Same test marked as slow/flaky, showing recurrence across releases."
+          }
+        ],
+        "expected_resolution_summary": "Flaky e2e test likely due to timing/race condition in PD handling; fix expected within a few days once root cause is isolated.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 147.0,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 43.0,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The flakiness does not block user workflows but degrades CI reliability and can hide regressions; a workaround (re‑run) exists, so not high priority.",
+        "suggested_assignee_class": "test-infra team",
+        "suggested_next_steps": [
+          "Reproduce the failure locally with the same test configuration and capture logs to pinpoint the nondeterministic value.",
+          "Bisect recent changes to the PD controller and test framework to identify the commit introducing the flakiness.",
+          "Add explicit synchronization or retries in the test to reduce nondeterminism, and update the test to be more robust.",
+          "Link this issue to the most similar prior flake (#21839) and consider closing duplicates if they refer to the same root cause."
+        ],
+        "triage_summary": "The e2e test \"Pod Disks should schedule a pod w/ a RW PD, remove it, then schedule it on another host\" is flaky at head, failing with mismatched volume IDs. Similar flake reports exist (#21839, #21830, #28214). Assign to test‑infra; medium priority due to CI impact. Expected fix within a few days.",
+        "grounding": {
+          "component_source": "test-infra",
+          "similar_issue_refs": [
+            21839,
+            21830,
+            28214
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            21839,
+            21830,
+            28214
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            21839,
+            21830,
+            28214
+          ],
+          "next_steps_cited_issues": [
+            21839
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 1,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid but the priority is misaligned with the gold standard's 'high' priority, which likely reflects the significant CI reliability impact of the flaky test."
+      },
+      "error": null,
+      "issue_id": "k8s-13257",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "k8s-14054::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "kubelet",
+        "component_confidence": 0.553,
+        "similar_issues": [
+          {
+            "number": 12836,
+            "similarity": 0.78,
+            "relevance_note": "Directly discusses registering the master kubelet with the apiserver and a revert of that change."
+          },
+          {
+            "number": 12349,
+            "similarity": 0.778,
+            "relevance_note": "Describes the same registration option and its separation from local apiserver usage."
+          },
+          {
+            "number": 2435,
+            "similarity": 0.777,
+            "relevance_note": "Early implementation of kubelet self‑registration with the master, relevant for the requested fix."
+          }
+        ],
+        "expected_resolution_summary": "Small configuration/registration fix; expected to be resolved within a day once the correct flag handling is updated.",
+        "expected_resolution_lower_days": 0.0,
+        "expected_resolution_upper_days": 15.9,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 72.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The change is limited to master‑kubelet registration, does not block cluster operation, and has existing workarounds (e.g., manual flag settings). Impact is narrow, so low priority is appropriate.",
+        "suggested_assignee_class": "kubelet team",
+        "suggested_next_steps": [
+          "Locate the code path handling the --register-with-apiserver flag for the master kubelet.",
+          "Apply the fix/revert pattern from #12836 or #12349 to ensure proper registration.",
+          "Add a unit test that starts a master kubelet and verifies it appears in the apiserver endpoints list.",
+          "Update documentation to reflect the correct flag usage for master nodes."
+        ],
+        "triage_summary": "Issue requests that the master kubelet be registered with the apiserver, referencing #13102. Similar past issues (#12836, #12349, #2435) cover the same area. The change is straightforward and low‑impact, suitable for a quick fix by the kubelet team.",
+        "grounding": {
+          "component_source": "kubelet",
+          "similar_issue_refs": [
+            12836,
+            12349,
+            2435
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            12836,
+            12349,
+            2435
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            12836,
+            12349,
+            2435
+          ],
+          "next_steps_cited_issues": [
+            12836,
+            12349
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 1,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with accurate component identification, highly relevant similar issues, actionable next steps, and a reasonable resolution estimate aligned with the gold standard."
+      },
+      "error": null,
+      "issue_id": "k8s-14054",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "k8s-13096::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "api",
+        "component_confidence": 0.58,
+        "similar_issues": [
+          {
+            "number": 5800,
+            "similarity": 0.714,
+            "relevance_note": "Defines PersistentVolume and PersistentVolumeClaim API types; directly related to response schema."
+          },
+          {
+            "number": 20213,
+            "similarity": 0.715,
+            "relevance_note": "Addresses controller processing of PV/PVC; may involve list handling logic."
+          },
+          {
+            "number": 27523,
+            "similarity": 0.709,
+            "relevance_note": "Mentions misleading warnings for PVC; indicates handling of empty results."
+          }
+        ],
+        "expected_resolution_summary": "Modify the API serialization to return an empty items array instead of nil for empty PersistentVolumeList and PersistentVolumeClaimList responses.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 259.6,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 40.2,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The API returns nil where an empty list is expected, which can break client code that assumes a list. It is a functional regression without a crash, and a manual nil‑check workaround exists, so medium priority.",
+        "suggested_assignee_class": "api team",
+        "suggested_next_steps": [
+          "Reproduce the nil response via direct API call and `kubectl get pv` on a cluster with no PVs.",
+          "Locate the serialization code for PersistentVolumeList and PersistentVolumeClaimList in the apiserver codebase.",
+          "Change the encoder to emit \"items\": [] when the list is empty.",
+          "Add unit tests covering empty list serialization for both PV and PVC.",
+          "Update API documentation to state that an empty list is returned when no resources exist."
+        ],
+        "triage_summary": "API returns nil instead of an empty list for empty PersistentVolumeList and PersistentVolumeClaimList objects, causing client incompatibility. Two related issues (#5800, #20213, #27523) indicate similar handling concerns. Assign to the API team with medium priority.",
+        "grounding": {
+          "component_source": "api",
+          "similar_issue_refs": [
+            5800,
+            20213,
+            27523
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            5800,
+            20213,
+            27523
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            5800,
+            20213,
+            27523
+          ],
+          "next_steps_cited_issues": []
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid and actionable, with correct component labeling and relevant issue references. However, the priority is misaligned with the gold standard (low vs. medium), which affects the overall quality score."
+      },
+      "error": null,
+      "issue_id": "k8s-13096",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "k8s-12224::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "example",
+        "component_confidence": 0.62,
+        "similar_issues": [
+          {
+            "number": 743,
+            "similarity": 0.748,
+            "relevance_note": "User asks about missing run script/port; this issue discusses the PHP‑Redis guestbook example setup."
+          },
+          {
+            "number": 26764,
+            "similarity": 0.745,
+            "relevance_note": "Walkthrough of guestbook example with Flask/NGINX shows how ports are exposed; relevant for locating the correct service port."
+          },
+          {
+            "number": 13428,
+            "similarity": 0.738,
+            "relevance_note": "General testing of the guestbook example includes steps to discover service ports."
+          }
+        ],
+        "expected_resolution_summary": "Answer the user with the correct service/NodePort for the PHP guestbook example and update documentation; typically resolved within a few days.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 245.1,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 37.0,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The issue is a usability question about which port the example exposes; it does not block any core functionality and has a straightforward documentation‑based answer.",
+        "suggested_assignee_class": "example team",
+        "suggested_next_steps": [
+          "Check the guestbook example's Kubernetes manifests to identify the Service type and targetPort (usually 80).",
+          "Verify the Service is of type LoadBalancer/NodePort and note the allocated external port (e.g., 30000).",
+          "Update the example README with explicit instructions on how to discover and access the PHP app port.",
+          "Add a comment linking to the relevant manifest lines for future reference."
+        ],
+        "triage_summary": "User cannot determine the port for the PHP guestbook example after deploying on Azure; the answer lies in the Service definition. Low priority, assign to the example team and provide documentation clarification.",
+        "grounding": {
+          "component_source": "example",
+          "similar_issue_refs": [
+            743,
+            26764,
+            13428
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            743,
+            26764,
+            13428
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            743,
+            26764,
+            13428
+          ],
+          "next_steps_cited_issues": []
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid but has a critical misalignment in priority. The issue is high priority due to the user's inability to access the application, yet the plan labels it as low priority. Other aspects like component match, issue relevance, and next steps are strong."
+      },
+      "error": null,
+      "issue_id": "k8s-12224",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "k8s-13435::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "os/fedora",
+        "component_confidence": 0.683,
+        "similar_issues": [
+          {
+            "number": 2597,
+            "similarity": 0.764,
+            "relevance_note": "Fedora minion setup fails, similar mirror errors during kube-up."
+          },
+          {
+            "number": 2054,
+            "similarity": 0.748,
+            "relevance_note": "Problem running minion on Fedora 20, mirrors not found."
+          },
+          {
+            "number": 1085,
+            "similarity": 0.728,
+            "relevance_note": "Errors updating Fedora in Vagrant/kube setup, mirrors missing."
+          }
+        ],
+        "expected_resolution_summary": "Fix Fedora mirror list or update documentation to point to valid repos; typical turnaround 1–3 weeks.",
+        "expected_resolution_lower_days": 0.6,
+        "expected_resolution_upper_days": 499.5,
+        "resolution_bucket": "long",
+        "resolution_confidence_pct": 28.1,
+        "resolution_interval_conformal": null,
+        "priority_guess": "high",
+        "priority_rationale": "Cluster setup fails for Fedora users with no built‑in workaround, blocking a core workflow (kube-up). Affects all users on affected Fedora versions.",
+        "suggested_assignee_class": "os/fedora team",
+        "suggested_next_steps": [
+          "Reproduce the failure on a fresh Fedora 21 VM using the same kube-up script.",
+          "Identify which repository URLs are outdated and locate current mirror URLs.",
+          "Update the Fedora-specific mirror list in the Kubernetes deployment scripts or docs.",
+          "Add a test in the kube-up CI that validates mirror URLs for supported Fedora releases."
+        ],
+        "triage_summary": "kube-up fails on Fedora because the script tries to download updates from obsolete mirrors, causing 404/550 errors and aborting cluster creation. Similar historic issues (#2597, #2054, #1085) show this is a recurring Fedora mirror problem. High priority fix needed for the os/fedora component.",
+        "grounding": {
+          "component_source": "os/fedora",
+          "similar_issue_refs": [
+            2597,
+            2054,
+            1085
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            2597,
+            2054,
+            1085
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            2597,
+            2054,
+            1085
+          ],
+          "next_steps_cited_issues": [
+            2597,
+            2054,
+            1085
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid but has a misaligned priority. The component and similar issues are correctly identified, next steps are actionable, and resolution estimates are reasonable. However, the priority is marked as 'high' while the gold standard indicates 'low', which is a significant discrepancy."
+      },
+      "error": null,
+      "issue_id": "k8s-13435",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "k8s-13995::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "test-infra",
+        "component_confidence": 0.58,
+        "similar_issues": [
+          {
+            "number": 13503,
+            "similarity": 0.793,
+            "relevance_note": "Directly implements the \"do not delete namespace\" option for e2e tests, matching the requested feature."
+          },
+          {
+            "number": 9148,
+            "similarity": 0.768,
+            "relevance_note": "Fixes namespace handling in e2e tests; relevant for migrating remaining tests to the new framework."
+          },
+          {
+            "number": 10380,
+            "similarity": 0.76,
+            "relevance_note": "Addresses namespace deletion bugs in e2e, providing context for the new option."
+          }
+        ],
+        "expected_resolution_summary": "Porting remaining e2e tests to the new test framework and adding a flag to keep namespaces is a straightforward test‑infra change; historically such migrations resolve within a few days.",
+        "expected_resolution_lower_days": 0.0,
+        "expected_resolution_upper_days": 56.8,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 53.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "Feature request with no user‑visible breakage; existing tests continue to run and a manual workaround (manual namespace cleanup) exists, so it does not block development or CI pipelines.",
+        "suggested_assignee_class": "test-infra team",
+        "suggested_next_steps": [
+          "Create a design doc outlining the migration steps for the remaining e2e tests to the Framework.",
+          "Implement the \"--keep-namespace\" flag similar to #13503 and ensure it is configurable per test.",
+          "Port one representative e2e test as a pilot and verify CI stability.",
+          "Close duplicate issues #13503 and #9148 if this work subsumes them."
+        ],
+        "triage_summary": "The issue requests porting the remaining e2e tests to the new test Framework and adding an option to retain namespaces after test execution. Several existing issues (#13503, #9148, #10380) already address namespace handling, making this a low‑priority test‑infra enhancement. Assign to the test‑infra team.",
+        "grounding": {
+          "component_source": "test-infra",
+          "similar_issue_refs": [
+            13503,
+            9148,
+            10380
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            13503,
+            9148,
+            10380
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            13503,
+            9148
+          ],
+          "next_steps_cited_issues": [
+            13503
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, actionable next steps, and a reasonable resolution estimate aligned with historical data."
+      },
+      "error": null,
+      "issue_id": "k8s-13995",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "vscode-311284::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "scm",
+        "component_confidence": 0.932,
+        "similar_issues": [
+          {
+            "number": 311282,
+            "similarity": 0.895,
+            "relevance_note": "Identical leak of disposed SCM source controls in extension host bookkeeping."
+          },
+          {
+            "number": 311990,
+            "similarity": 0.736,
+            "relevance_note": "Related SCM provider leakage issue that may share the same cleanup path."
+          }
+        ],
+        "expected_resolution_summary": "Fix the SCM bookkeeping leak by clearing disposed source control references; typical turnaround 1–2 weeks.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 171.1,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 34.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Memory leak that can grow over time but does not cause immediate crashes; impact is on long‑running sessions and may affect large repos, with a clear workaround of restarting VS Code.",
+        "suggested_assignee_class": "scm team",
+        "suggested_next_steps": [
+          "Add a unit test that registers, disposes, and verifies the source control handle is removed from bookkeeping.",
+          "Instrument the extension host to assert no lingering references after disposal in CI.",
+          "Reference #311282 to confirm this is the same issue and close it as duplicate if appropriate."
+        ],
+        "triage_summary": "Disposed SCM source controls remain retained in extension‑host bookkeeping, leading to memory growth. Two related issues (#311282, #311990) confirm the pattern. Medium priority; assign to the SCM team for a cleanup fix.",
+        "grounding": {
+          "component_source": "scm",
+          "similar_issue_refs": [
+            311282,
+            311990
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            311282,
+            311990
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            311282,
+            311990
+          ],
+          "next_steps_cited_issues": [
+            311282
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid but requires minor edits, particularly in priority alignment, which is misclassified as medium instead of high."
+      },
+      "error": null,
+      "issue_id": "vscode-311284",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "vscode-311836::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "extensions",
+        "component_confidence": 0.322,
+        "similar_issues": [
+          {
+            "number": 311844,
+            "similarity": 0.877,
+            "relevance_note": "Directly proposes using proper streams for loading webview resources, matching the request."
+          },
+          {
+            "number": 312020,
+            "similarity": 0.691,
+            "relevance_note": "Related discussion on improving webview service worker handling, indicating interest in webview performance."
+          }
+        ],
+        "expected_resolution_summary": "Performance improvement requiring API change to stream resources to webviews; typical turnaround 1‑4 weeks once scoped.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 147.0,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 34.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "Feature request for better performance; does not block any workflow and has a clear workaround (loading whole buffer). Hence low priority.",
+        "suggested_assignee_class": "extensions team",
+        "suggested_next_steps": [
+          "Review current webview resource loading code to identify buffering bottleneck.",
+          "Prototype a streaming API (e.g., ReadableStream) and benchmark with large assets such as video files.",
+          "Create a design doc outlining API surface and backward‑compatibility considerations.",
+          "Add unit and integration tests for the new streaming path.",
+          "Reference #311844 for prior discussion and potential implementation hints."
+        ],
+        "triage_summary": "Request to replace full‑buffer loading of webview resources with real streaming to improve performance, especially for large assets. Similar issue #311844 already outlines the same idea. Low priority feature request for the extensions/webview API.",
+        "grounding": {
+          "component_source": "extensions",
+          "similar_issue_refs": [
+            311844,
+            312020
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            311844,
+            312020
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            311844,
+            312020
+          ],
+          "next_steps_cited_issues": [
+            311844
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 1,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan has actionable next steps and relevant similar issues, but the priority is misaligned with the gold standard's high priority. The resolution estimate is imprecise and the component is not correct."
+      },
+      "error": null,
+      "issue_id": "vscode-311836",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "vscode-311878::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "terminal",
+        "component_confidence": 0.779,
+        "similar_issues": [
+          {
+            "number": 175049,
+            "similarity": 0.799,
+            "relevance_note": "Discusses sharing terminal I/O resources across instances, directly related to the proposed shared command storage."
+          }
+        ],
+        "expected_resolution_summary": "Refactor terminal instance code to share command data and replace functional array ops with more efficient structures; typical effort 1 day to a few weeks.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 183.8,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 34.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The change is a performance optimisation with no functional regression; VS Code works correctly, and the impact is limited to internal resource usage.",
+        "suggested_assignee_class": "terminal team",
+        "suggested_next_steps": [
+          "Add a benchmark/profiling test to measure current per‑instance command computation cost.",
+          "Implement a shared, read‑only command cache (e.g., a module‑level constant) and replace the per‑instance computation.",
+          "Replace filter/map/concat with a simple lookup (e.g., Set or Map) for O(1) checks.",
+          "Write unit tests ensuring the shared cache is correctly used and that behaviour remains unchanged."
+        ],
+        "triage_summary": "Inefficiency in terminalInstance.ts where each terminal instance recomputes and stores command lists; propose sharing the data and using a faster lookup. Low priority performance tweak for the terminal team.",
+        "grounding": {
+          "component_source": "terminal",
+          "similar_issue_refs": [
+            175049
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            175049
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            175049
+          ],
+          "next_steps_cited_issues": []
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid but the priority is misaligned with the gold standard, which labeled the issue as high priority. The rest of the plan is well-structured and actionable."
+      },
+      "error": null,
+      "issue_id": "vscode-311878",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "vscode-312260::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "terminal",
+        "component_confidence": 0.717,
+        "similar_issues": [
+          {
+            "number": 312263,
+            "similarity": 0.86,
+            "relevance_note": "Proposes a multiline wrapper to correctly handle multi-line POSIX commands, directly addressing the premature resolution problem."
+          },
+          {
+            "number": 311757,
+            "similarity": 0.808,
+            "relevance_note": "Describes freezes caused by multi-line terminal output processing, indicating related execution‑monitor bugs."
+          },
+          {
+            "number": 312853,
+            "similarity": 0.798,
+            "relevance_note": "Reports terminal tool hangs when shell integration breaks mid‑command, another symptom of the same RichExecuteStrategy issue."
+          }
+        ],
+        "expected_resolution_summary": "Fix the RichExecuteStrategy to wait for all shell‑integration markers before resolving, add multiline handling and regression tests. Estimated 1–3 weeks.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 229.2,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 34.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The bug causes incomplete command execution and wrong model responses, degrading the chat‑agent experience. It is reproducible but a manual workaround (avoid multiline or re‑run) exists, so not blocking.",
+        "suggested_assignee_class": "terminal team",
+        "suggested_next_steps": [
+          "Create a minimal reproducer that runs a multi‑line POSIX command via run_in_terminal and verifies only the first line resolves.",
+          "Instrument RichExecuteStrategy to log each shell‑integration marker and confirm early return behavior.",
+          "Implement a multiline wrapper (e.g., CommandLineMultilineWrapRewriter) as suggested in #312263.",
+          "Add unit and integration tests that submit heredoc and script snippets and assert full output is returned before the tool resolves.",
+          "Verify that the fix does not introduce regressions in single‑line command handling."
+        ],
+        "triage_summary": "run_in_terminal currently resolves after the first line of a multi‑line POSIX command, leaving the rest to run unattended. This is a functional regression in the terminal chat‑agent integration, with several related issues already filed. Medium priority; assign to the terminal team for a RichExecuteStrategy fix.",
+        "grounding": {
+          "component_source": "terminal",
+          "similar_issue_refs": [
+            312263,
+            311757,
+            312853
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            312263,
+            311757,
+            312853
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            312263,
+            311757,
+            312853
+          ],
+          "next_steps_cited_issues": [
+            312263,
+            311591
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid and actionable, with correct component labeling and relevant similar issues. However, the resolution estimate is imprecise and the priority is misaligned with the gold standard."
+      },
+      "error": null,
+      "issue_id": "vscode-312260",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "vscode-312423::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "accessibility",
+        "component_confidence": 0.755,
+        "similar_issues": [
+          {
+            "number": 312429,
+            "similarity": 0.97,
+            "relevance_note": "Essentially the same request: add verbosity setting, keybinding, and aria hints for the carousel terminal focus."
+          },
+          {
+            "number": 2145,
+            "similarity": 0.76,
+            "relevance_note": "General keyboard accessibility and focus indication work that can inform implementation."
+          },
+          {
+            "number": 6731,
+            "similarity": 0.755,
+            "relevance_note": "Related accessibility issue about focusing out of the integrated terminal."
+          }
+        ],
+        "expected_resolution_summary": "Feature implementation involving a new setting, keybinding registration, and ARIA label updates. Estimated 1–3 weeks depending on design review and testing.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 231.5,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 34.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Accessibility gap that impacts users relying on keyboard navigation. Not a blocker for general usage, but important for inclusive UX; no existing workaround.",
+        "suggested_assignee_class": "accessibility team",
+        "suggested_next_steps": [
+          "Review #312429 to confirm duplication and adopt any existing design decisions.",
+          "Design the boolean verbosity setting with default true/false as described.",
+          "Implement the new command and keybinding, scoped to the carousel context key.",
+          "Update the carousel's ARIA label to include the navigation hint when verbosity is enabled.",
+          "Add unit and integration tests covering the setting toggle, keybinding activation, and ARIA label output."
+        ],
+        "triage_summary": "Feature request to improve accessibility of the question carousel by adding a verbosity setting, keyboard shortcut, and ARIA label hint for focusing the terminal. Similar issue #312429 already captures the same need. Medium priority due to impact on keyboard‑only users; assign to the accessibility team.",
+        "grounding": {
+          "component_source": "accessibility",
+          "similar_issue_refs": [
+            312429,
+            2145,
+            6731
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            312429,
+            2145,
+            6731
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            312429,
+            2145,
+            6731
+          ],
+          "next_steps_cited_issues": [
+            312429
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, actionable next steps, and a reasonable resolution estimate aligned with the gold standard."
+      },
+      "error": null,
+      "issue_id": "vscode-312423",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "vscode-239838::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "terminal",
+        "component_confidence": 0.715,
+        "similar_issues": [
+          {
+            "number": 240002,
+            "similarity": 0.884,
+            "relevance_note": "Freeze on opening integrated terminal reported, same environment and steps."
+          },
+          {
+            "number": 240145,
+            "similarity": 0.882,
+            "relevance_note": "Direct report of VS Code freezing when terminal is opened after 1.97 update."
+          },
+          {
+            "number": 239946,
+            "similarity": 0.873,
+            "relevance_note": "User confirms issue occurs with all extensions disabled, matching this report."
+          }
+        ],
+        "expected_resolution_summary": "Critical freeze bug in the integrated terminal likely requires investigation of recent terminal‑related changes and a hotfix; typical fix time 1–4 weeks.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 188.8,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 34.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "high",
+        "priority_rationale": "The IDE becomes completely unusable when opening a terminal, with no workaround; this blocks core workflow for all users on the affected version.",
+        "suggested_assignee_class": "terminal team",
+        "suggested_next_steps": [
+          "Reproduce the freeze on a clean VS Code 1.97.0 install with all extensions disabled.",
+          "Collect crash/trace logs from the main process and terminal renderer when the freeze occurs.",
+          "Bisect recent terminal‑related commits (e.g., xterm.js integration, PTY handling) to locate the regression.",
+          "Create a minimal repro repository (TypeScript project) and add to CI as a flaky test to prevent regression."
+        ],
+        "triage_summary": "VS Code 1.97.0 freezes whenever the integrated terminal is opened, even with all extensions disabled, rendering the editor unusable. Multiple similar reports exist, indicating a regression in the terminal subsystem. High priority, assign to the terminal team for urgent investigation and hotfix.",
+        "grounding": {
+          "component_source": "terminal",
+          "similar_issue_refs": [
+            240002,
+            240145,
+            239946
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            240002,
+            240145,
+            239946
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            240002,
+            240145,
+            239946
+          ],
+          "next_steps_cited_issues": [
+            240002,
+            240145,
+            239946
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid but has a misaligned priority. It correctly identifies the component and provides actionable next steps, but the priority is labeled as 'high' while the gold standard indicates 'medium'."
+      },
+      "error": null,
+      "issue_id": "vscode-239838",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "vscode-286776::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "scm",
+        "component_confidence": 0.918,
+        "similar_issues": [
+          {
+            "number": 112487,
+            "similarity": 0.813,
+            "relevance_note": "Tree expands incorrectly after staging changes, similar UI glitch in source control view."
+          },
+          {
+            "number": 201797,
+            "similarity": 0.808,
+            "relevance_note": "Source control tree stays collapsed after branch switch, matching the expand‑failure behavior."
+          },
+          {
+            "number": 115238,
+            "similarity": 0.785,
+            "relevance_note": "Tree‑view collapse on source‑control actions, another manifestation of the same rendering bug."
+          }
+        ],
+        "expected_resolution_summary": "UI regression in the Source Control Graph view; requires investigation of tree rendering and git argument handling, typical fix time 1‑3 weeks.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 229.1,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 34.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The issue prevents some entries from expanding and shows an error, degrading the source‑control experience, but VS Code remains usable and a manual refresh works as a workaround.",
+        "suggested_assignee_class": "scm team",
+        "suggested_next_steps": [
+          "Reproduce with a minimal repo containing many files and verify the error message when expanding entries.",
+          "Add logging around the code that builds the tree to capture the undefined path argument and identify the failing branch.",
+          "Create a regression test that opens a repo with >10 changed files and asserts all tree nodes expand without error."
+        ],
+        "triage_summary": "Source Control Graph tree nodes sometimes fail to expand, throwing a 'path argument must be of type string' error. The problem appears after recent updates and affects the SCM view but does not crash the editor. Medium priority; assign to the SCM team for investigation and fix.",
+        "grounding": {
+          "component_source": "scm",
+          "similar_issue_refs": [
+            112487,
+            201797,
+            115238
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            112487,
+            201797,
+            115238
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            112487,
+            201797,
+            115238
+          ],
+          "next_steps_cited_issues": [
+            112487,
+            201797,
+            115238
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, correct priority, actionable next steps, and a clear, well-structured summary."
+      },
+      "error": null,
+      "issue_id": "vscode-286776",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "vscode-278113::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "debug",
+        "component_confidence": 0.775,
+        "similar_issues": [
+          {
+            "number": 174126,
+            "similarity": 0.797,
+            "relevance_note": "Debugger completions UI issue similar to missing detail field behavior."
+          },
+          {
+            "number": 1793,
+            "similarity": 0.778,
+            "relevance_note": "Related discussion about debug adapter UI handling of completion items."
+          }
+        ],
+        "expected_resolution_summary": "Add UI option or change default to always render the detail field for debug adapter completions; include tests and documentation.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 195.2,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 34.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "Feature request only; does not block any workflow and has a simple UI change. No crash or data loss, and a workaround (re‑triggering completion) exists.",
+        "suggested_assignee_class": "debug team",
+        "suggested_next_steps": [
+          "Reproduce the missing detail behavior with a minimal debug adapter that returns a detail field.",
+          "Locate the rendering code for completion items in the debug console and add a flag to always show detail.",
+          "Implement a configuration setting (e.g., debug.showDetailInCompletions) defaulting to true.",
+          "Add unit/integration tests covering both filtered and unfiltered completions.",
+          "Update the release notes and documentation to describe the new behavior."
+        ],
+        "triage_summary": "User requests that the detail field of debug adapter completions always be displayed, even after filtering. Similar UI issues exist (#174126, #1793). This is a low‑priority UI enhancement for the debug team.",
+        "grounding": {
+          "component_source": "debug",
+          "similar_issue_refs": [
+            174126,
+            1793
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            174126,
+            1793
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            174126,
+            1793
+          ],
+          "next_steps_cited_issues": []
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with correct component labeling, highly relevant similar issues, reasonable resolution estimate, proper priority alignment, actionable next steps, and a clear, well-structured summary."
+      },
+      "error": null,
+      "issue_id": "vscode-278113",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "vscode-4978::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "search",
+        "component_confidence": 0.903,
+        "similar_issues": [
+          {
+            "number": 88487,
+            "similarity": 0.846,
+            "relevance_note": "Directly discusses making excluded files editable in the Search UI."
+          },
+          {
+            "number": 19029,
+            "similarity": 0.827,
+            "relevance_note": "Requests ability to include files that are excluded by files.exclude/search.exclude."
+          },
+          {
+            "number": 18796,
+            "similarity": 0.798,
+            "relevance_note": "Feature request related to search behavior and UI controls."
+          }
+        ],
+        "expected_resolution_summary": "UI enhancement to allow editing of the \"files excluded\" field in the Search view; typical effort 1–2 weeks.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 193.1,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 34.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "Feature request that does not block any core functionality; users can already work around the limitation by editing settings manually. Cosmetic UI improvement, thus low priority.",
+        "suggested_assignee_class": "search team",
+        "suggested_next_steps": [
+          "Confirm with product that exposing an editable field for search exclusions aligns with design goals.",
+          "Prototype a UI change (e.g., make the exclusion list editable or add a temporary toggle).",
+          "Add a unit/integration test that verifies the new UI element persists changes correctly."
+        ],
+        "triage_summary": "User wants the \"files excluded through settings\" field in the Search UI to be editable so they can temporarily include excluded folders like node_modules. Similar past requests exist (#88487, #19029, #18796). This is a non‑blocking UI enhancement, therefore low priority and assign to the search team.",
+        "grounding": {
+          "component_source": "search",
+          "similar_issue_refs": [
+            88487,
+            19029,
+            18796
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            88487,
+            19029,
+            18796
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            88487,
+            19029,
+            18796
+          ],
+          "next_steps_cited_issues": []
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, correct priority alignment, actionable next steps, and a clear, well-structured summary."
+      },
+      "error": null,
+      "issue_id": "vscode-4978",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "vscode-4993::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "debug",
+        "component_confidence": 0.835,
+        "similar_issues": [
+          {
+            "number": 4519,
+            "similarity": 0.809,
+            "relevance_note": "Discusses missing debugger UI cues, similar to needing a command to reveal the current debug point."
+          },
+          {
+            "number": 2671,
+            "similarity": 0.799,
+            "relevance_note": "Focuses on debugger accessibility and UI extensions, relevant for adding a new context‑menu action."
+          },
+          {
+            "number": 204529,
+            "similarity": 0.781,
+            "relevance_note": "Explores new debugger UI capabilities, indicating openness to UI feature additions."
+          }
+        ],
+        "expected_resolution_summary": "Feature addition to the debugger UI to expose a \"Show next statement\" command; requires UI, command registration, and possibly debug‑adapter support. Typical timeline weeks to months.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 155.0,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 34.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The request addresses a workflow gap for developers during debugging. It is not a crash or data loss, but improves productivity; no current workaround exists beyond manual navigation, so medium priority is appropriate.",
+        "suggested_assignee_class": "debug team",
+        "suggested_next_steps": [
+          "Review the debugger context‑menu contribution point and assess where a \"Show next statement\" command could be inserted.",
+          "Design the command to move the editor cursor to the current execution line using the debug service API.",
+          "Prototype the feature in an internal branch and validate that it works across multiple platforms and debug adapters.",
+          "Gather UX feedback and add the command to the official VS Code feature backlog."
+        ],
+        "triage_summary": "Feature request to add a \"Show next statement\" option in the editor context menu during a debug session, similar to Visual Studio. The request targets the debug UI and aligns with existing discussions about improving debugger visibility (#4519, #2671, #204529). Assigned to the debug team with medium priority.",
+        "grounding": {
+          "component_source": "debug",
+          "similar_issue_refs": [
+            4519,
+            2671,
+            204529
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            4519,
+            2671,
+            204529
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            4519,
+            2671,
+            204529
+          ],
+          "next_steps_cited_issues": []
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid and actionable, with correct component labeling and relevant issue references. However, the priority is misaligned with the gold standard (low vs. medium), which affects the overall quality score."
+      },
+      "error": null,
+      "issue_id": "vscode-4993",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "vscode-4996::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "editor-multicursor",
+        "component_confidence": 0.953,
+        "similar_issues": [
+          {
+            "number": 18976,
+            "similarity": 0.89,
+            "relevance_note": "Multicursor paste distributes text across cursors, same symptom of pasting all clipboard contents at each cursor."
+          },
+          {
+            "number": 18223,
+            "similarity": 0.837,
+            "relevance_note": "Multicursor cut/paste does not work correctly, another report of the same behavior."
+          }
+        ],
+        "expected_resolution_summary": "Fix clipboard handling for multicursor paste; typical turnaround 1‑2 weeks once the paste pipeline is audited.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 195.6,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 34.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Functional regression that breaks expected multicursor paste behavior, impacting editing workflow. No critical crash, and users can work around by using a single cursor, so medium priority.",
+        "suggested_assignee_class": "editor-multicursor team",
+        "suggested_next_steps": [
+          "Create a minimal reproducible test case with multiple cursors, copy, and paste to capture the current behavior.",
+          "Investigate the editor's clipboard aggregation logic to ensure only the primary selection is pasted per cursor.",
+          "Add a unit/integration test that asserts a single clipboard content is pasted at each cursor.",
+          "If similar to #18976 or #18223, consider closing as duplicate after fixing."
+        ],
+        "triage_summary": "Multicursor paste currently inserts the combined clipboard contents at every cursor, diverging from expected behavior where each cursor receives the same single clipboard content. Two prior issues describe the same problem, indicating a regression in the editor's multicursor handling. Assign to the editor-multicursor team with medium priority.",
+        "grounding": {
+          "component_source": "editor-multicursor",
+          "similar_issue_refs": [
+            18976,
+            18223
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            18976,
+            18223
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            18976,
+            18223
+          ],
+          "next_steps_cited_issues": []
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid and actionable, with correct component labeling and relevant similar issues. However, the priority is misaligned with the gold standard (low vs. medium), which affects the overall quality score."
+      },
+      "error": null,
+      "issue_id": "vscode-4996",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "k8s-12287::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "provider/openstack",
+        "component_confidence": 0.691,
+        "similar_issues": [
+          {
+            "number": 12288,
+            "similarity": 0.852,
+            "relevance_note": "Directly addresses missing IP assignment when creating an external load balancer in OpenStack."
+          },
+          {
+            "number": 12284,
+            "similarity": 0.802,
+            "relevance_note": "Adds support for floating IPs on LB VIPs, related to handling unspecified IPs."
+          },
+          {
+            "number": 7199,
+            "similarity": 0.786,
+            "relevance_note": "Reports errors from OpenStack CreateExternalLoadBalancer implementation, similar symptom."
+          }
+        ],
+        "expected_resolution_summary": "Fix the nil IP handling in the OpenStack provider's load balancer creation path; typical turnaround 1‑2 weeks.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 357.9,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 44.3,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Load balancer creation fails when no public IP is supplied, breaking a common workflow. Users can work around by explicitly providing an IP, so not completely blocking, but the defect impacts reliability.",
+        "suggested_assignee_class": "provider/openstack team",
+        "suggested_next_steps": [
+          "Add a unit test that creates an external load balancer without specifying a public IP and asserts a valid VIP is allocated.",
+          "Inspect the OpenStack provider code where the VirtualIP struct is populated; replace the literal \"nil\" with an empty string or omit the field.",
+          "Cross‑reference #12288 and #12284 to determine if a recent change introduced the regression.",
+          "Validate the fix against both OpenStack Newton and Pike releases."
+        ],
+        "triage_summary": "Creating an external load balancer in OpenStack without a public IP currently results in the string \"nil\" being sent as the IP address, causing the operation to fail. The issue is similar to #12288, #12284, and #7199. Medium priority; assign to the provider/openstack team for a quick fix.",
+        "grounding": {
+          "component_source": "provider/openstack",
+          "similar_issue_refs": [
+            12288,
+            12284,
+            7199
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            12288,
+            12284,
+            7199
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            12288,
+            12284,
+            7199
+          ],
+          "next_steps_cited_issues": [
+            12288,
+            12284,
+            7199
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid and actionable, with correct component labeling and highly relevant similar issues. However, the priority is misaligned with the gold standard (high vs. medium), which significantly impacts the overall quality score."
+      },
+      "error": null,
+      "issue_id": "k8s-12287",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "k8s-12461::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "kubectl",
+        "component_confidence": 0.533,
+        "similar_issues": [
+          {
+            "number": 12280,
+            "similarity": 0.706,
+            "relevance_note": "Directly addresses human‑readable time output in kubectl, matching the proposed change."
+          },
+          {
+            "number": 12331,
+            "similarity": 0.702,
+            "relevance_note": "Implementation reference for human‑readable times; same feature scope."
+          },
+          {
+            "number": 18004,
+            "similarity": 0.677,
+            "relevance_note": "Related request to show absolute time when watching events, indicating interest in time formatting."
+          }
+        ],
+        "expected_resolution_summary": "Small usability enhancement to shorten event time display; typically a few days of work and CI verification.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 405.7,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 35.0,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The change is cosmetic, improves readability but does not affect functionality or cause crashes; a simple UI tweak with a clear workaround (using full time view).",
+        "suggested_assignee_class": "kubectl team",
+        "suggested_next_steps": [
+          "Verify that the existing helper function for human‑readable timestamps is used consistently in the event printer code.",
+          "Add unit tests for the new output format covering both short and full time representations.",
+          "Update documentation and changelog to reflect the new AGE column behavior.",
+          "Ensure no regression in other kubectl output formats; run the full kubectl test suite."
+        ],
+        "triage_summary": "Proposal to print human‑readable, shortened event times in kubectl output. Similar issues #12280 and #12331 already discuss this feature. Low‑priority cosmetic improvement for the CLI.",
+        "grounding": {
+          "component_source": "kubectl",
+          "similar_issue_refs": [
+            12280,
+            12331,
+            18004
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            12280,
+            12331,
+            18004
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            12280,
+            12331,
+            18004
+          ],
+          "next_steps_cited_issues": [
+            12280,
+            12331
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 0,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 0,
+        "next_steps_actionability": 2,
+        "overall_quality": 1,
+        "judge_rationale": "The triage plan has significant issues with component matching and priority alignment, which severely impact the overall quality."
+      },
+      "error": null,
+      "issue_id": "k8s-12461",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "k8s-14557::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "kubelet",
+        "component_confidence": 0.585,
+        "similar_issues": [
+          {
+            "number": 27563,
+            "similarity": 0.775,
+            "relevance_note": "Small kubelet‑related fix (typo/help) – shows the pattern of lightweight patches to kubelet code/docs."
+          },
+          {
+            "number": 11091,
+            "similarity": 0.773,
+            "relevance_note": "Another minor kubelet documentation change, indicating the typical turnaround for simple kubelet patches."
+          }
+        ],
+        "expected_resolution_summary": "Minor kubelet code change; should be reviewed, CI‑tested and merged within a few days.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 224.5,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 36.6,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The change is a small, non‑breaking fix that only adds a label‑check in the kubelet. No user‑visible regression; the main impact is to close #14263.",
+        "suggested_assignee_class": "kubelet team",
+        "suggested_next_steps": [
+          "Review the PR for correctness of the added label check.",
+          "Run the kubelet unit and integration test suites to ensure no regressions.",
+          "Validate that label modifications are now reflected in the kubelet at runtime.",
+          "If the change passes review, merge and close the referenced issue #14263."
+        ],
+        "triage_summary": "Partial fix for #14263 adds a missing label‑check in the kubelet so that label modifications are respected. The patch is small and low‑risk, matching other lightweight kubelet fixes. Assign to the kubelet team; low priority with an expected turnaround of a few days.",
+        "grounding": {
+          "component_source": "kubelet",
+          "similar_issue_refs": [
+            27563,
+            11091
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            27563,
+            11091
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            27563,
+            11091
+          ],
+          "next_steps_cited_issues": []
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid and actionable, with correct component labeling and relevant similar issues. However, the priority is misaligned as the fix is more critical than labeled as low priority."
+      },
+      "error": null,
+      "issue_id": "k8s-14557",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "k8s-14723::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "apiserver",
+        "component_confidence": 0.49,
+        "similar_issues": [
+          {
+            "number": 10577,
+            "similarity": 0.798,
+            "relevance_note": "kube-apiserver generates a self‑signed cert that fails when no client‑ca‑file is provided, matching the current symptom."
+          },
+          {
+            "number": 15359,
+            "similarity": 0.809,
+            "relevance_note": "TLS verification flags in kubeconfig not working, indicating TLS handling edge cases in the apiserver."
+          },
+          {
+            "number": 10159,
+            "similarity": 0.809,
+            "relevance_note": "General guidance on starting the apiserver with HTTPS, useful for reproducing the failure."
+          }
+        ],
+        "expected_resolution_summary": "Adjust kube‑apiserver TLS validation to accept server cert/key without requiring a client‑ca‑file, and add unit tests for this configuration path.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 180.1,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 44.0,
+        "resolution_interval_conformal": null,
+        "priority_guess": "high",
+        "priority_rationale": "The apiserver fails to serve TLS for any cluster using a cert/key only, causing complete loss of API access. No workaround exists, affecting core cluster functionality and security.",
+        "suggested_assignee_class": "apiserver team",
+        "suggested_next_steps": [
+          "Reproduce the failure on a minimal cluster with only --tls-cert-file and --tls-private-key-file set.",
+          "Inspect the TLS initialization code path to identify the check that erroneously requires client‑ca‑file.",
+          "Implement a conditional that skips client‑ca validation when client authentication is not configured.",
+          "Add a regression test covering the no‑client‑ca scenario."
+        ],
+        "triage_summary": "kube‑apiserver TLS cert/key configuration fails when client‑ca‑file is omitted, breaking API access on both macOS and Windows. Similar past reports (#10577, #15359, #10159) point to TLS handling bugs. This is a high‑priority regression requiring an immediate fix.",
+        "grounding": {
+          "component_source": "apiserver",
+          "similar_issue_refs": [
+            10577,
+            15359,
+            10159
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            10577,
+            15359,
+            10159
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            10577,
+            15359,
+            10159
+          ],
+          "next_steps_cited_issues": [
+            10577
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 1,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 1,
+        "next_steps_actionability": 3,
+        "overall_quality": 3,
+        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, correct priority, actionable next steps, and a clear, well-structured summary."
+      },
+      "error": null,
+      "issue_id": "k8s-14723",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "k8s-14477::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "apiserver",
+        "component_confidence": 0.595,
+        "similar_issues": [
+          {
+            "number": 5084,
+            "similarity": 0.785,
+            "relevance_note": "Directly reports kubectl proxy failures during e2e tests, matching the proxy request flakiness."
+          },
+          {
+            "number": 16685,
+            "similarity": 0.783,
+            "relevance_note": "Flaky autoscaling e2e test with ~10-20% failure rate, similar to the intermittent proxy failure."
+          },
+          {
+            "number": 26614,
+            "similarity": 0.799,
+            "relevance_note": "General broken test run in GKE e2e suite, indicating broader test‑infra instability."
+          }
+        ],
+        "expected_resolution_summary": "Investigate and stabilize the API server proxy handling in e2e tests; likely a race or timeout issue that can be fixed with better error handling or retries. Typical fix time 1‑3 weeks.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 232.0,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 37.4,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Flaky e2e test causes CI failures and delays releases, but does not affect end‑user functionality. No immediate user‑visible crash, yet the instability impacts development workflow.",
+        "suggested_assignee_class": "apiserver team",
+        "suggested_next_steps": [
+          "Reproduce the failure locally by running the autoscaling e2e test with verbose proxy logging enabled.",
+          "Add instrumentation to the apiserver proxy path to capture request/response timing and errors.",
+          "Introduce a retry or back‑off mechanism in the test when the proxy request fails, and assess if the flakiness persists.",
+          "If the root cause is in apiserver, add a unit test for the proxy handling; otherwise, mark the e2e test as flaky pending a fix."
+        ],
+        "triage_summary": "E2E autoscaling test intermittently fails when accessing a service via the API server proxy (>30% failure rate). Logs show errors in apiserver proxy handling. Similar flaky test reports exist (#5084, #16685, #26614). Assign to apiserver team; medium priority due to CI impact.",
+        "grounding": {
+          "component_source": "apiserver",
+          "similar_issue_refs": [
+            5084,
+            16685,
+            26614
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            5084,
+            16685,
+            26614
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            5084,
+            16685,
+            26614
+          ],
+          "next_steps_cited_issues": [
+            5084,
+            16685
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 1,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 1,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan has actionable next steps and relevant similar issues, but the priority is misaligned with the gold standard (high vs. medium), and the resolution estimate is too broad and lacks precision."
+      },
+      "error": null,
+      "issue_id": "k8s-14477",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    },
+    "k8s-14125::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "test-infra",
+        "component_confidence": 0.62,
+        "similar_issues": [
+          {
+            "number": 16828,
+            "similarity": 0.806,
+            "relevance_note": "Same soak job (gce) failing on SchedulerPredicates tests, indicating a recurring test‑infra problem."
+          },
+          {
+            "number": 19118,
+            "similarity": 0.793,
+            "relevance_note": "Continuous soak failures on GKE/GCE, showing the issue is not isolated to a single run."
+          },
+          {
+            "number": 20982,
+            "similarity": 0.788,
+            "relevance_note": "Timing‑out soak runs on GCE, another symptom of flaky test‑infra pipelines."
+          }
+        ],
+        "expected_resolution_summary": "Typical test‑infra regression; once the flaky test or infrastructure change is identified, a fix is usually landed within a week.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 479.6,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 26.6,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The failure blocks the continuous soak job, impacting CI health and downstream release confidence, but it does not affect end‑users directly and a manual re‑run can be used as a temporary workaround.",
+        "suggested_assignee_class": "test-infra team",
+        "suggested_next_steps": [
+          "Inspect the latest changes to the SchedulerPredicates test and related GCE soak job configuration for recent breakages.",
+          "Run the failing test locally with the same GCE environment to reproduce the node‑not‑ready and namespace‑active errors.",
+          "Check for recent changes in the test‑infra job definitions (e.g., prow config) that could introduce timing or resource allocation issues.",
+          "If the failure is due to a flaky test, add a retry or quarantine annotation and file a separate test‑flakiness issue."
+        ],
+        "triage_summary": "kubernetes-soak-continuous-e2e-gce turned yellow due to node‑not‑ready and namespace‑active errors, mirroring several recent soak failures. The pattern points to a test‑infra regression rather than core Kubernetes code. Assign to test‑infra, medium priority, with an expected fix within a week.",
+        "grounding": {
+          "component_source": "test-infra",
+          "similar_issue_refs": [
+            16828,
+            19118,
+            20982
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            16828,
+            19118,
+            20982
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            16828,
+            19118,
+            20982
+          ],
+          "next_steps_cited_issues": [
+            16828,
+            19118
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": {
+        "component_match": 2,
+        "similar_issues_relevance": 3,
+        "resolution_estimate_reasonableness": 2,
+        "priority_alignment": 0,
+        "next_steps_actionability": 3,
+        "overall_quality": 2,
+        "judge_rationale": "The triage plan is solid and actionable, with correct component labeling and highly relevant similar issues. However, the priority is misaligned with the gold standard (high vs. medium), which reduces the overall quality score."
+      },
+      "error": null,
+      "issue_id": "k8s-14125",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d"
+    }
+  }
 }

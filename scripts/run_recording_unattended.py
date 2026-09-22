@@ -54,15 +54,21 @@ STATUS_PATH = WORKTREE_ROOT / "eval" / "cassettes" / "RECORDING_STATUS.txt"
 LOG_DIR = WORKTREE_ROOT / "eval" / "cassettes" / "unattended_logs"
 PID_PATH = WORKTREE_ROOT / "eval" / "cassettes" / "unattended_recorder.pid"
 
+sys.path.insert(0, str(WORKTREE_ROOT / "src"))
+sys.path.insert(0, str(RECORD_SCRIPT.parent))
+import record_cassettes as rc  # noqa: E402
+import artifact_fingerprint  # noqa: E402
+# _parse_tpd_wait lives in record_cassettes.py, not duplicated here -- it sees the raw Groq
+# error text first and needs the identical regex to report an accurate resume estimate in
+# RECORDING_STATUS.txt at the moment it hits the wall (ADR-0060); importing it keeps this
+# wrapper's own (later, coarser) re-parse of captured stdout from ever drifting out of sync.
+
 TOTAL_ISSUES = sum(1 for _ in EVAL_SET_PATH.open(encoding="utf-8") if _.strip())
 
-DEFAULT_TPD_WAIT_S = 30 * 60  # fallback if Groq's error text can't be parsed for a wait
 CONNECTION_WAIT_S = 5 * 60
 RETRY_BUFFER_S = 60
 VRAM_CHECK_INTERVAL_S = 2 * 60
 MIN_FREE_VRAM_MB = 6 * 1024
-
-_TPD_WAIT_RE = re.compile(r"try again in\s+(?:(\d+)m)?\s*(?:([\d.]+)s)?", re.IGNORECASE)
 
 HARD_STOP_MARKERS = [
     "SYNTHESIS DEGRADED (not a genuine completion)",
@@ -96,13 +102,9 @@ def _load_groq_key() -> str:
 
 
 def _current_model_and_hash() -> tuple[str, str, str]:
-    """Import record_cassettes.py's own hashing logic rather than re-deriving it, so this
-    wrapper can never drift out of sync with what a real invocation would compute."""
-    sys.path.insert(0, str(WORKTREE_ROOT / "src"))
-    sys.path.insert(0, str(RECORD_SCRIPT.parent))
-    import record_cassettes as rc  # noqa: E402
-    import artifact_fingerprint  # noqa: E402
-
+    """Reuse record_cassettes.py's own hashing logic (module-level import above) rather
+    than re-deriving it, so this wrapper can never drift out of sync with what a real
+    invocation would compute."""
     artifact_hashes = artifact_fingerprint.compute_artifact_hashes(WORKTREE_ROOT)
     return rc.TRIAGE_MODEL, rc._compute_prompt_hash(), artifact_fingerprint.combined_hash(artifact_hashes)
 
@@ -142,16 +144,6 @@ def _write_status(mode: str, model: str, prompt_hash: str, artifact_hash: str, e
         *extra,
     ]
     STATUS_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-
-def _parse_tpd_wait(text: str) -> int:
-    m = _TPD_WAIT_RE.search(text)
-    if not m:
-        return DEFAULT_TPD_WAIT_S
-    minutes = int(m.group(1)) if m.group(1) else 0
-    seconds = float(m.group(2)) if m.group(2) else 0.0
-    total = minutes * 60 + seconds
-    return int(total) if total > 0 else DEFAULT_TPD_WAIT_S
 
 
 def _free_vram_mb() -> int | None:
@@ -279,7 +271,7 @@ def main() -> None:
             return
 
         if "=== TPD HIT" in output:
-            wait_s = _parse_tpd_wait(output) + RETRY_BUFFER_S
+            wait_s = rc._parse_tpd_wait(output) + RETRY_BUFFER_S
             resume_at = datetime.now(timezone.utc).timestamp() + wait_s
             _write_status(mode, model, prompt_hash, artifact_hash, [
                 f"WAITING (rate limit): sleeping {wait_s}s (~{wait_s // 60}m), resuming at "

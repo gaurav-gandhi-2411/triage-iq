@@ -27,12 +27,15 @@ Exit codes:
 """
 
 import argparse
+import ctypes
 import hashlib
 import json
 import logging
 import numpy as np
+import re
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
@@ -64,6 +67,15 @@ logger = logging.getLogger(__name__)
 EVAL_SET = ROOT / "eval" / "eval_set.jsonl"
 CASSETTE_PATH = ROOT / "eval" / "cassettes" / "eval_cassette.json"
 CHECKPOINT_PATH = ROOT / "eval" / "cassettes" / "recording_checkpoint.json"
+# 2026-09-06: this used to be written only by scripts/run_recording_unattended.py, once per
+# subprocess pass -- fine for the old combined mode (a pass usually meant "this issue"), but
+# under --mode synthesis a single pass can quietly run for tens of minutes (Groq TPM backoff
+# retries happen INSIDE this process, invisible to the launcher until it exits), so the file
+# could show a stale "iteration 1" the whole time even while the checkpoint was advancing
+# issue by issue. record_cassettes.py now writes it directly after every issue -- this is
+# the file meant for a human checking progress without a CC session, so it must reflect
+# reality at per-issue granularity, not per-subprocess-invocation granularity.
+STATUS_PATH = ROOT / "eval" / "cassettes" / "RECORDING_STATUS.txt"
 
 # ADR-0059: the 2026-09-05 incident that made artifact fingerprinting necessary was this
 # exact checkout being resolved as ROOT by a script actually invoked from it (ROOT is always
@@ -102,6 +114,85 @@ def _is_connection_error(exc: Exception) -> bool:
     msg = str(exc).lower()
     return any(kw in msg for kw in ("connection error", "connection refused", "getaddrinfo",
                                     "connecterror", "apiconnectionerror", "timed out", "timeout"))
+
+
+# 2026-09-06: moved here from scripts/run_recording_unattended.py -- THIS process sees the
+# raw Groq error text first (the launcher only sees it later, re-parsed out of captured
+# stdout), so it can report the actual next-resume estimate in RECORDING_STATUS.txt at the
+# moment it hits the wall, not just after the fact. run_recording_unattended.py imports
+# these from here rather than keeping its own copy (one function, not two that can drift).
+_TPD_WAIT_RE = re.compile(r"try again in\s+(?:(\d+)m)?\s*(?:([\d.]+)s)?", re.IGNORECASE)
+_DEFAULT_TPD_WAIT_S = 30 * 60
+
+
+def _parse_tpd_wait(text: str) -> int:
+    m = _TPD_WAIT_RE.search(text)
+    if not m:
+        return _DEFAULT_TPD_WAIT_S
+    minutes = int(m.group(1)) if m.group(1) else 0
+    seconds = float(m.group(2)) if m.group(2) else 0.0
+    total = minutes * 60 + seconds
+    return int(total) if total > 0 else _DEFAULT_TPD_WAIT_S
+
+
+_PRIORITY_CLASS_NAMES = {
+    0x00000040: "IDLE",
+    0x00004000: "BELOW_NORMAL",
+    0x00000020: "NORMAL",
+    0x00008000: "ABOVE_NORMAL",
+    0x00000080: "HIGH",
+    0x00000100: "REALTIME",
+}
+
+
+def _current_priority_class() -> str:
+    """Best-effort human-readable Windows priority class of THIS process, for the status
+    file (so a human can confirm Phase 3a's BelowNormal launch actually took effect without
+    needing Task Manager). Returns 'unknown' off Windows or if the WinAPI call fails."""
+    try:
+        handle = ctypes.windll.kernel32.GetCurrentProcess()
+        value = ctypes.windll.kernel32.GetPriorityClass(handle)
+        return _PRIORITY_CLASS_NAMES.get(value, f"UNKNOWN(0x{value:x})")
+    except (AttributeError, OSError):
+        return "unknown"
+
+
+def write_live_status(
+    mode: str, model: str, prompt_hash: str, artifact_hash: str, total_issues: int,
+    last_issue_id: str | None = None, next_resume_at: str | None = None,
+    extra: list[str] | None = None,
+) -> None:
+    """The one function that writes RECORDING_STATUS.txt -- called after every issue (from
+    run_synthesis/run_judge/run_full), not just once per subprocess pass, so a human
+    checking progress without a CC session sees per-issue granularity, matching what the
+    checkpoint file already has. Reads CHECKPOINT_PATH fresh from disk rather than trusting
+    an in-memory snapshot, since this is meant to reflect ground truth."""
+    entries: list[dict] = []
+    if CHECKPOINT_PATH.exists():
+        data = json.loads(CHECKPOINT_PATH.read_text(encoding="utf-8"))
+        entries = [
+            rec for rec in data.get("done", {}).values()
+            if rec.get("model") == model and rec.get("prompt_hash") == prompt_hash
+            and rec.get("artifact_hash") == artifact_hash
+        ]
+    synthesized = sum(1 for rec in entries if rec.get("plan") is not None)
+    judged = sum(1 for rec in entries if rec.get("judge_score") is not None)
+    dead = [
+        rec.get("issue_id", "?") for rec in entries
+        if rec.get("plan") is None and not rec.get("tpd_hit") and not rec.get("schema_invalid_retry")
+    ]
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    lines = [
+        f"Mode: {mode}  Updated: {now}",
+        f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
+        f"Synthesis-done: {synthesized}/{total_issues}   Judged: {judged}/{total_issues}"
+        f"   Permanently dead: {len(dead)} {dead}",
+        f"Last issue processed: {last_issue_id or 'n/a'}",
+        f"Process priority: {_current_priority_class()}",
+        f"Next quota-resume time: {next_resume_at or 'n/a (no rate limit hit this pass)'}",
+        *(extra or []),
+    ]
+    STATUS_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def _compute_prompt_hash() -> str:
@@ -444,7 +535,7 @@ def _unload_judge_model() -> None:
 def _synthesize_one(
     assistant, issue: dict, issue_id: str, i: int, total: int, current_done: dict, checkpoint: dict,
     current_model: str, current_prompt_hash: str, current_artifact_hash: str,
-    cassette: CassettePlayer, n_synthesis_recorded: int,
+    cassette: CassettePlayer, n_synthesis_recorded: int, mode: str = "synthesis",
 ) -> tuple[object | None, str | None, int, bool]:
     """Run synthesis for one issue. Returns (plan_or_None, triage_error_or_None,
     updated_n_synthesis_recorded, already_finalized). already_finalized=True means this
@@ -513,6 +604,7 @@ def _synthesize_one(
             }
             _record_done(checkpoint, issue_id, rec, current_model, current_prompt_hash, current_artifact_hash)
             save_checkpoint(checkpoint)
+            write_live_status(mode, current_model, current_prompt_hash, current_artifact_hash, total, last_issue_id=issue_id)
             return None, None, n_synthesis_recorded, True
         if llm_status not in ("ok", "parse_retry_succeeded"):
             logger.error(
@@ -522,6 +614,11 @@ def _synthesize_one(
                 llm_status, n_synthesis_recorded, cassette.stats()["entries"],
             )
             save_checkpoint({"done": checkpoint.get("done", {})})
+            write_live_status(
+                mode, current_model, current_prompt_hash, current_artifact_hash, total,
+                last_issue_id=issue_id,
+                extra=[f"STOPPED: synthesis degraded (llm_status={llm_status}) on {issue_id}."],
+            )
             print("\n=== SYNTHESIS DEGRADED (not a genuine completion) ===")
             print(f"Issue: {issue_id}")
             print(f"llm_status={llm_status}")
@@ -543,6 +640,11 @@ def _synthesize_one(
             n_synthesis_recorded, exc.completion_tokens, exc.max_tokens, cassette.stats()["entries"],
         )
         save_checkpoint({"done": checkpoint.get("done", {})})
+        write_live_status(
+            mode, current_model, current_prompt_hash, current_artifact_hash, total,
+            last_issue_id=issue_id,
+            extra=[f"STOPPED: completion truncated on {issue_id} -- raise max_tokens and re-run."],
+        )
         print("\n=== TRUNCATED COMPLETION ===")
         print(f"Issue: {issue_id}")
         print(f"completion_tokens={exc.completion_tokens} max_tokens={exc.max_tokens}")
@@ -569,6 +671,15 @@ def _synthesize_one(
                 n_synthesis_recorded, cassette.stats()["entries"], exc,
             )
             save_checkpoint({"done": checkpoint.get("done", {})})
+            resume_in_s = _parse_tpd_wait(str(exc))
+            resume_at = datetime.fromtimestamp(
+                datetime.now(timezone.utc).timestamp() + resume_in_s, tz=timezone.utc
+            ).strftime("%Y-%m-%d %H:%M:%S UTC")
+            write_live_status(
+                mode, current_model, current_prompt_hash, current_artifact_hash, total,
+                last_issue_id=issue_id, next_resume_at=resume_at,
+                extra=[f"STOPPED: Groq rate limit on {issue_id}. Resume in ~{resume_in_s}s."],
+            )
             print(f"\n=== TPD HIT ===")
             print(f"Synthesis recorded: {n_synthesis_recorded}")
             print(f"Cassette entries: {cassette.stats()['entries']}")
@@ -584,6 +695,11 @@ def _synthesize_one(
                 n_synthesis_recorded, cassette.stats()["entries"], exc,
             )
             save_checkpoint({"done": checkpoint.get("done", {})})
+            write_live_status(
+                mode, current_model, current_prompt_hash, current_artifact_hash, total,
+                last_issue_id=issue_id,
+                extra=[f"STOPPED: connection lost on {issue_id}."],
+            )
             print("\n=== CONNECTION LOST ===")
             print(f"Synthesis recorded: {n_synthesis_recorded}")
             print(f"Cassette entries: {cassette.stats()['entries']}")
@@ -677,6 +793,7 @@ def run_full(groq_key, issues, cassette, current_model, current_prompt_hash, cur
         plan, triage_error, n_synthesis_recorded, already_finalized = _synthesize_one(
             assistant, issue, issue_id, i, len(issues), current_done, checkpoint,
             current_model, current_prompt_hash, current_artifact_hash, cassette, n_synthesis_recorded,
+            mode="full",
         )
         if already_finalized:
             continue
@@ -685,6 +802,7 @@ def run_full(groq_key, issues, cassette, current_model, current_prompt_hash, cur
             results[issue_id] = rec
             _record_done(checkpoint, issue_id, rec, current_model, current_prompt_hash, current_artifact_hash)
             save_checkpoint(checkpoint)
+            write_live_status("full", current_model, current_prompt_hash, current_artifact_hash, len(issues), last_issue_id=issue_id)
             continue
 
         plan_dict = plan.model_dump(exclude=_JUDGE_EXCLUDED_PLAN_FIELDS)
@@ -695,6 +813,10 @@ def run_full(groq_key, issues, cassette, current_model, current_prompt_hash, cur
             results[issue_id] = rec
             _record_done(checkpoint, issue_id, rec, current_model, current_prompt_hash, current_artifact_hash)
             save_checkpoint(checkpoint)
+            write_live_status(
+                "full", current_model, current_prompt_hash, current_artifact_hash, len(issues),
+                last_issue_id=issue_id, extra=[f"STOPPED: Groq TPD during judging on {issue_id}."],
+            )
             print(f"\n=== TPD HIT (during judge) ===")
             print(f"Synthesis recorded: {n_synthesis_recorded}")
             print(f"Judge recorded: {n_judge_recorded}")
@@ -704,6 +826,7 @@ def run_full(groq_key, issues, cassette, current_model, current_prompt_hash, cur
         results[issue_id] = rec
         _record_done(checkpoint, issue_id, rec, current_model, current_prompt_hash, current_artifact_hash)
         save_checkpoint(checkpoint)
+        write_live_status("full", current_model, current_prompt_hash, current_artifact_hash, len(issues), last_issue_id=issue_id)
 
     _print_summary_full(issues, results, current_model, current_prompt_hash, n_synthesis_recorded, n_skipped, cassette)
 
@@ -742,6 +865,7 @@ def run_synthesis(groq_key, issues, cassette, current_model, current_prompt_hash
         plan, triage_error, n_synthesis_recorded, already_finalized = _synthesize_one(
             assistant, issue, issue_id, i, len(issues), current_done, checkpoint,
             current_model, current_prompt_hash, current_artifact_hash, cassette, n_synthesis_recorded,
+            mode="synthesis",
         )
         if already_finalized:
             continue
@@ -754,6 +878,10 @@ def run_synthesis(groq_key, issues, cassette, current_model, current_prompt_hash
         }
         _record_done(checkpoint, issue_id, rec, current_model, current_prompt_hash, current_artifact_hash)
         save_checkpoint(checkpoint)
+        write_live_status(
+            "synthesis", current_model, current_prompt_hash, current_artifact_hash, len(issues),
+            last_issue_id=issue_id,
+        )
         if plan is not None:
             n_pending_judge += 1
 
@@ -829,6 +957,10 @@ def run_judge(issues, cassette, current_model, current_prompt_hash, current_arti
             updated = {**rec, "judge_score": judge_score, "judge_pending": False}
             _record_done(checkpoint, issue_id, updated, current_model, current_prompt_hash, current_artifact_hash)
             save_checkpoint(checkpoint)
+            write_live_status(
+                "judge", current_model, current_prompt_hash, current_artifact_hash, len(issues),
+                last_issue_id=issue_id,
+            )
     finally:
         # Phase 3c: unload the model the moment this pass is done (success, partial, or a
         # sys.exit above) so VRAM is freed immediately rather than waiting for Ollama's own

@@ -3,11 +3,22 @@ from __future__ import annotations
 """Unattended driver for eval/record_cassettes.py — waits out Groq's rate-limit window and
 resumes automatically, without a human/CC session babysitting it.
 
+2026-09-06 (ADR-0060): split into --mode synthesis / --mode judge, mirroring
+record_cassettes.py's own split. Synthesis and judging have different resource profiles and
+different "done" definitions:
+  - synthesis: Groq calls only. Runs at BelowNormal priority with BLAS threads capped
+    (OMP/MKL/OPENBLAS_NUM_THREADS=2) so it yields CPU to whatever else is running on this
+    machine. "Done" means every issue has a plan (judge_score irrelevant here).
+  - judge: local Ollama only, zero Groq calls. Ollama's qwen3:8b holds ~5.5 GB VRAM on an
+    8 GB card while loaded, so this mode checks free VRAM (nvidia-smi) before EVERY
+    invocation and waits rather than contending with another GPU-heavy process. "Done"
+    means every issue has a judge_score (record_cassettes.py's original definition,
+    unchanged).
+
 This is a wrapper, not a replacement: record_cassettes.py's own checkpoint (keyed by
-(issue_id, model, prompt_hash) as of the 2026-08-30 fix, extended to (issue_id, model,
-prompt_hash, artifact_hash) by ADR-0059 on 2026-09-06) is still the source of truth for
-what's actually recorded. This script only decides WHEN to re-invoke it and WHETHER an
-exit is "wait and retry" vs "stop, a human needs to look at this."
+(issue_id, model, prompt_hash, artifact_hash) as of ADR-0058/0059) is still the source of
+truth for what's actually recorded. This script only decides WHEN to re-invoke it and
+WHETHER an exit is "wait and retry" vs "stop, a human needs to look at this."
 
 Stop conditions (per the working agreement -- these abort the loop, they do not retry):
   - A fallback/degraded synthesis ("SYNTHESIS DEGRADED" in record_cassettes.py's output).
@@ -21,22 +32,10 @@ Retryable (these just wait and re-invoke the same command):
     usually names an exact wait ("Please try again in Xm Ys"); parsed and used with a
     1-minute buffer, falling back to a fixed default if the text can't be parsed.
   - A connection error ("CONNECTION LOST") -- shorter fixed backoff, not the TPD wait.
-
-Terminal "done" state is computed from the checkpoint file directly, NOT from the
-subprocess's exit code or "RECORDING COMPLETE" text -- record_cassettes.py's own summary
-logic exits 1 ("NOT RECORDING COMPLETE (zero live synthesis calls this run)") on every
-resume once the only issues left are ones it permanently skips (checkpointed with
-plan=None, e.g. a genuine early-termination failure) -- that would otherwise be an
-infinite retry trap. This script instead reads recording_checkpoint.json each iteration
-and stops once every one of the 64 issues is either resolved (has a judge_score) or
-permanently dead (plan=None) under the CURRENTLY configured model+prompt -- there is
-nothing left any retry could accomplish at that point.
-
-Early termination on a issue not previously seen is expected data, not a stop condition
--- it gets logged and the loop continues to the next issue automatically (that's just
-another "dead" issue counted in the terminal-state check above).
+  - (judge mode only) Insufficient free VRAM -- waits and re-checks rather than starting.
 """
 
+import argparse
 import json
 import re
 import subprocess
@@ -60,6 +59,8 @@ TOTAL_ISSUES = sum(1 for _ in EVAL_SET_PATH.open(encoding="utf-8") if _.strip())
 DEFAULT_TPD_WAIT_S = 30 * 60  # fallback if Groq's error text can't be parsed for a wait
 CONNECTION_WAIT_S = 5 * 60
 RETRY_BUFFER_S = 60
+VRAM_CHECK_INTERVAL_S = 2 * 60
+MIN_FREE_VRAM_MB = 6 * 1024
 
 _TPD_WAIT_RE = re.compile(r"try again in\s+(?:(\d+)m)?\s*(?:([\d.]+)s)?", re.IGNORECASE)
 
@@ -71,6 +72,7 @@ HARD_STOP_MARKERS = [
     "does not exist. This file is the explicit, committed statement",  # missing expected-hash file
     "resolved artifacts do not match",  # ADR-0059: artifact mismatch against expected hashes
     "GROQ_API_KEY not set",
+    "JUDGE PASS STOPPED (unexpected rate-limit signal)",
     # 2026-09-03 (ADR-0055 Part P1a/2c): a FIRST degraded_schema_invalid on an issue is
     # NOT a hard stop -- it's logged and the run continues (see record_cassettes.py),
     # so it deliberately does not appear here. Only a REPRODUCED failure (2nd
@@ -95,10 +97,7 @@ def _load_groq_key() -> str:
 
 def _current_model_and_hash() -> tuple[str, str, str]:
     """Import record_cassettes.py's own hashing logic rather than re-deriving it, so this
-    wrapper can never drift out of sync with what a real invocation would compute. Includes
-    artifact_hash (ADR-0059) alongside model/prompt_hash -- this wrapper's own terminal-state
-    check below must key on all three or it can silently declare "done" against a checkpoint
-    recorded under different classifier/predictor/index/conformal artifacts."""
+    wrapper can never drift out of sync with what a real invocation would compute."""
     sys.path.insert(0, str(WORKTREE_ROOT / "src"))
     sys.path.insert(0, str(RECORD_SCRIPT.parent))
     import record_cassettes as rc  # noqa: E402
@@ -108,33 +107,40 @@ def _current_model_and_hash() -> tuple[str, str, str]:
     return rc.TRIAGE_MODEL, rc._compute_prompt_hash(), artifact_fingerprint.combined_hash(artifact_hashes)
 
 
-def _checkpoint_progress(model: str, prompt_hash: str, artifact_hash: str) -> tuple[int, int, list[str]]:
-    """(resolved, dead, dead_issue_ids) among entries matching (model, prompt_hash, artifact_hash)."""
+def _checkpoint_entries(model: str, prompt_hash: str, artifact_hash: str) -> list[dict]:
     if not CHECKPOINT_PATH.exists():
-        return 0, 0, []
+        return []
     data = json.loads(CHECKPOINT_PATH.read_text(encoding="utf-8"))
-    resolved = 0
-    dead: list[str] = []
-    for rec in data.get("done", {}).values():
-        if (
-            rec.get("model") != model
-            or rec.get("prompt_hash") != prompt_hash
-            or rec.get("artifact_hash") != artifact_hash
-        ):
-            continue
-        if rec.get("judge_score") is not None:
-            resolved += 1
-        # tpd_hit AND schema_invalid_retry entries are excluded from "dead" (2026-09-03,
-        # ADR-0055 Part P1a/2c) -- both are retryable on a later resume (record_cassettes.py
-        # excludes them from done_ids the same way), not permanently skipped. Counting
-        # either as dead here would let the terminal-stop check below (resolved+dead ==
-        # TOTAL_ISSUES) fire before a retryable issue was ever actually retried.
-        elif rec.get("plan") is None and not rec.get("tpd_hit") and not rec.get("schema_invalid_retry"):
-            dead.append(rec.get("issue_id", "?"))
-    return resolved, len(dead), dead
+    return [
+        rec for rec in data.get("done", {}).values()
+        if rec.get("model") == model and rec.get("prompt_hash") == prompt_hash
+        and rec.get("artifact_hash") == artifact_hash
+    ]
 
 
-def _write_status(lines: list[str]) -> None:
+def _progress(model: str, prompt_hash: str, artifact_hash: str) -> dict:
+    """Both synthesis and judge progress, always both -- Phase 3e: the status file must
+    show N/64 synthesis-done AND N/64 judged regardless of which mode is currently running,
+    so a human glancing at RECORDING_STATUS.txt never has to guess the other number."""
+    entries = _checkpoint_entries(model, prompt_hash, artifact_hash)
+    synthesized = sum(1 for rec in entries if rec.get("plan") is not None)
+    judged = sum(1 for rec in entries if rec.get("judge_score") is not None)
+    dead = [
+        rec.get("issue_id", "?") for rec in entries
+        if rec.get("plan") is None and not rec.get("tpd_hit") and not rec.get("schema_invalid_retry")
+    ]
+    return {"synthesized": synthesized, "judged": judged, "dead": dead}
+
+
+def _write_status(mode: str, model: str, prompt_hash: str, artifact_hash: str, extra: list[str]) -> None:
+    p = _progress(model, prompt_hash, artifact_hash)
+    lines = [
+        f"Mode: {mode}  Updated: {_now()}",
+        f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
+        f"Synthesis-done: {p['synthesized']}/{TOTAL_ISSUES}   Judged: {p['judged']}/{TOTAL_ISSUES}"
+        f"   Permanently dead: {len(p['dead'])} {p['dead']}",
+        *extra,
+    ]
     STATUS_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -148,65 +154,124 @@ def _parse_tpd_wait(text: str) -> int:
     return int(total) if total > 0 else DEFAULT_TPD_WAIT_S
 
 
+def _free_vram_mb() -> int | None:
+    """None means "couldn't determine" (nvidia-smi missing/failed) -- callers treat that as
+    "assume contended, wait" (fail closed on resource availability: waiting is cheap and
+    reversible, proceeding into a genuinely contended GPU is not)."""
+    try:
+        out = subprocess.run(
+            ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=15,
+        )
+        if out.returncode != 0:
+            return None
+        return int(out.stdout.strip().splitlines()[0])
+    except (OSError, ValueError, IndexError, subprocess.TimeoutExpired):
+        return None
+
+
+def _wait_for_vram(mode: str, model: str, prompt_hash: str, artifact_hash: str) -> None:
+    """Phase 3c: never start the judge pass while another process holds most of this
+    machine's 8 GB card. Waits and re-checks rather than starting -- 'slower is fine'."""
+    if mode != "judge":
+        return
+    while True:
+        free_mb = _free_vram_mb()
+        if free_mb is not None and free_mb >= MIN_FREE_VRAM_MB:
+            return
+        _write_status(mode, model, prompt_hash, artifact_hash, [
+            f"WAITING (VRAM): free={free_mb if free_mb is not None else 'unknown (nvidia-smi check failed)'} MiB, "
+            f"need >={MIN_FREE_VRAM_MB} MiB before starting the judge pass.",
+            f"Re-checking in {VRAM_CHECK_INTERVAL_S}s.",
+        ])
+        time.sleep(VRAM_CHECK_INTERVAL_S)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--mode", choices=("synthesis", "judge"), required=True)
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
+    mode = args.mode
+
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     PID_PATH.write_text(str(__import__("os").getpid()), encoding="utf-8")
-
-    groq_key = _load_groq_key()
-    model, prompt_hash, artifact_hash = _current_model_and_hash()
 
     import os
 
     env = os.environ.copy()
-    env["GROQ_API_KEY"] = groq_key
+    if mode == "synthesis":
+        groq_key = _load_groq_key()
+        env["GROQ_API_KEY"] = groq_key
+        env["TRIAGE_PROMPT_INCLUDE_ATTRIBUTION"] = "1"
+        # Phase 3b: cap BLAS thread pools so the classifier/TF-IDF matrix ops this process
+        # does don't spin up threads competing with whatever else is on this CPU. Must be
+        # set before the child process imports numpy/sklearn -- setting them here (env dict
+        # for a FRESH subprocess) achieves that; setting them mid-process in
+        # record_cassettes.py itself would be too late (BLAS reads them once at library init).
+        for var in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS"):
+            env[var] = "2"
+        # Note: record_cassettes.py's synthesis path never imports torch, FAISS, or
+        # sentence-transformers (confirmed directly, ADR-0060 Phase 1b measurement) --
+        # frozen retrieval reads pre-computed similar_issues from eval_set.jsonl, no BGE
+        # embedding or GPU work happens in this process. torch.set_num_threads and
+        # "force BGE to CPU" have no code path to apply to here; not implemented because
+        # there is nothing for them to constrain, not because they were skipped.
+    priority_flag = subprocess.BELOW_NORMAL_PRIORITY_CLASS
+
+    # _current_model_and_hash() computes the prompt hash by reading THIS process's own
+    # os.environ (not the `env` dict built above, which only affects the child subprocess)
+    # -- set it here too so this wrapper's notion of "current config" matches exactly what
+    # the child (which inherits `env`) will compute for itself.
+    if mode == "synthesis":
+        os.environ["TRIAGE_PROMPT_INCLUDE_ATTRIBUTION"] = "1"
+    model, prompt_hash, artifact_hash = _current_model_and_hash()
 
     iteration = 0
     while True:
         iteration += 1
-        resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash, artifact_hash)
+        p = _progress(model, prompt_hash, artifact_hash)
 
-        if resolved + dead_count >= TOTAL_ISSUES:
-            _write_status([
-                f"STOPPED (terminal): {_now()}",
-                f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
-                f"Resolved: {resolved}/{TOTAL_ISSUES}  Permanently dead (early-termination): {dead_count}",
-                f"Dead issue ids: {dead_ids}",
-                "All 64 issues are accounted for -- nothing left for a retry to accomplish.",
-                "Decide on the dead issue(s) per docs/SESSION_RESUME_2026-08-30.md before",
-                "declaring the recording complete.",
+        if mode == "synthesis":
+            terminal = p["synthesized"] + len(p["dead"]) >= TOTAL_ISSUES
+        else:
+            terminal = p["judged"] + len(p["dead"]) >= TOTAL_ISSUES
+
+        if terminal:
+            _write_status(mode, model, prompt_hash, artifact_hash, [
+                "STOPPED (terminal): nothing left for a retry to accomplish in this mode.",
                 f"Iterations run: {iteration - 1}",
             ])
-            print("DONE: all issues accounted for, see RECORDING_STATUS.txt")
+            print(f"DONE ({mode}): all issues accounted for, see RECORDING_STATUS.txt")
             return
 
-        _write_status([
-            f"RUNNING: {_now()}",
-            f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
-            f"Resolved: {resolved}/{TOTAL_ISSUES}  Permanently dead so far: {dead_count} {dead_ids}",
-            f"Iteration {iteration}: invoking record_cassettes.py now...",
+        _wait_for_vram(mode, model, prompt_hash, artifact_hash)
+
+        _write_status(mode, model, prompt_hash, artifact_hash, [
+            f"RUNNING: iteration {iteration}, invoking record_cassettes.py --mode {mode} now...",
         ])
 
-        log_path = LOG_DIR / f"iter_{iteration:04d}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+        log_path = LOG_DIR / f"{mode}_iter_{iteration:04d}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
         proc = subprocess.run(
-            [str(PYTHON), str(RECORD_SCRIPT)],
+            [str(PYTHON), str(RECORD_SCRIPT), "--mode", mode],
             cwd=str(WORKTREE_ROOT),
             env=env,
             capture_output=True,
             text=True,
             encoding="utf-8",
             errors="replace",
+            creationflags=priority_flag,
         )
         output = (proc.stdout or "") + "\n" + (proc.stderr or "")
         log_path.write_text(output, encoding="utf-8")
 
         hard_stop = next((m for m in HARD_STOP_MARKERS if m in output), None)
         if hard_stop:
-            resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash, artifact_hash)
-            _write_status([
-                f"BLOCKED (hard stop): {_now()}",
-                f"Reason: {hard_stop!r} found in subprocess output.",
-                f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
-                f"Resolved: {resolved}/{TOTAL_ISSUES}  Dead: {dead_count} {dead_ids}",
+            _write_status(mode, model, prompt_hash, artifact_hash, [
+                f"BLOCKED (hard stop): {hard_stop!r} found in subprocess output.",
                 f"Full log: {log_path}",
                 f"Iterations run: {iteration}",
             ])
@@ -215,13 +280,9 @@ def main() -> None:
 
         if "=== TPD HIT" in output:
             wait_s = _parse_tpd_wait(output) + RETRY_BUFFER_S
-            resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash, artifact_hash)
             resume_at = datetime.now(timezone.utc).timestamp() + wait_s
-            _write_status([
-                f"WAITING (rate limit): {_now()}",
-                f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
-                f"Resolved: {resolved}/{TOTAL_ISSUES}  Dead: {dead_count} {dead_ids}",
-                f"Sleeping {wait_s}s (~{wait_s // 60}m), resuming at "
+            _write_status(mode, model, prompt_hash, artifact_hash, [
+                f"WAITING (rate limit): sleeping {wait_s}s (~{wait_s // 60}m), resuming at "
                 f"{datetime.fromtimestamp(resume_at, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}.",
                 f"Full log: {log_path}",
                 f"Iterations run: {iteration}",
@@ -230,47 +291,39 @@ def main() -> None:
             continue
 
         if "=== CONNECTION LOST" in output:
-            resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash, artifact_hash)
-            _write_status([
-                f"WAITING (connection error): {_now()}",
-                f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
-                f"Resolved: {resolved}/{TOTAL_ISSUES}  Dead: {dead_count} {dead_ids}",
-                f"Sleeping {CONNECTION_WAIT_S}s (~{CONNECTION_WAIT_S // 60}m) then retrying.",
+            _write_status(mode, model, prompt_hash, artifact_hash, [
+                f"WAITING (connection error): sleeping {CONNECTION_WAIT_S}s (~{CONNECTION_WAIT_S // 60}m) then retrying.",
                 f"Full log: {log_path}",
                 f"Iterations run: {iteration}",
             ])
             time.sleep(CONNECTION_WAIT_S)
             continue
 
-        if proc.returncode == 0 and "=== RECORDING COMPLETE ===" in output:
-            # 2026-09-03: found live -- a run that goes from 0 to 64/64 in a SINGLE
-            # iteration (e.g. because same-day validation testing had already warmed
-            # the cassette for most issues) never hits the checkpoint-based terminal
-            # check at the TOP of the loop, since that only runs BEFORE each
-            # iteration. Recognize the script's own success summary directly instead
-            # of falling through to the generic unrecognized-outcome bucket.
-            resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash, artifact_hash)
-            _write_status([
-                f"DONE (recording complete): {_now()}",
-                f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
-                f"Resolved: {resolved}/{TOTAL_ISSUES}  Dead: {dead_count} {dead_ids}",
+        done_marker = "=== SYNTHESIS COMPLETE ===" if mode == "synthesis" else "=== JUDGE COMPLETE ==="
+        if proc.returncode == 0 and done_marker in output:
+            _write_status(mode, model, prompt_hash, artifact_hash, [
+                f"DONE ({mode} complete): {done_marker}",
                 f"Full log: {log_path}",
                 f"Iterations run: {iteration}",
             ])
-            print("DONE: recording complete this iteration, see RECORDING_STATUS.txt")
+            print(f"DONE: {mode} complete this iteration, see RECORDING_STATUS.txt")
+            return
+
+        if mode == "judge" and proc.returncode == 0 and "=== NOTHING TO JUDGE ===" in output and "Not yet synthesized: 0" in output:
+            _write_status(mode, model, prompt_hash, artifact_hash, [
+                "DONE (judge complete): nothing left to judge, all issues fully judged.",
+                f"Full log: {log_path}",
+                f"Iterations run: {iteration}",
+            ])
+            print("DONE: judge complete, see RECORDING_STATUS.txt")
             return
 
         # Anything else (including exit 0 mid-run, or an exit 1 this wrapper doesn't
         # recognize) is a fail-closed stop -- never loop silently on an unknown outcome.
-        resolved, dead_count, dead_ids = _checkpoint_progress(model, prompt_hash, artifact_hash)
-        _write_status([
-            f"BLOCKED (unrecognized outcome): {_now()}",
-            f"Subprocess exit code: {proc.returncode}",
-            f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
-            f"Resolved: {resolved}/{TOTAL_ISSUES}  Dead: {dead_count} {dead_ids}",
+        _write_status(mode, model, prompt_hash, artifact_hash, [
+            f"BLOCKED (unrecognized outcome): subprocess exit code {proc.returncode}.",
             f"Full log: {log_path}",
-            "This wrapper does not retry an outcome it doesn't recognize -- inspect the",
-            "log and decide manually.",
+            "This wrapper does not retry an outcome it doesn't recognize -- inspect the log and decide manually.",
             f"Iterations run: {iteration}",
         ])
         print(f"BLOCKED (unrecognized outcome, exit={proc.returncode}) -- see RECORDING_STATUS.txt")

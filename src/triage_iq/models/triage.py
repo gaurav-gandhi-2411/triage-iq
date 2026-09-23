@@ -10,6 +10,7 @@ import logging
 import os
 import re
 import time
+from datetime import datetime, timezone
 from typing import Literal
 
 import numpy as np
@@ -463,6 +464,29 @@ class TriageAssistant:
             },
         ]
 
+    def _cache_response(self, content: str, usage: dict) -> dict:
+        """Build the dict stored by cache.set() for a live Groq call, with provenance.
+
+        2026-08-27 (Part D, multi-account diagnostic session): cassette entries previously
+        carried NO record of which model, account, or when they were recorded -- `model`
+        was passed into cache.set() but silently dropped by both CassettePlayer and
+        LLMCache, and there was no timestamp or account identifier at all. That made it
+        structurally impossible to tell, after the fact, whether a recording mixed
+        entries from different Groq accounts/tiers/quota states (see PLAN.md/ADR for the
+        investigation this closes). GROQ_ACCOUNT_LABEL is optional and self-reported --
+        there is no verified Groq API to ask "which account is this" -- so it defaults to
+        "unknown" rather than silently implying a label that was never actually set.
+        """
+        return {
+            "content": content,
+            "usage": usage,
+            "_provenance": {
+                "model": self.model,
+                "recorded_at": datetime.now(timezone.utc).isoformat(),
+                "account_label": os.environ.get("GROQ_ACCOUNT_LABEL", "unknown"),
+            },
+        }
+
     def _call_llm_verbose(self, signals: dict) -> tuple[TriagePlan, str, dict, str, bool]:
         """Return (plan, raw, usage, llm_status, cache_hit)."""
         from triage_iq.prompts.triage_prompt import (
@@ -518,7 +542,7 @@ class TriageAssistant:
 
         raw, usage = self._groq_completion(messages)
         if cache is not None and cache_key is not None:
-            cache.set(cache_key, "groq", self.model, messages, {"content": raw, "usage": usage})
+            cache.set(cache_key, "groq", self.model, messages, self._cache_response(raw, usage))
         llm_status = "ok"
 
         try:
@@ -541,7 +565,10 @@ class TriageAssistant:
                     usage = cached2.get("usage", {})
                 else:
                     raw2, usage = self._groq_completion(retry_messages)
-                    cache.set(parse_retry_key, "groq", self.model, retry_messages, {"content": raw2, "usage": usage})
+                    cache.set(
+                        parse_retry_key, "groq", self.model, retry_messages,
+                        self._cache_response(raw2, usage),
+                    )
             else:
                 raw2, usage = self._groq_completion(retry_messages)
             try:

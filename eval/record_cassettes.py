@@ -6,6 +6,14 @@ eval/cassettes/eval_cassette.json.
 
 Run ONCE locally with live GROQ_API_KEY set.  CI never runs this script.
 
+GROQ_ACCOUNT_LABEL (optional): self-reported identifier for which Groq account/key
+recorded this session, stored in every entry's response["_provenance"]["account_label"]
+(see TriageAssistant._cache_response in src/triage_iq/models/triage.py). Defaults to
+"unknown" if unset -- there is no verified Groq API to determine this programmatically,
+so it is never silently inferred. Set this explicitly whenever recording against a
+different account/key than the last recording, e.g.:
+    GROQ_ACCOUNT_LABEL=triageiq-production python eval/record_cassettes.py
+
 Usage:
     python eval/record_cassettes.py
 

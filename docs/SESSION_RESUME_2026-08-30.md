@@ -5,6 +5,26 @@ first, then resume exactly as described below.** Production has been down since
 ~2026-08-16 (Groq retired `llama-3.1-8b-instant`); this session got as far as selecting
 a replacement and is mid-way through re-recording the eval cassette against it.
 
+## 2026-09-23 (latest): STOP after Phase 3 — restoration staged, nothing merged
+
+- GG decisions applied: baseline promoted (`reports/eval_baseline.json`, ADR-0061), k8s
+  grounding ratchet = 1/53, `component_departed_from_top1_rate` report-only in `run_eval.py`.
+  `test_k8s_no_fabrication` now ratchets on the baseline (separate commit `5363874`,
+  revertable).
+- Retrained classifiers **published to GCS** (as 1129); `MANIFEST.sha256` ==
+  `EXPECTED_ARTIFACT_HASHES.json`; `test_model_manifest_clean` passes. Until the integration
+  lands, a deploy from `main` would fail its manifest drift guard (main's MANIFEST is old).
+- **Integration branch** `chore/integration-2026-09-23` (worktree
+  `../triage-iq-wt-integration`) = this branch + main + #129/#130 (superseded data kept ours)
+  + #116 prereg + #132. Draft PR **#131** (DO NOT MERGE) is its CI run.
+- **#132** (draft): anyio CVE-2026-63374/64847 suppressions. New advisories were failing ci.yml's
+  audit; a lock bump is blocked by the known requirements.txt/lock drift.
+- #115 was already merged (CVE-2026-9856 entry already on main). #116 targets main directly:
+  not merged, content carried in the integration.
+- README update drafted in the session scratchpad, NOT committed (goes on the public
+  portfolio).
+- Next: GG merge decision on the sequence in the session report; then deploy from CI on main.
+
 ## 2026-09-23 (later): AT STOP GATE 1 — recording complete, awaiting GG
 
 Synthesis 64/64 + judge 64/64 committed (`091e37e`, `f1efca7` mojibake repair, `444ef64`).

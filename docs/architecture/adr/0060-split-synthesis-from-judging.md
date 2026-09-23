@@ -100,3 +100,21 @@ link can distinguish the two.
 - **Re-synthesize the 48 instead of backfilling (B5).** Correct but costs ~1.5 days of Groq
   quota (48 × ~6.4k tokens against a 200k/day window) to recover a fact already determinable
   from the cassette.
+
+## Incident (2026-09-23): the B3/B5 cleanup wrote mojibake into 48 entries
+
+The same `ad7529f` data cleanup that implemented B3/B5 rewrote `eval_cassette.json` and
+`recording_checkpoint.json` after reading them as cp1252 rather than UTF-8. Every non-ASCII
+character in the 48 entries then present (em-dash, arrow, non-breaking hyphen) was stored as
+mojibake in requests, responses and checkpoint plans. Keys were untouched, so replay still hit,
+while serving corrupted plan text. The 16 entries synthesized afterwards were clean. Found by
+the prompt-parity test (the cassette held two distinct system prompts).
+
+Repaired in `f1efca7` by the exact inverse transform, verified:
+- byte-exact against `71bd580` for every entry that exists there;
+- by zero-call regeneration of all 48 user prompts.
+
+`test_cassette_and_checkpoint_have_no_mojibake` now guards the class. It returns 0 at `71bd580`
+and 383/164 corrupted strings at `ad7529f`. B5's content match itself was unaffected: it
+compared equally-corrupted copies. For any future checkpoint/cassette surgery: explicit
+`encoding="utf-8"` on every read and write, and re-run the invariant suite before committing.

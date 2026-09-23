@@ -1,0 +1,1712 @@
+{
+  "status": "CANDIDATE -- not written to reports/eval_baseline.json; awaiting GG approval at STOP GATE 1 (2026-09-23)",
+  "provenance": {
+    "cassette_commit": "444ef64",
+    "cassette_sha256": "f08e296d52bf8f744c8d9b4fbd4fceb8d7e4d180c736432913552525a003c3f4",
+    "eval_set_sha256": "0c2e57410098ea170f3f65668ff8977d3ce4942936b9a3e2ffb6696a09621bfe",
+    "synthesis": "openai/gpt-oss-120b, prompt_hash 5f845ce8697e3e7f (attribution ON), artifact_hash 55559dd93dc2a65d (ADR-0057 retrained 47-class classifier)",
+    "judge": "qwen3:8b via Ollama 0.33.3, digest 500a1f06",
+    "produced_by": "run_eval.compute_scores() + measure_grounding.compute_grounding_reports(), strict cassette replay, TRIAGE_PROMPT_INCLUDE_ATTRIBUTION unset"
+  },
+  "scores": {
+    "eval_set_hash": "0c2e57410098ea170f3f65668ff8977d3ce4942936b9a3e2ffb6696a09621bfe",
+    "cassette_hash": "f08e296d52bf8f744c8d9b4fbd4fceb8d7e4d180c736432913552525a003c3f4",
+    "per_repo": {
+      "microsoft/vscode": {
+        "n": 11,
+        "mean": 12.2727,
+        "dimensions": {
+          "component_match": 1.9090909090909092,
+          "similar_issues_relevance": 3.0,
+          "resolution_estimate_reasonableness": 1.6363636363636365,
+          "priority_alignment": 0.36363636363636365,
+          "next_steps_actionability": 3.0,
+          "overall_quality": 2.3636363636363638
+        },
+        "floor_fail_rate": 0.0,
+        "fabrication_rate": 0.0,
+        "prose_number_contradiction_rate": 0.0
+      },
+      "kubernetes/kubernetes": {
+        "n": 53,
+        "mean": 11.8679,
+        "dimensions": {
+          "component_match": 1.6603773584905661,
+          "similar_issues_relevance": 3.0,
+          "resolution_estimate_reasonableness": 1.5849056603773586,
+          "priority_alignment": 0.3584905660377358,
+          "next_steps_actionability": 2.9622641509433962,
+          "overall_quality": 2.30188679245283
+        },
+        "floor_fail_rate": 0.0566,
+        "fabrication_rate": 0.0189,
+        "prose_number_contradiction_rate": 0.0
+      }
+    },
+    "overall": {
+      "n": 64,
+      "mean": 11.9375
+    }
+  },
+  "recording_quality": {
+    "microsoft/vscode": {
+      "n": 11,
+      "fallback_plans": 0,
+      "truncated": 0,
+      "early_terminated": 0,
+      "declared_attribution_non_null": 11,
+      "component_ungrounded": 0
+    },
+    "kubernetes/kubernetes": {
+      "n": 53,
+      "fallback_plans": 0,
+      "truncated": 0,
+      "early_terminated": 0,
+      "declared_attribution_non_null": 53,
+      "component_ungrounded": 1
+    },
+    "POOLED": {
+      "n": 64,
+      "fallback_plans": 0,
+      "truncated": 0,
+      "early_terminated": 0,
+      "declared_attribution_non_null": 64,
+      "component_ungrounded": 1
+    }
+  },
+  "comparison_to_superseded_2026_09_05_run": {
+    "superseded_overall_mean": 12.0938,
+    "superseded_note": "recorded against the pre-retrain classifier (ADR-0059 incident); not a valid baseline",
+    "paired_mean_diff": {
+      "microsoft/vscode": {
+        "n": 11,
+        "diff": -0.1818,
+        "ci95": [
+          -0.967,
+          0.603
+        ]
+      },
+      "kubernetes/kubernetes": {
+        "n": 53,
+        "diff": -0.1509,
+        "ci95": [
+          -0.551,
+          0.249
+        ]
+      },
+      "pooled": {
+        "n": 64,
+        "diff": -0.1562,
+        "ci95": [
+          -0.511,
+          0.199
+        ]
+      }
+    },
+    "same_predicted_component": "61/64"
+  },
+  "grounding_variant_proposal": {
+    "per_issue": [
+      {
+        "id": "k8s-13257",
+        "repo": "kubernetes/kubernetes",
+        "num": 13257,
+        "pred": "test-infra",
+        "gold": "test",
+        "correct": false,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "test-infra",
+            0.605
+          ],
+          [
+            "test",
+            0.602
+          ],
+          [
+            "upgrade",
+            0.483
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14054",
+        "repo": "kubernetes/kubernetes",
+        "num": 14054,
+        "pred": "kubelet",
+        "gold": "api",
+        "correct": false,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "kubelet",
+            0.553
+          ],
+          [
+            "apiserver",
+            0.531
+          ],
+          [
+            "reliability",
+            0.468
+          ]
+        ]
+      },
+      {
+        "id": "k8s-13096",
+        "repo": "kubernetes/kubernetes",
+        "num": 13096,
+        "pred": "api",
+        "gold": "api",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "api",
+            0.582
+          ],
+          [
+            "apiserver",
+            0.457
+          ],
+          [
+            "usability",
+            0.454
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12224",
+        "repo": "kubernetes/kubernetes",
+        "num": 12224,
+        "pred": "example",
+        "gold": "example",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "example",
+            0.617
+          ],
+          [
+            "ui",
+            0.485
+          ],
+          [
+            "usability",
+            0.444
+          ]
+        ]
+      },
+      {
+        "id": "k8s-13435",
+        "repo": "kubernetes/kubernetes",
+        "num": 13435,
+        "pred": "os/fedora",
+        "gold": "os/fedora",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "os/fedora",
+            0.683
+          ],
+          [
+            "usability",
+            0.468
+          ],
+          [
+            "apiserver",
+            0.448
+          ]
+        ]
+      },
+      {
+        "id": "k8s-13995",
+        "repo": "kubernetes/kubernetes",
+        "num": 13995,
+        "pred": "test-infra",
+        "gold": "test-infra",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "test-infra",
+            0.581
+          ],
+          [
+            "test",
+            0.548
+          ],
+          [
+            "node-e2e",
+            0.439
+          ]
+        ]
+      },
+      {
+        "id": "vscode-311284",
+        "repo": "microsoft/vscode",
+        "num": 311284,
+        "pred": "scm",
+        "gold": "scm",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "scm",
+            0.932
+          ],
+          [
+            "git",
+            0.447
+          ],
+          [
+            "api",
+            0.389
+          ]
+        ]
+      },
+      {
+        "id": "vscode-311836",
+        "repo": "microsoft/vscode",
+        "num": 311836,
+        "pred": "extensions",
+        "gold": "perf",
+        "correct": false,
+        "v0": true,
+        "v1": false,
+        "v2": true,
+        "top3": [
+          [
+            "ux",
+            0.345
+          ],
+          [
+            "extensions",
+            0.322
+          ],
+          [
+            "api",
+            0.305
+          ]
+        ]
+      },
+      {
+        "id": "vscode-311878",
+        "repo": "microsoft/vscode",
+        "num": 311878,
+        "pred": "terminal",
+        "gold": "terminal",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "terminal",
+            0.779
+          ],
+          [
+            "api",
+            0.395
+          ],
+          [
+            "tasks",
+            0.221
+          ]
+        ]
+      },
+      {
+        "id": "vscode-312260",
+        "repo": "microsoft/vscode",
+        "num": 312260,
+        "pred": "terminal",
+        "gold": "terminal",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "terminal",
+            0.717
+          ],
+          [
+            "api",
+            0.39
+          ],
+          [
+            "tasks",
+            0.258
+          ]
+        ]
+      },
+      {
+        "id": "vscode-312423",
+        "repo": "microsoft/vscode",
+        "num": 312423,
+        "pred": "accessibility",
+        "gold": "accessibility",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "accessibility",
+            0.755
+          ],
+          [
+            "keybindings",
+            0.702
+          ],
+          [
+            "terminal",
+            0.532
+          ]
+        ]
+      },
+      {
+        "id": "vscode-239838",
+        "repo": "microsoft/vscode",
+        "num": 239838,
+        "pred": "terminal",
+        "gold": "terminal",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "terminal",
+            0.715
+          ],
+          [
+            "typescript",
+            0.548
+          ],
+          [
+            "electron",
+            0.378
+          ]
+        ]
+      },
+      {
+        "id": "vscode-286776",
+        "repo": "microsoft/vscode",
+        "num": 286776,
+        "pred": "scm",
+        "gold": "scm",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "scm",
+            0.918
+          ],
+          [
+            "git",
+            0.651
+          ],
+          [
+            "debug",
+            0.236
+          ]
+        ]
+      },
+      {
+        "id": "vscode-278113",
+        "repo": "microsoft/vscode",
+        "num": 278113,
+        "pred": "debug",
+        "gold": "debug",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "debug",
+            0.775
+          ],
+          [
+            "suggest",
+            0.362
+          ],
+          [
+            "api",
+            0.299
+          ]
+        ]
+      },
+      {
+        "id": "vscode-4978",
+        "repo": "microsoft/vscode",
+        "num": 4978,
+        "pred": "search",
+        "gold": "search",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "search",
+            0.903
+          ],
+          [
+            "config",
+            0.506
+          ],
+          [
+            "file-explorer",
+            0.332
+          ]
+        ]
+      },
+      {
+        "id": "vscode-4993",
+        "repo": "microsoft/vscode",
+        "num": 4993,
+        "pred": "debug",
+        "gold": "debug",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "debug",
+            0.835
+          ],
+          [
+            "ux",
+            0.453
+          ],
+          [
+            "api",
+            0.236
+          ]
+        ]
+      },
+      {
+        "id": "vscode-4996",
+        "repo": "microsoft/vscode",
+        "num": 4996,
+        "pred": "editor-multicursor",
+        "gold": "editor-multicursor",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "editor-multicursor",
+            0.953
+          ],
+          [
+            "editor-core",
+            0.504
+          ],
+          [
+            "editor-find",
+            0.458
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12287",
+        "repo": "kubernetes/kubernetes",
+        "num": 12287,
+        "pred": "provider/openstack",
+        "gold": "provider/openstack",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "provider/openstack",
+            0.691
+          ],
+          [
+            "cloudprovider",
+            0.522
+          ],
+          [
+            "kubectl",
+            0.497
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12461",
+        "repo": "kubernetes/kubernetes",
+        "num": 12461,
+        "pred": "kubectl",
+        "gold": "usability",
+        "correct": false,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "kubectl",
+            0.533
+          ],
+          [
+            "usability",
+            0.487
+          ],
+          [
+            "kubelet",
+            0.453
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14557",
+        "repo": "kubernetes/kubernetes",
+        "num": 14557,
+        "pred": "kubelet",
+        "gold": "kubelet",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "kubelet",
+            0.585
+          ],
+          [
+            "test",
+            0.453
+          ],
+          [
+            "test-infra",
+            0.437
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14723",
+        "repo": "kubernetes/kubernetes",
+        "num": 14723,
+        "pred": "apiserver",
+        "gold": "security",
+        "correct": false,
+        "v0": true,
+        "v1": false,
+        "v2": true,
+        "top3": [
+          [
+            "security",
+            0.505
+          ],
+          [
+            "apiserver",
+            0.49
+          ],
+          [
+            "kubectl",
+            0.489
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14477",
+        "repo": "kubernetes/kubernetes",
+        "num": 14477,
+        "pred": "apiserver",
+        "gold": "test",
+        "correct": false,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "apiserver",
+            0.595
+          ],
+          [
+            "test",
+            0.574
+          ],
+          [
+            "test-infra",
+            0.502
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14125",
+        "repo": "kubernetes/kubernetes",
+        "num": 14125,
+        "pred": "test-infra",
+        "gold": "test-infra",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "test-infra",
+            0.624
+          ],
+          [
+            "test",
+            0.582
+          ],
+          [
+            "upgrade",
+            0.465
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14135",
+        "repo": "kubernetes/kubernetes",
+        "num": 14135,
+        "pred": "test-infra",
+        "gold": "test-infra",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "test-infra",
+            0.588
+          ],
+          [
+            "test",
+            0.481
+          ],
+          [
+            "kubelet",
+            0.42
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12254",
+        "repo": "kubernetes/kubernetes",
+        "num": 12254,
+        "pred": "test-infra",
+        "gold": "test-infra",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "test-infra",
+            0.613
+          ],
+          [
+            "test",
+            0.584
+          ],
+          [
+            "reliability",
+            0.436
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12477",
+        "repo": "kubernetes/kubernetes",
+        "num": 12477,
+        "pred": "apiserver",
+        "gold": "apiserver",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "apiserver",
+            0.62
+          ],
+          [
+            "api",
+            0.501
+          ],
+          [
+            "test",
+            0.462
+          ]
+        ]
+      },
+      {
+        "id": "k8s-13034",
+        "repo": "kubernetes/kubernetes",
+        "num": 13034,
+        "pred": "provider/openstack",
+        "gold": "cloudprovider",
+        "correct": false,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "provider/openstack",
+            0.628
+          ],
+          [
+            "cloudprovider",
+            0.494
+          ],
+          [
+            "kubectl",
+            0.458
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14550",
+        "repo": "kubernetes/kubernetes",
+        "num": 14550,
+        "pred": "controller-manager",
+        "gold": "controller-manager",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "controller-manager",
+            0.631
+          ],
+          [
+            "test",
+            0.486
+          ],
+          [
+            "test-infra",
+            0.474
+          ]
+        ]
+      },
+      {
+        "id": "k8s-13270",
+        "repo": "kubernetes/kubernetes",
+        "num": 13270,
+        "pred": "kube-proxy",
+        "gold": "kube-proxy",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "kube-proxy",
+            0.65
+          ],
+          [
+            "example",
+            0.446
+          ],
+          [
+            "kubelet",
+            0.44
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12277",
+        "repo": "kubernetes/kubernetes",
+        "num": 12277,
+        "pred": "nodecontroller",
+        "gold": "nodecontroller",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "nodecontroller",
+            0.648
+          ],
+          [
+            "test",
+            0.484
+          ],
+          [
+            "test-infra",
+            0.468
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12587",
+        "repo": "kubernetes/kubernetes",
+        "num": 12587,
+        "pred": "provider/openstack",
+        "gold": "provider/openstack",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "provider/openstack",
+            0.659
+          ],
+          [
+            "os/coreos",
+            0.613
+          ],
+          [
+            "cloudprovider",
+            0.505
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14935",
+        "repo": "kubernetes/kubernetes",
+        "num": 14935,
+        "pred": "kubelet",
+        "gold": "system-requirement",
+        "correct": false,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "kubelet",
+            0.511
+          ],
+          [
+            "isolation",
+            0.493
+          ],
+          [
+            "introspection",
+            0.471
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14835",
+        "repo": "kubernetes/kubernetes",
+        "num": 14835,
+        "pred": "build-release",
+        "gold": "build-release",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "build-release",
+            0.604
+          ],
+          [
+            "release-eng",
+            0.51
+          ],
+          [
+            "test-infra",
+            0.458
+          ]
+        ]
+      },
+      {
+        "id": "k8s-13784",
+        "repo": "kubernetes/kubernetes",
+        "num": 13784,
+        "pred": "kubelet",
+        "gold": "kubelet",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "kubelet",
+            0.618
+          ],
+          [
+            "provider/openstack",
+            0.535
+          ],
+          [
+            "cloudprovider",
+            0.514
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12665",
+        "repo": "kubernetes/kubernetes",
+        "num": 12665,
+        "pred": "networking",
+        "gold": "ha",
+        "correct": false,
+        "v0": false,
+        "v1": true,
+        "v2": false,
+        "top3": [
+          [
+            "kubectl",
+            0.496
+          ],
+          [
+            "usability",
+            0.488
+          ],
+          [
+            "app-lifecycle",
+            0.483
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14553",
+        "repo": "kubernetes/kubernetes",
+        "num": 14553,
+        "pred": "platform/mesos",
+        "gold": "controller-manager",
+        "correct": false,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "platform/mesos",
+            0.671
+          ],
+          [
+            "controller-manager",
+            0.606
+          ],
+          [
+            "test",
+            0.554
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14756",
+        "repo": "kubernetes/kubernetes",
+        "num": 14756,
+        "pred": "kube-proxy",
+        "gold": "kube-proxy",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "kube-proxy",
+            0.668
+          ],
+          [
+            "test",
+            0.476
+          ],
+          [
+            "test-infra",
+            0.445
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12703",
+        "repo": "kubernetes/kubernetes",
+        "num": 12703,
+        "pred": "ui",
+        "gold": "ui",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "ui",
+            0.677
+          ],
+          [
+            "kubectl",
+            0.556
+          ],
+          [
+            "usability",
+            0.461
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12248",
+        "repo": "kubernetes/kubernetes",
+        "num": 12248,
+        "pred": "kubectl",
+        "gold": "usability",
+        "correct": false,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "kubectl",
+            0.595
+          ],
+          [
+            "usability",
+            0.548
+          ],
+          [
+            "build-release",
+            0.432
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14785",
+        "repo": "kubernetes/kubernetes",
+        "num": 14785,
+        "pred": "build-release",
+        "gold": "build-release",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "build-release",
+            0.616
+          ],
+          [
+            "release-eng",
+            0.537
+          ],
+          [
+            "upgrade",
+            0.477
+          ]
+        ]
+      },
+      {
+        "id": "k8s-13470",
+        "repo": "kubernetes/kubernetes",
+        "num": 13470,
+        "pred": "kubelet",
+        "gold": "kubelet",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "kubelet",
+            0.59
+          ],
+          [
+            "api",
+            0.493
+          ],
+          [
+            "kubelet-api",
+            0.467
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12784",
+        "repo": "kubernetes/kubernetes",
+        "num": 12784,
+        "pred": "apiserver",
+        "gold": "os/coreos",
+        "correct": false,
+        "v0": true,
+        "v1": false,
+        "v2": true,
+        "top3": [
+          [
+            "os/coreos",
+            0.606
+          ],
+          [
+            "apiserver",
+            0.484
+          ],
+          [
+            "usability",
+            0.466
+          ]
+        ]
+      },
+      {
+        "id": "k8s-13508",
+        "repo": "kubernetes/kubernetes",
+        "num": 13508,
+        "pred": "reliability",
+        "gold": "reliability",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "reliability",
+            0.581
+          ],
+          [
+            "cloudprovider",
+            0.46
+          ],
+          [
+            "kubectl",
+            0.448
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14078",
+        "repo": "kubernetes/kubernetes",
+        "num": 14078,
+        "pred": "test",
+        "gold": "kubectl",
+        "correct": false,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "test",
+            0.563
+          ],
+          [
+            "test-infra",
+            0.524
+          ],
+          [
+            "kubectl",
+            0.502
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14424",
+        "repo": "kubernetes/kubernetes",
+        "num": 14424,
+        "pred": "test-infra",
+        "gold": "test",
+        "correct": false,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "test-infra",
+            0.63
+          ],
+          [
+            "test",
+            0.583
+          ],
+          [
+            "reliability",
+            0.425
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12828",
+        "repo": "kubernetes/kubernetes",
+        "num": 12828,
+        "pred": "kubectl",
+        "gold": "usability",
+        "correct": false,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "kubectl",
+            0.598
+          ],
+          [
+            "usability",
+            0.569
+          ],
+          [
+            "app-lifecycle",
+            0.467
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12737",
+        "repo": "kubernetes/kubernetes",
+        "num": 12737,
+        "pred": "apiserver",
+        "gold": "apiserver",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "apiserver",
+            0.609
+          ],
+          [
+            "api",
+            0.517
+          ],
+          [
+            "example",
+            0.516
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12122",
+        "repo": "kubernetes/kubernetes",
+        "num": 12122,
+        "pred": "cloudprovider",
+        "gold": "cloudprovider",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "cloudprovider",
+            0.66
+          ],
+          [
+            "api",
+            0.484
+          ],
+          [
+            "logging",
+            0.461
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12284",
+        "repo": "kubernetes/kubernetes",
+        "num": 12284,
+        "pred": "provider/openstack",
+        "gold": "provider/openstack",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "provider/openstack",
+            0.692
+          ],
+          [
+            "cloudprovider",
+            0.517
+          ],
+          [
+            "api",
+            0.462
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14281",
+        "repo": "kubernetes/kubernetes",
+        "num": 14281,
+        "pred": "kubectl",
+        "gold": "app-lifecycle",
+        "correct": false,
+        "v0": true,
+        "v1": false,
+        "v2": true,
+        "top3": [
+          [
+            "app-lifecycle",
+            0.572
+          ],
+          [
+            "kubectl",
+            0.564
+          ],
+          [
+            "usability",
+            0.478
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12615",
+        "repo": "kubernetes/kubernetes",
+        "num": 12615,
+        "pred": "api",
+        "gold": "kubelet",
+        "correct": false,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "api",
+            0.518
+          ],
+          [
+            "kubelet",
+            0.476
+          ],
+          [
+            "apiserver",
+            0.456
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14009",
+        "repo": "kubernetes/kubernetes",
+        "num": 14009,
+        "pred": "monitoring",
+        "gold": "monitoring",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "monitoring",
+            0.537
+          ],
+          [
+            "test",
+            0.454
+          ],
+          [
+            "test-infra",
+            0.449
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12853",
+        "repo": "kubernetes/kubernetes",
+        "num": 12853,
+        "pred": "os/coreos",
+        "gold": "os/coreos",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "os/coreos",
+            0.653
+          ],
+          [
+            "kubectl",
+            0.518
+          ],
+          [
+            "example",
+            0.455
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12818",
+        "repo": "kubernetes/kubernetes",
+        "num": 12818,
+        "pred": "reliability",
+        "gold": "reliability",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "reliability",
+            0.582
+          ],
+          [
+            "test-infra",
+            0.47
+          ],
+          [
+            "test",
+            0.451
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14711",
+        "repo": "kubernetes/kubernetes",
+        "num": 14711,
+        "pred": "kubectl",
+        "gold": "kubectl",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "kubectl",
+            0.503
+          ],
+          [
+            "introspection",
+            0.466
+          ],
+          [
+            "monitoring",
+            0.453
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14552",
+        "repo": "kubernetes/kubernetes",
+        "num": 14552,
+        "pred": "test",
+        "gold": "test",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "test",
+            0.569
+          ],
+          [
+            "test-infra",
+            0.56
+          ],
+          [
+            "reliability",
+            0.412
+          ]
+        ]
+      },
+      {
+        "id": "k8s-13062",
+        "repo": "kubernetes/kubernetes",
+        "num": 13062,
+        "pred": "test-infra",
+        "gold": "test-infra",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "test-infra",
+            0.624
+          ],
+          [
+            "test",
+            0.564
+          ],
+          [
+            "reliability",
+            0.426
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14762",
+        "repo": "kubernetes/kubernetes",
+        "num": 14762,
+        "pred": "cadvisor",
+        "gold": "cadvisor",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "cadvisor",
+            0.651
+          ],
+          [
+            "monitoring",
+            0.491
+          ],
+          [
+            "kubelet",
+            0.472
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14895",
+        "repo": "kubernetes/kubernetes",
+        "num": 14895,
+        "pred": "kubectl",
+        "gold": "client-libraries",
+        "correct": false,
+        "v0": true,
+        "v1": false,
+        "v2": true,
+        "top3": [
+          [
+            "client-libraries",
+            0.632
+          ],
+          [
+            "kubectl",
+            0.507
+          ],
+          [
+            "usability",
+            0.467
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14363",
+        "repo": "kubernetes/kubernetes",
+        "num": 14363,
+        "pred": "cloudprovider",
+        "gold": "cloudprovider",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "cloudprovider",
+            0.628
+          ],
+          [
+            "kubectl",
+            0.512
+          ],
+          [
+            "usability",
+            0.465
+          ]
+        ]
+      },
+      {
+        "id": "k8s-13057",
+        "repo": "kubernetes/kubernetes",
+        "num": 13057,
+        "pred": "etcd",
+        "gold": "etcd",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "etcd",
+            0.651
+          ],
+          [
+            "api",
+            0.489
+          ],
+          [
+            "kubectl",
+            0.484
+          ]
+        ]
+      },
+      {
+        "id": "k8s-14190",
+        "repo": "kubernetes/kubernetes",
+        "num": 14190,
+        "pred": "api",
+        "gold": "swagger",
+        "correct": false,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "api",
+            0.579
+          ],
+          [
+            "usability",
+            0.521
+          ],
+          [
+            "swagger",
+            0.461
+          ]
+        ]
+      },
+      {
+        "id": "k8s-13276",
+        "repo": "kubernetes/kubernetes",
+        "num": 13276,
+        "pred": "ui",
+        "gold": "ui",
+        "correct": true,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "ui",
+            0.697
+          ],
+          [
+            "usability",
+            0.485
+          ],
+          [
+            "api",
+            0.463
+          ]
+        ]
+      },
+      {
+        "id": "k8s-12123",
+        "repo": "kubernetes/kubernetes",
+        "num": 12123,
+        "pred": "kubectl",
+        "gold": "usability",
+        "correct": false,
+        "v0": true,
+        "v1": true,
+        "v2": true,
+        "top3": [
+          [
+            "kubectl",
+            0.647
+          ],
+          [
+            "usability",
+            0.571
+          ],
+          [
+            "app-lifecycle",
+            0.446
+          ]
+        ]
+      }
+    ]
+  }
+}

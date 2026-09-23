@@ -5,6 +5,22 @@ first, then resume exactly as described below.** Production has been down since
 ~2026-08-16 (Groq retired `llama-3.1-8b-instant`); this session got as far as selecting
 a replacement and is mid-way through re-recording the eval cassette against it.
 
+## 2026-09-23 (later): AT STOP GATE 1 — recording complete, awaiting GG
+
+Synthesis 64/64 + judge 64/64 committed (`091e37e`, `f1efca7` mojibake repair, `444ef64`).
+Candidate scores in `reports/eval_baseline_candidate_2026-09-23.json`: overall judge mean
+11.9375 (vscode 12.2727, k8s 11.8679) vs the superseded old-classifier run's 12.0938, a paired
+diff of −0.156 (95% CI [−0.51, +0.20]). 0 fallback, 0 truncated, 0 early-terminated, 64/64
+declared_attribution. **Open for GG:**
+1. `test_grounding_ratchet_k8s` FAILS 1 > 0 (`k8s-12665`, declared wrong override). Either
+   accept 1/53 as the new ratchet baseline or not. Gate untouched.
+2. Write `reports/eval_baseline.json` + `_GROUNDING_BASELINE` from the candidate? Not done.
+3. `test_model_manifest_clean` still fails (expected until the GCS publish).
+4. Grounding-variant proposal (ADR-0058 addendum): `component_departed_from_top1`, report-only.
+
+Do not re-run synthesis: the recording is complete and valid. Re-judging is free (local) if the
+judge rubric changes.
+
 ## 2026-09-23: synthesis resumed after laptop shutdown; judge + STOP GATE 1 next
 
 **State (verified from checkpoint, not status file):** 56/64 synthesized at restart, 0 judged,

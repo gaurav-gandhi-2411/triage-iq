@@ -141,3 +141,61 @@ construction.
 
 See Phase 2b above for the three rejected ratchet-sizing alternatives (rate-based tolerance,
 k-repeat recording, pooled-n gating) with reasoning for each.
+
+## 2026-09-23 correction — Phase 1 ran against the old-classifier recording; re-run on the superseding one
+
+**Text above kept unedited.** The "clean 64/64 baseline" this ADR builds on (ADR-0052,
+2026-09-05) had the pre-retrain classifier in the loop (ADR-0059 incident; see ADR-0052's
+2026-09-23 correction). Re-checked on the superseding recording (cassette `444ef64`):
+
+- **Negative control re-run: still CAUGHT.** `scripts/scratch/negative_control_fabrication.py`
+  (key now resolved from the checkpoint rather than hardcoded) on vscode #311836: grounding
+  gate `component_grounded=False, all_grounded=False`; `run_eval.compute_scores()`
+  `fabrication_rate=0.0909` (1/11); real cassette byte-identical before/after (sha256
+  `f08e296d…`).
+- **Phase 3 ECE: independent of the cassette, VERIFIED.** `test_calibration_ece_in_tolerance`
+  reads only `eval_set.jsonl` + the classifier. Recomputed 0.1875 / 0.1210 before and after the
+  cassette changed (`cd198978…` → `f08e296d…`), identical to `_RECORDED_ECE`. ADR-0057's top-3
+  comparison (`scripts/measure_old_classifier_on_fresh_taxonomy.py`) reads only
+  `*_classifier_test.parquet` + the pkls; it regenerated
+  `reports/old_classifier_on_fresh_taxonomy.json` byte-identical at both cassette states
+  (68.09% / 83.61% old-classifier top-3).
+- **k8s grounding hard gate fails: 1 > 0** (`k8s-12665`, declared `model_override`, wrong vs
+  gold) — see ADR-0052's correction. Gate not modified.
+
+## 2026-09-23 — the grounding metric's #311836 weakness, and a stricter variant (PROPOSAL, not implemented)
+
+**Weakness (recorded, not new, now quantified):** "grounded" means the predicted component is
+in the classifier's top-3. When top-3 is flat, almost any plausible wrong guess passes. #311836:
+top-3 `[ux .345, extensions .322, api .305]`, gold `perf`. **6/6 live redraws were wrong vs gold
+and all 6 scored grounded** (Phase 1b above), and the current recording (`extensions`) is the
+same. More broadly, on the current recording **19 of the 20 gold-wrong predictions are scored
+grounded**; only `k8s-12665` (outside top-3) is flagged.
+
+**Proposed variant — `component_departed_from_top1`: predicted ≠ classifier top-1, with no
+declared-override exemption.** Effect on the current recording (zero-call replay; per-issue
+rows in `reports/eval_baseline_candidate_2026-09-23.json`):
+
+| | current rule (∉ top-3) | proposed (≠ top-1) |
+|---|---:|---:|
+| vscode flagged | 0/11 | 1/11 (#311836) |
+| k8s flagged | 1/53 | 5/53 (#14723, #12665, #12784, #14281, #14895) |
+| pooled flagged | 1/64 | 6/64 |
+| of flagged, gold-wrong | 1/1 | 6/6 |
+| of flagged, gold-correct (false alarm) | 0 | 0 (all 44 gold-correct predictions are top-1) |
+| gold-wrong but not flagged | 19 | 14 |
+
+In 4 of the 5 newly flagged cases, gold **was** the classifier's top-1 and the LLM moved off it.
+This is a distinct and useful failure signal: the LLM overriding a correct classifier.
+
+**Rejected alternatives, measured:**
+- "top-1 or declared override" would un-flag `k8s-12665`, the one case the current rule catches.
+- "≥ 50% of top-1's confidence" flags nothing new (1/64): top-3 confidences are flat by
+  construction.
+
+**Recommendation:** add it as a **report-only** metric beside `fabrication_rate`, and do not
+replace or gate on it yet.
+- It measures classifier *agreement*, not fabrication.
+- A correct top-2 pick would count as a false alarm, and 0 false alarms at n=64 bounds that
+  rate only to ≲ 5.6% (rule of three).
+- Gating it would need its own ratchet sized per Phase 2 (vscode n≈73).

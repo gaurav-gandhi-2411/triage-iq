@@ -98,10 +98,19 @@ _GROUNDING_BASELINE = {
     # ungrounded, same n both repos) via the same zero-live-call replay, and eval_set_hash
     # is unchanged (only the cassette recording changed, not the eval SET) -- so no value
     # below changed, only this provenance note.
+    #
+    # 2026-09-23 (ADR-0061): the 2026-09-05 re-record above had the PRE-retrain classifier in
+    # the loop (ADR-0059 incident), so its 0/53 was void. Re-derived from the superseding
+    # recording (cassette 444ef64: gpt-oss-120b, retrained 47-class classifier, attribution
+    # ON): k8s 1/53 (k8s-12665 -- predicted `networking`, gold `ha`, outside top-3
+    # [kubectl, usability, app-lifecycle], declared model_override). GG accepted 1 as the
+    # baseline: a real error correctly flagged, not a regression -- n=53 cannot distinguish a
+    # true rate behind 0, 1 or 2 observed (Wilson 95% upper bounds 6.8% / 9.9% / 12.8%; see
+    # ADR-0061). vscode unchanged at 0/11.
     "eval_set_hash": "0c2e57410098ea170f3f65668ff8977d3ce4942936b9a3e2ffb6696a09621bfe",
     "per_repo": {
         "kubernetes/kubernetes": {
-            "ungrounded_count": 0,
+            "ungrounded_count": 1,
             "n": 53,
         },
         "microsoft/vscode": {

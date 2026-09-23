@@ -5,6 +5,37 @@ first, then resume exactly as described below.** Production has been down since
 ~2026-08-16 (Groq retired `llama-3.1-8b-instant`); this session got as far as selecting
 a replacement and is mid-way through re-recording the eval cassette against it.
 
+## 2026-09-23: synthesis resumed after laptop shutdown; judge + STOP GATE 1 next
+
+**State (verified from checkpoint, not status file):** 56/64 synthesized at restart, 0 judged,
+checkpoint ↔ cassette 1:1 (no orphans, stamps `gpt-oss-120b / 5f845ce8697e3e7f /
+55559dd93dc2a65d`). Relaunched detached/BelowNormal; hit TPD again at 61/64, wrapper
+auto-resumes. Laptop is set to never sleep.
+
+**Groq quota is shared (stated by GG, 2026-09-23):** all Groq usage is consolidated on one
+account/organization (`org_01kpw92f…` in 429 bodies), so **gg-portfolio's chatbot
+(`/api/chat`), 6-hourly chat canary, weekly `metrics-refresh.yml` content pipeline (Mondays
+03:00 UTC) and `run-eval --live` all draw from the same `openai/gpt-oss-120b` 200k TPD pool**
+as this recording. Expect slower recording around Monday 03:00 UTC and any gg-portfolio
+live-eval run. Not independently verified here (keys differ locally; org is per-account) —
+recorded as GG's statement. No change to gg-portfolio.
+
+**Decisions this session (GG):**
+- `TRIAGE_PROMPT_INCLUDE_ATTRIBUTION` default flips to ON in code (prod, eval, CI) — the
+  baseline is recorded with it on; plus a parity test so prod and cassette config can't
+  silently diverge. Applied after synthesis reaches 64/64 (the recorder re-imports those files).
+- ADR-0059 and ADR-0060 written (`c62d10a`).
+
+**Restoration merge plan — must include:**
+- `docs/bakeoff-prereg` branch → `docs/eval/bakeoff_prereg_2026-08-29.md`. ADR-0052/0053/0054
+  (model selection, Arm B elimination, tie-breaker amendment) cite it; it is NOT an ancestor of
+  `chore/bakeoff-screen-2026-08-29` (verified `git merge-base --is-ancestor`, 2026-09-23). If it
+  never merges, the evidence for the model choice is missing from `main`.
+
+**Post-launch tasks (not now):**
+- ADR-0007, ADR-0011, ADR-0015, ADR-0016 are cited in `src/`/`eval/`/`scripts/`/`tests/` code
+  comments but no file exists in `docs/architecture/adr/`. Write or re-point the citations.
+
 ## 2026-09-03 (final): 9/9 confirmed — READY to start the full re-record, NOT started
 
 `k8s-14835` (the last unconfirmed issue) succeeded on retry — genuinely live,

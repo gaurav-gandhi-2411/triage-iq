@@ -307,6 +307,9 @@ def _make_assistant() -> TriageAssistant:
     asst.temperature = 0.0
     asst.max_tokens = 1024
     asst._groq_key = "test-key"
+    # __init__'s default. Read on the attribution-prompt path, which is the default path since
+    # 2026-09-23 (attribution_prompt_enabled()) -- the legacy path this fixture predates didn't.
+    asst.use_structured_output = True
     asst.classifier = MagicMock()
     asst.detector = MagicMock()
     asst.predictor = MagicMock()

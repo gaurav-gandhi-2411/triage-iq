@@ -199,9 +199,10 @@ def _compute_prompt_hash() -> str:
     """Fingerprint of the exact system prompt + few-shot messages + wire JSON schema this
     run will send, mirroring TriageAssistant._call_llm_verbose's prompt-selection
     (triage.py) so a prompt OR schema change is caught by the checkpoint the same way a
-    model change is caught by TRIAGE_MODEL. Does not cover use_structured_output's
-    SYSTEM_PROMPT/_PROSE branch -- that branch is only reachable when
-    TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1, which this script never sets.
+    model change is caught by TRIAGE_MODEL. Assumes use_structured_output=True (the
+    SYSTEM_PROMPT_PROSE branch), which is what recording uses. Prompt selection goes through
+    attribution_prompt_enabled() -- the same function triage.py uses -- so an unset env var
+    hashes to the same config production runs (default ON since 2026-09-23).
 
     2026-09-03 (ADR-0054/0055): the wire schema (TriagePlan's response_format, via
     _build_triage_plan_response_format) was NOT part of this hash until now -- the
@@ -214,12 +215,13 @@ def _compute_prompt_hash() -> str:
     from triage_iq.prompts.triage_prompt import (
         SYSTEM_PROMPT_LEGACY,
         SYSTEM_PROMPT_PROSE,
+        attribution_prompt_enabled,
         build_few_shot_examples,
         build_few_shot_examples_legacy,
     )
     from triage_iq.models.triage import _TRIAGE_PLAN_RESPONSE_FORMAT
 
-    if os.environ.get("TRIAGE_PROMPT_INCLUDE_ATTRIBUTION") == "1":
+    if attribution_prompt_enabled():
         system_prompt = SYSTEM_PROMPT_PROSE
         few_shots = build_few_shot_examples()
     else:

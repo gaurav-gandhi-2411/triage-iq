@@ -930,16 +930,16 @@ class TriageAssistant:
             SYSTEM_PROMPT,
             SYSTEM_PROMPT_LEGACY,
             SYSTEM_PROMPT_PROSE,
+            attribution_prompt_enabled,
             build_few_shot_examples,
             build_few_shot_examples_legacy,
             build_triage_prompt,
         )
 
-        # ADR-0020: attribution prompt is opt-in via TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1, off by
-        # default so eval/cassettes/eval_cassette.json (recorded pre-attribution) and
-        # reports/eval_baseline.json stay valid without re-baselining. See ADR-0020 "Baseline
-        # decision". Same env-var-gated pattern as TRIAGE_PROMPT_INCLUDE_BUCKET above.
-        _include_attribution = os.environ.get("TRIAGE_PROMPT_INCLUDE_ATTRIBUTION") == "1"
+        # ADR-0020: attribution prompt ON by default since 2026-09-23 (was opt-in) -- the eval
+        # cassette and baseline are recorded with it on, so prod must run the same config.
+        # See attribution_prompt_enabled() for the reasoning and the parity test that pins it.
+        _include_attribution = attribution_prompt_enabled()
         if _include_attribution:
             # 2026-08-28 (Part A): the JSON schema description is redundant prompt text when
             # native structured output is active -- Groq's response_format enforces it

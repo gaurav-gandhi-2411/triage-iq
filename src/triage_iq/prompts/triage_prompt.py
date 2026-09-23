@@ -5,7 +5,7 @@ TriagePlan response. The schema is embedded in the prompt so the model
 can be instructed to follow it without function-calling support.
 """
 
-
+import os
 
 SYSTEM_PROMPT = """\
 You are an expert GitHub issue triager for large open-source software projects.
@@ -176,12 +176,23 @@ Be specific and actionable. Do not hallucinate issue numbers not listed above.
 """
 
 
-# ADR-0020: TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1 switches synthesis to the attribution-augmented
-# SYSTEM_PROMPT / build_few_shot_examples() above (same env-var-gated pattern as
-# TRIAGE_PROMPT_INCLUDE_BUCKET in triage.py). Off by default so eval/cassettes/eval_cassette.json
-# (recorded pre-attribution) stays replayable without re-baselining reports/eval_baseline.json --
-# see ADR-0020 "Baseline decision". The two constants below are a frozen, byte-exact snapshot of
-# the pre-attribution prompt and are not meant to evolve alongside SYSTEM_PROMPT.
+def attribution_prompt_enabled() -> bool:
+    """Whether synthesis uses the attribution-augmented prompt (ADR-0020).
+
+    ON unless TRIAGE_PROMPT_INCLUDE_ATTRIBUTION is explicitly "0". Was opt-in ("1") until
+    2026-09-23: the eval cassette and reports/eval_baseline.json are now recorded WITH
+    attribution, so an off-by-default flag meant production, run_eval.py and CI all ran a
+    config the baseline never measured (same defect class as the ADR-0059 stale-classifier
+    incident). tests/test_prompt_config_parity.py pins that the unset-env default hashes to
+    the prompt_hash the committed cassette was recorded under. The one definition every
+    caller uses -- triage.py's prompt selection and record_cassettes.py's prompt_hash."""
+    return os.environ.get("TRIAGE_PROMPT_INCLUDE_ATTRIBUTION", "1") != "0"
+
+
+# ADR-0020: attribution_prompt_enabled() (above) selects the attribution-augmented
+# SYSTEM_PROMPT / build_few_shot_examples() vs. the legacy pair below. The two constants below
+# are a frozen, byte-exact snapshot of the pre-attribution prompt, kept for the explicit
+# TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=0 path, and are not meant to evolve alongside SYSTEM_PROMPT.
 SYSTEM_PROMPT_LEGACY = """\
 You are an expert GitHub issue triager for large open-source software projects.
 You will be given an issue along with signals from automated classification and retrieval systems.

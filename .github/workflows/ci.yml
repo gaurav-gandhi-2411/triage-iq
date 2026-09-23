@@ -27,7 +27,7 @@ jobs:
 
       - name: Security audit
         run: |
-          # All 7 suppressions below are justified in DEPENDENCIES.md (unreachable code
+          # All 8 suppressions below are justified in DEPENDENCIES.md (unreachable code
           # paths, verified directly against this codebase's actual usage — not blanket
           # ignores). 22 other CVEs (aiohttp/idna/starlette/pydantic-settings) were FIXED
           # via a surgical requirements.lock bump in the 2026-07-10 hygiene pass, and 8
@@ -58,6 +58,13 @@ jobs:
           # AutoModel.from_pretrained() call (scripts/w3_t4_train.py) uses a hardcoded,
           # fixed model ID, never an attacker-suppliable one.
           #
+          # CVE-2026-9856: transformers save_pretrained() path traversal via untrusted
+          # chat_template dict keys used as filenames. The only save_pretrained() call
+          # sites in this repo (4 offline training scripts) all load their tokenizer from
+          # a hardcoded, trusted model ID (BAAI/bge-base-en-v1.5 or
+          # microsoft/deberta-v3-base), never an attacker-suppliable repo -- no reachable
+          # surface. See DEPENDENCIES.md for the full reachability analysis.
+          #
           # PYSEC-2026-3447: setuptools MANIFEST.in exclude-pattern Unicode-normalization
           # bypass — requires building an sdist on macOS APFS/HFS+. This repo has no
           # MANIFEST.in/setup.py, never builds an sdist, and runs on Linux everywhere.
@@ -86,6 +93,7 @@ jobs:
             --ignore-vuln CVE-2026-4372 \
             --ignore-vuln CVE-2025-3000 \
             --ignore-vuln PYSEC-2026-2290 \
+            --ignore-vuln CVE-2026-9856 \
             --ignore-vuln PYSEC-2026-3447 \
             --ignore-vuln PYSEC-2026-3716
 

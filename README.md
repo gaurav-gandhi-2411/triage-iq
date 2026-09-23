@@ -68,8 +68,8 @@ POST /triage {repo, title, body}
                    │ p10/p50/p90 days estimate
                    ▼
 ┌───────────────────────────────────────┐
-│ System 4: LLM Triage Assistant         │  ~3s p50
-│ Groq llama-3.1-8b-instant, 3-shot    │
+│ System 4: LLM Triage Assistant         │  DOWN**
+│ Groq (RETIRED — see note below)      │
 │ JSON TriagePlan with retry + fallback  │
 └──────────────────┬────────────────────┘
                    │
@@ -78,6 +78,15 @@ TriagePlan JSON: predicted_component, similar_issues,
 expected_resolution_days, priority_guess,
 suggested_next_steps, triage_summary
 ```
+
+\*\* **System 4 is down as of 2026-08-28, not merely running an old model.** Groq retired
+`llama-3.1-8b-instant` (confirmed live: absent from Groq's `/v1/models` listing) after this
+diagram and the numbers below it were written; production triage requests currently fail
+outright. A replacement-model swap is in progress but halted pending a structured-output
+reliability fix — see [ADR-0052](docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md)
+(once merged) and PR #106. The `~3s p50` / fabrication-rate / quality numbers elsewhere in this
+README describe that retired model's historical behavior, not current production state — each is
+labeled with the model it was measured on.
 
 \* k8s R@5 on a hand-verified clean eval subset — see the Evaluation table and note below;
 the unfiltered number over the full eval population is lower (24.67%) because ~56% of that
@@ -120,6 +129,14 @@ got worse.
 | LLM synthesis | vscode | Fabrication rate (grounding-verified; hard zero-tolerance gate, ADR-0044) | 0.0% (0/11) |
 
 95% Wilson CIs shown in brackets where computed on a held-out test split.
+
+> **All six "LLM synthesis" rows above (judge mean, floor-fail rate, fabrication rate) were
+> measured on `llama-3.1-8b-instant`, which Groq has since retired (confirmed live: absent from
+> Groq's `/v1/models` listing as of 2026-08-28) — that model is not the current production LLM,
+> because there currently is no working one. These numbers are historical record of what that
+> retired model did, not a current-state claim. See
+> [ADR-0052](docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md) (once merged):
+> TriageIQ has no valid LLM-quality baseline right now, on any model.
 
 > **2026-08-10 update — retrieval, resolution, and synthesis cutovers shipped (ADR-0040/0041/0043/0044), supersedes the retrieval/resolution/synthesis numbers in the notes below.**
 > **Retrieval (ADR-0040):** two independent bugs fixed — corpus-side text was truncated at 512
@@ -445,7 +462,7 @@ Full evaluation reports: [`reports/`](reports/)
 | Embeddings | `sentence-transformers` BAAI/bge-base-en-v1.5 |
 | Retrieval | FAISS (cosine, CPU) |
 | Prediction | LightGBM quantile regression |
-| LLM | Groq llama-3.1-8b-instant |
+| LLM | Groq — currently **down**; `llama-3.1-8b-instant` (used historically) retired by Groq, no working replacement yet, see note under System 4 above |
 | Config | pydantic-settings |
 | Observability | Prometheus + prometheus-fastapi-instrumentator + GCP Cloud Monitoring |
 | CI | GitHub Actions: ruff, mypy, pip-audit, pytest (61% coverage), dependabot |

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Regression test for the class of bug found 2026-08-29 (Part A schema audit, session
 2): resolution_interval_conformal's field description read "k8s 76.6% [74.0%, 79.1%]"
 (percent language) while its own nested model constrained those same values to a [0,1]
@@ -11,6 +9,8 @@ Walks every Pydantic model feeding TriagePlan's native structured-output schema 
 checks each field's description text for numeric-range language against its own ge/le
 constraints, so this class of contract violation cannot recur silently.
 """
+
+from __future__ import annotations
 
 import re
 

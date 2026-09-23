@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Regression test for ADR-0054/0055's schema-reduction fix (2026-09-03), updated for
 ADR-0057 Phase 3 (2026-09-04)'s declared_attribution restoration.
 
@@ -31,11 +29,14 @@ with `null`, not literally absent from `required` (strict mode forces required t
 every remaining property, with no exception).
 """
 
+from __future__ import annotations
+
+from pydantic_core import PydanticUndefined
+
 from triage_iq.models.triage import (
     TriagePlan,
     _build_triage_plan_response_format,
 )
-from pydantic_core import PydanticUndefined
 
 # The 6 fields still stripped -- declared_attribution moved to
 # _EXPECTED_RESTORED_FIELDS below (ADR-0057 Phase 3).

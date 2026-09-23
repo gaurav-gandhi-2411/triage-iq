@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """ADR-0060 Phase 2c: the checkpoint must distinguish synthesis-done from fully-done.
 
 A judge pass must never silently skip an unjudged entry, and a completion summary must
@@ -8,6 +6,8 @@ splitting synthesis from judging could silently regress back to the single-pass 
 replaced -- this test would fail loudly if either regressed.
 """
 
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "eval"))
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import record_cassettes as rc  # noqa: E402
+
 from triage_iq.evaluation.triage_eval import compute_judge_prompt_hash  # noqa: E402
 
 _CURRENT = object()  # sentinel: stamp the entry with the currently configured judge config

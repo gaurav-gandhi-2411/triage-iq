@@ -10,7 +10,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "eval"))
 
-from cassette import CassettePlayer, CassetteMissError  # noqa: E402
+from cassette import CassetteMissError, CassettePlayer  # noqa: E402
 
 _MESSAGES = [{"role": "user", "content": "hello"}]
 

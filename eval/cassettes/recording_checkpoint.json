@@ -28,7 +28,7 @@
         "resolution_confidence_pct": 43.0,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "The flakiness does not block user workflows but degrades CI reliability and can hide regressions; a workaround (re‑run) exists, so not high priority.",
+        "priority_rationale": "The flakiness does not block user workflows but degrades CI reliability and can hide regressions; a workaround (reâ€‘run) exists, so not high priority.",
         "suggested_assignee_class": "test-infra team",
         "suggested_next_steps": [
           "Reproduce the failure locally with the same test configuration and capture logs to pinpoint the nondeterministic value.",
@@ -36,7 +36,7 @@
           "Add explicit synchronization or retries in the test to reduce nondeterminism, and update the test to be more robust.",
           "Link this issue to the most similar prior flake (#21839) and consider closing duplicates if they refer to the same root cause."
         ],
-        "triage_summary": "The e2e test \"Pod Disks should schedule a pod w/ a RW PD, remove it, then schedule it on another host\" is flaky at head, failing with mismatched volume IDs. Similar flake reports exist (#21839, #21830, #28214). Assign to test‑infra; medium priority due to CI impact. Expected fix within a few days.",
+        "triage_summary": "The e2e test \"Pod Disks should schedule a pod w/ a RW PD, remove it, then schedule it on another host\" is flaky at head, failing with mismatched volume IDs. Similar flake reports exist (#21839, #21830, #28214). Assign to testâ€‘infra; medium priority due to CI impact. Expected fix within a few days.",
         "grounding": {
           "component_source": "test-infra",
           "similar_issue_refs": [
@@ -70,20 +70,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 1,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 2,
-        "priority_alignment": 0,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid but the priority is misaligned with the gold standard's 'high' priority, which likely reflects the significant CI reliability impact of the flaky test."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "k8s-13257",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "eab17fe99b77dba019ddf02766c038eaf4b8e74564b5e3c0ef839d3cbab29157",
+      "judge_pending": true
     },
     "k8s-14054::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -103,7 +97,7 @@
           {
             "number": 2435,
             "similarity": 0.777,
-            "relevance_note": "Early implementation of kubelet self‑registration with the master, relevant for the requested fix."
+            "relevance_note": "Early implementation of kubelet selfâ€‘registration with the master, relevant for the requested fix."
           }
         ],
         "expected_resolution_summary": "Small configuration/registration fix; expected to be resolved within a day once the correct flag handling is updated.",
@@ -113,7 +107,7 @@
         "resolution_confidence_pct": 72.5,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "The change is limited to master‑kubelet registration, does not block cluster operation, and has existing workarounds (e.g., manual flag settings). Impact is narrow, so low priority is appropriate.",
+        "priority_rationale": "The change is limited to masterâ€‘kubelet registration, does not block cluster operation, and has existing workarounds (e.g., manual flag settings). Impact is narrow, so low priority is appropriate.",
         "suggested_assignee_class": "kubelet team",
         "suggested_next_steps": [
           "Locate the code path handling the --register-with-apiserver flag for the master kubelet.",
@@ -121,7 +115,7 @@
           "Add a unit test that starts a master kubelet and verifies it appears in the apiserver endpoints list.",
           "Update documentation to reflect the correct flag usage for master nodes."
         ],
-        "triage_summary": "Issue requests that the master kubelet be registered with the apiserver, referencing #13102. Similar past issues (#12836, #12349, #2435) cover the same area. The change is straightforward and low‑impact, suitable for a quick fix by the kubelet team.",
+        "triage_summary": "Issue requests that the master kubelet be registered with the apiserver, referencing #13102. Similar past issues (#12836, #12349, #2435) cover the same area. The change is straightforward and lowâ€‘impact, suitable for a quick fix by the kubelet team.",
         "grounding": {
           "component_source": "kubelet",
           "similar_issue_refs": [
@@ -156,20 +150,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 1,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 1,
-        "priority_alignment": 1,
-        "next_steps_actionability": 3,
-        "overall_quality": 3,
-        "judge_rationale": "The triage plan is excellent, with accurate component identification, highly relevant similar issues, actionable next steps, and a reasonable resolution estimate aligned with the gold standard."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "k8s-14054",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "03589945e951292db6e8f39193061032aaeef8d707153c4348709a789f871c62",
+      "judge_pending": true
     },
     "k8s-13096::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -199,7 +187,7 @@
         "resolution_confidence_pct": 40.2,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "The API returns nil where an empty list is expected, which can break client code that assumes a list. It is a functional regression without a crash, and a manual nil‑check workaround exists, so medium priority.",
+        "priority_rationale": "The API returns nil where an empty list is expected, which can break client code that assumes a list. It is a functional regression without a crash, and a manual nilâ€‘check workaround exists, so medium priority.",
         "suggested_assignee_class": "api team",
         "suggested_next_steps": [
           "Reproduce the nil response via direct API call and `kubectl get pv` on a cluster with no PVs.",
@@ -240,20 +228,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 2,
-        "priority_alignment": 0,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid and actionable, with correct component labeling and relevant issue references. However, the priority is misaligned with the gold standard (low vs. medium), which affects the overall quality score."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "k8s-13096",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "1df7eb4c91f5bf774bdc875746d2cb84e4234006ba8d0404edd7f8ca6733c139",
+      "judge_pending": true
     },
     "k8s-12224::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -263,7 +245,7 @@
           {
             "number": 743,
             "similarity": 0.748,
-            "relevance_note": "User asks about missing run script/port; this issue discusses the PHP‑Redis guestbook example setup."
+            "relevance_note": "User asks about missing run script/port; this issue discusses the PHPâ€‘Redis guestbook example setup."
           },
           {
             "number": 26764,
@@ -283,7 +265,7 @@
         "resolution_confidence_pct": 37.0,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "The issue is a usability question about which port the example exposes; it does not block any core functionality and has a straightforward documentation‑based answer.",
+        "priority_rationale": "The issue is a usability question about which port the example exposes; it does not block any core functionality and has a straightforward documentationâ€‘based answer.",
         "suggested_assignee_class": "example team",
         "suggested_next_steps": [
           "Check the guestbook example's Kubernetes manifests to identify the Service type and targetPort (usually 80).",
@@ -323,20 +305,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 1,
-        "priority_alignment": 0,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid but has a critical misalignment in priority. The issue is high priority due to the user's inability to access the application, yet the plan labels it as low priority. Other aspects like component match, issue relevance, and next steps are strong."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "k8s-12224",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "b6f6fe71e749990b4b06911b87b709cedc4e2ffaa287aced1621f999d4fed7e7",
+      "judge_pending": true
     },
     "k8s-13435::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -359,14 +335,14 @@
             "relevance_note": "Errors updating Fedora in Vagrant/kube setup, mirrors missing."
           }
         ],
-        "expected_resolution_summary": "Fix Fedora mirror list or update documentation to point to valid repos; typical turnaround 1–3 weeks.",
+        "expected_resolution_summary": "Fix Fedora mirror list or update documentation to point to valid repos; typical turnaround 1â€“3 weeks.",
         "expected_resolution_lower_days": 0.6,
         "expected_resolution_upper_days": 499.5,
         "resolution_bucket": "long",
         "resolution_confidence_pct": 28.1,
         "resolution_interval_conformal": null,
         "priority_guess": "high",
-        "priority_rationale": "Cluster setup fails for Fedora users with no built‑in workaround, blocking a core workflow (kube-up). Affects all users on affected Fedora versions.",
+        "priority_rationale": "Cluster setup fails for Fedora users with no builtâ€‘in workaround, blocking a core workflow (kube-up). Affects all users on affected Fedora versions.",
         "suggested_assignee_class": "os/fedora team",
         "suggested_next_steps": [
           "Reproduce the failure on a fresh Fedora 21 VM using the same kube-up script.",
@@ -410,20 +386,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 2,
-        "priority_alignment": 0,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid but has a misaligned priority. The component and similar issues are correctly identified, next steps are actionable, and resolution estimates are reasonable. However, the priority is marked as 'high' while the gold standard indicates 'low', which is a significant discrepancy."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "k8s-13435",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "d6edba3014c2a3b9ffabfb40516b47832fbc0bcf0d5c6f0951ddd14a30790d02",
+      "judge_pending": true
     },
     "k8s-13995::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -446,14 +416,14 @@
             "relevance_note": "Addresses namespace deletion bugs in e2e, providing context for the new option."
           }
         ],
-        "expected_resolution_summary": "Porting remaining e2e tests to the new test framework and adding a flag to keep namespaces is a straightforward test‑infra change; historically such migrations resolve within a few days.",
+        "expected_resolution_summary": "Porting remaining e2e tests to the new test framework and adding a flag to keep namespaces is a straightforward testâ€‘infra change; historically such migrations resolve within a few days.",
         "expected_resolution_lower_days": 0.0,
         "expected_resolution_upper_days": 56.8,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 53.5,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "Feature request with no user‑visible breakage; existing tests continue to run and a manual workaround (manual namespace cleanup) exists, so it does not block development or CI pipelines.",
+        "priority_rationale": "Feature request with no userâ€‘visible breakage; existing tests continue to run and a manual workaround (manual namespace cleanup) exists, so it does not block development or CI pipelines.",
         "suggested_assignee_class": "test-infra team",
         "suggested_next_steps": [
           "Create a design doc outlining the migration steps for the remaining e2e tests to the Framework.",
@@ -461,7 +431,7 @@
           "Port one representative e2e test as a pilot and verify CI stability.",
           "Close duplicate issues #13503 and #9148 if this work subsumes them."
         ],
-        "triage_summary": "The issue requests porting the remaining e2e tests to the new test Framework and adding an option to retain namespaces after test execution. Several existing issues (#13503, #9148, #10380) already address namespace handling, making this a low‑priority test‑infra enhancement. Assign to the test‑infra team.",
+        "triage_summary": "The issue requests porting the remaining e2e tests to the new test Framework and adding an option to retain namespaces after test execution. Several existing issues (#13503, #9148, #10380) already address namespace handling, making this a lowâ€‘priority testâ€‘infra enhancement. Assign to the testâ€‘infra team.",
         "grounding": {
           "component_source": "test-infra",
           "similar_issue_refs": [
@@ -494,20 +464,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 1,
-        "priority_alignment": 1,
-        "next_steps_actionability": 3,
-        "overall_quality": 3,
-        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, actionable next steps, and a reasonable resolution estimate aligned with historical data."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "k8s-13995",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "7d84b1b4a0ac46ae3fa2ceff681a6c03124dfe63941b9d456899aecb26f955c8",
+      "judge_pending": true
     },
     "vscode-311284::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -525,21 +489,21 @@
             "relevance_note": "Related SCM provider leakage issue that may share the same cleanup path."
           }
         ],
-        "expected_resolution_summary": "Fix the SCM bookkeeping leak by clearing disposed source control references; typical turnaround 1–2 weeks.",
+        "expected_resolution_summary": "Fix the SCM bookkeeping leak by clearing disposed source control references; typical turnaround 1â€“2 weeks.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 171.1,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 34.5,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "Memory leak that can grow over time but does not cause immediate crashes; impact is on long‑running sessions and may affect large repos, with a clear workaround of restarting VS Code.",
+        "priority_rationale": "Memory leak that can grow over time but does not cause immediate crashes; impact is on longâ€‘running sessions and may affect large repos, with a clear workaround of restarting VS Code.",
         "suggested_assignee_class": "scm team",
         "suggested_next_steps": [
           "Add a unit test that registers, disposes, and verifies the source control handle is removed from bookkeeping.",
           "Instrument the extension host to assert no lingering references after disposal in CI.",
           "Reference #311282 to confirm this is the same issue and close it as duplicate if appropriate."
         ],
-        "triage_summary": "Disposed SCM source controls remain retained in extension‑host bookkeeping, leading to memory growth. Two related issues (#311282, #311990) confirm the pattern. Medium priority; assign to the SCM team for a cleanup fix.",
+        "triage_summary": "Disposed SCM source controls remain retained in extensionâ€‘host bookkeeping, leading to memory growth. Two related issues (#311282, #311990) confirm the pattern. Medium priority; assign to the SCM team for a cleanup fix.",
         "grounding": {
           "component_source": "scm",
           "similar_issue_refs": [
@@ -570,20 +534,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 1,
-        "priority_alignment": 0,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid but requires minor edits, particularly in priority alignment, which is misclassified as medium instead of high."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "vscode-311284",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "70d4b2d7617db72171316f72bcca0c34134528c7ff7ccabc80eed398ee78765c",
+      "judge_pending": true
     },
     "vscode-311836::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -601,7 +559,7 @@
             "relevance_note": "Related discussion on improving webview service worker handling, indicating interest in webview performance."
           }
         ],
-        "expected_resolution_summary": "Performance improvement requiring API change to stream resources to webviews; typical turnaround 1‑4 weeks once scoped.",
+        "expected_resolution_summary": "Performance improvement requiring API change to stream resources to webviews; typical turnaround 1â€‘4 weeks once scoped.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 147.0,
         "resolution_bucket": "hours",
@@ -613,11 +571,11 @@
         "suggested_next_steps": [
           "Review current webview resource loading code to identify buffering bottleneck.",
           "Prototype a streaming API (e.g., ReadableStream) and benchmark with large assets such as video files.",
-          "Create a design doc outlining API surface and backward‑compatibility considerations.",
+          "Create a design doc outlining API surface and backwardâ€‘compatibility considerations.",
           "Add unit and integration tests for the new streaming path.",
           "Reference #311844 for prior discussion and potential implementation hints."
         ],
-        "triage_summary": "Request to replace full‑buffer loading of webview resources with real streaming to improve performance, especially for large assets. Similar issue #311844 already outlines the same idea. Low priority feature request for the extensions/webview API.",
+        "triage_summary": "Request to replace fullâ€‘buffer loading of webview resources with real streaming to improve performance, especially for large assets. Similar issue #311844 already outlines the same idea. Low priority feature request for the extensions/webview API.",
         "grounding": {
           "component_source": "extensions",
           "similar_issue_refs": [
@@ -648,20 +606,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 1,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 1,
-        "priority_alignment": 0,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan has actionable next steps and relevant similar issues, but the priority is misaligned with the gold standard's high priority. The resolution estimate is imprecise and the component is not correct."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "vscode-311836",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "20bc66b50358b113352aec99be2afbddb83b811e4bc3840789d5f68da9ede187",
+      "judge_pending": true
     },
     "vscode-311878::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -674,18 +626,18 @@
             "relevance_note": "Discusses sharing terminal I/O resources across instances, directly related to the proposed shared command storage."
           }
         ],
-        "expected_resolution_summary": "Refactor terminal instance code to share command data and replace functional array ops with more efficient structures; typical effort 1 day to a few weeks.",
+        "expected_resolution_summary": "Refactor terminal instance code to share command data and replace functional array ops with more efficient structures; typical effort 1â€¯day to a few weeks.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 183.8,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 34.5,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "The change is a performance optimisation with no functional regression; VS Code works correctly, and the impact is limited to internal resource usage.",
+        "priority_rationale": "The change is a performance optimisation with no functional regression; VSâ€¯Code works correctly, and the impact is limited to internal resource usage.",
         "suggested_assignee_class": "terminal team",
         "suggested_next_steps": [
-          "Add a benchmark/profiling test to measure current per‑instance command computation cost.",
-          "Implement a shared, read‑only command cache (e.g., a module‑level constant) and replace the per‑instance computation.",
+          "Add a benchmark/profiling test to measure current perâ€‘instance command computation cost.",
+          "Implement a shared, readâ€‘only command cache (e.g., a moduleâ€‘level constant) and replace the perâ€‘instance computation.",
           "Replace filter/map/concat with a simple lookup (e.g., Set or Map) for O(1) checks.",
           "Write unit tests ensuring the shared cache is correctly used and that behaviour remains unchanged."
         ],
@@ -715,20 +667,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 2,
-        "priority_alignment": 0,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid but the priority is misaligned with the gold standard, which labeled the issue as high priority. The rest of the plan is well-structured and actionable."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "vscode-311878",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "b47d79906afa27037e7d685ea706d8dc29bad1f4a976193075d9f97d328e6faf",
+      "judge_pending": true
     },
     "vscode-312260::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -743,31 +689,31 @@
           {
             "number": 311757,
             "similarity": 0.808,
-            "relevance_note": "Describes freezes caused by multi-line terminal output processing, indicating related execution‑monitor bugs."
+            "relevance_note": "Describes freezes caused by multi-line terminal output processing, indicating related executionâ€‘monitor bugs."
           },
           {
             "number": 312853,
             "similarity": 0.798,
-            "relevance_note": "Reports terminal tool hangs when shell integration breaks mid‑command, another symptom of the same RichExecuteStrategy issue."
+            "relevance_note": "Reports terminal tool hangs when shell integration breaks midâ€‘command, another symptom of the same RichExecuteStrategy issue."
           }
         ],
-        "expected_resolution_summary": "Fix the RichExecuteStrategy to wait for all shell‑integration markers before resolving, add multiline handling and regression tests. Estimated 1–3 weeks.",
+        "expected_resolution_summary": "Fix the RichExecuteStrategy to wait for all shellâ€‘integration markers before resolving, add multiline handling and regression tests. Estimated 1â€“3 weeks.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 229.2,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 34.5,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "The bug causes incomplete command execution and wrong model responses, degrading the chat‑agent experience. It is reproducible but a manual workaround (avoid multiline or re‑run) exists, so not blocking.",
+        "priority_rationale": "The bug causes incomplete command execution and wrong model responses, degrading the chatâ€‘agent experience. It is reproducible but a manual workaround (avoid multiline or reâ€‘run) exists, so not blocking.",
         "suggested_assignee_class": "terminal team",
         "suggested_next_steps": [
-          "Create a minimal reproducer that runs a multi‑line POSIX command via run_in_terminal and verifies only the first line resolves.",
-          "Instrument RichExecuteStrategy to log each shell‑integration marker and confirm early return behavior.",
+          "Create a minimal reproducer that runs a multiâ€‘line POSIX command via run_in_terminal and verifies only the first line resolves.",
+          "Instrument RichExecuteStrategy to log each shellâ€‘integration marker and confirm early return behavior.",
           "Implement a multiline wrapper (e.g., CommandLineMultilineWrapRewriter) as suggested in #312263.",
           "Add unit and integration tests that submit heredoc and script snippets and assert full output is returned before the tool resolves.",
-          "Verify that the fix does not introduce regressions in single‑line command handling."
+          "Verify that the fix does not introduce regressions in singleâ€‘line command handling."
         ],
-        "triage_summary": "run_in_terminal currently resolves after the first line of a multi‑line POSIX command, leaving the rest to run unattended. This is a functional regression in the terminal chat‑agent integration, with several related issues already filed. Medium priority; assign to the terminal team for a RichExecuteStrategy fix.",
+        "triage_summary": "run_in_terminal currently resolves after the first line of a multiâ€‘line POSIX command, leaving the rest to run unattended. This is a functional regression in the terminal chatâ€‘agent integration, with several related issues already filed. Medium priority; assign to the terminal team for a RichExecuteStrategy fix.",
         "grounding": {
           "component_source": "terminal",
           "similar_issue_refs": [
@@ -802,20 +748,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 1,
-        "priority_alignment": 0,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid and actionable, with correct component labeling and relevant similar issues. However, the resolution estimate is imprecise and the priority is misaligned with the gold standard."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "vscode-312260",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "f395f3f130b9894ff6b08034d59283d6c0003d4fcae40cafd0d20cb0d6ebc2ef",
+      "judge_pending": true
     },
     "vscode-312423::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -838,7 +778,7 @@
             "relevance_note": "Related accessibility issue about focusing out of the integrated terminal."
           }
         ],
-        "expected_resolution_summary": "Feature implementation involving a new setting, keybinding registration, and ARIA label updates. Estimated 1–3 weeks depending on design review and testing.",
+        "expected_resolution_summary": "Feature implementation involving a new setting, keybinding registration, and ARIA label updates. Estimated 1â€“3 weeks depending on design review and testing.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 231.5,
         "resolution_bucket": "hours",
@@ -854,7 +794,7 @@
           "Update the carousel's ARIA label to include the navigation hint when verbosity is enabled.",
           "Add unit and integration tests covering the setting toggle, keybinding activation, and ARIA label output."
         ],
-        "triage_summary": "Feature request to improve accessibility of the question carousel by adding a verbosity setting, keyboard shortcut, and ARIA label hint for focusing the terminal. Similar issue #312429 already captures the same need. Medium priority due to impact on keyboard‑only users; assign to the accessibility team.",
+        "triage_summary": "Feature request to improve accessibility of the question carousel by adding a verbosity setting, keyboard shortcut, and ARIA label hint for focusing the terminal. Similar issue #312429 already captures the same need. Medium priority due to impact on keyboardâ€‘only users; assign to the accessibility team.",
         "grounding": {
           "component_source": "accessibility",
           "similar_issue_refs": [
@@ -888,20 +828,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 1,
-        "priority_alignment": 1,
-        "next_steps_actionability": 3,
-        "overall_quality": 3,
-        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, actionable next steps, and a reasonable resolution estimate aligned with the gold standard."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "vscode-312423",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "ef8e220b20da78a7fa289c3f975be6ba03cca562fadb14700071144f81b7768a",
+      "judge_pending": true
     },
     "vscode-239838::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -924,7 +858,7 @@
             "relevance_note": "User confirms issue occurs with all extensions disabled, matching this report."
           }
         ],
-        "expected_resolution_summary": "Critical freeze bug in the integrated terminal likely requires investigation of recent terminal‑related changes and a hotfix; typical fix time 1–4 weeks.",
+        "expected_resolution_summary": "Critical freeze bug in the integrated terminal likely requires investigation of recent terminalâ€‘related changes and a hotfix; typical fix time 1â€“4 weeks.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 188.8,
         "resolution_bucket": "hours",
@@ -936,7 +870,7 @@
         "suggested_next_steps": [
           "Reproduce the freeze on a clean VS Code 1.97.0 install with all extensions disabled.",
           "Collect crash/trace logs from the main process and terminal renderer when the freeze occurs.",
-          "Bisect recent terminal‑related commits (e.g., xterm.js integration, PTY handling) to locate the regression.",
+          "Bisect recent terminalâ€‘related commits (e.g., xterm.js integration, PTY handling) to locate the regression.",
           "Create a minimal repro repository (TypeScript project) and add to CI as a flaky test to prevent regression."
         ],
         "triage_summary": "VS Code 1.97.0 freezes whenever the integrated terminal is opened, even with all extensions disabled, rendering the editor unusable. Multiple similar reports exist, indicating a regression in the terminal subsystem. High priority, assign to the terminal team for urgent investigation and hotfix.",
@@ -975,20 +909,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 2,
-        "priority_alignment": 0,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid but has a misaligned priority. It correctly identifies the component and provides actionable next steps, but the priority is labeled as 'high' while the gold standard indicates 'medium'."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "vscode-239838",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "ae29271f7cc06c248111fb6d54498fac77a36d6b518630fbd0cdc4ae8a7d8c4a",
+      "judge_pending": true
     },
     "vscode-286776::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1003,22 +931,22 @@
           {
             "number": 201797,
             "similarity": 0.808,
-            "relevance_note": "Source control tree stays collapsed after branch switch, matching the expand‑failure behavior."
+            "relevance_note": "Source control tree stays collapsed after branch switch, matching the expandâ€‘failure behavior."
           },
           {
             "number": 115238,
             "similarity": 0.785,
-            "relevance_note": "Tree‑view collapse on source‑control actions, another manifestation of the same rendering bug."
+            "relevance_note": "Treeâ€‘view collapse on sourceâ€‘control actions, another manifestation of the same rendering bug."
           }
         ],
-        "expected_resolution_summary": "UI regression in the Source Control Graph view; requires investigation of tree rendering and git argument handling, typical fix time 1‑3 weeks.",
+        "expected_resolution_summary": "UI regression in the Source Control Graph view; requires investigation of tree rendering and git argument handling, typical fix time 1â€‘3 weeks.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 229.1,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 34.5,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "The issue prevents some entries from expanding and shows an error, degrading the source‑control experience, but VS Code remains usable and a manual refresh works as a workaround.",
+        "priority_rationale": "The issue prevents some entries from expanding and shows an error, degrading the sourceâ€‘control experience, but VSâ€¯Code remains usable and a manual refresh works as a workaround.",
         "suggested_assignee_class": "scm team",
         "suggested_next_steps": [
           "Reproduce with a minimal repo containing many files and verify the error message when expanding entries.",
@@ -1061,20 +989,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 2,
-        "priority_alignment": 1,
-        "next_steps_actionability": 3,
-        "overall_quality": 3,
-        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, correct priority, actionable next steps, and a clear, well-structured summary."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "vscode-286776",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "6e979b5dcf752430fa28437b7c8ba3a46e1c057b65ad4a5c551d4dbe6fa5bd9f",
+      "judge_pending": true
     },
     "vscode-278113::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1099,7 +1021,7 @@
         "resolution_confidence_pct": 34.5,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "Feature request only; does not block any workflow and has a simple UI change. No crash or data loss, and a workaround (re‑triggering completion) exists.",
+        "priority_rationale": "Feature request only; does not block any workflow and has a simple UI change. No crash or data loss, and a workaround (reâ€‘triggering completion) exists.",
         "suggested_assignee_class": "debug team",
         "suggested_next_steps": [
           "Reproduce the missing detail behavior with a minimal debug adapter that returns a detail field.",
@@ -1108,7 +1030,7 @@
           "Add unit/integration tests covering both filtered and unfiltered completions.",
           "Update the release notes and documentation to describe the new behavior."
         ],
-        "triage_summary": "User requests that the detail field of debug adapter completions always be displayed, even after filtering. Similar UI issues exist (#174126, #1793). This is a low‑priority UI enhancement for the debug team.",
+        "triage_summary": "User requests that the detail field of debug adapter completions always be displayed, even after filtering. Similar UI issues exist (#174126, #1793). This is a lowâ€‘priority UI enhancement for the debug team.",
         "grounding": {
           "component_source": "debug",
           "similar_issue_refs": [
@@ -1137,20 +1059,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 2,
-        "priority_alignment": 1,
-        "next_steps_actionability": 3,
-        "overall_quality": 3,
-        "judge_rationale": "The triage plan is excellent, with correct component labeling, highly relevant similar issues, reasonable resolution estimate, proper priority alignment, actionable next steps, and a clear, well-structured summary."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "vscode-278113",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "c050a039adcca9db6400fbb34b113421c9d9b156b091b4bd30e69fdaf662ce62",
+      "judge_pending": true
     },
     "vscode-4978::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1173,7 +1089,7 @@
             "relevance_note": "Feature request related to search behavior and UI controls."
           }
         ],
-        "expected_resolution_summary": "UI enhancement to allow editing of the \"files excluded\" field in the Search view; typical effort 1–2 weeks.",
+        "expected_resolution_summary": "UI enhancement to allow editing of the \"files excluded\" field in the Search view; typical effort 1â€“2 weeks.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 193.1,
         "resolution_bucket": "hours",
@@ -1187,7 +1103,7 @@
           "Prototype a UI change (e.g., make the exclusion list editable or add a temporary toggle).",
           "Add a unit/integration test that verifies the new UI element persists changes correctly."
         ],
-        "triage_summary": "User wants the \"files excluded through settings\" field in the Search UI to be editable so they can temporarily include excluded folders like node_modules. Similar past requests exist (#88487, #19029, #18796). This is a non‑blocking UI enhancement, therefore low priority and assign to the search team.",
+        "triage_summary": "User wants the \"files excluded through settings\" field in the Search UI to be editable so they can temporarily include excluded folders like node_modules. Similar past requests exist (#88487, #19029, #18796). This is a nonâ€‘blocking UI enhancement, therefore low priority and assign to the search team.",
         "grounding": {
           "component_source": "search",
           "similar_issue_refs": [
@@ -1219,20 +1135,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 2,
-        "priority_alignment": 1,
-        "next_steps_actionability": 3,
-        "overall_quality": 3,
-        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, correct priority alignment, actionable next steps, and a clear, well-structured summary."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "vscode-4978",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "2bffe8c10b3ec90b85ab20f8a55a9c31bea888a86bd9c6b755bc4b664f5b8a18",
+      "judge_pending": true
     },
     "vscode-4993::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1247,7 +1157,7 @@
           {
             "number": 2671,
             "similarity": 0.799,
-            "relevance_note": "Focuses on debugger accessibility and UI extensions, relevant for adding a new context‑menu action."
+            "relevance_note": "Focuses on debugger accessibility and UI extensions, relevant for adding a new contextâ€‘menu action."
           },
           {
             "number": 204529,
@@ -1255,7 +1165,7 @@
             "relevance_note": "Explores new debugger UI capabilities, indicating openness to UI feature additions."
           }
         ],
-        "expected_resolution_summary": "Feature addition to the debugger UI to expose a \"Show next statement\" command; requires UI, command registration, and possibly debug‑adapter support. Typical timeline weeks to months.",
+        "expected_resolution_summary": "Feature addition to the debugger UI to expose a \"Show next statement\" command; requires UI, command registration, and possibly debugâ€‘adapter support. Typical timeline weeks to months.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 155.0,
         "resolution_bucket": "hours",
@@ -1265,7 +1175,7 @@
         "priority_rationale": "The request addresses a workflow gap for developers during debugging. It is not a crash or data loss, but improves productivity; no current workaround exists beyond manual navigation, so medium priority is appropriate.",
         "suggested_assignee_class": "debug team",
         "suggested_next_steps": [
-          "Review the debugger context‑menu contribution point and assess where a \"Show next statement\" command could be inserted.",
+          "Review the debugger contextâ€‘menu contribution point and assess where a \"Show next statement\" command could be inserted.",
           "Design the command to move the editor cursor to the current execution line using the debug service API.",
           "Prototype the feature in an internal branch and validate that it works across multiple platforms and debug adapters.",
           "Gather UX feedback and add the command to the official VS Code feature backlog."
@@ -1302,20 +1212,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 2,
-        "priority_alignment": 0,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid and actionable, with correct component labeling and relevant issue references. However, the priority is misaligned with the gold standard (low vs. medium), which affects the overall quality score."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "vscode-4993",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "b52edb35821f743c3525fd36ca56c2ea8941bb2c6267eb45b3a7cdad82091e38",
+      "judge_pending": true
     },
     "vscode-4996::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1333,7 +1237,7 @@
             "relevance_note": "Multicursor cut/paste does not work correctly, another report of the same behavior."
           }
         ],
-        "expected_resolution_summary": "Fix clipboard handling for multicursor paste; typical turnaround 1‑2 weeks once the paste pipeline is audited.",
+        "expected_resolution_summary": "Fix clipboard handling for multicursor paste; typical turnaround 1â€‘2 weeks once the paste pipeline is audited.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 195.6,
         "resolution_bucket": "hours",
@@ -1377,20 +1281,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 2,
-        "priority_alignment": 0,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid and actionable, with correct component labeling and relevant similar issues. However, the priority is misaligned with the gold standard (low vs. medium), which affects the overall quality score."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "vscode-4996",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "98d7a4b7d118472e3c4282f7fc434ba7f16fc2300fe5803eb33d48749673bddb",
+      "judge_pending": true
     },
     "k8s-12287::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1413,7 +1311,7 @@
             "relevance_note": "Reports errors from OpenStack CreateExternalLoadBalancer implementation, similar symptom."
           }
         ],
-        "expected_resolution_summary": "Fix the nil IP handling in the OpenStack provider's load balancer creation path; typical turnaround 1‑2 weeks.",
+        "expected_resolution_summary": "Fix the nil IP handling in the OpenStack provider's load balancer creation path; typical turnaround 1â€‘2 weeks.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 357.9,
         "resolution_bucket": "hours",
@@ -1425,7 +1323,7 @@
         "suggested_next_steps": [
           "Add a unit test that creates an external load balancer without specifying a public IP and asserts a valid VIP is allocated.",
           "Inspect the OpenStack provider code where the VirtualIP struct is populated; replace the literal \"nil\" with an empty string or omit the field.",
-          "Cross‑reference #12288 and #12284 to determine if a recent change introduced the regression.",
+          "Crossâ€‘reference #12288 and #12284 to determine if a recent change introduced the regression.",
           "Validate the fix against both OpenStack Newton and Pike releases."
         ],
         "triage_summary": "Creating an external load balancer in OpenStack without a public IP currently results in the string \"nil\" being sent as the IP address, causing the operation to fail. The issue is similar to #12288, #12284, and #7199. Medium priority; assign to the provider/openstack team for a quick fix.",
@@ -1464,20 +1362,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 2,
-        "priority_alignment": 0,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid and actionable, with correct component labeling and highly relevant similar issues. However, the priority is misaligned with the gold standard (high vs. medium), which significantly impacts the overall quality score."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "k8s-12287",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "1ea0283346587afc44b7094d68effe3d33ba1910986e3cffef2e3c10726f08db",
+      "judge_pending": true
     },
     "k8s-12461::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1487,12 +1379,12 @@
           {
             "number": 12280,
             "similarity": 0.706,
-            "relevance_note": "Directly addresses human‑readable time output in kubectl, matching the proposed change."
+            "relevance_note": "Directly addresses humanâ€‘readable time output in kubectl, matching the proposed change."
           },
           {
             "number": 12331,
             "similarity": 0.702,
-            "relevance_note": "Implementation reference for human‑readable times; same feature scope."
+            "relevance_note": "Implementation reference for humanâ€‘readable times; same feature scope."
           },
           {
             "number": 18004,
@@ -1510,12 +1402,12 @@
         "priority_rationale": "The change is cosmetic, improves readability but does not affect functionality or cause crashes; a simple UI tweak with a clear workaround (using full time view).",
         "suggested_assignee_class": "kubectl team",
         "suggested_next_steps": [
-          "Verify that the existing helper function for human‑readable timestamps is used consistently in the event printer code.",
+          "Verify that the existing helper function for humanâ€‘readable timestamps is used consistently in the event printer code.",
           "Add unit tests for the new output format covering both short and full time representations.",
           "Update documentation and changelog to reflect the new AGE column behavior.",
           "Ensure no regression in other kubectl output formats; run the full kubectl test suite."
         ],
-        "triage_summary": "Proposal to print human‑readable, shortened event times in kubectl output. Similar issues #12280 and #12331 already discuss this feature. Low‑priority cosmetic improvement for the CLI.",
+        "triage_summary": "Proposal to print humanâ€‘readable, shortened event times in kubectl output. Similar issues #12280 and #12331 already discuss this feature. Lowâ€‘priority cosmetic improvement for the CLI.",
         "grounding": {
           "component_source": "kubectl",
           "similar_issue_refs": [
@@ -1550,20 +1442,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 0,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 1,
-        "priority_alignment": 0,
-        "next_steps_actionability": 2,
-        "overall_quality": 1,
-        "judge_rationale": "The triage plan has significant issues with component matching and priority alignment, which severely impact the overall quality."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "k8s-12461",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "135c33ac0b4ac5aa45cbad9e919422c7cbc7e3a9ace10033ea7e794e34e07b67",
+      "judge_pending": true
     },
     "k8s-14557::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1573,7 +1459,7 @@
           {
             "number": 27563,
             "similarity": 0.775,
-            "relevance_note": "Small kubelet‑related fix (typo/help) – shows the pattern of lightweight patches to kubelet code/docs."
+            "relevance_note": "Small kubeletâ€‘related fix (typo/help) â€“ shows the pattern of lightweight patches to kubelet code/docs."
           },
           {
             "number": 11091,
@@ -1581,14 +1467,14 @@
             "relevance_note": "Another minor kubelet documentation change, indicating the typical turnaround for simple kubelet patches."
           }
         ],
-        "expected_resolution_summary": "Minor kubelet code change; should be reviewed, CI‑tested and merged within a few days.",
+        "expected_resolution_summary": "Minor kubelet code change; should be reviewed, CIâ€‘tested and merged within a few days.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 224.5,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 36.6,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "The change is a small, non‑breaking fix that only adds a label‑check in the kubelet. No user‑visible regression; the main impact is to close #14263.",
+        "priority_rationale": "The change is a small, nonâ€‘breaking fix that only adds a labelâ€‘check in the kubelet. No userâ€‘visible regression; the main impact is to close #14263.",
         "suggested_assignee_class": "kubelet team",
         "suggested_next_steps": [
           "Review the PR for correctness of the added label check.",
@@ -1596,7 +1482,7 @@
           "Validate that label modifications are now reflected in the kubelet at runtime.",
           "If the change passes review, merge and close the referenced issue #14263."
         ],
-        "triage_summary": "Partial fix for #14263 adds a missing label‑check in the kubelet so that label modifications are respected. The patch is small and low‑risk, matching other lightweight kubelet fixes. Assign to the kubelet team; low priority with an expected turnaround of a few days.",
+        "triage_summary": "Partial fix for #14263 adds a missing labelâ€‘check in the kubelet so that label modifications are respected. The patch is small and lowâ€‘risk, matching other lightweight kubelet fixes. Assign to the kubelet team; low priority with an expected turnaround of a few days.",
         "grounding": {
           "component_source": "kubelet",
           "similar_issue_refs": [
@@ -1625,20 +1511,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 2,
-        "priority_alignment": 0,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid and actionable, with correct component labeling and relevant similar issues. However, the priority is misaligned as the fix is more critical than labeled as low priority."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "k8s-14557",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "12723d5994b9f4cf5797caaec3d97373441d3f67f6da3d2f8b658468955101bc",
+      "judge_pending": true
     },
     "k8s-14723::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1648,7 +1528,7 @@
           {
             "number": 10577,
             "similarity": 0.798,
-            "relevance_note": "kube-apiserver generates a self‑signed cert that fails when no client‑ca‑file is provided, matching the current symptom."
+            "relevance_note": "kube-apiserver generates a selfâ€‘signed cert that fails when no clientâ€‘caâ€‘file is provided, matching the current symptom."
           },
           {
             "number": 15359,
@@ -1661,7 +1541,7 @@
             "relevance_note": "General guidance on starting the apiserver with HTTPS, useful for reproducing the failure."
           }
         ],
-        "expected_resolution_summary": "Adjust kube‑apiserver TLS validation to accept server cert/key without requiring a client‑ca‑file, and add unit tests for this configuration path.",
+        "expected_resolution_summary": "Adjust kubeâ€‘apiserver TLS validation to accept server cert/key without requiring a clientâ€‘caâ€‘file, and add unit tests for this configuration path.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 180.1,
         "resolution_bucket": "hours",
@@ -1672,11 +1552,11 @@
         "suggested_assignee_class": "apiserver team",
         "suggested_next_steps": [
           "Reproduce the failure on a minimal cluster with only --tls-cert-file and --tls-private-key-file set.",
-          "Inspect the TLS initialization code path to identify the check that erroneously requires client‑ca‑file.",
-          "Implement a conditional that skips client‑ca validation when client authentication is not configured.",
-          "Add a regression test covering the no‑client‑ca scenario."
+          "Inspect the TLS initialization code path to identify the check that erroneously requires clientâ€‘caâ€‘file.",
+          "Implement a conditional that skips clientâ€‘ca validation when client authentication is not configured.",
+          "Add a regression test covering the noâ€‘clientâ€‘ca scenario."
         ],
-        "triage_summary": "kube‑apiserver TLS cert/key configuration fails when client‑ca‑file is omitted, breaking API access on both macOS and Windows. Similar past reports (#10577, #15359, #10159) point to TLS handling bugs. This is a high‑priority regression requiring an immediate fix.",
+        "triage_summary": "kubeâ€‘apiserver TLS cert/key configuration fails when clientâ€‘caâ€‘file is omitted, breaking API access on both macOS and Windows. Similar past reports (#10577, #15359, #10159) point to TLS handling bugs. This is a highâ€‘priority regression requiring an immediate fix.",
         "grounding": {
           "component_source": "apiserver",
           "similar_issue_refs": [
@@ -1710,20 +1590,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 1,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 2,
-        "priority_alignment": 1,
-        "next_steps_actionability": 3,
-        "overall_quality": 3,
-        "judge_rationale": "The triage plan is excellent, with accurate component labeling, highly relevant similar issues, reasonable resolution estimate, correct priority, actionable next steps, and a clear, well-structured summary."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "k8s-14723",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "5a2a190a6664fe31024307fe05c6aa8f04bc607b115b0a1421e76b60e48a69d8",
+      "judge_pending": true
     },
     "k8s-14477::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1743,22 +1617,22 @@
           {
             "number": 26614,
             "similarity": 0.799,
-            "relevance_note": "General broken test run in GKE e2e suite, indicating broader test‑infra instability."
+            "relevance_note": "General broken test run in GKE e2e suite, indicating broader testâ€‘infra instability."
           }
         ],
-        "expected_resolution_summary": "Investigate and stabilize the API server proxy handling in e2e tests; likely a race or timeout issue that can be fixed with better error handling or retries. Typical fix time 1‑3 weeks.",
+        "expected_resolution_summary": "Investigate and stabilize the API server proxy handling in e2e tests; likely a race or timeout issue that can be fixed with better error handling or retries. Typical fix time 1â€‘3 weeks.",
         "expected_resolution_lower_days": 0.2,
         "expected_resolution_upper_days": 232.0,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 37.4,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "Flaky e2e test causes CI failures and delays releases, but does not affect end‑user functionality. No immediate user‑visible crash, yet the instability impacts development workflow.",
+        "priority_rationale": "Flaky e2e test causes CI failures and delays releases, but does not affect endâ€‘user functionality. No immediate userâ€‘visible crash, yet the instability impacts development workflow.",
         "suggested_assignee_class": "apiserver team",
         "suggested_next_steps": [
           "Reproduce the failure locally by running the autoscaling e2e test with verbose proxy logging enabled.",
           "Add instrumentation to the apiserver proxy path to capture request/response timing and errors.",
-          "Introduce a retry or back‑off mechanism in the test when the proxy request fails, and assess if the flakiness persists.",
+          "Introduce a retry or backâ€‘off mechanism in the test when the proxy request fails, and assess if the flakiness persists.",
           "If the root cause is in apiserver, add a unit test for the proxy handling; otherwise, mark the e2e test as flaky pending a fix."
         ],
         "triage_summary": "E2E autoscaling test intermittently fails when accessing a service via the API server proxy (>30% failure rate). Logs show errors in apiserver proxy handling. Similar flaky test reports exist (#5084, #16685, #26614). Assign to apiserver team; medium priority due to CI impact.",
@@ -1796,20 +1670,14 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 1,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 1,
-        "priority_alignment": 0,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan has actionable next steps and relevant similar issues, but the priority is misaligned with the gold standard (high vs. medium), and the resolution estimate is too broad and lacks precision."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "k8s-14477",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "846dff044a39430e77cb45d906552d6634921ecbeb95088db0579bf1a77d1dbf",
+      "judge_pending": true
     },
     "k8s-14125::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1819,7 +1687,7 @@
           {
             "number": 16828,
             "similarity": 0.806,
-            "relevance_note": "Same soak job (gce) failing on SchedulerPredicates tests, indicating a recurring test‑infra problem."
+            "relevance_note": "Same soak job (gce) failing on SchedulerPredicates tests, indicating a recurring testâ€‘infra problem."
           },
           {
             "number": 19118,
@@ -1829,25 +1697,25 @@
           {
             "number": 20982,
             "similarity": 0.788,
-            "relevance_note": "Timing‑out soak runs on GCE, another symptom of flaky test‑infra pipelines."
+            "relevance_note": "Timingâ€‘out soak runs on GCE, another symptom of flaky testâ€‘infra pipelines."
           }
         ],
-        "expected_resolution_summary": "Typical test‑infra regression; once the flaky test or infrastructure change is identified, a fix is usually landed within a week.",
+        "expected_resolution_summary": "Typical testâ€‘infra regression; once the flaky test or infrastructure change is identified, a fix is usually landed within a week.",
         "expected_resolution_lower_days": 0.2,
         "expected_resolution_upper_days": 479.6,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 26.6,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "The failure blocks the continuous soak job, impacting CI health and downstream release confidence, but it does not affect end‑users directly and a manual re‑run can be used as a temporary workaround.",
+        "priority_rationale": "The failure blocks the continuous soak job, impacting CI health and downstream release confidence, but it does not affect endâ€‘users directly and a manual reâ€‘run can be used as a temporary workaround.",
         "suggested_assignee_class": "test-infra team",
         "suggested_next_steps": [
           "Inspect the latest changes to the SchedulerPredicates test and related GCE soak job configuration for recent breakages.",
-          "Run the failing test locally with the same GCE environment to reproduce the node‑not‑ready and namespace‑active errors.",
-          "Check for recent changes in the test‑infra job definitions (e.g., prow config) that could introduce timing or resource allocation issues.",
-          "If the failure is due to a flaky test, add a retry or quarantine annotation and file a separate test‑flakiness issue."
+          "Run the failing test locally with the same GCE environment to reproduce the nodeâ€‘notâ€‘ready and namespaceâ€‘active errors.",
+          "Check for recent changes in the testâ€‘infra job definitions (e.g., prow config) that could introduce timing or resource allocation issues.",
+          "If the failure is due to a flaky test, add a retry or quarantine annotation and file a separate testâ€‘flakiness issue."
         ],
-        "triage_summary": "kubernetes-soak-continuous-e2e-gce turned yellow due to node‑not‑ready and namespace‑active errors, mirroring several recent soak failures. The pattern points to a test‑infra regression rather than core Kubernetes code. Assign to test‑infra, medium priority, with an expected fix within a week.",
+        "triage_summary": "kubernetes-soak-continuous-e2e-gce turned yellow due to nodeâ€‘notâ€‘ready and namespaceâ€‘active errors, mirroring several recent soak failures. The pattern points to a testâ€‘infra regression rather than core Kubernetes code. Assign to testâ€‘infra, medium priority, with an expected fix within a week.",
         "grounding": {
           "component_source": "test-infra",
           "similar_issue_refs": [
@@ -1882,20 +1750,2000 @@
         },
         "abstention_status": null
       },
-      "judge_score": {
-        "component_match": 2,
-        "similar_issues_relevance": 3,
-        "resolution_estimate_reasonableness": 2,
-        "priority_alignment": 0,
-        "next_steps_actionability": 3,
-        "overall_quality": 2,
-        "judge_rationale": "The triage plan is solid and actionable, with correct component labeling and highly relevant similar issues. However, the priority is misaligned with the gold standard (high vs. medium), which reduces the overall quality score."
-      },
+      "judge_score": null,
       "error": null,
       "issue_id": "k8s-14125",
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
-      "artifact_hash": "55559dd93dc2a65d"
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "0268006c0636141172b65c1a440812f4b8fe45fd9f1cc0e584c6bca4b6c0ab92",
+      "judge_pending": true
+    },
+    "k8s-14135::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "test-infra",
+        "component_confidence": 0.588,
+        "similar_issues": [
+          {
+            "number": 14072,
+            "similarity": 0.802,
+            "relevance_note": "Directly matches the same e2e daemon set test being demoted to flaky."
+          },
+          {
+            "number": 10904,
+            "similarity": 0.776,
+            "relevance_note": "Previous example of demoting Docker e2e tests to flaky, same workflow."
+          },
+          {
+            "number": 16623,
+            "similarity": 0.759,
+            "relevance_note": "Another daemon set e2e test reported as flaky, indicating a pattern."
+          }
+        ],
+        "expected_resolution_summary": "Small testâ€‘infra change (regex update / test label adjustment) typically resolved within a few days.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 359.5,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 29.0,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "Changing a test's status to flaky does not affect userâ€‘facing functionality; it is a maintenance task with a simple workaround (ignore the test).",
+        "suggested_assignee_class": "test-infra team",
+        "suggested_next_steps": [
+          "Verify the flakiness by reproducing the Jenkins failure on the current branch.",
+          "Update the e2e test regex or label to mark it as flaky as described in #14072.",
+          "Run the full e2e suite in CI to ensure no regressions are introduced.",
+          "Submit the PR and request review from the testâ€‘infra maintainers."
+        ],
+        "triage_summary": "The issue proposes demoting the e2e daemonâ€‘set test to flaky. Similar demotions have been handled before (#14072, #10904, #16623). This is a lowâ€‘impact maintenance change, assign to the testâ€‘infra team.",
+        "grounding": {
+          "component_source": "test-infra",
+          "similar_issue_refs": [
+            14072,
+            10904,
+            16623
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14072,
+            10904,
+            16623
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            14072,
+            10904,
+            16623
+          ],
+          "next_steps_cited_issues": [
+            14072
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-14135",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "3edcc7e807d0fb133b4157d2d8e586afe09b0ce6d0d033aed83e7dde0c1fe84c"
+    },
+    "k8s-12254::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "test-infra",
+        "component_confidence": 0.613,
+        "similar_issues": [
+          {
+            "number": 15139,
+            "similarity": 0.869,
+            "relevance_note": "Same flaky SchedulerPredicates MaxPods test, recent failures reported."
+          },
+          {
+            "number": 19681,
+            "similarity": 0.868,
+            "relevance_note": "Flaky e2e SchedulerPredicates test on GCE, matches failure pattern."
+          },
+          {
+            "number": 29820,
+            "similarity": 0.857,
+            "relevance_note": "SchedulerPredicates test flakiness in CI, indicates a recurring timing issue."
+          }
+        ],
+        "expected_resolution_summary": "Investigate and stabilize the SchedulerPredicates e2e test (likely timeout or resource contention). Typical fix involves adjusting timeout or improving test isolation; expected turnaround 1â€‘2 weeks.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 428.4,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 28.7,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Flaky e2e test breaks CI reliability but does not affect endâ€‘users directly. No immediate blocker for developers, yet it degrades the testing pipeline, warranting medium priority.",
+        "suggested_assignee_class": "test-infra team",
+        "suggested_next_steps": [
+          "Reproduce the failure locally on GCE with the same test parameters to confirm timeout behavior.",
+          "Review recent changes to the scheduler or test harness that could affect MaxPods calculation timing.",
+          "Increase the test timeout or add explicit waits for pod creation to reduce flakiness.",
+          "Crossâ€‘reference #15139 to determine if the same root cause applies and close duplicates if appropriate."
+        ],
+        "triage_summary": "The SchedulerPredicates e2e test has become flaky on GCE, failing the MaxPods validation in the last four Jenkins runs. Similar flaky reports (#15139, #19681, #29820) indicate a recurring timing issue. Assign to testâ€‘infra; medium priority due to CI impact.",
+        "grounding": {
+          "component_source": "test-infra",
+          "similar_issue_refs": [
+            15139,
+            19681,
+            29820
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            15139,
+            19681,
+            29820
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            15139,
+            19681,
+            29820
+          ],
+          "next_steps_cited_issues": [
+            15139
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-12254",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "8545119f9a756872af0f7674c6f3f31d78d01ddc809b20a761ab007231f87d89"
+    },
+    "k8s-12477::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "apiserver",
+        "component_confidence": 0.62,
+        "similar_issues": [
+          {
+            "number": 8915,
+            "similarity": 0.784,
+            "relevance_note": "Discusses reducing list requests in a watchâ€‘based cache, directly related to the proposed cacher."
+          },
+          {
+            "number": 12268,
+            "similarity": 0.777,
+            "relevance_note": "Implementation of watchCache structure referenced by the same design doc (ref #10475)."
+          },
+          {
+            "number": 12205,
+            "similarity": 0.76,
+            "relevance_note": "Proofâ€‘ofâ€‘concept PR for watch in apiserver, aligns with the requested feature."
+          },
+          {
+            "number": 13186,
+            "similarity": 0.76,
+            "relevance_note": "Reâ€‘enables watch in apiserver, another related effort."
+          },
+          {
+            "number": 26853,
+            "similarity": 0.754,
+            "relevance_note": "Talks about apiserver cache locality, relevant to a watch cacher."
+          }
+        ],
+        "expected_resolution_summary": "Feature implementation expected within a few days to a week once design is approved and a reviewer is assigned.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 51.4,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 59.8,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Adds a performanceâ€‘critical watch cache to the apiserver. Not a blocker for existing functionality, but addresses an active workflow need for large clusters; thus medium priority.",
+        "suggested_assignee_class": "apiserver team",
+        "suggested_next_steps": [
+          "Create a design document summarizing the watch cacher architecture and reference #10475.",
+          "Assign a maintainer to review the design and approve the implementation scope.",
+          "Implement the watch cache based on patterns from #12205 and #12268.",
+          "Add unit and integration tests covering watch list reduction and cache eviction.",
+          "Update documentation and announce the new feature in the release notes."
+        ],
+        "triage_summary": "The issue proposes adding a watch cacher at the apiserver level (ref #10475). Several related PRs and discussions (#8915, #12268, #12205, #13186, #26853) indicate ongoing work. This is a nonâ€‘blocking performance improvement, warranting medium priority and assignment to the apiserver team.",
+        "grounding": {
+          "component_source": "apiserver",
+          "similar_issue_refs": [
+            8915,
+            12268,
+            12205,
+            13186,
+            26853
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            8915,
+            12268,
+            12205,
+            13186,
+            26853
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            8915,
+            12268,
+            12205,
+            13186,
+            26853
+          ],
+          "next_steps_cited_issues": [
+            12205,
+            12268
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-12477",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "97d2a8c052c7307e14d63c11e58fa33a06ed5728ae988252063e8c4d4d238765"
+    },
+    "k8s-13034::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "provider/openstack",
+        "component_confidence": 0.628,
+        "similar_issues": [
+          {
+            "number": 20146,
+            "similarity": 0.803,
+            "relevance_note": "User reports inability to configure OpenStack cloud provider, similar symptom of apiserver start failure."
+          },
+          {
+            "number": 22789,
+            "similarity": 0.784,
+            "relevance_note": "Null pointer error in OpenStack cloud provider during startup, matches runtime error description."
+          },
+          {
+            "number": 25750,
+            "similarity": 0.782,
+            "relevance_note": "Discussion about missing cloud-config CLI option for OpenStack, indicating configurationâ€‘related failures."
+          }
+        ],
+        "expected_resolution_summary": "Likely a configurationâ€‘validation or nilâ€‘pointer bug in the OpenStack cloud provider; typical fix range is a few days to a week once the root cause is identified.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 218.8,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 34.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "high",
+        "priority_rationale": "Apiserver crashes on start when OpenStack cloud provider is enabled, blocking any cluster that relies on this provider. No inâ€‘product workaround exists for users needing OpenStack.",
+        "suggested_assignee_class": "cloud-provider/openstack team",
+        "suggested_next_steps": [
+          "Ask the reporter to provide the full apiserver log and the exact cloud-config YAML used.",
+          "Reproduce the issue on a minimal cluster with a trimmed OpenStack config to isolate the failing field.",
+          "Search the code for nil checks in the OpenStack provider initialization path; add missing validation if needed.",
+          "If the problem is purely misconfiguration, improve documentation and add a validation step that fails with a clear error message.",
+          "Reference similar issues #20146 and #22789 to avoid duplicate work."
+        ],
+        "triage_summary": "Runtime error when enabling the OpenStack cloud provider causes the apiserver to crash on startup on both macOS and Windows. The issue aligns with prior reports of nilâ€‘pointer and configuration errors in the OpenStack provider. High priority due to complete cluster failure; assign to the OpenStack cloudâ€‘provider team.",
+        "grounding": {
+          "component_source": "provider/openstack",
+          "similar_issue_refs": [
+            20146,
+            22789,
+            25750
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            20146,
+            22789,
+            25750
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            20146,
+            22789,
+            25750
+          ],
+          "next_steps_cited_issues": [
+            20146,
+            22789
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-13034",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "d4643cfd024a4a41c77932c17eadd4b6955365fba302e1510d90b1462a9b3c77"
+    },
+    "k8s-14550::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "controller-manager",
+        "component_confidence": 0.63,
+        "similar_issues": [
+          {
+            "number": 14553,
+            "similarity": 0.847,
+            "relevance_note": "Directly addresses daemonset support on Mesos, same code paths and e2e adjustments."
+          },
+          {
+            "number": 14909,
+            "similarity": 0.784,
+            "relevance_note": "DaemonSet e2e test failures related to missing inline code, matching the scheduling bug described."
+          },
+          {
+            "number": 22716,
+            "similarity": 0.789,
+            "relevance_note": "DaemonSet pod creation issues that expose controller logic flaws similar to the repeated pod creation loop."
+          }
+        ],
+        "expected_resolution_summary": "Fix daemonset controller logic and update e2e tests; expected effort 1â€“2 weeks.",
+        "expected_resolution_lower_days": 0.5,
+        "expected_resolution_upper_days": 366.9,
+        "resolution_bucket": "long",
+        "resolution_confidence_pct": 21.7,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The bugs affect daemonset behavior on Mesos and cause flaky e2e tests, but do not block core functionality for the majority of users; a workaround exists by not using Mesos. Hence medium priority.",
+        "suggested_assignee_class": "controller-manager team",
+        "suggested_next_steps": [
+          "Review the PR changes for the daemonset controller to ensure pod.Spec.HostNetwork (or equivalent) is set correctly.",
+          "Update the daemonset e2e tests to preserve node labels needed by other tests and add assertions for correct pod scheduling.",
+          "Run the full e2e test suite on both Mesos and standard Kubernetes clusters to verify no regressions.",
+          "Create a regression test that simulates a slow scheduler to confirm the controller no longer creates duplicate pods."
+        ],
+        "triage_summary": "PR fixes daemonset controller bugs (missing inline code causing duplicate pod creation) and adjusts e2e tests that delete node labels. Relevant prior work includes #14553, #14909, and #22716. Medium priority; assign to controller-manager team.",
+        "grounding": {
+          "component_source": "controller-manager",
+          "similar_issue_refs": [
+            14553,
+            14909,
+            22716
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14553,
+            14909,
+            22716
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            14553,
+            14909,
+            22716
+          ],
+          "next_steps_cited_issues": [
+            14553
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-14550",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "fa0aa7f965944651743613e1428d5d2560868f565a745d8373bd6ec8943f7029"
+    },
+    "k8s-13270::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "kube-proxy",
+        "component_confidence": 0.65,
+        "similar_issues": [
+          {
+            "number": 19457,
+            "similarity": 0.805,
+            "relevance_note": "High CPU load reported for both kubelet and kube-proxy, similar environment and version range."
+          },
+          {
+            "number": 513,
+            "similarity": 0.791,
+            "relevance_note": "User reports ~90% CPU usage by kube-proxy binary, matching the symptom."
+          },
+          {
+            "number": 8891,
+            "similarity": 0.795,
+            "relevance_note": "Memoryâ€‘leak style report for kube-proxy; often CPU and memory issues are related."
+          }
+        ],
+        "expected_resolution_summary": "Typical performance regression; likely fixed by configuration tweak or upstream patch, usually resolved within a few days.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 223.7,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 40.0,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "CPU exhaustion degrades node performance and can affect workloads, but the node remains usable and a workaround (e.g., switching proxy mode) may mitigate; thus not a full block.",
+        "suggested_assignee_class": "kube-proxy team",
+        "suggested_next_steps": [
+          "Gather pprof CPU profile of kube-proxy while load is high.",
+          "Verify proxy mode (iptables vs ipvs) and try switching to see if CPU drops.",
+          "Compare configuration and logs with known cases #19457 and #513.",
+          "Test with a newer Kubernetes release to see if the issue persists."
+        ],
+        "triage_summary": "kube-proxy consumes excessive CPU on a singleâ€‘node cluster (Kubernetes 1.0.3). Similar highâ€‘CPU reports exist (#19457, #513, #8891). The issue impacts performance but does not crash the cluster, so it is medium priority. Assign to the kube-proxy team with concrete debugging steps.",
+        "grounding": {
+          "component_source": "kube-proxy",
+          "similar_issue_refs": [
+            19457,
+            513,
+            8891
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            19457,
+            513,
+            8891
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            19457,
+            513,
+            8891
+          ],
+          "next_steps_cited_issues": [
+            19457,
+            513
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-13270",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "062f00cdb0705e8fb6e6c605ede34016f6b2d0099c6064b1135e49a70bbe691b"
+    },
+    "k8s-12277::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "nodecontroller",
+        "component_confidence": 0.648,
+        "similar_issues": [
+          {
+            "number": 12545,
+            "similarity": 0.739,
+            "relevance_note": "NodeController deletes node before pods, a race condition similar to handling node deletion correctly."
+          },
+          {
+            "number": 12929,
+            "similarity": 0.74,
+            "relevance_note": "Error handling in NodeController during list failures; relevant for robust deletion logic."
+          },
+          {
+            "number": 15930,
+            "similarity": 0.734,
+            "relevance_note": "Ensures NodeController deletes terminating pods; related to proper cleanup during node removal."
+          }
+        ],
+        "expected_resolution_summary": "Fix NodeController deletion logic and add unit/e2e test; typical turnaround 1â€‘3 days for a focused controller bug.",
+        "expected_resolution_lower_days": 0.0,
+        "expected_resolution_upper_days": 39.4,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 56.7,
+        "resolution_interval_conformal": null,
+        "priority_guess": "high",
+        "priority_rationale": "Incorrect node deletion can lead to pods being terminated prematurely or orphaned, causing potential data loss and cluster instability. No viable workaround exists.",
+        "suggested_assignee_class": "nodecontroller team",
+        "suggested_next_steps": [
+          "Add a unit test that simulates node deletion while pods are still terminating and asserts correct ordering.",
+          "Review the sync loop to ensure pods are deleted before the node object is removed.",
+          "Check for existing duplicate bugs (#12545, #15930) and close or link as appropriate."
+        ],
+        "triage_summary": "NodeController currently mishandles node deletion, risking pod loss. Similar past bugs (#12545, #12929, #15930) indicate a pattern. High priority fix with test coverage needed.",
+        "grounding": {
+          "component_source": "nodecontroller",
+          "similar_issue_refs": [
+            12545,
+            12929,
+            15930
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            12545,
+            12929,
+            15930
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            12545,
+            12929,
+            15930
+          ],
+          "next_steps_cited_issues": [
+            12545,
+            15930
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-12277",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "1c65d3491d0203f4e017fcc324c0d7e9dcf85e81a43adc8edcf8ba777ab9157a"
+    },
+    "k8s-12587::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "provider/openstack",
+        "component_confidence": 0.659,
+        "similar_issues": [
+          {
+            "number": 12656,
+            "similarity": 0.817,
+            "relevance_note": "Directly adds OpenStack instructions to the CoreOS multinode cluster guide, matching the requested documentation."
+          },
+          {
+            "number": 13456,
+            "similarity": 0.79,
+            "relevance_note": "Provides an OpenStack gettingâ€‘started guide for Kubernetes, useful reference for authoring the missing section."
+          }
+        ],
+        "expected_resolution_summary": "Add OpenStack instructions to the CoreOS multinode cluster documentation; a small documentation change typically resolved within a few days.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 255.1,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 36.8,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "Documentation request with no functional impact; users can continue using existing guides. Nonâ€‘blocking and low effort.",
+        "suggested_assignee_class": "documentation team",
+        "suggested_next_steps": [
+          "Review the existing CoreOS multinode cluster guide to locate the appropriate insertion point.",
+          "Draft OpenStack-specific steps (networking, instance creation, kubelet configuration) following the style of the AWS/GCE sections.",
+          "Reference and adapt content from issue #12656 and #13456 to avoid duplication.",
+          "Submit a PR to the docs repository and request review from the docs maintainers."
+        ],
+        "triage_summary": "User requests OpenStack instructions for the CoreOS multinode cluster guide. Similar prior work exists (#12656) and a related OpenStack guide (#13456). This is a pure documentation enhancement, thus low priority. Assign to the documentation team.",
+        "grounding": {
+          "component_source": "provider/openstack",
+          "similar_issue_refs": [
+            12656,
+            13456
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            12656,
+            13456
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            12656,
+            13456
+          ],
+          "next_steps_cited_issues": [
+            12656,
+            13456
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-12587",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "d82557908b4acb01e47b312d7a19633a679d1c9ec8cdaa72efc5df7b029e4877"
+    },
+    "k8s-14935::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "kubelet",
+        "component_confidence": 0.511,
+        "similar_issues": [
+          {
+            "number": 14532,
+            "similarity": 0.809,
+            "relevance_note": "Discusses improving node memory management to meet QoS guarantees, directly related to overcommit policy."
+          },
+          {
+            "number": 15091,
+            "similarity": 0.802,
+            "relevance_note": "Mentions kubelet ensuring node stability on OOM, overlapping with the proposed overcommit change."
+          },
+          {
+            "number": 15087,
+            "similarity": 0.8,
+            "relevance_note": "Kubelet already sets /proc/sys/vm/overcommit_memory; this issue proposes adjusting that behavior."
+          },
+          {
+            "number": 14452,
+            "similarity": 0.792,
+            "relevance_note": "Reports node instability caused by current overcommit settings, motivating the same fix."
+          },
+          {
+            "number": 7294,
+            "similarity": 0.752,
+            "relevance_note": "Feature request for kubelet configuration flags, similar to adding a flag for overcommit policy."
+          }
+        ],
+        "expected_resolution_summary": "Design and implement a kubelet flag to configure kernel memory overcommit (e.g., --overcommit-policy=never) and update node startup to set vm.overcommit_memory accordingly. Add tests for QoS guarantees under different overcommit settings.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 340.3,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 28.2,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The change affects node stability and QoS guarantees but does not cause an immediate crash. It is a functional regression for Bestâ€‘Effort containers that can be worked around by manual kernel tuning, so medium priority.",
+        "suggested_assignee_class": "kubelet team",
+        "suggested_next_steps": [
+          "Create a design document outlining the overcommit policy flag and its interaction with existing QoS logic.",
+          "Implement the flag in kubelet startup, mirroring the behavior of issue #15087.",
+          "Add unit and e2e tests that simulate Bestâ€‘Effort containers failing under default overcommit and succeeding with the new policy.",
+          "Validate the proposal against the scenarios described in #14532 and #14452.",
+          "Update documentation to explain the new flag and its recommended usage."
+        ],
+        "triage_summary": "The issue proposes adjusting the kernel memory overcommit setting via kubelet to prevent Bestâ€‘Effort containers from causing malloc failures for Guaranteed pods, improving QoS reliability. Several related issues (#14532, #15087, #14452) show this is a known concern. Medium priority; assign to the kubelet team for a flag implementation and testing.",
+        "grounding": {
+          "component_source": "kubelet",
+          "similar_issue_refs": [
+            14532,
+            15091,
+            15087,
+            14452,
+            7294
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14532,
+            15091,
+            15087,
+            14452,
+            7294
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            14532,
+            15087,
+            14452
+          ],
+          "next_steps_cited_issues": [
+            15087,
+            14532
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-14935",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "ab004396a6019b0bc2e4443f86f488bc3ded290d6deae65a09f32bfdb29b50af"
+    },
+    "k8s-14835::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "build-release",
+        "component_confidence": 0.604,
+        "similar_issues": [
+          {
+            "number": 14785,
+            "similarity": 0.906,
+            "relevance_note": "Directly discusses consolidating mark-stable-release.sh with kube::release::gcs::publish_latest_official, matching the current request."
+          },
+          {
+            "number": 17444,
+            "similarity": 0.819,
+            "relevance_note": "Related to release tooling and script usage, providing context for how release scripts are managed."
+          }
+        ],
+        "expected_resolution_summary": "A small releaseâ€‘script modification; typically resolved within a few days once reviewed and CI passes.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 260.6,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 36.8,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The change is nonâ€‘breaking and only affects release automation; no userâ€‘facing impact and a manual review can be scheduled, so it is low priority.",
+        "suggested_assignee_class": "build-release team",
+        "suggested_next_steps": [
+          "Review the current mark-stable-release.sh implementation and the kube::release::gcs::publish_latest_official function.",
+          "Create a branch that replaces the inline code with a call to the shared function and update documentation accordingly.",
+          "Run the releaseâ€‘script CI jobs to ensure no regressions.",
+          "Request a thorough review from @zmerlynn and other release engineers.",
+          "Merge after CI passes and the review is approved."
+        ],
+        "triage_summary": "Request to use kube::release::gcs::publish_latest_official logic in mark-stable-release.sh, consolidating duplicate code. Similar issue #14785 already outlines the same change. Low priority, assign to buildâ€‘release team for a quick fix.",
+        "grounding": {
+          "component_source": "build-release",
+          "similar_issue_refs": [
+            14785,
+            17444
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14785,
+            17444
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            14785,
+            17444
+          ],
+          "next_steps_cited_issues": [
+            14785
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-14835",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "7d5314b9a1319d84c00eaa9310c8a8941e0afe61884c1ae0583697346a9755de"
+    },
+    "k8s-13784::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "kubelet",
+        "component_confidence": 0.62,
+        "similar_issues": [
+          {
+            "number": 23769,
+            "similarity": 0.794,
+            "relevance_note": "Addresses cloud provider config propagation to volume plugins, directly related to the proposed change."
+          },
+          {
+            "number": 11543,
+            "similarity": 0.764,
+            "relevance_note": "Shows difficulties with AWS cloudâ€‘provider flags, indicating the need for proper cloudâ€‘provider handling in plugins."
+          },
+          {
+            "number": 5667,
+            "similarity": 0.759,
+            "relevance_note": "Adds a cloud provider config option on kubelet, the same mechanism this patch would leverage."
+          }
+        ],
+        "expected_resolution_summary": "Feature implementation and integration work; typical turnaround 1â€“2 weeks once design is approved.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 440.3,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 26.9,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The change adds optional functionality for AWS EBS plugins; it does not block existing workflows and has existing workarounds (manual cloudâ€‘provider configuration). Hence it is low priority.",
+        "suggested_assignee_class": "kubelet team",
+        "suggested_next_steps": [
+          "Review the patch for consistency with existing cloudâ€‘provider handling in other volume plugins (e.g., OpenStack Cinder).",
+          "Add unit tests for the aws_ebs plugin to verify cloudProvider propagation from kubelet.",
+          "Update documentation to describe the new configuration path.",
+          "Run integration tests on a cluster with the AWS cloud provider enabled."
+        ],
+        "triage_summary": "Proposes passing the cloudProvider from kubelet to the aws_ebs volume plugin, mirroring the mechanism used by the OpenStack Cinder plugin. Similar to existing issues #23769, #11543, and #5667. Low priority feature request; assign to the kubelet team.",
+        "grounding": {
+          "component_source": "kubelet",
+          "similar_issue_refs": [
+            23769,
+            11543,
+            5667
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            23769,
+            11543,
+            5667
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            23769,
+            11543,
+            5667
+          ],
+          "next_steps_cited_issues": [
+            23769,
+            11543,
+            5667
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-13784",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "01adba1bff56eb0a934d1f6133fd9aaab48c8d36f9d7a5ec8433771564a6f571"
+    },
+    "k8s-12665::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "networking",
+        "component_confidence": 0.5,
+        "similar_issues": [
+          {
+            "number": 12111,
+            "similarity": 0.764,
+            "relevance_note": "Direct proposal to link HAProxy with Kubernetes services, matching the desired automatic config useâ€‘case."
+          },
+          {
+            "number": 10010,
+            "similarity": 0.747,
+            "relevance_note": "User report of HAProxy integration with Kubernetes services, highlighting similar dynamic service discovery challenges."
+          },
+          {
+            "number": 19587,
+            "similarity": 0.741,
+            "relevance_note": "Discussion of external load balancer (including HAProxy) installation and configuration with kubeâ€‘proxy."
+          }
+        ],
+        "expected_resolution_summary": "Feature request for automatic HAProxy configuration based on Service objects; likely requires design discussion, prototype, and integration work â€“ weeks to months.",
+        "expected_resolution_lower_days": 0.5,
+        "expected_resolution_upper_days": 701.8,
+        "resolution_bucket": "long",
+        "resolution_confidence_pct": 34.9,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "Nonâ€‘blocking feature request affecting a niche workflow; VS Code continues to function without HAProxy and a manual solution exists.",
+        "suggested_assignee_class": "networking team",
+        "suggested_next_steps": [
+          "Open a design proposal (KEP) outlining the desired HAProxy integration model.",
+          "Create a prototype controller that watches Service objects and updates an HAProxy config template.",
+          "Discuss with SIGâ€‘Network to align on responsibilities and potential reuse of existing ingress controller code."
+        ],
+        "triage_summary": "User wants Kubernetes to automatically generate HAProxy routing rules for NodePort services, replacing port numbers with friendly URLs. This is a feature request for external loadâ€‘balancer automation, similar to prior discussions (#12111, #10010, #19587). Assign to the networking team; low priority.",
+        "grounding": {
+          "component_source": "networking",
+          "similar_issue_refs": [
+            12111,
+            10010,
+            19587
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": false,
+          "component_reason": "not in classifier_top3",
+          "similar_issue_refs": [
+            12111,
+            10010,
+            19587
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": false
+        },
+        "declared_attribution": {
+          "component_source": "model_override",
+          "component_override_reason": "Topâ€‘3 classifier predictions (kubectl, usability, appâ€‘lifecycle) do not capture the external loadâ€‘balancer nature of the request; networking is the appropriate component.",
+          "summary_cited_issues": [
+            12111,
+            10010,
+            19587
+          ],
+          "next_steps_cited_issues": []
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-12665",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "e54a22d5f6fef2867cbeadafbe0619c250659ca79b5a199c2afdce682a28b114"
+    },
+    "k8s-14553::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "platform/mesos",
+        "component_confidence": 0.671,
+        "similar_issues": [
+          {
+            "number": 14550,
+            "similarity": 0.836,
+            "relevance_note": "Directly fixes daemonset controller bugs and e2e tests for Mesos, same area of change."
+          },
+          {
+            "number": 13896,
+            "similarity": 0.8,
+            "relevance_note": "Adds experimental daemonset API and conformance test, closely related to the needed support."
+          }
+        ],
+        "expected_resolution_summary": "Feature implementation to enable daemonsets on Mesos; typical turnaround 1â€‘3 days once code review passes, but may extend if integration issues arise.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 255.4,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 29.0,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Enables a missing core feature (daemonsets) for Mesos users, affecting functionality but not causing crashes. No immediate workaround, but the impact is limited to Mesos deployments, so medium priority.",
+        "suggested_assignee_class": "platform/mesos team",
+        "suggested_next_steps": [
+          "Run the full e2e conformance suite on a Mesos cluster to verify daemonset test passes.",
+          "Review the NodeLabels support PR #13857 and daemonset bug fix PR #14550 for any required backports.",
+          "Update documentation to reflect daemonset support on Mesos and add a note in the release notes.",
+          "Submit the PR for review, ensuring CI passes on all supported platforms."
+        ],
+        "triage_summary": "PR adds daemonset support to the apiserver for Mesos, enabling the corresponding e2e conformance test. Related prior changes (#14550, #13896) address similar controller bugs. Medium priority feature work for the Mesos platform team.",
+        "grounding": {
+          "component_source": "platform/mesos",
+          "similar_issue_refs": [
+            14550,
+            13896
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14550,
+            13896
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            14550,
+            13896
+          ],
+          "next_steps_cited_issues": [
+            14550,
+            13896
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-14553",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "57f3428c4864bd4de27c9b4718eaf8169dd90103152c0190be8f89cc0f812253"
+    },
+    "k8s-14756::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "kube-proxy",
+        "component_confidence": 0.668,
+        "similar_issues": [
+          {
+            "number": 14719,
+            "similarity": 0.846,
+            "relevance_note": "Direct request to increase allowed memory usage for kube-proxy, matching this issue's intent."
+          },
+          {
+            "number": 8891,
+            "similarity": 0.836,
+            "relevance_note": "Reports high RAM usage of kube-proxy, providing context for memoryâ€‘footprint concerns."
+          }
+        ],
+        "expected_resolution_summary": "Adjust default memory limit for kube-proxy and update related tests; typically a small change that can be landed within a few days.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 138.6,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 45.1,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The request is a nonâ€‘blocking configuration increase; kube-proxy continues to function and no crash or data loss occurs. It is a cosmetic/resourceâ€‘allocation change with a simple workaround (manual limit adjustment).",
+        "suggested_assignee_class": "kube-proxy team",
+        "suggested_next_steps": [
+          "Confirm current default memory limit for kube-proxy in the codebase and test suite.",
+          "Update the default limit to 30â€¯MiB (or a justified value) and adjust any related unit/integration tests.",
+          "Add a comment in the documentation explaining the expected memory usage and how to tune it.",
+          "Run the full test suite to ensure the change does not cause regressions."
+        ],
+        "triage_summary": "User requests increasing kube-proxy's memory footprint to 30â€¯MiB after observing usage up to 26â€¯MiB. Similar past issues discuss raising the limit and high memory usage. This is a lowâ€‘priority, nonâ€‘blocking change that can be addressed quickly.",
+        "grounding": {
+          "component_source": "kube-proxy",
+          "similar_issue_refs": [
+            14719,
+            8891
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14719,
+            8891
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            14719,
+            8891
+          ],
+          "next_steps_cited_issues": [
+            14719,
+            8891
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-14756",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "b637bbb18f68a4f687b756d4b4d9309d8b2cc247f31ad97f056ff3434c52f69b"
+    },
+    "k8s-12703::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "ui",
+        "component_confidence": 0.677,
+        "similar_issues": [
+          {
+            "number": 14389,
+            "similarity": 0.843,
+            "relevance_note": "Kubeâ€‘ui only displays resources from the default namespace, matching the symptom of missing kubeâ€‘system objects."
+          },
+          {
+            "number": 26479,
+            "similarity": 0.764,
+            "relevance_note": "Blank kubeâ€‘ui dashboard after cluster upgrade, similar UIâ€‘rendering failure."
+          }
+        ],
+        "expected_resolution_summary": "UI rendering bug where kubeâ€‘ui fails to list namespaced resources; typical fix involves correcting API query filters or RBAC scopes, usually resolved within a few weeks.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 324.7,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 23.7,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The UI does not display any resources despite kubectl showing them, impacting visibility for users but not breaking core cluster operation; a workaround (using kubectl) exists, so the issue is a mediumâ€‘priority visual regression.",
+        "suggested_assignee_class": "ui team",
+        "suggested_next_steps": [
+          "Reproduce on a fresh cluster with default kubeâ€‘ui version to confirm the issue is not environmentâ€‘specific.",
+          "Check the API requests made by kubeâ€‘ui for namespace filtering or resource version handling; compare with working kubectl output.",
+          "Verify RBAC permissions for the kubeâ€‘ui service account on the kubeâ€‘system namespace.",
+          "Crossâ€‘reference #14389 and #26479 to see if a recent change introduced the regression.",
+          "Add an e2e test that loads the dashboard and asserts that pods, services, and replication controllers appear for a nonâ€‘default namespace."
+        ],
+        "triage_summary": "Kubeâ€‘ui fails to render any objects from the kubeâ€‘system namespace while kubectl reports them correctly. Similar past reports (#14389, #26479) indicate a regression in namespace handling or API query logic. Assign to the UI team with medium priority.",
+        "grounding": {
+          "component_source": "ui",
+          "similar_issue_refs": [
+            14389,
+            26479
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14389,
+            26479
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            14389,
+            26479
+          ],
+          "next_steps_cited_issues": [
+            14389
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-12703",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "35ca6b64595ec0429f59b1c9ec78d68e6c76879c1da27015ae8e3f27e58983b2"
+    },
+    "k8s-12248::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "kubectl",
+        "component_confidence": 0.595,
+        "similar_issues": [
+          {
+            "number": 24365,
+            "similarity": 0.909,
+            "relevance_note": "Directly discusses adding/deprecating -t shorthand for --tty in kubectl, matching the proposed change."
+          },
+          {
+            "number": 15471,
+            "similarity": 0.808,
+            "relevance_note": "Calls for removal of deprecated shorthand flags in kubectl, same motivation."
+          },
+          {
+            "number": 24243,
+            "similarity": 0.788,
+            "relevance_note": "Mentions removal of a deprecated flag in kubectl, relevant precedent."
+          }
+        ],
+        "expected_resolution_summary": "Deprecation of -t flag and migration to --tty is a nonâ€‘breaking UX change; typical turnaround 1â€“2 weeks after design approval.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 369.6,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 42.6,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The change is cosmetic/UXâ€‘focused, does not affect core functionality, and scripts can continue using the existing flag until the deprecation period ends; no immediate breakage.",
+        "suggested_assignee_class": "kubectl team",
+        "suggested_next_steps": [
+          "Create a design doc outlining deprecation timeline and migration guidance for users.",
+          "Update kubectl flag parsing to emit a deprecation warning when -t is used and map it to --tty.",
+          "Add unit and e2e tests ensuring -t still works during the deprecation window and is removed in a future release.",
+          "Reference prior deprecation work in #15471 to align process.",
+          "Communicate the change in the release notes and update documentation."
+        ],
+        "triage_summary": "Proposal to deprecate the -t shorthand in kubectl in favor of the explicit --tty flag. Similar deprecation work exists (#24365, #15471, #24243). Low priority as it is a nonâ€‘breaking UX change with a clear migration path. Assign to the kubectl team.",
+        "grounding": {
+          "component_source": "kubectl",
+          "similar_issue_refs": [
+            24365,
+            15471,
+            24243
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            24365,
+            15471,
+            24243
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            24365,
+            15471,
+            24243
+          ],
+          "next_steps_cited_issues": [
+            15471
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-12248",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "3ab5b3168f7e9ade3066104370ae71f6ded1800e3b752ed97995160bee61ddd7"
+    },
+    "k8s-14785::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "build-release",
+        "component_confidence": 0.616,
+        "similar_issues": [
+          {
+            "number": 14835,
+            "similarity": 0.875,
+            "relevance_note": "Directly proposes using publish_latest_official logic in mark-stable-release.sh, matching the requested consolidation."
+          },
+          {
+            "number": 16773,
+            "similarity": 0.824,
+            "relevance_note": "Discusses broader release mechanics consolidation, indicating this change fits a larger refactor effort."
+          }
+        ],
+        "expected_resolution_summary": "Small refactor to align mark-stable-release.sh with existing publish_latest_official logic; should be implementable within a few days.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 258.9,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 44.2,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The change is purely a codeâ€‘cleanup with no functional impact on users; it does not block any workflow and has a straightforward implementation path.",
+        "suggested_assignee_class": "release-eng team",
+        "suggested_next_steps": [
+          "Create a branch that replaces the custom logic in mark-stable-release.sh with a call to kube::release::gcs::publish_latest_official.",
+          "Add unit tests or scriptâ€‘level tests to verify the new path produces identical output.",
+          "Reference #14835 for the exact implementation details and ensure the change does not affect existing CI pipelines."
+        ],
+        "triage_summary": "The issue requests consolidating the logic in mark-stable-release.sh with the existing publish_latest_official function. Two closely related prior issues (#14835, #16773) already discuss similar refactoring. This is a lowâ€‘impact cleanup suitable for the releaseâ€‘eng team.",
+        "grounding": {
+          "component_source": "build-release",
+          "similar_issue_refs": [
+            14835,
+            16773
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14835,
+            16773
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            14835,
+            16773
+          ],
+          "next_steps_cited_issues": [
+            14835
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-14785",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "c85785b34047f67276bd832d90bf8877a3861247cf9183d37a5d136830ffd420"
+    },
+    "k8s-13470::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "kubelet",
+        "component_confidence": 0.59,
+        "similar_issues": [
+          {
+            "number": 482,
+            "similarity": 0.816,
+            "relevance_note": "Shows existing code that interacts with the kubelet API, useful as a reference when writing documentation."
+          },
+          {
+            "number": 12386,
+            "similarity": 0.808,
+            "relevance_note": "Discusses a kubelet flag related to the API; can be linked from the new docs for context."
+          }
+        ],
+        "expected_resolution_summary": "Create or improve official documentation for the kubelet API; typically a few days of writing and review.",
+        "expected_resolution_lower_days": 0.0,
+        "expected_resolution_upper_days": 68.9,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 58.3,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "The issue is a request for documentation; it does not block any functionality and has a straightforward fix (add docs).",
+        "suggested_assignee_class": "kubelet team",
+        "suggested_next_steps": [
+          "Identify the appropriate documentation location (e.g., website API reference or design docs).",
+          "Draft a concise guide covering how to access the kubelet API, required authentication, and example calls.",
+          "Link the new documentation from the existing kubelet component page.",
+          "Add a reference to the guide in the CONTRIBUTING or FAQ sections.",
+          "Request review from the kubelet maintainers and merge."
+        ],
+        "triage_summary": "User requests documentation for the kubelet API. No existing docs were found. Provide a short guide with examples and link it appropriately. Low priority, suitable for the kubelet team.",
+        "grounding": {
+          "component_source": "kubelet",
+          "similar_issue_refs": [
+            482,
+            12386
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            482,
+            12386
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [],
+          "next_steps_cited_issues": []
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-13470",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "2d3e55e3e9c6a0d63108a8eefdc22caf292be3945fe71734e1ceb6270973bb95"
+    },
+    "k8s-12784::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "apiserver",
+        "component_confidence": 0.48,
+        "similar_issues": [
+          {
+            "number": 10530,
+            "similarity": 0.823,
+            "relevance_note": "kube-dns unable to connect to the API server, same symptom of service connectivity failure."
+          },
+          {
+            "number": 24842,
+            "similarity": 0.779,
+            "relevance_note": "kube2sky waiting for service default/kubernetes timeout â€“ indicates similar connection problem."
+          },
+          {
+            "number": 24812,
+            "similarity": 0.776,
+            "relevance_note": "kube2sky cannot connect due to TLS certificate issues â€“ shows that misâ€‘configuration can block kube2sky."
+          }
+        ],
+        "expected_resolution_summary": "Fix kube2sky connection configuration (address, TLS, or etcd proxy) so it can reach the API server; typical fix time 1â€“4 weeks.",
+        "expected_resolution_lower_days": 1.6,
+        "expected_resolution_upper_days": 521.3,
+        "resolution_bucket": "long",
+        "resolution_confidence_pct": 28.9,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The issue prevents DNS (kube2sky) from reaching the API server, breaking service discovery for the cluster. It does not crash the whole cluster, and a manual workaround (e.g., fixing host entries) may exist, so it is a mediumâ€‘priority regression.",
+        "suggested_assignee_class": "apiserver team",
+        "suggested_next_steps": [
+          "Verify that the API server is reachable from the node running kube2sky (curl http://127.0.0.1:8080/healthz).",
+          "Check kube2sky flags (--master, --etcd-servers) for correct values; ensure they match the current cluster setup.",
+          "Inspect TLS certificates if HTTPS is used; compare with the scenario in #24812.",
+          "Review logs for timeout errors and correlate with #24842 to see if a serviceâ€‘lookup race is occurring.",
+          "Add a unit test that starts a mock API server and confirms kube2sky can register the service."
+        ],
+        "triage_summary": "kube2sky cannot connect to the Kubernetes API server on a CoreOS local cluster after upgrade to v1.0.3, causing DNS pod failure. Similar connectivity failures have been reported in #10530, #24842, and #24812. Assign to the apiserver team with medium priority; expected fix within a few weeks.",
+        "grounding": {
+          "component_source": "apiserver",
+          "similar_issue_refs": [
+            10530,
+            24842,
+            24812
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            10530,
+            24842,
+            24812
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            10530,
+            24842,
+            24812
+          ],
+          "next_steps_cited_issues": [
+            10530,
+            24842,
+            24812
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-12784",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "b79f9500603e302c0af2671495e6ae86fe431102b64cc5971888cd2f6e064be3"
+    },
+    "k8s-13508::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "reliability",
+        "component_confidence": 0.581,
+        "similar_issues": [
+          {
+            "number": 23383,
+            "similarity": 0.801,
+            "relevance_note": "Node runs out of disk after resource changes on AWS, same symptom of outâ€‘ofâ€‘space failures."
+          },
+          {
+            "number": 13174,
+            "similarity": 0.776,
+            "relevance_note": "Fresh cluster on AWS runs out of space on first image pull, indicating default disk allocation problems."
+          },
+          {
+            "number": 26566,
+            "similarity": 0.776,
+            "relevance_note": "Kubelet reports insufficient disk despite space, a known misâ€‘reporting issue related to disk pressure handling."
+          }
+        ],
+        "expected_resolution_summary": "Investigate kubelet diskâ€‘pressure detection and log / container image cleanup on AWS nodes; add proper eviction or increase default /mnt/ephemeral size. Typical fix timeframe 1â€‘2 weeks.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 356.8,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 34.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "high",
+        "priority_rationale": "Node becomes unusable after a few days, causing cluster failure with no inâ€‘product workaround other than terminating the EC2 instance. This blocks core cluster operation for all workloads.",
+        "suggested_assignee_class": "reliability team",
+        "suggested_next_steps": [
+          "Collect disk usage metrics (df, du) on affected nodes over time to identify which directories fill up.",
+          "Reproduce on a test cluster with the same instance type and monitor kubelet eviction thresholds.",
+          "Check kubelet's image garbage collection and log rotation settings; adjust defaults if needed.",
+          "Create a CI test that simulates prolonged pod creation/pull on m3.large and asserts node remains healthy."
+        ],
+        "triage_summary": "AWS nodes (m3.large) exhaust /mnt/ephemeral space after a few days, causing node failure and requiring instance termination. Similar historical reports point to kubelet diskâ€‘pressure handling and default disk sizing on AWS. High priority; assign to reliability team for investigation and fix.",
+        "grounding": {
+          "component_source": "reliability",
+          "similar_issue_refs": [
+            23383,
+            13174,
+            26566
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            23383,
+            13174,
+            26566
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            23383,
+            13174,
+            26566
+          ],
+          "next_steps_cited_issues": [
+            23383,
+            13174,
+            26566
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-13508",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "a066c2ca515954a967647562110222dc701dce95269421562c54c5fd240a8a1b"
+    },
+    "k8s-14078::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "test",
+        "component_confidence": 0.563,
+        "similar_issues": [
+          {
+            "number": 25657,
+            "similarity": 0.864,
+            "relevance_note": "Identical flaky e2e test for kubectl expose rc, same failure pattern."
+          },
+          {
+            "number": 29227,
+            "similarity": 0.855,
+            "relevance_note": "Same test flake reported recently, indicating a recurring issue."
+          },
+          {
+            "number": 26209,
+            "similarity": 0.847,
+            "relevance_note": "Duplicate of the flaky exposeâ€‘rc test failure."
+          },
+          {
+            "number": 23389,
+            "similarity": 0.842,
+            "relevance_note": "Related flaky test in the same suite, suggesting a systemic timing problem."
+          },
+          {
+            "number": 24619,
+            "similarity": 0.839,
+            "relevance_note": "Another recent report of the exposeâ€‘rc flake, confirming persistence."
+          }
+        ],
+        "expected_resolution_summary": "Stabilize the Kubectl expose rc e2e test by adjusting timing, adding explicit waits, or fixing the underlying race condition; typical fix time 1â€‘3 weeks.",
+        "expected_resolution_lower_days": 0.6,
+        "expected_resolution_upper_days": 561.4,
+        "resolution_bucket": "months",
+        "resolution_confidence_pct": 24.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Flaky test does not block user workflows but degrades CI reliability and can hide regressions; a workaround (reâ€‘run) exists, so not high priority.",
+        "suggested_assignee_class": "test team",
+        "suggested_next_steps": [
+          "Reproduce the flake locally with increased logging to capture the race window.",
+          "Add an explicit wait or retry after exposing the RC to ensure the service is created before verification.",
+          "Investigate recent changes in testâ€‘infra or kubectl that may have introduced timing regressions.",
+          "Update the test to use a more robust readiness check instead of a fixed 1â€‘second sleep.",
+          "Mark the issue as duplicate of the most recent similar flake (e.g., #25657) if confirmed."
+        ],
+        "triage_summary": "A flaky e2e test for 'kubectl expose' on replication controllers fails ~10% of the time, likely due to a timing race. Multiple recent similar reports exist. Assign to the test team, medium priority, with a resolution window of days to weeks.",
+        "grounding": {
+          "component_source": "test",
+          "similar_issue_refs": [
+            25657,
+            29227,
+            26209,
+            23389,
+            24619
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            25657,
+            29227,
+            26209,
+            23389,
+            24619
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            25657,
+            29227,
+            26209,
+            23389,
+            24619
+          ],
+          "next_steps_cited_issues": [
+            25657,
+            29227
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-14078",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "d4b2ffbe462e03aeef1353f50ac8b35c02a333a689c66f82c18b16840c7143b3"
+    },
+    "k8s-14424::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "test-infra",
+        "component_confidence": 0.63,
+        "similar_issues": [
+          {
+            "number": 7008,
+            "similarity": 0.766,
+            "relevance_note": "Similar e2e test skipping behavior observed in GCE/GKE tests, indicating a pattern of flaky service tests."
+          },
+          {
+            "number": 20631,
+            "similarity": 0.746,
+            "relevance_note": "Direct timeout of Services e2e test, matching the current failure."
+          },
+          {
+            "number": 10322,
+            "similarity": 0.744,
+            "relevance_note": "General discussion of unhelpful timeout errors in e2e tests, relevant for diagnosing this flake."
+          }
+        ],
+        "expected_resolution_summary": "Typical e2e test flake; expect investigation, possible test fix or improved skip logic within 1â€‘3 weeks.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 53.1,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 54.2,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The CI build is broken but can be unblocked by skipping the test, providing a workaround. The issue impacts developer productivity and should be addressed promptly, but it is not a crash or dataâ€‘loss scenario.",
+        "suggested_assignee_class": "test-infra team",
+        "suggested_next_steps": [
+          "Reâ€‘run the failing service e2e test locally to capture logs and identify the timeout point.",
+          "Identify recent changes to the service test or underlying infrastructure that could cause the timeout.",
+          "Determine if the test needs a more robust wait condition or a legitimate skip annotation.",
+          "If the test is flaky, add a reliable retry or backâ€‘off mechanism, or file a separate issue to improve the test harness.",
+          "Update CI to automatically skip the test only when the underlying issue is confirmed, and reference the fix in the PR."
+        ],
+        "triage_summary": "Service e2e tests are timing out, causing CI failures. The issue mirrors several prior flaky test reports (#7008, #20631, #10322). A temporary skip works, but a permanent fix is needed. Assign to testâ€‘infra team with medium priority.",
+        "grounding": {
+          "component_source": "test-infra",
+          "similar_issue_refs": [
+            7008,
+            20631,
+            10322
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            7008,
+            20631,
+            10322
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            7008,
+            20631,
+            10322
+          ],
+          "next_steps_cited_issues": [
+            7008,
+            20631
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-14424",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "be5e0e3c4c5c4d44c7afcf34a2b545e44e2feb2c16984958c6adf44b46a24c97"
+    },
+    "k8s-12828::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "kubectl",
+        "component_confidence": 0.6,
+        "similar_issues": [
+          {
+            "number": 18964,
+            "similarity": 0.85,
+            "relevance_note": "Direct complaint about naive --env parsing in kubectl run."
+          },
+          {
+            "number": 13422,
+            "similarity": 0.837,
+            "relevance_note": "Feature request explicitly asking for env var support in kubectl run."
+          },
+          {
+            "number": 28734,
+            "similarity": 0.819,
+            "relevance_note": "Edge case where empty env values are rejected, highlighting need for robust --env handling."
+          }
+        ],
+        "expected_resolution_summary": "Add proper multi-flag --env support to kubectl run; design, implement, and test. Typically 1â€“2 weeks of work.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 162.7,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 42.0,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Missing functionality that affects many users' workflows but does not block core operations; a workaround exists via alternative pod creation methods, so not high urgency.",
+        "suggested_assignee_class": "kubectl team",
+        "suggested_next_steps": [
+          "Review current kubectl run flag parsing code to identify where --env handling should be added.",
+          "Draft a design proposal for accepting multiple --env flags and handling empty values.",
+          "Add unit tests covering multiple --env flags, values with '=' characters, and empty strings.",
+          "Implement the flag parsing and pass env vars to the pod spec generation.",
+          "Submit a PR and request review from the kubectl maintainers."
+        ],
+        "triage_summary": "Feature request to allow multiple --env flags (including empty values) in kubectl run. Several similar issues already exist, indicating a known gap. Assign to the kubectl team; medium priority due to usability impact without a hard blocker.",
+        "grounding": {
+          "component_source": "kubectl",
+          "similar_issue_refs": [
+            18964,
+            13422,
+            28734
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            18964,
+            13422,
+            28734
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            18964,
+            13422,
+            28734
+          ],
+          "next_steps_cited_issues": [
+            18964,
+            13422
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-12828",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "587793b5df9208314b2b53328fe495cf9ef251f6ecb9db79a3e8831453da7448"
+    },
+    "k8s-12737::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "apiserver",
+        "component_confidence": 0.609,
+        "similar_issues": [
+          {
+            "number": 11181,
+            "similarity": 0.759,
+            "relevance_note": "Directly reports un-namespaced POST failing for namespaced objects, matching the observed 403 error."
+          },
+          {
+            "number": 11218,
+            "similarity": 0.752,
+            "relevance_note": "Shows same issue with pods; confirms that the API server returns an incorrect status for missing namespace."
+          },
+          {
+            "number": 12446,
+            "similarity": 0.765,
+            "relevance_note": "Related namespace handling problem, indicating broader validation inconsistencies."
+          }
+        ],
+        "expected_resolution_summary": "Fix API server validation to return a proper error (e.g., 400 Bad Request) when a namespaced resource is POSTed without a namespace; add tests and update docs.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 268.5,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 30.6,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Incorrect 403 response misleads users but does not prevent API usage; a manual workaround (specifying a namespace) exists, so the issue is a functional regression of moderate impact.",
+        "suggested_assignee_class": "apiserver team",
+        "suggested_next_steps": [
+          "Reproduce the request against the latest master and capture the exact error response.",
+          "Check the API server code path that validates namespace presence for namespaced resources and adjust the error handling to return a 400 with a clear message.",
+          "Add a unit test covering POST without namespace for a namespaced kind (e.g., ReplicationController).",
+          "Update the OpenAPI/Swagger spec and documentation to reflect the correct error behavior.",
+          "Reference #11181 and #11218 to ensure the fix addresses the same root cause."
+        ],
+        "triage_summary": "POSTing a namespaced resource without a namespace currently yields a 403 Forbidden error, which is misleading. Similar reports (#11181, #11218, #12446) indicate a broader validation issue in the apiserver. This is a mediumâ€‘priority regression requiring a fix to the error handling logic, tests, and documentation.",
+        "grounding": {
+          "component_source": "apiserver",
+          "similar_issue_refs": [
+            11181,
+            11218,
+            12446
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            11181,
+            11218,
+            12446
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            11181,
+            11218,
+            12446
+          ],
+          "next_steps_cited_issues": [
+            11181,
+            11218
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-12737",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "74bd7e33244d63e805825666825c4664b4c3cb0824d6303c48a1d1b1a1994fb0"
+    },
+    "k8s-12122::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "cloudprovider",
+        "component_confidence": 0.66,
+        "similar_issues": [
+          {
+            "number": 10032,
+            "similarity": 0.758,
+            "relevance_note": "Adds a debugging transport for client calls, similar to logging AWS API requests."
+          },
+          {
+            "number": 12121,
+            "similarity": 0.748,
+            "relevance_note": "Discusses AWS API call problems; while focused on rate limiting, it highlights the need for better visibility."
+          },
+          {
+            "number": 26595,
+            "similarity": 0.753,
+            "relevance_note": "General example of adding logs for debugging purposes in the codebase."
+          }
+        ],
+        "expected_resolution_summary": "Implement optional verbose logging for AWS cloudâ€‘provider API calls (e.g., V(2)/V(4) flag). Expected effort is a few days to add log statements and tests.",
+        "expected_resolution_lower_days": 0.3,
+        "expected_resolution_upper_days": 344.5,
+        "resolution_bucket": "days",
+        "resolution_confidence_pct": 30.8,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "Feature request for additional diagnostic logging; does not block any functionality and has a clear workaround (manual debugging). Impact is limited to developers needing deeper insight, so it is low priority.",
+        "suggested_assignee_class": "cloudprovider team",
+        "suggested_next_steps": [
+          "Create a design doc proposing a new log level flag (e.g., --cloud-provider-aws-log-level) and discuss with SIGâ€‘Cloud.",
+          "Add V(2) or V(4) log statements around each AWS SDK call in the AWS cloudâ€‘provider implementation.",
+          "Write unit tests that verify the log output appears when the flag is enabled.",
+          "Update the documentation to describe the new logging option and its intended use cases."
+        ],
+        "triage_summary": "Request to add optional verbose logging for AWS API calls to aid debugging of excessive request loops. Similar prior work exists for generic client debugging and AWS rateâ€‘limiter discussions. Low priority feature for the cloudprovider team.",
+        "grounding": {
+          "component_source": "cloudprovider",
+          "similar_issue_refs": [
+            10032,
+            12121,
+            26595
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            10032,
+            12121,
+            26595
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            10032,
+            12121,
+            26595
+          ],
+          "next_steps_cited_issues": [
+            10032,
+            12121
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "issue_id": "k8s-12122",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "synthesis_cache_key": "a277f36fae22ec00f356d5d32dd074384b8ac526caf4f379bba9dbbc9acda52f"
     }
   }
 }

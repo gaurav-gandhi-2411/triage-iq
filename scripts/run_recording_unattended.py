@@ -126,7 +126,12 @@ def _progress(model: str, prompt_hash: str, artifact_hash: str) -> dict:
     so a human glancing at RECORDING_STATUS.txt never has to guess the other number."""
     entries = _checkpoint_entries(model, prompt_hash, artifact_hash)
     synthesized = sum(1 for rec in entries if rec.get("plan") is not None)
-    judged = sum(1 for rec in entries if rec.get("judge_score") is not None)
+    # 2026-09-23 (judge-provenance fix, B4): a judge_score recorded under a since-changed
+    # judge model/rubric must not count as "judged" here either -- this drives the judge
+    # loop's own terminal check (main()'s `p["judged"] + len(p["dead"]) >= TOTAL_ISSUES`),
+    # and without this it would consider judging complete based on stale scores. Reuses
+    # record_cassettes.py's own predicate (rc, imported above) rather than re-deriving it.
+    judged = sum(1 for rec in entries if rec.get("judge_score") is not None and rc._judge_config_current(rec))
     dead = [
         rec.get("issue_id", "?") for rec in entries
         if rec.get("plan") is None and not rec.get("tpd_hit") and not rec.get("schema_invalid_retry")

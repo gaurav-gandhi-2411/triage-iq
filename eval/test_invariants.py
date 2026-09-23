@@ -479,9 +479,33 @@ def test_model_manifest_clean() -> None:
     )
 
 
+def _match_repo_by_artifact_subset(provenance: dict, current_by_repo: dict, artifact_fingerprint):
+    """Match a stamped artifact_hashes subset against whichever repo's current hashes it's
+    a subset of (ADR-0059 stamps only the triaged issue's own repo, not both). Returns
+    (matched_repo, None) on a match, or (None, diff_text) against the closest repo
+    otherwise. Shared by the synthesis-entry check and the judge-entry check below so the
+    matching logic can't drift between the two (2026-09-23, judge-provenance fix)."""
+    matched_repo = next(
+        (
+            repo for repo, current in current_by_repo.items()
+            if all(current.get(p) == h for p, h in provenance.items())
+        ),
+        None,
+    )
+    if matched_repo is not None:
+        return matched_repo, None
+    best_repo = max(
+        current_by_repo,
+        key=lambda r: sum(1 for p, h in provenance.items() if current_by_repo[r].get(p) == h),
+    )
+    diff = artifact_fingerprint.diff_against_expected(current_by_repo[best_repo], provenance)
+    return None, f"(closest match {best_repo}):\n" + "\n".join(diff)
+
+
 def test_cassette_provenance_matches_current_artifacts() -> None:
-    """Every eval_cassette.json entry's stamped artifact_hashes (ADR-0059) must match the
-    classifier/predictor/index/conformal-store files actually on disk in this checkout.
+    """Every eval_cassette.json entry's provenance must be verifiable against what's
+    currently on disk / currently configured -- synthesis entries via their stamped
+    artifact_hashes (ADR-0059), judge entries via judge_provenance (2026-09-23).
 
     Guards against the 2026-09-05 incident this test exists to make impossible: a cassette
     recorded against one checkout's classifier files got committed while a DIFFERENT
@@ -491,14 +515,25 @@ def test_cassette_provenance_matches_current_artifacts() -> None:
     here means either the cassette needs re-recording (eval/record_cassettes.py) against the
     artifacts currently on disk, or the artifacts on disk are wrong for this cassette.
 
-    Entries with no artifact_hashes at all (recorded before ADR-0059) are reported as a
-    distinct failure category, not silently skipped -- an unstamped entry is exactly as
-    unverifiable as a mismatched one, just for a different reason.
+    Also guards against the 2026-09-06 regression this test caught directly (ADR-0060's
+    synthesis/judge split never gave judge-mode calls a set_provenance-equivalent stamp --
+    23/68 entries, 100% of judge/ollama entries, had zero artifact_hashes): a judge entry
+    must carry judge_provenance with (a) a parent_synthesis_key pointing at an existing,
+    itself-stamped synthesis entry in this same cassette, (b) a judge_model matching the
+    currently configured judge model, (c) a judge_prompt_hash matching the current rubric,
+    and (d) inherited artifact_hashes that still match the artifacts on disk.
+
+    Entries with no provenance at all (synthesis: no artifact_hashes; judge: no
+    judge_provenance) are reported as a distinct failure category, not silently skipped --
+    an unstamped entry is exactly as unverifiable as a mismatched one, just for a different
+    reason.
     """
     import sys as _sys
 
     _sys.path.insert(0, str(ROOT / "eval"))
     import artifact_fingerprint
+    from record_cassettes import JUDGE_MODEL as _CURRENT_JUDGE_MODEL
+    from triage_iq.evaluation.triage_eval import compute_judge_prompt_hash
 
     cassette_path = ROOT / "eval" / "cassettes" / "eval_cassette.json"
     if not cassette_path.exists():
@@ -512,56 +547,112 @@ def test_cassette_provenance_matches_current_artifacts() -> None:
     current_by_repo = {
         repo: artifact_fingerprint.compute_artifact_hashes(ROOT, repo=repo) for repo in REPOS
     }
+    current_judge_prompt_hash = compute_judge_prompt_hash()
 
     unstamped: list[str] = []
     mismatched: list[str] = []
     checked = 0
+    judge_unstamped: list[str] = []
+    judge_orphaned: list[str] = []
+    judge_model_stale: list[str] = []
+    judge_prompt_stale: list[str] = []
+    judge_artifact_mismatched: list[str] = []
+    judge_checked = 0
+
     for key, entry in entries.items():
         if not (isinstance(entry, dict) and "response" in entry):
             continue  # legacy/pre-request-storage entry shape, not this check's concern
+
+        is_judge_entry = entry.get("provider") == "ollama" or "judge_provenance" in entry
+        if is_judge_entry:
+            judge_checked += 1
+            jp = entry.get("judge_provenance")
+            if not jp:
+                judge_unstamped.append(key[:16])
+                continue
+            parent_key = jp.get("parent_synthesis_key")
+            parent_entry = entries.get(parent_key) if parent_key else None
+            parent_ok = (
+                parent_key
+                and isinstance(parent_entry, dict)
+                and bool(parent_entry.get("artifact_hashes"))
+            )
+            if not parent_ok:
+                judge_orphaned.append(
+                    f"{key[:16]}: parent_synthesis_key={parent_key!r} "
+                    f"({'not found in this cassette' if parent_entry is None else 'exists but has no artifact_hashes of its own'})"
+                )
+            if jp.get("judge_model") != _CURRENT_JUDGE_MODEL:
+                judge_model_stale.append(
+                    f"{key[:16]}: stamped={jp.get('judge_model')!r} current={_CURRENT_JUDGE_MODEL!r}"
+                )
+            if jp.get("judge_prompt_hash") != current_judge_prompt_hash:
+                judge_prompt_stale.append(
+                    f"{key[:16]}: stamped={jp.get('judge_prompt_hash')!r} current={current_judge_prompt_hash!r}"
+                )
+            judge_provenance_hashes = jp.get("artifact_hashes") or {}
+            if not judge_provenance_hashes:
+                judge_artifact_mismatched.append(f"{key[:16]}: no inherited artifact_hashes")
+            else:
+                matched_repo, diff = _match_repo_by_artifact_subset(
+                    judge_provenance_hashes, current_by_repo, artifact_fingerprint
+                )
+                if matched_repo is None:
+                    judge_artifact_mismatched.append(f"{key[:16]} {diff}")
+            continue
+
         provenance = entry.get("artifact_hashes")
         if not provenance:
             unstamped.append(key[:16])
             continue
         checked += 1
-        # A provenance dict was recorded against ONE repo's artifact set (ADR-0059 stamps
-        # only the triaged issue's own repo, not both) -- match it against whichever repo's
-        # current hashes it's a subset of, rather than assuming which repo this key belongs
-        # to (the cassette key is an opaque LLM-request hash, not itself repo-labeled).
-        matched_repo = next(
-            (
-                repo for repo, current in current_by_repo.items()
-                if all(current.get(p) == h for p, h in provenance.items())
-            ),
-            None,
-        )
+        matched_repo, diff = _match_repo_by_artifact_subset(provenance, current_by_repo, artifact_fingerprint)
         if matched_repo is None:
-            best_repo = max(
-                current_by_repo,
-                key=lambda r: sum(
-                    1 for p, h in provenance.items() if current_by_repo[r].get(p) == h
-                ),
-            )
-            diff = artifact_fingerprint.diff_against_expected(current_by_repo[best_repo], provenance)
-            mismatched.append(f"{key[:16]} (closest match {best_repo}):\n" + "\n".join(diff))
+            mismatched.append(f"{key[:16]} {diff}")
 
     errors: list[str] = []
     if unstamped:
         errors.append(
-            f"{len(unstamped)}/{checked + len(unstamped)} entries have no artifact_hashes "
-            f"(recorded before ADR-0059, or by a path that doesn't stamp provenance): "
-            f"{unstamped[:10]}{' ...' if len(unstamped) > 10 else ''}"
+            f"{len(unstamped)}/{checked + len(unstamped)} synthesis entries have no "
+            f"artifact_hashes (recorded before ADR-0059, or by a path that doesn't stamp "
+            f"provenance): {unstamped[:10]}{' ...' if len(unstamped) > 10 else ''}"
         )
     if mismatched:
         errors.append(
-            f"{len(mismatched)}/{checked} stamped entries do NOT match the artifacts "
-            f"currently on disk:\n" + "\n\n".join(mismatched[:5])
+            f"{len(mismatched)}/{checked} stamped synthesis entries do NOT match the "
+            f"artifacts currently on disk:\n" + "\n\n".join(mismatched[:5])
             + (f"\n... and {len(mismatched) - 5} more" if len(mismatched) > 5 else "")
+        )
+    if judge_unstamped:
+        errors.append(
+            f"{len(judge_unstamped)}/{judge_checked} judge entries have no judge_provenance "
+            f"stamp at all: {judge_unstamped[:10]}{' ...' if len(judge_unstamped) > 10 else ''}"
+        )
+    if judge_orphaned:
+        errors.append(
+            f"{len(judge_orphaned)}/{judge_checked} judge entries have no valid parent "
+            f"synthesis entry:\n" + "\n".join(judge_orphaned[:10])
+        )
+    if judge_model_stale:
+        errors.append(
+            f"{len(judge_model_stale)}/{judge_checked} judge entries were scored by a "
+            f"different judge model than currently configured:\n" + "\n".join(judge_model_stale[:10])
+        )
+    if judge_prompt_stale:
+        errors.append(
+            f"{len(judge_prompt_stale)}/{judge_checked} judge entries were scored against a "
+            f"stale rubric:\n" + "\n".join(judge_prompt_stale[:10])
+        )
+    if judge_artifact_mismatched:
+        errors.append(
+            f"{len(judge_artifact_mismatched)}/{judge_checked} judge entries' inherited "
+            f"artifact_hashes do not match the artifacts currently on disk:\n"
+            + "\n\n".join(judge_artifact_mismatched[:5])
         )
 
     assert not errors, (
         "Cassette provenance drift detected — re-run eval/record_cassettes.py against the "
-        "current artifacts and commit the updated cassette:\n\n" + "\n\n".join(errors)
+        "current artifacts/config and commit the updated cassette:\n\n" + "\n\n".join(errors)
     )
 
 

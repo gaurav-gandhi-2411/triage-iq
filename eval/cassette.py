@@ -236,6 +236,51 @@ class CassettePlayer:
             return entry.get("artifact_hashes")
         return None
 
+    def set_judge_provenance(
+        self, key: str, *, parent_synthesis_key: str, judge_model: str,
+        judge_prompt_hash: str, artifact_hashes: dict[str, str],
+    ) -> None:
+        """Attach judge-call provenance to an already-written judge cassette entry.
+
+        A judge entry's own prompt does not depend on the classifier/predictor/
+        retrieval-index artifacts directly the way a synthesis entry does -- set_provenance
+        (ADR-0059) exists for the call that actually consumed those artifacts to build its
+        prompt. A judge entry's real dependency chain is: which synthesis entry produced the
+        plan it scored, which judge model scored it, and against which rubric -- the
+        artifact_hashes recorded here are INHERITED from that parent synthesis entry (via
+        get_provenance), not an independent claim that this entry consumed them itself.
+        Stored under a separate "judge_provenance" key, never merged into the top-level
+        "artifact_hashes" key, so the two provenance meanings are never conflated.
+
+        Same allow_record discipline as set() -- this only ever runs during the one
+        sanctioned recording pass.
+        """
+        if not self._allow_record:
+            raise RuntimeError(
+                f"Refusing to write judge provenance to {self._path}: this CassettePlayer "
+                "was not constructed with allow_record=True."
+            )
+        entry = self._entries.get(key)
+        if entry is None or not isinstance(entry, dict) or "response" not in entry:
+            raise KeyError(
+                f"No writable cassette entry for key {key[:16]}… to attach judge provenance "
+                "to -- call set() first."
+            )
+        entry["judge_provenance"] = {
+            "parent_synthesis_key": parent_synthesis_key,
+            "judge_model": judge_model,
+            "judge_prompt_hash": judge_prompt_hash,
+            "artifact_hashes": artifact_hashes,
+        }
+        self._save()
+
+    def get_judge_provenance(self, key: str) -> dict | None:
+        """Return the stored judge_provenance dict for `key`, or None if absent."""
+        entry = self._entries.get(key)
+        if isinstance(entry, dict):
+            return entry.get("judge_provenance")
+        return None
+
     # ------------------------------------------------------------------
     # Stats
     # ------------------------------------------------------------------

@@ -750,6 +750,13 @@ class TriageAssistant:
             "groq_error_code": usage.get("groq_error_code"),
             "llm_cache_hit": cache_hit,
             "classifier_top3": signals["classifier_top3"],
+            # The cassette key of the synthesis call that produced this plan -- present only
+            # when a cache/cassette was configured and a cache_key was actually computed
+            # (absent on the token-budget-exhaustion degrade, which returns before reaching
+            # cache lookup at all). record_cassettes.py threads this through to the judge
+            # pass so a judge entry can be stamped with its real parent (2026-09-23,
+            # judge-provenance fix).
+            "synthesis_cache_key": usage.get("cache_key"),
         }
         logger.info(
             "[%s] Triaged #%s in %.2fs (groq %d+%d tok)",
@@ -1032,7 +1039,7 @@ class TriageAssistant:
             cached = cache.get(cache_key)
             if cached is not None:
                 raw = cached["content"]
-                usage = cached.get("usage", {})
+                usage = {**cached.get("usage", {}), "cache_key": cache_key}
                 try:
                     return self._parse_plan(raw), raw, usage, "ok", True
                 except (json.JSONDecodeError, ValueError):
@@ -1047,7 +1054,7 @@ class TriageAssistant:
                     cached_retry = cache.get(retry_key)
                     if cached_retry is not None:
                         raw2 = cached_retry["content"]
-                        usage2 = cached_retry.get("usage", {})
+                        usage2 = {**cached_retry.get("usage", {}), "cache_key": retry_key}
                         try:
                             return (
                                 self._parse_plan(raw2), raw2, usage2, "parse_retry_succeeded", True,
@@ -1103,6 +1110,7 @@ class TriageAssistant:
         if cache is not None and cache_key is not None:
             cache.set(cache_key, "groq", self.model, messages, {"content": raw, "usage": usage})
             self._tag_cache_provenance(cache, cache_key)
+            usage["cache_key"] = cache_key
         llm_status = "ok"
 
         try:
@@ -1123,7 +1131,7 @@ class TriageAssistant:
                     cached2 = cache.get(parse_retry_key)
                     if cached2 is not None:
                         raw2 = cached2["content"]
-                        usage = cached2.get("usage", {})
+                        usage = {**cached2.get("usage", {}), "cache_key": parse_retry_key}
                     else:
                         raw2, usage = self._groq_completion(retry_messages, max_tokens=max_tokens)
                         cache.set(
@@ -1131,6 +1139,7 @@ class TriageAssistant:
                             {"content": raw2, "usage": usage},
                         )
                         self._tag_cache_provenance(cache, parse_retry_key)
+                        usage["cache_key"] = parse_retry_key
                 else:
                     raw2, usage = self._groq_completion(retry_messages, max_tokens=max_tokens)
             except TruncatedCompletionError as exc2:

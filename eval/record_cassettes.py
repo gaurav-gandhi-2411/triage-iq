@@ -54,7 +54,7 @@ from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
 from triage_iq.model_config import TRIAGE_MODEL
 from triage_iq.models.component_classifier import load_classifier
-from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore
+from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore, compute_judge_prompt_hash
 from triage_iq.models.resolution import ResolutionTimePredictor
 from triage_iq.models.triage import TriageAssistant, TruncatedCompletionError
 
@@ -176,7 +176,7 @@ def write_live_status(
             and rec.get("artifact_hash") == artifact_hash
         ]
     synthesized = sum(1 for rec in entries if rec.get("plan") is not None)
-    judged = sum(1 for rec in entries if rec.get("judge_score") is not None)
+    judged = sum(1 for rec in entries if rec.get("judge_score") is not None and _judge_config_current(rec))
     dead = [
         rec.get("issue_id", "?") for rec in entries
         if rec.get("plan") is None and not rec.get("tpd_hit") and not rec.get("schema_invalid_retry")
@@ -536,14 +536,18 @@ def _synthesize_one(
     assistant, issue: dict, issue_id: str, i: int, total: int, current_done: dict, checkpoint: dict,
     current_model: str, current_prompt_hash: str, current_artifact_hash: str,
     cassette: CassettePlayer, n_synthesis_recorded: int, mode: str = "synthesis",
-) -> tuple[object | None, str | None, int, bool]:
+) -> tuple[object | None, str | None, int, bool, str | None]:
     """Run synthesis for one issue. Returns (plan_or_None, triage_error_or_None,
-    updated_n_synthesis_recorded, already_finalized). already_finalized=True means this
-    function already wrote and saved a checkpoint entry for issue_id (the
-    degraded_schema_invalid residual case) -- the caller must NOT also record one, just
-    move on to the next issue. Every hard-stop condition calls sys.exit(1) directly, exactly
-    as the original combined loop did. Shared by --mode full and --mode synthesis so the two
-    can never diverge (this project's "one function, everyone uses it" precedent)."""
+    updated_n_synthesis_recorded, already_finalized, synthesis_cache_key_or_None).
+    already_finalized=True means this function already wrote and saved a checkpoint entry
+    for issue_id (the degraded_schema_invalid residual case) -- the caller must NOT also
+    record one, just move on to the next issue. synthesis_cache_key is the cassette key of
+    the synthesis call that produced `plan` (None whenever plan is None) -- the caller
+    stores it in the checkpoint record so a later judge pass can stamp judge_provenance
+    with its real parent (2026-09-23, judge-provenance fix). Every hard-stop condition calls
+    sys.exit(1) directly, exactly as the original combined loop did. Shared by --mode full
+    and --mode synthesis so the two can never diverge (this project's "one function,
+    everyone uses it" precedent)."""
     row = pd.Series({
         "title": issue["title"],
         "body_clean": issue["body"],
@@ -553,8 +557,10 @@ def _synthesize_one(
 
     plan = None
     triage_error = None
+    synthesis_cache_key: str | None = None
     try:
         plan, meta = assistant.triage_with_metadata(row)
+        synthesis_cache_key = meta.get("synthesis_cache_key")
         # 2026-08-30: TruncatedCompletionError is caught INSIDE _call_llm_verbose (Part
         # B3's degrade path, PR #113) and converted to a clean fallback plan before it ever
         # reaches this caller -- confirmed by a zero-quota dry run
@@ -605,7 +611,7 @@ def _synthesize_one(
             _record_done(checkpoint, issue_id, rec, current_model, current_prompt_hash, current_artifact_hash)
             save_checkpoint(checkpoint)
             write_live_status(mode, current_model, current_prompt_hash, current_artifact_hash, total, last_issue_id=issue_id)
-            return None, None, n_synthesis_recorded, True
+            return None, None, n_synthesis_recorded, True, None
         if llm_status not in ("ok", "parse_retry_succeeded"):
             logger.error(
                 "STOP: synthesis degraded (llm_status=%s) after %d synthesis calls. "
@@ -707,14 +713,26 @@ def _synthesize_one(
         logger.warning("  synthesis FAILED: %s", exc)
         triage_error = str(exc)
 
-    return plan, triage_error, n_synthesis_recorded, False
+    return plan, triage_error, n_synthesis_recorded, False, synthesis_cache_key
 
 
-def _judge_one(judge, issue: dict, plan_dict: dict, n_judge_recorded: int) -> tuple[dict | None, int, bool]:
+def _judge_one(
+    judge, issue: dict, plan_dict: dict, n_judge_recorded: int,
+    cassette: CassettePlayer, parent_synthesis_key: str | None,
+) -> tuple[dict | None, int, bool]:
     """Score one already-synthesized plan (plan_dict already excludes
     _JUDGE_EXCLUDED_PLAN_FIELDS). Returns (judge_score_dict_or_None, updated
     n_judge_recorded, hit_fatal_tpd) -- the caller decides the exit message/checkpoint
-    write for hit_fatal_tpd, since that differs between --mode full and --mode judge."""
+    write for hit_fatal_tpd, since that differs between --mode full and --mode judge.
+
+    parent_synthesis_key is the checkpoint's synthesis_cache_key for this issue -- passed
+    through to judge.score() so a fresh (non-cache-hit) judge call gets stamped with
+    judge_provenance (2026-09-23, judge-provenance fix). The artifact_hashes stamped are
+    INHERITED from that parent synthesis cassette entry (cassette.get_provenance), never
+    recomputed here -- a judge call has no direct classifier/predictor/retrieval-index
+    dependency of its own. parent_synthesis_key may be None (e.g. a checkpoint entry
+    recorded before this fix) -- judge.score() simply skips stamping in that case, same as
+    it always has for callers that don't pass it."""
     time.sleep(JUDGE_DELAY)
     plan_json = json.dumps(plan_dict, ensure_ascii=False)
     gold = {
@@ -722,6 +740,9 @@ def _judge_one(judge, issue: dict, plan_dict: dict, n_judge_recorded: int) -> tu
         "priority": issue["gold_priority"],
         "actual_resolution_days": issue["actual_resolution_days"],
     }
+    inherited_artifact_hashes = (
+        cassette.get_provenance(parent_synthesis_key) if parent_synthesis_key else None
+    )
 
     judge_score = None
     _judge_exc: Exception | None = None
@@ -730,6 +751,8 @@ def _judge_one(judge, issue: dict, plan_dict: dict, n_judge_recorded: int) -> tu
             score = judge.score(
                 issue_title=issue["title"], issue_body=issue["body"][:600],
                 triage_plan_json=plan_json, gold=gold,
+                parent_synthesis_key=parent_synthesis_key,
+                artifact_hashes=inherited_artifact_hashes,
             )
             judge_score = score.model_dump()
             n_judge_recorded += 1
@@ -790,7 +813,7 @@ def run_full(groq_key, issues, cassette, current_model, current_prompt_hash, cur
 
         logger.info("[%d/%d] %s — triaging …", i + 1, len(issues), issue_id)
         assistant = models[repo]["assistant"]
-        plan, triage_error, n_synthesis_recorded, already_finalized = _synthesize_one(
+        plan, triage_error, n_synthesis_recorded, already_finalized, synthesis_cache_key = _synthesize_one(
             assistant, issue, issue_id, i, len(issues), current_done, checkpoint,
             current_model, current_prompt_hash, current_artifact_hash, cassette, n_synthesis_recorded,
             mode="full",
@@ -806,10 +829,13 @@ def run_full(groq_key, issues, cassette, current_model, current_prompt_hash, cur
             continue
 
         plan_dict = plan.model_dump(exclude=_JUDGE_EXCLUDED_PLAN_FIELDS)
-        judge_score, n_judge_recorded, hit_fatal_tpd = _judge_one(judge, issue, plan_dict, n_judge_recorded)
+        judge_score, n_judge_recorded, hit_fatal_tpd = _judge_one(
+            judge, issue, plan_dict, n_judge_recorded, cassette, synthesis_cache_key,
+        )
         if hit_fatal_tpd:
             logger.error("STOP: Groq TPD (daily quota) hit during judging after %d judge calls.", n_judge_recorded)
-            rec = {"plan": plan.model_dump(), "judge_score": None, "tpd_hit": True}
+            rec = {"plan": plan.model_dump(), "judge_score": None, "tpd_hit": True,
+                   "synthesis_cache_key": synthesis_cache_key}
             results[issue_id] = rec
             _record_done(checkpoint, issue_id, rec, current_model, current_prompt_hash, current_artifact_hash)
             save_checkpoint(checkpoint)
@@ -822,7 +848,13 @@ def run_full(groq_key, issues, cassette, current_model, current_prompt_hash, cur
             print(f"Judge recorded: {n_judge_recorded}")
             sys.exit(1)
 
-        rec = {"plan": plan.model_dump(), "judge_score": judge_score, "error": triage_error}
+        rec = {
+            "plan": plan.model_dump(), "judge_score": judge_score, "error": triage_error,
+            "synthesis_cache_key": synthesis_cache_key,
+        }
+        if judge_score is not None:
+            rec["judge_model_used"] = JUDGE_MODEL
+            rec["judge_prompt_hash_used"] = compute_judge_prompt_hash()
         results[issue_id] = rec
         _record_done(checkpoint, issue_id, rec, current_model, current_prompt_hash, current_artifact_hash)
         save_checkpoint(checkpoint)
@@ -862,7 +894,7 @@ def run_synthesis(groq_key, issues, cassette, current_model, current_prompt_hash
 
         logger.info("[%d/%d] %s — synthesizing …", i + 1, len(issues), issue_id)
         assistant = models[repo]["assistant"]
-        plan, triage_error, n_synthesis_recorded, already_finalized = _synthesize_one(
+        plan, triage_error, n_synthesis_recorded, already_finalized, synthesis_cache_key = _synthesize_one(
             assistant, issue, issue_id, i, len(issues), current_done, checkpoint,
             current_model, current_prompt_hash, current_artifact_hash, cassette, n_synthesis_recorded,
             mode="synthesis",
@@ -875,6 +907,7 @@ def run_synthesis(groq_key, issues, cassette, current_model, current_prompt_hash
             "judge_score": None,
             "judge_pending": plan is not None,
             "error": triage_error,
+            "synthesis_cache_key": synthesis_cache_key,
         }
         _record_done(checkpoint, issue_id, rec, current_model, current_prompt_hash, current_artifact_hash)
         save_checkpoint(checkpoint)
@@ -896,23 +929,47 @@ def run_synthesis(groq_key, issues, cassette, current_model, current_prompt_hash
         sys.exit(1)
 
 
+def _judge_config_current(rec: dict) -> bool:
+    """True iff `rec`'s stored judge_model_used/judge_prompt_hash_used match the CURRENTLY
+    configured judge model/rubric. A checkpoint entry judged under a since-changed judge
+    model or rubric text must be treated the same as never-judged for scheduling purposes
+    -- otherwise a judge config change would silently leave stale scores uncorrected
+    (2026-09-23, judge-provenance fix, B4). Deliberately a runtime predicate on stored
+    FIELDS rather than folded into the (issue_id, model, prompt_hash, artifact_hash)
+    checkpoint key itself: that key already gates whether SYNTHESIS is considered done, and
+    a judge-only config change must invalidate judging without also forcing a full,
+    quota-burning re-synthesis of every issue -- the two concerns are independent and must
+    stay able to invalidate independently."""
+    return (
+        rec.get("judge_model_used") == JUDGE_MODEL
+        and rec.get("judge_prompt_hash_used") == compute_judge_prompt_hash()
+    )
+
+
 def _pending_judge_entries(current_done: dict[str, dict]) -> dict[str, dict]:
-    """Entries that are synthesis-done but NOT fully-done: plan present, judge_score still
-    None. Deliberately NOT the same set as run_synthesis's done_ids (which includes
-    fully-judged entries too) -- this is the one function that must distinguish
-    "synthesis-done" from "fully-done" (Phase 2c), so both run_judge and its test import
-    this same definition rather than each re-deriving it."""
+    """Entries that are synthesis-done but NOT fully-done under the CURRENT judge config:
+    plan present, and either judge_score is still None or it was scored under a
+    since-changed judge model/rubric (_judge_config_current). Deliberately NOT the same set
+    as run_synthesis's done_ids (which includes fully-judged entries too) -- this is the one
+    function that must distinguish "synthesis-done" from "fully-done" (Phase 2c), so both
+    run_judge and its test import this same definition rather than each re-deriving it."""
     return {
         issue_id: v for issue_id, v in current_done.items()
-        if v.get("plan") is not None and v.get("judge_score") is None
+        if v.get("plan") is not None
+        and (v.get("judge_score") is None or not _judge_config_current(v))
     }
 
 
 def _fully_judged_count(current_done: dict[str, dict]) -> int:
-    """Entries with a real judge_score -- the ONLY thing a completion summary may count
-    toward "N/64 done". Never count len(current_done) or a synthesis-only count here; that
-    is exactly the bug this function exists to make structurally impossible (Phase 2c)."""
-    return sum(1 for v in current_done.values() if v.get("judge_score") is not None)
+    """Entries with a real judge_score recorded under the CURRENT judge config -- the ONLY
+    thing a completion summary may count toward "N/64 done". Never count len(current_done)
+    or a synthesis-only count here; that is exactly the bug this function exists to make
+    structurally impossible (Phase 2c). A judge_score scored under a stale judge config
+    does not count (Phase B4)."""
+    return sum(
+        1 for v in current_done.values()
+        if v.get("judge_score") is not None and _judge_config_current(v)
+    )
 
 
 def run_judge(issues, cassette, current_model, current_prompt_hash, current_artifact_hash, checkpoint, current_done) -> None:
@@ -946,7 +1003,9 @@ def run_judge(issues, cassette, current_model, current_prompt_hash, current_arti
             issue = by_id[issue_id]
             logger.info("[%d/%d] %s — judging …", i + 1, len(pending), issue_id)
             plan_dict = {k: v for k, v in rec["plan"].items() if k not in _JUDGE_EXCLUDED_PLAN_FIELDS}
-            judge_score, n_judge_recorded, hit_fatal_tpd = _judge_one(judge, issue, plan_dict, n_judge_recorded)
+            judge_score, n_judge_recorded, hit_fatal_tpd = _judge_one(
+                judge, issue, plan_dict, n_judge_recorded, cassette, rec.get("synthesis_cache_key"),
+            )
             if hit_fatal_tpd:
                 logger.error("STOP: judge hit a fatal rate-limit signal after %d judge calls "
                              "(unexpected for a local Ollama judge -- investigate).", n_judge_recorded)
@@ -954,7 +1013,14 @@ def run_judge(issues, cassette, current_model, current_prompt_hash, current_arti
                 print(f"Judge recorded this run: {n_judge_recorded}")
                 sys.exit(1)
 
-            updated = {**rec, "judge_score": judge_score, "judge_pending": False}
+            updated = {
+                **rec, "judge_score": judge_score, "judge_pending": False,
+                "judge_model_used": JUDGE_MODEL if judge_score is not None else rec.get("judge_model_used"),
+                "judge_prompt_hash_used": (
+                    compute_judge_prompt_hash() if judge_score is not None
+                    else rec.get("judge_prompt_hash_used")
+                ),
+            }
             _record_done(checkpoint, issue_id, updated, current_model, current_prompt_hash, current_artifact_hash)
             save_checkpoint(checkpoint)
             write_live_status(

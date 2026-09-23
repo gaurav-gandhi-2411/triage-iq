@@ -118,26 +118,6 @@ def test_k8s_quality_regression(current_scores: dict, baseline: dict) -> None:
     _check_repo_quality("kubernetes/kubernetes", current_scores, baseline)
 
 
-def _check_no_fabrication(repo: str, current_scores: dict) -> None:
-    """Assert zero fabricated claims for `repo` (ADR-0028 Phase B3).
-
-    A fabricated component/similar-issue claim is qualitatively worse than a soft
-    quality miss and the mean-band gate above cannot detect it at all (the judge never
-    sees classifier_top3/retrieved_numbers). BLOCKING since PR #57 (this file's CI job
-    lost continue-on-error:true 2026-08-10). Deliberately zero-tolerance, no per-repo
-    slack even for vscode's n=11 -- see ADR-0044 for why (grounding is replay-deterministic,
-    so this can only move on a deliberate, human-reviewed cassette re-record, not on an
-    ordinary PR).
-    """
-    rate = current_scores["per_repo"][repo]["fabrication_rate"]
-    n = current_scores["per_repo"][repo]["n"]
-    assert rate == 0.0, (
-        f"Fabrication detected for {repo}: fabrication_rate={rate:.4f} (n={n}). "
-        "A fabricated component/similar-issue claim is a hard-fail correctness issue, "
-        "not a soft quality miss -- see plan.grounding_status for the offending plan(s)."
-    )
-
-
 def test_vscode_no_fabrication(current_scores: dict) -> None:
     """microsoft/vscode's fabrication rate is REPORT ONLY, not gated (ADR-0058, 2026-09-05).
 
@@ -168,13 +148,24 @@ def test_vscode_no_fabrication(current_scores: dict) -> None:
               "Not blocking per ADR-0058 -- n=11 cannot support a zero-tolerance gate.")
 
 
-def test_k8s_no_fabrication(current_scores: dict) -> None:
-    """kubernetes/kubernetes must have zero grounding-verified fabricated claims.
+def test_k8s_no_fabrication(current_scores: dict, baseline: dict) -> None:
+    """kubernetes/kubernetes fabrication rate must not exceed the approved baseline.
 
-    Stays hard-gated (ADR-0058): n=53's Wilson upper bound at 0 observed is ~9.9%,
-    genuinely informative, unlike vscode's n=11 -- no statistical basis to loosen this one.
+    Stays hard-gated (ADR-0058). Was `== 0` until 2026-09-23 (ADR-0061): the 0 came from the
+    void old-classifier recording, and the superseding recording has 1/53 (k8s-12665, a
+    declared wrong override), accepted by GG as the baseline. This is the same signal as
+    eval/test_invariants.py::test_grounding_ratchet_k8s (ungrounded == fabrication; ADR-0058:
+    the two consumers must move together), so it ratchets against the committed baseline's
+    rate instead of a literal zero -- any increase above the approved 1/53 still fails.
     """
-    _check_no_fabrication("kubernetes/kubernetes", current_scores)
+    repo = "kubernetes/kubernetes"
+    rate = current_scores["per_repo"][repo]["fabrication_rate"]
+    allowed = baseline["per_repo"][repo]["fabrication_rate"]
+    n = current_scores["per_repo"][repo]["n"]
+    assert rate <= allowed, (
+        f"Fabrication regressed for {repo}: fabrication_rate={rate:.4f} > baseline {allowed:.4f} "
+        f"(n={n}). See plan.grounding_status for the offending plan(s)."
+    )
 
 
 def _check_no_prose_number_contradiction(repo: str, current_scores: dict) -> None:

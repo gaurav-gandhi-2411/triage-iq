@@ -150,8 +150,18 @@ def _current_priority_class() -> str:
     file (so a human can confirm Phase 3a's BelowNormal launch actually took effect without
     needing Task Manager). Returns 'unknown' off Windows or if the WinAPI call fails."""
     try:
-        handle = ctypes.windll.kernel32.GetCurrentProcess()
-        value = ctypes.windll.kernel32.GetPriorityClass(handle)
+        from ctypes import wintypes
+
+        kernel32 = ctypes.windll.kernel32
+        # Without explicit restype/argtypes ctypes treats the HANDLE as a 32-bit int, the
+        # pseudo-handle gets mangled on 64-bit Python, and GetPriorityClass returns 0 --
+        # which the status file showed as "UNKNOWN(0x0)" while the process was really
+        # BELOW_NORMAL (verified via Get-Process, 2026-09-23).
+        kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+        kernel32.GetPriorityClass.argtypes = [wintypes.HANDLE]
+        kernel32.GetPriorityClass.restype = wintypes.DWORD
+        handle = kernel32.GetCurrentProcess()
+        value = kernel32.GetPriorityClass(handle)
         return _PRIORITY_CLASS_NAMES.get(value, f"UNKNOWN(0x{value:x})")
     except (AttributeError, OSError):
         return "unknown"

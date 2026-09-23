@@ -77,7 +77,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "eab17fe99b77dba019ddf02766c038eaf4b8e74564b5e3c0ef839d3cbab29157",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "k8s-14054::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -157,7 +158,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "03589945e951292db6e8f39193061032aaeef8d707153c4348709a789f871c62",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "k8s-13096::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -235,7 +237,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "1df7eb4c91f5bf774bdc875746d2cb84e4234006ba8d0404edd7f8ca6733c139",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "k8s-12224::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -312,7 +315,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "b6f6fe71e749990b4b06911b87b709cedc4e2ffaa287aced1621f999d4fed7e7",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "k8s-13435::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -393,7 +397,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "d6edba3014c2a3b9ffabfb40516b47832fbc0bcf0d5c6f0951ddd14a30790d02",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "k8s-13995::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -471,7 +476,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "7d84b1b4a0ac46ae3fa2ceff681a6c03124dfe63941b9d456899aecb26f955c8",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "vscode-311284::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -541,7 +547,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "70d4b2d7617db72171316f72bcca0c34134528c7ff7ccabc80eed398ee78765c",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "vscode-311836::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -613,7 +620,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "20bc66b50358b113352aec99be2afbddb83b811e4bc3840789d5f68da9ede187",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "vscode-311878::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -674,7 +682,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "b47d79906afa27037e7d685ea706d8dc29bad1f4a976193075d9f97d328e6faf",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "vscode-312260::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -755,7 +764,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "f395f3f130b9894ff6b08034d59283d6c0003d4fcae40cafd0d20cb0d6ebc2ef",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "vscode-312423::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -835,7 +845,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "ef8e220b20da78a7fa289c3f975be6ba03cca562fadb14700071144f81b7768a",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "vscode-239838::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -916,7 +927,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "ae29271f7cc06c248111fb6d54498fac77a36d6b518630fbd0cdc4ae8a7d8c4a",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "vscode-286776::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -996,7 +1008,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "6e979b5dcf752430fa28437b7c8ba3a46e1c057b65ad4a5c551d4dbe6fa5bd9f",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "vscode-278113::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1066,7 +1079,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "c050a039adcca9db6400fbb34b113421c9d9b156b091b4bd30e69fdaf662ce62",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "vscode-4978::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1142,7 +1156,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "2bffe8c10b3ec90b85ab20f8a55a9c31bea888a86bd9c6b755bc4b664f5b8a18",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "vscode-4993::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1219,7 +1234,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "b52edb35821f743c3525fd36ca56c2ea8941bb2c6267eb45b3a7cdad82091e38",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "vscode-4996::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1288,7 +1304,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "98d7a4b7d118472e3c4282f7fc434ba7f16fc2300fe5803eb33d48749673bddb",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "k8s-12287::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1369,7 +1386,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "1ea0283346587afc44b7094d68effe3d33ba1910986e3cffef2e3c10726f08db",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "k8s-12461::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1449,7 +1467,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "135c33ac0b4ac5aa45cbad9e919422c7cbc7e3a9ace10033ea7e794e34e07b67",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "k8s-14557::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1518,7 +1537,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "12723d5994b9f4cf5797caaec3d97373441d3f67f6da3d2f8b658468955101bc",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "k8s-14723::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1597,7 +1617,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "5a2a190a6664fe31024307fe05c6aa8f04bc607b115b0a1421e76b60e48a69d8",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "k8s-14477::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1677,7 +1698,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "846dff044a39430e77cb45d906552d6634921ecbeb95088db0579bf1a77d1dbf",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "k8s-14125::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1757,7 +1779,8 @@
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
       "synthesis_cache_key": "0268006c0636141172b65c1a440812f4b8fe45fd9f1cc0e584c6bca4b6c0ab92",
-      "judge_pending": true
+      "judge_pending": true,
+      "link_source": "backfilled_content_match"
     },
     "k8s-14135::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1836,7 +1859,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "3edcc7e807d0fb133b4157d2d8e586afe09b0ce6d0d033aed83e7dde0c1fe84c"
+      "synthesis_cache_key": "3edcc7e807d0fb133b4157d2d8e586afe09b0ce6d0d033aed83e7dde0c1fe84c",
+      "link_source": "backfilled_content_match"
     },
     "k8s-12254::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -1915,7 +1939,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "8545119f9a756872af0f7674c6f3f31d78d01ddc809b20a761ab007231f87d89"
+      "synthesis_cache_key": "8545119f9a756872af0f7674c6f3f31d78d01ddc809b20a761ab007231f87d89",
+      "link_source": "backfilled_content_match"
     },
     "k8s-12477::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -2012,7 +2037,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "97d2a8c052c7307e14d63c11e58fa33a06ed5728ae988252063e8c4d4d238765"
+      "synthesis_cache_key": "97d2a8c052c7307e14d63c11e58fa33a06ed5728ae988252063e8c4d4d238765",
+      "link_source": "backfilled_content_match"
     },
     "k8s-13034::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -2093,7 +2119,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "d4643cfd024a4a41c77932c17eadd4b6955365fba302e1510d90b1462a9b3c77"
+      "synthesis_cache_key": "d4643cfd024a4a41c77932c17eadd4b6955365fba302e1510d90b1462a9b3c77",
+      "link_source": "backfilled_content_match"
     },
     "k8s-14550::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -2172,7 +2199,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "fa0aa7f965944651743613e1428d5d2560868f565a745d8373bd6ec8943f7029"
+      "synthesis_cache_key": "fa0aa7f965944651743613e1428d5d2560868f565a745d8373bd6ec8943f7029",
+      "link_source": "backfilled_content_match"
     },
     "k8s-13270::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -2252,7 +2280,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "062f00cdb0705e8fb6e6c605ede34016f6b2d0099c6064b1135e49a70bbe691b"
+      "synthesis_cache_key": "062f00cdb0705e8fb6e6c605ede34016f6b2d0099c6064b1135e49a70bbe691b",
+      "link_source": "backfilled_content_match"
     },
     "k8s-12277::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -2331,7 +2360,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "1c65d3491d0203f4e017fcc324c0d7e9dcf85e81a43adc8edcf8ba777ab9157a"
+      "synthesis_cache_key": "1c65d3491d0203f4e017fcc324c0d7e9dcf85e81a43adc8edcf8ba777ab9157a",
+      "link_source": "backfilled_content_match"
     },
     "k8s-12587::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -2403,7 +2433,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "d82557908b4acb01e47b312d7a19633a679d1c9ec8cdaa72efc5df7b029e4877"
+      "synthesis_cache_key": "d82557908b4acb01e47b312d7a19633a679d1c9ec8cdaa72efc5df7b029e4877",
+      "link_source": "backfilled_content_match"
     },
     "k8s-14935::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -2498,7 +2529,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "ab004396a6019b0bc2e4443f86f488bc3ded290d6deae65a09f32bfdb29b50af"
+      "synthesis_cache_key": "ab004396a6019b0bc2e4443f86f488bc3ded290d6deae65a09f32bfdb29b50af",
+      "link_source": "backfilled_content_match"
     },
     "k8s-14835::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -2570,7 +2602,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "7d5314b9a1319d84c00eaa9310c8a8941e0afe61884c1ae0583697346a9755de"
+      "synthesis_cache_key": "7d5314b9a1319d84c00eaa9310c8a8941e0afe61884c1ae0583697346a9755de",
+      "link_source": "backfilled_content_match"
     },
     "k8s-13784::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -2651,7 +2684,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "01adba1bff56eb0a934d1f6133fd9aaab48c8d36f9d7a5ec8433771564a6f571"
+      "synthesis_cache_key": "01adba1bff56eb0a934d1f6133fd9aaab48c8d36f9d7a5ec8433771564a6f571",
+      "link_source": "backfilled_content_match"
     },
     "k8s-12665::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -2727,7 +2761,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "e54a22d5f6fef2867cbeadafbe0619c250659ca79b5a199c2afdce682a28b114"
+      "synthesis_cache_key": "e54a22d5f6fef2867cbeadafbe0619c250659ca79b5a199c2afdce682a28b114",
+      "link_source": "backfilled_content_match"
     },
     "k8s-14553::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -2799,7 +2834,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "57f3428c4864bd4de27c9b4718eaf8169dd90103152c0190be8f89cc0f812253"
+      "synthesis_cache_key": "57f3428c4864bd4de27c9b4718eaf8169dd90103152c0190be8f89cc0f812253",
+      "link_source": "backfilled_content_match"
     },
     "k8s-14756::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -2871,7 +2907,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "b637bbb18f68a4f687b756d4b4d9309d8b2cc247f31ad97f056ff3434c52f69b"
+      "synthesis_cache_key": "b637bbb18f68a4f687b756d4b4d9309d8b2cc247f31ad97f056ff3434c52f69b",
+      "link_source": "backfilled_content_match"
     },
     "k8s-12703::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -2943,7 +2980,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "35ca6b64595ec0429f59b1c9ec78d68e6c76879c1da27015ae8e3f27e58983b2"
+      "synthesis_cache_key": "35ca6b64595ec0429f59b1c9ec78d68e6c76879c1da27015ae8e3f27e58983b2",
+      "link_source": "backfilled_content_match"
     },
     "k8s-12248::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -3023,7 +3061,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "3ab5b3168f7e9ade3066104370ae71f6ded1800e3b752ed97995160bee61ddd7"
+      "synthesis_cache_key": "3ab5b3168f7e9ade3066104370ae71f6ded1800e3b752ed97995160bee61ddd7",
+      "link_source": "backfilled_content_match"
     },
     "k8s-14785::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -3093,7 +3132,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "c85785b34047f67276bd832d90bf8877a3861247cf9183d37a5d136830ffd420"
+      "synthesis_cache_key": "c85785b34047f67276bd832d90bf8877a3861247cf9183d37a5d136830ffd420",
+      "link_source": "backfilled_content_match"
     },
     "k8s-13470::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -3160,7 +3200,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "2d3e55e3e9c6a0d63108a8eefdc22caf292be3945fe71734e1ceb6270973bb95"
+      "synthesis_cache_key": "2d3e55e3e9c6a0d63108a8eefdc22caf292be3945fe71734e1ceb6270973bb95",
+      "link_source": "backfilled_content_match"
     },
     "k8s-12784::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -3242,7 +3283,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "b79f9500603e302c0af2671495e6ae86fe431102b64cc5971888cd2f6e064be3"
+      "synthesis_cache_key": "b79f9500603e302c0af2671495e6ae86fe431102b64cc5971888cd2f6e064be3",
+      "link_source": "backfilled_content_match"
     },
     "k8s-13508::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -3323,7 +3365,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "a066c2ca515954a967647562110222dc701dce95269421562c54c5fd240a8a1b"
+      "synthesis_cache_key": "a066c2ca515954a967647562110222dc701dce95269421562c54c5fd240a8a1b",
+      "link_source": "backfilled_content_match"
     },
     "k8s-14078::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -3420,7 +3463,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "d4b2ffbe462e03aeef1353f50ac8b35c02a333a689c66f82c18b16840c7143b3"
+      "synthesis_cache_key": "d4b2ffbe462e03aeef1353f50ac8b35c02a333a689c66f82c18b16840c7143b3",
+      "link_source": "backfilled_content_match"
     },
     "k8s-14424::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -3501,7 +3545,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "be5e0e3c4c5c4d44c7afcf34a2b545e44e2feb2c16984958c6adf44b46a24c97"
+      "synthesis_cache_key": "be5e0e3c4c5c4d44c7afcf34a2b545e44e2feb2c16984958c6adf44b46a24c97",
+      "link_source": "backfilled_content_match"
     },
     "k8s-12828::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -3582,7 +3627,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "587793b5df9208314b2b53328fe495cf9ef251f6ecb9db79a3e8831453da7448"
+      "synthesis_cache_key": "587793b5df9208314b2b53328fe495cf9ef251f6ecb9db79a3e8831453da7448",
+      "link_source": "backfilled_content_match"
     },
     "k8s-12737::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -3663,7 +3709,8 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "74bd7e33244d63e805825666825c4664b4c3cb0824d6303c48a1d1b1a1994fb0"
+      "synthesis_cache_key": "74bd7e33244d63e805825666825c4664b4c3cb0824d6303c48a1d1b1a1994fb0",
+      "link_source": "backfilled_content_match"
     },
     "k8s-12122::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
       "plan": {
@@ -3743,7 +3790,1331 @@
       "model": "openai/gpt-oss-120b",
       "prompt_hash": "5f845ce8697e3e7f",
       "artifact_hash": "55559dd93dc2a65d",
-      "synthesis_cache_key": "a277f36fae22ec00f356d5d32dd074384b8ac526caf4f379bba9dbbc9acda52f"
+      "synthesis_cache_key": "a277f36fae22ec00f356d5d32dd074384b8ac526caf4f379bba9dbbc9acda52f",
+      "link_source": "backfilled_content_match"
+    },
+    "k8s-12284::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "provider/openstack",
+        "component_confidence": 0.692,
+        "similar_issues": [
+          {
+            "number": 12589,
+            "similarity": 0.881,
+            "relevance_note": "Direct proposal to add floating IP allocation for LB creation on OpenStack."
+          },
+          {
+            "number": 12288,
+            "similarity": 0.866,
+            "relevance_note": "Fixes external LB IP assignment in OpenStack, closely related to the requested feature."
+          },
+          {
+            "number": 12287,
+            "similarity": 0.786,
+            "relevance_note": "Describes current behavior where LB creation yields nil IP when unspecified."
+          }
+        ],
+        "expected_resolution_summary": "Feature implementation requiring config option and OpenStack API integration; typical turnaround 1‑2 weeks but could be longer depending on design discussions.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 356.8,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 30.6,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "Feature request with no current breakage; adds convenience for OpenStack users but does not block existing workflows.",
+        "suggested_assignee_class": "provider/openstack team",
+        "suggested_next_steps": [
+          "Open a design discussion in the SIG-Cloud-Provider mailing list to capture requirements and edge cases.",
+          "Create a design document outlining the new cloud-config option and its interaction with OpenStack LB services.",
+          "Implement the config flag, update the OpenStack cloud provider code to allocate a floating IP when requested.",
+          "Add unit and integration tests covering the new path, including failure scenarios.",
+          "Reference existing implementations in #12589 and #12288 for guidance."
+        ],
+        "triage_summary": "Request to allow OpenStack load balancer VIPs to be assigned floating IPs via a new cloud-config option. Several closely related issues already discuss similar functionality, indicating the area is active. Low priority as it is a non‑blocking feature request.",
+        "grounding": {
+          "component_source": "provider/openstack",
+          "similar_issue_refs": [
+            12589,
+            12288,
+            12287
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            12589,
+            12288,
+            12287
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            12589,
+            12288,
+            12287
+          ],
+          "next_steps_cited_issues": [
+            12589,
+            12288
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "synthesis_cache_key": "e2ab2f11d4883a8469d7d8d314de62540016f97ffcd4a2a7217fda3c05f0bca6",
+      "issue_id": "k8s-12284",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "link_source": "recorded"
+    },
+    "k8s-14281::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "kubectl",
+        "component_confidence": 0.564,
+        "similar_issues": [
+          {
+            "number": 8827,
+            "similarity": 0.803,
+            "relevance_note": "User reports same error when using rolling-update with a manifest file."
+          },
+          {
+            "number": 13350,
+            "similarity": 0.778,
+            "relevance_note": "Exact error message about resource name being empty when rolling-update is used."
+          },
+          {
+            "number": 13486,
+            "similarity": 0.777,
+            "relevance_note": "Fix attempt for the generateName bug referenced in #13350, directly related to this issue."
+          },
+          {
+            "number": 13469,
+            "similarity": 0.77,
+            "relevance_note": "Continuation of the generateName fix, showing the same failure mode."
+          },
+          {
+            "number": 4696,
+            "similarity": 0.756,
+            "relevance_note": "Discussion of namespace handling in rolling-update, indicating broader command‑line nuances."
+          }
+        ],
+        "expected_resolution_summary": "Fix validation of manifest‑based rolling‑update to accept generated names; typical turnaround 1–2 weeks.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 379.4,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 40.6,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The bug blocks a core workflow (rolling updates via manifest) for users without a simple workaround, but it does not cause crashes or data loss. Impact is limited to users of this specific command, so medium priority.",
+        "suggested_assignee_class": "kubectl team",
+        "suggested_next_steps": [
+          "Reproduce the error with a minimal manifest that uses generateName and invoke `kubectl rolling-update`.",
+          "Inspect the validation logic that enforces a unique name; adjust to allow generated names when a manifest is supplied.",
+          "Add a unit test covering the generateName case and a e2e test that runs rolling-update on a manifest.",
+          "Reference existing fixes in #13350 and #13486 to avoid duplicate work."
+        ],
+        "triage_summary": "Rolling‑update command rejects manifests that rely on generated names, emitting a \"resource name may not be empty\" error. Multiple similar reports exist, indicating a regression in name validation. Assign to the kubectl team; medium priority due to workflow blockage without a crash.",
+        "grounding": {
+          "component_source": "kubectl",
+          "similar_issue_refs": [
+            8827,
+            13350,
+            13486,
+            13469,
+            4696
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            8827,
+            13350,
+            13486,
+            13469,
+            4696
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            8827,
+            13350,
+            13486,
+            13469,
+            4696
+          ],
+          "next_steps_cited_issues": [
+            13350,
+            13486
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "synthesis_cache_key": "26c9f8d38fc965ced406ee34b7e96eeebc7863fea0134924fd1c1eea2ab7954d",
+      "issue_id": "k8s-14281",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "link_source": "recorded"
+    },
+    "k8s-12615::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "api",
+        "component_confidence": 0.518,
+        "similar_issues": [
+          {
+            "number": 12894,
+            "similarity": 0.894,
+            "relevance_note": "Directly adds LastTransitionTime to PodCondition, matching the requested enhancement."
+          },
+          {
+            "number": 14767,
+            "similarity": 0.834,
+            "relevance_note": "Implements LastTransitionTime, Reason, and Message for ready PodCondition, same scope."
+          }
+        ],
+        "expected_resolution_summary": "API struct change and associated conversion, validation, and documentation updates; typically resolved within a few days but may be delayed by PR review cycles.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 274.5,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 38.8,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Enhancement needed for AvailableThresholdSeconds feature; impacts readiness logic but does not block existing workflows. No immediate workaround, but not a crash or data loss.",
+        "suggested_assignee_class": "api team",
+        "suggested_next_steps": [
+          "Review the TODO in pkg/api/v1/types.go and design the struct changes to include LastTransitionTime, Reason, and Message.",
+          "Update conversion functions, validation logic, and defaulting for the new fields across API versions.",
+          "Add unit tests for the new fields and update existing tests that construct PodCondition objects.",
+          "Update documentation (API reference and design docs) to describe the new fields and their semantics.",
+          "Create an e2e test that verifies AvailableThresholdSeconds behavior using the new fields."
+        ],
+        "triage_summary": "Request to enhance PodCondition with LastTransitionTime, Reason, and Message to support AvailableThresholdSeconds. Two closely related prior issues (#12894, #14767) already address this change, indicating it is a known enhancement. Medium priority; assign to API team.",
+        "grounding": {
+          "component_source": "api",
+          "similar_issue_refs": [
+            12894,
+            14767
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            12894,
+            14767
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            12894,
+            14767
+          ],
+          "next_steps_cited_issues": [
+            12894,
+            14767
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "synthesis_cache_key": "bda0874f6ec4aebe94846e2c1866936f8ab0cde290f537c51c0f3a0f1cd14e95",
+      "issue_id": "k8s-12615",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "link_source": "recorded"
+    },
+    "k8s-14009::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "monitoring",
+        "component_confidence": 0.537,
+        "similar_issues": [
+          {
+            "number": 28279,
+            "similarity": 0.752,
+            "relevance_note": "Directly proposes updating InfluxDB version in the cluster monitoring stack."
+          },
+          {
+            "number": 18826,
+            "similarity": 0.732,
+            "relevance_note": "Updates InfluxDB client to 0.9+, relevant for API compatibility when upgrading the server."
+          },
+          {
+            "number": 19020,
+            "similarity": 0.764,
+            "relevance_note": "General update of the cluster‑monitoring addon, showing precedent for such upgrades."
+          }
+        ],
+        "expected_resolution_summary": "Feature upgrade proposal; typical turnaround 1–4 weeks after compatibility testing and CI verification.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 250.9,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 40.3,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "Non‑blocking improvement to monitoring stack; no current crash or data loss. Upgrade is optional and can be scheduled with regular release cycles.",
+        "suggested_assignee_class": "monitoring team",
+        "suggested_next_steps": [
+          "Review compatibility of InfluxDB v0.9+ with current metrics pipeline (heapster, prometheus adapters).",
+          "Update the cluster‑monitoring addon manifests to reference the new InfluxDB image/tag.",
+          "Run end‑to‑end e2e tests on a test cluster to verify metrics collection and storage work as expected.",
+          "Create a PR referencing #28279 and #18826 to document the change and track discussion."
+        ],
+        "triage_summary": "Proposal to upgrade the InfluxDB component of the Kubernetes monitoring stack to v0.9+. Similar past upgrades exist (#28279, #18826, #19020). Low priority as it is a non‑critical enhancement; assign to the monitoring team for compatibility testing and PR creation.",
+        "grounding": {
+          "component_source": "monitoring",
+          "similar_issue_refs": [
+            28279,
+            18826,
+            19020
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            28279,
+            18826,
+            19020
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            28279,
+            18826,
+            19020
+          ],
+          "next_steps_cited_issues": [
+            28279,
+            18826
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "synthesis_cache_key": "4b3df3f38a64faa57cb4098ebcd4b9a44292ee87e15d384edd72cc1fbe1a1e2c",
+      "issue_id": "k8s-14009",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "link_source": "recorded"
+    },
+    "k8s-12853::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "os/coreos",
+        "component_confidence": 0.65,
+        "similar_issues": [
+          {
+            "number": 11869,
+            "similarity": 0.777,
+            "relevance_note": "Openshift Origin fails to list Kubernetes items during install – similar failure path."
+          },
+          {
+            "number": 11661,
+            "similarity": 0.771,
+            "relevance_note": "Openshift Origin example broken due to CLI changes – same installation workflow."
+          },
+          {
+            "number": 18239,
+            "similarity": 0.766,
+            "relevance_note": "Containerized cluster cannot mount default secrets – directly related to secret packaging failure."
+          }
+        ],
+        "expected_resolution_summary": "Installation‑workflow bug on CoreOS; likely a fix to secret handling or config generation. Expected turnaround 1 week to a few months depending on root‑cause complexity.",
+        "expected_resolution_lower_days": 0.4,
+        "expected_resolution_upper_days": 318.3,
+        "resolution_bucket": "months",
+        "resolution_confidence_pct": 26.2,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The issue blocks Openshift installation on a specific OS (CoreOS) with no known workaround, but it does not affect core Kubernetes functionality for the broader user base.",
+        "suggested_assignee_class": "openshift team",
+        "suggested_next_steps": [
+          "Reproduce the failure on a fresh CoreOS VM following the exact steps and capture the full error log.",
+          "Verify whether the secret‑packaging code in the OpenShift installer expects a different kubeconfig layout on CoreOS.",
+          "Compare the failing setup with the working setups described in #11869 and #11661 to pinpoint divergent configuration.",
+          "If the issue is due to missing API objects, add a guard or fallback in the installer and add a regression test."
+        ],
+        "triage_summary": "Openshift installation on a CoreOS‑based Kubernetes cluster fails when packaging secrets for the OpenShift pod. The problem mirrors prior OpenShift‑origin install failures (#11869, #11661) and a secret‑mount issue (#18239). Medium priority; assign to the OpenShift team for investigation and fix.",
+        "grounding": {
+          "component_source": "os/coreos",
+          "similar_issue_refs": [
+            11869,
+            11661,
+            18239
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            11869,
+            11661,
+            18239
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            11869,
+            11661,
+            18239
+          ],
+          "next_steps_cited_issues": [
+            11869,
+            11661,
+            18239
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "synthesis_cache_key": "1e76fd385c6ea8df1bd1b065ac55844d56c69e5b9f05b48c63c9f93996ee94c7",
+      "issue_id": "k8s-12853",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "link_source": "recorded"
+    },
+    "k8s-12818::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "reliability",
+        "component_confidence": 0.582,
+        "similar_issues": [
+          {
+            "number": 15396,
+            "similarity": 0.795,
+            "relevance_note": "Discusses panic_on_oom configuration; similar kernel panic handling concerns."
+          },
+          {
+            "number": 15091,
+            "similarity": 0.728,
+            "relevance_note": "Directly mentions ensuring nodes do not panic on OOM, related to panic_on_oops settings."
+          },
+          {
+            "number": 15670,
+            "similarity": 0.715,
+            "relevance_note": "Further discussion of disabling panic_on_oom, indicating relevance to kernel panic policies."
+          },
+          {
+            "number": 8784,
+            "similarity": 0.705,
+            "relevance_note": "Adds e2e test that triggers kernel panic on a node, useful for verification."
+          },
+          {
+            "number": 19251,
+            "similarity": 0.698,
+            "relevance_note": "E2E flake test that reboots nodes by triggering kernel panic, relevant for testing the change."
+          }
+        ],
+        "expected_resolution_summary": "Add configurable support for enabling kernel panic_on_oops on nodes, update documentation, and add e2e verification. Timeline uncertain due to cross‑team coordination.",
+        "expected_resolution_lower_days": 0.4,
+        "expected_resolution_upper_days": 556.2,
+        "resolution_bucket": "long",
+        "resolution_confidence_pct": 24.1,
+        "resolution_interval_conformal": null,
+        "priority_guess": "high",
+        "priority_rationale": "Nodes silently disappearing is a critical reliability failure with no built‑in mitigation; the issue blocks core cluster operation for affected workloads.",
+        "suggested_assignee_class": "reliability team",
+        "suggested_next_steps": [
+          "Investigate current kubelet/node configuration options for setting /proc/sys/kernel/panic_on_oops.",
+          "Design a feature flag or node config field to enable panic_on_oops via the kubelet.",
+          "Implement an e2e test (referencing #8784 and #19251) that triggers an oops and verifies node reboot.",
+          "Update documentation and communicate the change to SIG‑Node and cluster operators."
+        ],
+        "triage_summary": "Enabling kernel panic_on_oops on nodes prevents silent AWOL failures. Similar past discussions around panic_on_oom and e2e panic tests exist. High priority due to impact on cluster reliability; assign to reliability team.",
+        "grounding": {
+          "component_source": "reliability",
+          "similar_issue_refs": [
+            15396,
+            15091,
+            15670,
+            8784,
+            19251
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            15396,
+            15091,
+            15670,
+            8784,
+            19251
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            15396,
+            15091,
+            15670,
+            8784,
+            19251
+          ],
+          "next_steps_cited_issues": [
+            8784,
+            19251
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "synthesis_cache_key": "746385ae2a64215b5906ad05f75e60c1bc6122d52a4ae9a51d939e99d03b8e8b",
+      "issue_id": "k8s-12818",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "link_source": "recorded"
+    },
+    "k8s-14711::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "kubectl",
+        "component_confidence": 0.503,
+        "similar_issues": [
+          {
+            "number": 25012,
+            "similarity": 0.696,
+            "relevance_note": "Exec/attach shells exhibit wonky readline behavior, matching the vim display artifacts observed in GKE pods."
+          }
+        ],
+        "expected_resolution_summary": "Terminal handling bug in kubectl exec causing malformed screen updates for vim; requires fixing the PTY/tty handling path and adding a regression test.",
+        "expected_resolution_lower_days": 0.3,
+        "expected_resolution_upper_days": 470.0,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 25.0,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Visual inconsistency in a core feature (kubectl exec) that impacts developer workflow; a manual workaround (avoiding vim or using non‑tty exec) exists but is inconvenient, so it is not low priority.",
+        "suggested_assignee_class": "kubectl team",
+        "suggested_next_steps": [
+          "Reproduce the issue on a minimal GKE pod with vim using `kubectl exec -ti` and capture terminal escape sequences.",
+          "Compare PTY handling code paths between kubectl exec and docker exec to identify missing terminal mode resets.",
+          "File a bug against the exec implementation and add a regression test that runs vim in an exec session and asserts correct cursor rendering."
+        ],
+        "triage_summary": "kubectl exec on GKE pods shows a display bug when running vim, resulting in garbled screen output. The problem is specific to kubectl's PTY handling and does not occur with docker exec. Medium priority; assign to the kubectl team for terminal handling fix.",
+        "grounding": {
+          "component_source": "kubectl",
+          "similar_issue_refs": [
+            25012
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            25012
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            25012
+          ],
+          "next_steps_cited_issues": [
+            25012
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "synthesis_cache_key": "3a7a80cf11a775e94538f235f921a49c065b946f955554d9f677cd341bd8b4ef",
+      "issue_id": "k8s-14711",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "link_source": "recorded"
+    },
+    "k8s-14552::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "test",
+        "component_confidence": 0.57,
+        "similar_issues": [
+          {
+            "number": 19773,
+            "similarity": 0.799,
+            "relevance_note": "Latency spike observed in large‑scale test, similar metric regression."
+          },
+          {
+            "number": 10607,
+            "similarity": 0.792,
+            "relevance_note": "Discussion of latency metric limits in capacity load tests, relevant to API call latency."
+          },
+          {
+            "number": 19743,
+            "similarity": 0.785,
+            "relevance_note": "Direct report of API call latency exceeding 500 ms in scalability runs."
+          },
+          {
+            "number": 14554,
+            "similarity": 0.772,
+            "relevance_note": "Performance regression in small clusters, indicating possible shared root cause."
+          },
+          {
+            "number": 10282,
+            "similarity": 0.769,
+            "relevance_note": "Scalability test failures that could be linked to underlying latency issues."
+          }
+        ],
+        "expected_resolution_summary": "Root‑cause analysis and fix of the latency regression in scalability test pipelines; typical turnaround 1 – 2 weeks once the offending change is identified.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 268.9,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 28.8,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Significant performance regression (200 ms → >500 ms) in API calls observed across multiple test runs, but it currently impacts only CI scalability metrics, not end‑user workloads. No immediate workaround, yet not a production‑blocking crash.",
+        "suggested_assignee_class": "test team",
+        "suggested_next_steps": [
+          "Re‑run the affected scalability tests with detailed tracing enabled to pinpoint the slow path.",
+          "Bisect recent changes in the test‑infra repository (and related components) to locate the commit introducing the latency.",
+          "Add a benchmark or alert in the test suite to catch API call latency >300 ms in future runs.",
+          "Reference similar investigations (#19773, #19743) to avoid duplicate effort."
+        ],
+        "triage_summary": "Scalability tests report a clear API call latency regression (>500 ms) after a recent period with no obvious merges. Multiple related latency issues exist, suggesting a systemic change. Medium priority; assign to the test team for root‑cause analysis and mitigation.",
+        "grounding": {
+          "component_source": "test",
+          "similar_issue_refs": [
+            19773,
+            10607,
+            19743,
+            14554,
+            10282
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            19773,
+            10607,
+            19743,
+            14554,
+            10282
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            19773,
+            10607,
+            19743,
+            14554,
+            10282
+          ],
+          "next_steps_cited_issues": [
+            19773,
+            19743
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "synthesis_cache_key": "812ee543b527a4a3b19015c0b6e62628e7fa4a9cf1701fb12d90c31d2999f477",
+      "issue_id": "k8s-14552",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "link_source": "recorded"
+    },
+    "k8s-13062::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "test-infra",
+        "component_confidence": 0.624,
+        "similar_issues": [
+          {
+            "number": 14224,
+            "similarity": 0.75,
+            "relevance_note": "Discusses excluding slow e2e tests from parallel runs, directly related to partitioning."
+          },
+          {
+            "number": 6847,
+            "similarity": 0.739,
+            "relevance_note": "Mentions moving tests to unique namespaces to avoid interference, a form of test isolation."
+          },
+          {
+            "number": 14957,
+            "similarity": 0.738,
+            "relevance_note": "Covers cleanup and noise reduction in e2e, indicating awareness of test job organization."
+          },
+          {
+            "number": 20068,
+            "similarity": 0.735,
+            "relevance_note": "Questions the meaning of \"Slow Test\" results, highlighting the need to treat slow tests specially."
+          },
+          {
+            "number": 14790,
+            "similarity": 0.734,
+            "relevance_note": "Restores a flaky test, showing the broader context of test reliability and grouping."
+          }
+        ],
+        "expected_resolution_summary": "Introduce a configurable test partitioning scheme in test-infra to separate mandatory‑slow e2e tests from optimizable slow tests, likely requiring CI job definition changes and test metadata updates.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 516.3,
+        "resolution_bucket": "long",
+        "resolution_confidence_pct": 24.7,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The issue degrades CI throughput and can cause timeouts, impacting developer productivity, but does not block functional releases. A workaround (manual test selection) exists, so it is not high priority.",
+        "suggested_assignee_class": "test-infra team",
+        "suggested_next_steps": [
+          "Create a label or annotation (e.g., \"slow‑by‑necessity\" vs \"slow‑optimizable\") for e2e tests.",
+          "Update the test-infra job configuration to route tests with the new labels into separate test jobs.",
+          "Add a CI job that runs only the \"slow‑optimizable\" tests in a quarantine queue for future improvement.",
+          "Back‑port the changes to the current release branch and add documentation for test authors."
+        ],
+        "triage_summary": "The proposal seeks to improve CI efficiency by partitioning e2e tests into mandatory‑slow and optimizable‑slow groups. Similar past discussions exist (#14224, #20068). Assign to test‑infra team; medium priority with an estimated resolution window ranging from a few hours to many months due to potential scope creep.",
+        "grounding": {
+          "component_source": "test-infra",
+          "similar_issue_refs": [
+            14224,
+            6847,
+            14957,
+            20068,
+            14790
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14224,
+            6847,
+            14957,
+            20068,
+            14790
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            14224,
+            20068
+          ],
+          "next_steps_cited_issues": [
+            14224,
+            6847,
+            14957,
+            20068,
+            14790
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "synthesis_cache_key": "84bf409866a5753fed76ab6fbd9d9524f81c628240054ffb8d67037761c660a9",
+      "issue_id": "k8s-13062",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "link_source": "recorded"
+    },
+    "k8s-14762::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "cadvisor",
+        "component_confidence": 0.65,
+        "similar_issues": [
+          {
+            "number": 15444,
+            "similarity": 0.833,
+            "relevance_note": "Reports zero memory statistics in heapster similar to the observed missing stats."
+          },
+          {
+            "number": 27194,
+            "similarity": 0.793,
+            "relevance_note": "cAdvisor /stats/summary endpoint returns incorrect CPU numbers, indicating a stats collection problem."
+          },
+          {
+            "number": 22542,
+            "similarity": 0.794,
+            "relevance_note": "Discussion about using the summary API with heapster; may be related to the pipeline that delivers stats."
+          }
+        ],
+        "expected_resolution_summary": "Fix cAdvisor stats collection on Ubuntu 15.04 (kernel/cgroup compatibility) so that kubelet and heapster receive non‑zero memory/CPU metrics.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 286.9,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 33.9,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Missing metrics break monitoring dashboards and alerting but do not stop cluster operation; a workaround is to ignore the metrics, so impact is moderate.",
+        "suggested_assignee_class": "cadvisor team",
+        "suggested_next_steps": [
+          "Reproduce the issue on a fresh Ubuntu 15.04 AMI with the same Kubernetes 1.6 setup and collect cadvisor logs.",
+          "Check kernel version and cgroup driver compatibility; upgrade kernel or adjust cgroup settings if needed.",
+          "Compare stats output on a newer Ubuntu release to confirm the problem is OS‑specific.",
+          "Review recent cadvisor changes around the time of the issue to identify a regression.",
+          "Add a test case that validates non‑zero memory/CPU stats from cAdvisor on Ubuntu 15.04."
+        ],
+        "triage_summary": "cAdvisor reports zero memory and CPU stats on Ubuntu 15.04 nodes, causing heapster to show no usage. Similar past reports (#15444, #27194, #22542) point to a stats collection regression. Medium priority; assign to cadvisor team for OS‑specific fix.",
+        "grounding": {
+          "component_source": "cadvisor",
+          "similar_issue_refs": [
+            15444,
+            27194,
+            22542
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            15444,
+            27194,
+            22542
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            15444,
+            27194,
+            22542
+          ],
+          "next_steps_cited_issues": [
+            15444,
+            27194
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "synthesis_cache_key": "d17849f287092c4c9285638b5c39954184ae7b5f08c1407ad356a5b78d85e7c1",
+      "issue_id": "k8s-14762",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "link_source": "recorded"
+    },
+    "k8s-14895::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "kubectl",
+        "component_confidence": 0.51,
+        "similar_issues": [
+          {
+            "number": 14893,
+            "similarity": 0.813,
+            "relevance_note": "Temporarily disables the warning message in NegotiateVersion, directly related to the current regression."
+          },
+          {
+            "number": 13794,
+            "similarity": 0.786,
+            "relevance_note": "Discusses NegotiateVersion being invoked too often, indicating broader logic concerns."
+          },
+          {
+            "number": 9762,
+            "similarity": 0.782,
+            "relevance_note": "Shows a successful fix for version negotiation, useful as a reference implementation."
+          }
+        ],
+        "expected_resolution_summary": "Fix NegotiateVersion logic and restore proper warning handling; split #14592 into reviewable pieces and re‑enable warnings.",
+        "expected_resolution_lower_days": 0.3,
+        "expected_resolution_upper_days": 370.4,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 25.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Functional regression that can cause incorrect API version selection and confusing warnings for users creating experimental resources. No full workaround besides manual config changes, but it does not crash the client.",
+        "suggested_assignee_class": "kubectl team",
+        "suggested_next_steps": [
+          "Create a minimal reproducer that triggers the warning and version mismatch using a fresh experimental API group.",
+          "Review #14592 to identify independent sub‑tasks; open separate PRs for each logical piece.",
+          "Re‑enable the warning in NegotiateVersion after fixing the version‑selection logic.",
+          "Add unit tests covering group/version discovery at /apis and Config.Version handling."
+        ],
+        "triage_summary": "NegotiateVersion currently emits a warning for experimental resources and mishandles client#Config.Version across multiple API groups. The issue references #14893 (temporary warning disable) and #14592 (pending fix). Medium priority; assign to the kubectl team to split the fix and restore correct behavior.",
+        "grounding": {
+          "component_source": "kubectl",
+          "similar_issue_refs": [
+            14893,
+            13794,
+            9762
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14893,
+            13794,
+            9762
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            14893,
+            13794,
+            9762
+          ],
+          "next_steps_cited_issues": [
+            14893,
+            14592
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "synthesis_cache_key": "f1796d406f902f9d32231a769e48848dbcade45247d593e1b17cc383b1a000d1",
+      "issue_id": "k8s-14895",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "link_source": "recorded"
+    },
+    "k8s-14363::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "cloudprovider",
+        "component_confidence": 0.628,
+        "similar_issues": [
+          {
+            "number": 14366,
+            "similarity": 0.822,
+            "relevance_note": "Same vsphere cloud provider failure due to missing configuration flags."
+          },
+          {
+            "number": 14368,
+            "similarity": 0.806,
+            "relevance_note": "Related vsphere provider script issues that stem from undocumented environment requirements."
+          }
+        ],
+        "expected_resolution_summary": "Add documentation for required env vars (e.g., GOVC_NETWORK, GOVC_DATACENTER) and improve validation in the vsphere cloud provider to emit a clear error when multiple networks are present.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 475.7,
+        "resolution_bucket": "long",
+        "resolution_confidence_pct": 28.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The issue blocks cluster creation for users with multi‑network vSphere setups, but a workaround (setting the missing env vars) exists. It impacts a specific deployment path, so it is not high‑severity but warrants timely attention.",
+        "suggested_assignee_class": "cloudprovider team",
+        "suggested_next_steps": [
+          "Reproduce the failure with a minimal vsphere setup that has multiple networks.",
+          "Add validation in the vsphere cloud provider code to check for required env vars and emit a helpful error message.",
+          "Update the official documentation and example scripts to list all necessary env variables (GOVC_NETWORK, GOVC_DATACENTER, etc.).",
+          "Reference #14366 and #14368 to ensure the fix addresses the same root cause."
+        ],
+        "triage_summary": "Creating a cluster with the vsphere cloud provider fails when the vCenter manages multiple networks because required environment variables are undocumented. Two similar existing issues confirm this pattern. Medium priority; assign to cloudprovider team to add validation and improve docs.",
+        "grounding": {
+          "component_source": "cloudprovider",
+          "similar_issue_refs": [
+            14366,
+            14368
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14366,
+            14368
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            14366,
+            14368
+          ],
+          "next_steps_cited_issues": [
+            14366,
+            14368
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "synthesis_cache_key": "69980dfad658033dcd482d6d9c7705497dbacdcdae1da97b8f078536034e15c9",
+      "issue_id": "k8s-14363",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "link_source": "recorded"
+    },
+    "k8s-13057::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "etcd",
+        "component_confidence": 0.65,
+        "similar_issues": [
+          {
+            "number": 25775,
+            "similarity": 0.78,
+            "relevance_note": "Discusses inconsistencies in generic registry code that relate to error handling abstractions."
+          },
+          {
+            "number": 22093,
+            "similarity": 0.773,
+            "relevance_note": "Proposes moving more logic to generic apiserver, touching storage error surfaces."
+          },
+          {
+            "number": 29993,
+            "similarity": 0.767,
+            "relevance_note": "Mentions removal of default etcd validation, indicating close coupling between etcd storage and higher‑level APIs."
+          }
+        ],
+        "expected_resolution_summary": "Refactor storage.Interface error handling to surface higher‑level errors; requires design discussion and implementation across the etcd storage layer, typically a few weeks.",
+        "expected_resolution_lower_days": 0.4,
+        "expected_resolution_upper_days": 538.3,
+        "resolution_bucket": "long",
+        "resolution_confidence_pct": 40.4,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The issue does not cause crashes but forces callers to handle low‑level etcd errors, leading to fragile code. No immediate workaround exists, yet impact is limited to developers extending the storage layer, so medium priority.",
+        "suggested_assignee_class": "etcd team",
+        "suggested_next_steps": [
+          "Draft a design proposal outlining how storage.Interface should wrap etcd errors into higher‑level API errors.",
+          "Add unit tests that verify error conversion for Get, Delete, and Update paths.",
+          "Review related issues #25775 and #22093 to determine if they are duplicates or require coordinated changes.",
+          "Implement the error‑wrapping changes in the storage package and run the full CI suite."
+        ],
+        "triage_summary": "storage.Interface currently leaks raw etcd errors, forcing callers to handle low‑level details. Similar discussions exist in generic apiserver and etcd validation issues. Medium priority refactor needed by the etcd team.",
+        "grounding": {
+          "component_source": "etcd",
+          "similar_issue_refs": [
+            25775,
+            22093,
+            29993
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            25775,
+            22093,
+            29993
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            25775,
+            22093,
+            29993
+          ],
+          "next_steps_cited_issues": [
+            25775,
+            22093
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "synthesis_cache_key": "5d8c44482b6129576f4744ec124a59bbd06fc92f2f189cdf8f18df527e6b3498",
+      "issue_id": "k8s-13057",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "link_source": "recorded"
+    },
+    "k8s-14190::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "api",
+        "component_confidence": 0.579,
+        "similar_issues": [
+          {
+            "number": 9656,
+            "similarity": 0.788,
+            "relevance_note": "Swagger spec incorrectly defines targetPort as string, matching the current problem."
+          },
+          {
+            "number": 9655,
+            "similarity": 0.75,
+            "relevance_note": "Minor fix note that targetPort should be int32, directly relevant to the schema mismatch."
+          },
+          {
+            "number": 2123,
+            "similarity": 0.79,
+            "relevance_note": "Reports a similar inconsistency between JSON schema and actual API response for ServicePort."
+          }
+        ],
+        "expected_resolution_summary": "Correct the OpenAPI/Swagger definition for ServicePort.TargetPort to use integer type and regenerate client code; typical turnaround 1–3 weeks.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 469.4,
+        "resolution_bucket": "long",
+        "resolution_confidence_pct": 28.1,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "The mismatch breaks generated client libraries for statically typed languages, causing compile‑time failures, but does not affect runtime of the cluster itself and a manual workaround (adjusting generated code) exists.",
+        "suggested_assignee_class": "api team",
+        "suggested_next_steps": [
+          "Create a minimal reproducible test case showing the integer response vs string schema.",
+          "Update the OpenAPI spec (swagger.json) to declare targetPort as integer (int32).",
+          "Run the spec generation pipeline and verify that generated Go structs match the actual API response.",
+          "Add a regression test that validates the OpenAPI schema against a live API response for ServicePort."
+        ],
+        "triage_summary": "ServicePort.TargetPort is documented as a string in the OpenAPI schema but the API returns an integer, breaking code generation for statically typed clients. Similar schema bugs have been reported (#9656, #9655, #2123). Medium priority due to impact on client generation; assign to the API team.",
+        "grounding": {
+          "component_source": "api",
+          "similar_issue_refs": [
+            9656,
+            9655,
+            2123
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            9656,
+            9655,
+            2123
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            9656,
+            9655,
+            2123
+          ],
+          "next_steps_cited_issues": [
+            9656,
+            9655,
+            2123
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "synthesis_cache_key": "cb99967a49fc4294e7da5c92435c62120ef960740ea3a56797605e1160289c90",
+      "issue_id": "k8s-14190",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "link_source": "recorded"
+    },
+    "k8s-13276::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "ui",
+        "component_confidence": 0.697,
+        "similar_issues": [
+          {
+            "number": 14389,
+            "similarity": 0.781,
+            "relevance_note": "Same limitation: UI only shows resources in the default namespace."
+          },
+          {
+            "number": 9311,
+            "similarity": 0.763,
+            "relevance_note": "Requests support for namespace filtering in the dashboard UI."
+          }
+        ],
+        "expected_resolution_summary": "Add namespace selector to the dashboard UI and wire it to the API; typical implementation effort is a few weeks.",
+        "expected_resolution_lower_days": 0.1,
+        "expected_resolution_upper_days": 134.1,
+        "resolution_bucket": "hours",
+        "resolution_confidence_pct": 48.5,
+        "resolution_interval_conformal": null,
+        "priority_guess": "medium",
+        "priority_rationale": "Feature gap that blocks users from managing resources outside the default namespace, affecting core workflow. No workaround exists other than using kubectl, so it is more than cosmetic but not a crash.",
+        "suggested_assignee_class": "ui team",
+        "suggested_next_steps": [
+          "Review existing dashboard code to locate the namespace hard‑code (likely default=\"default\").",
+          "Add a namespace dropdown or URL parameter to allow selection of any namespace.",
+          "Update the backend API calls to include the selected namespace and verify RBAC handling.",
+          "Create e2e tests that switch namespaces and verify resources are displayed correctly.",
+          "Reference prior discussions in #14389 and #9311 to avoid duplicate work."
+        ],
+        "triage_summary": "The Kubernetes dashboard UI currently only displays resources from the default namespace, preventing users from viewing or managing other namespaces. Two similar issues (#14389, #9311) confirm this is a known limitation. Assign to the UI team; medium priority due to workflow impact.",
+        "grounding": {
+          "component_source": "ui",
+          "similar_issue_refs": [
+            14389,
+            9311
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            14389,
+            9311
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            14389,
+            9311
+          ],
+          "next_steps_cited_issues": [
+            14389,
+            9311
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "synthesis_cache_key": "27b35a36441d9f9bcc16e1ac446d014f949e07c930ec45928ae9bbc2c8b0ac74",
+      "issue_id": "k8s-13276",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "link_source": "recorded"
+    },
+    "k8s-12123::openai/gpt-oss-120b::5f845ce8697e3e7f::55559dd93dc2a65d": {
+      "plan": {
+        "predicted_component": "kubectl",
+        "component_confidence": 0.647,
+        "similar_issues": [
+          {
+            "number": 4343,
+            "similarity": 0.799,
+            "relevance_note": "Discusses desire for -f to accept multiple files across commands, matching the request."
+          },
+          {
+            "number": 7152,
+            "similarity": 0.777,
+            "relevance_note": "Reports that \"kubectl create -f <directory>\" does not pick up .yml files, directly related to glob support."
+          },
+          {
+            "number": 10853,
+            "similarity": 0.776,
+            "relevance_note": "Mentions broken filename handling for -f, indicating existing limitations."
+          }
+        ],
+        "expected_resolution_summary": "Feature enhancement to make -f accept glob patterns or directories; typical implementation effort 1–3 weeks.",
+        "expected_resolution_lower_days": 0.2,
+        "expected_resolution_upper_days": 285.1,
+        "resolution_bucket": "days",
+        "resolution_confidence_pct": 30.1,
+        "resolution_interval_conformal": null,
+        "priority_guess": "low",
+        "priority_rationale": "Usability request with existing workarounds (comma‑separated list, shell loops). No crash or data loss; impact is limited to convenience when handling many manifest files.",
+        "suggested_assignee_class": "kubectl team",
+        "suggested_next_steps": [
+          "Open a design discussion on the kubectl repo to decide on glob syntax (e.g., \"-f *.yaml\" or directory recursion).",
+          "Prototype support by expanding the filename argument using Go's filepath.Glob and directory walk.",
+          "Add unit tests covering multiple files, directories, and edge cases (empty matches, non‑yaml files).",
+          "Reference existing issues #7152 and #10853 to avoid duplicate effort."
+        ],
+        "triage_summary": "User requests that kubectl -f be glob‑friendly so a directory of YAML manifests can be created or deleted in one command. Similar issues already highlight the limitation. Low priority feature request; assign to the kubectl team.",
+        "grounding": {
+          "component_source": "kubectl",
+          "similar_issue_refs": [
+            4343,
+            7152,
+            10853
+          ]
+        },
+        "grounding_status": {
+          "component_grounded": true,
+          "component_reason": "in classifier_top3",
+          "similar_issue_refs": [
+            4343,
+            7152,
+            10853
+          ],
+          "ungrounded_refs": [],
+          "all_grounded": true
+        },
+        "declared_attribution": {
+          "component_source": "classifier_top3",
+          "component_override_reason": "",
+          "summary_cited_issues": [
+            4343,
+            7152,
+            10853
+          ],
+          "next_steps_cited_issues": [
+            7152
+          ]
+        },
+        "abstention_status": null
+      },
+      "judge_score": null,
+      "judge_pending": true,
+      "error": null,
+      "synthesis_cache_key": "1889c2146253dbb965fd1869acbeab9167a539f4c589cc1fb3a8ac228d330ef9",
+      "issue_id": "k8s-12123",
+      "model": "openai/gpt-oss-120b",
+      "prompt_hash": "5f845ce8697e3e7f",
+      "artifact_hash": "55559dd93dc2a65d",
+      "link_source": "recorded"
     }
   }
 }

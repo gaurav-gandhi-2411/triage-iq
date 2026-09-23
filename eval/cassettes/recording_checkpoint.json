@@ -28,7 +28,7 @@
         "resolution_confidence_pct": 43.0,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "The flakiness does not block user workflows but degrades CI reliability and can hide regressions; a workaround (reâ€‘run) exists, so not high priority.",
+        "priority_rationale": "The flakiness does not block user workflows but degrades CI reliability and can hide regressions; a workaround (re‑run) exists, so not high priority.",
         "suggested_assignee_class": "test-infra team",
         "suggested_next_steps": [
           "Reproduce the failure locally with the same test configuration and capture logs to pinpoint the nondeterministic value.",
@@ -36,7 +36,7 @@
           "Add explicit synchronization or retries in the test to reduce nondeterminism, and update the test to be more robust.",
           "Link this issue to the most similar prior flake (#21839) and consider closing duplicates if they refer to the same root cause."
         ],
-        "triage_summary": "The e2e test \"Pod Disks should schedule a pod w/ a RW PD, remove it, then schedule it on another host\" is flaky at head, failing with mismatched volume IDs. Similar flake reports exist (#21839, #21830, #28214). Assign to testâ€‘infra; medium priority due to CI impact. Expected fix within a few days.",
+        "triage_summary": "The e2e test \"Pod Disks should schedule a pod w/ a RW PD, remove it, then schedule it on another host\" is flaky at head, failing with mismatched volume IDs. Similar flake reports exist (#21839, #21830, #28214). Assign to test‑infra; medium priority due to CI impact. Expected fix within a few days.",
         "grounding": {
           "component_source": "test-infra",
           "similar_issue_refs": [
@@ -98,7 +98,7 @@
           {
             "number": 2435,
             "similarity": 0.777,
-            "relevance_note": "Early implementation of kubelet selfâ€‘registration with the master, relevant for the requested fix."
+            "relevance_note": "Early implementation of kubelet self‑registration with the master, relevant for the requested fix."
           }
         ],
         "expected_resolution_summary": "Small configuration/registration fix; expected to be resolved within a day once the correct flag handling is updated.",
@@ -108,7 +108,7 @@
         "resolution_confidence_pct": 72.5,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "The change is limited to masterâ€‘kubelet registration, does not block cluster operation, and has existing workarounds (e.g., manual flag settings). Impact is narrow, so low priority is appropriate.",
+        "priority_rationale": "The change is limited to master‑kubelet registration, does not block cluster operation, and has existing workarounds (e.g., manual flag settings). Impact is narrow, so low priority is appropriate.",
         "suggested_assignee_class": "kubelet team",
         "suggested_next_steps": [
           "Locate the code path handling the --register-with-apiserver flag for the master kubelet.",
@@ -116,7 +116,7 @@
           "Add a unit test that starts a master kubelet and verifies it appears in the apiserver endpoints list.",
           "Update documentation to reflect the correct flag usage for master nodes."
         ],
-        "triage_summary": "Issue requests that the master kubelet be registered with the apiserver, referencing #13102. Similar past issues (#12836, #12349, #2435) cover the same area. The change is straightforward and lowâ€‘impact, suitable for a quick fix by the kubelet team.",
+        "triage_summary": "Issue requests that the master kubelet be registered with the apiserver, referencing #13102. Similar past issues (#12836, #12349, #2435) cover the same area. The change is straightforward and low‑impact, suitable for a quick fix by the kubelet team.",
         "grounding": {
           "component_source": "kubelet",
           "similar_issue_refs": [
@@ -189,7 +189,7 @@
         "resolution_confidence_pct": 40.2,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "The API returns nil where an empty list is expected, which can break client code that assumes a list. It is a functional regression without a crash, and a manual nilâ€‘check workaround exists, so medium priority.",
+        "priority_rationale": "The API returns nil where an empty list is expected, which can break client code that assumes a list. It is a functional regression without a crash, and a manual nil‑check workaround exists, so medium priority.",
         "suggested_assignee_class": "api team",
         "suggested_next_steps": [
           "Reproduce the nil response via direct API call and `kubectl get pv` on a cluster with no PVs.",
@@ -248,7 +248,7 @@
           {
             "number": 743,
             "similarity": 0.748,
-            "relevance_note": "User asks about missing run script/port; this issue discusses the PHPâ€‘Redis guestbook example setup."
+            "relevance_note": "User asks about missing run script/port; this issue discusses the PHP‑Redis guestbook example setup."
           },
           {
             "number": 26764,
@@ -268,7 +268,7 @@
         "resolution_confidence_pct": 37.0,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "The issue is a usability question about which port the example exposes; it does not block any core functionality and has a straightforward documentationâ€‘based answer.",
+        "priority_rationale": "The issue is a usability question about which port the example exposes; it does not block any core functionality and has a straightforward documentation‑based answer.",
         "suggested_assignee_class": "example team",
         "suggested_next_steps": [
           "Check the guestbook example's Kubernetes manifests to identify the Service type and targetPort (usually 80).",
@@ -339,14 +339,14 @@
             "relevance_note": "Errors updating Fedora in Vagrant/kube setup, mirrors missing."
           }
         ],
-        "expected_resolution_summary": "Fix Fedora mirror list or update documentation to point to valid repos; typical turnaround 1â€“3 weeks.",
+        "expected_resolution_summary": "Fix Fedora mirror list or update documentation to point to valid repos; typical turnaround 1–3 weeks.",
         "expected_resolution_lower_days": 0.6,
         "expected_resolution_upper_days": 499.5,
         "resolution_bucket": "long",
         "resolution_confidence_pct": 28.1,
         "resolution_interval_conformal": null,
         "priority_guess": "high",
-        "priority_rationale": "Cluster setup fails for Fedora users with no builtâ€‘in workaround, blocking a core workflow (kube-up). Affects all users on affected Fedora versions.",
+        "priority_rationale": "Cluster setup fails for Fedora users with no built‑in workaround, blocking a core workflow (kube-up). Affects all users on affected Fedora versions.",
         "suggested_assignee_class": "os/fedora team",
         "suggested_next_steps": [
           "Reproduce the failure on a fresh Fedora 21 VM using the same kube-up script.",
@@ -421,14 +421,14 @@
             "relevance_note": "Addresses namespace deletion bugs in e2e, providing context for the new option."
           }
         ],
-        "expected_resolution_summary": "Porting remaining e2e tests to the new test framework and adding a flag to keep namespaces is a straightforward testâ€‘infra change; historically such migrations resolve within a few days.",
+        "expected_resolution_summary": "Porting remaining e2e tests to the new test framework and adding a flag to keep namespaces is a straightforward test‑infra change; historically such migrations resolve within a few days.",
         "expected_resolution_lower_days": 0.0,
         "expected_resolution_upper_days": 56.8,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 53.5,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "Feature request with no userâ€‘visible breakage; existing tests continue to run and a manual workaround (manual namespace cleanup) exists, so it does not block development or CI pipelines.",
+        "priority_rationale": "Feature request with no user‑visible breakage; existing tests continue to run and a manual workaround (manual namespace cleanup) exists, so it does not block development or CI pipelines.",
         "suggested_assignee_class": "test-infra team",
         "suggested_next_steps": [
           "Create a design doc outlining the migration steps for the remaining e2e tests to the Framework.",
@@ -436,7 +436,7 @@
           "Port one representative e2e test as a pilot and verify CI stability.",
           "Close duplicate issues #13503 and #9148 if this work subsumes them."
         ],
-        "triage_summary": "The issue requests porting the remaining e2e tests to the new test Framework and adding an option to retain namespaces after test execution. Several existing issues (#13503, #9148, #10380) already address namespace handling, making this a lowâ€‘priority testâ€‘infra enhancement. Assign to the testâ€‘infra team.",
+        "triage_summary": "The issue requests porting the remaining e2e tests to the new test Framework and adding an option to retain namespaces after test execution. Several existing issues (#13503, #9148, #10380) already address namespace handling, making this a low‑priority test‑infra enhancement. Assign to the test‑infra team.",
         "grounding": {
           "component_source": "test-infra",
           "similar_issue_refs": [
@@ -495,21 +495,21 @@
             "relevance_note": "Related SCM provider leakage issue that may share the same cleanup path."
           }
         ],
-        "expected_resolution_summary": "Fix the SCM bookkeeping leak by clearing disposed source control references; typical turnaround 1â€“2 weeks.",
+        "expected_resolution_summary": "Fix the SCM bookkeeping leak by clearing disposed source control references; typical turnaround 1–2 weeks.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 171.1,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 34.5,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "Memory leak that can grow over time but does not cause immediate crashes; impact is on longâ€‘running sessions and may affect large repos, with a clear workaround of restarting VS Code.",
+        "priority_rationale": "Memory leak that can grow over time but does not cause immediate crashes; impact is on long‑running sessions and may affect large repos, with a clear workaround of restarting VS Code.",
         "suggested_assignee_class": "scm team",
         "suggested_next_steps": [
           "Add a unit test that registers, disposes, and verifies the source control handle is removed from bookkeeping.",
           "Instrument the extension host to assert no lingering references after disposal in CI.",
           "Reference #311282 to confirm this is the same issue and close it as duplicate if appropriate."
         ],
-        "triage_summary": "Disposed SCM source controls remain retained in extensionâ€‘host bookkeeping, leading to memory growth. Two related issues (#311282, #311990) confirm the pattern. Medium priority; assign to the SCM team for a cleanup fix.",
+        "triage_summary": "Disposed SCM source controls remain retained in extension‑host bookkeeping, leading to memory growth. Two related issues (#311282, #311990) confirm the pattern. Medium priority; assign to the SCM team for a cleanup fix.",
         "grounding": {
           "component_source": "scm",
           "similar_issue_refs": [
@@ -566,7 +566,7 @@
             "relevance_note": "Related discussion on improving webview service worker handling, indicating interest in webview performance."
           }
         ],
-        "expected_resolution_summary": "Performance improvement requiring API change to stream resources to webviews; typical turnaround 1â€‘4 weeks once scoped.",
+        "expected_resolution_summary": "Performance improvement requiring API change to stream resources to webviews; typical turnaround 1‑4 weeks once scoped.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 147.0,
         "resolution_bucket": "hours",
@@ -578,11 +578,11 @@
         "suggested_next_steps": [
           "Review current webview resource loading code to identify buffering bottleneck.",
           "Prototype a streaming API (e.g., ReadableStream) and benchmark with large assets such as video files.",
-          "Create a design doc outlining API surface and backwardâ€‘compatibility considerations.",
+          "Create a design doc outlining API surface and backward‑compatibility considerations.",
           "Add unit and integration tests for the new streaming path.",
           "Reference #311844 for prior discussion and potential implementation hints."
         ],
-        "triage_summary": "Request to replace fullâ€‘buffer loading of webview resources with real streaming to improve performance, especially for large assets. Similar issue #311844 already outlines the same idea. Low priority feature request for the extensions/webview API.",
+        "triage_summary": "Request to replace full‑buffer loading of webview resources with real streaming to improve performance, especially for large assets. Similar issue #311844 already outlines the same idea. Low priority feature request for the extensions/webview API.",
         "grounding": {
           "component_source": "extensions",
           "similar_issue_refs": [
@@ -634,18 +634,18 @@
             "relevance_note": "Discusses sharing terminal I/O resources across instances, directly related to the proposed shared command storage."
           }
         ],
-        "expected_resolution_summary": "Refactor terminal instance code to share command data and replace functional array ops with more efficient structures; typical effort 1â€¯day to a few weeks.",
+        "expected_resolution_summary": "Refactor terminal instance code to share command data and replace functional array ops with more efficient structures; typical effort 1 day to a few weeks.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 183.8,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 34.5,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "The change is a performance optimisation with no functional regression; VSâ€¯Code works correctly, and the impact is limited to internal resource usage.",
+        "priority_rationale": "The change is a performance optimisation with no functional regression; VS Code works correctly, and the impact is limited to internal resource usage.",
         "suggested_assignee_class": "terminal team",
         "suggested_next_steps": [
-          "Add a benchmark/profiling test to measure current perâ€‘instance command computation cost.",
-          "Implement a shared, readâ€‘only command cache (e.g., a moduleâ€‘level constant) and replace the perâ€‘instance computation.",
+          "Add a benchmark/profiling test to measure current per‑instance command computation cost.",
+          "Implement a shared, read‑only command cache (e.g., a module‑level constant) and replace the per‑instance computation.",
           "Replace filter/map/concat with a simple lookup (e.g., Set or Map) for O(1) checks.",
           "Write unit tests ensuring the shared cache is correctly used and that behaviour remains unchanged."
         ],
@@ -698,31 +698,31 @@
           {
             "number": 311757,
             "similarity": 0.808,
-            "relevance_note": "Describes freezes caused by multi-line terminal output processing, indicating related executionâ€‘monitor bugs."
+            "relevance_note": "Describes freezes caused by multi-line terminal output processing, indicating related execution‑monitor bugs."
           },
           {
             "number": 312853,
             "similarity": 0.798,
-            "relevance_note": "Reports terminal tool hangs when shell integration breaks midâ€‘command, another symptom of the same RichExecuteStrategy issue."
+            "relevance_note": "Reports terminal tool hangs when shell integration breaks mid‑command, another symptom of the same RichExecuteStrategy issue."
           }
         ],
-        "expected_resolution_summary": "Fix the RichExecuteStrategy to wait for all shellâ€‘integration markers before resolving, add multiline handling and regression tests. Estimated 1â€“3 weeks.",
+        "expected_resolution_summary": "Fix the RichExecuteStrategy to wait for all shell‑integration markers before resolving, add multiline handling and regression tests. Estimated 1–3 weeks.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 229.2,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 34.5,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "The bug causes incomplete command execution and wrong model responses, degrading the chatâ€‘agent experience. It is reproducible but a manual workaround (avoid multiline or reâ€‘run) exists, so not blocking.",
+        "priority_rationale": "The bug causes incomplete command execution and wrong model responses, degrading the chat‑agent experience. It is reproducible but a manual workaround (avoid multiline or re‑run) exists, so not blocking.",
         "suggested_assignee_class": "terminal team",
         "suggested_next_steps": [
-          "Create a minimal reproducer that runs a multiâ€‘line POSIX command via run_in_terminal and verifies only the first line resolves.",
-          "Instrument RichExecuteStrategy to log each shellâ€‘integration marker and confirm early return behavior.",
+          "Create a minimal reproducer that runs a multi‑line POSIX command via run_in_terminal and verifies only the first line resolves.",
+          "Instrument RichExecuteStrategy to log each shell‑integration marker and confirm early return behavior.",
           "Implement a multiline wrapper (e.g., CommandLineMultilineWrapRewriter) as suggested in #312263.",
           "Add unit and integration tests that submit heredoc and script snippets and assert full output is returned before the tool resolves.",
-          "Verify that the fix does not introduce regressions in singleâ€‘line command handling."
+          "Verify that the fix does not introduce regressions in single‑line command handling."
         ],
-        "triage_summary": "run_in_terminal currently resolves after the first line of a multiâ€‘line POSIX command, leaving the rest to run unattended. This is a functional regression in the terminal chatâ€‘agent integration, with several related issues already filed. Medium priority; assign to the terminal team for a RichExecuteStrategy fix.",
+        "triage_summary": "run_in_terminal currently resolves after the first line of a multi‑line POSIX command, leaving the rest to run unattended. This is a functional regression in the terminal chat‑agent integration, with several related issues already filed. Medium priority; assign to the terminal team for a RichExecuteStrategy fix.",
         "grounding": {
           "component_source": "terminal",
           "similar_issue_refs": [
@@ -788,7 +788,7 @@
             "relevance_note": "Related accessibility issue about focusing out of the integrated terminal."
           }
         ],
-        "expected_resolution_summary": "Feature implementation involving a new setting, keybinding registration, and ARIA label updates. Estimated 1â€“3 weeks depending on design review and testing.",
+        "expected_resolution_summary": "Feature implementation involving a new setting, keybinding registration, and ARIA label updates. Estimated 1–3 weeks depending on design review and testing.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 231.5,
         "resolution_bucket": "hours",
@@ -804,7 +804,7 @@
           "Update the carousel's ARIA label to include the navigation hint when verbosity is enabled.",
           "Add unit and integration tests covering the setting toggle, keybinding activation, and ARIA label output."
         ],
-        "triage_summary": "Feature request to improve accessibility of the question carousel by adding a verbosity setting, keyboard shortcut, and ARIA label hint for focusing the terminal. Similar issue #312429 already captures the same need. Medium priority due to impact on keyboardâ€‘only users; assign to the accessibility team.",
+        "triage_summary": "Feature request to improve accessibility of the question carousel by adding a verbosity setting, keyboard shortcut, and ARIA label hint for focusing the terminal. Similar issue #312429 already captures the same need. Medium priority due to impact on keyboard‑only users; assign to the accessibility team.",
         "grounding": {
           "component_source": "accessibility",
           "similar_issue_refs": [
@@ -869,7 +869,7 @@
             "relevance_note": "User confirms issue occurs with all extensions disabled, matching this report."
           }
         ],
-        "expected_resolution_summary": "Critical freeze bug in the integrated terminal likely requires investigation of recent terminalâ€‘related changes and a hotfix; typical fix time 1â€“4 weeks.",
+        "expected_resolution_summary": "Critical freeze bug in the integrated terminal likely requires investigation of recent terminal‑related changes and a hotfix; typical fix time 1–4 weeks.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 188.8,
         "resolution_bucket": "hours",
@@ -881,7 +881,7 @@
         "suggested_next_steps": [
           "Reproduce the freeze on a clean VS Code 1.97.0 install with all extensions disabled.",
           "Collect crash/trace logs from the main process and terminal renderer when the freeze occurs.",
-          "Bisect recent terminalâ€‘related commits (e.g., xterm.js integration, PTY handling) to locate the regression.",
+          "Bisect recent terminal‑related commits (e.g., xterm.js integration, PTY handling) to locate the regression.",
           "Create a minimal repro repository (TypeScript project) and add to CI as a flaky test to prevent regression."
         ],
         "triage_summary": "VS Code 1.97.0 freezes whenever the integrated terminal is opened, even with all extensions disabled, rendering the editor unusable. Multiple similar reports exist, indicating a regression in the terminal subsystem. High priority, assign to the terminal team for urgent investigation and hotfix.",
@@ -943,22 +943,22 @@
           {
             "number": 201797,
             "similarity": 0.808,
-            "relevance_note": "Source control tree stays collapsed after branch switch, matching the expandâ€‘failure behavior."
+            "relevance_note": "Source control tree stays collapsed after branch switch, matching the expand‑failure behavior."
           },
           {
             "number": 115238,
             "similarity": 0.785,
-            "relevance_note": "Treeâ€‘view collapse on sourceâ€‘control actions, another manifestation of the same rendering bug."
+            "relevance_note": "Tree‑view collapse on source‑control actions, another manifestation of the same rendering bug."
           }
         ],
-        "expected_resolution_summary": "UI regression in the Source Control Graph view; requires investigation of tree rendering and git argument handling, typical fix time 1â€‘3 weeks.",
+        "expected_resolution_summary": "UI regression in the Source Control Graph view; requires investigation of tree rendering and git argument handling, typical fix time 1‑3 weeks.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 229.1,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 34.5,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "The issue prevents some entries from expanding and shows an error, degrading the sourceâ€‘control experience, but VSâ€¯Code remains usable and a manual refresh works as a workaround.",
+        "priority_rationale": "The issue prevents some entries from expanding and shows an error, degrading the source‑control experience, but VS Code remains usable and a manual refresh works as a workaround.",
         "suggested_assignee_class": "scm team",
         "suggested_next_steps": [
           "Reproduce with a minimal repo containing many files and verify the error message when expanding entries.",
@@ -1034,7 +1034,7 @@
         "resolution_confidence_pct": 34.5,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "Feature request only; does not block any workflow and has a simple UI change. No crash or data loss, and a workaround (reâ€‘triggering completion) exists.",
+        "priority_rationale": "Feature request only; does not block any workflow and has a simple UI change. No crash or data loss, and a workaround (re‑triggering completion) exists.",
         "suggested_assignee_class": "debug team",
         "suggested_next_steps": [
           "Reproduce the missing detail behavior with a minimal debug adapter that returns a detail field.",
@@ -1043,7 +1043,7 @@
           "Add unit/integration tests covering both filtered and unfiltered completions.",
           "Update the release notes and documentation to describe the new behavior."
         ],
-        "triage_summary": "User requests that the detail field of debug adapter completions always be displayed, even after filtering. Similar UI issues exist (#174126, #1793). This is a lowâ€‘priority UI enhancement for the debug team.",
+        "triage_summary": "User requests that the detail field of debug adapter completions always be displayed, even after filtering. Similar UI issues exist (#174126, #1793). This is a low‑priority UI enhancement for the debug team.",
         "grounding": {
           "component_source": "debug",
           "similar_issue_refs": [
@@ -1103,7 +1103,7 @@
             "relevance_note": "Feature request related to search behavior and UI controls."
           }
         ],
-        "expected_resolution_summary": "UI enhancement to allow editing of the \"files excluded\" field in the Search view; typical effort 1â€“2 weeks.",
+        "expected_resolution_summary": "UI enhancement to allow editing of the \"files excluded\" field in the Search view; typical effort 1–2 weeks.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 193.1,
         "resolution_bucket": "hours",
@@ -1117,7 +1117,7 @@
           "Prototype a UI change (e.g., make the exclusion list editable or add a temporary toggle).",
           "Add a unit/integration test that verifies the new UI element persists changes correctly."
         ],
-        "triage_summary": "User wants the \"files excluded through settings\" field in the Search UI to be editable so they can temporarily include excluded folders like node_modules. Similar past requests exist (#88487, #19029, #18796). This is a nonâ€‘blocking UI enhancement, therefore low priority and assign to the search team.",
+        "triage_summary": "User wants the \"files excluded through settings\" field in the Search UI to be editable so they can temporarily include excluded folders like node_modules. Similar past requests exist (#88487, #19029, #18796). This is a non‑blocking UI enhancement, therefore low priority and assign to the search team.",
         "grounding": {
           "component_source": "search",
           "similar_issue_refs": [
@@ -1172,7 +1172,7 @@
           {
             "number": 2671,
             "similarity": 0.799,
-            "relevance_note": "Focuses on debugger accessibility and UI extensions, relevant for adding a new contextâ€‘menu action."
+            "relevance_note": "Focuses on debugger accessibility and UI extensions, relevant for adding a new context‑menu action."
           },
           {
             "number": 204529,
@@ -1180,7 +1180,7 @@
             "relevance_note": "Explores new debugger UI capabilities, indicating openness to UI feature additions."
           }
         ],
-        "expected_resolution_summary": "Feature addition to the debugger UI to expose a \"Show next statement\" command; requires UI, command registration, and possibly debugâ€‘adapter support. Typical timeline weeks to months.",
+        "expected_resolution_summary": "Feature addition to the debugger UI to expose a \"Show next statement\" command; requires UI, command registration, and possibly debug‑adapter support. Typical timeline weeks to months.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 155.0,
         "resolution_bucket": "hours",
@@ -1190,7 +1190,7 @@
         "priority_rationale": "The request addresses a workflow gap for developers during debugging. It is not a crash or data loss, but improves productivity; no current workaround exists beyond manual navigation, so medium priority is appropriate.",
         "suggested_assignee_class": "debug team",
         "suggested_next_steps": [
-          "Review the debugger contextâ€‘menu contribution point and assess where a \"Show next statement\" command could be inserted.",
+          "Review the debugger context‑menu contribution point and assess where a \"Show next statement\" command could be inserted.",
           "Design the command to move the editor cursor to the current execution line using the debug service API.",
           "Prototype the feature in an internal branch and validate that it works across multiple platforms and debug adapters.",
           "Gather UX feedback and add the command to the official VS Code feature backlog."
@@ -1253,7 +1253,7 @@
             "relevance_note": "Multicursor cut/paste does not work correctly, another report of the same behavior."
           }
         ],
-        "expected_resolution_summary": "Fix clipboard handling for multicursor paste; typical turnaround 1â€‘2 weeks once the paste pipeline is audited.",
+        "expected_resolution_summary": "Fix clipboard handling for multicursor paste; typical turnaround 1‑2 weeks once the paste pipeline is audited.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 195.6,
         "resolution_bucket": "hours",
@@ -1328,7 +1328,7 @@
             "relevance_note": "Reports errors from OpenStack CreateExternalLoadBalancer implementation, similar symptom."
           }
         ],
-        "expected_resolution_summary": "Fix the nil IP handling in the OpenStack provider's load balancer creation path; typical turnaround 1â€‘2 weeks.",
+        "expected_resolution_summary": "Fix the nil IP handling in the OpenStack provider's load balancer creation path; typical turnaround 1‑2 weeks.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 357.9,
         "resolution_bucket": "hours",
@@ -1340,7 +1340,7 @@
         "suggested_next_steps": [
           "Add a unit test that creates an external load balancer without specifying a public IP and asserts a valid VIP is allocated.",
           "Inspect the OpenStack provider code where the VirtualIP struct is populated; replace the literal \"nil\" with an empty string or omit the field.",
-          "Crossâ€‘reference #12288 and #12284 to determine if a recent change introduced the regression.",
+          "Cross‑reference #12288 and #12284 to determine if a recent change introduced the regression.",
           "Validate the fix against both OpenStack Newton and Pike releases."
         ],
         "triage_summary": "Creating an external load balancer in OpenStack without a public IP currently results in the string \"nil\" being sent as the IP address, causing the operation to fail. The issue is similar to #12288, #12284, and #7199. Medium priority; assign to the provider/openstack team for a quick fix.",
@@ -1397,12 +1397,12 @@
           {
             "number": 12280,
             "similarity": 0.706,
-            "relevance_note": "Directly addresses humanâ€‘readable time output in kubectl, matching the proposed change."
+            "relevance_note": "Directly addresses human‑readable time output in kubectl, matching the proposed change."
           },
           {
             "number": 12331,
             "similarity": 0.702,
-            "relevance_note": "Implementation reference for humanâ€‘readable times; same feature scope."
+            "relevance_note": "Implementation reference for human‑readable times; same feature scope."
           },
           {
             "number": 18004,
@@ -1420,12 +1420,12 @@
         "priority_rationale": "The change is cosmetic, improves readability but does not affect functionality or cause crashes; a simple UI tweak with a clear workaround (using full time view).",
         "suggested_assignee_class": "kubectl team",
         "suggested_next_steps": [
-          "Verify that the existing helper function for humanâ€‘readable timestamps is used consistently in the event printer code.",
+          "Verify that the existing helper function for human‑readable timestamps is used consistently in the event printer code.",
           "Add unit tests for the new output format covering both short and full time representations.",
           "Update documentation and changelog to reflect the new AGE column behavior.",
           "Ensure no regression in other kubectl output formats; run the full kubectl test suite."
         ],
-        "triage_summary": "Proposal to print humanâ€‘readable, shortened event times in kubectl output. Similar issues #12280 and #12331 already discuss this feature. Lowâ€‘priority cosmetic improvement for the CLI.",
+        "triage_summary": "Proposal to print human‑readable, shortened event times in kubectl output. Similar issues #12280 and #12331 already discuss this feature. Low‑priority cosmetic improvement for the CLI.",
         "grounding": {
           "component_source": "kubectl",
           "similar_issue_refs": [
@@ -1478,7 +1478,7 @@
           {
             "number": 27563,
             "similarity": 0.775,
-            "relevance_note": "Small kubeletâ€‘related fix (typo/help) â€“ shows the pattern of lightweight patches to kubelet code/docs."
+            "relevance_note": "Small kubelet‑related fix (typo/help) – shows the pattern of lightweight patches to kubelet code/docs."
           },
           {
             "number": 11091,
@@ -1486,14 +1486,14 @@
             "relevance_note": "Another minor kubelet documentation change, indicating the typical turnaround for simple kubelet patches."
           }
         ],
-        "expected_resolution_summary": "Minor kubelet code change; should be reviewed, CIâ€‘tested and merged within a few days.",
+        "expected_resolution_summary": "Minor kubelet code change; should be reviewed, CI‑tested and merged within a few days.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 224.5,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 36.6,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "The change is a small, nonâ€‘breaking fix that only adds a labelâ€‘check in the kubelet. No userâ€‘visible regression; the main impact is to close #14263.",
+        "priority_rationale": "The change is a small, non‑breaking fix that only adds a label‑check in the kubelet. No user‑visible regression; the main impact is to close #14263.",
         "suggested_assignee_class": "kubelet team",
         "suggested_next_steps": [
           "Review the PR for correctness of the added label check.",
@@ -1501,7 +1501,7 @@
           "Validate that label modifications are now reflected in the kubelet at runtime.",
           "If the change passes review, merge and close the referenced issue #14263."
         ],
-        "triage_summary": "Partial fix for #14263 adds a missing labelâ€‘check in the kubelet so that label modifications are respected. The patch is small and lowâ€‘risk, matching other lightweight kubelet fixes. Assign to the kubelet team; low priority with an expected turnaround of a few days.",
+        "triage_summary": "Partial fix for #14263 adds a missing label‑check in the kubelet so that label modifications are respected. The patch is small and low‑risk, matching other lightweight kubelet fixes. Assign to the kubelet team; low priority with an expected turnaround of a few days.",
         "grounding": {
           "component_source": "kubelet",
           "similar_issue_refs": [
@@ -1548,7 +1548,7 @@
           {
             "number": 10577,
             "similarity": 0.798,
-            "relevance_note": "kube-apiserver generates a selfâ€‘signed cert that fails when no clientâ€‘caâ€‘file is provided, matching the current symptom."
+            "relevance_note": "kube-apiserver generates a self‑signed cert that fails when no client‑ca‑file is provided, matching the current symptom."
           },
           {
             "number": 15359,
@@ -1561,7 +1561,7 @@
             "relevance_note": "General guidance on starting the apiserver with HTTPS, useful for reproducing the failure."
           }
         ],
-        "expected_resolution_summary": "Adjust kubeâ€‘apiserver TLS validation to accept server cert/key without requiring a clientâ€‘caâ€‘file, and add unit tests for this configuration path.",
+        "expected_resolution_summary": "Adjust kube‑apiserver TLS validation to accept server cert/key without requiring a client‑ca‑file, and add unit tests for this configuration path.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 180.1,
         "resolution_bucket": "hours",
@@ -1572,11 +1572,11 @@
         "suggested_assignee_class": "apiserver team",
         "suggested_next_steps": [
           "Reproduce the failure on a minimal cluster with only --tls-cert-file and --tls-private-key-file set.",
-          "Inspect the TLS initialization code path to identify the check that erroneously requires clientâ€‘caâ€‘file.",
-          "Implement a conditional that skips clientâ€‘ca validation when client authentication is not configured.",
-          "Add a regression test covering the noâ€‘clientâ€‘ca scenario."
+          "Inspect the TLS initialization code path to identify the check that erroneously requires client‑ca‑file.",
+          "Implement a conditional that skips client‑ca validation when client authentication is not configured.",
+          "Add a regression test covering the no‑client‑ca scenario."
         ],
-        "triage_summary": "kubeâ€‘apiserver TLS cert/key configuration fails when clientâ€‘caâ€‘file is omitted, breaking API access on both macOS and Windows. Similar past reports (#10577, #15359, #10159) point to TLS handling bugs. This is a highâ€‘priority regression requiring an immediate fix.",
+        "triage_summary": "kube‑apiserver TLS cert/key configuration fails when client‑ca‑file is omitted, breaking API access on both macOS and Windows. Similar past reports (#10577, #15359, #10159) point to TLS handling bugs. This is a high‑priority regression requiring an immediate fix.",
         "grounding": {
           "component_source": "apiserver",
           "similar_issue_refs": [
@@ -1638,22 +1638,22 @@
           {
             "number": 26614,
             "similarity": 0.799,
-            "relevance_note": "General broken test run in GKE e2e suite, indicating broader testâ€‘infra instability."
+            "relevance_note": "General broken test run in GKE e2e suite, indicating broader test‑infra instability."
           }
         ],
-        "expected_resolution_summary": "Investigate and stabilize the API server proxy handling in e2e tests; likely a race or timeout issue that can be fixed with better error handling or retries. Typical fix time 1â€‘3 weeks.",
+        "expected_resolution_summary": "Investigate and stabilize the API server proxy handling in e2e tests; likely a race or timeout issue that can be fixed with better error handling or retries. Typical fix time 1‑3 weeks.",
         "expected_resolution_lower_days": 0.2,
         "expected_resolution_upper_days": 232.0,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 37.4,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "Flaky e2e test causes CI failures and delays releases, but does not affect endâ€‘user functionality. No immediate userâ€‘visible crash, yet the instability impacts development workflow.",
+        "priority_rationale": "Flaky e2e test causes CI failures and delays releases, but does not affect end‑user functionality. No immediate user‑visible crash, yet the instability impacts development workflow.",
         "suggested_assignee_class": "apiserver team",
         "suggested_next_steps": [
           "Reproduce the failure locally by running the autoscaling e2e test with verbose proxy logging enabled.",
           "Add instrumentation to the apiserver proxy path to capture request/response timing and errors.",
-          "Introduce a retry or backâ€‘off mechanism in the test when the proxy request fails, and assess if the flakiness persists.",
+          "Introduce a retry or back‑off mechanism in the test when the proxy request fails, and assess if the flakiness persists.",
           "If the root cause is in apiserver, add a unit test for the proxy handling; otherwise, mark the e2e test as flaky pending a fix."
         ],
         "triage_summary": "E2E autoscaling test intermittently fails when accessing a service via the API server proxy (>30% failure rate). Logs show errors in apiserver proxy handling. Similar flaky test reports exist (#5084, #16685, #26614). Assign to apiserver team; medium priority due to CI impact.",
@@ -1709,7 +1709,7 @@
           {
             "number": 16828,
             "similarity": 0.806,
-            "relevance_note": "Same soak job (gce) failing on SchedulerPredicates tests, indicating a recurring testâ€‘infra problem."
+            "relevance_note": "Same soak job (gce) failing on SchedulerPredicates tests, indicating a recurring test‑infra problem."
           },
           {
             "number": 19118,
@@ -1719,25 +1719,25 @@
           {
             "number": 20982,
             "similarity": 0.788,
-            "relevance_note": "Timingâ€‘out soak runs on GCE, another symptom of flaky testâ€‘infra pipelines."
+            "relevance_note": "Timing‑out soak runs on GCE, another symptom of flaky test‑infra pipelines."
           }
         ],
-        "expected_resolution_summary": "Typical testâ€‘infra regression; once the flaky test or infrastructure change is identified, a fix is usually landed within a week.",
+        "expected_resolution_summary": "Typical test‑infra regression; once the flaky test or infrastructure change is identified, a fix is usually landed within a week.",
         "expected_resolution_lower_days": 0.2,
         "expected_resolution_upper_days": 479.6,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 26.6,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "The failure blocks the continuous soak job, impacting CI health and downstream release confidence, but it does not affect endâ€‘users directly and a manual reâ€‘run can be used as a temporary workaround.",
+        "priority_rationale": "The failure blocks the continuous soak job, impacting CI health and downstream release confidence, but it does not affect end‑users directly and a manual re‑run can be used as a temporary workaround.",
         "suggested_assignee_class": "test-infra team",
         "suggested_next_steps": [
           "Inspect the latest changes to the SchedulerPredicates test and related GCE soak job configuration for recent breakages.",
-          "Run the failing test locally with the same GCE environment to reproduce the nodeâ€‘notâ€‘ready and namespaceâ€‘active errors.",
-          "Check for recent changes in the testâ€‘infra job definitions (e.g., prow config) that could introduce timing or resource allocation issues.",
-          "If the failure is due to a flaky test, add a retry or quarantine annotation and file a separate testâ€‘flakiness issue."
+          "Run the failing test locally with the same GCE environment to reproduce the node‑not‑ready and namespace‑active errors.",
+          "Check for recent changes in the test‑infra job definitions (e.g., prow config) that could introduce timing or resource allocation issues.",
+          "If the failure is due to a flaky test, add a retry or quarantine annotation and file a separate test‑flakiness issue."
         ],
-        "triage_summary": "kubernetes-soak-continuous-e2e-gce turned yellow due to nodeâ€‘notâ€‘ready and namespaceâ€‘active errors, mirroring several recent soak failures. The pattern points to a testâ€‘infra regression rather than core Kubernetes code. Assign to testâ€‘infra, medium priority, with an expected fix within a week.",
+        "triage_summary": "kubernetes-soak-continuous-e2e-gce turned yellow due to node‑not‑ready and namespace‑active errors, mirroring several recent soak failures. The pattern points to a test‑infra regression rather than core Kubernetes code. Assign to test‑infra, medium priority, with an expected fix within a week.",
         "grounding": {
           "component_source": "test-infra",
           "similar_issue_refs": [
@@ -1803,22 +1803,22 @@
             "relevance_note": "Another daemon set e2e test reported as flaky, indicating a pattern."
           }
         ],
-        "expected_resolution_summary": "Small testâ€‘infra change (regex update / test label adjustment) typically resolved within a few days.",
+        "expected_resolution_summary": "Small test‑infra change (regex update / test label adjustment) typically resolved within a few days.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 359.5,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 29.0,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "Changing a test's status to flaky does not affect userâ€‘facing functionality; it is a maintenance task with a simple workaround (ignore the test).",
+        "priority_rationale": "Changing a test's status to flaky does not affect user‑facing functionality; it is a maintenance task with a simple workaround (ignore the test).",
         "suggested_assignee_class": "test-infra team",
         "suggested_next_steps": [
           "Verify the flakiness by reproducing the Jenkins failure on the current branch.",
           "Update the e2e test regex or label to mark it as flaky as described in #14072.",
           "Run the full e2e suite in CI to ensure no regressions are introduced.",
-          "Submit the PR and request review from the testâ€‘infra maintainers."
+          "Submit the PR and request review from the test‑infra maintainers."
         ],
-        "triage_summary": "The issue proposes demoting the e2e daemonâ€‘set test to flaky. Similar demotions have been handled before (#14072, #10904, #16623). This is a lowâ€‘impact maintenance change, assign to the testâ€‘infra team.",
+        "triage_summary": "The issue proposes demoting the e2e daemon‑set test to flaky. Similar demotions have been handled before (#14072, #10904, #16623). This is a low‑impact maintenance change, assign to the test‑infra team.",
         "grounding": {
           "component_source": "test-infra",
           "similar_issue_refs": [
@@ -1883,22 +1883,22 @@
             "relevance_note": "SchedulerPredicates test flakiness in CI, indicates a recurring timing issue."
           }
         ],
-        "expected_resolution_summary": "Investigate and stabilize the SchedulerPredicates e2e test (likely timeout or resource contention). Typical fix involves adjusting timeout or improving test isolation; expected turnaround 1â€‘2 weeks.",
+        "expected_resolution_summary": "Investigate and stabilize the SchedulerPredicates e2e test (likely timeout or resource contention). Typical fix involves adjusting timeout or improving test isolation; expected turnaround 1‑2 weeks.",
         "expected_resolution_lower_days": 0.2,
         "expected_resolution_upper_days": 428.4,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 28.7,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "Flaky e2e test breaks CI reliability but does not affect endâ€‘users directly. No immediate blocker for developers, yet it degrades the testing pipeline, warranting medium priority.",
+        "priority_rationale": "Flaky e2e test breaks CI reliability but does not affect end‑users directly. No immediate blocker for developers, yet it degrades the testing pipeline, warranting medium priority.",
         "suggested_assignee_class": "test-infra team",
         "suggested_next_steps": [
           "Reproduce the failure locally on GCE with the same test parameters to confirm timeout behavior.",
           "Review recent changes to the scheduler or test harness that could affect MaxPods calculation timing.",
           "Increase the test timeout or add explicit waits for pod creation to reduce flakiness.",
-          "Crossâ€‘reference #15139 to determine if the same root cause applies and close duplicates if appropriate."
+          "Cross‑reference #15139 to determine if the same root cause applies and close duplicates if appropriate."
         ],
-        "triage_summary": "The SchedulerPredicates e2e test has become flaky on GCE, failing the MaxPods validation in the last four Jenkins runs. Similar flaky reports (#15139, #19681, #29820) indicate a recurring timing issue. Assign to testâ€‘infra; medium priority due to CI impact.",
+        "triage_summary": "The SchedulerPredicates e2e test has become flaky on GCE, failing the MaxPods validation in the last four Jenkins runs. Similar flaky reports (#15139, #19681, #29820) indicate a recurring timing issue. Assign to test‑infra; medium priority due to CI impact.",
         "grounding": {
           "component_source": "test-infra",
           "similar_issue_refs": [
@@ -1950,7 +1950,7 @@
           {
             "number": 8915,
             "similarity": 0.784,
-            "relevance_note": "Discusses reducing list requests in a watchâ€‘based cache, directly related to the proposed cacher."
+            "relevance_note": "Discusses reducing list requests in a watch‑based cache, directly related to the proposed cacher."
           },
           {
             "number": 12268,
@@ -1960,12 +1960,12 @@
           {
             "number": 12205,
             "similarity": 0.76,
-            "relevance_note": "Proofâ€‘ofâ€‘concept PR for watch in apiserver, aligns with the requested feature."
+            "relevance_note": "Proof‑of‑concept PR for watch in apiserver, aligns with the requested feature."
           },
           {
             "number": 13186,
             "similarity": 0.76,
-            "relevance_note": "Reâ€‘enables watch in apiserver, another related effort."
+            "relevance_note": "Re‑enables watch in apiserver, another related effort."
           },
           {
             "number": 26853,
@@ -1980,7 +1980,7 @@
         "resolution_confidence_pct": 59.8,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "Adds a performanceâ€‘critical watch cache to the apiserver. Not a blocker for existing functionality, but addresses an active workflow need for large clusters; thus medium priority.",
+        "priority_rationale": "Adds a performance‑critical watch cache to the apiserver. Not a blocker for existing functionality, but addresses an active workflow need for large clusters; thus medium priority.",
         "suggested_assignee_class": "apiserver team",
         "suggested_next_steps": [
           "Create a design document summarizing the watch cacher architecture and reference #10475.",
@@ -1989,7 +1989,7 @@
           "Add unit and integration tests covering watch list reduction and cache eviction.",
           "Update documentation and announce the new feature in the release notes."
         ],
-        "triage_summary": "The issue proposes adding a watch cacher at the apiserver level (ref #10475). Several related PRs and discussions (#8915, #12268, #12205, #13186, #26853) indicate ongoing work. This is a nonâ€‘blocking performance improvement, warranting medium priority and assignment to the apiserver team.",
+        "triage_summary": "The issue proposes adding a watch cacher at the apiserver level (ref #10475). Several related PRs and discussions (#8915, #12268, #12205, #13186, #26853) indicate ongoing work. This is a non‑blocking performance improvement, warranting medium priority and assignment to the apiserver team.",
         "grounding": {
           "component_source": "apiserver",
           "similar_issue_refs": [
@@ -2058,17 +2058,17 @@
           {
             "number": 25750,
             "similarity": 0.782,
-            "relevance_note": "Discussion about missing cloud-config CLI option for OpenStack, indicating configurationâ€‘related failures."
+            "relevance_note": "Discussion about missing cloud-config CLI option for OpenStack, indicating configuration‑related failures."
           }
         ],
-        "expected_resolution_summary": "Likely a configurationâ€‘validation or nilâ€‘pointer bug in the OpenStack cloud provider; typical fix range is a few days to a week once the root cause is identified.",
+        "expected_resolution_summary": "Likely a configuration‑validation or nil‑pointer bug in the OpenStack cloud provider; typical fix range is a few days to a week once the root cause is identified.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 218.8,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 34.5,
         "resolution_interval_conformal": null,
         "priority_guess": "high",
-        "priority_rationale": "Apiserver crashes on start when OpenStack cloud provider is enabled, blocking any cluster that relies on this provider. No inâ€‘product workaround exists for users needing OpenStack.",
+        "priority_rationale": "Apiserver crashes on start when OpenStack cloud provider is enabled, blocking any cluster that relies on this provider. No in‑product workaround exists for users needing OpenStack.",
         "suggested_assignee_class": "cloud-provider/openstack team",
         "suggested_next_steps": [
           "Ask the reporter to provide the full apiserver log and the exact cloud-config YAML used.",
@@ -2077,7 +2077,7 @@
           "If the problem is purely misconfiguration, improve documentation and add a validation step that fails with a clear error message.",
           "Reference similar issues #20146 and #22789 to avoid duplicate work."
         ],
-        "triage_summary": "Runtime error when enabling the OpenStack cloud provider causes the apiserver to crash on startup on both macOS and Windows. The issue aligns with prior reports of nilâ€‘pointer and configuration errors in the OpenStack provider. High priority due to complete cluster failure; assign to the OpenStack cloudâ€‘provider team.",
+        "triage_summary": "Runtime error when enabling the OpenStack cloud provider causes the apiserver to crash on startup on both macOS and Windows. The issue aligns with prior reports of nil‑pointer and configuration errors in the OpenStack provider. High priority due to complete cluster failure; assign to the OpenStack cloud‑provider team.",
         "grounding": {
           "component_source": "provider/openstack",
           "similar_issue_refs": [
@@ -2143,7 +2143,7 @@
             "relevance_note": "DaemonSet pod creation issues that expose controller logic flaws similar to the repeated pod creation loop."
           }
         ],
-        "expected_resolution_summary": "Fix daemonset controller logic and update e2e tests; expected effort 1â€“2 weeks.",
+        "expected_resolution_summary": "Fix daemonset controller logic and update e2e tests; expected effort 1–2 weeks.",
         "expected_resolution_lower_days": 0.5,
         "expected_resolution_upper_days": 366.9,
         "resolution_bucket": "long",
@@ -2220,7 +2220,7 @@
           {
             "number": 8891,
             "similarity": 0.795,
-            "relevance_note": "Memoryâ€‘leak style report for kube-proxy; often CPU and memory issues are related."
+            "relevance_note": "Memory‑leak style report for kube-proxy; often CPU and memory issues are related."
           }
         ],
         "expected_resolution_summary": "Typical performance regression; likely fixed by configuration tweak or upstream patch, usually resolved within a few days.",
@@ -2238,7 +2238,7 @@
           "Compare configuration and logs with known cases #19457 and #513.",
           "Test with a newer Kubernetes release to see if the issue persists."
         ],
-        "triage_summary": "kube-proxy consumes excessive CPU on a singleâ€‘node cluster (Kubernetes 1.0.3). Similar highâ€‘CPU reports exist (#19457, #513, #8891). The issue impacts performance but does not crash the cluster, so it is medium priority. Assign to the kube-proxy team with concrete debugging steps.",
+        "triage_summary": "kube-proxy consumes excessive CPU on a single‑node cluster (Kubernetes 1.0.3). Similar high‑CPU reports exist (#19457, #513, #8891). The issue impacts performance but does not crash the cluster, so it is medium priority. Assign to the kube-proxy team with concrete debugging steps.",
         "grounding": {
           "component_source": "kube-proxy",
           "similar_issue_refs": [
@@ -2304,7 +2304,7 @@
             "relevance_note": "Ensures NodeController deletes terminating pods; related to proper cleanup during node removal."
           }
         ],
-        "expected_resolution_summary": "Fix NodeController deletion logic and add unit/e2e test; typical turnaround 1â€‘3 days for a focused controller bug.",
+        "expected_resolution_summary": "Fix NodeController deletion logic and add unit/e2e test; typical turnaround 1‑3 days for a focused controller bug.",
         "expected_resolution_lower_days": 0.0,
         "expected_resolution_upper_days": 39.4,
         "resolution_bucket": "hours",
@@ -2376,7 +2376,7 @@
           {
             "number": 13456,
             "similarity": 0.79,
-            "relevance_note": "Provides an OpenStack gettingâ€‘started guide for Kubernetes, useful reference for authoring the missing section."
+            "relevance_note": "Provides an OpenStack getting‑started guide for Kubernetes, useful reference for authoring the missing section."
           }
         ],
         "expected_resolution_summary": "Add OpenStack instructions to the CoreOS multinode cluster documentation; a small documentation change typically resolved within a few days.",
@@ -2386,7 +2386,7 @@
         "resolution_confidence_pct": 36.8,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "Documentation request with no functional impact; users can continue using existing guides. Nonâ€‘blocking and low effort.",
+        "priority_rationale": "Documentation request with no functional impact; users can continue using existing guides. Non‑blocking and low effort.",
         "suggested_assignee_class": "documentation team",
         "suggested_next_steps": [
           "Review the existing CoreOS multinode cluster guide to locate the appropriate insertion point.",
@@ -2474,16 +2474,16 @@
         "resolution_confidence_pct": 28.2,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "The change affects node stability and QoS guarantees but does not cause an immediate crash. It is a functional regression for Bestâ€‘Effort containers that can be worked around by manual kernel tuning, so medium priority.",
+        "priority_rationale": "The change affects node stability and QoS guarantees but does not cause an immediate crash. It is a functional regression for Best‑Effort containers that can be worked around by manual kernel tuning, so medium priority.",
         "suggested_assignee_class": "kubelet team",
         "suggested_next_steps": [
           "Create a design document outlining the overcommit policy flag and its interaction with existing QoS logic.",
           "Implement the flag in kubelet startup, mirroring the behavior of issue #15087.",
-          "Add unit and e2e tests that simulate Bestâ€‘Effort containers failing under default overcommit and succeeding with the new policy.",
+          "Add unit and e2e tests that simulate Best‑Effort containers failing under default overcommit and succeeding with the new policy.",
           "Validate the proposal against the scenarios described in #14532 and #14452.",
           "Update documentation to explain the new flag and its recommended usage."
         ],
-        "triage_summary": "The issue proposes adjusting the kernel memory overcommit setting via kubelet to prevent Bestâ€‘Effort containers from causing malloc failures for Guaranteed pods, improving QoS reliability. Several related issues (#14532, #15087, #14452) show this is a known concern. Medium priority; assign to the kubelet team for a flag implementation and testing.",
+        "triage_summary": "The issue proposes adjusting the kernel memory overcommit setting via kubelet to prevent Best‑Effort containers from causing malloc failures for Guaranteed pods, improving QoS reliability. Several related issues (#14532, #15087, #14452) show this is a known concern. Medium priority; assign to the kubelet team for a flag implementation and testing.",
         "grounding": {
           "component_source": "kubelet",
           "similar_issue_refs": [
@@ -2548,23 +2548,23 @@
             "relevance_note": "Related to release tooling and script usage, providing context for how release scripts are managed."
           }
         ],
-        "expected_resolution_summary": "A small releaseâ€‘script modification; typically resolved within a few days once reviewed and CI passes.",
+        "expected_resolution_summary": "A small release‑script modification; typically resolved within a few days once reviewed and CI passes.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 260.6,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 36.8,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "The change is nonâ€‘breaking and only affects release automation; no userâ€‘facing impact and a manual review can be scheduled, so it is low priority.",
+        "priority_rationale": "The change is non‑breaking and only affects release automation; no user‑facing impact and a manual review can be scheduled, so it is low priority.",
         "suggested_assignee_class": "build-release team",
         "suggested_next_steps": [
           "Review the current mark-stable-release.sh implementation and the kube::release::gcs::publish_latest_official function.",
           "Create a branch that replaces the inline code with a call to the shared function and update documentation accordingly.",
-          "Run the releaseâ€‘script CI jobs to ensure no regressions.",
+          "Run the release‑script CI jobs to ensure no regressions.",
           "Request a thorough review from @zmerlynn and other release engineers.",
           "Merge after CI passes and the review is approved."
         ],
-        "triage_summary": "Request to use kube::release::gcs::publish_latest_official logic in mark-stable-release.sh, consolidating duplicate code. Similar issue #14785 already outlines the same change. Low priority, assign to buildâ€‘release team for a quick fix.",
+        "triage_summary": "Request to use kube::release::gcs::publish_latest_official logic in mark-stable-release.sh, consolidating duplicate code. Similar issue #14785 already outlines the same change. Low priority, assign to build‑release team for a quick fix.",
         "grounding": {
           "component_source": "build-release",
           "similar_issue_refs": [
@@ -2618,7 +2618,7 @@
           {
             "number": 11543,
             "similarity": 0.764,
-            "relevance_note": "Shows difficulties with AWS cloudâ€‘provider flags, indicating the need for proper cloudâ€‘provider handling in plugins."
+            "relevance_note": "Shows difficulties with AWS cloud‑provider flags, indicating the need for proper cloud‑provider handling in plugins."
           },
           {
             "number": 5667,
@@ -2626,17 +2626,17 @@
             "relevance_note": "Adds a cloud provider config option on kubelet, the same mechanism this patch would leverage."
           }
         ],
-        "expected_resolution_summary": "Feature implementation and integration work; typical turnaround 1â€“2 weeks once design is approved.",
+        "expected_resolution_summary": "Feature implementation and integration work; typical turnaround 1–2 weeks once design is approved.",
         "expected_resolution_lower_days": 0.2,
         "expected_resolution_upper_days": 440.3,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 26.9,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "The change adds optional functionality for AWS EBS plugins; it does not block existing workflows and has existing workarounds (manual cloudâ€‘provider configuration). Hence it is low priority.",
+        "priority_rationale": "The change adds optional functionality for AWS EBS plugins; it does not block existing workflows and has existing workarounds (manual cloud‑provider configuration). Hence it is low priority.",
         "suggested_assignee_class": "kubelet team",
         "suggested_next_steps": [
-          "Review the patch for consistency with existing cloudâ€‘provider handling in other volume plugins (e.g., OpenStack Cinder).",
+          "Review the patch for consistency with existing cloud‑provider handling in other volume plugins (e.g., OpenStack Cinder).",
           "Add unit tests for the aws_ebs plugin to verify cloudProvider propagation from kubelet.",
           "Update documentation to describe the new configuration path.",
           "Run integration tests on a cluster with the AWS cloud provider enabled."
@@ -2695,7 +2695,7 @@
           {
             "number": 12111,
             "similarity": 0.764,
-            "relevance_note": "Direct proposal to link HAProxy with Kubernetes services, matching the desired automatic config useâ€‘case."
+            "relevance_note": "Direct proposal to link HAProxy with Kubernetes services, matching the desired automatic config use‑case."
           },
           {
             "number": 10010,
@@ -2705,24 +2705,24 @@
           {
             "number": 19587,
             "similarity": 0.741,
-            "relevance_note": "Discussion of external load balancer (including HAProxy) installation and configuration with kubeâ€‘proxy."
+            "relevance_note": "Discussion of external load balancer (including HAProxy) installation and configuration with kube‑proxy."
           }
         ],
-        "expected_resolution_summary": "Feature request for automatic HAProxy configuration based on Service objects; likely requires design discussion, prototype, and integration work â€“ weeks to months.",
+        "expected_resolution_summary": "Feature request for automatic HAProxy configuration based on Service objects; likely requires design discussion, prototype, and integration work – weeks to months.",
         "expected_resolution_lower_days": 0.5,
         "expected_resolution_upper_days": 701.8,
         "resolution_bucket": "long",
         "resolution_confidence_pct": 34.9,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "Nonâ€‘blocking feature request affecting a niche workflow; VS Code continues to function without HAProxy and a manual solution exists.",
+        "priority_rationale": "Non‑blocking feature request affecting a niche workflow; VS Code continues to function without HAProxy and a manual solution exists.",
         "suggested_assignee_class": "networking team",
         "suggested_next_steps": [
           "Open a design proposal (KEP) outlining the desired HAProxy integration model.",
           "Create a prototype controller that watches Service objects and updates an HAProxy config template.",
-          "Discuss with SIGâ€‘Network to align on responsibilities and potential reuse of existing ingress controller code."
+          "Discuss with SIG‑Network to align on responsibilities and potential reuse of existing ingress controller code."
         ],
-        "triage_summary": "User wants Kubernetes to automatically generate HAProxy routing rules for NodePort services, replacing port numbers with friendly URLs. This is a feature request for external loadâ€‘balancer automation, similar to prior discussions (#12111, #10010, #19587). Assign to the networking team; low priority.",
+        "triage_summary": "User wants Kubernetes to automatically generate HAProxy routing rules for NodePort services, replacing port numbers with friendly URLs. This is a feature request for external load‑balancer automation, similar to prior discussions (#12111, #10010, #19587). Assign to the networking team; low priority.",
         "grounding": {
           "component_source": "networking",
           "similar_issue_refs": [
@@ -2744,7 +2744,7 @@
         },
         "declared_attribution": {
           "component_source": "model_override",
-          "component_override_reason": "Topâ€‘3 classifier predictions (kubectl, usability, appâ€‘lifecycle) do not capture the external loadâ€‘balancer nature of the request; networking is the appropriate component.",
+          "component_override_reason": "Top‑3 classifier predictions (kubectl, usability, app‑lifecycle) do not capture the external load‑balancer nature of the request; networking is the appropriate component.",
           "summary_cited_issues": [
             12111,
             10010,
@@ -2780,7 +2780,7 @@
             "relevance_note": "Adds experimental daemonset API and conformance test, closely related to the needed support."
           }
         ],
-        "expected_resolution_summary": "Feature implementation to enable daemonsets on Mesos; typical turnaround 1â€‘3 days once code review passes, but may extend if integration issues arise.",
+        "expected_resolution_summary": "Feature implementation to enable daemonsets on Mesos; typical turnaround 1‑3 days once code review passes, but may extend if integration issues arise.",
         "expected_resolution_lower_days": 0.2,
         "expected_resolution_upper_days": 255.4,
         "resolution_bucket": "hours",
@@ -2850,7 +2850,7 @@
           {
             "number": 8891,
             "similarity": 0.836,
-            "relevance_note": "Reports high RAM usage of kube-proxy, providing context for memoryâ€‘footprint concerns."
+            "relevance_note": "Reports high RAM usage of kube-proxy, providing context for memory‑footprint concerns."
           }
         ],
         "expected_resolution_summary": "Adjust default memory limit for kube-proxy and update related tests; typically a small change that can be landed within a few days.",
@@ -2860,15 +2860,15 @@
         "resolution_confidence_pct": 45.1,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "The request is a nonâ€‘blocking configuration increase; kube-proxy continues to function and no crash or data loss occurs. It is a cosmetic/resourceâ€‘allocation change with a simple workaround (manual limit adjustment).",
+        "priority_rationale": "The request is a non‑blocking configuration increase; kube-proxy continues to function and no crash or data loss occurs. It is a cosmetic/resource‑allocation change with a simple workaround (manual limit adjustment).",
         "suggested_assignee_class": "kube-proxy team",
         "suggested_next_steps": [
           "Confirm current default memory limit for kube-proxy in the codebase and test suite.",
-          "Update the default limit to 30â€¯MiB (or a justified value) and adjust any related unit/integration tests.",
+          "Update the default limit to 30 MiB (or a justified value) and adjust any related unit/integration tests.",
           "Add a comment in the documentation explaining the expected memory usage and how to tune it.",
           "Run the full test suite to ensure the change does not cause regressions."
         ],
-        "triage_summary": "User requests increasing kube-proxy's memory footprint to 30â€¯MiB after observing usage up to 26â€¯MiB. Similar past issues discuss raising the limit and high memory usage. This is a lowâ€‘priority, nonâ€‘blocking change that can be addressed quickly.",
+        "triage_summary": "User requests increasing kube-proxy's memory footprint to 30 MiB after observing usage up to 26 MiB. Similar past issues discuss raising the limit and high memory usage. This is a low‑priority, non‑blocking change that can be addressed quickly.",
         "grounding": {
           "component_source": "kube-proxy",
           "similar_issue_refs": [
@@ -2918,31 +2918,31 @@
           {
             "number": 14389,
             "similarity": 0.843,
-            "relevance_note": "Kubeâ€‘ui only displays resources from the default namespace, matching the symptom of missing kubeâ€‘system objects."
+            "relevance_note": "Kube‑ui only displays resources from the default namespace, matching the symptom of missing kube‑system objects."
           },
           {
             "number": 26479,
             "similarity": 0.764,
-            "relevance_note": "Blank kubeâ€‘ui dashboard after cluster upgrade, similar UIâ€‘rendering failure."
+            "relevance_note": "Blank kube‑ui dashboard after cluster upgrade, similar UI‑rendering failure."
           }
         ],
-        "expected_resolution_summary": "UI rendering bug where kubeâ€‘ui fails to list namespaced resources; typical fix involves correcting API query filters or RBAC scopes, usually resolved within a few weeks.",
+        "expected_resolution_summary": "UI rendering bug where kube‑ui fails to list namespaced resources; typical fix involves correcting API query filters or RBAC scopes, usually resolved within a few weeks.",
         "expected_resolution_lower_days": 0.2,
         "expected_resolution_upper_days": 324.7,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 23.7,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "The UI does not display any resources despite kubectl showing them, impacting visibility for users but not breaking core cluster operation; a workaround (using kubectl) exists, so the issue is a mediumâ€‘priority visual regression.",
+        "priority_rationale": "The UI does not display any resources despite kubectl showing them, impacting visibility for users but not breaking core cluster operation; a workaround (using kubectl) exists, so the issue is a medium‑priority visual regression.",
         "suggested_assignee_class": "ui team",
         "suggested_next_steps": [
-          "Reproduce on a fresh cluster with default kubeâ€‘ui version to confirm the issue is not environmentâ€‘specific.",
-          "Check the API requests made by kubeâ€‘ui for namespace filtering or resource version handling; compare with working kubectl output.",
-          "Verify RBAC permissions for the kubeâ€‘ui service account on the kubeâ€‘system namespace.",
-          "Crossâ€‘reference #14389 and #26479 to see if a recent change introduced the regression.",
-          "Add an e2e test that loads the dashboard and asserts that pods, services, and replication controllers appear for a nonâ€‘default namespace."
+          "Reproduce on a fresh cluster with default kube‑ui version to confirm the issue is not environment‑specific.",
+          "Check the API requests made by kube‑ui for namespace filtering or resource version handling; compare with working kubectl output.",
+          "Verify RBAC permissions for the kube‑ui service account on the kube‑system namespace.",
+          "Cross‑reference #14389 and #26479 to see if a recent change introduced the regression.",
+          "Add an e2e test that loads the dashboard and asserts that pods, services, and replication controllers appear for a non‑default namespace."
         ],
-        "triage_summary": "Kubeâ€‘ui fails to render any objects from the kubeâ€‘system namespace while kubectl reports them correctly. Similar past reports (#14389, #26479) indicate a regression in namespace handling or API query logic. Assign to the UI team with medium priority.",
+        "triage_summary": "Kube‑ui fails to render any objects from the kube‑system namespace while kubectl reports them correctly. Similar past reports (#14389, #26479) indicate a regression in namespace handling or API query logic. Assign to the UI team with medium priority.",
         "grounding": {
           "component_source": "ui",
           "similar_issue_refs": [
@@ -3004,14 +3004,14 @@
             "relevance_note": "Mentions removal of a deprecated flag in kubectl, relevant precedent."
           }
         ],
-        "expected_resolution_summary": "Deprecation of -t flag and migration to --tty is a nonâ€‘breaking UX change; typical turnaround 1â€“2 weeks after design approval.",
+        "expected_resolution_summary": "Deprecation of -t flag and migration to --tty is a non‑breaking UX change; typical turnaround 1–2 weeks after design approval.",
         "expected_resolution_lower_days": 0.2,
         "expected_resolution_upper_days": 369.6,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 42.6,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "The change is cosmetic/UXâ€‘focused, does not affect core functionality, and scripts can continue using the existing flag until the deprecation period ends; no immediate breakage.",
+        "priority_rationale": "The change is cosmetic/UX‑focused, does not affect core functionality, and scripts can continue using the existing flag until the deprecation period ends; no immediate breakage.",
         "suggested_assignee_class": "kubectl team",
         "suggested_next_steps": [
           "Create a design doc outlining deprecation timeline and migration guidance for users.",
@@ -3020,7 +3020,7 @@
           "Reference prior deprecation work in #15471 to align process.",
           "Communicate the change in the release notes and update documentation."
         ],
-        "triage_summary": "Proposal to deprecate the -t shorthand in kubectl in favor of the explicit --tty flag. Similar deprecation work exists (#24365, #15471, #24243). Low priority as it is a nonâ€‘breaking UX change with a clear migration path. Assign to the kubectl team.",
+        "triage_summary": "Proposal to deprecate the -t shorthand in kubectl in favor of the explicit --tty flag. Similar deprecation work exists (#24365, #15471, #24243). Low priority as it is a non‑breaking UX change with a clear migration path. Assign to the kubectl team.",
         "grounding": {
           "component_source": "kubectl",
           "similar_issue_refs": [
@@ -3087,14 +3087,14 @@
         "resolution_confidence_pct": 44.2,
         "resolution_interval_conformal": null,
         "priority_guess": "low",
-        "priority_rationale": "The change is purely a codeâ€‘cleanup with no functional impact on users; it does not block any workflow and has a straightforward implementation path.",
+        "priority_rationale": "The change is purely a code‑cleanup with no functional impact on users; it does not block any workflow and has a straightforward implementation path.",
         "suggested_assignee_class": "release-eng team",
         "suggested_next_steps": [
           "Create a branch that replaces the custom logic in mark-stable-release.sh with a call to kube::release::gcs::publish_latest_official.",
-          "Add unit tests or scriptâ€‘level tests to verify the new path produces identical output.",
+          "Add unit tests or script‑level tests to verify the new path produces identical output.",
           "Reference #14835 for the exact implementation details and ensure the change does not affect existing CI pipelines."
         ],
-        "triage_summary": "The issue requests consolidating the logic in mark-stable-release.sh with the existing publish_latest_official function. Two closely related prior issues (#14835, #16773) already discuss similar refactoring. This is a lowâ€‘impact cleanup suitable for the releaseâ€‘eng team.",
+        "triage_summary": "The issue requests consolidating the logic in mark-stable-release.sh with the existing publish_latest_official function. Two closely related prior issues (#14835, #16773) already discuss similar refactoring. This is a low‑impact cleanup suitable for the release‑eng team.",
         "grounding": {
           "component_source": "build-release",
           "similar_issue_refs": [
@@ -3216,28 +3216,28 @@
           {
             "number": 24842,
             "similarity": 0.779,
-            "relevance_note": "kube2sky waiting for service default/kubernetes timeout â€“ indicates similar connection problem."
+            "relevance_note": "kube2sky waiting for service default/kubernetes timeout – indicates similar connection problem."
           },
           {
             "number": 24812,
             "similarity": 0.776,
-            "relevance_note": "kube2sky cannot connect due to TLS certificate issues â€“ shows that misâ€‘configuration can block kube2sky."
+            "relevance_note": "kube2sky cannot connect due to TLS certificate issues – shows that mis‑configuration can block kube2sky."
           }
         ],
-        "expected_resolution_summary": "Fix kube2sky connection configuration (address, TLS, or etcd proxy) so it can reach the API server; typical fix time 1â€“4 weeks.",
+        "expected_resolution_summary": "Fix kube2sky connection configuration (address, TLS, or etcd proxy) so it can reach the API server; typical fix time 1–4 weeks.",
         "expected_resolution_lower_days": 1.6,
         "expected_resolution_upper_days": 521.3,
         "resolution_bucket": "long",
         "resolution_confidence_pct": 28.9,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "The issue prevents DNS (kube2sky) from reaching the API server, breaking service discovery for the cluster. It does not crash the whole cluster, and a manual workaround (e.g., fixing host entries) may exist, so it is a mediumâ€‘priority regression.",
+        "priority_rationale": "The issue prevents DNS (kube2sky) from reaching the API server, breaking service discovery for the cluster. It does not crash the whole cluster, and a manual workaround (e.g., fixing host entries) may exist, so it is a medium‑priority regression.",
         "suggested_assignee_class": "apiserver team",
         "suggested_next_steps": [
           "Verify that the API server is reachable from the node running kube2sky (curl http://127.0.0.1:8080/healthz).",
           "Check kube2sky flags (--master, --etcd-servers) for correct values; ensure they match the current cluster setup.",
           "Inspect TLS certificates if HTTPS is used; compare with the scenario in #24812.",
-          "Review logs for timeout errors and correlate with #24842 to see if a serviceâ€‘lookup race is occurring.",
+          "Review logs for timeout errors and correlate with #24842 to see if a service‑lookup race is occurring.",
           "Add a unit test that starts a mock API server and confirms kube2sky can register the service."
         ],
         "triage_summary": "kube2sky cannot connect to the Kubernetes API server on a CoreOS local cluster after upgrade to v1.0.3, causing DNS pod failure. Similar connectivity failures have been reported in #10530, #24842, and #24812. Assign to the apiserver team with medium priority; expected fix within a few weeks.",
@@ -3294,7 +3294,7 @@
           {
             "number": 23383,
             "similarity": 0.801,
-            "relevance_note": "Node runs out of disk after resource changes on AWS, same symptom of outâ€‘ofâ€‘space failures."
+            "relevance_note": "Node runs out of disk after resource changes on AWS, same symptom of out‑of‑space failures."
           },
           {
             "number": 13174,
@@ -3304,17 +3304,17 @@
           {
             "number": 26566,
             "similarity": 0.776,
-            "relevance_note": "Kubelet reports insufficient disk despite space, a known misâ€‘reporting issue related to disk pressure handling."
+            "relevance_note": "Kubelet reports insufficient disk despite space, a known mis‑reporting issue related to disk pressure handling."
           }
         ],
-        "expected_resolution_summary": "Investigate kubelet diskâ€‘pressure detection and log / container image cleanup on AWS nodes; add proper eviction or increase default /mnt/ephemeral size. Typical fix timeframe 1â€‘2 weeks.",
+        "expected_resolution_summary": "Investigate kubelet disk‑pressure detection and log / container image cleanup on AWS nodes; add proper eviction or increase default /mnt/ephemeral size. Typical fix timeframe 1‑2 weeks.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 356.8,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 34.5,
         "resolution_interval_conformal": null,
         "priority_guess": "high",
-        "priority_rationale": "Node becomes unusable after a few days, causing cluster failure with no inâ€‘product workaround other than terminating the EC2 instance. This blocks core cluster operation for all workloads.",
+        "priority_rationale": "Node becomes unusable after a few days, causing cluster failure with no in‑product workaround other than terminating the EC2 instance. This blocks core cluster operation for all workloads.",
         "suggested_assignee_class": "reliability team",
         "suggested_next_steps": [
           "Collect disk usage metrics (df, du) on affected nodes over time to identify which directories fill up.",
@@ -3322,7 +3322,7 @@
           "Check kubelet's image garbage collection and log rotation settings; adjust defaults if needed.",
           "Create a CI test that simulates prolonged pod creation/pull on m3.large and asserts node remains healthy."
         ],
-        "triage_summary": "AWS nodes (m3.large) exhaust /mnt/ephemeral space after a few days, causing node failure and requiring instance termination. Similar historical reports point to kubelet diskâ€‘pressure handling and default disk sizing on AWS. High priority; assign to reliability team for investigation and fix.",
+        "triage_summary": "AWS nodes (m3.large) exhaust /mnt/ephemeral space after a few days, causing node failure and requiring instance termination. Similar historical reports point to kubelet disk‑pressure handling and default disk sizing on AWS. High priority; assign to reliability team for investigation and fix.",
         "grounding": {
           "component_source": "reliability",
           "similar_issue_refs": [
@@ -3386,7 +3386,7 @@
           {
             "number": 26209,
             "similarity": 0.847,
-            "relevance_note": "Duplicate of the flaky exposeâ€‘rc test failure."
+            "relevance_note": "Duplicate of the flaky expose‑rc test failure."
           },
           {
             "number": 23389,
@@ -3396,23 +3396,23 @@
           {
             "number": 24619,
             "similarity": 0.839,
-            "relevance_note": "Another recent report of the exposeâ€‘rc flake, confirming persistence."
+            "relevance_note": "Another recent report of the expose‑rc flake, confirming persistence."
           }
         ],
-        "expected_resolution_summary": "Stabilize the Kubectl expose rc e2e test by adjusting timing, adding explicit waits, or fixing the underlying race condition; typical fix time 1â€‘3 weeks.",
+        "expected_resolution_summary": "Stabilize the Kubectl expose rc e2e test by adjusting timing, adding explicit waits, or fixing the underlying race condition; typical fix time 1‑3 weeks.",
         "expected_resolution_lower_days": 0.6,
         "expected_resolution_upper_days": 561.4,
         "resolution_bucket": "months",
         "resolution_confidence_pct": 24.5,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "Flaky test does not block user workflows but degrades CI reliability and can hide regressions; a workaround (reâ€‘run) exists, so not high priority.",
+        "priority_rationale": "Flaky test does not block user workflows but degrades CI reliability and can hide regressions; a workaround (re‑run) exists, so not high priority.",
         "suggested_assignee_class": "test team",
         "suggested_next_steps": [
           "Reproduce the flake locally with increased logging to capture the race window.",
           "Add an explicit wait or retry after exposing the RC to ensure the service is created before verification.",
-          "Investigate recent changes in testâ€‘infra or kubectl that may have introduced timing regressions.",
-          "Update the test to use a more robust readiness check instead of a fixed 1â€‘second sleep.",
+          "Investigate recent changes in test‑infra or kubectl that may have introduced timing regressions.",
+          "Update the test to use a more robust readiness check instead of a fixed 1‑second sleep.",
           "Mark the issue as duplicate of the most recent similar flake (e.g., #25657) if confirmed."
         ],
         "triage_summary": "A flaky e2e test for 'kubectl expose' on replication controllers fails ~10% of the time, likely due to a timing race. Multiple recent similar reports exist. Assign to the test team, medium priority, with a resolution window of days to weeks.",
@@ -3487,23 +3487,23 @@
             "relevance_note": "General discussion of unhelpful timeout errors in e2e tests, relevant for diagnosing this flake."
           }
         ],
-        "expected_resolution_summary": "Typical e2e test flake; expect investigation, possible test fix or improved skip logic within 1â€‘3 weeks.",
+        "expected_resolution_summary": "Typical e2e test flake; expect investigation, possible test fix or improved skip logic within 1‑3 weeks.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 53.1,
         "resolution_bucket": "hours",
         "resolution_confidence_pct": 54.2,
         "resolution_interval_conformal": null,
         "priority_guess": "medium",
-        "priority_rationale": "The CI build is broken but can be unblocked by skipping the test, providing a workaround. The issue impacts developer productivity and should be addressed promptly, but it is not a crash or dataâ€‘loss scenario.",
+        "priority_rationale": "The CI build is broken but can be unblocked by skipping the test, providing a workaround. The issue impacts developer productivity and should be addressed promptly, but it is not a crash or data‑loss scenario.",
         "suggested_assignee_class": "test-infra team",
         "suggested_next_steps": [
-          "Reâ€‘run the failing service e2e test locally to capture logs and identify the timeout point.",
+          "Re‑run the failing service e2e test locally to capture logs and identify the timeout point.",
           "Identify recent changes to the service test or underlying infrastructure that could cause the timeout.",
           "Determine if the test needs a more robust wait condition or a legitimate skip annotation.",
-          "If the test is flaky, add a reliable retry or backâ€‘off mechanism, or file a separate issue to improve the test harness.",
+          "If the test is flaky, add a reliable retry or back‑off mechanism, or file a separate issue to improve the test harness.",
           "Update CI to automatically skip the test only when the underlying issue is confirmed, and reference the fix in the PR."
         ],
-        "triage_summary": "Service e2e tests are timing out, causing CI failures. The issue mirrors several prior flaky test reports (#7008, #20631, #10322). A temporary skip works, but a permanent fix is needed. Assign to testâ€‘infra team with medium priority.",
+        "triage_summary": "Service e2e tests are timing out, causing CI failures. The issue mirrors several prior flaky test reports (#7008, #20631, #10322). A temporary skip works, but a permanent fix is needed. Assign to test‑infra team with medium priority.",
         "grounding": {
           "component_source": "test-infra",
           "similar_issue_refs": [
@@ -3569,7 +3569,7 @@
             "relevance_note": "Edge case where empty env values are rejected, highlighting need for robust --env handling."
           }
         ],
-        "expected_resolution_summary": "Add proper multi-flag --env support to kubectl run; design, implement, and test. Typically 1â€“2 weeks of work.",
+        "expected_resolution_summary": "Add proper multi-flag --env support to kubectl run; design, implement, and test. Typically 1–2 weeks of work.",
         "expected_resolution_lower_days": 0.1,
         "expected_resolution_upper_days": 162.7,
         "resolution_bucket": "hours",
@@ -3667,7 +3667,7 @@
           "Update the OpenAPI/Swagger spec and documentation to reflect the correct error behavior.",
           "Reference #11181 and #11218 to ensure the fix addresses the same root cause."
         ],
-        "triage_summary": "POSTing a namespaced resource without a namespace currently yields a 403 Forbidden error, which is misleading. Similar reports (#11181, #11218, #12446) indicate a broader validation issue in the apiserver. This is a mediumâ€‘priority regression requiring a fix to the error handling logic, tests, and documentation.",
+        "triage_summary": "POSTing a namespaced resource without a namespace currently yields a 403 Forbidden error, which is misleading. Similar reports (#11181, #11218, #12446) indicate a broader validation issue in the apiserver. This is a medium‑priority regression requiring a fix to the error handling logic, tests, and documentation.",
         "grounding": {
           "component_source": "apiserver",
           "similar_issue_refs": [
@@ -3733,7 +3733,7 @@
             "relevance_note": "General example of adding logs for debugging purposes in the codebase."
           }
         ],
-        "expected_resolution_summary": "Implement optional verbose logging for AWS cloudâ€‘provider API calls (e.g., V(2)/V(4) flag). Expected effort is a few days to add log statements and tests.",
+        "expected_resolution_summary": "Implement optional verbose logging for AWS cloud‑provider API calls (e.g., V(2)/V(4) flag). Expected effort is a few days to add log statements and tests.",
         "expected_resolution_lower_days": 0.3,
         "expected_resolution_upper_days": 344.5,
         "resolution_bucket": "days",
@@ -3743,12 +3743,12 @@
         "priority_rationale": "Feature request for additional diagnostic logging; does not block any functionality and has a clear workaround (manual debugging). Impact is limited to developers needing deeper insight, so it is low priority.",
         "suggested_assignee_class": "cloudprovider team",
         "suggested_next_steps": [
-          "Create a design doc proposing a new log level flag (e.g., --cloud-provider-aws-log-level) and discuss with SIGâ€‘Cloud.",
-          "Add V(2) or V(4) log statements around each AWS SDK call in the AWS cloudâ€‘provider implementation.",
+          "Create a design doc proposing a new log level flag (e.g., --cloud-provider-aws-log-level) and discuss with SIG‑Cloud.",
+          "Add V(2) or V(4) log statements around each AWS SDK call in the AWS cloud‑provider implementation.",
           "Write unit tests that verify the log output appears when the flag is enabled.",
           "Update the documentation to describe the new logging option and its intended use cases."
         ],
-        "triage_summary": "Request to add optional verbose logging for AWS API calls to aid debugging of excessive request loops. Similar prior work exists for generic client debugging and AWS rateâ€‘limiter discussions. Low priority feature for the cloudprovider team.",
+        "triage_summary": "Request to add optional verbose logging for AWS API calls to aid debugging of excessive request loops. Similar prior work exists for generic client debugging and AWS rate‑limiter discussions. Low priority feature for the cloudprovider team.",
         "grounding": {
           "component_source": "cloudprovider",
           "similar_issue_refs": [

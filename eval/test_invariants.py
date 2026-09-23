@@ -656,6 +656,43 @@ def test_cassette_provenance_matches_current_artifacts() -> None:
     )
 
 
+def _mojibake_strings(obj: object, path: str = "") -> list[str]:
+    """Paths of strings that are UTF-8 text mis-decoded as cp1252 and re-saved (e.g. an em-dash
+    stored as 'â€”'). Detected by reversibility: such a string re-encodes to cp1252 and then
+    decodes cleanly as UTF-8 into something different. Genuine non-ASCII text ('é', '—')
+    fails that round-trip and is left alone."""
+    if isinstance(obj, str):
+        try:
+            return [path] if obj.encode("cp1252").decode("utf-8") != obj else []
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            return []
+    if isinstance(obj, dict):
+        return [p for k, v in obj.items() for p in _mojibake_strings(v, f"{path}/{k}")]
+    if isinstance(obj, list):
+        return [p for i, v in enumerate(obj) for p in _mojibake_strings(v, f"{path}[{i}]")]
+    return []
+
+
+def test_cassette_and_checkpoint_have_no_mojibake() -> None:
+    """2026-09-23: a data-cleanup rewrite (ad7529f) read eval_cassette.json and
+    recording_checkpoint.json with the Windows default encoding (cp1252) and wrote them back
+    as UTF-8, turning every em-dash/arrow/non-breaking hyphen in 48 entries' stored requests,
+    responses and checkpoint plans into mojibake. Cache KEYS were untouched, so replay still
+    "worked" -- it just served corrupted plan text to the judge and the grounding checks.
+    Nothing caught it; it was found by accident while writing a prompt-parity test. This is
+    that check. Repaired in the same commit this test landed in (verified byte-exact against
+    the pre-corruption history at 71bd580 where it exists)."""
+    for rel in ("eval/cassettes/eval_cassette.json", "eval/cassettes/recording_checkpoint.json"):
+        path = ROOT / rel
+        if not path.exists():
+            continue
+        bad = _mojibake_strings(json.loads(path.read_text(encoding="utf-8")))
+        assert not bad, (
+            f"{rel}: {len(bad)} string(s) look like UTF-8 mis-decoded as cp1252 and re-saved "
+            f"(mojibake), e.g. {bad[:5]}. Something rewrote this file without encoding='utf-8'."
+        )
+
+
 def _eval_set_hash_guard() -> str:
     """Compute eval_set.jsonl's sha256 and return a loud failure message if it has drifted.
 

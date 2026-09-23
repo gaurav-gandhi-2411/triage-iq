@@ -210,3 +210,33 @@ actually scheduled) — not something to do as a side effect of one CVE bump.
 `sentence-transformers` as its own reviewed change; (2) then bump `requirements.lock`'s
 `datasets` pin to `>=5.0.1` and drop this suppression — no source code change needed since
 the package isn't imported directly.
+
+### CVE-2026-63374 / CVE-2026-64847 — anyio TLS IDNA-2003 host check; process-pool stderr hang
+
+- **Suppressed since:** 2026-09-23 (surfaced by pip-audit on PR #131; newly published, not
+  caused by that PR's diff)
+- **Affected package:** `anyio==4.13.0` (`requirements.lock`; transitive via
+  starlette/httpx/uvicorn — never imported by TriageIQ's own code)
+- **Fix version:** `anyio>=4.14.2` (published; GHSA-82r6-8w77-94w6, GHSA-5p39-cfhj-2xmp)
+
+**Why suppressed:**
+- CVE-2026-63374: `connect_tcp()`/`TLSStream.wrap()` can validate a **non-ASCII** host name
+  after IDNA-2003 conversion, so an attacker who hijacks a connection to an internationalized
+  domain can present a certificate for the different ASCII name. Checked directly: `grep -rn
+  anyio src/` returns zero matches. Every outbound LLM client is the **synchronous**
+  `groq.Groq` (`src/triage_iq/api/app.py`, `models/triage.py`, `evaluation/triage_eval.py`);
+  sync httpx does not route through anyio's TLS stream. Every outbound host is a hardcoded
+  ASCII constant (`api.groq.com` via the SDK default, `api.github.com`, `localhost` Ollama),
+  and no request input is ever used as a connection host.
+- CVE-2026-64847: anyio **process-pool** workers (`anyio.to_process`) can block on an
+  undrained stderr pipe. TriageIQ never uses anyio process pools; `to_process` appears
+  nowhere in `src/`, `eval/` or `scripts/`.
+
+**Why not fixed immediately:** Same blocker as PYSEC-2026-3716 above: any `pip-compile`
+regen, including `--upgrade-package anyio`, re-resolves the drifted `sentence-transformers`
+floor and pulls in the deferred 2.7.0→5.7.0 / transformers 4→5 refresh. Confirmed directly
+2026-09-23 in a `python:3.11-slim` container: the scoped regen also moved `groq` 1.2.0→1.7.0
+and `sentence-transformers` 2.7.0→5.7.0. Hand-editing the lock is not allowed.
+
+**Revisit trigger:** The same drift resolution as PYSEC-2026-3716. Once the lock regenerates
+cleanly, anyio lands at ≥4.14.2 and both suppressions drop.

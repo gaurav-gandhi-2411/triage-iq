@@ -362,3 +362,28 @@ Artifacts: `scripts/measure_attribution_token_cost.py`, `reports/attribution_tok
   production" (an infrastructure action, explicitly gated to Phase 5 with its own "do not
   deploy" instruction). Doing both together would make the model swap live before the
   re-baseline, contradicting ADR-0052/the working agreement's own sequencing.
+
+## 2026-09-23 correction — paired test on the common population: k8s's gain is not significant
+
+**Text above kept unedited.** "Strictly better on standalone top-3 for both repos" was a point
+estimate. `scripts/measure_classifier_old_vs_new_paired.py` scores both models on identical
+fresh test rows (`reports/classifier_old_vs_new_paired_2026-09-23.json`, exact McNemar on the
+discordant rows):
+
+| Repo | Metric | Old | New | Paired Δ (95% CI) | p |
+|---|---|---:|---:|---:|---:|
+| vscode (n=423) | top-3 | 68.09% | 85.82% | **+17.73pp** [+13.06, +22.40] | <0.001 |
+| vscode | top-1 | 54.61% | 69.98% | **+15.37pp** [+10.35, +20.38] | <0.001 |
+| vscode | macro-F1 (top-1) | 0.340 | 0.517 | — | — |
+| k8s (n=671) | top-3 | 83.61% | 85.99% | +2.38pp [−0.56, +5.33] | 0.137 |
+| k8s | top-1 | 57.53% | 54.84% | −2.68pp [−6.68, +1.32] | 0.215 |
+| k8s | macro-F1 (top-1) | 0.415 | 0.427 | — | — |
+
+vscode's improvement is large and significant, and is mostly taxonomy coverage: 17.97% of its
+test rows carry a label the old 28-class model could never emit. k8s is **not distinguishable
+from no change** on either metric (5.51% out-of-old-taxonomy). Claim for k8s: coverage 35 → 47
+classes (0 test labels now unreachable, previously 37), with accuracy statistically unchanged.
+
+Separately, the model was published to GCS and `MANIFEST.sha256` updated on 2026-09-23 (the
+Phase 5 step deferred above), after the re-baseline (ADR-0061). Serving changes only on the next
+deploy.

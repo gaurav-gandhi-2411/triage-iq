@@ -12,6 +12,7 @@ Usage:
 import argparse
 import hashlib
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -36,6 +37,10 @@ PROCESSED_DIR = ROOT / "data" / "processed"
 EVAL_SET_PATH = ROOT / "eval" / "eval_set.jsonl"
 CASSETTE_PATH = ROOT / "eval" / "cassettes" / "eval_cassette.json"
 BASELINE_PATH = ROOT / "reports" / "eval_baseline.json"
+
+# Same env knob / default as Settings.triage_max_tokens (src/triage_iq/config.py) -- see its
+# comment for why this is no longer a bare TriageAssistant constructor default.
+TRIAGE_MAX_TOKENS = int(os.environ.get("TRIAGE_MAX_TOKENS", "2048"))
 
 REPO_MAP: dict[str, str] = {
     "microsoft/vscode": "microsoft_vscode",
@@ -92,6 +97,7 @@ def _load_models(
         train_df=train_df,
         groq_api_key=CI_API_KEY,
         cache=cassette,
+        max_tokens=TRIAGE_MAX_TOKENS,
     )
     return {
         "classifier": classifier,
@@ -145,6 +151,13 @@ def compute_scores(
     # numeric interval it was generated alongside? Same zero-extra-cost, deterministic-check
     # pattern as fabrication_rate above -- reads fields TriagePlan already produces.
     repo_prose_contradicts: dict[str, list[bool]] = {repo: [] for repo in REPO_MAP}
+    # ADR-0058 2026-09-23 addendum (REPORT ONLY): did the LLM's predicted_component depart from
+    # the classifier's top-1? Top-3 grounding passes almost any plausible guess when the
+    # classifier's top-3 is flat (#311836); departure from top-1 was the stronger error signal
+    # on the 2026-09-23 recording (6/64 departures, 6/6 wrong vs gold). Case-insensitive,
+    # whitespace-stripped comparison. Zero extra LLM calls -- reads classifier_top3 from the
+    # metadata triage_with_metadata already returns.
+    repo_departed: dict[str, list[bool]] = {repo: [] for repo in REPO_MAP}
 
     for issue in issues:
         repo = issue["repo"]
@@ -165,6 +178,8 @@ def compute_scores(
 
         plan, _meta = assistant.triage_with_metadata(row)
         repo_grounded[repo].append(plan.grounding_status.all_grounded)
+        top1 = str(_meta["classifier_top3"][0]["label"]).strip().lower()
+        repo_departed[repo].append(str(plan.predicted_component).strip().lower() != top1)
         consistency = verify_resolution_consistency(
             plan.expected_resolution_summary,
             plan.expected_resolution_lower_days,
@@ -241,6 +256,9 @@ def compute_scores(
             "floor_fail_rate": round(float(np.mean(floor_fails)), 4) if n else 0.0,
             "fabrication_rate": round(fabrication_rate, 4),
             "prose_number_contradiction_rate": round(prose_number_contradiction_rate, 4),
+            "component_departed_from_top1_rate": (
+                round(float(np.mean(repo_departed[repo])), 4) if n else 0.0
+            ),
         }
 
     overall: dict[str, Any] = {
@@ -367,6 +385,14 @@ def _write_baseline(scores: dict, path: Path = BASELINE_PATH) -> None:
                 "currently material, kept as a standing zero-cost check rather than a hard gate "
                 "sized to a single historical anecdote).",
             },
+            "component_departed_from_top1_rate": {
+                "definition": "fraction of plans whose predicted_component (case-insensitive) is "
+                "not the classifier's top-1 label, regardless of any declared model_override. "
+                "Complements fabrication_rate: top-3 membership passes almost any plausible guess "
+                "when the classifier's top-3 is flat (vscode #311836, ADR-0058 2026-09-23 addendum).",
+                "gate": "REPORT ONLY (GG decision, 2026-09-23): measures classifier agreement, not "
+                "fabrication -- a correct top-2 pick also counts. Not gated at n=11/53.",
+            },
         },
     }
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -397,7 +423,9 @@ def main() -> None:
         print(
             f"    floor_fail_rate: {data['floor_fail_rate']:.4f}   "
             f"fabrication_rate: {data['fabrication_rate']:.4f}   "
-            f"prose_number_contradiction_rate: {data['prose_number_contradiction_rate']:.4f}"
+            f"prose_number_contradiction_rate: {data['prose_number_contradiction_rate']:.4f}   "
+            f"component_departed_from_top1_rate: {data['component_departed_from_top1_rate']:.4f}"
+            " (report only)"
         )
     print()
     print(f"  overall: n={scores['overall']['n']}, mean={scores['overall']['mean']:.4f}/15")

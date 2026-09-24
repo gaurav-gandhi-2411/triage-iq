@@ -2,12 +2,70 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sqlite3
 import threading
 from pathlib import Path
 from typing import Any
 
-_SCHEMA_VERSION = "v1"
+# v2 (2026-08-27): cache-key formula now canonicalizes embedded floats before hashing
+# (see _canonicalize_floats). This invalidates every key computed under v1 -- deliberate,
+# not a bug: v1 entries were reachable only by coincidence of matching library-version
+# floating-point output byte-for-byte, which a 1-ULP difference between environments (a
+# LightGBM/sklearn/pandas version difference on the resolution-predictor -> conformal-
+# adjustment path, confirmed via a three-environment control experiment) silently broke.
+# Bumping the version makes the invalidation an explicit, intentional cutover rather than
+# a silent drift no one asked for.
+_SCHEMA_VERSION = "v2"
+
+# 6 decimal places: the fields that end up embedded in hashed message text are day counts
+# (expected_resolution_lower_days/upper_days, observed up to the low hundreds),
+# percentages (component_confidence, resolution_confidence_pct, similarity scores, all in
+# [0, 1] or [0, 100]), and similar small-magnitude values. None of these carry meaningful
+# precision below 1e-6 -- a business estimate of "0.5 to 250 days" was never precise to a
+# microsecond of a day. 6dp absorbs the proven 1-ULP-class noise (a real reproduced case:
+# 0.0356567072910697 vs 0.03565670729106969, identical at 6dp: 0.035657 both) while still
+# distinguishing any materially different prediction (anything differing at the 1st-4th
+# decimal, which is the scale any real regression in this domain would show up at) and any
+# real prompt-template or retrieval-result change (those aren't numeric drift at all --
+# different text/structure hashes differently regardless of float rounding).
+_FLOAT_CANONICALIZATION_DECIMALS = 6
+_FLOAT_PATTERN = re.compile(r"-?\d+\.\d+(?:[eE][+-]?\d+)?")
+
+
+def _canonicalize_floats(text: str) -> str:
+    """Round every float literal embedded in `text` to a fixed decimal precision.
+
+    Operates on message content strings, not structured JSON values -- the plans/prompts
+    hashed here embed a fully-serialized JSON plan as a *string* inside a chat message, so
+    the floats to canonicalize are text digits, not Python float objects json.dumps could
+    round natively.
+    """
+
+    def _round_match(m: re.Match[str]) -> str:
+        try:
+            value = float(m.group(0))
+        except ValueError:
+            return m.group(0)
+        return repr(round(value, _FLOAT_CANONICALIZATION_DECIMALS))
+
+    return _FLOAT_PATTERN.sub(_round_match, text)
+
+
+def _canonicalize_messages(messages: list[dict]) -> list[dict]:
+    """Return `messages` with every string content field float-canonicalized.
+
+    Non-string content (unused today, but message content can technically be a list of
+    content parts per the OpenAI-style schema) is passed through unchanged rather than
+    guessed at.
+    """
+    canonicalized = []
+    for m in messages:
+        content = m.get("content")
+        if isinstance(content, str):
+            m = {**m, "content": _canonicalize_floats(content)}
+        canonicalized.append(m)
+    return canonicalized
 
 _CREATE_TABLE = """
 CREATE TABLE IF NOT EXISTS llm_cache (
@@ -57,12 +115,19 @@ class LLMCache:
         max_tokens: int = 1024,
         **extra: Any,
     ) -> str:
-        """SHA-256 of a canonical JSON payload that uniquely identifies a request."""
+        """SHA-256 of a canonical JSON payload that uniquely identifies a request.
+
+        Message content is float-canonicalized first (see _canonicalize_floats) so that
+        numeric noise below _FLOAT_CANONICALIZATION_DECIMALS precision -- e.g. a 1-ULP
+        difference in a resolution-predictor output between library versions -- cannot by
+        itself invalidate a cache/cassette entry. A materially different prediction, a
+        changed prompt template, or a different retrieval result still changes the hash.
+        """
         payload: dict[str, Any] = {
             "schema_version": _SCHEMA_VERSION,
             "provider": provider,
             "model": model,
-            "messages": messages,
+            "messages": _canonicalize_messages(messages),
             "temperature": temperature,
             "max_tokens": max_tokens,
         }

@@ -128,3 +128,127 @@ discovered as an accident after the fact — but together they mean:
   baseline exists, `eval/cassettes/eval_cassette.json` and `reports/eval_baseline.json` get
   re-recorded against it and become the new comparison point for everything after. Nothing
   before it is comparable to anything after it, by construction, and that is intentional.
+
+## Update 2026-09-05 — Resolved: the baseline this ADR called for now exists
+
+**Note on how this update was written:** the session that produced it worked in a long-lived
+worktree branch that forked before this ADR's 2026-08-29 update and never merged `main`
+again until closing out — it independently drafted a second "ADR-0052" file
+(`0052-no-valid-eval-baseline-resolution.md`) documenting the same resolution below without
+knowing this file already existed. Caught and reconciled by merging `main` before opening any
+PR; the duplicate file is deleted, its content folded in here. Recorded plainly per this
+project's own honest-documentation standard — a near-duplicate-ADR mistake is exactly the
+kind of process gap worth naming, not quietly absorbing.
+
+**No step could produce a trustworthy baseline on its own — each was a precondition for the
+next:**
+
+- **ADR-0054** found the model-selection basis itself (parse-success "44/44 vs 29/31") was
+  never traceable to a committed artifact and didn't match the recovered raw data (20/20 vs
+  19/20) — selection was re-grounded on truncation headroom instead.
+- **ADR-0055** found the early-termination defect was substantially a wire-schema defect
+  (asking the model to emit 7 fields nothing downstream consumes), not a model quality
+  difference — fixed by stripping those fields from the wire schema (18 → 11 required).
+- **ADR-0056** found the eval gold set's component labels were drawn from a broader taxonomy
+  than the deployed classifier could ever emit — training-data staleness, not genuine
+  rarity — making the existing "ungrounded" signal unreliable for a material fraction of
+  vscode's eval population.
+- **ADR-0057** shipped a retrain resolving the taxonomy gap, found the previously-reported
+  "accuracy regression" didn't survive an apples-to-apples remeasurement (the old classifier
+  is worse on a fair comparison, not better), and landed `declared_attribution` (ADR-0020)
+  properly into the wire schema.
+- **ADR-0058** proved the grounding/fabrication gate with a negative control (it had only
+  ever been observed passing, never failing, until this), sized the vscode ratchet honestly
+  given real observed sampling variance, and resolved the two residual gate failures found
+  while closing this ADR (a stale `_RECORDED_ECE` constant, and `MANIFEST.sha256` drift
+  pending the Phase 4 GCS publish — see that ADR for both).
+
+**Baseline set from a clean, complete recording** (`eval/record_cassettes.py`, 34
+quota-paced iterations over ~14 hours real time, `openai/gpt-oss-120b`, 47-class retrained
+classifier, 12-required-field schema with `declared_attribution` restored,
+`TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1`):
+
+| Metric | vscode | k8s | Overall |
+|---|---:|---:|---:|
+| n | 11 | 53 | 64 |
+| Judge mean (/15) | 12.4545 (83.0%) | 12.0189 (80.1%) | 12.0938 (80.6%) |
+| Fabrication rate | 0.0% | 0.0% | 0.0% (0/64) |
+| Floor-fail rate | 0.0% | 7.55% | — |
+| Component-ungrounded | 0/11 | 0/53 | 0/64 |
+| Fallback plans | 0 | 0 | 0/64 |
+| Truncated completions | 0 | 0 | 0/64 |
+| Permanently early-terminated | 0 | 0 | 0/64 |
+| `declared_attribution` non-null | 11/11 | 53/53 | 64/64 (100%) |
+
+**Recording quality: strictly better than the prior (invalid) attempt.** The previous
+64-issue re-record (attribution off, pre-ADR-0057 schema) resolved 59/64 with 5 permanently
+early-terminated. This recording resolved 64/64 with zero early terminations, zero fallback
+plans, zero truncations.
+
+Written to `reports/eval_baseline.json` (`eval/run_eval.py --update-baseline`). Not a
+before/after regression check against the prior baseline — model, classifier, schema, and
+prompt all changed simultaneously; there is no valid prior baseline this compares against
+(that was this ADR's entire premise). This is a fresh floor, not a delta.
+
+**`eval/test_invariants.py`'s `_GROUNDING_BASELINE` required NO numeric change.** Its
+recorded values (0 ungrounded, n=53/n=11) already matched this recording's real result
+exactly, and `eval_set_hash` is unchanged — only the provenance comment was stale, attributing
+the constant to the now-invalid prior measurement.
+
+**What becomes easier:** future model/prompt/schema changes have a real floor to compare
+against, and the specific chain of unverified-precedent problems this ADR closes (parse-
+success figures with no artifact, a taxonomy gap masquerading as fabrication, a stale
+grounding ratchet silently failing since 2026-08-06) has a documented, one-time fix rather
+than being rediscovered piecemeal again. See ADR-0058 for the gate-proof and ratchet-sizing
+work that followed directly from this baseline, including the vscode statistical-power
+finding (n≈73 needed for a 5%-ceiling hard gate) and the two residual gate fixes.
+
+**What stays open:** everything ADR-0057 already listed as invalidated-but-not-yet-edited
+(README claims, `docs/architecture/adr/0044`'s cited figures) — none of those are edited by
+this update either, per the working agreement's explicit "do not edit these docs until
+told."
+
+## 2026-09-23 correction — the "clean, complete recording" above had the OLD classifier in the loop
+
+**The 2026-09-05 baseline table above is superseded. The text above is kept unedited as the
+record of what was believed at the time.** That recording is the ADR-0059 incident: it was run
+from the main repo checkout, whose `data/models` still held the **pre-retrain** component
+classifier. Every prompt embedded the old classifier's `classifier_top3`, so the claim above
+("47-class retrained classifier") is false for that recording, and its judge mean (12.0938),
+0/64 ungrounded, and every other figure in that table measured a configuration that never
+shipped. Detection had no way to fire: the checkpoint key then covered only
+`(issue_id, model, prompt_hash)`, and a classifier retrain changes neither.
+
+**Superseding recording (2026-09-23):** `openai/gpt-oss-120b`, prompt_hash `5f845ce8697e3e7f`
+(attribution ON), artifact_hash `55559dd93dc2a65d` (retrained 47-class classifier, verified
+against `EXPECTED_ARTIFACT_HASHES.json` at the top of every run and stamped per cassette
+entry), judged by local `qwen3:8b`. Cassette commit `444ef64`, sha256 `f08e296d…`. Scores from
+strict replay, recorded in `reports/eval_baseline_candidate_2026-09-23.json`:
+
+| Metric | vscode | k8s | Overall |
+|---|---:|---:|---:|
+| n | 11 | 53 | 64 |
+| Judge mean (/15) | 12.2727 | 11.8679 | 11.9375 |
+| Fabrication rate (component ungrounded) | 0/11 | 1/53 (1.89%) | 1/64 |
+| Floor-fail rate | 0.0% | 5.66% | — |
+| Fallback plans | 0 | 0 | 0/64 |
+| Truncated completions (`finish_reason` present on 64/64, all `stop`) | 0 | 0 | 0/64 |
+| Early-terminated | 0 | 0 | 0/64 |
+| `declared_attribution` non-null | 11/11 | 53/53 | 64/64 |
+
+Against the superseded run (paired, same 64 issues, same prompt_hash): pooled −0.156
+(95% CI [−0.51, +0.20]); vscode −0.18 ([−0.97, +0.60]); k8s −0.15 ([−0.55, +0.25]); 61/64
+identical `predicted_component`. **Not distinguishable from zero**, and inside the ADR-0019
+re-record jitter bands (vscode 0.45, k8s 0.22). Swapping the classifier moved the judge mean
+by an amount this eval cannot resolve.
+
+**The k8s grounding hard gate now fails, 1 > baseline 0:** `k8s-12665` predicted `networking`
+(gold `ha`), outside top-3 `[kubectl, usability, app-lifecycle]`, with a declared
+`model_override` and a stated reason. This is the gate catching a disclosed, wrong override.
+The ADR-0052 "0/53" it was ratcheted to came from the old-classifier recording.
+`_GROUNDING_BASELINE` and `reports/eval_baseline.json` are **not** updated — writing a new
+baseline is GG's decision (STOP GATE 1).
+
+A separate data-integrity defect was found and repaired before scoring: `ad7529f`'s cleanup
+wrote mojibake into 48 entries' stored text (ADR-0060, "Incident"). The scores above are from
+the repaired cassette.

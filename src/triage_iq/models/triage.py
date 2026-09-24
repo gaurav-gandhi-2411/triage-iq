@@ -14,12 +14,88 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from triage_iq.model_config import TRIAGE_MODEL
-from triage_iq.models.grounding import verify_plan_grounding
+from triage_iq.model_config import (
+    TRIAGE_MODEL,
+    TRIAGE_PRICE_COMPLETION_PER_MTOK,
+    TRIAGE_PRICE_PROMPT_PER_MTOK,
+)
+from triage_iq.models.grounding import compute_grounding_status
 
 logger = logging.getLogger(__name__)
+
+
+class TruncatedCompletionError(RuntimeError):
+    """Raised when Groq's finish_reason == "length" -- the completion was cut off by
+    max_tokens mid-generation, not a malformed-JSON parse failure.
+
+    2026-08-28: this is the distinct failure mode that hid the actual defect behind this
+    entire engagement -- a truncated completion used to fail silently as a generic JSON
+    parse error, indistinguishable from the model genuinely emitting malformed JSON, so it
+    was never possible to tell "the model is bad at JSON" apart from "max_tokens is too
+    small" without manually inspecting raw content. Raised inside _groq_completion, before
+    the caller ever gets a (content, usage) tuple back -- a truncated completion can
+    therefore never reach cache.set() and can never enter a committed cassette.
+    """
+
+    def __init__(
+        self,
+        completion_tokens: int,
+        max_tokens: int,
+        content_preview: str,
+        prompt_tokens: int = -1,
+    ) -> None:
+        self.completion_tokens = completion_tokens
+        self.max_tokens = max_tokens
+        self.content_preview = content_preview
+        # 2026-08-28 (Part B): a truncated completion still consumed real, billable
+        # tokens -- the degrade path built on this exception (triage.py's
+        # _call_llm_verbose) needs prompt_tokens to report accurate cost/usage instead
+        # of silently zeroing it out. Optional/defaulted so this stays additive for any
+        # other caller.
+        self.prompt_tokens = prompt_tokens
+        super().__init__(
+            f"Completion truncated: finish_reason='length' at completion_tokens="
+            f"{completion_tokens} (max_tokens={max_tokens}). Raise max_tokens, not a "
+            f"retry -- retrying at the same cap reproduces the same truncation. "
+            f"Content tail: ...{content_preview[-80:]!r}"
+        )
+
+
+class SchemaValidationError(RuntimeError):
+    """Raised when Groq's structured-output decoder ACCEPTS our response_format as a
+    valid schema but the model's specific completion for THIS request doesn't satisfy
+    it -- a 400 with body.error.code == "json_validate_failed" (a genuine,
+    syntactically-complete JSON object that omits a required field or emits a
+    malformed key, NOT the same thing as response_format itself being rejected --
+    see _groq_completion's ordering of these two checks).
+
+    2026-09-03 (ADR-0055 Part P1a): this error shape matched NO exception handling
+    anywhere in the call chain before this fix -- not TruncatedCompletionError, not
+    the response_format-rejection branch (Groq's error text for this case never
+    contains "response_format"), not a >=500 retry. It propagated unhandled through
+    _call_llm_verbose, through TriageAssistant.triage_with_metadata (no catch), to
+    app.py's /triage handler's broad except-Exception, which returns HTTP 500. This
+    means the exact defect ADR-0055 found and fixed (7 forced-required fields the
+    model reliably dropped a subset of) was, before that fix, generating live 500s
+    in production every time it fired -- an outage generator hidden behind the
+    already-dead retired model, not merely a recording-time inconvenience.
+
+    Raised inside _groq_completion, mirroring TruncatedCompletionError -- caught in
+    _call_llm_verbose and degraded to a clean fallback plan (llm_status=
+    "degraded_schema_invalid") before it can reach a caller as an unhandled
+    exception.
+    """
+
+    def __init__(self, groq_error_code: str, detail: str, prompt_tokens: int = -1) -> None:
+        self.groq_error_code = groq_error_code
+        self.prompt_tokens = prompt_tokens
+        super().__init__(
+            f"Groq schema validation rejected the completion (code={groq_error_code}): "
+            f"{detail}"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Pydantic output schema
@@ -27,6 +103,12 @@ logger = logging.getLogger(__name__)
 
 
 class SimilarIssue(BaseModel):
+    # extra="forbid" on every nested model here (2026-08-28): required for Groq's native
+    # `strict: true` JSON-schema-constrained output, which rejects a schema unless
+    # additionalProperties:false is set on every object -- Pydantic's model_json_schema()
+    # doesn't set this by default on nested $defs.
+    model_config = ConfigDict(extra="forbid")
+
     number: int
     similarity: float = Field(ge=0.0, le=1.0)
     relevance_note: str
@@ -40,6 +122,8 @@ class ConformalIntervalResult(BaseModel):
     This is marginal (not conditional) coverage; temporal data may violate exchangeability.
     See ADR-0010.
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     lower_days: float = Field(ge=0.0)
     upper_days: float = Field(ge=0.0)
@@ -56,6 +140,8 @@ class GroundingAttribution(BaseModel):
     iteration. See ADR-0015.
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     component_source: str
     similar_issue_refs: list[int]
 
@@ -68,6 +154,8 @@ class GroundingStatus(BaseModel):
     request — not verification against world/ground truth.
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     component_grounded: bool
     component_reason: str
     similar_issue_refs: list[int]
@@ -78,6 +166,8 @@ class GroundingStatus(BaseModel):
 class DeclaredAttribution(BaseModel):
     """LLM-emitted source attribution (elicited by the prompt — contrast GroundingAttribution,
     a post-hoc reconstruction of the same plan; ADR-0015/ADR-0020)."""
+
+    model_config = ConfigDict(extra="forbid")
 
     component_source: Literal["classifier_top3", "model_override"]
     component_override_reason: str = ""
@@ -94,6 +184,8 @@ class StageAbstention(BaseModel):
     "wide_interval").
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     abstained: bool
     reason: str = ""
 
@@ -105,6 +197,8 @@ class AbstentionStatus(BaseModel):
     signal anywhere in the pipeline to threshold, unlike component_confidence (ADR-0004)
     or the CQR interval (ADR-0010). See ADR-0021 for why that gap is flagged, not gated.
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     component: StageAbstention
     resolution: StageAbstention
@@ -130,20 +224,25 @@ class TriagePlan(BaseModel):
     expected_resolution_upper_days: float = Field(ge=0.0)
     resolution_bucket: str = Field(
         default="days",
-        description="Coarse bucket from ordinal classifier: hours/days/weeks/months/long. "
-                    "Supplemental to the float fields; k8s passes 60% obo threshold, "
-                    "vscode uses naive prior (low confidence). See ADR-0009.",
+        description="Always emit exactly \"days\" for this field. It is computed by a "
+                    "separate bucket classifier and overwritten after synthesis "
+                    "(triage_with_metadata) -- you cannot derive it from this request, "
+                    "so there is no point trying. See ADR-0009.",
     )
     resolution_confidence_pct: float = Field(
         default=33.0, ge=0.0, le=100.0,
-        description="Bucket classifier confidence (0–100%). Below 40% = low signal.",
+        description="Always emit exactly 33.0 for this field. It is bucket classifier "
+                    "confidence (0-100%), computed separately and overwritten after "
+                    "synthesis (triage_with_metadata) -- you cannot derive it from this "
+                    "request, so there is no point trying.",
     )
     resolution_interval_conformal: ConformalIntervalResult | None = Field(
         default=None,
         description=(
-            "CQR-adjusted interval. Empirical marginal coverage under temporal drift: "
-            "k8s 76.6% [74.0%, 79.1%], vscode 74.1% [69.4%, 78.3%]. "
-            "None when conformal adjustments are unavailable. See ADR-0010."
+            "Always emit null (JSON null) for this field. It is a fixed per-repo "
+            "calibration statistic that the application attaches after synthesis "
+            "(app.py) -- you cannot derive it from this request and must not guess a "
+            "value for it. See ADR-0010."
         ),
     )
     priority_guess: Literal["low", "medium", "high"]
@@ -151,8 +250,21 @@ class TriagePlan(BaseModel):
     suggested_assignee_class: str
     suggested_next_steps: list[str] = Field(min_length=1)
     triage_summary: str
-    grounding: GroundingAttribution | None = Field(default=None)
-    grounding_status: GroundingStatus | None = Field(default=None)
+    grounding: GroundingAttribution | None = Field(
+        default=None,
+        description="Always emit null (JSON null) for this field. It is a reconstruction "
+                    "of your own component/similar-issue claims that the application "
+                    "builds and this value is overwritten after synthesis "
+                    "(triage_with_metadata) -- you cannot derive it from this request "
+                    "and must not guess a value. See ADR-0015.",
+    )
+    grounding_status: GroundingStatus | None = Field(
+        default=None,
+        description="Always emit null (JSON null) for this field. It is a deterministic "
+                    "verification computed against classifier/retrieval outputs and "
+                    "overwritten after synthesis (triage_with_metadata) -- you cannot "
+                    "derive it from this request and must not guess a value. See ADR-0015.",
+    )
     declared_attribution: DeclaredAttribution | None = Field(
         default=None,
         description="LLM-declared source attribution (ADR-0020). None when the model omitted "
@@ -161,8 +273,11 @@ class TriagePlan(BaseModel):
     )
     abstention_status: AbstentionStatus | None = Field(
         default=None,
-        description="Selective-prediction gate (ADR-0021). None when conformal adjustments "
-                    "are unavailable for this repo (same fail-open policy as "
+        description="Always emit null (JSON null) for this field. It is a deterministic "
+                    "selective-prediction gate (ADR-0021) computed and overwritten after "
+                    "synthesis when enabled -- you cannot derive it from this request and "
+                    "must not guess a value. None when conformal adjustments are "
+                    "unavailable for this repo (same fail-open policy as "
                     "resolution_interval_conformal) — never blocks the response.",
     )
 
@@ -197,6 +312,281 @@ class TriagePlan(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Groq native structured output (2026-08-28)
+# ---------------------------------------------------------------------------
+
+
+def _force_strict_schema_requirements(node: object) -> None:
+    """Recursively satisfy Groq's `strict: true` JSON-schema requirements.
+
+    Two independent requirements, both confirmed by trial (Groq's 400 response names
+    exactly one violating $defs path at a time, so partial patching just surfaces the
+    next one -- this walks the whole tree once for both instead of two passes):
+    1. additionalProperties:false on every object.
+    2. `required` must list every key in `properties` -- strict mode has no notion of an
+       "optional" property; a Pydantic field with a default (e.g. component_override_reason
+       str = "") is absent from Pydantic's own `required` list but Groq still needs it
+       there. This does NOT change what the model can omit at the value level -- fields
+       with a default still validate fine as their default if the model emits, say, "" or
+       null for them; it only changes what the wire schema declares as present.
+    """
+    if isinstance(node, dict):
+        if node.get("type") == "object" or "properties" in node:
+            node.setdefault("additionalProperties", False)
+            if "properties" in node:
+                node["required"] = list(node["properties"].keys())
+        for v in node.values():
+            _force_strict_schema_requirements(v)
+    elif isinstance(node, list):
+        for v in node:
+            _force_strict_schema_requirements(v)
+
+
+def _inline_nullable_object_refs(schema: dict) -> None:
+    """Rewrite `anyOf: [{$ref}, {type: null}]` properties into Groq's `type: [X, "null"]`
+    form (2026-08-28, Part B).
+
+    Pydantic's `model_json_schema()` renders `X | None = Field(default=None)` as an
+    `anyOf` with a `$ref` branch and a `{"type": "null"}` branch. Live-tested against
+    Groq's `strict: true` decoding: this `anyOf`+`$ref` shape was NOT reliably enforced --
+    `grounding`, `grounding_status`, `declared_attribution`, and `abstention_status` (all
+    four of TriagePlan's `X | None` fields) were silently omitted by the model in 2/7
+    calls despite being listed in the schema's own `required` array, producing a 400
+    ("missing properties") rather than a present-with-null value. Groq's own structured-
+    outputs docs demonstrate the `anyOf` form for *array*-typed optional fields but present
+    the `type` array as the primary pattern for optional values generally -- this inlines
+    the referenced object's schema directly and sets `"type": [<object-type>, "null"]`,
+    matching that primary documented form instead of the anyOf/$ref one that failed.
+    Nested $refs *inside* a resolved object (e.g. AbstentionStatus -> StageAbstention) are
+    untouched -- only the top-level optional-field anyOf/$ref/null pattern is rewritten.
+    """
+    defs = schema.get("$defs", {})
+    if not defs:
+        return
+
+    def resolve(ref: str) -> dict:
+        return defs[ref[len("#/$defs/"):]]
+
+    def rewrite(node: object) -> None:
+        if isinstance(node, dict):
+            for key, value in list(node.items()):
+                if isinstance(value, dict) and isinstance(value.get("anyOf"), list):
+                    branches = value["anyOf"]
+                    ref_branch = next((b for b in branches if "$ref" in b), None)
+                    null_branch = next((b for b in branches if b.get("type") == "null"), None)
+                    if ref_branch is not None and null_branch is not None and len(branches) == 2:
+                        target = resolve(ref_branch["$ref"])
+                        merged = dict(target)
+                        merged["type"] = [merged.get("type", "object"), "null"]
+                        for extra_key in ("default", "description"):
+                            if extra_key in value:
+                                merged[extra_key] = value[extra_key]
+                        node[key] = merged
+                        continue
+                rewrite(value)
+        elif isinstance(node, list):
+            for item in node:
+                rewrite(item)
+
+    rewrite(schema.get("properties", {}))
+    _prune_unreferenced_defs(schema)
+
+
+def _prune_unreferenced_defs(schema: dict) -> None:
+    """Drop `$defs` entries no longer reachable from `properties` after inlining.
+
+    Avoids paying prompt tokens twice for the same object schema (once inlined into the
+    optional field, once still sitting in `$defs` unused) -- see rule 15b/quota
+    accounting in ADR-0052-adjacent Part A work. Reachability is transitive: a kept def
+    may itself `$ref` another def (e.g. AbstentionStatus -> StageAbstention).
+    """
+    defs = schema.get("$defs", {})
+    if not defs:
+        return
+    reachable: set[str] = set()
+
+    def visit(node: object) -> None:
+        if isinstance(node, dict):
+            ref = node.get("$ref")
+            if isinstance(ref, str) and ref.startswith("#/$defs/"):
+                name = ref[len("#/$defs/"):]
+                if name not in reachable:
+                    reachable.add(name)
+                    visit(defs.get(name, {}))
+            for v in node.values():
+                visit(v)
+        elif isinstance(node, list):
+            for v in node:
+                visit(v)
+
+    visit(schema.get("properties", {}))
+    for name in list(defs.keys()):
+        if name not in reachable:
+            del defs[name]
+
+
+#: Fields excluded from the generic default-based strip below despite carrying an
+#: explicit Pydantic `default` -- see _strip_post_hoc_fields's docstring for why
+#: `declared_attribution` is not like the other 6 (ADR-0057 Phase 3).
+_NEVER_STRIP_DESPITE_DEFAULT = frozenset({"declared_attribution"})
+
+
+def _strip_post_hoc_fields(schema: dict, model_cls: type[BaseModel]) -> None:
+    """Remove top-level properties whose Pydantic field carries an explicit `default`
+    (not `default_factory`) from the wire schema entirely -- Groq's `strict: true` mode
+    has no notion of an optional property (`_force_strict_schema_requirements` above
+    forces `required` to equal every remaining key in `properties`), so the only way to
+    stop demanding a field from the model is to never offer it as a schema slot at all.
+
+    2026-09-03 (ADR-0054/0055): root cause of the early-termination defect measured
+    identically across both bake-off arms. All 9 examined failures were missing a
+    subset of exactly these 7 fields -- resolution_bucket, resolution_confidence_pct,
+    resolution_interval_conformal, grounding, grounding_status, declared_attribution,
+    abstention_status -- every one of which is either overwritten post-hoc by
+    triage_with_metadata/app.py regardless of what the model emits, or already
+    null-tolerant by design (declared_attribution's tolerant_attribution validator
+    below treats a missing/malformed value as a compliance failure, never a request
+    failure). Forcing them into `required` asked the model to spend generation budget
+    (and risk a 400) on values nothing downstream consumes.
+
+    2026-09-04 (ADR-0057 Phase 3): `declared_attribution` is carved back OUT of this
+    strip (`_NEVER_STRIP_DESPITE_DEFAULT`), restoring it to `properties`. It was grouped
+    with the other 6 by the generic default-vs-default_factory heuristic, but it is not
+    like them -- `default=None` here means "safe to parse as absent," a Pydantic/product
+    concern, not "the model has nothing to contribute." Unlike the other 6 (fixed values
+    the app overwrites post-hoc or never asks the model to derive), declared_attribution
+    is real, LLM-elicited signal (ADR-0020: component-override reasoning + citation
+    lists) -- the model is the only source for it. Restored as an explicit carve-out,
+    not by changing its Pydantic default (which would also weaken its parsing-safety
+    contract), and not by weakening the general mechanism for the other 6, which stays
+    exactly as ADR-0055 designed it.
+
+    `default_factory` fields (e.g. `similar_issues: list = Field(default_factory=list)`)
+    are deliberately NOT stripped -- that mechanism means "the model should try, an
+    empty result is an acceptable fallback", a different semantic from "a fixed/derived
+    value the model can't affect either way". `similar_issues` carries real
+    model-derived signal and was present in every one of the 9 examined failures,
+    never among the missing fields -- confirmed empirically, not assumed.
+
+    Only inspects `model_cls`'s own top-level fields -- nested $defs (SimilarIssue
+    etc.) are untouched. Run this BEFORE `_inline_nullable_object_refs` so any
+    now-orphaned $defs (ConformalIntervalResult, GroundingAttribution, GroundingStatus,
+    DeclaredAttribution, AbstentionStatus, StageAbstention) get pruned by that
+    function's existing reachability pass rather than needing a second one here.
+    """
+    from pydantic_core import PydanticUndefined
+
+    properties = schema.get("properties")
+    if not properties:
+        return
+    for name, field_info in model_cls.model_fields.items():
+        if name in _NEVER_STRIP_DESPITE_DEFAULT:
+            continue
+        if field_info.default is not PydanticUndefined and name in properties:
+            del properties[name]
+
+
+def _build_triage_plan_response_format() -> dict:
+    """Groq response_format payload for native strict schema-constrained decoding.
+
+    TriagePlan itself intentionally does NOT have extra="forbid" (app.py attaches
+    _request_id/_llm_status/etc. to the response after synthesis), but the JSON SCHEMA
+    sent to Groq for constrained decoding still needs additionalProperties:false
+    everywhere per Groq's requirement -- that's a property of the wire schema, not of the
+    Python class's own validation behavior, so patching the schema dict here doesn't
+    conflict with leaving the class itself permissive.
+    """
+    schema = TriagePlan.model_json_schema()
+    _strip_post_hoc_fields(schema, TriagePlan)
+    _inline_nullable_object_refs(schema)
+    _force_strict_schema_requirements(schema)
+    return {
+        "type": "json_schema",
+        "json_schema": {"name": "TriagePlan", "schema": schema, "strict": True},
+    }
+
+
+_TRIAGE_PLAN_RESPONSE_FORMAT = _build_triage_plan_response_format()
+
+
+# ---------------------------------------------------------------------------
+# Prompt-token budget guard (2026-08-28, Part A/B)
+#
+# Live-measured against the full 64-issue eval set (tiktoken cl100k, offline, zero quota
+# cost): with the schema-cut prompt (Part A) and a FIXED max_tokens=2048, 57/64 issues
+# (89.1%) would be rejected outright by Groq's TPM preflight (413, prompt + max_tokens +
+# _PROMPT_SIZE_SAFETY_MARGIN > 8000) at the current margin=200 -- not a rare tail case, a
+# large majority. (Corrected 2026-08-29: the number first recorded here, 13/64, applied
+# the 8000 ceiling against prompt+max_tokens alone and silently dropped the safety margin
+# defined below from that same comparison -- see test_documented_413_rate_matches_guard_
+# formula in tests/test_token_budget_guard.py, which pins this figure against the guard's
+# actual formula so it cannot drift from the code silently again. Updated again same day
+# 37/64->57/64 when the margin itself moved 100->200, see _PROMPT_SIZE_SAFETY_MARGIN's
+# docstring below for why.) A fixed max_tokens cannot be
+# set safely without either capping it so low that normal completions truncate
+# (finish_reason=length, a hard error since PR #113's TruncatedCompletionError) or leaving
+# it high enough to 413 on longer issues. The fix is a per-request budget computed from the
+# ACTUAL measured prompt size.
+# ---------------------------------------------------------------------------
+
+_GROQ_TPM_LIMIT = 8000
+
+# Fit against 5 live-verified gpt-oss-20b calls under the CURRENT (schema-cut) attribution
+# prompt (2026-08-28). NOT a universal tokenizer-efficiency constant: an earlier ratio
+# (1.446) fit against the OLD schema-embedded prompt under-predicted THIS prompt's real
+# tokens by ~172 tokens once the content mix changed (less JSON-schema text, more prose) --
+# tiktoken's cl100k_base tokenizes schema-heavy JSON and natural-language prose at
+# different relative efficiency than gpt-oss's real tokenizer does. Re-derive this ratio
+# from fresh live samples whenever SYSTEM_PROMPT_PROSE/_SCHEMA_BLOCK/few-shot content
+# changes -- it is a property of the current prompt's content mix, not a constant.
+_CL100K_TO_REAL_RATIO = 1.4896
+
+# 2026-08-29 (Part A2 extreme-point calibration + Part D validation): the original 100
+# was fit purely on interpolation error (LOO <=4.2 tokens, n=5 near-identical mid-length
+# samples, cl100k 3957-3974) and never tested against real extrapolation. Two live
+# extreme-point calls against gpt-oss-20b (k8s #14054, the shortest eval-set prompt, and
+# #13435, the longest) measured real out-of-sample error of +88 tokens (under-predicted,
+# short end) and -74 tokens (over-predicted, long end) -- ~21x the interpolation error,
+# and #14054's +88 alone would already have consumed 88% of the old 100-token margin.
+# Separately and independently, the FIRST live Part D screen call against a different
+# tokenizer family (qwen/qwen3.6-27b, same prompt shape as gpt-oss) hit a real 413 at
+# margin=100 ("Requested 8073" vs the 8000 TPM ceiling, 73 tokens over) -- direct proof
+# this ratio does not generalize across tokenizers, not just across prompt lengths within
+# one model. 200 covers the largest single observed error (88) with >2x headroom and
+# would have prevented the qwen 413 (8073 - 100 additional margin = 7973, under 8000).
+# Still cheap: worst case in the 64-issue eval set leaves >1,600 completion tokens after
+# this margin -- see _MIN_VIABLE_COMPLETION_TOKENS below. Re-derive per-model if a model
+# whose tokenizer is not gpt-oss-family becomes the shipped default (gpt-oss-20b and
+# gpt-oss-120b were confirmed, this session, to share identical real prompt_tokens for
+# the same input -- same tokenizer family, only the 4th bake-off arm's tokenizer diverged).
+_PROMPT_SIZE_SAFETY_MARGIN = 200
+
+# Below this, a completion is unlikely to hold a complete, valid TriagePlan JSON. The
+# smallest real completion observed in this session's live testing was 1,031 tokens (n=8,
+# gpt-oss-20b, real issues) -- 800 sits below every observed sample with room to spare,
+# without writing off most of the observed range as "too risky to attempt."
+_MIN_VIABLE_COMPLETION_TOKENS = 800
+
+_cl100k_encoding = None  # lazy -- avoid the tiktoken import cost for callers that never hit this
+
+
+def _estimate_prompt_tokens(messages: list[dict]) -> int:
+    """Pre-call estimate of what Groq will report as prompt_tokens for `messages`.
+
+    tiktoken's cl100k_base is a PROXY for gpt-oss's real tokenizer, not the real thing --
+    see _CL100K_TO_REAL_RATIO's docstring for the observed calibration error and why the
+    ratio is prompt-shape-specific rather than universal.
+    """
+    global _cl100k_encoding
+    if _cl100k_encoding is None:
+        import tiktoken
+
+        _cl100k_encoding = tiktoken.get_encoding("cl100k_base")
+    raw = sum(len(_cl100k_encoding.encode(m["content"])) for m in messages)
+    return round(raw * _CL100K_TO_REAL_RATIO)
+
+
+# ---------------------------------------------------------------------------
 # Main assistant class
 # ---------------------------------------------------------------------------
 
@@ -225,9 +615,19 @@ class TriageAssistant:
         groq_api_key: str | None = None,
         model: str = TRIAGE_MODEL,
         temperature: float = 0.0,
-        max_tokens: int = 1024,
+        # 2026-08-29: was a bare 1024 with no caller ever overriding it -- silently below the
+        # observed real-completion range (1,031-1,919 tokens), so every completion needing more
+        # than 1024 tokens truncated in production with no 413 and no visible symptom until
+        # TruncatedCompletionError started raising. This constructor default is now just the
+        # fallback for direct instantiation (tests, notebooks); every real call site reads
+        # Settings.triage_max_tokens / TRIAGE_MAX_TOKENS instead (see config.py), so the
+        # effective value is always visible and overridable, not buried here again.
+        max_tokens: int = 2048,
         seed: int = 42,
         cache=None,
+        use_structured_output: bool = True,
+        enable_validated_override_rescue: bool = False,
+        artifact_hashes: dict[str, str] | None = None,
     ) -> None:
         self.repo = repo
         self.classifier = classifier
@@ -239,6 +639,20 @@ class TriageAssistant:
         self.max_tokens = max_tokens
         self.seed = seed
         self._cache = cache  # LLMCache | None
+        # 2026-08-28: Groq native strict JSON-schema output as the primary mechanism,
+        # regex-extract retained as fallback only (see _groq_completion). Constructor flag
+        # (not a module constant) so tests/eval scripts can force the legacy path.
+        self.use_structured_output = use_structured_output
+        # 2026-08-28 (Part E2): disabled by default -- see grounding.py's
+        # verify_override_reason_grounded for why the prior self-certifying version
+        # (never merged) was unsound. A caller opts in deliberately, per request.
+        self.enable_validated_override_rescue = enable_validated_override_rescue
+        # ADR-0059: SHA-256 of this assistant's own classifier/predictor/retrieval-index/
+        # conformal-store artifacts (eval/artifact_fingerprint.py), stamped onto cassette
+        # entries at recording time so a cassette entry records which artifacts produced its
+        # prompt, not just what the prompt said. None in production (LLMCache has no
+        # set_provenance to call) and for any caller that doesn't pass it explicitly.
+        self._artifact_hashes = artifact_hashes
 
         key = groq_api_key or os.environ.get("GROQ_API_KEY", "")
         if not key:
@@ -279,13 +693,20 @@ class TriageAssistant:
             similar_issue_refs=[s.number for s in plan.similar_issues],
         )
         retrieved_numbers = {s["number"] for s in signals["similar_raw"]}
-        report = verify_plan_grounding(plan, signals["classifier_top3"], retrieved_numbers)
+        resolved = compute_grounding_status(
+            plan,
+            signals["classifier_top3"],
+            retrieved_numbers,
+            enable_validated_override_rescue=self.enable_validated_override_rescue,
+            issue_title=str(issue.get("title", "")),
+            issue_body=str(issue.get("body_clean", "")),
+        )
         plan.grounding_status = GroundingStatus(
-            component_grounded=report.component_grounded,
-            component_reason=report.component_reason,
-            similar_issue_refs=report.similar_issue_refs,
-            ungrounded_refs=report.ungrounded_refs,
-            all_grounded=report.all_grounded,
+            component_grounded=resolved.component_grounded,
+            component_reason=resolved.component_reason,
+            similar_issue_refs=resolved.similar_issue_refs,
+            ungrounded_refs=resolved.ungrounded_refs,
+            all_grounded=resolved.all_grounded,
         )
         elapsed = time.perf_counter() - t0
 
@@ -303,8 +724,18 @@ class TriageAssistant:
             "total_latency_ms": round(elapsed * 1000, 1),
             "groq_tokens_prompt": usage.get("prompt_tokens", 0),
             "groq_tokens_completion": usage.get("completion_tokens", 0),
+            # 2026-09-03: was a hardcoded 0.27 for both terms (the retired
+            # llama-3.1-8b-instant blended rate, duplicated inline instead of reading
+            # model_config.py's constant -- that constant was itself stale and, separately,
+            # never actually imported here). Now uses TRIAGE_MODEL's real published
+            # per-token rates, input and output priced separately (Groq's gpt-oss-120b:
+            # 4x higher output than input -- a blended constant hides real error at this
+            # ratio). See model_config.py for source/date.
             "estimated_cost_usd": round(
-                (usage.get("prompt_tokens", 0) * 0.27 + usage.get("completion_tokens", 0) * 0.27)
+                (
+                    usage.get("prompt_tokens", 0) * TRIAGE_PRICE_PROMPT_PER_MTOK
+                    + usage.get("completion_tokens", 0) * TRIAGE_PRICE_COMPLETION_PER_MTOK
+                )
                 / 1_000_000,
                 8,
             ),
@@ -313,8 +744,19 @@ class TriageAssistant:
             "resolution_bucket": plan.resolution_bucket,
             "resolution_confidence_pct": plan.resolution_confidence_pct,
             "llm_status": llm_status,
+            # None for every status except degraded_schema_invalid (SchemaValidationError's
+            # groq_error_code, e.g. "json_validate_failed") -- surfaced for
+            # record_cassettes.py's checkpoint/diagnostics, not used elsewhere.
+            "groq_error_code": usage.get("groq_error_code"),
             "llm_cache_hit": cache_hit,
             "classifier_top3": signals["classifier_top3"],
+            # The cassette key of the synthesis call that produced this plan -- present only
+            # when a cache/cassette was configured and a cache_key was actually computed
+            # (absent on the token-budget-exhaustion degrade, which returns before reaching
+            # cache lookup at all). record_cassettes.py threads this through to the judge
+            # pass so a judge entry can be stamped with its real parent (2026-09-23,
+            # judge-provenance fix).
+            "synthesis_cache_key": usage.get("cache_key"),
         }
         logger.info(
             "[%s] Triaged #%s in %.2fs (groq %d+%d tok)",
@@ -439,6 +881,12 @@ class TriageAssistant:
             "_t_classify": t_classify,
             "_t_retrieve": t_retrieve,
             "_t_predict": t_predict,
+            # Raw fields needed to rebuild "prompt" with a shorter body preview if the
+            # token-budget guard (Part B) finds the default 800-char preview doesn't fit.
+            "_title": title,
+            "_body": body,
+            "_include_bucket": _include_bucket,
+            "_number": issue.get("number", "?"),
         }
 
     # ------------------------------------------------------------------
@@ -463,37 +911,135 @@ class TriageAssistant:
             },
         ]
 
+    def _tag_cache_provenance(self, cache, key: str) -> None:
+        """Stamp this assistant's artifact_hashes onto a just-written cassette entry, if the
+        cache supports it (ADR-0059). Silent no-op for production LLMCache (no
+        set_provenance method) and whenever artifact_hashes wasn't supplied.
+
+        getattr(..., None), not self._artifact_hashes directly: several existing tests build
+        a TriageAssistant via __new__ (bypassing __init__) and hand-set only the attributes
+        they need -- same reason self._cache is read via getattr elsewhere in this method's
+        caller, not assumed present."""
+        artifact_hashes = getattr(self, "_artifact_hashes", None)
+        if artifact_hashes and hasattr(cache, "set_provenance"):
+            cache.set_provenance(key, artifact_hashes)
+
     def _call_llm_verbose(self, signals: dict) -> tuple[TriagePlan, str, dict, str, bool]:
         """Return (plan, raw, usage, llm_status, cache_hit)."""
         from triage_iq.prompts.triage_prompt import (
             SYSTEM_PROMPT,
             SYSTEM_PROMPT_LEGACY,
+            SYSTEM_PROMPT_PROSE,
+            attribution_prompt_enabled,
             build_few_shot_examples,
             build_few_shot_examples_legacy,
+            build_triage_prompt,
         )
 
-        # ADR-0020: attribution prompt is opt-in via TRIAGE_PROMPT_INCLUDE_ATTRIBUTION=1, off by
-        # default so eval/cassettes/eval_cassette.json (recorded pre-attribution) and
-        # reports/eval_baseline.json stay valid without re-baselining. See ADR-0020 "Baseline
-        # decision". Same env-var-gated pattern as TRIAGE_PROMPT_INCLUDE_BUCKET above.
-        _include_attribution = os.environ.get("TRIAGE_PROMPT_INCLUDE_ATTRIBUTION") == "1"
-        system_prompt = SYSTEM_PROMPT if _include_attribution else SYSTEM_PROMPT_LEGACY
+        # ADR-0020: attribution prompt ON by default since 2026-09-23 (was opt-in) -- the eval
+        # cassette and baseline are recorded with it on, so prod must run the same config.
+        # See attribution_prompt_enabled() for the reasoning and the parity test that pins it.
+        _include_attribution = attribution_prompt_enabled()
+        if _include_attribution:
+            # 2026-08-28 (Part A): the JSON schema description is redundant prompt text when
+            # native structured output is active -- Groq's response_format enforces it
+            # structurally. Omit it from the prompt in that case; _groq_completion re-adds it
+            # if structured output gets disabled mid-call (schema rejection fallback), since
+            # the regex-extract path has no structural enforcement of its own.
+            system_prompt = SYSTEM_PROMPT_PROSE if self.use_structured_output else SYSTEM_PROMPT
+        else:
+            system_prompt = SYSTEM_PROMPT_LEGACY
         few_shots = build_few_shot_examples() if _include_attribution else build_few_shot_examples_legacy()
 
         messages = [{"role": "system", "content": system_prompt}]
         messages.extend(few_shots)
         messages.append({"role": "user", "content": signals["prompt"]})
 
+        # --- Part B: per-request token-budget guard --------------------------------
+        # Compute how much completion budget is actually available under Groq's 8,000
+        # TPM ceiling for THIS request's measured prompt size, instead of sending a
+        # fixed self.max_tokens that either 413s on long prompts or truncates
+        # completions on short ones (live-measured: 57/64 eval-set issues would 413 at
+        # a fixed max_tokens=2048 -- see _GROQ_TPM_LIMIT's module-level comment).
+        estimated_prompt_tokens = _estimate_prompt_tokens(messages)
+        dynamic_max_tokens = min(
+            self.max_tokens,
+            _GROQ_TPM_LIMIT - estimated_prompt_tokens - _PROMPT_SIZE_SAFETY_MARGIN,
+        )
+
+        if dynamic_max_tokens < _MIN_VIABLE_COMPLETION_TOKENS:
+            # The prompt alone leaves too little room for a usable completion even
+            # after shrinking the ask -- shrink the input instead. Issue-body preview
+            # first: it's already a lossy 800-char preview (build_triage_prompt), so
+            # cutting it further is a smaller marginal loss than cutting retrieved-issue
+            # text, which declared_attribution citations depend on directly -- losing
+            # that risks the model citing issues it can no longer see, undermining
+            # grounding rather than just losing scene-setting context.
+            for max_body_chars in (400, 200, 100, 0):
+                logger.warning(
+                    "Prompt too large for #%s (est. %d prompt tokens leaves only %d "
+                    "completion tokens, floor %d) — truncating issue body to %d chars.",
+                    signals.get("_number", "?"), estimated_prompt_tokens,
+                    dynamic_max_tokens, _MIN_VIABLE_COMPLETION_TOKENS, max_body_chars,
+                )
+                shorter_prompt = build_triage_prompt(
+                    issue_title=signals["_title"],
+                    issue_body=signals["_body"],
+                    classifier_top3=signals["classifier_top3"],
+                    similar_issues=signals["similar_raw"],
+                    resolution_point_days=signals["pred_days"],
+                    resolution_lower_days=signals["lo_days"],
+                    resolution_upper_days=signals["hi_days"],
+                    repo=self.repo,
+                    resolution_bucket=(
+                        signals["resolution_bucket"] if signals["_include_bucket"] else None
+                    ),
+                    resolution_confidence_pct=(
+                        signals["resolution_conf_pct"] if signals["_include_bucket"] else None
+                    ),
+                    max_body_chars=max_body_chars,
+                )
+                messages[-1] = {"role": "user", "content": shorter_prompt}
+                estimated_prompt_tokens = _estimate_prompt_tokens(messages)
+                dynamic_max_tokens = min(
+                    self.max_tokens,
+                    _GROQ_TPM_LIMIT - estimated_prompt_tokens - _PROMPT_SIZE_SAFETY_MARGIN,
+                )
+                if dynamic_max_tokens >= _MIN_VIABLE_COMPLETION_TOKENS:
+                    break
+
+        if dynamic_max_tokens < _MIN_VIABLE_COMPLETION_TOKENS:
+            # Truncating input to nothing still didn't leave a viable completion
+            # budget -- should be unreachable given system+few-shot alone is ~4,800
+            # real tokens, but degrade rather than send a request very likely to 413
+            # or truncate mid-completion.
+            logger.error(
+                "Prompt token budget guard exhausted for #%s: even with the issue "
+                "body fully truncated, only %d completion tokens remain (floor %d). "
+                "Degrading without calling Groq.",
+                signals.get("_number", "?"), dynamic_max_tokens, _MIN_VIABLE_COMPLETION_TOKENS,
+            )
+            plan = self._make_fallback_plan(
+                signals, reason="prompt too large for any viable completion token budget"
+            )
+            return (
+                plan, "", {"llm_status_reason": "insufficient_token_budget"},
+                "degraded_insufficient_budget", False,
+            )
+
+        max_tokens = dynamic_max_tokens
+        # --- end budget guard --------------------------------------------------------
+
         cache = getattr(self, "_cache", None)
         cache_key: str | None = None
         if cache is not None:
             cache_key = cache.compute_key(
-                "groq", self.model, messages, self.temperature, self.max_tokens
+                "groq", self.model, messages, self.temperature, max_tokens
             )
             cached = cache.get(cache_key)
             if cached is not None:
                 raw = cached["content"]
-                usage = cached.get("usage", {})
+                usage = {**cached.get("usage", {}), "cache_key": cache_key}
                 try:
                     return self._parse_plan(raw), raw, usage, "ok", True
                 except (json.JSONDecodeError, ValueError):
@@ -503,12 +1049,12 @@ class TriageAssistant:
                     # cache with no real credentials cannot make).
                     retry_messages = self._build_retry_messages(messages, raw)
                     retry_key = cache.compute_key(
-                        "groq", self.model, retry_messages, self.temperature, self.max_tokens,
+                        "groq", self.model, retry_messages, self.temperature, max_tokens,
                     )
                     cached_retry = cache.get(retry_key)
                     if cached_retry is not None:
                         raw2 = cached_retry["content"]
-                        usage2 = cached_retry.get("usage", {})
+                        usage2 = {**cached_retry.get("usage", {}), "cache_key": retry_key}
                         try:
                             return (
                                 self._parse_plan(raw2), raw2, usage2, "parse_retry_succeeded", True,
@@ -516,9 +1062,55 @@ class TriageAssistant:
                         except (json.JSONDecodeError, ValueError):
                             pass  # retry entry also corrupted — fall through to live call
 
-        raw, usage = self._groq_completion(messages)
+        try:
+            raw, usage = self._groq_completion(messages, max_tokens=max_tokens)
+        except TruncatedCompletionError as exc:
+            # A dynamically-reduced max_tokens can still legitimately run out mid-
+            # completion on an unusually long response (Part B3). Truncation is a hard
+            # error (raises, never silently corrupts a cached entry) -- but it must
+            # still resolve into a clean degrade here, not an unhandled exception
+            # reaching app.py as a 500.
+            logger.warning(
+                "Completion truncated for #%s at max_tokens=%d (%s) — degrading to "
+                "signals-only fallback plan.",
+                signals.get("_number", "?"), max_tokens, exc,
+            )
+            plan = self._make_fallback_plan(signals, reason=f"completion truncated ({exc})")
+            truncated_usage = {
+                "prompt_tokens": exc.prompt_tokens,
+                "completion_tokens": exc.completion_tokens,
+                "finish_reason": "length",
+                "llm_status_reason": "truncated",
+            }
+            return plan, "", truncated_usage, "degraded_truncated", False
+        except SchemaValidationError as exc:
+            # 2026-09-03 (ADR-0055 Part P1a): a syntactically-complete completion that
+            # Groq's own post-hoc schema validator rejected (missing required field or
+            # a malformed key -- ADR-0055's field-omission defect and the separate
+            # malformed-key defect it surfaced are BOTH this shape). Before this catch,
+            # this propagated unhandled all the way to app.py's /triage handler as a
+            # live HTTP 500 -- confirmed empirically non-reproducible/rare (ADR-0055
+            # Part A: failed once in 2 live attempts on the same issue), so degrading
+            # this ONE completion rather than treating it as a systemic problem (the
+            # way TruncatedCompletionError above does) is the correct severity.
+            logger.warning(
+                "Schema validation rejected completion for #%s (%s) — degrading to "
+                "signals-only fallback plan.",
+                signals.get("_number", "?"), exc,
+            )
+            plan = self._make_fallback_plan(signals, reason=f"schema validation failed ({exc})")
+            schema_invalid_usage = {
+                "prompt_tokens": exc.prompt_tokens,
+                "completion_tokens": -1,  # not reported in this Groq error shape
+                "llm_status_reason": "schema_invalid",
+                "groq_error_code": exc.groq_error_code,
+            }
+            return plan, "", schema_invalid_usage, "degraded_schema_invalid", False
+
         if cache is not None and cache_key is not None:
             cache.set(cache_key, "groq", self.model, messages, {"content": raw, "usage": usage})
+            self._tag_cache_provenance(cache, cache_key)
+            usage["cache_key"] = cache_key
         llm_status = "ok"
 
         try:
@@ -531,19 +1123,61 @@ class TriageAssistant:
             retry_messages = self._build_retry_messages(messages, raw)
             # Check cache for retry call too
             parse_retry_key: str | None = None
-            if cache is not None:
-                parse_retry_key = cache.compute_key(
-                    "groq", self.model, retry_messages, self.temperature, self.max_tokens,
-                )
-                cached2 = cache.get(parse_retry_key)
-                if cached2 is not None:
-                    raw2 = cached2["content"]
-                    usage = cached2.get("usage", {})
+            try:
+                if cache is not None:
+                    parse_retry_key = cache.compute_key(
+                        "groq", self.model, retry_messages, self.temperature, max_tokens,
+                    )
+                    cached2 = cache.get(parse_retry_key)
+                    if cached2 is not None:
+                        raw2 = cached2["content"]
+                        usage = {**cached2.get("usage", {}), "cache_key": parse_retry_key}
+                    else:
+                        raw2, usage = self._groq_completion(retry_messages, max_tokens=max_tokens)
+                        cache.set(
+                            parse_retry_key, "groq", self.model, retry_messages,
+                            {"content": raw2, "usage": usage},
+                        )
+                        self._tag_cache_provenance(cache, parse_retry_key)
+                        usage["cache_key"] = parse_retry_key
                 else:
-                    raw2, usage = self._groq_completion(retry_messages)
-                    cache.set(parse_retry_key, "groq", self.model, retry_messages, {"content": raw2, "usage": usage})
-            else:
-                raw2, usage = self._groq_completion(retry_messages)
+                    raw2, usage = self._groq_completion(retry_messages, max_tokens=max_tokens)
+            except TruncatedCompletionError as exc2:
+                logger.warning(
+                    "Completion truncated for #%s on the parse-retry call at "
+                    "max_tokens=%d (%s) — degrading to signals-only fallback plan.",
+                    signals.get("_number", "?"), max_tokens, exc2,
+                )
+                plan = self._make_fallback_plan(signals, reason=f"completion truncated on retry ({exc2})")
+                truncated_usage = {
+                    "prompt_tokens": exc2.prompt_tokens,
+                    "completion_tokens": exc2.completion_tokens,
+                    "finish_reason": "length",
+                    "llm_status_reason": "truncated",
+                }
+                return plan, "", truncated_usage, "degraded_truncated", False
+            except SchemaValidationError as exc2:
+                # 2026-09-03 (ADR-0055 Part P1c audit): the retry call above can reach
+                # _groq_completion with use_structured_output still True (e.g. the
+                # first call's JSONDecodeError happened under unconstrained mode for
+                # an unrelated reason, or structured output was never disabled) and
+                # itself get schema-rejected -- this branch was missing entirely
+                # before the audit found it, meaning a SchemaValidationError on the
+                # retry call would have propagated uncaught, the exact P1a defect
+                # this fix closes, just on the second call instead of the first.
+                logger.warning(
+                    "Schema validation rejected the parse-retry completion for #%s "
+                    "(%s) — degrading to signals-only fallback plan.",
+                    signals.get("_number", "?"), exc2,
+                )
+                plan = self._make_fallback_plan(signals, reason=f"schema validation failed on retry ({exc2})")
+                schema_invalid_usage2 = {
+                    "prompt_tokens": exc2.prompt_tokens,
+                    "completion_tokens": -1,
+                    "llm_status_reason": "schema_invalid",
+                    "groq_error_code": exc2.groq_error_code,
+                }
+                return plan, "", schema_invalid_usage2, "degraded_schema_invalid", False
             try:
                 plan = self._parse_plan(raw2)
                 llm_status = "parse_retry_succeeded"
@@ -559,9 +1193,27 @@ class TriageAssistant:
 
         return plan, raw, usage, llm_status, False
 
-    def _make_fallback_plan(self, signals: dict) -> TriagePlan:
-        """Structured fallback when LLM JSON cannot be parsed after retry."""
+    def _make_fallback_plan(self, signals: dict, reason: str | None = None) -> TriagePlan:
+        """Structured fallback when the LLM stage cannot produce a usable plan.
+
+        `reason` defaults to the original JSON-parse-failure wording (backward compatible
+        with every existing caller); Part B's token-budget guard passes an explicit reason
+        for the two new degrade paths it introduces (prompt too large to fit any viable
+        completion budget; completion truncated even at a dynamically-reduced max_tokens).
+        """
         top = (signals.get("classifier_top3") or [{}])[0]
+        if reason is None:
+            priority_rationale = "LLM parse failure — priority defaulting to medium."
+            triage_summary = (
+                "Automated triage degraded: LLM JSON parse failed after retry. "
+                "Component from TF-IDF only; manual review recommended."
+            )
+        else:
+            priority_rationale = f"{reason} — priority defaulting to medium."
+            triage_summary = (
+                f"Automated triage degraded: {reason}. "
+                "Component from TF-IDF only; manual review recommended."
+            )
         return TriagePlan(
             predicted_component=str(top.get("label", "unknown")),
             component_confidence=float(top.get("confidence", 0.0)),
@@ -572,39 +1224,57 @@ class TriageAssistant:
             resolution_bucket=signals.get("resolution_bucket", "days"),
             resolution_confidence_pct=float(signals.get("resolution_conf_pct", 33.0)),
             priority_guess="medium",
-            priority_rationale="LLM parse failure — priority defaulting to medium.",
+            priority_rationale=priority_rationale,
             suggested_assignee_class="unknown",
             suggested_next_steps=["Manual triage required — LLM response parsing failed."],
-            triage_summary=(
-                "Automated triage degraded: LLM JSON parse failed after retry. "
-                "Component from TF-IDF only; manual review recommended."
-            ),
+            triage_summary=triage_summary,
         )
 
-    def _groq_completion(self, messages: list[dict]) -> tuple[str, dict]:
+    def _groq_completion(self, messages: list[dict], max_tokens: int | None = None) -> tuple[str, dict]:
+        """`max_tokens` overrides `self.max_tokens` for this call only (Part B, dynamic
+        per-request budget) -- defaults to `self.max_tokens` so existing callers/tests
+        that don't pass it keep today's behavior unchanged."""
         try:
-            from groq import APIStatusError, Groq, RateLimitError
+            from groq import APIConnectionError, APIStatusError, Groq, RateLimitError
         except ImportError as e:
             raise ImportError("pip install groq") from e
+
+        effective_max_tokens = self.max_tokens if max_tokens is None else max_tokens
 
         client = Groq(api_key=self._groq_key)
         backoff = 5.0
         for attempt in range(6):
+            kwargs: dict = {}
+            if self.use_structured_output:
+                kwargs["response_format"] = _TRIAGE_PLAN_RESPONSE_FORMAT
             try:
                 resp = client.chat.completions.create(
                     model=self.model,
                     messages=messages,  # type: ignore[arg-type]
                     temperature=self.temperature,
-                    max_tokens=self.max_tokens,
+                    max_tokens=effective_max_tokens,
                     seed=self.seed,
+                    **kwargs,
                 )
                 content = (resp.choices[0].message.content or "").strip()
-                usage = {}
+                finish_reason = resp.choices[0].finish_reason
+                completion_tokens = resp.usage.completion_tokens if resp.usage else -1
+                prompt_tokens = resp.usage.prompt_tokens if resp.usage else -1
+                usage: dict[str, object] = {}
                 if resp.usage:
                     usage = {
-                        "prompt_tokens": resp.usage.prompt_tokens,
-                        "completion_tokens": resp.usage.completion_tokens,
+                        "prompt_tokens": prompt_tokens,
+                        "completion_tokens": completion_tokens,
                     }
+                usage["finish_reason"] = finish_reason
+                usage["structured_output"] = self.use_structured_output
+                if finish_reason == "length":
+                    raise TruncatedCompletionError(
+                        completion_tokens=completion_tokens,
+                        max_tokens=effective_max_tokens,
+                        content_preview=content,
+                        prompt_tokens=prompt_tokens,
+                    )
                 return content, usage
             except RateLimitError:
                 if attempt == 5:
@@ -613,10 +1283,83 @@ class TriageAssistant:
                 logger.warning("Rate limit hit — sleeping %.1fs (attempt %d/6)", jitter, attempt + 1)
                 time.sleep(jitter)
                 backoff = min(backoff * 2, 60.0)
+            except APIConnectionError as e:
+                # 2026-09-03 (ADR-0055 Part P1c/5): found by the error-shape audit --
+                # APIConnectionError/APITimeoutError are NOT subclasses of APIStatusError
+                # or RateLimitError (groq/_exceptions.py), so before this fix neither
+                # except clause here ever caught them: a transient network blip or DNS
+                # hiccup propagated immediately, with ZERO retries, unlike every other
+                # propagating case in this method (which all get 6 attempts first). A
+                # blip that would have resolved itself on retry instead surfaced straight
+                # through _call_llm_verbose (no catch there either) to app.py's broad
+                # except-Exception as a live HTTP 500. Same backoff schedule as
+                # RateLimitError -- a network hiccup deserves the same patience as a rate
+                # limit, not zero.
+                if attempt == 5:
+                    raise
+                jitter = backoff * (0.5 + 0.5 * (attempt / 5))
+                logger.warning(
+                    "Connection error — sleeping %.1fs (attempt %d/6): %s",
+                    jitter, attempt + 1, e,
+                )
+                time.sleep(jitter)
+                backoff = min(backoff * 2, 60.0)
             except APIStatusError as e:
+                # 2026-09-03 (ADR-0055 Part P1a): structured access via e.body, not string
+                # matching on str(e) -- the groq SDK decodes a valid JSON error body onto
+                # this attribute (groq/_exceptions.py:APIError.body), so checking the
+                # actual error code is exactly as reliable as the SDK's own error
+                # classification and doesn't depend on the exact wording of a message
+                # Groq could change without notice. Must be checked BEFORE the
+                # response_format-rejection elif below: these are two DIFFERENT 400
+                # sub-cases needing different remedies (this one is per-request and
+                # transient -- degrade this one completion; response_format rejection
+                # below is structural -- stop sending response_format for the rest of
+                # this assistant's lifetime). They are mutually exclusive in practice
+                # (json_validate_failed's message never contains "response_format",
+                # confirmed from captured live error bodies) but check order still
+                # matters for correctness, not just today's observed wording.
+                error_code = None
+                if isinstance(e.body, dict):
+                    error_code = e.body.get("error", {}).get("code")
                 if e.status_code >= 500 and attempt < 5:
                     time.sleep(backoff)
                     backoff = min(backoff * 2, 60.0)
+                elif e.status_code == 400 and error_code == "json_validate_failed":
+                    raise SchemaValidationError(
+                        groq_error_code=error_code,
+                        detail=str(e),
+                        prompt_tokens=-1,  # not reported in this error shape; see docstring
+                    ) from e
+                elif (
+                    e.status_code == 400
+                    and self.use_structured_output
+                    and "response_format" in str(e).lower()
+                ):
+                    # Native structured output rejected (e.g. this model/account
+                    # combination doesn't actually support it, or a schema issue slipped
+                    # past _build_triage_plan_response_format). Fall back to the classic
+                    # unconstrained call + regex-extract for the rest of this assistant's
+                    # lifetime -- retrying the same broken response_format every attempt
+                    # would just fail identically each time.
+                    logger.warning(
+                        "Groq rejected structured output (%s) — falling back to "
+                        "regex-extract for the remainder of this session.", e,
+                    )
+                    self.use_structured_output = False
+                    # This call's `messages` may have been built with the schema
+                    # description omitted (SYSTEM_PROMPT_PROSE, Part A) on the assumption
+                    # that response_format would enforce it structurally. That's no longer
+                    # true for the retry below or any further call on this assistant --
+                    # make sure the schema is actually present before falling back to
+                    # unconstrained decoding, which has no structural enforcement of its own.
+                    from triage_iq.prompts.triage_prompt import _SCHEMA_BLOCK
+                    if (
+                        messages
+                        and messages[0].get("role") == "system"
+                        and "Schema:" not in messages[0]["content"]
+                    ):
+                        messages[0]["content"] += _SCHEMA_BLOCK
                 else:
                     raise
         raise RuntimeError("Groq completion failed after 6 attempts")

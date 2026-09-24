@@ -1,0 +1,17 @@
+{
+  "description": "Committed, human-reviewed expected SHA-256 for every model artifact that feeds a triage prompt. eval/record_cassettes.py refuses to run against a checkout whose resolved artifacts don't match this file -- see ADR-0059. Regenerate deliberately (scripts or a one-off) whenever you intend to record against a genuinely different classifier/predictor/index/conformal store; a mismatch is meant to stop the run, not be silently reconciled.",
+  "note": "ADR-0059: committed at the start of the Phase 2 re-record, from the ADR-0057 retrained classifier + existing resolution/retrieval/conformal artifacts already in this worktree (data/models, data/processed). Regenerate deliberately if any of these are intentionally retrained again.",
+  "artifact_hashes": {
+    "data/models/component_classifier_kubernetes_kubernetes.pkl": "a7caf13b08e7e9cb3e7b8ae25413243345dd723a233556ca328641d606394f66",
+    "data/models/component_classifier_microsoft_vscode.pkl": "5e286b1f75218373feceb43703d2a1a8a249d972393def659139eb308475313f",
+    "data/models/cqr_conformal_adjustments.json": "9ad1a63cfb1bffd4838a3c5b052cfd3e88e1a58424443504d15cdb36e3bda20c",
+    "data/models/resolution_predictor_kubernetes_kubernetes.pkl": "038052a90225ea5c5bf88682bd71fdf1336270a918e640fc4a1448986cb06406",
+    "data/models/resolution_predictor_microsoft_vscode.pkl": "60b39981d8c95dcf0114700132a474e4c62706c1c64388b055f8819378bad870",
+    "data/models/similar_issue_index_kubernetes_kubernetes_bge/index.faiss": "a2ff35a0f7665ec76126ef01db40a4d84471165696c54e0e0a96836de0004dab",
+    "data/models/similar_issue_index_kubernetes_kubernetes_bge/meta.pkl": "62f48f8f53c6b975c2b5d577ad49bcaef8a4423554a25a442b6a37f3495064d4",
+    "data/models/similar_issue_index_microsoft_vscode_bge/index.faiss": "3b825bd00696b2b83c2731a0e5cde9af0123b109eded2f7e48ea1194855e3a53",
+    "data/models/similar_issue_index_microsoft_vscode_bge/meta.pkl": "cd74345b4d539b7a2a416fdf6c10940984a94334c9e363cc936538637dd4bd1e",
+    "data/processed/kubernetes_kubernetes_temporal_train.parquet": "f7988eec072804618d036d3ace03c87395773e0d7bf4281490daf63d69d8dc94",
+    "data/processed/microsoft_vscode_temporal_train.parquet": "0d8094db7d5b4839c26f105f9f50f3d12f5b283faff7e2f06600925b876718fe"
+  }
+}

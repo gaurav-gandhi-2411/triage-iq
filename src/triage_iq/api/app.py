@@ -25,7 +25,6 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from ..config import get_settings
-from ..model_config import TRIAGE_PRICE_PER_MTOK
 from ..models.abstention import compute_abstention_status
 from ..models.triage import ConformalIntervalResult, TriagePlan
 from .loader import ModelStore
@@ -40,8 +39,6 @@ _RESOLUTION_MODEL_BEATS_NAIVE: dict[str, bool] = {
     "microsoft/vscode": False,       # improvement −70.5% vs naive; no creation-time signal
     "kubernetes/kubernetes": True,   # improvement +2.1% vs naive; bucket model 50 rounds
 }
-
-_GROQ_PRICE_PER_MTOK = TRIAGE_PRICE_PER_MTOK
 
 # ---------------------------------------------------------------------------
 # Prometheus custom metrics
@@ -198,6 +195,7 @@ async def lifespan(app: FastAPI):
         data_dir=cfg.data_dir,
         groq_api_key=cfg.groq_api_key.get_secret_value(),
         cache=app.state.cache,
+        max_tokens=cfg.triage_max_tokens,
     )
     logger.info("Models ready: %s", app.state.store.repos)
     _token_set = bool(cfg.metrics_token and cfg.metrics_token.get_secret_value())
@@ -367,7 +365,15 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
 
     total_ms = round((time.perf_counter() - t_start) * 1000, 1)
     llm_status = meta.get("llm_status", "ok")
-    req_status = "fallback" if llm_status == "parse_failure" else "success"
+    # "degraded_*" (Part B, 2026-08-28: insufficient token budget / completion truncated
+    # even at a dynamically-reduced max_tokens) are signals-only fallback plans, same as
+    # parse_failure -- not "success". parse_retry_succeeded is deliberately excluded: that
+    # plan IS real LLM content, just needed a retry.
+    req_status = (
+        "fallback"
+        if llm_status == "parse_failure" or llm_status.startswith("degraded_")
+        else "success"
+    )
 
     _triage_requests_total.labels(repo=body.repo, status=req_status).inc()
     _triage_latency_seconds.observe(total_ms / 1000.0)
@@ -397,6 +403,15 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     result = plan.model_dump()
     result["_request_id"] = request_id
     result["_llm_status"] = llm_status
+    # 2026-09-03 (ADR-0055 Part P1b): explicit boolean, same logic as req_status above --
+    # added because the deploy smoke test had no field it could assert on to catch a
+    # revision where every request silently falls back to a classifier-only plan
+    # (predicted_component stays non-empty either way, so that alone was never a
+    # sufficient check). _llm_status already carried this information as a string, but
+    # a smoke test (or any other consumer) parsing specific status string values to
+    # infer degradation is exactly the kind of narrower-than-it-looks check this
+    # engagement keeps finding -- an explicit boolean is the field a gate should assert.
+    result["_degraded"] = req_status == "fallback"
     result["_llm_cache_hit"] = meta.get("llm_cache_hit")
     result["classifier_top3"] = meta.get("classifier_top3")
     result["resolution_model_beats_naive"] = _RESOLUTION_MODEL_BEATS_NAIVE.get(body.repo, True)

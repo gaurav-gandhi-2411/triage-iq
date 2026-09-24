@@ -82,6 +82,13 @@ jobs:
           # major-version refresh that CVE-2026-1839 and friends are explicitly waiting on.
           # See DEPENDENCIES.md.
           #
+          # CVE-2026-63374 / CVE-2026-64847 (anyio 4.13.0, fixed 4.14.2): IDNA-2003 host-name
+          # check in connect_tcp()/TLSStream.wrap() for NON-ASCII hosts, and process-pool
+          # workers blocking on an undrained stderr pipe. TriageIQ imports anyio nowhere,
+          # never uses anyio process pools (no to_process), and every outbound client is the
+          # synchronous Groq/httpx client (no anyio TLS) to hardcoded ASCII hosts. Same
+          # lock-regen blocker as PYSEC-2026-3716. See DEPENDENCIES.md.
+          #
           # Transformers findings (all but PYSEC-2026-3447/3716): fix requires
           # transformers>=5.0.0rc3 (needs sentence-transformers>=5.x, a triple major bump)
           # or, for CVE-2025-3000, no fix version is published at all. Revisit when a
@@ -95,7 +102,9 @@ jobs:
             --ignore-vuln PYSEC-2026-2290 \
             --ignore-vuln CVE-2026-9856 \
             --ignore-vuln PYSEC-2026-3447 \
-            --ignore-vuln PYSEC-2026-3716
+            --ignore-vuln PYSEC-2026-3716 \
+            --ignore-vuln CVE-2026-63374 \
+            --ignore-vuln CVE-2026-64847
 
       - name: Lint (ruff)
         run: ruff check src/ tests/

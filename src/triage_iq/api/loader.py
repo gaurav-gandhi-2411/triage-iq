@@ -115,6 +115,7 @@ class ModelStore:
         data_dir: Path | None = None,
         groq_api_key: str | None = None,
         cache=None,
+        max_tokens: int | None = None,
     ) -> ModelStore:
         import time
 
@@ -129,6 +130,13 @@ class ModelStore:
         _check_manifest_drift(data_dir)  # warn-not-crash: image-baked artifact integrity
 
         key = (groq_api_key if groq_api_key else os.environ.get("GROQ_API_KEY", "")).strip()
+        # 2026-08-29: single source of truth is Settings.triage_max_tokens (config.py); this
+        # env fallback exists so direct callers (scripts, tests) that don't build a Settings
+        # object still get the same documented default instead of TriageAssistant's own bare
+        # constructor default. See config.py's triage_max_tokens comment for the incident.
+        effective_max_tokens = (
+            max_tokens if max_tokens is not None else int(os.environ.get("TRIAGE_MAX_TOKENS", "2048"))
+        )
 
         bundles: dict[str, RepoBundle] = {}
         for repo, slug in _REPO_SLUGS.items():
@@ -147,6 +155,7 @@ class ModelStore:
                     train_df=train_df,
                     groq_api_key=key,
                     cache=cache,
+                    max_tokens=effective_max_tokens,
                 )
                 bundles[repo] = RepoBundle(clf, det, pred, train_df, asst)
                 logger.info("Loaded %s — OK", repo)

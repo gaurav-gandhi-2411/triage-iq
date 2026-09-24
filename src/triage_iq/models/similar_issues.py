@@ -186,6 +186,42 @@ class SimilarIssueRetriever:
             use = bool(QUERY_INSTRUCTIONS.get(self.model_key, ""))
         return QUERY_INSTRUCTIONS.get(self.model_key, "") + text if use else text
 
+    def match_indexed_issue(self, title: str, body: str) -> int | None:
+        """Number of the indexed issue whose stored corpus text is exactly this title+body.
+
+        Users usually paste an issue that already exists, and without an issue_number the
+        index returns the issue itself as its own top "similar issue" (seen live on vscode
+        #286776, 2026-09-24). The corpus text is built from the CLEANED body
+        (preprocess.clean_text) through _build_text with this model's tokenizer, so the
+        query is canonicalized the same way before the lookup. Verified on #286776: the
+        raw GitHub body cleaned this way reproduces the indexed text byte-for-byte; the
+        raw body does not. The body is also tried as-is, for callers that already pass a
+        cleaned body. Exact-text equality only, never a similarity threshold: a
+        near-duplicate filed separately is a real result and must stay. If several indexed
+        issues share the text, nothing is excluded (ambiguous).
+        """
+        from triage_iq.data.preprocess import clean_text
+
+        if self.texts is None or self.issue_numbers is None:
+            return None
+        lookup = getattr(self, "_text_to_numbers", None)
+        if lookup is None:
+            lookup = {}
+            for text, num in zip(self.texts, self.issue_numbers, strict=True):
+                lookup.setdefault(text, []).append(int(num))
+            self._text_to_numbers = lookup
+        tokenizer = getattr(self.model, "tokenizer", None)
+        max_tokens = getattr(self.model, "max_seq_length", 512)
+        for candidate_body in dict.fromkeys((clean_text(body)[0], body)):
+            built = _build_text(
+                pd.Series([title]), pd.Series([candidate_body]),
+                tokenizer=tokenizer, max_tokens=max_tokens,
+            )[0]
+            nums = lookup.get(built)
+            if nums is not None and len(nums) == 1:
+                return nums[0]
+        return None
+
     def retrieve(
         self,
         query_text: str,

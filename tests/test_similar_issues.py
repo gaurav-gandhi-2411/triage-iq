@@ -153,3 +153,58 @@ def test_build_index_never_gets_query_instruction() -> None:
         "Represent this sentence"
         not in _build_text(pd.Series(["T"]), pd.Series(["B"]), tokenizer=None)[0]
     )
+
+
+# --- Self-retrieval exclusion (2026-09-24) ---------------------------------------------------
+# A user pasting an issue already in the index got that same issue back as its own top
+# "similar issue" (vscode #286776, live). match_indexed_issue finds the exact indexed copy so
+# retrieve() can exclude it even without an issue_number.
+
+
+class _StubModel:
+    def __init__(self) -> None:
+        self.tokenizer = _StubTokenizer()
+        self.max_seq_length = 512
+
+
+def _indexed_retriever(texts: list[str], numbers: list[int]) -> SimilarIssueRetriever:
+    import numpy as np
+
+    obj = SimilarIssueRetriever.__new__(SimilarIssueRetriever)
+    obj.repo = "microsoft/vscode"
+    obj.model_key = "bge"
+    obj.model = _StubModel()
+    obj.texts = texts
+    obj.issue_numbers = np.asarray(numbers, dtype=np.int64)
+    return obj
+
+
+def _corpus_text(title: str, body: str) -> str:
+    return _build_text(pd.Series([title]), pd.Series([body]), tokenizer=_StubTokenizer(), max_tokens=512)[0]
+
+
+def test_match_indexed_issue_finds_exact_copy() -> None:
+    r = _indexed_retriever(
+        [_corpus_text("Graph tree does not expand", "some entries never expand"), _corpus_text("Other", "x")],
+        [286776, 1],
+    )
+    assert r.match_indexed_issue("Graph tree does not expand", "some entries never expand") == 286776
+
+
+def test_match_indexed_issue_cleans_a_raw_paste_like_the_corpus() -> None:
+    from triage_iq.data.preprocess import clean_text
+
+    raw = "<!-- Please fill in the template -->\nsome entries never expand"
+    r = _indexed_retriever([_corpus_text("Graph tree", clean_text(raw)[0])], [286776])
+    assert r.match_indexed_issue("Graph tree", raw) == 286776
+
+
+def test_match_indexed_issue_ignores_near_duplicates() -> None:
+    r = _indexed_retriever([_corpus_text("Graph tree", "some entries never expand")], [286776])
+    assert r.match_indexed_issue("Graph tree", "some entries never expand on Linux") is None
+    assert r.match_indexed_issue("Graph tree broken", "some entries never expand") is None
+
+
+def test_match_indexed_issue_is_none_when_ambiguous() -> None:
+    text = _corpus_text("Crash", "it crashes")
+    assert _indexed_retriever([text, text], [10, 11]).match_indexed_issue("Crash", "it crashes") is None

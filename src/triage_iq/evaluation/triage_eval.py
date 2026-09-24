@@ -14,8 +14,6 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field
 
-from triage_iq.model_config import JUDGE_MODEL
-
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -177,7 +175,7 @@ class TriageJudge:
     def __init__(
         self,
         groq_api_key: str | None = None,
-        model: str = JUDGE_MODEL,
+        model: str | None = None,
         temperature: float = 0.0,
         provider: str = "groq",
         gemini_api_key: str | None = None,
@@ -186,6 +184,12 @@ class TriageJudge:
         ollama_seed: int = 42,
         cache=None,
     ) -> None:
+        # No default model: the old default was model_config.JUDGE_MODEL
+        # ("llama-3.3-70b-versatile"), which Groq retired on 2026-08-16. Every real call site
+        # already passes its judge explicitly (local qwen3:8b per ADR-0019), so a missing
+        # model is a caller bug and must fail at construction, not at the first API call.
+        if not model:
+            raise ValueError("TriageJudge requires an explicit model (e.g. 'qwen3:8b' with provider='ollama').")
         self.model = model
         self.temperature = temperature
         self.provider = provider

@@ -163,6 +163,26 @@ jobs:
           fi
           echo "Health: $(curl -sf "$URL/health")"
 
+          # 1b. Dependency readiness (2026-09-24). Bare /health is liveness only -- it reports
+          # groq_key_present, never whether Groq ACCEPTS the key. On 2026-09-24 a revoked
+          # production key passed /health and was only caught by the /triage 500 below, with no
+          # indication of the cause. ?deps=1 makes one zero-token authenticated Groq call and
+          # returns 503 with a per-dependency detail, so a rejected key fails here, named.
+          echo "=== /health?deps=1 ==="
+          DRESP=$(curl -s -w "\n%{http_code}" "$URL/health?deps=1")
+          DCODE=$(echo "$DRESP" | tail -1)
+          DBODY=$(echo "$DRESP" | sed '$d')
+          echo "$DBODY"
+          if [ "$DCODE" != "200" ]; then
+            if echo "$DBODY" | grep -q -E '401|invalid_api_key|AuthenticationError'; then
+              echo "FAILED: Groq REJECTED the production API key (401). Add a new Secret Manager version of groq-api-key, then re-run this deploy."
+            else
+              echo "FAILED: /health?deps=1 returned HTTP $DCODE -- a dependency is unhealthy (see body above)."
+            fi
+            exit 1
+          fi
+          echo "Dependency check passed"
+
           # 2. Metrics endpoint — requires bearer token
           echo "=== /metrics ==="
           if [ -n "$SMOKE_METRICS_TOKEN" ]; then

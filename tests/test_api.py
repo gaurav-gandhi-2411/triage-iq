@@ -54,6 +54,7 @@ def _fake_meta() -> dict:
 def _make_store() -> ModelStore:
     bundle = MagicMock()
     bundle.assistant.triage_with_metadata.return_value = (_fake_plan(), _fake_meta())
+    bundle.assistant.model = "openai/gpt-oss-120b"
     store = MagicMock()
     store.repos = ["microsoft/vscode", "kubernetes/kubernetes"]
     store.start_time = time.monotonic() - 5.0
@@ -148,6 +149,8 @@ def test_triage_includes_resolution_prediction(client):
     assert "_request_id" in body
     assert "_llm_status" in body
     assert body["_llm_status"] in ("ok", "parse_retry_succeeded", "parse_failure")
+    # The serving LLM is reported so clients never need to hardcode it (2026-09-24).
+    assert body["_model"] == "openai/gpt-oss-120b"
 
 
 def test_triage_accepts_created_at(client):

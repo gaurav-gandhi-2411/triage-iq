@@ -413,6 +413,10 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     # engagement keeps finding -- an explicit boolean is the field a gate should assert.
     result["_degraded"] = req_status == "fallback"
     result["_llm_cache_hit"] = meta.get("llm_cache_hit")
+    # 2026-09-24: the LLM that produced this plan, so clients (triage-iq-ui's "Under the
+    # Hood") render the serving model from the response instead of hardcoded copy -- the UI
+    # said gpt-oss-20b while production served openai/gpt-oss-120b.
+    result["_model"] = bundle.assistant.model
     result["classifier_top3"] = meta.get("classifier_top3")
     result["resolution_model_beats_naive"] = _RESOLUTION_MODEL_BEATS_NAIVE.get(body.repo, True)
     return JSONResponse(content=result)

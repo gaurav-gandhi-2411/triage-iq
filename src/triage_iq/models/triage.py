@@ -816,7 +816,15 @@ class TriageAssistant:
         t2 = time.perf_counter()
         try:
             num = int(issue.get("number", -1))
-            similar_raw = self.detector.retrieve(text, k=5, exclude_number=num if num > 0 else None)
+            exclude = num if num > 0 else None
+            # No issue_number: exclude the query itself if it is an exact copy of an indexed
+            # issue (see SimilarIssueRetriever.match_indexed_issue). The eval harness's frozen
+            # retriever has no such method, so eval/cassette behaviour is unchanged.
+            if exclude is None and hasattr(self.detector, "match_indexed_issue"):
+                exclude = self.detector.match_indexed_issue(
+                    str(issue.get("title", "")), str(issue.get("body_clean", ""))
+                )
+            similar_raw = self.detector.retrieve(text, k=5, exclude_number=exclude)
         except Exception as e:
             logger.warning("Retrieval failed: %s", e)
             similar_raw = []

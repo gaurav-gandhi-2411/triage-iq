@@ -13,6 +13,7 @@ import time
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pandas as pd
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
@@ -480,13 +481,33 @@ def health(request: Request, deps: int = 0) -> HealthResponse | JSONResponse:
 @app.get("/eval/summary")
 def eval_summary() -> JSONResponse:
     """Return the static eval methodology summary from reports/eval_summary.json."""
-    from pathlib import Path
     _eval_path = Path(__file__).parent.parent.parent.parent / "reports" / "eval_summary.json"
     try:
         data = json.loads(_eval_path.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
         return JSONResponse({"detail": "eval summary not available"}, status_code=503)
+    data["current_llm_baseline"] = _current_llm_baseline(_eval_path.parent / "eval_baseline.json")
     return JSONResponse(content=data)
+
+
+def _current_llm_baseline(path: Path) -> dict | None:
+    """The committed LLM-quality baseline, read from reports/eval_baseline.json (written by
+    eval/run_eval.py --update-baseline) so the UI shows the measured number instead of
+    hardcoded copy (it showed a stale 10.93/15 from a retired model). None if the file is
+    absent or unreadable: the UI then shows no score rather than a wrong one."""
+    try:
+        b = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    return {
+        "judge_model": b.get("judge", {}).get("model"),
+        "overall": b.get("overall"),
+        "per_repo": {
+            repo: {k: v.get(k) for k in ("n", "mean", "fabrication_rate", "floor_fail_rate")}
+            for repo, v in (b.get("per_repo") or {}).items()
+        },
+        "cassette_hash": (b.get("cassette_hash") or "")[:12],
+    }
 
 
 # ---------------------------------------------------------------------------

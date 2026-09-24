@@ -5,8 +5,8 @@ on:
     branches: [main]
     # Skip paths that never reach the built image or the deploy job itself.
     # Verified against docker/Dockerfile.prod's COPY list before adding any
-    # entry here — reports/** is ignored EXCEPT eval_summary.json, which
-    # Dockerfile.prod bakes in directly and /eval/summary serves live.
+    # entry here — reports/** is ignored EXCEPT eval_summary.json and eval_baseline.json,
+    # which Dockerfile.prod bakes in directly and /eval/summary serves live.
     paths-ignore:
       - 'docs/**'
       - '**/*.md'
@@ -16,6 +16,7 @@ on:
       - 'deploy/**'
       - 'reports/**'
       - '!reports/eval_summary.json'
+      - '!reports/eval_baseline.json'  # baked in for /eval/summary's current_llm_baseline
   workflow_dispatch:
 
 # Serialize deploys to the same ref — two unordered concurrent `gcloud run

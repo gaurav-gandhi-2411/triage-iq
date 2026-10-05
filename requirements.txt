@@ -17,7 +17,7 @@ tqdm>=4.67.3
 pyarrow>=14.0
 
 # ML
-scikit-learn>=1.6,<1.8
+scikit-learn>=1.7.2,<1.8
 lightgbm>=4.0
 transformers>=4.40
 sentence-transformers>=2.7.0,<3.0  # matches requirements.lock (prod has always shipped 2.7.0); 5.x is a deliberate future change, see DEPENDENCIES.md

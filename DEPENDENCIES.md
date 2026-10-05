@@ -239,4 +239,103 @@ floor and pulls in the deferred 2.7.0→5.7.0 / transformers 4→5 refresh. Conf
 and `sentence-transformers` 2.7.0→5.7.0. Hand-editing the lock is not allowed.
 
 **Revisit trigger:** The same drift resolution as PYSEC-2026-3716. Once the lock regenerates
-cleanly, anyio lands at ≥4.14.2 and both suppressions drop.
+cleanly, anyio lands at ≥4.14.2 and both suppressions drop. (**Update 2026-10-05:** the drift
+is resolved, see "Version floors realigned" below; this entry and PYSEC-2026-3716 can now be
+cleared by a scoped `--upgrade-package` regen. Not done in this change.)
+
+### PYSEC-2026-4164 — sentence-transformers local model loading bypasses `trust_remote_code`
+
+- **Suppressed since:** 2026-10-05 (published 2026-10-01; surfaced by pip-audit on PR #137,
+  whose diff touches neither `requirements.lock` nor `ci.yml`: main fails identically)
+- **Affected package:** `sentence-transformers==2.7.0` (`requirements.lock`)
+- **Fix version:** `sentence-transformers>=5.6.0` only (a 2→5 major upgrade, see below)
+
+**Why suppressed:** exploitation needs `SentenceTransformer(...)` to load a local model
+directory that contains attacker-authored custom Python modules. Checked directly:
+- The one model-loading call site in served code is
+  `src/triage_iq/models/similar_issues.py:121`, `SentenceTransformer(model_name)`, where
+  `model_name` comes from the hardcoded `SUPPORTED_MODELS` table (`BAAI/bge-base-en-v1.5` by
+  default). No request field, env var or file path reaches it.
+- `docker/Dockerfile.prod` bakes that model into the image at build time
+  (`SentenceTransformer('BAAI/bge-base-en-v1.5')`, lines 28-31) and sets `HF_HUB_OFFLINE=1`
+  (line 74), so the serving container downloads nothing at runtime and cannot be pointed at a
+  different repo.
+- bge-base-en-v1.5 is a plain BERT checkpoint with no custom modules.
+- Every other `SentenceTransformer(` / `CrossEncoder(` call is in an offline `scripts/` file
+  (training, mining, latency probes); none is imported by the API.
+
+**Would become reachable if:** (a) a model name or local path derived from request input,
+config an operator does not control, or a downloaded/user-supplied directory reached
+`SentenceTransformer(...)`; (b) the baked model in the image were replaced by one whose repo
+ships custom modules; or (c) `HF_HUB_OFFLINE=1` were dropped and the model ID became
+changeable at runtime. Re-run this analysis for any change touching those three.
+
+**Revisit trigger:** the deliberate sentence-transformers 2→5 upgrade (own change, own eval;
+see "Version floors realigned" below). The suppression drops with it.
+
+### PYSEC-2026-4174 — transformers downloads custom generation code before trust consent
+
+- **Suppressed since:** 2026-10-05 (published 2026-10-01; same provenance as above)
+- **Affected package:** `transformers==4.57.6` (`requirements.lock`)
+- **Fix version:** none published for the 4.x line at the time of writing (CI's pip-audit
+  output lists no fix version)
+
+**Why suppressed:** the flaw is on the `generate()` path when a model repo supplies custom
+generation code. This codebase never runs a Hugging Face text-generation model. Checked
+directly: `grep -rnE "\.generate\(|custom_generate|generation_config|GenerationMixin"` over
+`src/`, `scripts/`, `eval/`, `tests/` returns one hit, `eval/record_cassettes.py:541`, which is
+the Ollama client's `.generate(...)` (an unrelated HTTP API), not transformers. The only
+transformers surfaces in use are `AutoModel`/`AutoTokenizer`/`AutoModelForSequenceClassification`
+`from_pretrained(...)` in offline training/eval scripts and the sentence-transformers encoder in
+the served path; neither calls `generate()`. LLM synthesis goes to Groq over HTTP.
+
+**Would become reachable if:** any code calls `generate()` on a transformers model, particularly
+with `trust_remote_code=True`, a `custom_generate` argument, or a model/repo ID that is not
+hardcoded and trusted (for example a local text-generation fallback for when Groq is down).
+
+**Revisit trigger:** a published fix version for the installed major, or the transformers 4→5
+refresh that accompanies the sentence-transformers upgrade.
+
+## Version floors realigned to the shipped lock (2026-10-05)
+
+Two floors in `requirements.txt` had been raised past what `requirements.lock` (and therefore
+production, which installs from the lock) ever shipped:
+
+| Package | `requirements.txt` was | Lock / production ships | Now |
+|---|---|---|---|
+| sentence-transformers | `>=5.7.0,<6.0` (Dependabot PR #69, 2026-08-11) | `2.7.0` | `>=2.7.0,<3.0` |
+| groq | `>=1.6.0` | `1.2.0` | `>=1.2.0,<1.6` |
+
+**How it happened:** Dependabot edits `requirements.txt` floors but never regenerates the
+lock, and nothing checked that the two agreed. The lock therefore kept shipping the old
+versions while `requirements.txt` described different ones. The first visible symptom was
+indirect: any scoped `pip-compile --upgrade-package X` regen (for a CVE) silently also moved
+sentence-transformers 2.7.0→5.7.0 and groq 1.2.0→1.7.0, which is why PYSEC-2026-3716 and the
+anyio CVEs were suppressed instead of fixed (entries above).
+
+**What changed:** only the two constraints in `requirements.txt`. Zero installed packages
+change: a no-upgrade `pip-compile` regen in `python:3.11-slim` now reproduces the committed
+lock with no non-comment diff (`scripts/check_lock_in_sync.py`, exit 0, 79 pinned lines).
+
+**Guard against recurrence:** CI job `lock-in-sync` runs `scripts/check_lock_in_sync.py` on
+every push/PR and fails on any non-comment difference between the committed lock and a
+fresh no-upgrade regen. Verified to fail when `groq>=1.6.0` is re-introduced.
+
+**Deliberate future changes (each is its own PR with its own evaluation):**
+- **sentence-transformers 2→5** (and the transformers 4→5 refresh that comes with it).
+  Changes the embedding code path for retrieval, so it needs a retrieval re-evaluation
+  (recall@k on the gold set), a check for embedding shift against the prebuilt FAISS indexes
+  (built with the currently shipped embedder), cassette invalidation, and a fresh
+  baseline per the baseline-promotion rules. Clears PYSEC-2026-4164, 4174 and the older
+  transformers suppressions.
+- **groq 1.2→1.7.** groq is the live LLM client, so the upgrade can change request/response
+  handling (structured output, retries, error types) in production; it needs a cassette
+  re-record or replay check, the eval regression gate, and a staged deploy.
+
+Dependabot will keep proposing the raised floors; do not merge those PRs without doing the
+corresponding change above, and regenerate the lock in the same PR (the CI check enforces it).
+
+### PYSEC-2026-4175 / -4176 / -4177 — urllib3 (fixed, not suppressed)
+
+Published 2026-10-01. Fixed by a scoped `pip-compile --upgrade-package urllib3` regen,
+`urllib3` 2.7.0→2.8.0 (diff touches only that line). No suppression needed.

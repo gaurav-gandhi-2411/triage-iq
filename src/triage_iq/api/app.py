@@ -125,6 +125,20 @@ _access_logger.setLevel(logging.INFO)
 _access_logger.addHandler(_access_handler)
 _access_logger.propagate = False
 
+# uvicorn only configures its own loggers, so INFO lines from the startup path (loader
+# startup_step timings, "Models ready") were silently dropped in prod -- Cloud Run showed only
+# uvicorn's "Waiting for application startup" -> "complete". Route just these loggers to the
+# same JSON stdout handler; WARNING+ from them still appears (previously via lastResort/stderr).
+for _startup_logger_name in (
+    __name__,
+    "triage_iq.api.loader",
+    "triage_iq.models.similar_issues",
+):
+    _startup_logger = logging.getLogger(_startup_logger_name)
+    _startup_logger.setLevel(logging.INFO)
+    _startup_logger.addHandler(_access_handler)
+    _startup_logger.propagate = False
+
 
 # ---------------------------------------------------------------------------
 # /metrics auth dependency

@@ -911,6 +911,57 @@ def test_eval_summary_serves_the_committed_llm_baseline(client):
     assert set(b["per_repo"]) == set(committed["per_repo"])
 
 
+_STALE_JUDGE_KEYS = (
+    "cross_family_judge_model",
+    "cross_family_validation",
+    "w1_1_pre_calibration",
+    "w1_2_post_calibration",
+    "production_llama_score",
+)
+
+
+def test_eval_summary_judge_block_matches_committed_baseline(client):
+    """Drift guard: the judge block the /eval page renders is hand-copied from
+    reports/eval_baseline.json, so a re-baseline that forgets eval_summary.json fails here
+    (it served n=65 / 10.52 / 8.36 from a retired judge long after the baseline moved)."""
+    import json as _json
+    from pathlib import Path as _Path
+
+    from triage_iq.evaluation.triage_eval import DIMENSION_MAX
+
+    committed = _json.loads(
+        (_Path(__file__).parent.parent / "reports" / "eval_baseline.json").read_text(encoding="utf-8")
+    )
+    r = client.get("/eval/summary")
+    assert r.status_code == 200
+    judge = r.json()["judge"]
+
+    assert judge["production_judge_model"] == committed["judge"]["model"]
+    assert judge["n_issues_evaluated"] == committed["overall"]["n"]
+    assert judge["overall"] == committed["overall"]
+    assert judge["dimension_max"] == DIMENSION_MAX
+    assert set(judge["per_repo"]) == set(committed["per_repo"])
+    for repo, want in committed["per_repo"].items():
+        got = judge["per_repo"][repo]
+        assert got["n"] == want["n"]
+        assert got["mean"] == pytest.approx(want["mean"], abs=1e-4)
+        assert set(got["dimensions"]) == set(want["dimensions"])
+        for dim, mean in want["dimensions"].items():
+            assert got["dimensions"][dim] == pytest.approx(mean, abs=1e-4)
+
+
+def test_eval_summary_has_no_stale_judge_history_or_hardcoded_revision(client):
+    """Retired-judge W1-era numbers must not be served as current, and a hardcoded Cloud Run
+    revision name is wrong after the next deploy (it showed triageiq-api-00050-flt long after)."""
+    r = client.get("/eval/summary")
+    assert r.status_code == 200
+    body = r.json()
+    for key in _STALE_JUDGE_KEYS:
+        assert key not in body["judge"], key
+    assert "dimensions" not in body["judge"]
+    assert "triageiq-api-0" not in r.text
+
+
 def test_current_llm_baseline_is_none_when_file_missing(tmp_path):
     from triage_iq.api.app import _current_llm_baseline
 

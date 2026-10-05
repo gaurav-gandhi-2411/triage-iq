@@ -1,0 +1,4 @@
+sklearn 1.6.1 microsoft_vscode: test n=423 top1=0.6998 top3=0.8582 | eval-set n=11 ECE(5bins)=0.1875
+sklearn 1.6.1 kubernetes_kubernetes: test n=671 top1=0.5484 top3=0.8599 | eval-set n=53 ECE(5bins)=0.1210
+sklearn 1.7.2 microsoft_vscode: test n=423 top1=0.6998 top3=0.8582 | eval-set n=11 ECE(5bins)=0.1875
+sklearn 1.7.2 kubernetes_kubernetes: test n=671 top1=0.5484 top3=0.8599 | eval-set n=53 ECE(5bins)=0.1210

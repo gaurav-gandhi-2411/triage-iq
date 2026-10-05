@@ -33,6 +33,34 @@ jobs:
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install -r requirements-dev.txt
 
+      # 2026-10-05: Dependabot raised two floors in requirements.txt (sentence-transformers
+      # >=5.7.0, groq >=1.6.0) without regenerating requirements.lock; prod installs from the
+      # lock, so the two silently diverged and every later scoped regen dragged both upgrades
+      # in. This regenerates the lock (no upgrades, python:3.11-slim, header's own command)
+      # and fails on any non-comment diff. The regen takes ~10 min (torch metadata), so it runs
+      # only when requirements.txt, requirements.lock or the checker changed; if the changed
+      # set cannot be determined (new branch, shallow history) it RUNS rather than skips.
+      - name: Lock in sync with requirements.txt
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          run_check=1
+          if [ "$EVENT_NAME" = "pull_request" ]; then base="$BASE_SHA"; else base="$BEFORE_SHA"; fi
+          if [ -n "$base" ] && [ "$base" != "0000000000000000000000000000000000000000" ] \
+             && git fetch --no-tags --depth=1 origin "$base" 2>/dev/null; then
+            changed="$(git diff --name-only "$base" HEAD || echo UNKNOWN)"
+            if [ "$changed" != "UNKNOWN" ] && ! echo "$changed" | grep -qE '^(requirements\.txt|requirements\.lock|scripts/check_lock_in_sync\.py)$'; then
+              run_check=0
+            fi
+          fi
+          if [ "$run_check" = "0" ]; then
+            echo "requirements.txt / requirements.lock unchanged; lock-sync check not needed."
+          else
+            python scripts/check_lock_in_sync.py
+          fi
+
       - name: Security audit
         run: |
           # All 8 suppressions below are justified in DEPENDENCIES.md (unreachable code
@@ -112,7 +140,18 @@ jobs:
             --ignore-vuln PYSEC-2026-3447 \
             --ignore-vuln PYSEC-2026-3716 \
             --ignore-vuln CVE-2026-63374 \
-            --ignore-vuln CVE-2026-64847
+            --ignore-vuln CVE-2026-64847 \
+            --ignore-vuln PYSEC-2026-4164 \
+            --ignore-vuln PYSEC-2026-4174
+          # PYSEC-2026-4164 (sentence-transformers 2.7.0; fix only in 5.6.0) and
+          # PYSEC-2026-4174 (transformers 4.57.6; no fix published), both published
+          # 2026-10-01. Explicitly authorized by GG 2026-10-05; the only two entries added.
+          # Unreachable here: the prod image bakes the embedder at build time with
+          # HF_HUB_OFFLINE=1, the single model-loading call site (similar_issues.py:121)
+          # uses a hardcoded model ID, and nothing calls transformers generate().
+          # DEPENDENCIES.md names the conditions that would make each reachable.
+          # The three urllib3 advisories published the same day are FIXED (lock regen), not
+          # suppressed.
 
       - name: Lint (ruff)
         run: ruff check src/ tests/

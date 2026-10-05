@@ -137,7 +137,15 @@ def engineer_features(
 
     # ── Author features (leak-proof: only past info) ──────────────
     if train_df is not None:
-        all_df = pd.concat([train_df, df], sort=False).drop_duplicates(subset=["number"])
+        # Only these columns are read below. Concatenating the full frames also copied every
+        # training row's text columns on each request. Sorting and dedup are keyed on
+        # created_at / number alone, so the row order is unchanged.
+        _author_cols = ["number", "author", "created_at", "resolution_hours", "state"]
+        all_df = pd.concat(
+            [train_df[[c for c in _author_cols if c in train_df.columns]],
+             df[[c for c in _author_cols if c in df.columns]]],
+            sort=False,
+        ).drop_duplicates(subset=["number"])
         all_df = all_df.sort_values("created_at")
 
         author_prior_count: dict[str, int] = {}
@@ -145,18 +153,35 @@ def engineer_features(
         author_count_at = {}
         author_median_at = {}
 
-        for _, row in all_df.iterrows():
-            num = row["number"]
-            author = row.get("author", "")
+        # 2026-09-24 perf: this loop runs on every /triage request over the FULL training set
+        # (23,928 k8s rows). It used all_df.iterrows(), which builds a pandas Series per row,
+        # and took np.median of every row's history although only df's rows are read back:
+        # ~2.4 s per k8s request, ~0.43 s per vscode request (measured locally, matches
+        # production's System 3 latency). Same algorithm over plain column lists --
+        # identical row order, identical dict-key objects (the same values iterrows would
+        # yield, including NaN/None authors), identical closed/resolution filter -- with the
+        # median computed only for the rows this call returns. Output verified
+        # element-for-element identical to the iterrows version.
+        n_rows = len(all_df)
+        numbers = all_df["number"].tolist()
+        authors = all_df["author"].tolist() if "author" in all_df.columns else [""] * n_rows
+        resolutions = (
+            all_df["resolution_hours"].tolist() if "resolution_hours" in all_df.columns else [None] * n_rows
+        )
+        states = all_df["state"].tolist() if "state" in all_df.columns else [None] * n_rows
+        wanted = set(df["number"].tolist())
+
+        for num, author, res_hrs, state in zip(numbers, authors, resolutions, states, strict=True):
             count = author_prior_count.get(author, 0)
-            medians = author_prior_resolutions.get(author, [])
-            author_count_at[num] = count
-            author_median_at[num] = np.median(medians) if medians else np.nan
+            if num in wanted:
+                medians = author_prior_resolutions.get(author, [])
+                author_count_at[num] = count
+                author_median_at[num] = np.median(medians) if medians else np.nan
 
             # Update for future rows
             author_prior_count[author] = count + 1
-            if pd.notna(row.get("resolution_hours")) and row.get("state") == "closed":
-                author_prior_resolutions.setdefault(author, []).append(row["resolution_hours"])
+            if pd.notna(res_hrs) and state == "closed":
+                author_prior_resolutions.setdefault(author, []).append(res_hrs)
 
         feats["author_prior_count"] = df["number"].map(author_count_at).fillna(0)
         feats["is_first_author"] = (feats["author_prior_count"] == 0).astype(int)

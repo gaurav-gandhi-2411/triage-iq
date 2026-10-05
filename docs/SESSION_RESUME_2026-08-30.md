@@ -30,6 +30,35 @@ Backlog, each with rationale and rough effort (nothing here is started):
 Related, tracked in their own PRs/issues rather than here: scikit-learn 1.7.2 pickles served
 under a 1.6.1 lock; startup probe (#142); cold-start logging (#140).
 
+### Release checklist (written after the 2026-10-05 `/eval` outage)
+
+**What happened.** Core #141 removed judge keys from `/eval/summary`; the deployed UI still read
+them; the UI fix (#22) merged but its production build was rejected by Vercel
+("Deployment rate limited"), so no deployment existed for it. The live `/eval` page was blank
+for hours. The merge order was right on paper, and it still broke, because **merge is not deploy**.
+
+1. **Merge != deploy.** Any release whose steps must land in order (UI before API, API before UI)
+   gates each step on a *confirmed production deployment*, not on a merge: the deployment ID,
+   state `READY`, and that it is the current production deployment (Vercel: deployments list /
+   `gh api repos/<repo>/deployments`; Cloud Run: `gcloud run services describe` traffic +
+   image tag equals the merge commit). A red or missing deployment status on the merge commit
+   (`gh api repos/<repo>/commits/<sha>/status`) blocks the next step.
+2. **Expand / contract for API response shapes.** The API never removes or renames a response
+   field until every consumer that reads it is confirmed deployed without it (step 1). Add the
+   new field first (expand), switch consumers, confirm, then remove the old one (contract) in a
+   separate PR. A consumer must tolerate both shapes during the window.
+3. **A CI test must fail on a breaking shape change**: the UI renders the Eval page against a
+   fixture of core `main`'s current `reports/eval_summary.json` (tracked as a backlog item until
+   it lands; do not rely on reviewers noticing).
+4. **Vercel quota.** The Hobby plan limits deployments per account, shared across every project
+   on the team (docs: 100 per 24 h, https://vercel.com/docs/limits); the status text on a
+   rejection says "retry in 24 hours". Every push to a UI branch builds a preview and counts.
+   Do not push to UI branches while a production deploy is pending; do not use a build to test
+   whether a limit has reset. A rejected production build is recovered by redeploying the same
+   commit after the limit clears, not by pushing a new commit.
+5. **Never `--prod` from a local tree** (global rule 31a): recovery is a redeploy of the merged
+   commit from Vercel/CI.
+
 ## 2026-09-23: STOP after Phase 3 — restoration staged, nothing merged
 
 - GG decisions applied: baseline promoted (`reports/eval_baseline.json`, ADR-0061), k8s

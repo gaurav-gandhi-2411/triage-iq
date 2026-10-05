@@ -2,9 +2,7 @@
   "_sources": {
     "calibration": "reports/calibration_results.json + docs/architecture/adr/0004-classifier-calibration.md",
     "resolution": "reports/resolution_results.json + docs/architecture/adr/0009-resolution-predictor-diagnosis.md",
-    "judge_cohere": "reports/triage_results_judge_cohere_command_a.json + docs/architecture/adr/0003-judge-default-verdict.md",
-    "judge_llama": "reports/triage_results_judge_llama70b.json",
-    "judge_w12": "docs/architecture/adr/0004-classifier-calibration.md (W1.2 Verdict section)",
+    "judge": "reports/eval_baseline.json + docs/architecture/adr/0019-local-judge-and-mean-based-gate.md",
     "reranker": "reports/phase2_robustness.json + docs/architecture/adr/0006-cross-encoder-reranker.md",
     "conformal": "data/models/cqr_conformal_adjustments.json + scripts/10_calibrate_cqr.py + docs/architecture/adr/0010-conformal-quantile-regression.md"
   },
@@ -37,8 +35,7 @@
       "corrected_model_gcs_uploaded": "2026-06-19T05:52Z",
       "companion_train_parquet_gcs_uploaded": "2026-07-03T23:15Z",
       "corrected_pairing_deployed": "2026-07-04T00:00Z",
-      "cloud_run_revision": "triageiq-api-00050-flt",
-      "gap_disclosure": "resolution_predictor_{slug}.pkl was retrained on the corrected created_at split and uploaded to GCS on 2026-06-19, but engineer_features() also reads data/processed/{slug}_temporal_train.parquet at inference time for historical-aggregate features, and that companion file was NOT re-uploaded — GCS retained the pre-ADR-0009 parquet (uploaded 2026-05-02). MANIFEST.sha256 only covered data/models/*, so nothing detected the mismatch. Cloud Run revisions triageiq-api-00045-kpk (2026-06-19 06:00 UTC) through triageiq-api-00049-m26 (2026-06-20 17:41 UTC) served the corrected model weights joined against pre-fix training data — an internally inconsistent hybrid, not simply the old leaky behavior. See ADR-0009 'Deployment Correction' for full detail including measured before/after values on live /triage.",
+      "gap_disclosure": "resolution_predictor_{slug}.pkl was retrained on the corrected created_at split and uploaded to GCS on 2026-06-19, but engineer_features() also reads data/processed/{slug}_temporal_train.parquet at inference time for historical-aggregate features, and that companion file was NOT re-uploaded — GCS retained the pre-ADR-0009 parquet (uploaded 2026-05-02). MANIFEST.sha256 only covered data/models/*, so nothing detected the mismatch. The Cloud Run revisions serving from 2026-06-19 06:00 UTC through 2026-06-20 17:41 UTC served the corrected model weights joined against pre-fix training data — an internally inconsistent hybrid, not simply the old leaky behavior. See ADR-0009 'Deployment Correction' for full detail including measured before/after values on live /triage.",
       "served_vs_corrected_example": {
         "test_issue": "microsoft/vscode#4760",
         "served_2026_06_19_to_2026_07_03": {
@@ -59,7 +56,6 @@
       "calibrated_model_fitted": "2026-05-19",
       "calibrated_gcs_uploaded": "2026-06-20T16:26Z",
       "calibrated_deployed": "2026-06-20T17:41Z",
-      "cloud_run_revision": "triageiq-api-00049-m26",
       "gap_disclosure": "The calibrated classifier pkl was fitted on 2026-05-19 but the GCS artifact was not updated at that time. Production served the UNCALIBRATED classifier from approximately 2026-05-02 to 2026-06-19. The ece_test values below (0.138/0.156) were accurate for the calibrated model but were NOT what production was serving during that period.",
       "ece_while_uncalibrated": {
         "microsoft_vscode": 0.3096,
@@ -89,51 +85,46 @@
   "judge": {
     "production_judge_model": "qwen3:8b",
     "production_judge_provider": "ollama",
-    "cross_family_judge_model": "command-a-03-2025",
-    "cross_family_judge_provider": "cohere",
-    "n_issues_evaluated": 65,
-    "cross_family_rationale": "Not one model grading its own homework — Cohere Command A is a different model family from the Groq/Meta LLaMA triage model.",
-    "baseline_history_note": "Re-baselined 2026-07-07 on the clean, train-decontaminated n=65 gold set with a local judge (ADR-0018, ADR-0019) — two changes at once (contamination removed AND judge switched llama-3.3-70b-versatile/Groq -> qwen3:8b/Ollama), not decomposed. The w1_1/w1_2/production_llama_score/cross_family_validation entries below are historical W1-era snapshots computed on the old n=60 set with the old judge — kept for the record, not comparable to the current dimensions block.",
-    "w1_1_pre_calibration": {
-      "judge": "command-a-03-2025",
-      "score": 10.40,
-      "score_pct": 69.3,
-      "max": 15
+    "n_issues_evaluated": 64,
+    "overall": {
+      "n": 64,
+      "mean": 11.9375
     },
-    "w1_2_post_calibration": {
-      "judge": "command-a-03-2025",
-      "score": 10.83,
-      "score_pct": 72.2,
-      "max": 15,
-      "delta_vs_w1_1": "+0.43 pts (+2.89pp)",
-      "best_mover": "resolution_estimate_reasonableness (+0.17)"
-    },
-    "production_llama_score": {
-      "judge": "llama-3.3-70b-versatile",
-      "score": 10.93,
-      "score_pct": 72.9,
-      "max": 15
-    },
-    "cross_family_validation": {
-      "cohere_score": 10.40,
-      "llama_score": 10.93,
-      "gap_pts": -0.53,
-      "gap_pp": -3.6,
-      "pearson_r": 0.729,
-      "gap_threshold_pp": 5.0,
-      "decision": "Llama-70b retained as default judge — gap is -3.6pp, below the 5pp escalation threshold. High ranking agreement (r=0.729) confirms cross-family result is not an outlier."
-    },
-    "dimensions": {
-      "component_match": {"max": 2, "production_mean": 1.308},
-      "similar_issues_relevance": {"max": 3, "production_mean": 2.554},
-      "resolution_estimate_reasonableness": {"max": 3, "production_mean": 1.277},
-      "priority_alignment": {"max": 1, "production_mean": 0.415},
-      "next_steps_actionability": {"max": 3, "production_mean": 2.477},
-      "overall_quality": {"max": 3, "production_mean": 2.123}
+    "baseline_note": "Current baseline, copied from reports/eval_baseline.json (schema v2) by hand and guarded by tests/test_api.py::test_eval_summary_judge_block_matches_committed_baseline. Local qwen3:8b judge (ADR-0019) on the train-decontaminated gold set (ADR-0018). Scores from earlier judges (llama-3.3-70b-versatile, command-a-03-2025) were measured on a different n=60 set and are not comparable; they were removed from this file on 2026-10-05 and remain in git history.",
+    "source": "reports/eval_baseline.json",
+    "dimension_max": {
+      "component_match": 2,
+      "similar_issues_relevance": 3,
+      "resolution_estimate_reasonableness": 3,
+      "priority_alignment": 1,
+      "next_steps_actionability": 3,
+      "overall_quality": 3
     },
     "per_repo": {
-      "kubernetes/kubernetes": {"n": 54, "mean": 10.5185},
-      "microsoft/vscode": {"n": 11, "mean": 8.3636, "note": "Data-limited secondary (ADR-0017) — n=11 gives this repo's mean a wider quality-regression tolerance band (0.45 vs k8s's 0.22). See reports/eval_baseline.json."}
+      "microsoft/vscode": {
+        "n": 11,
+        "mean": 12.2727,
+        "dimensions": {
+          "component_match": 1.9091,
+          "similar_issues_relevance": 3.0,
+          "resolution_estimate_reasonableness": 1.6364,
+          "priority_alignment": 0.3636,
+          "next_steps_actionability": 3.0,
+          "overall_quality": 2.3636
+        }
+      },
+      "kubernetes/kubernetes": {
+        "n": 53,
+        "mean": 11.8679,
+        "dimensions": {
+          "component_match": 1.6604,
+          "similar_issues_relevance": 3.0,
+          "resolution_estimate_reasonableness": 1.5849,
+          "priority_alignment": 0.3585,
+          "next_steps_actionability": 2.9623,
+          "overall_quality": 2.3019
+        }
+      }
     }
   },
   "reranker": {

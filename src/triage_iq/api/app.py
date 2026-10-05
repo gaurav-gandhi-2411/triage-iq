@@ -191,6 +191,7 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("LLM response cache disabled (TRIAGE_LLM_CACHE_ENABLED not set)")
 
+    _t_load = time.perf_counter()
     logger.info("Loading models from %s …", cfg.data_dir)
     app.state.store = ModelStore.load_all(
         data_dir=cfg.data_dir,
@@ -198,7 +199,10 @@ async def lifespan(app: FastAPI):
         cache=app.state.cache,
         max_tokens=cfg.triage_max_tokens,
     )
-    logger.info("Models ready: %s", app.state.store.repos)
+    logger.info(
+        "Models ready: %s (startup_step load_all took %.1f ms)",
+        app.state.store.repos, (time.perf_counter() - _t_load) * 1000.0,
+    )
     _token_set = bool(cfg.metrics_token and cfg.metrics_token.get_secret_value())
     _metrics_state = (
         "protected with token" if _token_set

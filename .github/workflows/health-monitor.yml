@@ -3,8 +3,10 @@ name: Health Monitor
 # Standing detection for exactly the failure mode that let the 2026-08-05 billing-account
 # outage go unnoticed for up to 12 days: nothing was watching /health on a schedule, so a
 # scale-to-zero Cloud Run service can silently stop being able to cold-start and nobody finds
-# out until someone happens to hit it by hand. A failed run sends GitHub's default
-# scheduled-workflow-failure email to the repo owner -- no extra notification wiring needed.
+# out until someone happens to hit it by hand. A failed run opens (or comments on) a labelled
+# GitHub issue via the alert-on-failure job below (2026-09-24). GitHub's default
+# scheduled-workflow-failure email alone proved insufficient: it fired throughout the 10+ day
+# 2026-08 outage without being acted on.
 #
 # Status as of 2026-08-12 (ADR-0050 migration): this workflow is the PRIMARY automated check
 # again. The GCP Cloud Monitoring uptime check described as primary as of 2026-08-10 lived in
@@ -30,6 +32,15 @@ on:
     # interval is wider and why that's now covered by the GCP uptime check instead.
     - cron: '*/30 * * * *'
   workflow_dispatch:
+    inputs:
+      simulate:
+        # Alert-path self-test (2026-09-24). An alert that has never been seen firing is not
+        # proven; this lets a human force the alert-on-failure job to run on demand. The
+        # simulated failure opens a separately labelled [SELF-TEST] issue, never the real alert.
+        description: "Force a simulated failure to exercise the alert path (none = normal run)"
+        type: choice
+        options: [none, generic_failure, groq_key_rejected]
+        default: none
 
 concurrency:
   group: health-monitor
@@ -122,6 +133,8 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    outputs:
+      failure_kind: ${{ steps.groq.outputs.failure_kind || steps.models.outputs.failure_kind }}
     steps:
       - uses: actions/checkout@v7
 
@@ -130,19 +143,21 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Read configured model names from the single source of truth
+      - name: Read the production model from the single source of truth
         id: models
         run: |
+          # TRIAGE_MODEL only (2026-09-24). This used to also check model_config.JUDGE_MODEL,
+          # a Groq model retired 2026-08-16 that nothing in serving or eval calls (the eval
+          # judge is local qwen3:8b). That made this job fail on every run, which trains its
+          # owner to ignore it -- exactly the failure mode this workflow exists to prevent.
           TRIAGE_MODEL=$(PYTHONPATH=src python -c 'from triage_iq.model_config import TRIAGE_MODEL; print(TRIAGE_MODEL)')
-          JUDGE_MODEL=$(PYTHONPATH=src python -c 'from triage_iq.model_config import JUDGE_MODEL; print(JUDGE_MODEL)')
-          if [ -z "$TRIAGE_MODEL" ] || [ -z "$JUDGE_MODEL" ]; then
-            echo "::error::Could not read TRIAGE_MODEL/JUDGE_MODEL from src/triage_iq/model_config.py -- TRIAGE_MODEL='$TRIAGE_MODEL' JUDGE_MODEL='$JUDGE_MODEL'. Fix this check, don't ignore it."
+          if [ -z "$TRIAGE_MODEL" ]; then
+            echo "failure_kind=monitor_broken" >> "$GITHUB_OUTPUT"
+            echo "::error::Could not read TRIAGE_MODEL from src/triage_iq/model_config.py. Fix this check, don't ignore it."
             exit 1
           fi
           echo "triage_model=$TRIAGE_MODEL" >> "$GITHUB_OUTPUT"
-          echo "judge_model=$JUDGE_MODEL" >> "$GITHUB_OUTPUT"
           echo "Configured triage model: $TRIAGE_MODEL"
-          echo "Configured judge model: $JUDGE_MODEL"
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v3
@@ -161,7 +176,8 @@ jobs:
           echo "::add-mask::$KEY"
           echo "GROQ_API_KEY=$KEY" >> "$GITHUB_ENV"
 
-      - name: Confirm the key is accepted AND both configured models are live on Groq
+      - name: Confirm the production key is accepted AND the production model is live on Groq
+        id: groq
         run: |
           set -o pipefail
           RESP=$(curl -sS -w "\n%{http_code}" \
@@ -169,29 +185,40 @@ jobs:
             https://api.groq.com/openai/v1/models)
           HTTP_CODE=$(echo "$RESP" | tail -1)
           BODY=$(echo "$RESP" | sed '$d')
+          # failure_kind feeds the alert-on-failure job, so a rejected key opens a distinctly
+          # titled and labelled issue (1e). Two production keys have died without rotation.
           if [ "$HTTP_CODE" = "401" ]; then
-            echo "::error::Groq rejected the API key (401 invalid_api_key). This is NOT a model deprecation -- the key itself is no longer accepted by Groq, independent of which model is configured. Check the key's status in the Groq console; rotating it requires a new Secret Manager version (gcloud secrets versions add groq-api-key)."
+            echo "failure_kind=groq_key_rejected" >> "$GITHUB_OUTPUT"
+            echo "::error::Groq rejected the PRODUCTION API key (401 invalid_api_key) read from Secret Manager (groq-api-key:latest). This is NOT a model deprecation. Every /triage request is failing. Rotate: add a new Secret Manager version, then redeploy."
             exit 1
           fi
           if [ "$HTTP_CODE" != "200" ]; then
+            echo "failure_kind=groq_unverified" >> "$GITHUB_OUTPUT"
             echo "::error::UNVERIFIED -- Groq /models returned HTTP $HTTP_CODE, not 200. This is NOT a confirmed model removal or key issue: the check itself failed (Groq API issue, network blip). Body: $BODY"
             exit 1
           fi
           LIVE_IDS=$(echo "$BODY" | python3 -c "import json,sys; print('\n'.join(m['id'] for m in json.load(sys.stdin)['data']))")
-          FAIL=0
-          for MODEL in "${{ steps.models.outputs.triage_model }}" "${{ steps.models.outputs.judge_model }}"; do
-            if ! echo "$LIVE_IDS" | grep -qxF "$MODEL"; then
-              echo "::error::Model '$MODEL' (configured in src/triage_iq/model_config.py) is no longer in Groq's live model catalog -- it has been deprecated/removed. Check console.groq.com/docs/deprecations for the documented replacement, do not guess a replacement name."
-              FAIL=1
-            fi
-          done
-          exit $FAIL
+          MODEL="${{ steps.models.outputs.triage_model }}"
+          if ! echo "$LIVE_IDS" | grep -qxF "$MODEL"; then
+            echo "failure_kind=model_retired" >> "$GITHUB_OUTPUT"
+            echo "::error::Production model '$MODEL' (src/triage_iq/model_config.py TRIAGE_MODEL) is no longer in Groq's live model catalog -- it has been deprecated/removed. Check console.groq.com/docs/deprecations for the documented replacement, do not guess a replacement name."
+            exit 1
+          fi
+          echo "Key accepted; production model '$MODEL' is live on Groq."
 
   check:
     runs-on: ubuntu-latest
+    outputs:
+      failure_kind: ${{ steps.health.outputs.failure_kind }}
     steps:
-      - name: Hit /health, fail loudly on anything but 200 + status=ok
+      - name: Hit /health?deps=1, fail loudly on anything but 200 + status=ok
+        id: health
         run: |
+          # 2026-09-24: ?deps=1 added. Bare /health is liveness only: it reports
+          # groq_key_present, never whether Groq accepts the key, so on 2026-09-24 a revoked
+          # production key would have passed this check while every /triage returned 500.
+          # ?deps=1 makes one zero-token authenticated Groq call (models.list) and returns 503
+          # with a per-dependency detail when anything is unhealthy -- see app.py's health().
           # --max-time was 20s until 2026-08-10 -- discovered false-failing on ~99/100 runs
           # (curl error 28, timeout) because the service runs --min-instances 0 (deploy.yml)
           # and a genuine cold start (loading BGE embeddings + FAISS indices + classifiers)
@@ -218,11 +245,13 @@ jobs:
             ATTEMPT="$1"
             # %{time_total} is curl's own wall-clock for the whole transfer -- the cold start is
             # inside it, since Cloud Run holds the connection open while the instance boots.
-            RESP=$(curl -sS -w "\n%{http_code} %{time_total}" --max-time "$HARD_LIMIT_S" "${{ env.SERVICE_URL }}/health")
+            RESP=$(curl -sS -w "\n%{http_code} %{time_total}" --max-time "$HARD_LIMIT_S" "${{ env.SERVICE_URL }}/health?deps=1")
             META=$(echo "$RESP" | tail -1)
             HTTP_CODE=${META%% *}
             ELAPSED=${META##* }
             BODY=$(echo "$RESP" | sed '$d')
+            LAST_CODE="$HTTP_CODE"
+            LAST_BODY="$BODY"
             echo "HTTP $HTTP_CODE in ${ELAPSED}s (attempt $ATTEMPT)"
             echo "$BODY"
             # Greppable marker, same convention as the kill-switch's AUTOMATED_KILLSWITCH_FIRED:
@@ -248,5 +277,105 @@ jobs:
             echo "Health check passed on retry."
             exit 0
           fi
-          echo "::error::/health failed twice in a row -- service may be down (billing, quota, crash-looping, or a bad deploy), or degraded (200 but status != ok)."
+          # Classify the final failure so the alert says WHICH failure it is. A rejected Groq
+          # key gets its own kind: it has taken production down twice without rotation.
+          KIND=$(LAST_CODE="$LAST_CODE" LAST_BODY="$LAST_BODY" python3 -c '
+          import json, os
+          code, body = os.environ.get("LAST_CODE", ""), os.environ.get("LAST_BODY", "")
+          try:
+              deps = json.loads(body).get("dependencies") or []
+          except Exception:
+              deps = []
+          bad = [d for d in deps if not d.get("healthy")]
+          groq = next((d for d in bad if d.get("name") == "groq"), None)
+          detail = (groq or {}).get("detail", "")
+          if groq and ("401" in detail or "invalid_api_key" in detail or "AuthenticationError" in detail):
+              print("groq_key_rejected")
+          elif bad:
+              print("dependency_unhealthy")
+          elif code in ("", "000"):
+              print("unreachable")
+          else:
+              print("unhealthy")
+          ')
+          echo "failure_kind=$KIND" >> "$GITHUB_OUTPUT"
+          if [ "$KIND" = "groq_key_rejected" ]; then
+            echo "::error::PRODUCTION GROQ KEY REJECTED -- /health?deps=1 reports the groq dependency unhealthy with an authentication failure. Every /triage request is failing. Rotate the key (new Secret Manager version of groq-api-key) and redeploy."
+          else
+            echo "::error::/health?deps=1 failed twice in a row ($KIND) -- service may be down (billing, quota, crash-looping, or a bad deploy), or a dependency is unhealthy (503; details above)."
+          fi
           exit 1
+
+  alert-selftest:
+    # Only on a manual dispatch with simulate != none; skipped on every scheduled run.
+    if: github.event_name == 'workflow_dispatch' && inputs.simulate != 'none'
+    runs-on: ubuntu-latest
+    outputs:
+      failure_kind: ${{ steps.sim.outputs.failure_kind }}
+    steps:
+      - name: Simulate a monitor failure
+        id: sim
+        run: |
+          echo "failure_kind=${{ inputs.simulate }}" >> "$GITHUB_OUTPUT"
+          echo "::error::SIMULATED failure (kind=${{ inputs.simulate }}) to exercise alert-on-failure. Not a real outage."
+          exit 1
+
+  alert-on-failure:
+    # From draft #104 (2026-09-24), rewired to this workflow's jobs. GitHub's default
+    # scheduled-workflow-failure email was the only signal during the 10+ day outage and it
+    # fired on every failed run without being acted on. This opens (or comments on) a labelled
+    # GitHub issue instead, using only the default GITHUB_TOKEN -- no new secret.
+    runs-on: ubuntu-latest
+    needs: [billing-check, model-availability-check, check, alert-selftest]
+    if: always() && contains(needs.*.result, 'failure')
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update the health-monitor alert issue
+        uses: actions/github-script@v8
+        env:
+          NEEDS_JSON: ${{ toJson(needs) }}
+        with:
+          script: |
+            const needs = JSON.parse(process.env.NEEDS_JSON);
+            const failed = Object.entries(needs).filter(([, v]) => v.result === 'failure');
+            const kinds = failed.map(([job, v]) => `${job}: ${(v.outputs && v.outputs.failure_kind) || 'unclassified'}`);
+            const selftest = needs['alert-selftest'] && needs['alert-selftest'].result === 'failure';
+            const keyRejected = failed.some(([, v]) => v.outputs && v.outputs.failure_kind === 'groq_key_rejected');
+
+            // Self-test issues never mix with real alerts: separate label and title.
+            const baseLabel = selftest ? 'health-monitor-selftest' : 'health-monitor-alert';
+            const labels = keyRejected ? [baseLabel, 'groq-key-rejected'] : [baseLabel];
+            let title = 'Health Monitor: standing failure';
+            if (keyRejected) title = 'Health Monitor: PRODUCTION GROQ KEY REJECTED (401)';
+            if (selftest) title = `[SELF-TEST] ${title}`;
+
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              keyRejected
+                ? '**Groq rejected the production API key.** Every /triage request fails. Rotate: add a new Secret Manager version of `groq-api-key`, then redeploy.'
+                : 'One or more health-monitor jobs failed.',
+              '',
+              `Failed job(s) and failure kind: **${kinds.join('; ')}**`,
+              `Run: ${runUrl}`,
+              `Time: ${new Date().toISOString()}`,
+              '',
+              selftest
+                ? 'SELF-TEST: this run was dispatched with `simulate` set; it proves the alert path fires. Close this issue.'
+                : 'Auto-created by health-monitor.yml. Closing it does not stop later failing runs from reopening it; fix the cause.',
+            ].join('\n');
+
+            const open = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo, state: 'open', labels: labels.join(','),
+            });
+            if (open.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo, issue_number: open.data[0].number, body,
+              });
+              core.notice(`Commented on existing alert issue #${open.data[0].number}`);
+            } else {
+              const created = await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo, title, body, labels,
+              });
+              core.notice(`Opened alert issue #${created.data.number}`);
+            }

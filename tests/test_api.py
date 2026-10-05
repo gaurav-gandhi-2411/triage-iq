@@ -54,6 +54,7 @@ def _fake_meta() -> dict:
 def _make_store() -> ModelStore:
     bundle = MagicMock()
     bundle.assistant.triage_with_metadata.return_value = (_fake_plan(), _fake_meta())
+    bundle.assistant.model = "openai/gpt-oss-120b"
     store = MagicMock()
     store.repos = ["microsoft/vscode", "kubernetes/kubernetes"]
     store.start_time = time.monotonic() - 5.0
@@ -148,6 +149,8 @@ def test_triage_includes_resolution_prediction(client):
     assert "_request_id" in body
     assert "_llm_status" in body
     assert body["_llm_status"] in ("ok", "parse_retry_succeeded", "parse_failure")
+    # The serving LLM is reported so clients never need to hardcode it (2026-09-24).
+    assert body["_model"] == "openai/gpt-oss-120b"
 
 
 def test_triage_accepts_created_at(client):
@@ -889,3 +892,26 @@ def test_cors_allows_explicit_production_origin(client):
         },
     )
     assert r.headers.get("access-control-allow-origin") == "https://triage-iq-orcin.vercel.app"
+
+
+def test_eval_summary_serves_the_committed_llm_baseline(client):
+    """The UI shows the judge score from this block instead of hardcoded copy (2026-09-24),
+    so it must equal the committed reports/eval_baseline.json, not a stale constant."""
+    import json as _json
+    from pathlib import Path as _Path
+
+    committed = _json.loads(
+        (_Path(__file__).parent.parent / "reports" / "eval_baseline.json").read_text(encoding="utf-8")
+    )
+    r = client.get("/eval/summary")
+    assert r.status_code == 200
+    b = r.json()["current_llm_baseline"]
+    assert b["overall"]["mean"] == committed["overall"]["mean"]
+    assert b["judge_model"] == committed["judge"]["model"]
+    assert set(b["per_repo"]) == set(committed["per_repo"])
+
+
+def test_current_llm_baseline_is_none_when_file_missing(tmp_path):
+    from triage_iq.api.app import _current_llm_baseline
+
+    assert _current_llm_baseline(tmp_path / "absent.json") is None

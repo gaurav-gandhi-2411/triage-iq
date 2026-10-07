@@ -27,7 +27,7 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from ..config import get_settings
 from ..models.abstention import compute_abstention_status
-from ..models.triage import ConformalIntervalResult, TriagePlan
+from ..models.triage import PROVIDER_DEGRADED_STATUS, ConformalIntervalResult, TriagePlan
 from .loader import ModelStore
 from .schemas import DependencyStatus, HealthResponse, ServiceInfoResponse, TriageRequest
 
@@ -48,7 +48,12 @@ _RESOLUTION_MODEL_BEATS_NAIVE: dict[str, bool] = {
 _triage_requests_total = Counter(
     "triage_requests_total",
     "Total /triage requests by repo and outcome",
-    ["repo", "status"],  # status: success | error | fallback
+    ["repo", "status"],  # status: success | error | fallback | provider_degraded
+)
+_triage_llm_provider_errors_total = Counter(
+    "triage_llm_provider_errors_total",
+    "Triage calls degraded to the signals-only plan by an LLM provider outage, by reason",
+    ["reason"],  # rate_limited_tpd | rate_limited_tpm | provider_unavailable | provider_timeout
 )
 _triage_llm_fallback_total = Counter(
     "triage_llm_fallback_total",
@@ -394,10 +399,17 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         else "success"
     )
 
-    _triage_requests_total.labels(repo=body.repo, status=req_status).inc()
+    # Provider outages get their own status label so an alert/graph can separate "Groq is
+    # down or rate-limited" from "the model produced unusable output" (ADR-0063).
+    metric_status = "provider_degraded" if llm_status == PROVIDER_DEGRADED_STATUS else req_status
+    _triage_requests_total.labels(repo=body.repo, status=metric_status).inc()
     _triage_latency_seconds.observe(total_ms / 1000.0)
     if llm_status != "ok":
         _triage_llm_fallback_total.inc()
+    if llm_status == PROVIDER_DEGRADED_STATUS:
+        _triage_llm_provider_errors_total.labels(
+            reason=str(meta.get("llm_status_reason") or "unknown")
+        ).inc()
     tokens = (meta.get("groq_tokens_prompt") or 0) + (meta.get("groq_tokens_completion") or 0)
     if tokens:
         _triage_groq_tokens_total.inc(tokens)
@@ -422,6 +434,9 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     result = plan.model_dump()
     result["_request_id"] = request_id
     result["_llm_status"] = llm_status
+    # Short machine reason for a degraded status (null when the LLM answered), e.g.
+    # rate_limited_tpd | rate_limited_tpm | provider_unavailable | provider_timeout.
+    result["_llm_status_reason"] = meta.get("llm_status_reason")
     # 2026-09-03 (ADR-0055 Part P1b): explicit boolean, same logic as req_status above --
     # added because the deploy smoke test had no field it could assert on to catch a
     # revision where every request silently falls back to a classifier-only plan

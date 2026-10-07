@@ -74,6 +74,10 @@ def _signals() -> dict:
         "hi_days": 20.0,
         "resolution_bucket": "days",
         "resolution_conf_pct": 55.0,
+        # keys added by the train-median point estimate (ADR-0064); triage_with_metadata reads them
+        "resolution_point_days": 4.0,
+        "resolution_point_source": "model",
+        "resolution_interval_basis": "model",
         "_t_classify": 0.01,
         "_t_retrieve": 0.01,
         "_t_predict": 0.01,

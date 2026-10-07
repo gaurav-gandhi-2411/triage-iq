@@ -23,7 +23,9 @@ from triage_iq.model_config import (
 )
 from triage_iq.models.grounding import compute_grounding_status
 from triage_iq.models.resolution import (
+    INTERVAL_RECENTRED,
     POINT_ESTIMATE_TRUSTED,
+    POINT_SOURCE_TRAIN_MEDIAN,
     naive_median_days,
     naive_scaled_interval,
     repo_slug,
@@ -951,15 +953,15 @@ class TriageAssistant:
                 extra={"repo": self.repo, "reason": "no_train_median"},
             )
             return pred_days, lo_days, hi_days, "model", "model"
-        if model_ok:
+        if model_ok and INTERVAL_RECENTRED.get(repo_slug(self.repo), True):
             scaled = naive_scaled_interval(naive, pred_days, lo_days, hi_days)
             if scaled is not None:
-                return naive, scaled[0], scaled[1], "naive_median", "naive_scaled"
+                return naive, scaled[0], scaled[1], POINT_SOURCE_TRAIN_MEDIAN, "naive_scaled"
             logger.warning(
                 "Naive-scaled interval not computable, keeping the model interval",
                 extra={"repo": self.repo, "reason": "degenerate_model_point"},
             )
-        return naive, lo_days, hi_days, "naive_median", "model"
+        return naive, lo_days, hi_days, POINT_SOURCE_TRAIN_MEDIAN, "model"
 
     def _collect_signals(self, issue: pd.Series) -> dict:
         from triage_iq.prompts.triage_prompt import build_triage_prompt

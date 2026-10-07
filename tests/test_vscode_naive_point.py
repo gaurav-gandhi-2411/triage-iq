@@ -16,6 +16,7 @@ import pytest
 
 from triage_iq.models.resolution import (
     BUCKET_CLASSIFIER_TRUSTED,
+    INTERVAL_RECENTRED,
     NAIVE_INTERVAL_COVERAGE,
     POINT_ESTIMATE_TRUSTED,
     naive_median_days,
@@ -32,7 +33,7 @@ EMB = [f"emb_{i}" for i in range(64)]
 # sha256 of the k8s signals for the fixed sample below, computed on origin/main (30e6fd8, #150+#153 merged) with the platform-exact projection below, BEFORE this change. Was on origin/fix/k8s-resolution-
 # embeddings-reuse (PR #150, e79cc70) BEFORE this change. Any drift means the k8s serving path
 # changed; regenerate only after deliberately changing k8s behaviour (and say so in the PR).
-K8S_GOLDEN_SHA256 = "390cb4a15953fd5fcb9edc7ac160dfa4d5efc4d2d175e62ceb9eec682e007ce5"
+K8S_GOLDEN_SHA256 = "d2c0f259d6fac78c276e474e9ecff4f7de8fd06f92dec4a357355efbf64ea1e4"
 
 
 class _Classifier:
@@ -124,7 +125,10 @@ def _assistant(repo: str, predictor=None, train=None) -> TriageAssistant:
 
 
 def test_flag_defaults_and_alignment_with_bucket_trust() -> None:
-    assert POINT_ESTIMATE_TRUSTED == {"kubernetes_kubernetes": True, "microsoft_vscode": False}
+    # D7 (2026-10-08): both repos serve the training-window median as the point estimate.
+    assert POINT_ESTIMATE_TRUSTED == {"kubernetes_kubernetes": False, "microsoft_vscode": False}
+    # k8s keeps the model interval bit-identical (D7); vscode re-centres it on the median.
+    assert INTERVAL_RECENTRED == {"kubernetes_kubernetes": False, "microsoft_vscode": True}
     # Same repos, same keys as the bucket gate; an unlisted repo defaults to trusted.
     assert set(POINT_ESTIMATE_TRUSTED) == set(BUCKET_CLASSIFIER_TRUSTED)
     assert POINT_ESTIMATE_TRUSTED.get(repo_slug("some/future-repo"), True) is True
@@ -155,7 +159,7 @@ def test_vscode_serves_naive_median_point_and_scaled_interval() -> None:
     a = _assistant(VSCODE)
     sig = a._collect_signals(_issue())
     naive = 30.0 / 24.0
-    assert sig["resolution_point_source"] == "naive_median"
+    assert sig["resolution_point_source"] == "train_median"
     assert sig["resolution_interval_basis"] == "naive_scaled"
     assert sig["pred_days"] == pytest.approx(naive) == pytest.approx(sig["resolution_point_days"])
     # Model outputs are kept (diagnostics) and the interval is the model's relative width.
@@ -218,16 +222,18 @@ def test_no_train_median_falls_back_to_model_with_warning(train, caplog) -> None
 def test_predictor_failure_still_serves_naive_with_fixed_interval() -> None:
     a = _assistant(VSCODE, predictor=_Predictor(_pca(), fail=True))
     sig = a._collect_signals(_issue())
-    assert sig["resolution_point_source"] == "naive_median"
+    assert sig["resolution_point_source"] == "train_median"
     assert sig["resolution_interval_basis"] == "model"  # fixed fallback interval, not re-centred
     assert (sig["lo_days"], sig["hi_days"]) == (1.0, 30.0)
     assert sig["pred_days"] == pytest.approx(30.0 / 24.0)
 
 
-def test_k8s_predictor_failure_keeps_legacy_defaults() -> None:
+def test_k8s_predictor_failure_serves_median_with_fixed_interval() -> None:
     sig = _assistant(K8S, predictor=_Predictor(_pca(), fail=True))._collect_signals(_issue())
-    assert sig["resolution_point_source"] == "model"
-    assert (sig["pred_days"], sig["lo_days"], sig["hi_days"]) == (7.0, 1.0, 30.0)
+    assert sig["resolution_point_source"] == "train_median"
+    assert sig["resolution_interval_basis"] == "model"
+    assert (sig["lo_days"], sig["hi_days"]) == (1.0, 30.0)
+    assert sig["pred_days"] == pytest.approx(30.0 / 24.0)
 
 
 # --- k8s bit-identical -----------------------------------------------------------------------
@@ -238,21 +244,24 @@ def _k8s_digest() -> str:
     rows = []
     for n in (11, 12, 13, 14, 15, 16):
         s = a._collect_signals(_issue(n))
+        # D7 changes the served POINT (and so the prompt text); everything else the model
+        # produces must stay bit-identical, so prompt and pred_days are not in the digest.
         rows.append({k: s[k] for k in (
-            "prompt", "pred_days", "lo_days", "hi_days", "resolution_bucket",
+            "lo_days", "hi_days", "resolution_bucket",
             "resolution_conf_pct", "classifier_top3", "similar_raw")})
     return hashlib.sha256(json.dumps(rows, sort_keys=True, default=repr).encode()).hexdigest()
 
 
-def test_k8s_signals_hash_identical_to_pre_change_branch() -> None:
+def test_k8s_bucket_interval_and_retrieval_identical_to_pre_change_main() -> None:
     assert _k8s_digest() == K8S_GOLDEN_SHA256
 
 
-def test_k8s_reports_model_source() -> None:
+def test_k8s_serves_train_median_with_unchanged_model_interval() -> None:
     sig = _assistant(K8S)._collect_signals(_issue())
-    assert sig["resolution_point_source"] == "model"
+    assert sig["resolution_point_source"] == "train_median"
     assert sig["resolution_interval_basis"] == "model"
-    assert sig["pred_days"] == sig["model_point_days"]
+    assert sig["pred_days"] == pytest.approx(30.0 / 24.0)  # train median(hours) / 24
+    assert sig["model_point_days"] != sig["pred_days"]  # the model point is still computed
     assert (sig["lo_days"], sig["hi_days"]) == (sig["model_lo_days"], sig["model_hi_days"])
 
 
@@ -304,10 +313,10 @@ def _post(meta_extra: dict) -> dict:
 
 
 def test_api_response_is_expand_only_and_reports_naive_source() -> None:
-    body = _post({"resolution_point_days": 3.8374, "resolution_point_source": "naive_median",
+    body = _post({"resolution_point_days": 3.8374, "resolution_point_source": "train_median",
                   "resolution_interval_basis": "naive_scaled"})
     assert set(body) >= _PRE_EXISTING_KEYS
-    assert body["resolution_point_source"] == "naive_median"
+    assert body["resolution_point_source"] == "train_median"
     assert body["resolution_point_days"] == pytest.approx(3.8374)
     assert body["resolution_interval_basis"] == "naive_scaled"
     assert body["resolution_model_beats_naive"] is False  # meaning unchanged (measured fact)

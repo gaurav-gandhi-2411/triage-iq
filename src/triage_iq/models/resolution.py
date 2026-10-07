@@ -46,20 +46,37 @@ BUCKET_CLASSIFIER_TRUSTED: dict[str, bool] = {
 }
 
 
-# Per-repo trust decision for the POINT estimate (ADR-0063), the point-estimate analogue of
-# BUCKET_CLASSIFIER_TRUSTED. False = the trained regressor is not served; the repo's naive
-# median resolution time is served instead (response field resolution_point_source =
-# "naive_median"). Repos not listed default to trusted (unmeasured, not proven untrustworthy).
+# Value of the response field resolution_point_source when the training-window median is served.
+POINT_SOURCE_TRAIN_MEDIAN = "train_median"
+
+# Per-repo trust decision for the POINT estimate (ADR-0064), the point-estimate analogue of
+# BUCKET_CLASSIFIER_TRUSTED. False = the trained regressor is not served; the repo's
+# training-window median resolution time is served instead (response field
+# resolution_point_source = "train_median"). Repos not listed default to trusted (unmeasured,
+# not proven untrustworthy).
 POINT_ESTIMATE_TRUSTED: dict[str, bool] = {
-    # +2.06% MAE vs naive on the ADR-0041 re-split test (n=2992) with serving-time embeddings
-    # (ADR-0062); the model is served.
-    "kubernetes_kubernetes": True,
+    # Owner decision D7 (2026-10-08): the +2.06% mean-MAE gain vs naive on the ADR-0041 re-split
+    # test (n=2992, served path) has a bootstrap CI containing naive, and the median AE is worse
+    # than naive (7.28 d vs 3.52 d, reports/served_k8s_metrics.json): the typical issue is served
+    # worse by the model. The learned parts that stay: the bucket classifier (+6.95 pp) and the
+    # CQR interval around the model quantiles.
+    "kubernetes_kubernetes": False,
     # Served model MAE 5.448 d vs naive 3.533 d (-54.19%, paired bootstrap gain CI
     # [-2.089, -1.717] d, excludes zero, WRONG direction) on the reconstructed 616-row
     # 2026-04-21..27 window; with serving-time embeddings -82.34%. No retrain beat naive in 10
     # runs (docs/DECISION_LOG_2026-10.md D17-D18). A model that loses to naive under every
     # variant is not served (owner decision D2).
     "microsoft_vscode": False,
+}
+
+
+# Per-repo choice of interval served alongside the train-median point. False = keep the model Q10/Q90
+# interval unchanged (owner decision D7: the k8s interval stays bit-identical); True = re-centre the
+# model relative width on the median (naive_scaled_interval), used for vscode where the model point
+# is far from the median and a model-centred interval would not contain the served point.
+INTERVAL_RECENTRED: dict[str, bool] = {
+    "kubernetes_kubernetes": False,
+    "microsoft_vscode": True,
 }
 
 

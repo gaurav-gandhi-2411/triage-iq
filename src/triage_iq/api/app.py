@@ -461,7 +461,7 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     result["classifier_top3"] = meta.get("classifier_top3")
     result["resolution_model_beats_naive"] = _RESOLUTION_MODEL_BEATS_NAIVE.get(body.repo, True)
     # ADR-0063 (expand-only): the point estimate the resolution stage was given and its source,
-    # "model" or "naive_median" (POINT_ESTIMATE_TRUSTED). resolution_model_beats_naive keeps its
+    # "model" or "train_median" (POINT_ESTIMATE_TRUSTED). resolution_model_beats_naive keeps its
     # meaning (a measured property of the trained model); this field says what is being served.
     result["resolution_point_days"] = meta.get("resolution_point_days")
     result["resolution_point_source"] = meta.get("resolution_point_source", "model")

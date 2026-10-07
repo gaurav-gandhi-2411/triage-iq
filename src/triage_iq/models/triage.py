@@ -73,6 +73,73 @@ class TruncatedCompletionError(RuntimeError):
         )
 
 
+# Provider-side failures that are NOT the caller's fault degrade to the signals-only fallback
+# plan (HTTP 200, _degraded true) instead of surfacing as a 500 -- see ADR-0063. Auth (401/403)
+# and request-shape (400/422) errors are deliberately NOT here: those mean OUR bug or a bad key
+# and must stay loud.
+PROVIDER_DEGRADED_STATUS = "degraded_provider_error"
+_DAILY_QUOTA_REASONS = frozenset({"rate_limited_tpd", "rate_limited_rpd"})
+
+
+def _provider_error_body(exc: BaseException) -> dict:
+    body = getattr(exc, "body", None)
+    if isinstance(body, dict) and isinstance(body.get("error"), dict):
+        return body["error"]
+    return {}
+
+
+def _provider_message(exc: BaseException) -> str:
+    msg = _provider_error_body(exc).get("message")
+    return msg if isinstance(msg, str) else str(exc)
+
+
+def _rate_limit_reason(exc: BaseException) -> str:
+    """Classify a Groq 429 by the quota that was hit, from the structured error body.
+
+    Groq's message reads e.g. 'Rate limit reached for model ... on tokens per day (TPD): ...
+    Please try again in 7m12s'. Matching the quota wording keeps this tolerant to unrelated
+    wording changes; unknown shapes fall back to the generic reason.
+    """
+    msg = _provider_message(exc).lower()
+    for token, reason in (
+        ("(tpd)", "rate_limited_tpd"),
+        ("tokens per day", "rate_limited_tpd"),
+        ("(rpd)", "rate_limited_rpd"),
+        ("requests per day", "rate_limited_rpd"),
+        ("(tpm)", "rate_limited_tpm"),
+        ("tokens per minute", "rate_limited_tpm"),
+        ("(rpm)", "rate_limited_rpm"),
+        ("requests per minute", "rate_limited_rpm"),
+    ):
+        if token in msg:
+            return reason
+    return "rate_limited"
+
+
+def classify_provider_error(exc: BaseException) -> str | None:
+    """Return a degrade reason for provider-side failures, or None if `exc` must keep raising.
+
+    Degradable: 429 (RateLimitError), connection errors, timeouts, 5xx.
+    Not degradable (returns None): AuthenticationError/PermissionDeniedError (401/403), any
+    other 4xx (400 BadRequest, 422, 413 ...) and every non-Groq exception.
+    """
+    try:
+        import groq
+    except ImportError:
+        return None
+    if isinstance(exc, (groq.AuthenticationError, groq.PermissionDeniedError)):
+        return None
+    if isinstance(exc, groq.RateLimitError):
+        return _rate_limit_reason(exc)
+    if isinstance(exc, groq.APITimeoutError):  # subclass of APIConnectionError: check first
+        return "provider_timeout"
+    if isinstance(exc, groq.APIConnectionError):
+        return "provider_unavailable"
+    if isinstance(exc, groq.APIStatusError) and exc.status_code >= 500:
+        return "provider_unavailable"
+    return None
+
+
 class SchemaValidationError(RuntimeError):
     """Raised when Groq's structured-output decoder ACCEPTS our response_format as a
     valid schema but the model's specific completion for THIS request doesn't satisfy
@@ -758,6 +825,9 @@ class TriageAssistant:
             # groq_error_code, e.g. "json_validate_failed") -- surfaced for
             # record_cassettes.py's checkpoint/diagnostics, not used elsewhere.
             "groq_error_code": usage.get("groq_error_code"),
+            # Short machine reason for any degraded status (e.g. rate_limited_tpd,
+            # provider_unavailable, truncated); None when the LLM answered.
+            "llm_status_reason": usage.get("llm_status_reason"),
             "llm_cache_hit": cache_hit,
             "classifier_top3": signals["classifier_top3"],
             # The cassette key of the synthesis call that produced this plan -- present only
@@ -1175,6 +1245,13 @@ class TriageAssistant:
                 "groq_error_code": exc.groq_error_code,
             }
             return plan, "", schema_invalid_usage, "degraded_schema_invalid", False
+        except Exception as exc:
+            # Provider-side outage (429/connection/timeout/5xx): degrade, never cache (the
+            # cache.set below is unreachable from here). Auth/400 errors return None -> re-raise.
+            provider_degrade = self._degrade_on_provider_error(exc, signals, "synthesis call")
+            if provider_degrade is None:
+                raise
+            return provider_degrade
 
         if cache is not None and cache_key is not None:
             cache.set(cache_key, "groq", self.model, messages, {"content": raw, "usage": usage})
@@ -1247,6 +1324,13 @@ class TriageAssistant:
                     "groq_error_code": exc2.groq_error_code,
                 }
                 return plan, "", schema_invalid_usage2, "degraded_schema_invalid", False
+            except Exception as exc2:
+                provider_degrade = self._degrade_on_provider_error(
+                    exc2, signals, "parse-retry call"
+                )
+                if provider_degrade is None:
+                    raise
+                return provider_degrade
             try:
                 plan = self._parse_plan(raw2)
                 llm_status = "parse_retry_succeeded"
@@ -1262,7 +1346,36 @@ class TriageAssistant:
 
         return plan, raw, usage, llm_status, False
 
-    def _make_fallback_plan(self, signals: dict, reason: str | None = None) -> TriagePlan:
+    def _degrade_on_provider_error(
+        self, exc: BaseException, signals: dict, where: str
+    ) -> tuple[TriagePlan, str, dict, str, bool] | None:
+        """Signals-only degrade for provider-side failures; None means the caller must re-raise.
+
+        Never sleeps (latency) and never caches. The provider text is logged (truncated to 200
+        chars, WARNING) but only the short machine reason reaches the response.
+        """
+        reason = classify_provider_error(exc)
+        if reason is None:
+            return None
+        logger.warning(
+            "LLM provider error on %s for #%s: degrading to signals-only fallback plan "
+            "(repo=%s status_code=%s error_code=%s reason=%s): %.200s",
+            where, signals.get("_number", "?"), self.repo,
+            getattr(exc, "status_code", None),
+            _provider_error_body(exc).get("code"),
+            reason, _provider_message(exc),
+        )
+        plan = self._make_fallback_plan(
+            signals,
+            reason=f"LLM provider unavailable ({reason})",
+            include_similar_issues=True,
+        )
+        usage = {"llm_status_reason": reason, "prompt_tokens": 0, "completion_tokens": 0}
+        return plan, "", usage, PROVIDER_DEGRADED_STATUS, False
+
+    def _make_fallback_plan(
+        self, signals: dict, reason: str | None = None, include_similar_issues: bool = False
+    ) -> TriagePlan:
         """Structured fallback when the LLM stage cannot produce a usable plan.
 
         `reason` defaults to the original JSON-parse-failure wording (backward compatible
@@ -1271,6 +1384,20 @@ class TriageAssistant:
         completion budget; completion truncated even at a dynamically-reduced max_tokens).
         """
         top = (signals.get("classifier_top3") or [{}])[0]
+        # Only the provider-outage degrade lists retrieved neighbours (real retrieval output,
+        # not LLM prose); the older degrade paths keep [] so their behaviour is unchanged.
+        similar = (
+            [
+                SimilarIssue(
+                    number=int(r["number"]),
+                    similarity=min(1.0, max(0.0, float(r.get("score", 0.0)))),
+                    relevance_note="Retrieved by embedding similarity; LLM summary unavailable.",
+                )
+                for r in (signals.get("similar_raw") or [])[:5]
+            ]
+            if include_similar_issues
+            else []
+        )
         if reason is None:
             priority_rationale = "LLM parse failure — priority defaulting to medium."
             triage_summary = (
@@ -1286,7 +1413,7 @@ class TriageAssistant:
         return TriagePlan(
             predicted_component=str(top.get("label", "unknown")),
             component_confidence=float(top.get("confidence", 0.0)),
-            similar_issues=[],
+            similar_issues=similar,
             expected_resolution_summary="LLM response unparseable; estimate from predictor only.",
             expected_resolution_lower_days=float(signals.get("lo_days", 1.0)),
             expected_resolution_upper_days=float(signals.get("hi_days", 30.0)),
@@ -1345,8 +1472,11 @@ class TriageAssistant:
                         prompt_tokens=prompt_tokens,
                     )
                 return content, usage
-            except RateLimitError:
-                if attempt == 5:
+            except RateLimitError as rl_exc:
+                # A daily quota (TPD/RPD) will not clear within any backoff we could afford
+                # in a request: fail fast instead of sleeping ~108s through 6 attempts before
+                # failing anyway (ADR-0063). Per-minute limits keep the existing retry.
+                if attempt == 5 or _rate_limit_reason(rl_exc) in _DAILY_QUOTA_REASONS:
                     raise
                 jitter = backoff * (0.5 + 0.5 * (attempt / 5))
                 logger.warning("Rate limit hit — sleeping %.1fs (attempt %d/6)", jitter, attempt + 1)

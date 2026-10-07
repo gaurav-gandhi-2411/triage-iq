@@ -15,7 +15,7 @@ MODELS_DIR = ROOT / "data" / "models"
 PROCESSED_DIR = ROOT / "data" / "processed"
 EVAL_SET = ROOT / "eval" / "eval_set.jsonl"
 CALIBRATION_RESULTS = ROOT / "reports" / "calibration_results.json"
-CONFORMAL_ADJ = ROOT / "data" / "models" / "cqr_conformal_adjustments.json"
+CONFORMAL_ADJ = ROOT / "data" / "models" / "cqr_conformal_adjustments_v2.json"  # the file loader.py serves
 MANIFEST_PATH = ROOT / "data" / "models" / "MANIFEST.sha256"
 LOCK_PATH = ROOT / "requirements.lock"
 
@@ -201,7 +201,9 @@ def test_conformal_layer_active() -> None:
     for repo in REPOS:
         assert repo in adjustments, f"Repo '{repo}' not found in conformal adjustments"
         adj = adjustments[repo]
-        assert adj["q_adjustment_hours"] > 0, (
+        # != 0, not > 0: CQR Q is negative when the base quantile interval over-covers
+        # (k8s v2: -1.02h, tightens the interval); zero would mean the layer is a no-op.
+        assert adj["q_adjustment_hours"] != 0, (
             f"{repo}: q_adjustment_hours={adj['q_adjustment_hours']} — conformal layer is a no-op"
         )
         assert adj["empirical_coverage"] > 0.50, (

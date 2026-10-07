@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
+import warnings
 from pathlib import Path
 
+import joblib
 import numpy as np
 import pytest
 
@@ -14,6 +17,7 @@ EVAL_SET = ROOT / "eval" / "eval_set.jsonl"
 CALIBRATION_RESULTS = ROOT / "reports" / "calibration_results.json"
 CONFORMAL_ADJ = ROOT / "data" / "models" / "cqr_conformal_adjustments.json"
 MANIFEST_PATH = ROOT / "data" / "models" / "MANIFEST.sha256"
+LOCK_PATH = ROOT / "requirements.lock"
 
 REPOS = ["microsoft/vscode", "kubernetes/kubernetes"]
 REPO_SLUGS = {
@@ -485,6 +489,104 @@ def test_model_manifest_clean() -> None:
     assert not errors, (
         "Model artifact drift detected — run python scripts/publish_models.py "
         "and commit the updated manifest:\n" + "\n".join(errors)
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pickled-artifact scikit-learn version invariant (2026-10-05)
+# ---------------------------------------------------------------------------
+# Production installs from requirements.lock, but the pickled estimators are produced on
+# whatever machine ran the retrain. A pickle saved by sklearn X and loaded by sklearn Y != X
+# emits InconsistentVersionWarning ("might lead to breaking code or invalid results"); loading a
+# NEWER pickle into an OLDER sklearn is the unsafe direction. Found live: resolution_predictor_*
+# (PCA) stored under 1.7.2 while the lock pinned 1.6.1, visible in Cloud Run startup logs.
+#
+# Artifacts whose stored version is deliberately NOT the lock pin. Both component classifiers
+# were retrained (ADR-0057) in an environment with scikit-learn 1.6.1, while the resolution
+# predictors were trained under 1.7.2, so NO single pin matches every pickle; retraining either
+# set changes the artifact bytes, which invalidates the cassette provenance gate (ADR-0059) and
+# needs a GCS publish. Pinning the lock to the newest stored version (1.7.2) means every pickle is
+# either an exact match or an OLDER-into-NEWER load, whose predictions were measured bit-for-bit
+# identical (reports/sklearn_pickle_equivalence_2026-10-05/compare_1.6.1_vs_1.7.2.txt). An entry
+# here is an explicit, reviewed exception: the test pins it to the recorded version, so a
+# retrain on a different sklearn (in either direction) fails until this table is updated.
+_KNOWN_OLDER_PICKLE_SKLEARN: dict[str, str] = {
+    "component_classifier_microsoft_vscode.pkl": "1.6.1",
+    "component_classifier_kubernetes_kubernetes.pkl": "1.6.1",
+}
+# Pickles that must contain >=1 sklearn estimator; zero detected means the recorder is blind
+# (fail closed), not that the file is clean.
+_MUST_CONTAIN_SKLEARN = ("component_classifier_", "resolution_predictor_")
+
+
+def _lock_sklearn_pin() -> str:
+    text = LOCK_PATH.read_text(encoding="utf-8")
+    m = re.search(r"^scikit-learn==(\S+)\s*$", text, flags=re.MULTILINE)
+    assert m, f"no `scikit-learn==X` pin found in {LOCK_PATH}"
+    return m.group(1)
+
+
+def _stored_sklearn_versions(path: Path) -> list[str]:
+    """scikit-learn version recorded inside every estimator of a joblib pickle.
+
+    BaseEstimator.__getstate__ stores `_sklearn_version`; __setstate__ receives it on load. We
+    record it there instead of parsing the stream, so this works under any installed sklearn
+    (a stream parse breaks on joblib's inline numpy array payloads).
+    """
+    from sklearn.base import BaseEstimator
+
+    seen: list[str] = []
+    original = BaseEstimator.__setstate__
+
+    def _recording_setstate(self, state):  # type: ignore[no-untyped-def]
+        seen.append(str(state.get("_sklearn_version", "pre-0.18")))
+        return original(self, state)
+
+    BaseEstimator.__setstate__ = _recording_setstate  # type: ignore[method-assign]
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")  # the mismatch warning is what we are reporting
+            joblib.load(path)
+    finally:
+        BaseEstimator.__setstate__ = original  # type: ignore[method-assign]
+    return seen
+
+
+def test_stored_sklearn_version_recorder_detects_versions(tmp_path: Path) -> None:
+    """Fail-closed self-check: the recorder must see a real estimator's version, otherwise
+    test_pickled_sklearn_versions_match_lock_pin could pass vacuously."""
+    import sklearn
+    from sklearn.preprocessing import LabelEncoder
+
+    f = tmp_path / "enc.pkl"
+    joblib.dump({"enc": LabelEncoder().fit(["a", "b"])}, f)
+    assert _stored_sklearn_versions(f) == [sklearn.__version__]
+
+
+def test_pickled_sklearn_versions_match_lock_pin() -> None:
+    """Every production pickle's recorded scikit-learn version equals requirements.lock's pin,
+    except the explicitly listed (and equivalence-measured) older ones above."""
+    pin = _lock_sklearn_pin()
+    files = sorted(MODELS_DIR.glob("*.pkl")) + sorted(MODELS_DIR.glob("*/meta.pkl"))
+    assert files, f"no production pickles under {MODELS_DIR} (run the GCS download step first)"
+    problems: list[str] = []
+    for f in files:
+        versions = set(_stored_sklearn_versions(f))
+        if not versions:
+            if f.name.startswith(_MUST_CONTAIN_SKLEARN):
+                problems.append(f"{f.name}: no sklearn estimator detected (recorder blind?)")
+            continue
+        expected = _KNOWN_OLDER_PICKLE_SKLEARN.get(f.name, pin)
+        if versions != {expected}:
+            problems.append(
+                f"{f.name}: stored scikit-learn {sorted(versions)}, expected {expected} "
+                f"(lock pin {pin})"
+            )
+    stale = [n for n in _KNOWN_OLDER_PICKLE_SKLEARN if not (MODELS_DIR / n).exists()]
+    assert not stale, f"_KNOWN_OLDER_PICKLE_SKLEARN lists artifacts that do not exist: {stale}"
+    assert not problems, (
+        "pickled scikit-learn version != requirements.lock pin "
+        "(InconsistentVersionWarning in production):\n" + "\n".join(problems)
     )
 
 

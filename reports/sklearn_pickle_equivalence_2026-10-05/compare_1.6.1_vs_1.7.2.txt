@@ -1,0 +1,141 @@
+array                                                                 shape   exact_eq   max_abs_diff
+kubernetes_kubernetes|cls_test|cal                                (671, 47) 671/671          0.000e+00
+kubernetes_kubernetes|cls_test|classes                                (47,) 47/47            (labels)
+kubernetes_kubernetes|cls_test|label                                 (671,) 671/671           (labels)
+kubernetes_kubernetes|cls_test|raw                                (671, 47) 671/671          0.000e+00
+kubernetes_kubernetes|cls_test|y                                     (671,) 671/671           (labels)
+kubernetes_kubernetes|cls_train|cal                              (5368, 47) 5368/5368         0.000e+00
+kubernetes_kubernetes|cls_train|classes                               (47,) 47/47            (labels)
+kubernetes_kubernetes|cls_train|label                               (5368,) 5368/5368          (labels)
+kubernetes_kubernetes|cls_train|raw                              (5368, 47) 5368/5368         0.000e+00
+kubernetes_kubernetes|cls_train|y                                   (5368,) 5368/5368          (labels)
+kubernetes_kubernetes|cls_val|cal                                 (671, 47) 671/671          0.000e+00
+kubernetes_kubernetes|cls_val|classes                                 (47,) 47/47            (labels)
+kubernetes_kubernetes|cls_val|label                                  (671,) 671/671           (labels)
+kubernetes_kubernetes|cls_val|raw                                 (671, 47) 671/671          0.000e+00
+kubernetes_kubernetes|cls_val|y                                      (671,) 671/671           (labels)
+kubernetes_kubernetes|eval64|cal                                   (53, 47) 53/53           0.000e+00
+kubernetes_kubernetes|eval64|classes                                  (47,) 47/47            (labels)
+kubernetes_kubernetes|eval64|label                                    (53,) 53/53            (labels)
+kubernetes_kubernetes|eval64|raw                                   (53, 47) 53/53           0.000e+00
+kubernetes_kubernetes|gold119|cal                                  (78, 47) 78/78           0.000e+00
+kubernetes_kubernetes|gold119|classes                                 (47,) 47/47            (labels)
+kubernetes_kubernetes|gold119|label                                   (78,) 78/78            (labels)
+kubernetes_kubernetes|gold119|raw                                  (78, 47) 78/78           0.000e+00
+kubernetes_kubernetes|res_gcsprod_train|bucket_label               (23928,) 23928/23928         (labels)
+kubernetes_kubernetes|res_gcsprod_train|bucket_proba             (23928, 5) 23928/23928        0.000e+00
+kubernetes_kubernetes|res_gcsprod_train|feats                   (23928, 79) 23928/23928        0.000e+00
+kubernetes_kubernetes|res_gcsprod_train|hi                         (23928,) 23928/23928        0.000e+00
+kubernetes_kubernetes|res_gcsprod_train|lo                         (23928,) 23928/23928        0.000e+00
+kubernetes_kubernetes|res_gcsprod_train|pca                     (23928, 64) 23928/23928        0.000e+00
+kubernetes_kubernetes|res_gcsprod_train|point_hrs                  (23928,) 23928/23928        0.000e+00
+kubernetes_kubernetes|res_gcsprod_train|point_log                  (23928,) 23928/23928        0.000e+00
+kubernetes_kubernetes|res_gcsprod_train|y                          (23928,) 23928/23928        0.000e+00
+kubernetes_kubernetes|res_regen_test|bucket_label                   (2992,) 2992/2992          (labels)
+kubernetes_kubernetes|res_regen_test|bucket_proba                 (2992, 5) 2992/2992         0.000e+00
+kubernetes_kubernetes|res_regen_test|feats                       (2992, 79) 2992/2992         0.000e+00
+kubernetes_kubernetes|res_regen_test|hi                             (2992,) 2992/2992         0.000e+00
+kubernetes_kubernetes|res_regen_test|lo                             (2992,) 2992/2992         0.000e+00
+kubernetes_kubernetes|res_regen_test|pca                         (2992, 64) 2992/2992         0.000e+00
+kubernetes_kubernetes|res_regen_test|point_hrs                      (2992,) 2992/2992         0.000e+00
+kubernetes_kubernetes|res_regen_test|point_log                      (2992,) 2992/2992         0.000e+00
+kubernetes_kubernetes|res_regen_test|y                              (2992,) 2992/2992         0.000e+00
+kubernetes_kubernetes|res_regen_train|bucket_label                 (23928,) 23928/23928         (labels)
+kubernetes_kubernetes|res_regen_train|bucket_proba               (23928, 5) 23928/23928        0.000e+00
+kubernetes_kubernetes|res_regen_train|feats                     (23928, 79) 23928/23928        0.000e+00
+kubernetes_kubernetes|res_regen_train|hi                           (23928,) 23928/23928        0.000e+00
+kubernetes_kubernetes|res_regen_train|lo                           (23928,) 23928/23928        0.000e+00
+kubernetes_kubernetes|res_regen_train|pca                       (23928, 64) 23928/23928        0.000e+00
+kubernetes_kubernetes|res_regen_train|point_hrs                    (23928,) 23928/23928        0.000e+00
+kubernetes_kubernetes|res_regen_train|point_log                    (23928,) 23928/23928        0.000e+00
+kubernetes_kubernetes|res_regen_train|y                            (23928,) 23928/23928        0.000e+00
+kubernetes_kubernetes|res_regen_val|bucket_label                    (2991,) 2991/2991          (labels)
+kubernetes_kubernetes|res_regen_val|bucket_proba                  (2991, 5) 2991/2991         0.000e+00
+kubernetes_kubernetes|res_regen_val|feats                        (2991, 79) 2991/2991         0.000e+00
+kubernetes_kubernetes|res_regen_val|hi                              (2991,) 2991/2991         0.000e+00
+kubernetes_kubernetes|res_regen_val|lo                              (2991,) 2991/2991         0.000e+00
+kubernetes_kubernetes|res_regen_val|pca                          (2991, 64) 2991/2991         0.000e+00
+kubernetes_kubernetes|res_regen_val|point_hrs                       (2991,) 2991/2991         0.000e+00
+kubernetes_kubernetes|res_regen_val|point_log                       (2991,) 2991/2991         0.000e+00
+kubernetes_kubernetes|res_regen_val|y                               (2991,) 2991/2991         0.000e+00
+kubernetes_kubernetes|res_served_gold|bucket_label                    (78,) 78/78            (labels)
+kubernetes_kubernetes|res_served_gold|bucket_proba                  (78, 5) 78/78           0.000e+00
+kubernetes_kubernetes|res_served_gold|hi                              (78,) 78/78           0.000e+00
+kubernetes_kubernetes|res_served_gold|lo                              (78,) 78/78           0.000e+00
+kubernetes_kubernetes|res_served_gold|point_hrs                       (78,) 78/78           0.000e+00
+microsoft_vscode|cls_test|cal                                     (423, 47) 423/423          0.000e+00
+microsoft_vscode|cls_test|classes                                     (47,) 47/47            (labels)
+microsoft_vscode|cls_test|label                                      (423,) 423/423           (labels)
+microsoft_vscode|cls_test|raw                                     (423, 47) 423/423          0.000e+00
+microsoft_vscode|cls_test|y                                          (423,) 423/423           (labels)
+microsoft_vscode|cls_train|cal                                   (3380, 47) 3380/3380         0.000e+00
+microsoft_vscode|cls_train|classes                                    (47,) 47/47            (labels)
+microsoft_vscode|cls_train|label                                    (3380,) 3380/3380          (labels)
+microsoft_vscode|cls_train|raw                                   (3380, 47) 3380/3380         0.000e+00
+microsoft_vscode|cls_train|y                                        (3380,) 3380/3380          (labels)
+microsoft_vscode|cls_val|cal                                      (423, 47) 423/423          0.000e+00
+microsoft_vscode|cls_val|classes                                      (47,) 47/47            (labels)
+microsoft_vscode|cls_val|label                                       (423,) 423/423           (labels)
+microsoft_vscode|cls_val|raw                                      (423, 47) 423/423          0.000e+00
+microsoft_vscode|cls_val|y                                           (423,) 423/423           (labels)
+microsoft_vscode|eval64|cal                                        (11, 47) 11/11           0.000e+00
+microsoft_vscode|eval64|classes                                       (47,) 47/47            (labels)
+microsoft_vscode|eval64|label                                         (11,) 11/11            (labels)
+microsoft_vscode|eval64|raw                                        (11, 47) 11/11           0.000e+00
+microsoft_vscode|gold119|cal                                       (41, 47) 41/41           0.000e+00
+microsoft_vscode|gold119|classes                                      (47,) 47/47            (labels)
+microsoft_vscode|gold119|label                                        (41,) 41/41            (labels)
+microsoft_vscode|gold119|raw                                       (41, 47) 41/41           0.000e+00
+microsoft_vscode|res_gcsprod_train|bucket_label                     (4923,) 4923/4923          (labels)
+microsoft_vscode|res_gcsprod_train|bucket_proba                   (4923, 5) 4923/4923         0.000e+00
+microsoft_vscode|res_gcsprod_train|feats                         (4923, 79) 4923/4923         0.000e+00
+microsoft_vscode|res_gcsprod_train|hi                               (4923,) 4923/4923         0.000e+00
+microsoft_vscode|res_gcsprod_train|lo                               (4923,) 4923/4923         0.000e+00
+microsoft_vscode|res_gcsprod_train|pca                           (4923, 64) 4923/4923         0.000e+00
+microsoft_vscode|res_gcsprod_train|point_hrs                        (4923,) 4923/4923         0.000e+00
+microsoft_vscode|res_gcsprod_train|point_log                        (4923,) 4923/4923         0.000e+00
+microsoft_vscode|res_gcsprod_train|y                                (4923,) 4923/4923         0.000e+00
+microsoft_vscode|res_regen_test|bucket_label                        (1225,) 1225/1225          (labels)
+microsoft_vscode|res_regen_test|bucket_proba                      (1225, 5) 1225/1225         0.000e+00
+microsoft_vscode|res_regen_test|feats                            (1225, 79) 1225/1225         0.000e+00
+microsoft_vscode|res_regen_test|hi                                  (1225,) 1225/1225         0.000e+00
+microsoft_vscode|res_regen_test|lo                                  (1225,) 1225/1225         0.000e+00
+microsoft_vscode|res_regen_test|pca                              (1225, 64) 1225/1225         0.000e+00
+microsoft_vscode|res_regen_test|point_hrs                           (1225,) 1225/1225         0.000e+00
+microsoft_vscode|res_regen_test|point_log                           (1225,) 1225/1225         0.000e+00
+microsoft_vscode|res_regen_test|y                                   (1225,) 1225/1225         0.000e+00
+microsoft_vscode|res_regen_train|bucket_label                       (9793,) 9793/9793          (labels)
+microsoft_vscode|res_regen_train|bucket_proba                     (9793, 5) 9793/9793         0.000e+00
+microsoft_vscode|res_regen_train|feats                           (9793, 79) 9793/9793         0.000e+00
+microsoft_vscode|res_regen_train|hi                                 (9793,) 9793/9793         0.000e+00
+microsoft_vscode|res_regen_train|lo                                 (9793,) 9793/9793         0.000e+00
+microsoft_vscode|res_regen_train|pca                             (9793, 64) 9793/9793         0.000e+00
+microsoft_vscode|res_regen_train|point_hrs                          (9793,) 9793/9793         0.000e+00
+microsoft_vscode|res_regen_train|point_log                          (9793,) 9793/9793         0.000e+00
+microsoft_vscode|res_regen_train|y                                  (9793,) 9793/9793         0.000e+00
+microsoft_vscode|res_regen_val|bucket_label                         (1224,) 1224/1224          (labels)
+microsoft_vscode|res_regen_val|bucket_proba                       (1224, 5) 1224/1224         0.000e+00
+microsoft_vscode|res_regen_val|feats                             (1224, 79) 1224/1224         0.000e+00
+microsoft_vscode|res_regen_val|hi                                   (1224,) 1224/1224         0.000e+00
+microsoft_vscode|res_regen_val|lo                                   (1224,) 1224/1224         0.000e+00
+microsoft_vscode|res_regen_val|pca                               (1224, 64) 1224/1224         0.000e+00
+microsoft_vscode|res_regen_val|point_hrs                            (1224,) 1224/1224         0.000e+00
+microsoft_vscode|res_regen_val|point_log                            (1224,) 1224/1224         0.000e+00
+microsoft_vscode|res_regen_val|y                                    (1224,) 1224/1224         0.000e+00
+microsoft_vscode|res_served_gold|bucket_label                         (41,) 41/41            (labels)
+microsoft_vscode|res_served_gold|bucket_proba                       (41, 5) 41/41           0.000e+00
+microsoft_vscode|res_served_gold|hi                                   (41,) 41/41           0.000e+00
+microsoft_vscode|res_served_gold|lo                                   (41,) 41/41           0.000e+00
+microsoft_vscode|res_served_gold|point_hrs                            (41,) 41/41           0.000e+00
+
+classifier top-3 label-set / top-1 agreement:
+kubernetes_kubernetes|cls_test|cal                 n=671 top1_same=1.000000 top3_ordered_same=1.000000
+kubernetes_kubernetes|cls_train|cal                n=5368 top1_same=1.000000 top3_ordered_same=1.000000
+kubernetes_kubernetes|cls_val|cal                  n=671 top1_same=1.000000 top3_ordered_same=1.000000
+kubernetes_kubernetes|eval64|cal                   n=53 top1_same=1.000000 top3_ordered_same=1.000000
+kubernetes_kubernetes|gold119|cal                  n=78 top1_same=1.000000 top3_ordered_same=1.000000
+microsoft_vscode|cls_test|cal                      n=423 top1_same=1.000000 top3_ordered_same=1.000000
+microsoft_vscode|cls_train|cal                     n=3380 top1_same=1.000000 top3_ordered_same=1.000000
+microsoft_vscode|cls_val|cal                       n=423 top1_same=1.000000 top3_ordered_same=1.000000
+microsoft_vscode|eval64|cal                        n=11 top1_same=1.000000 top3_ordered_same=1.000000
+microsoft_vscode|gold119|cal                       n=41 top1_same=1.000000 top3_ordered_same=1.000000

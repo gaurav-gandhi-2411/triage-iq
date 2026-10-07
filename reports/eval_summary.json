@@ -122,7 +122,7 @@
     "n_issues_evaluated": 64,
     "overall": {
       "n": 64,
-      "mean": 11.9375
+      "mean": 12.0312
     },
     "baseline_note": "Current baseline, copied from reports/eval_baseline.json (schema v2) by hand and guarded by tests/test_api.py::test_eval_summary_judge_block_matches_committed_baseline. Local qwen3:8b judge (ADR-0019) on the train-decontaminated gold set (ADR-0018). Scores from earlier judges (llama-3.3-70b-versatile, command-a-03-2025) were measured on a different n=60 set and are not comparable; they were removed from this file on 2026-10-05 and remain in git history.",
     "source": "reports/eval_baseline.json",
@@ -149,14 +149,14 @@
       },
       "kubernetes/kubernetes": {
         "n": 53,
-        "mean": 11.8679,
+        "mean": 11.9811,
         "dimensions": {
-          "component_match": 1.6604,
-          "similar_issues_relevance": 3.0,
-          "resolution_estimate_reasonableness": 1.5849,
-          "priority_alignment": 0.3585,
-          "next_steps_actionability": 2.9623,
-          "overall_quality": 2.3019
+          "component_match": 1.6226,
+          "similar_issues_relevance": 2.9623,
+          "resolution_estimate_reasonableness": 1.6792,
+          "priority_alignment": 0.434,
+          "next_steps_actionability": 2.9245,
+          "overall_quality": 2.3585
         }
       }
     }

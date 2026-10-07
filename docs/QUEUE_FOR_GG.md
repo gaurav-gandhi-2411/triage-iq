@@ -5,6 +5,18 @@ Last updated 2026-10-07. Newest first within each urgency. Everything else is in
 
 ## Do soon
 
+0. **Review the README proposal (draft PR #151, NOT merged by me).** Full proposed text:
+   `docs/README_PROPOSAL_2026-10-07.md` (verbatim copy of the PR branch's README.md; 70 claims
+   checked: 21 match, 5 partly, 44 were stale or wrong, 43 corrected; mismatch table in the PR body).
+   It contains new numbers, so it is yours to approve. Highlights to look at: the evaluation table
+   (as-served resolution numbers; vscode point estimate worse than naive, stated plainly), the
+   "Grounding is a consistency check, not a correctness check" note (19 of 20 wrong-vs-gold plans pass),
+   the Training data table (29,994 = k8s retrieval index size, not training data; classifiers saw
+   4,226 + 6,710 labeled issues), Latency (n=5), Monitoring (UptimeRobot + GitHub monitor; Cloud
+   Monitoring not adopted). Two blocks (`RESOLUTION-ROWS`, `LLM-BASELINE-BLOCK`) must be refreshed
+   after #150 lands and the k8s cassette is re-recorded: merge #151 after that.
+   `gh pr merge 151 --repo gaurav-gandhi-2411/triage-iq --merge` (delete the proposal file after).
+
 1. **Recreate the Vercel deploy hook and delete the old one.** The old URL was pasted in chat.
    Vercel dashboard -> project `triage-iq` -> Settings -> Git -> Deploy Hooks: delete the hook
    (`...Xafi3lf3AT`), create a new one for branch `main`. Do not paste the new URL anywhere that
@@ -48,6 +60,15 @@ Last updated 2026-10-07. Newest first within each urgency. Everything else is in
    fresh Q = -1.02 h vs stored +0.2835 h; held-out coverage 83.8% -> 79.7% [77.9, 81.4]. Publishing needs a
    new object name in `gs://triageiq-prod-260812-models/models/` plus a MANIFEST/loader change (I did not
    overwrite the existing artifact: the bucket has no versioning).
+
+9. **Merge core #150 when its cassette is re-recorded** (k8s resolution embeddings at serving; ADR-0062).
+   It cannot pass its quality gate until the 53 k8s synthesis + judge entries are re-recorded (the
+   prompt embeds the resolution numbers). The re-record is running unattended; status file
+   `eval/cassettes/RECORDING_STATUS.txt` in `C:\Users\gaura\ml-projects\triage-iq-wt-embfix`. When it
+   finishes I update the PR (cassette, checkpoint, baseline candidate) and it will say "ready" in the
+   decision log. The merge guard will block it on gate 3 (about 690 reviewable lines + a 168 KB
+   frozen-embeddings file), so it comes to you: `gh pr merge 150 --repo gaurav-gandhi-2411/triage-iq --merge`.
+   New judge baseline numbers go in the PR body before/after (a new baseline is yours to approve).
 
 ## Low urgency
 

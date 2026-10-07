@@ -213,3 +213,50 @@ bit-identical across versions, 128 arrays, verified earlier). Merge gate output:
 revision `triageiq-api-00038-gok`); `/health?deps=1`: model_store and groq healthy. The invariant
 test keeps its two-entry allowlist for the 1.6.1 classifiers.
 
+
+**D21. Implementation of the k8s embedding fix: draft PR #150 (`fix/k8s-resolution-embeddings-reuse`).**
+`retrieve_with_embedding()` exposes the query vector (`retrieve()` unchanged); `triage.py` passes
+`embeddings` + `predictor.pca` only for `RESOLUTION_EMBEDDINGS_REPOS = {kubernetes/kubernetes}`; every
+failure mode (no PCA, wrong dim, NaN, retrieval exception) falls back to zero-fill with a WARNING.
+The eval path uses a frozen retriever, so `eval/frozen_query_embeddings.npz` (53 x 768, generated and
+checked: live top-5 == frozen top-5 for all 53) keeps the cassette consistent with production.
+Evidence: 14 new tests; full `pytest tests/` 366 passed, 83.4% coverage; `ruff` and `mypy` clean;
+real-artifact end-to-end on 120 k8s test rows: `emb_*` non-zero 120/120, max abs diff to variant B
+2.1e-7, MAE on those rows naive 99.92 d / main 99.14 / branch 97.99 (paired gain 1.155 d, 95% CI
+[0.575, 1.793]); vscode: 62/62 rows byte-identical to main (SHA-256 over features, predictions,
+intervals, bucket, hits, prompt); resolution-stage latency 63.71 -> 65.97 ms median (+2.26 ms, n=400).
+CI: `test` green; both eval jobs fail with `CassetteMissError` (key d282240f...), the expected
+consequence of changed prompt inputs; the vscode tests fail only because they share the session
+fixture that replays all 64 issues.
+
+**D22. Re-record plan (k8s only).** 53 synthesis calls (Groq gpt-oss-120b) + 53 judge calls (local
+Ollama qwen3:8b, digest 500a1f067a9f, temperature 0, seed 42; 8 GB RTX 3070 free). Trap found by the
+implementer: the checkpoint is keyed by (issue, model, prompt_hash, artifact_hash) and the PR changes
+neither hash, so a plain resume would skip all 64. Fix: remove the 53 `k8s-*` checkpoint keys, keep the 11
+vscode keys, then `--mode synthesis` then `--mode judge` through `scripts/run_recording_unattended.py`
+(hard stops on degraded/truncated synthesis, schema failure, wrong checkout, artifact-hash mismatch;
+retries only TPD/rate-limit/connection). Judge drift control: re-judge 5 unchanged vscode issues and
+require exact agreement with the recorded scores before trusting the new k8s judge scores.
+Groq quota is shared with gg-portfolio (pre-authorized; paced by the recorder).
+
+**D23. README proposal: draft PR #151 (not merged).** 70 claims checked: 21 match, 5 partly, 44 stale
+or wrong, 43 corrected. Notable corrections: "System 4 DOWN" (false since 2026-10-05), classifier
+numbers (old 89.8%/87.1% -> 85.82%/85.99% top-3), k8s classifier retrain is NOT distinguishable from the
+old classifier (+2.38pp [-0.56, +5.33]), judge rows (10.26/8.64 retired -> 11.87/12.27), fabrication
+k8s 0/53 -> 1/53, "~20K issues" -> counts per model, coverage 61% -> 78.04%, eval-gate claim, monitor
+cadence 3-7 h, Cloud Monitoring "none". Unfixed and logged: `docs/screenshots/pipeline-diagram.svg`
+still says "~77% interval"; classifier naive baseline not committed (stated as unverified).
+**Found while reading it:** the live `/eval` page resolution table still shows the SUPERSEDED 05-30
+k8s model (104.05 d vs 106.29 d, +2.1%) under the label "deployed model"; #144 checked it against
+its source file (`w6_resolution_diagnosis.json`), which describes the old model, so the audit passed
+a number that is mislabeled. To fix with the #150 follow-up: replace with served numbers and cite
+`reports/resolution_train_serve_skew_2026-10-07.txt`.
+
+**D24. Worktree cleanup (merged, clean only; branches kept).** Removed 7 core and 3 UI worktrees whose
+PRs are merged and whose trees were clean (audit, ci2, deps2, docs, evalaudit, evalsummary, probe;
+UI evalaudit, evalsummary, ignore) after confirming each PR state with `gh pr list --head`. Kept: p3ro
+(read-only study checkout), d137 and sklearn (study inputs), coldstart/m140 (#140 open), embfix (#150),
+readme (#151), log, contract (#26), m21/prewarm (#21 closed, branch kept), and worktrees that are
+not from this session (`triage-iq-ui-wt-z4`, `triage-iq-wt-groq-model-fix`, `triage-iq-wt-wif-monitoring`).
+15 stale worktree records whose directories were already gone were pruned. Docker images kept:
+`triageiq-cold:*` (for #140), `tiq-sk:*` (study/implementation).

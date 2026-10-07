@@ -230,6 +230,29 @@ class SimilarIssueRetriever:
         apply_query_instruction: bool | None = None,
     ) -> list[dict]:
         """Return top-k most related issues (excluding query issue itself)."""
+        hits, _ = self.retrieve_with_embedding(
+            query_text,
+            k=k,
+            exclude_number=exclude_number,
+            apply_query_instruction=apply_query_instruction,
+        )
+        return hits
+
+    def retrieve_with_embedding(
+        self,
+        query_text: str,
+        k: int = 20,
+        exclude_number: int | None = None,
+        apply_query_instruction: bool | None = None,
+    ) -> tuple[list[dict], np.ndarray]:
+        """Same as retrieve(), also returning the query embedding it computed.
+
+        The embedding is the exact vector used for the FAISS search: float32, shape (dim,),
+        L2-normalised, encoded from the query text WITH this repo's query instruction applied
+        (see _apply_query_instruction). Exposed so callers that need the vector (serving's
+        resolution stage, ADR-0062) reuse it instead of encoding the same text a second time.
+        retrieve() delegates here, so its behaviour and return type are unchanged.
+        """
         assert self.index is not None, "Call build_index first"
         assert self.issue_numbers is not None
         assert self.texts is not None
@@ -250,7 +273,7 @@ class SimilarIssueRetriever:
             results.append({"number": num, "score": float(score), "text": self.texts[idx]})
             if len(results) >= k:
                 break
-        return results
+        return results, emb[0]
 
     def retrieve_batch(
         self,

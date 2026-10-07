@@ -13,7 +13,6 @@ import logging
 import numpy as np
 import pandas as pd
 import pytest
-from sklearn.decomposition import PCA
 
 from triage_iq.models.resolution import (
     BUCKET_CLASSIFIER_TRUSTED,
@@ -30,10 +29,10 @@ VSCODE = "microsoft/vscode"
 BASE = ["title_len_chars", "body_len_chars", "day_of_week", "days_since_repo_start"]
 EMB = [f"emb_{i}" for i in range(64)]
 
-# sha256 of the k8s signals for the fixed sample below, computed on origin/fix/k8s-resolution-
+# sha256 of the k8s signals for the fixed sample below, computed on origin/main (30e6fd8, #150+#153 merged) with the platform-exact projection below, BEFORE this change. Was on origin/fix/k8s-resolution-
 # embeddings-reuse (PR #150, e79cc70) BEFORE this change. Any drift means the k8s serving path
 # changed; regenerate only after deliberately changing k8s behaviour (and say so in the PR).
-K8S_GOLDEN_SHA256 = "52999f45bfe267cd0384ae29210b12efd61c78dc522d0fe1d2b1aa3539ed1896"
+K8S_GOLDEN_SHA256 = "390cb4a15953fd5fcb9edc7ac160dfa4d5efc4d2d175e62ceb9eec682e007ce5"
 
 
 class _Classifier:
@@ -47,7 +46,7 @@ class _Classifier:
 class _Predictor:
     """Deterministic stand-in whose outputs depend on the feature frame (incl. emb_*)."""
 
-    def __init__(self, pca: PCA | None, fail: bool = False) -> None:
+    def __init__(self, pca, fail: bool = False) -> None:
         self.feature_names = BASE + EMB
         self.pca = pca
         self.fail = fail
@@ -77,9 +76,22 @@ class _Retriever:
         return self.retrieve(text, k, exclude_number), v / np.linalg.norm(v)
 
 
-def _pca() -> PCA:
-    X = np.random.default_rng(42).normal(size=(200, 768))
-    return PCA(n_components=64, random_state=42).fit(X)
+class _FixedProjection:
+    """Stand-in for the fitted PCA: first 64 dims rounded to 2 dp.
+
+    A real ``PCA(...).fit`` on random data is BLAS/platform dependent at ~1e-12, enough to flip the
+    k8s golden digest between a laptop and the CI runner (PR #155 first CI run). Slicing + rounding
+    is exact on every platform, so the digest only moves when serving behaviour does.
+    """
+
+    n_features_in_ = 768
+
+    def transform(self, X):
+        return np.round(np.asarray(X, dtype=float)[:, :64], 2)
+
+
+def _pca() -> _FixedProjection:
+    return _FixedProjection()
 
 
 def _train(resolution_hours=(10.0, 20.0, 30.0, 40.0, 100.0)) -> pd.DataFrame:

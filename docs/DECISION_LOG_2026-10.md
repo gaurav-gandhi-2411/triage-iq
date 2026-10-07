@@ -132,3 +132,25 @@ UA `Mozilla/5.0 (compatible; UptimeRobot/2.0)`). It sends HEAD first (405 from t
 
 Keep-warm works and usage fell, not rose. (Script: `coldstarts_per_day.py`; "cold start" = one
 uvicorn "Started server process" line. The 48-hour window closes 12:40 UTC 2026-10-07.)
+
+## Phase 5 decisions: #140 and UI #21 (2026-10-07)
+
+**D14. UI #21 (pre-warm) closed, not merged.** It was written when cold starts were 6-17/day;
+with UptimeRobot keep-warm there was 1 on 10-06 and 0 on 10-07, so a per-page-view `/health`
+pre-warm has nothing to warm. The warm-up message/150 s timeout only matter if the monitor stops
+(the existing "Waking up service" label and Cloud Run's 300 s request timeout already bound that
+case). Branch kept; reopen if cold starts return. Alternative rejected: merge it anyway for the
+timeout (a UI deploy and extra requests for a scenario that no longer occurs).
+
+**D15. Core #140 (startup timing logs + tiktoken baked into the image) still adds value; queued
+for GG, not merged.** Value: per-step startup timings never reached Cloud Run before (verified in
+the platform logs: only uvicorn lines), and the first `/triage` on a fresh instance downloads
+tiktoken's encoding at request time. Reviewed the Dockerfile/app.py diff (82 lines): logging +
+a build-time cache, no model-path change; agent verified outputs byte-identical (sha256 767bff7d..).
+Required checks green. The merge guard fails ONLY gate 1: branch `perf/cold-start-startup` is not
+in its prefix list (feat/fix/chore/docs/refactor/investigate/test/wave-N). Not renamed (rule 35:
+renaming to fit is rule-gaming). Output of `python C:/Users/gaura/.claude/scripts/merge_gate.py
+-PrNumber 140 -Repo gaurav-gandhi-2411/triage-iq`: gate 1 FAIL; gates 2, 2b, 3, 4 PASS.
+
+**D16. UI #26 (Eval contract test) queued, not merged.** Size gate ambiguous (see queue item 5).
+

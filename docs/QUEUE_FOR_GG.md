@@ -29,6 +29,14 @@ Last updated 2026-10-07. Newest first within each urgency. Everything else is in
    `gh pr merge 26 --repo gaurav-gandhi-2411/triage-iq-ui --squash`
    The merge triggers one Vercel production build: confirm the deployment is READY and current.
 
+6. **Merge core #140** (startup timing logs reach Cloud Run; tiktoken encoding baked into the image).
+   Required checks green, bit-identical outputs verified, diff reviewed (82 lines). The merge guard
+   blocks it only on gate 1: the branch is `perf/cold-start-startup` and `perf/` is not in the
+   recognized prefix list. I did not rename the branch (that is rule-gaming the gate). Merge:
+   `gh pr merge 140 --repo gaurav-gandhi-2411/triage-iq --merge`
+   Optional follow-up for your global config: add `perf/` to the prefixes in
+   `C:\Users\gaura\.claude\scripts\merge_gate.py` (also affects #137-style branches).
+
 ## Low urgency
 
 4. UptimeRobot: switch the monitor's HTTP method to GET. It sends HEAD first and `/health`

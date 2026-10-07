@@ -88,6 +88,9 @@ HARD_STOP_MARKERS = [
     # so it deliberately does not appear here. Only a REPRODUCED failure (2nd
     # occurrence on the same issue) is a hard stop.
     "SCHEMA VALIDATION FAILURE REPRODUCED",
+    # 2026-10-08: the shared Groq daily budget is down to the protected reserve (eval/tpd_budget_gate.py).
+    # Not retried by waiting: the launcher cannot know when other consumers free budget.
+    "=== BUDGET RESERVE STOP ===",
 ]
 
 

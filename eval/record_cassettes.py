@@ -58,6 +58,7 @@ import os
 
 import artifact_fingerprint
 import checkpoint_validation as cv
+import tpd_budget_gate
 from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
 from triage_iq.model_config import TRIAGE_MODEL
@@ -104,6 +105,17 @@ SYNTHESIS_DELAY = 1.5  # seconds between synthesis calls (8B model: high TPM, 1.
 JUDGE_DELAY = 0.0
 JUDGE_MODEL = "qwen3:8b"
 JUDGE_PROVIDER = "ollama"
+
+
+def _enforce_budget_reserve(groq_key: str) -> None:
+    """Stop (exit 3, marker for the unattended launcher) before the shared Groq daily budget
+    drops below the protected reserve. See eval/tpd_budget_gate.py."""
+    try:
+        msg = tpd_budget_gate.check_budget(tpd_budget_gate.groq_probe(groq_key, TRIAGE_MODEL))
+    except tpd_budget_gate.BudgetReserveError as exc:
+        print(f"\n{exc}", flush=True)
+        sys.exit(3)
+    logger.info(msg)
 
 
 def _is_tpd_error(exc: Exception) -> bool:
@@ -930,6 +942,7 @@ def run_full(groq_key, issues, cassette, current_model, current_prompt_hash, cur
         if i > 0 and issue_id not in done_ids:
             time.sleep(SYNTHESIS_DELAY)
 
+        _enforce_budget_reserve(groq_key)
         logger.info("[%d/%d] %s — triaging …", i + 1, len(issues), issue_id)
         assistant = models[repo]["assistant"]
         plan, triage_error, n_synthesis_recorded, already_finalized, synthesis_cache_key = _synthesize_one(
@@ -1011,6 +1024,7 @@ def run_synthesis(groq_key, issues, cassette, current_model, current_prompt_hash
         if i > 0 and issue_id not in done_ids:
             time.sleep(SYNTHESIS_DELAY)
 
+        _enforce_budget_reserve(groq_key)
         logger.info("[%d/%d] %s — synthesizing …", i + 1, len(issues), issue_id)
         assistant = models[repo]["assistant"]
         plan, triage_error, n_synthesis_recorded, already_finalized, synthesis_cache_key = _synthesize_one(

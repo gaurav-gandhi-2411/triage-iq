@@ -277,3 +277,38 @@ the PR comment and ADR-0062 addendum). Grounding ratchet NOT tightened (one 0/53
 Wilson interval as 1/53). Merge guard for #150: gates 1, 2, 2b, 3b, 4 PASS; gate 3 FAIL (8,874
 reviewable lines; ~6,800 are cassette JSON outside a designated path, ~330 tests, ~700 code/ADR), so it
 is queued for a human merge with the exact command. Old k8s cassette entries remain as orphans.
+
+## Round 3 (2026-10-07 evening): owner decisions D1-D6 and what happened next
+
+**D26. Owner decisions recorded.** (D1) New judge baseline APPROVED: k8s 11.9811, vscode 12.2727, pooled
+12.0312; grounding ratchet stays at ADR-0061's bound. (D2) vscode serves the naive median point estimate,
+badged. (D3) Publish a recalibrated CQR as a NEW versioned GCS object (never overwrite), update
+MANIFEST.sha256 and the loader. (D4) #140's blocker was a branch-name convention: re-created. (D5) UI #26
+merge if CI green. (D6) The 7-preview Vercel deletion stands; no causal claim is made.
+
+**D27. UI #26 merged (`b1d1e81`); D4 done.** UI production deployment `dpl_CWs6FiSktpKwNBfLTkDXY48gxXNi`
+READY and current; UI CI on main ran Node v22.23.3 and the Eval contract tests (run 37679454705, success).
+#140 re-created unchanged as #153 (branch `chore/cold-start-startup-logging`, same commits); #140 closed with a
+pointer. #153's merge gate now reports eligible (gate 1 PASS).
+
+**D28. GG merged #150 at 20:07:53 UTC (`1190119`). Its deploy FAILED at the smoke test; production unaffected.**
+Run 37679694628: candidate revision `triageiq-api-00040-hop`; `/health`, `/health?deps=1`, `/metrics` passed;
+`POST /triage` returned HTTP 500 (curl exit 22). Candidate logs (20:16-20:18 UTC):
+`groq.RateLimitError 429 ... on tokens per day (TPD): Limit 200000, Used 199717, Requested 4895. Please try
+again in 33m12s`. Not a code regression. Traffic stayed on `00038-gok` (the gate worked as designed).
+**Root cause and my part in it (owned):** the k8s cassette re-record (53 synthesis calls at ~4k tokens, 16:29-18:47 UTC)
+spent the org-wide Groq TPD budget that production serves from. The charter pre-authorized the shared-quota
+spend, but I did not flag that this budget is also the production serving budget. Consequence until the
+rolling 24 h window frees (the oldest recording tokens age out from ~16:30 UTC Oct 8, fully by ~19:00): prod
+`/triage` can serve roughly one request per ~30 minutes. Observed real impact so far: 24 POST /triage in three
+days (almost all test traffic), one 500 (the smoke test). Mitigations: (1) fix the 500 (D29); (2) retry the
+deploy after the window opens a few thousand tokens (merging #153 also deploys main, which includes #150);
+(3) schedule further LLM-spending work (vscode re-record ~45k tokens, production latency replay ~25k) after the
+budget recovers; (4) a second-model fallback with a separate budget is proposed in the ADR, not implemented.
+
+**D29. Gap found while diagnosing: provider errors become HTTP 500.** `_call_llm_verbose` degrades gracefully
+only on truncation, schema-invalid and the pre-call budget guard; `groq.RateLimitError`, connection, timeout and
+5xx errors propagate to `app.py:300` and return `{"message": "Internal server error"}`. Fix in flight on
+`fix/triage-degrade-on-llm-provider-errors` (degrade to the signals-only plan with `_degraded` true and a distinct
+`_llm_status`; keep 401/403/400 loud). The deploy smoke test's `_degraded is False` assertion is deliberately
+NOT weakened: a rate-limited candidate must still fail the gate.

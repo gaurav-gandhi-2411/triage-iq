@@ -214,11 +214,15 @@ jobs:
           # test undetected and shipped to 100% traffic. Now also asserts _degraded is
           # false and triage_summary is a real, non-empty string.
           echo "=== /triage ==="
-          TBODY=$(curl -sf -X POST "$URL/triage" \
+          # Diagnostics only (assertions unchanged): capture the HTTP code and print the body
+          # on a non-200 instead of letting `curl -f` abort with a bare exit 22.
+          TRESP=$(curl -s -w "\n%{http_code}" -X POST "$URL/triage" \
             -H "Content-Type: application/json" \
             -d '{"repo":"microsoft/vscode","title":"Extension host crashes on startup","body":"Every time I open VS Code the extension host process terminates immediately."}')
-          if [ $? -ne 0 ]; then
-            echo "FAILED: /triage returned non-200"
+          TCODE=$(echo "$TRESP" | tail -1)
+          TBODY=$(echo "$TRESP" | sed '$d')
+          if [ "$TCODE" != "200" ]; then
+            echo "FAILED: /triage returned HTTP $TCODE -- body: $(echo "$TBODY" | head -c 500)"
             exit 1
           fi
           # Piped via stdin, not interpolated into the Python source -- $TBODY is
@@ -231,11 +235,12 @@ jobs:
           degraded = d.get('_degraded')
           summary = d.get('triage_summary')
           llm_status = d.get('_llm_status')
+          llm_reason = d.get('_llm_status_reason')
           failures = []
           if not component:
               failures.append('predicted_component is empty')
           if degraded is not False:
-              failures.append(f'_degraded is {degraded!r}, expected False -- llm_status={llm_status!r}')
+              failures.append(f'_degraded is {degraded!r}, expected False -- llm_status={llm_status!r} llm_status_reason={llm_reason!r}')
           if not summary or not summary.strip():
               failures.append('triage_summary is empty')
           if failures:

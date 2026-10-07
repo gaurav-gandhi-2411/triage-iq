@@ -260,3 +260,5 @@ readme (#151), log, contract (#26), m21/prewarm (#21 closed, branch kept), and w
 not from this session (`triage-iq-ui-wt-z4`, `triage-iq-wt-groq-model-fix`, `triage-iq-wt-wif-monitoring`).
 15 stale worktree records whose directories were already gone were pruned. Docker images kept:
 `triageiq-cold:*` (for #140), `tiq-sk:*` (study/implementation).
+
+**D23 note.** The brief asked for the full README text in the queue file. A 769-line copy would have pushed this docs PR past the size gate (forcing a human merge of the log itself) and could go stale after the #150 refresh, so the queue links the exact README on the PR branch instead.

@@ -5,9 +5,10 @@ Last updated 2026-10-07. Newest first within each urgency. Everything else is in
 
 ## Do soon
 
-0. **Review the README proposal (draft PR #151, NOT merged by me).** Full proposed text:
-   `docs/README_PROPOSAL_2026-10-07.md` (verbatim copy of the PR branch's README.md; 70 claims
-   checked: 21 match, 5 partly, 44 were stale or wrong, 43 corrected; mismatch table in the PR body).
+0. **Review the README proposal (draft PR #151, NOT merged by me).** Full proposed text is the README.md on the PR
+   branch: https://github.com/gaurav-gandhi-2411/triage-iq/blob/docs/readme-verified-numbers/README.md
+   (kept there, not copied into this file, so it cannot go stale; 70 claims checked: 21 match, 5
+   partly, 44 were stale or wrong, 43 corrected; mismatch table in the PR body).
    It contains new numbers, so it is yours to approve. Highlights to look at: the evaluation table
    (as-served resolution numbers; vscode point estimate worse than naive, stated plainly), the
    "Grounding is a consistency check, not a correctness check" note (19 of 20 wrong-vs-gold plans pass),
@@ -15,7 +16,7 @@ Last updated 2026-10-07. Newest first within each urgency. Everything else is in
    4,226 + 6,710 labeled issues), Latency (n=5), Monitoring (UptimeRobot + GitHub monitor; Cloud
    Monitoring not adopted). Two blocks (`RESOLUTION-ROWS`, `LLM-BASELINE-BLOCK`) must be refreshed
    after #150 lands and the k8s cassette is re-recorded: merge #151 after that.
-   `gh pr merge 151 --repo gaurav-gandhi-2411/triage-iq --merge` (delete the proposal file after).
+   `gh pr merge 151 --repo gaurav-gandhi-2411/triage-iq --merge`
 
 1. **Recreate the Vercel deploy hook and delete the old one.** The old URL was pasted in chat.
    Vercel dashboard -> project `triage-iq` -> Settings -> Git -> Deploy Hooks: delete the hook

@@ -77,6 +77,43 @@ python:3.11-slim moved only `multidict 6.7.1 -> 6.9.1`; fsspec stayed (BELIEVED:
 `datasets 4.8.5`). Trying a regen that also upgrades `datasets` (declared but never imported in
 this repo) to clear fsspec and the old PYSEC-2026-3716 suppression. Result recorded below.
 
+**D9 (final). Dependency fix merged: #147 -> `10a1784`.** The scoped regen moved exactly four pins
+(`multidict 6.7.1->6.9.1`, `fsspec 2026.2.0->2026.6.0`, `datasets 4.8.5->5.0.1`, `anyio 4.13.0->4.14.2`);
+nothing else (no sentence-transformers/groq/transformers movement). Incremental diffs: multidict
+alone; +datasets moved datasets/fsspec/multidict; +anyio moved only anyio. None of the four is
+imported by repo code (`git grep`). `pip-audit` with the nine remaining ignores: "No known
+vulnerabilities found, 10 ignored". Three obsolete ignores deleted (PYSEC-2026-3716, CVE-2026-63374,
+CVE-2026-64847): this only tightens the gate. CI (PR run 37623521925): "Lock in sync" success,
+"Security audit" success, "No known vulnerabilities found, 12 ignored" (CI counts differently).
+Alternative rejected: adding ignores for the two new advisories (they were fixable).
+Deploy of `10a1784`: run 37624456668 success (candidate smoke test passed, promoted).
+
+**D10. #146 merged: removed the permanently red informational pip-audit job.** It audited a freshly
+resolved environment, not the lock, with none of the documented suppressions, so it was red by
+construction (alternative: make it audit the lock with the same ignores = duplicate of the blocking
+step). It was never required (protection requires `test`, `Structural invariants (no LLM)`,
+`Quality regression (cassette-replayed judge)`). Backlog row marked done.
+
+**D11. Core #144 merged -> `3b0ed94`** after `gh pr update-branch` (strict protection) and green
+required checks. Gate: the UI that reads the new shape (#23) was already CONFIRMED deployed
+(D6), so the order was safe. Deploy run 37626771577 success; revision `triageiq-api-00036-xiy`.
+VERIFIED live: `/eval/summary` calibration keys now `classifier, ece_*_definition, n_test, n_eval_set,
+previous_classifier, ...`, T_opt 1.1388 / 4.8636, ece_test 0.0307 / 0.0431, ece_eval_set 0.1875 /
+0.121, judge n=64, no `triageiq-api-0...` strings. Live `/eval` hard-reloaded: renders, no console
+messages, no undefined/NaN, "Current baseline: 11.94/15 ... n=64". Screenshot:
+scratchpad `eval_live_after_144_2026-10-07.png`.
+
+**D12. Vercel Ignored Build Step: UI #24 merged -> `1072c70`.** `vercel.json` `ignoreCommand`
+builds only for `main`, `preview/*` and ref-less (CLI/hook) builds. Logic tested locally for 5
+cases. Skip path VERIFIED live: the PR branch got "Vercel: success - Canceled by Ignored Build
+Step" (no build consumed, no required check affected: protection requires only `lint-and-build`).
+Build path VERIFIED live: production deployment `dpl_CS7htPUwRJ2aeoqksbwvtHem3Zjd` READY and
+the project's current production, sha `1072c70`. Convention for a preview: name the branch `preview/<x>`.
+
+**D13. Stuck automation browser.** The browser tool's own Chrome (profile `chrome-devtools-mcp`)
+held its profile and blocked new pages; I stopped only that process tree (root pid 19896, after
+listing it: all processes were the automation profile, none were your normal Chrome).
+
 ## Phase 5: keep-warm
 **D10. UptimeRobot's first ping: 2026-10-05T12:39:50Z** (VERIFIED from Cloud Run request logs,
 UA `Mozilla/5.0 (compatible; UptimeRobot/2.0)`). It sends HEAD first (405 from the API) then GET

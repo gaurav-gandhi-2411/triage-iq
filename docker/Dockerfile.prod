@@ -81,6 +81,7 @@ COPY data/models/cqr_conformal_adjustments.json   data/models/
 # Runtime drift check (loader._check_manifest_drift) is a silent no-op without this file; it was
 # missing from the image until 2026-10-08 (startup log: 'MANIFEST.sha256 not found').
 COPY data/models/MANIFEST.sha256   data/models/
+COPY data/models/cqr_conformal_adjustments_v2.json   data/models/
 COPY data/processed/microsoft_vscode_temporal_train.parquet   data/processed/
 COPY data/processed/kubernetes_kubernetes_temporal_train.parquet   data/processed/
 

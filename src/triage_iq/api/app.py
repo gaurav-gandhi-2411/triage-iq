@@ -27,6 +27,7 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from ..config import get_settings
 from ..models.abstention import compute_abstention_status
+from ..models.resolution import NAIVE_INTERVAL_COVERAGE, repo_slug
 from ..models.triage import ConformalIntervalResult, TriagePlan
 from .loader import ModelStore
 from .schemas import DependencyStatus, HealthResponse, ServiceInfoResponse, TriageRequest
@@ -342,13 +343,19 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         adj = store.conformal_adjustments.get(body.repo)
         if adj is not None:
             q_days = adj["q_adjustment_hours"] / 24.0
+            # ADR-0063: the stored coverage statistics describe the model-quantile interval. When
+            # the served interval was re-centred on the naive median, report the coverage measured
+            # for THAT interval instead (resolution.NAIVE_INTERVAL_COVERAGE), never the old one.
+            cov = adj
+            if meta.get("resolution_interval_basis") == "naive_scaled":
+                cov = {**adj, **NAIVE_INTERVAL_COVERAGE.get(repo_slug(body.repo), {})}
             plan.resolution_interval_conformal = ConformalIntervalResult(
                 lower_days=max(0.0, plan.expected_resolution_lower_days - q_days),
                 upper_days=plan.expected_resolution_upper_days + q_days,
-                target_coverage=adj["target_coverage"],
-                empirical_coverage=adj["empirical_coverage"],
-                coverage_ci95_lower=adj["coverage_ci95_lower"],
-                coverage_ci95_upper=adj["coverage_ci95_upper"],
+                target_coverage=cov["target_coverage"],
+                empirical_coverage=cov["empirical_coverage"],
+                coverage_ci95_lower=cov["coverage_ci95_lower"],
+                coverage_ci95_upper=cov["coverage_ci95_upper"],
             )
     except Exception as _conf_err:
         logger.warning(
@@ -438,6 +445,12 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     result["_model"] = bundle.assistant.model
     result["classifier_top3"] = meta.get("classifier_top3")
     result["resolution_model_beats_naive"] = _RESOLUTION_MODEL_BEATS_NAIVE.get(body.repo, True)
+    # ADR-0063 (expand-only): the point estimate the resolution stage was given and its source,
+    # "model" or "naive_median" (POINT_ESTIMATE_TRUSTED). resolution_model_beats_naive keeps its
+    # meaning (a measured property of the trained model); this field says what is being served.
+    result["resolution_point_days"] = meta.get("resolution_point_days")
+    result["resolution_point_source"] = meta.get("resolution_point_source", "model")
+    result["resolution_interval_basis"] = meta.get("resolution_interval_basis", "model")
     return JSONResponse(content=result)
 
 

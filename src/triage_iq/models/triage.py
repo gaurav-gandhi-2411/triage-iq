@@ -22,6 +22,12 @@ from triage_iq.model_config import (
     TRIAGE_PRICE_PROMPT_PER_MTOK,
 )
 from triage_iq.models.grounding import compute_grounding_status
+from triage_iq.models.resolution import (
+    POINT_ESTIMATE_TRUSTED,
+    naive_median_days,
+    naive_scaled_interval,
+    repo_slug,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -753,6 +759,10 @@ class TriageAssistant:
             "predicted_resolution_days_p50": round(mid, 1),
             "resolution_bucket": plan.resolution_bucket,
             "resolution_confidence_pct": plan.resolution_confidence_pct,
+            # ADR-0063: the point estimate the prompt was given and where it came from.
+            "resolution_point_days": signals["resolution_point_days"],
+            "resolution_point_source": signals["resolution_point_source"],
+            "resolution_interval_basis": signals["resolution_interval_basis"],
             "llm_status": llm_status,
             # None for every status except degraded_schema_invalid (SchemaValidationError's
             # groq_error_code, e.g. "json_validate_failed") -- surfaced for
@@ -841,6 +851,46 @@ class TriageAssistant:
             return {}
         return {"embeddings": vec.reshape(1, -1), "pca": pca}
 
+    def _naive_median_days(self) -> float | None:
+        """Repo training-set median resolution time in days (cached); None if unavailable."""
+        if not hasattr(self, "_naive_days_cache"):
+            self._naive_days_cache = naive_median_days(self.train_df)
+        return self._naive_days_cache
+
+    def _apply_point_trust(
+        self, pred_days: float, lo_days: float, hi_days: float, model_ok: bool = True
+    ) -> tuple[float, float, float, str, str]:
+        """Apply POINT_ESTIMATE_TRUSTED (ADR-0063). Returns (point, lo, hi, source, basis).
+
+        basis is "naive_scaled" when the interval was re-centred on the naive median, else
+        "model" (the interval is still the model's Q10/Q90).
+
+        Trusted repos (and unlisted ones) pass through unchanged, source "model". For an
+        untrusted repo the naive median replaces the point and the model's relative Q10/Q90
+        width is re-centred on it (naive_scaled_interval) so the prompt's point lies inside its
+        interval. If the predictor itself failed (model_ok False) the fixed fallback interval is
+        kept. If the naive median cannot be computed the model output is served with a WARNING:
+        a request must never fail here.
+        """
+        if POINT_ESTIMATE_TRUSTED.get(repo_slug(self.repo), True):
+            return pred_days, lo_days, hi_days, "model", "model"
+        naive = self._naive_median_days()
+        if naive is None:
+            logger.warning(
+                "Naive median unavailable for untrusted point estimate, serving the model output",
+                extra={"repo": self.repo, "reason": "no_train_median"},
+            )
+            return pred_days, lo_days, hi_days, "model", "model"
+        if model_ok:
+            scaled = naive_scaled_interval(naive, pred_days, lo_days, hi_days)
+            if scaled is not None:
+                return naive, scaled[0], scaled[1], "naive_median", "naive_scaled"
+            logger.warning(
+                "Naive-scaled interval not computable, keeping the model interval",
+                extra={"repo": self.repo, "reason": "degenerate_model_point"},
+            )
+        return naive, lo_days, hi_days, "naive_median", "model"
+
     def _collect_signals(self, issue: pd.Series) -> dict:
         from triage_iq.prompts.triage_prompt import build_triage_prompt
 
@@ -918,10 +968,17 @@ class TriageAssistant:
             buckets, confs = self.predictor.predict_bucket(feats)
             resolution_bucket   = buckets[0]
             resolution_conf_pct = round(float(confs[0]) * 100, 1)
+            predictor_ok = True
         except Exception as e:
             logger.warning("Resolution predictor failed: %s", e)
+            predictor_ok = False
             pred_days, lo_days, hi_days = 7.0, 1.0, 30.0
             resolution_bucket, resolution_conf_pct = "days", 33.0
+        # Raw model outputs, kept for diagnostics/eval before any trust override (ADR-0063).
+        model_point_days, model_lo_days, model_hi_days = pred_days, lo_days, hi_days
+        pred_days, lo_days, hi_days, point_source, interval_basis = self._apply_point_trust(
+            pred_days, lo_days, hi_days, model_ok=predictor_ok
+        )
         t_predict = time.perf_counter() - t3
 
         # Config C: include bucket in prompt when TRIAGE_PROMPT_INCLUDE_BUCKET=1
@@ -945,6 +1002,12 @@ class TriageAssistant:
             "pred_days": pred_days,
             "lo_days": lo_days,
             "hi_days": hi_days,
+            "resolution_point_days": pred_days,
+            "resolution_point_source": point_source,
+            "resolution_interval_basis": interval_basis,
+            "model_point_days": model_point_days,
+            "model_lo_days": model_lo_days,
+            "model_hi_days": model_hi_days,
             "resolution_bucket": resolution_bucket,
             "resolution_conf_pct": resolution_conf_pct,
             "_t_classify": t_classify,

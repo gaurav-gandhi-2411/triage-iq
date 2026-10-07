@@ -154,3 +154,62 @@ renaming to fit is rule-gaming). Output of `python C:/Users/gaura/.claude/script
 
 **D16. UI #26 (Eval contract test) queued, not merged.** Size gate ambiguous (see queue item 5).
 
+## Phase 3-4: train/serve skew in the resolution predictors (2026-10-07)
+
+**D17. Study (read-only, Docker, sklearn 1.6.1, bootstrap 1000 seed 42).** Serving never passes
+embeddings: `triage.py:842` `engineer_features(issue_df, train_df=self.train_df)`; `triage.py:844-846`
+fills missing model columns with 0.0; `resolution.py:198-208` skips the embedding block when
+`embeddings is None`; `resolution.py:128-129` dsrs=0 for a single row; `app.py:292-297` issue has no
+author. Every published resolution metric was computed WITH embeddings (scripts: 09_train_resolution.py
+:245-247, lever3_train_resolution.py:149-151, w6_diagnose_resolution.py:134-135,
+10_calibrate_cqr.py:123-145). Training recipe (reproduced to 1e-7): text `title. body_clean[:512 chars]`,
+BAAI/bge-base-en-v1.5, normalized, no doc-side prefix, PCA(64, random_state=42) fit on train only.
+Retrieval query encoding differs (no char truncation; k8s-only BGE instruction, ADR-0040): cosine to
+the training recipe mean 0.957 (k8s). Single-text encode ~203-236 ms median on a 2-vCPU container.
+
+k8s, ADR-0041 re-split test, n=2992, naive MAE 104.229 d, naive bucket 26.00%:
+
+| Variant | MAE (vs naive) | bucket delta pp [CI] | raw Q10-Q90 cov |
+|---|---|---|---|
+| Published (with embeddings) | 101.98 (+2.16%) | +6.35 [5.08,7.55] | 80.75% |
+| **Z: served today (emb_*=0)** | 103.49 (+0.71%) | +5.05 [3.94,6.22] | 80.48% |
+| S1: embeddings, training recipe | 101.98 (+2.15%) | +7.09 [5.75,8.42] | 83.22% |
+| **B: retrieval-query embedding (reuse)** | 102.09 (+2.06%) | +6.95 [5.55,8.36] | 83.26% |
+| C2: retrain without emb/dsrs/author (1 seed) | 102.89 (+1.28%) | +5.98 [4.75,7.22] | 81.22% |
+| Zd/S2: dsrs from train start | +1.51% / +2.86% | +6.85 / +9.06 | 65.7% / 72.5% (coverage collapses) |
+
+vscode (reconstructed 7-day test, n=616, naive MAE 3.533 d): published/A -70.47% (reproduced
+exactly: 6.023 d, bucket -22.08pp); Z served -54.19%; S1 -82.34%; B -86.51%; no retrain without
+embeddings beats naive in 10 runs (C2 MAE 3.56-6.54 d); only Zd (dsrs from train start) beats naive
+(+4.93%, gain 0.174 d [0.082,0.275]), which relies on an extrapolated feature on one 616-row window.
+Limits: the original vscode test parquet is unrecoverable; Cloud Run latency not measured; k8s
+retrain is one seed.
+
+**D18. Decision (criteria in order: correctness, product quality, latency <= ~5.5 s p50, simplicity).**
+k8s: reuse the retrieval query embedding for `emb_*` via the predictor's own PCA (variant B). It
+recovers +1.35 pp of MAE gain and +1.9 pp bucket accuracy over today's serving, adds ~0 ms (the
+encode exists), and needs no new artifact. Alternatives rejected: (a) second exact-recipe encode
+(S1): +0.2 s per request for no distinguishable gain over B (2.14 vs 2.25 d, CIs overlap);
+(b) retrain without embeddings (C2): smaller gain, single-seed, needs a new model artifact + GCS
+publish + cutover; (c) changing dsrs: coverage collapses and live k8s issues are 10 years past the
+training window, so the semantics are not testable. vscode: no change (bit-identical): the
+"if the fix lifts it" condition is not met (embeddings make it worse; the only variant that beats
+naive is fragile). Recommendation queued for GG: serve the naive median for vscode's point estimate
+or accept the disclosed state.
+Implementation: branch `fix/k8s-resolution-embeddings-reuse` (draft PR; its CI cassette gate is expected to fail until
+the k8s cassette entries are re-recorded because resolution numbers are in the LLM prompt).
+
+**D19. CQR not recalibrated in this change.** Stored Q (k8s +0.2835 h) was fit on the old model;
+fresh Q for the served path is -1.02 h (variant B), which moves held-out coverage 83.82% -> 79.71%
+[77.94, 81.38]. The effect on the interval is ~0.04 d on a ~234 d width, but publishing it needs a
+GCS artifact overwrite (no versioning on the bucket: the old bytes would be unrecoverable), which is
+on the NEVER list. Queued for GG with the exact numbers. README must quote the held-out coverage
+measured for the shipped path (83.8% with the stored Q), not the stale 76.2%.
+
+**D20. #145 (scikit-learn lock 1.6.1 -> 1.7.2) merged: `b9ecbe4`.** Decision per Priority 4: the PCA
+goes live for k8s, and it is the only 1.7.2 pickle, so the runtime bump stands (predictions
+bit-identical across versions, 128 arrays, verified earlier). Merge gate output: gates 1, 2, 2b, 3,
+3b, 4 PASS, eligible. Deploy run 37645525560 success (candidate smoke test passed, promoted,
+revision `triageiq-api-00038-gok`); `/health?deps=1`: model_store and groq healthy. The invariant
+test keeps its two-entry allowlist for the 1.6.1 classifiers.
+

@@ -171,6 +171,12 @@ today), pin `setuptools>=83.0.0` explicitly as a build dependency at that time.
 
 ### PYSEC-2026-3716 — datasets folder-based dataset builder path traversal
 
+> **RESOLVED 2026-10-07 — no longer suppressed.** The lock-drift blocker described below was
+> fixed in #139; a scoped regen (`--upgrade-package datasets`) now moves exactly `datasets
+> 4.8.5 -> 5.0.1` (with `fsspec` 2026.2.0 -> 2026.6.0, which datasets 4.x capped). pip-audit
+> reports nothing for it and the `--ignore-vuln` entry is deleted. The entry below is kept as
+> history. `datasets` is still never imported by repo code.
+
 - **Suppressed since:** 2026-08-27
 - **Affected package:** `datasets==4.8.5` (`requirements.lock`; declared directly in
   `requirements.txt` alongside `transformers`/`sentence-transformers`, but never imported
@@ -212,6 +218,10 @@ actually scheduled) — not something to do as a side effect of one CVE bump.
 the package isn't imported directly.
 
 ### CVE-2026-63374 / CVE-2026-64847 — anyio TLS IDNA-2003 host check; process-pool stderr hang
+
+> **RESOLVED 2026-10-07 — no longer suppressed.** Scoped regen `--upgrade-package anyio` now
+> moves exactly `anyio 4.13.0 -> 4.14.2` (the drift blocker was fixed in #139). Both
+> `--ignore-vuln` entries are deleted; kept below as history.
 
 - **Suppressed since:** 2026-09-23 (surfaced by pip-audit on PR #131; newly published, not
   caused by that PR's diff)
@@ -339,3 +349,11 @@ corresponding change above, and regenerate the lock in the same PR (the CI check
 
 Published 2026-10-01. Fixed by a scoped `pip-compile --upgrade-package urllib3` regen,
 `urllib3` 2.7.0→2.8.0 (diff touches only that line). No suppression needed.
+
+### CVE-2026-104874 (multidict) / CVE-2026-104851 (fsspec) — fixed, never suppressed
+
+Published after 2026-10-05; they failed the blocking audit for every PR. Fixed 2026-10-07 by the
+same scoped regen: `multidict 6.7.1 -> 6.9.1`, `fsspec 2026.2.0 -> 2026.6.0`. Neither package is
+imported by repo code (transitive: multidict via aiohttp, fsspec via `datasets`/huggingface-hub).
+The whole regen touched exactly four pins (multidict, fsspec, datasets, anyio): no
+sentence-transformers, groq or transformers movement.

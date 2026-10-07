@@ -29,6 +29,26 @@ Last updated 2026-10-07. Newest first within each urgency. Everything else is in
    `gh pr merge 26 --repo gaurav-gandhi-2411/triage-iq-ui --squash`
    The merge triggers one Vercel production build: confirm the deployment is READY and current.
 
+6. **Merge core #140** (startup timing logs reach Cloud Run; tiktoken encoding baked into the image).
+   Required checks green, bit-identical outputs verified, diff reviewed (82 lines). The merge guard
+   blocks it only on gate 1: the branch is `perf/cold-start-startup` and `perf/` is not in the
+   recognized prefix list. I did not rename the branch (that is rule-gaming the gate). Merge:
+   `gh pr merge 140 --repo gaurav-gandhi-2411/triage-iq --merge`
+   Optional follow-up for your global config: add `perf/` to the prefixes in
+   `C:\Users\gaura\.claude\scripts\merge_gate.py` (also affects #137-style branches).
+
+7. **Decide vscode's resolution point estimate.** Served model is -54% MAE vs naive (6.02 d reported
+   as -70.5% with embeddings; 5.45 d as served); no variant robustly beats naive (study in
+   DECISION_LOG D17). Options: (a) leave as is (README already discloses it, UI shows "Model below naive
+   baseline"); (b) serve the naive median (3.84 d) as the point estimate, like the bucket already does
+   (needs an interval design + a cassette re-record of the 11 vscode issues). My recommendation: (b)
+   when you next touch vscode; not urgent.
+
+8. **Publish a recalibrated CQR artifact for k8s (optional, low value).** After the embedding fix,
+   fresh Q = -1.02 h vs stored +0.2835 h; held-out coverage 83.8% -> 79.7% [77.9, 81.4]. Publishing needs a
+   new object name in `gs://triageiq-prod-260812-models/models/` plus a MANIFEST/loader change (I did not
+   overwrite the existing artifact: the bucket has no versioning).
+
 ## Low urgency
 
 4. UptimeRobot: switch the monitor's HTTP method to GET. It sends HEAD first and `/health`

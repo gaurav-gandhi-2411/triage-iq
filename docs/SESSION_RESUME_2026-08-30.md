@@ -5,7 +5,23 @@ first, then resume exactly as described below.** Production has been down since
 ~2026-08-16 (Groq retired `llama-3.1-8b-instant`); this session got as far as selecting
 a replacement and is mid-way through re-recording the eval cassette against it.
 
-## 2026-10-05 (latest): production restored; post-launch backlog
+## 2026-10-07 (latest): state after the autonomous round
+
+**Read first:** `docs/DECISION_LOG_2026-10.md` (every decision with evidence) and
+`docs/QUEUE_FOR_GG.md` (only what GG must do). Summary:
+- Live `/eval` was blank on 2026-10-05 (merge != deploy; Vercel rejected the UI production build).
+  Restored 2026-10-07 by the deploy hook after removing 7 old previews: UI production deployment
+  `dpl_J8a5xQ1KGVkbLPjffM8uRSYDkTSw`, later `dpl_CS7htPUwRJ2aeoqksbwvtHem3Zjd` (UI #24, Ignored Build
+  Step: only `main` and `preview/*` branches build). Release checklist is below (2026-10-05 section).
+- Core on main: #139 (floors realigned + lock-sync guard), #147 (multidict/fsspec/datasets/anyio fixed,
+  three suppressions deleted), #146 (red informational audit job removed), #144 (Eval numbers read from
+  data, drift tests), #145 (scikit-learn 1.7.2 + pickle-version invariant), #142 (startup probe).
+- Keep-warm (UptimeRobot, first ping 2026-10-05 12:39:50 UTC) works: 1 cold start on 10-06, 0 on 10-07.
+- In flight: k8s resolution embeddings at serving (branch `fix/k8s-resolution-embeddings-reuse`; needs the
+  k8s cassette entries re-recorded before its quality gate can pass; see DECISION_LOG D17-D20).
+- Waiting on GG: UI #26, core #140 (guard: `perf/` prefix), deploy hook recreation, Vercel retention.
+
+## 2026-10-05: production restored; post-launch backlog
 
 **State:** production serves `openai/gpt-oss-120b` with the retrained classifiers (main at
 `15ef0b3` when this was written: #133, #134, #136, #137, #139, #141 merged; UI #20, #22

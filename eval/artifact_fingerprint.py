@@ -42,8 +42,10 @@ _PER_REPO_TEMPLATES = [
 ]
 
 # Shared across repos.
-_SHARED_PATHS = [
-    "data/models/cqr_conformal_adjustments.json",
+_SHARED_PATHS: list[str] = [
+    # The CQR conformal store is deliberately NOT fingerprinted (ADR-0059 addendum 2026-10-08): it is
+    # attached in api/app.py after assistant.triage_with_metadata() returns and never enters a
+    # prompt, a cache key or the judged plan, so changing it cannot change a recorded entry.
 ]
 
 EXPECTED_HASHES_PATH_REL = "eval/cassettes/EXPECTED_ARTIFACT_HASHES.json"

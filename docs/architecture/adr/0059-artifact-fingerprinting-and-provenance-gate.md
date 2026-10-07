@@ -75,3 +75,22 @@ prompt text are.
   change would carry one stamp for mixed content.
 - **Resolve `ROOT` from an env var / refuse unless run from the worktree.** Narrower — fixes the
   checkout-confusion instance but not an in-place artifact change in the right checkout.
+
+## Addendum 2026-10-08: the conformal store leaves the fingerprint
+
+`data/models/cqr_conformal_adjustments*.json` is removed from the prompt-feeding fingerprint
+(`eval/artifact_fingerprint.py::_SHARED_PATHS`, `EXPECTED_ARTIFACT_HASHES.json`). It stays in
+`data/models/MANIFEST.sha256` and is still verified for publish/serve drift.
+
+Why (verified by reading the code path, not by assumption): `api/app.py` attaches
+`resolution_interval_conformal` after `assistant.triage_with_metadata()` has returned, from
+`store.conformal_adjustments`; the abstention gate that reads its width is off by default
+(`TRIAGE_ENABLE_ABSTENTION_GATE`) and `abstention_status` is excluded from the judged plan
+(`record_cassettes._JUDGE_EXCLUDED_PLAN_FIELDS`, `run_eval.py`). The eval harness never builds a
+conformal interval. No conformal value therefore reaches a prompt, a synthesis cache key or a judged
+field, so recalibrating Q (k8s: +0.2835 h to -1.018 h, CQR v2) cannot change a recorded entry, and
+fingerprinting it only forced a 64-entry LLM re-record (about 250k tokens of a 200k/day shared budget)
+for a change with no effect on any recorded output.
+
+Consequence: if conformal values are ever fed into a prompt (for example a calibrated range quoted to
+the model), they must be added back to `_SHARED_PATHS` in the same change.

@@ -191,7 +191,13 @@ def test_conformal_q_formula() -> None:
 
 
 def test_conformal_layer_active() -> None:
-    """Verify conformal adjustments load correctly and Q is active (non-zero) for both repos."""
+    """Conformal adjustments load for both repos and Q is a non-zero (active) adjustment.
+
+    Q is asserted != 0, not > 0: CQR Q is negative when the base quantile interval over-covers the
+    calibration split (k8s v2 after the serving-time embedding fix: Q = -1.018 h, which tightens
+    the interval, 79.7 pct held-out coverage vs the 80 pct target). A positive-only assertion would
+    fail a correctly calibrated artifact; zero is what would mean the layer is a no-op.
+    """
     from triage_iq.api.loader import _load_conformal_adjustments
 
     adjustments = _load_conformal_adjustments(MODELS_DIR)

@@ -105,6 +105,12 @@ jobs:
           # newest deploy" behavior for every deploy after it -- see issue #22. Under the old
           # flow, a pinned service meant new revisions landed at 0% traffic while the smoke
           # test still curled the public URL and passed against stale, already-live code.)
+          # Startup probe 10s period / 10s timeout / 30 failures (was 60/45/3). The app takes
+          # ~41s p50 (n=303 prod cold starts, 2026-09-05..10-05) to finish lifespan, so the old
+          # first probe at t=0 always failed and the next one fired at t=60s: readiness landed on
+          # 60s boundaries and any start >60s jumped to 120s. Probing every 10s makes the
+          # instance ready ~5-10s after the app is up. timeoutSeconds must not exceed
+          # periodSeconds (Cloud Run docs); 30 x 10s = a 300s ceiling, more than the old 3 x 60s.
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image ${{ env.IMAGE }}:${{ github.sha }} \
             --region ${{ env.GCP_REGION }} \
@@ -117,7 +123,7 @@ jobs:
             --concurrency 8 \
             --cpu-throttling \
             --timeout 300 \
-            --startup-probe="httpGet.path=/health,httpGet.port=8080,timeoutSeconds=45,periodSeconds=60,failureThreshold=3" \
+            --startup-probe="httpGet.path=/health,httpGet.port=8080,timeoutSeconds=10,periodSeconds=10,failureThreshold=30" \
             --service-account ${{ env.RUNTIME_SA }} \
             --update-secrets GROQ_API_KEY=groq-api-key:latest,METRICS_TOKEN=metrics-token:latest \
             --update-env-vars ENVIRONMENT=prod \

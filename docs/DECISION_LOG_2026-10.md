@@ -213,3 +213,15 @@ bit-identical across versions, 128 arrays, verified earlier). Merge gate output:
 revision `triageiq-api-00038-gok`); `/health?deps=1`: model_store and groq healthy. The invariant
 test keeps its two-entry allowlist for the 1.6.1 classifiers.
 
+
+## README accuracy pass (2026-10-07)
+
+**D21. Monitoring decision recorded.** Uptime/keep-warm = external UptimeRobot (free plan, 5-minute
+`/health`, first ping 2026-10-05T12:39:50Z, D10) plus the GitHub Actions health monitor
+(`/health?deps=1`; scheduled every 30 min, observed 3-7 h apart over the last 8 runs, `gh run list`
+2026-10-07). Cloud Monitoring alerting is NOT adopted: alerting could not be verified free and the
+project runs on a zero-spend rule. VERIFIED: `gcloud monitoring policies list` and
+`gcloud monitoring uptime list-configs` on `triageiq-prod-260812` (read-only, explicit
+`--account`) returned empty on 2026-10-07. `scripts/setup_monitoring.sh` stays as a reference only.
+The README now states this as a decision, not an open gap. README numbers were re-derived from their
+sources by `readme_numbers_check.py` (PR body has the mismatch table).

@@ -62,14 +62,16 @@ Last updated 2026-10-07. Newest first within each urgency. Everything else is in
    new object name in `gs://triageiq-prod-260812-models/models/` plus a MANIFEST/loader change (I did not
    overwrite the existing artifact: the bucket has no versioning).
 
-9. **Merge core #150 when its cassette is re-recorded** (k8s resolution embeddings at serving; ADR-0062).
-   It cannot pass its quality gate until the 53 k8s synthesis + judge entries are re-recorded (the
-   prompt embeds the resolution numbers). The re-record is running unattended; status file
-   `eval/cassettes/RECORDING_STATUS.txt` in `C:\Users\gaura\ml-projects\triage-iq-wt-embfix`. When it
-   finishes I update the PR (cassette, checkpoint, baseline candidate) and it will say "ready" in the
-   decision log. The merge guard will block it on gate 3 (about 690 reviewable lines + a 168 KB
-   frozen-embeddings file), so it comes to you: `gh pr merge 150 --repo gaurav-gandhi-2411/triage-iq --merge`.
-   New judge baseline numbers go in the PR body before/after (a new baseline is yours to approve).
+9. **Merge core #150: READY** (k8s resolution embeddings at serving; ADR-0062; cassette re-recorded;
+   all 3 required checks green, PR CLEAN). Approve the new judge baseline, then
+   `gh pr merge 150 --repo gaurav-gandhi-2411/triage-iq --merge`
+   Baseline before -> after (details in the PR comment and the ADR-0062 addendum): k8s 11.8679 ->
+   11.9811 (+0.113, inside the +/-0.22 band, not claimed as an improvement), vscode 12.2727 unchanged,
+   overall 11.9375 -> 12.0312, k8s fabrication 1/53 -> 0/53, floor-fail 3/53 -> 4/53. Judge drift
+   control 6/6 identical. The merge guard blocks it only on gate 3 (8,874 "reviewable" lines, ~6,800
+   of them generated cassette JSON that cannot be split from the code). The merge triggers a
+   deploy (smoke-gated). After it deploys: README PR #151 gets its refresh (two marked blocks) and a
+   small follow-up fixes the /eval resolution table.
 
 ## Low urgency
 

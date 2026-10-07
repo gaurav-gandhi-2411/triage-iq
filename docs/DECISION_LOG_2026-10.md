@@ -262,3 +262,18 @@ not from this session (`triage-iq-ui-wt-z4`, `triage-iq-wt-groq-model-fix`, `tri
 `triageiq-cold:*` (for #140), `tiq-sk:*` (study/implementation).
 
 **D23 note.** The brief asked for the full README text in the queue file. A 769-line copy would have pushed this docs PR past the size gate (forcing a human merge of the log itself) and could go stale after the #150 refresh, so the queue links the exact README on the PR branch instead.
+
+**D25. Re-record executed (2026-10-07/08); PR #150 is ready for GG.** Setup: venv in the PR worktree
+(Python 3.11, lock minus Linux-only uvloop, torch 2.11.0+cpu; `.venv/` excluded locally), dry-run gate
+`scripts/record_cassettes_dry_run_check.py` passed (zero quota), cassette/checkpoint backed up, 53 `k8s-*`
+checkpoint keys removed (11 vscode kept). Synthesis ran unattended 16:29 -> 18:47 UTC (5 launcher
+iterations; Groq rate-limit waits of 13, 34, 20 and 37 minutes handled by the launcher; 0 dead, 0
+degraded/truncated). Judge pass 18:52 UTC, 4.5 minutes, 64/64. Judge drift control before trusting it:
+6/6 unchanged vscode plans re-scored live to identical dimension scores. New scores: vscode 12.2727
+(identical), k8s 11.9811 (+0.113), overall 12.0312, k8s fabrication 0/53. Tests: full unit suite 366
+passed; eval suites 21 passed locally; CI on the PR: `test`, `Structural invariants`, `Quality
+regression` all green. Baseline promoted via `eval/run_eval.py --update-baseline` (before/after in
+the PR comment and ADR-0062 addendum). Grounding ratchet NOT tightened (one 0/53 run is inside the same
+Wilson interval as 1/53). Merge guard for #150: gates 1, 2, 2b, 3b, 4 PASS; gate 3 FAIL (8,874
+reviewable lines; ~6,800 are cassette JSON outside a designated path, ~330 tests, ~700 code/ADR), so it
+is queued for a human merge with the exact command. Old k8s cassette entries remain as orphans.

@@ -5,6 +5,19 @@ Last updated 2026-10-07. Newest first within each urgency. Everything else is in
 
 ## Do soon
 
+0. **Review the README proposal (draft PR #151, NOT merged by me).** Full proposed text is the README.md on the PR
+   branch: https://github.com/gaurav-gandhi-2411/triage-iq/blob/docs/readme-verified-numbers/README.md
+   (kept there, not copied into this file, so it cannot go stale; 70 claims checked: 21 match, 5
+   partly, 44 were stale or wrong, 43 corrected; mismatch table in the PR body).
+   It contains new numbers, so it is yours to approve. Highlights to look at: the evaluation table
+   (as-served resolution numbers; vscode point estimate worse than naive, stated plainly), the
+   "Grounding is a consistency check, not a correctness check" note (19 of 20 wrong-vs-gold plans pass),
+   the Training data table (29,994 = k8s retrieval index size, not training data; classifiers saw
+   4,226 + 6,710 labeled issues), Latency (n=5), Monitoring (UptimeRobot + GitHub monitor; Cloud
+   Monitoring not adopted). Two blocks (`RESOLUTION-ROWS`, `LLM-BASELINE-BLOCK`) must be refreshed
+   after #150 lands and the k8s cassette is re-recorded: merge #151 after that.
+   `gh pr merge 151 --repo gaurav-gandhi-2411/triage-iq --merge`
+
 1. **Recreate the Vercel deploy hook and delete the old one.** The old URL was pasted in chat.
    Vercel dashboard -> project `triage-iq` -> Settings -> Git -> Deploy Hooks: delete the hook
    (`...Xafi3lf3AT`), create a new one for branch `main`. Do not paste the new URL anywhere that
@@ -48,6 +61,17 @@ Last updated 2026-10-07. Newest first within each urgency. Everything else is in
    fresh Q = -1.02 h vs stored +0.2835 h; held-out coverage 83.8% -> 79.7% [77.9, 81.4]. Publishing needs a
    new object name in `gs://triageiq-prod-260812-models/models/` plus a MANIFEST/loader change (I did not
    overwrite the existing artifact: the bucket has no versioning).
+
+9. **Merge core #150: READY** (k8s resolution embeddings at serving; ADR-0062; cassette re-recorded;
+   all 3 required checks green, PR CLEAN). Approve the new judge baseline, then
+   `gh pr merge 150 --repo gaurav-gandhi-2411/triage-iq --merge`
+   Baseline before -> after (details in the PR comment and the ADR-0062 addendum): k8s 11.8679 ->
+   11.9811 (+0.113, inside the +/-0.22 band, not claimed as an improvement), vscode 12.2727 unchanged,
+   overall 11.9375 -> 12.0312, k8s fabrication 1/53 -> 0/53, floor-fail 3/53 -> 4/53. Judge drift
+   control 6/6 identical. The merge guard blocks it only on gate 3 (8,874 "reviewable" lines, ~6,800
+   of them generated cassette JSON that cannot be split from the code). The merge triggers a
+   deploy (smoke-gated). After it deploys: README PR #151 gets its refresh (two marked blocks) and a
+   small follow-up fixes the /eval resolution table.
 
 ## Low urgency
 

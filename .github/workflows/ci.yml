@@ -156,29 +156,7 @@ jobs:
           path: .coverage
           if-no-files-found: warn
 
-  pip-audit:
-    name: Dependency vulnerability audit (informational)
-    runs-on: ubuntu-latest
-    # NON-BLOCKING: informational only — not a required status check. Only `test`
-    # is required for merge. Findings here are a signal for future triage, not a gate.
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-          cache: pip
-
-      - name: Install dependencies
-        run: |
-          pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install -r requirements-dev.txt
-
-      - name: pip-audit (installed environment)
-        # PYSEC-2026-3447 (setuptools): same finding, same reachability analysis as the
-        # `test` job's requirements.lock scan above — see DEPENDENCIES.md. This job audits
-        # a freshly-resolved environment (requirements-dev.txt has no setuptools pin), so
-        # it re-surfaces the finding independently of requirements.lock's ignore list.
-        run: pip-audit --ignore-vuln PYSEC-2026-3447
+  # The former "Dependency vulnerability audit (informational)" job was removed 2026-10-07: it
+  # audited a freshly resolved environment (not the lock that ships) without the documented
+  # suppressions, so it was red by construction and a permanently red check teaches everyone to
+  # ignore red. The blocking audit of requirements.lock is the "Security audit" step above.

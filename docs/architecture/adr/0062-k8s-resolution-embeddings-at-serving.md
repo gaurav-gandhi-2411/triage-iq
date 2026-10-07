@@ -135,3 +135,46 @@ Costs and risks:
 5. **Encode a second, doc-style embedding for the PCA input.** Slightly closer to the training
    distribution but adds a second BGE encode (hundreds of ms on CPU) for ~0.1 d MAE; rejected.
 6. **Refresh the CQR Q for k8s now.** Correct direction, but needs a GCS overwrite; queued for GG.
+
+## Addendum 2026-10-07/08: k8s cassette re-record and new judge baseline
+
+Because the k8s resolution numbers are inputs to the synthesis prompt, the 53 `k8s-*` synthesis
+entries (Groq `openai/gpt-oss-120b`) and their 53 judge entries (local Ollama `qwen3:8b`) were
+re-recorded; the 11 vscode entries are unchanged (their checkpoint entries were kept). Recording
+ran unattended through `scripts/run_recording_unattended.py` (synthesis, then judge), with Groq
+rate-limit waits handled by the launcher; 0 permanently dead entries, 0 degraded or truncated
+completions (the launcher hard-stops on both). Old k8s cassette entries remain in
+`eval_cassette.json` as unreferenced orphans (the file only grew); they are harmless to replay and
+were not pruned, to keep the change reversible.
+
+**Judge drift control (run before trusting the new k8s judge scores).** Six unchanged vscode plans
+were re-scored live (no cassette; same warm-up protocol, temperature 0, seed 42, qwen3:8b digest
+`500a1f067a9f`): 6 of 6 matched the recorded dimension scores exactly (mean |delta| 0.000). The new
+k8s judge scores are therefore comparable with the old ones.
+
+**Result** (`reports/eval_baseline.json`, cassette `f08e296d52bf` -> `dc03f6c0fa94`):
+
+| | Before | After |
+|---|---|---|
+| vscode mean (n=11) | 12.2727 | 12.2727 (identical, as expected: its entries are unchanged) |
+| kubernetes mean (n=53) | 11.8679 | 11.9811 (+0.113) |
+| overall (n=64) | 11.9375 | 12.0312 |
+| k8s resolution_estimate_reasonableness | 1.585 | 1.679 |
+| k8s component_match / next_steps_actionability | 1.660 / 2.962 | 1.623 / 2.925 |
+| k8s floor-fail rate | 5.66% (3/53) | 7.55% (4/53) |
+| k8s fabrication (grounding) | 1.89% (1/53) | 0.0% (0/53) |
+
+**Reading, honestly.** The k8s mean moved +0.113, inside the +/-0.22 regression band, and every k8s
+plan was re-synthesized by a sampling LLM, so part of any per-dimension movement (for example
+component_match 1.660 -> 1.623, which this change cannot affect) is re-synthesis variance, not the
+change. The one dimension that reads the resolution estimate moved up (1.585 -> 1.679), which is the
+direction the offline study predicts, but no quality-improvement claim is made from n=53 on one run.
+The grounding ratchet stays at its ADR-0061 bound (k8s <= 1/53): one run at 0/53 is inside the same
+Wilson interval as 1/53, so tightening it would make the deterministic gate brittle for no evidence.
+`reports/eval_summary.json`'s judge block was regenerated from the new baseline (the drift test in
+`tests/test_api.py` checks it). Full unit suite: 366 passed; eval suites: 21 passed (the manifest
+test needs cloud credentials and was run in CI instead).
+
+**Still open (separate changes):** the Eval page's resolution table and the README rows describe the
+superseded model; they are updated after this PR deploys. The stored CQR Q for k8s is still the old
+model's (see Consequences).

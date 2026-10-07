@@ -312,3 +312,40 @@ only on truncation, schema-invalid and the pre-call budget guard; `groq.RateLimi
 `fix/triage-degrade-on-llm-provider-errors` (degrade to the signals-only plan with `_degraded` true and a distinct
 `_llm_status`; keep 401/403/400 loud). The deploy smoke test's `_degraded is False` assertion is deliberately
 NOT weakened: a rate-limited candidate must still fail the gate.
+
+**D30. #150 reached production on the third deploy attempt (VERIFIED).** Main `30e6fd8` (#150 + #153) deployed
+~21:04 UTC Oct 7: drift guard, candidate, smoke test, promote all success. Serving revision
+`triageiq-api-00042-ves`, image tag `30e6fd8`; `/health?deps=1` HTTP 200 (model_store and groq healthy).
+Attempt 1 failed on a transient Google auth 503 in the drift guard (fail closed, correct); attempt 2 failed in the
+smoke test (Groq TPD still exhausted, D28); attempt 3 succeeded once a budget probe showed headroom.
+The `startup_step` timing lines from #153 are present in production logs (e.g. vscode detector 25.3 s, k8s
+detector 2.7 s, 21:02:57-21:03:32 UTC), so the cold-start breakdown is now observable.
+
+**D31. Production gap found: the runtime artifact drift check never runs (VERIFIED, fix in #157).** The same
+startup log shows `ARTIFACT_DRIFT: MANIFEST.sha256 not found at /app/data/models/MANIFEST.sha256 - skipping drift
+check`. `docker/Dockerfile.prod` never copied the manifest (git log -S shows no history of it), so
+`loader._check_manifest_drift` has been a silent no-op. The deploy-time GCS guard did run, so no gate was red:
+a control narrower than its name (rule 85a). All 11 manifest entries are already copied into the image; #157 adds
+the one COPY line plus a test that fails without it and checks every manifest entry is covered by a COPY.
+BELIEVED not harmful before: the GCS-level guard compares the same objects before they are baked in.
+
+**D32. Checkpoint validation, coupling guard, release item 6 landed in #154 (CI green, queued for human merge).**
+Gate 3 only (size, ~1,118 reviewable lines). Chosen because the stale-checkpoint trap in D25 cost a manual key
+removal; the validator now recomputes the synthesis key and compares to the recorded one.
+
+**D33. #155 (vscode naive median) first CI run failed; fixed (VERIFIED locally, CI re-running).** Failure:
+`test_k8s_signals_hash_identical_to_pre_change_branch` (CI digest 338eef33..., golden 52999f45...). Mechanism: the
+test fitted a real `PCA` on random data, which differs ~1e-12 between the laptop and the runner. I did NOT blame the
+code first: the digest computed on origin/main (30e6fd8) with the original test equalled the golden locally, so main
+had not moved it. Fix: platform-exact slice+round projection; golden recomputed on origin/main code BEFORE the PR's
+change (390cb4a1...). 19 tests pass; the k8s serving path is unchanged by #155 by construction of that test.
+Also: the Quality-regression and Structural checks on #155 were failing; they need the 11 vscode cassette entries
+re-recorded (Groq budget), so #155 stays draft. ADR number collision (0063 used by both #155 and #156): #155's
+renumbers to 0064 when its re-record lands.
+
+**D34. Process slip, owned (no data lost).** While preparing #157 I ran `git stash -q -- <path>` after my edit
+script had failed, then `git stash pop`; with nothing stashed, the pop applied an unrelated old stash
+(`stash@{0}`: another branch's WIP) to my fresh worktree and conflicted. Git kept the entry (both stashes are still in
+`git stash list`). I discarded the conflict residue with `git reset --hard HEAD` in that brand-new worktree only
+(HEAD = clean main, no edits of mine). Lesson: stashes are shared across worktrees; never `stash pop` without
+reading `git stash list` first.

@@ -1,79 +1,49 @@
 # Queue for GG (only items you must do)
 
-Last updated 2026-10-07. Newest first within each urgency. Everything else is in
-`docs/DECISION_LOG_2026-10.md`.
+Last updated 2026-10-08. Everything else is in `docs/DECISION_LOG_2026-10.md`.
+Done since the last version (removed from this list): #150 merged and deployed (revision
+`triageiq-api-00042-ves`, health OK); #153 (was #140) and UI #26 merged; baseline approved (D1).
 
-## Do soon
+## Merge commands (guard-blocked or human-only; I did not merge these)
 
-0. **Review the README proposal (draft PR #151, NOT merged by me).** Full proposed text is the README.md on the PR
-   branch: https://github.com/gaurav-gandhi-2411/triage-iq/blob/docs/readme-verified-numbers/README.md
-   (kept there, not copied into this file, so it cannot go stale; 70 claims checked: 21 match, 5
-   partly, 44 were stale or wrong, 43 corrected; mismatch table in the PR body).
-   It contains new numbers, so it is yours to approve. Highlights to look at: the evaluation table
-   (as-served resolution numbers; vscode point estimate worse than naive, stated plainly), the
-   "Grounding is a consistency check, not a correctness check" note (19 of 20 wrong-vs-gold plans pass),
-   the Training data table (29,994 = k8s retrieval index size, not training data; classifiers saw
-   4,226 + 6,710 labeled issues), Latency (n=5), Monitoring (UptimeRobot + GitHub monitor; Cloud
-   Monitoring not adopted). Two blocks (`RESOLUTION-ROWS`, `LLM-BASELINE-BLOCK`) must be refreshed
-   after #150 lands and the k8s cassette is re-recorded: merge #151 after that.
-   `gh pr merge 151 --repo gaurav-gandhi-2411/triage-iq --merge`
+1. **Core #154** — checkpoint validation, coupling guard test, ADR-0062 coupling section, release-checklist
+   item 6. All 3 required checks green. Guard gate 3 fails on size (~1,118 reviewable lines).
+   `gh pr merge 154 --repo gaurav-gandhi-2411/triage-iq --merge`
+2. **Core #156** — provider errors (429, connection, timeout, 5xx) degrade to the signals-only plan instead of
+   HTTP 500; the deploy smoke test still requires `_degraded is False`. Touches `deploy.yml` (guard gate 4), so
+   human merge. Branch needs `gh pr update-branch 156` first if it shows BEHIND.
+   `gh pr merge 156 --repo gaurav-gandhi-2411/triage-iq --merge`
+3. **Core #157** — Dockerfile.prod never copied `MANIFEST.sha256`, so the runtime drift check has been a silent
+   no-op in production (found in the 00042-ves startup log). One COPY line plus a guard test. Deploy config
+   (gate 4), so human merge. After the deploy, startup logs should contain no `ARTIFACT_DRIFT` line.
+   `gh pr merge 157 --repo gaurav-gandhi-2411/triage-iq --merge`
+4. **Core #155 (draft)** — vscode serves the naive median (D2). NOT ready: its cassette needs the 11 vscode
+   entries re-recorded, which needs Groq budget (see FYI). I will push the re-record and queue the final command.
+5. **README PR #151 (draft)** — review and merge yourself. Full text: the README.md on
+   https://github.com/gaurav-gandhi-2411/triage-iq/blob/docs/readme-verified-numbers/README.md
+   Two marked blocks (`RESOLUTION-ROWS`, `LLM-BASELINE-BLOCK`) are refreshed by me after the served-path metrics land.
 
-1. **Recreate the Vercel deploy hook and delete the old one.** The old URL was pasted in chat.
-   Vercel dashboard -> project `triage-iq` -> Settings -> Git -> Deploy Hooks: delete the hook
-   (`...Xafi3lf3AT`), create a new one for branch `main`. Do not paste the new URL anywhere that
-   is saved. Why: anyone with the URL can trigger production builds and burn the deploy quota.
+## Dashboard / account actions (only you can do these)
 
-2. **Set shorter deployment retention in the Vercel dashboard** (the API cannot). For projects
-   `gaurav-gandhi` and `samidha-reviews-web`: Settings -> (Security / Deployment Retention):
-   previews 7 days, canceled 3 days, errored 3 days; leave production at 30 days and "keep 10".
-   Why: both projects were at 30 days, so previews pile up and each READY Next.js deployment
-   stores a function bundle (the likely cause of "Exceeded free resources").
+6. **Recreate the Vercel deploy hook, delete the old one** (old URL was pasted in chat; ends `...Xafi3lf3AT`).
+   Project `triage-iq` -> Settings -> Git -> Deploy Hooks. Do not paste the new URL anywhere saved.
+7. **Set shorter Vercel deployment retention** (API cannot): projects `gaurav-gandhi` and `samidha-reviews-web`,
+   previews 7 d, canceled 3 d, errored 3 d, production 30 d / keep 10.
+8. **Check the Vercel Usage page** for Functions Storage (<10 GB?). I cannot read it. No causal claim is made
+   about the preview deletion (D6).
+9. UptimeRobot: switch the monitor to GET (it sends HEAD, `/health` answers 405, two requests per check). Noise only.
 
-3. **Check the Vercel Usage page** (https://vercel.com/gaurav-gandhi-2411s-projects/~/usage):
-   is "Functions Storage" under 10 GB now? I could not read it (not logged in). The production
-   deploy of the UI succeeded after I removed 7 old previews, but I cannot show the cleanup caused it.
+## Decisions for you (recommendation first)
 
-5. **Merge UI #26** (Eval page contract test: renders the Eval page against core main's JSON in
-   fixture and live modes; negative controls show it fails on the shape change that blanked `/eval`
-   on 2026-10-05). All checks green. I did not merge it: the size gate is ambiguous under rule 70a
-   (about 231 reviewable lines, plus 317 lines of verbatim core data fixtures outside a designated
-   path, plus 1,002 generated lock lines), and it edits `.github/workflows/ci.yml`, moving CI from
-   Node 20 to 22 because vitest 5 / jsdom 30 need it. Review the Node bump, then:
-   `gh pr merge 26 --repo gaurav-gandhi-2411/triage-iq-ui --squash`
-   The merge triggers one Vercel production build: confirm the deployment is READY and current.
+10. **vscode point estimate source.** D2 stands (naive median). Recommendation: also consider a recency-window
+    median instead of the stale train median (P5 study finding); not urgent, no action taken.
+11. **Second-model fallback on Groq 429** (a separate-budget model such as gpt-oss-20b). Proposed in the ADR for
+    #156, not implemented. Recommendation: yes, because a single org-wide free-tier budget is also the serving budget.
+12. **Retrieval-conditional k8s resolution redesign** (P5 study). Report only; recommendation: not now.
 
-6. **Merge core #140** (startup timing logs reach Cloud Run; tiktoken encoding baked into the image).
-   Required checks green, bit-identical outputs verified, diff reviewed (82 lines). The merge guard
-   blocks it only on gate 1: the branch is `perf/cold-start-startup` and `perf/` is not in the
-   recognized prefix list. I did not rename the branch (that is rule-gaming the gate). Merge:
-   `gh pr merge 140 --repo gaurav-gandhi-2411/triage-iq --merge`
-   Optional follow-up for your global config: add `perf/` to the prefixes in
-   `C:\Users\gaura\.claude\scripts\merge_gate.py` (also affects #137-style branches).
+## FYI (no action)
 
-7. **Decide vscode's resolution point estimate.** Served model is -54% MAE vs naive (6.02 d reported
-   as -70.5% with embeddings; 5.45 d as served); no variant robustly beats naive (study in
-   DECISION_LOG D17). Options: (a) leave as is (README already discloses it, UI shows "Model below naive
-   baseline"); (b) serve the naive median (3.84 d) as the point estimate, like the bucket already does
-   (needs an interval design + a cassette re-record of the 11 vscode issues). My recommendation: (b)
-   when you next touch vscode; not urgent.
-
-8. **Publish a recalibrated CQR artifact for k8s (optional, low value).** After the embedding fix,
-   fresh Q = -1.02 h vs stored +0.2835 h; held-out coverage 83.8% -> 79.7% [77.9, 81.4]. Publishing needs a
-   new object name in `gs://triageiq-prod-260812-models/models/` plus a MANIFEST/loader change (I did not
-   overwrite the existing artifact: the bucket has no versioning).
-
-9. **Merge core #150: READY** (k8s resolution embeddings at serving; ADR-0062; cassette re-recorded;
-   all 3 required checks green, PR CLEAN). Approve the new judge baseline, then
-   `gh pr merge 150 --repo gaurav-gandhi-2411/triage-iq --merge`
-   Baseline before -> after (details in the PR comment and the ADR-0062 addendum): k8s 11.8679 ->
-   11.9811 (+0.113, inside the +/-0.22 band, not claimed as an improvement), vscode 12.2727 unchanged,
-   overall 11.9375 -> 12.0312, k8s fabrication 1/53 -> 0/53, floor-fail 3/53 -> 4/53. Judge drift
-   control 6/6 identical. The merge guard blocks it only on gate 3 (8,874 "reviewable" lines, ~6,800
-   of them generated cassette JSON that cannot be split from the code). The merge triggers a
-   deploy (smoke-gated). After it deploys: README PR #151 gets its refresh (two marked blocks) and a
-   small follow-up fixes the /eval resolution table.
-
-## Low urgency
-
-4. UptimeRobot: switch the monitor's HTTP method to GET. It sends HEAD first and `/health`
-   answers 405, so every check logs two requests. Harmless, just noise.
+- **Groq daily budget (200k tokens/day, org-wide) was exhausted by my 53-call k8s re-record** (D28). Rolling
+  window frees from ~16:30 UTC Oct 8, fully by ~19:00 UTC. Until then production `/triage` may return 500 on 429
+  (fixed by #156 once merged and deployed). I will not spend Groq tokens before then; the vscode re-record
+  (~45k tokens) and production latency replay (~25k) are scheduled after the budget probe shows headroom.

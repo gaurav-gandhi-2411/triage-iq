@@ -10,6 +10,13 @@ Usage:
     python eval/record_cassettes.py                  # full: synthesis + judge per issue
     python eval/record_cassettes.py --mode synthesis  # Groq only, no Ollama load at all
     python eval/record_cassettes.py --mode judge      # local judge only, replays stored plans
+    python eval/record_cassettes.py --validate-checkpoint        # report stale 'done' entries
+    python eval/record_cassettes.py --validate-checkpoint --fix  # ...and rewrite the checkpoint
+
+Every mode validates the checkpoint at start (eval/checkpoint_validation.py): a 'done' entry
+whose request, recomputed through the CURRENT code, no longer hits the cassette is treated as
+pending, so a plain resume re-records exactly the stale ones. Fail-closed: if validation
+cannot run, the recorder stops instead of trusting the checkpoint.
 
 2026-09-06 (ADR-0060): split synthesis from judging because the local Ollama judge (qwen3:8b)
 sits resident in RAM+VRAM through every multi-minute Groq quota wait for zero benefit --
@@ -50,6 +57,7 @@ load_dotenv(ROOT / ".env")
 import os
 
 import artifact_fingerprint
+import checkpoint_validation as cv
 from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
 from triage_iq.model_config import TRIAGE_MODEL
@@ -422,7 +430,103 @@ def parse_args() -> argparse.Namespace:
              "judge-only batch pass over already-synthesized (judge_pending) entries -- loads "
              "no classifier/predictor/retriever, makes zero Groq calls.",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "--validate-checkpoint", action="store_true",
+        help="Report-only: recompute every 'done' checkpoint entry's request through the "
+             "current code and report valid / stale_synthesis / stale_judge. Makes no "
+             "Groq/Ollama call. Exit 0 if all valid, 2 if any stale, 1 if it cannot run.",
+    )
+    parser.add_argument(
+        "--fix", action="store_true",
+        help="With --validate-checkpoint: rewrite the checkpoint (timestamped backup first), "
+             "moving stale_synthesis entries out of 'done' and resetting stale_judge entries "
+             "to judge-pending with the replayed plan.",
+    )
+    args = parser.parse_args()
+    if args.fix and not args.validate_checkpoint:
+        parser.error("--fix is only valid together with --validate-checkpoint")
+    return args
+
+
+def _apply_validation_to_checkpoint(
+    checkpoint: dict, reconciled: dict[str, dict], results: dict, model: str,
+    prompt_hash: str, artifact_hash: str,
+) -> None:
+    """Mirror a reconciliation of current_done onto the raw checkpoint dict, so the later
+    save_checkpoint() calls and run_judge's final count see the same truth (a stale entry left
+    in checkpoint['done'] would otherwise still be counted as judged)."""
+    for issue_id in results:
+        key = _checkpoint_key(issue_id, model, prompt_hash, artifact_hash)
+        if issue_id not in reconciled:
+            checkpoint["done"].pop(key, None)
+        elif key in checkpoint["done"] and reconciled[issue_id] is not checkpoint["done"][key]:
+            checkpoint["done"][key] = reconciled[issue_id]
+
+
+def _validated_current_done(
+    mode: str, checkpoint: dict, current_done: dict[str, dict],
+    model: str, prompt_hash: str, artifact_hash: str,
+) -> dict[str, dict]:
+    """Fail-closed checkpoint validation shared by every recording mode: stale entries are
+    removed from the 'done' view (stale_judge -> judge-pending in judge mode) so the mode's
+    normal pending logic re-does exactly them. synthesis mode never imports TriageJudge
+    (ADR-0060), so it validates the synthesis stage only."""
+    if not current_done:
+        return current_done
+    try:
+        results = cv.validate_from_disk(current_done, check_judge=(mode != "synthesis"))
+    except cv.CheckpointValidationUnavailable as exc:
+        logger.error(
+            "STOP: CHECKPOINT VALIDATION UNAVAILABLE -- %s. Refusing to trust the checkpoint "
+            "(rule 98a: fail closed). Fix the cause or archive the checkpoint.", exc,
+        )
+        sys.exit(1)
+    logger.info(cv.summarize(results))
+    reconciled = cv.reconcile_current_done(current_done, results, mode)
+    n_stale = sum(1 for r in results.values() if r.status != cv.VALID)
+    if n_stale:
+        logger.warning(
+            "%d stale checkpoint entr%s treated as pending: %s", n_stale,
+            "y" if n_stale == 1 else "ies",
+            {i: r.status for i, r in results.items() if r.status != cv.VALID},
+        )
+    _apply_validation_to_checkpoint(checkpoint, reconciled, results, model, prompt_hash, artifact_hash)
+    return reconciled
+
+
+def run_validate_checkpoint(fix: bool) -> int:
+    """--validate-checkpoint [--fix]. Returns the process exit code."""
+    artifact_hashes = _resolve_and_verify_artifacts()
+    artifact_hash = artifact_fingerprint.combined_hash(artifact_hashes)
+    model, prompt_hash = TRIAGE_MODEL, _compute_prompt_hash()
+    checkpoint, current_done = load_checkpoint(model, prompt_hash, artifact_hash)
+    if not current_done:
+        print("Checkpoint has no entries under the current model/prompt/artifact config.")
+        return 0
+    try:
+        results = cv.validate_from_disk(current_done, check_judge=True)
+    except cv.CheckpointValidationUnavailable as exc:
+        print(f"CHECKPOINT VALIDATION UNAVAILABLE: {exc}")
+        return 1
+    print(cv.summarize(results))
+    stale = {i: r for i, r in results.items() if r.status != cv.VALID}
+    if not stale:
+        print("All plan-bearing checkpoint entries are valid.")
+        return 0
+    if not fix:
+        print("Report only (no changes written). Re-run with --fix to rewrite the checkpoint.")
+        return 2
+    backup = CHECKPOINT_PATH.with_name(
+        f"recording_checkpoint.json.bak-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+    )
+    backup.write_bytes(CHECKPOINT_PATH.read_bytes())
+    reconciled = cv.reconcile_current_done(current_done, results, "judge")
+    _apply_validation_to_checkpoint(checkpoint, reconciled, results, model, prompt_hash, artifact_hash)
+    save_checkpoint(checkpoint)
+    print(f"Backup written: {backup}")
+    print(f"Checkpoint rewritten: {len(stale)} stale entr{'y' if len(stale) == 1 else 'ies'} "
+          "moved out of 'done' (stale_synthesis) or reset to judge-pending (stale_judge).")
+    return 0
 
 
 def _load_common(mode: str) -> tuple[str, list[dict], CassettePlayer, str, str, str, dict, dict[str, dict]]:
@@ -461,6 +565,9 @@ def _load_common(mode: str) -> tuple[str, list[dict], CassettePlayer, str, str, 
     )
 
     checkpoint, current_done = load_checkpoint(current_model, current_prompt_hash, current_artifact_hash)
+    current_done = _validated_current_done(
+        mode, checkpoint, current_done, current_model, current_prompt_hash, current_artifact_hash,
+    )
     return groq_key, issues, cassette, current_model, current_prompt_hash, current_artifact_hash, checkpoint, current_done
 
 
@@ -1112,6 +1219,8 @@ def _print_summary_full(issues, results, current_model, current_prompt_hash, n_s
 
 def main() -> None:
     args = parse_args()
+    if args.validate_checkpoint:
+        sys.exit(run_validate_checkpoint(args.fix))
     (
         groq_key, issues, cassette, current_model, current_prompt_hash,
         current_artifact_hash, checkpoint, current_done,

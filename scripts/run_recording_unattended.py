@@ -58,6 +58,7 @@ sys.path.insert(0, str(WORKTREE_ROOT / "src"))
 sys.path.insert(0, str(RECORD_SCRIPT.parent))
 import record_cassettes as rc  # noqa: E402
 import artifact_fingerprint  # noqa: E402
+import checkpoint_validation as cv  # noqa: E402
 # _parse_tpd_wait lives in record_cassettes.py, not duplicated here -- it sees the raw Groq
 # error text first and needs the identical regex to report an accurate resume estimate in
 # RECORDING_STATUS.txt at the moment it hits the wall (ADR-0060); importing it keeps this
@@ -78,6 +79,9 @@ HARD_STOP_MARKERS = [
     "does not exist. This file is the explicit, committed statement",  # missing expected-hash file
     "resolved artifacts do not match",  # ADR-0059: artifact mismatch against expected hashes
     "GROQ_API_KEY not set",
+    # Fail closed: record_cassettes.py could not recompute the checkpoint against the current
+    # code, so it refused to trust it (eval/checkpoint_validation.py).
+    "CHECKPOINT VALIDATION UNAVAILABLE",
     "JUDGE PASS STOPPED (unexpected rate-limit signal)",
     # 2026-09-03 (ADR-0055 Part P1a/2c): a FIRST degraded_schema_invalid on an issue is
     # NOT a hard stop -- it's logged and the run continues (see record_cassettes.py),
@@ -137,6 +141,20 @@ def _progress(model: str, prompt_hash: str, artifact_hash: str) -> dict:
         if rec.get("plan") is None and not rec.get("tpd_hit") and not rec.get("schema_invalid_retry")
     ]
     return {"synthesized": synthesized, "judged": judged, "dead": dead}
+
+
+def stale_issue_ids(mode: str, model: str, prompt_hash: str, artifact_hash: str) -> set[str]:
+    """Issue ids whose 'done' checkpoint entry no longer replays against the CURRENT code
+    (eval/checkpoint_validation.py). _progress() counts raw checkpoint entries, so on its own
+    it would declare DONE on entries that a code change has invalidated (the k8s ADR-0062
+    incident). Raises cv.CheckpointValidationUnavailable if validation cannot run -- the
+    caller must stop, never fall back to the raw count. synthesis mode validates the
+    synthesis stage only (it never imports TriageJudge, ADR-0060)."""
+    entries = {rec["issue_id"]: rec for rec in _checkpoint_entries(model, prompt_hash, artifact_hash)}
+    if not entries:
+        return set()
+    results = cv.validate_from_disk(entries, check_judge=(mode != "synthesis"))
+    return {i for i, r in results.items() if r.status != cv.VALID}
 
 
 def _write_status(mode: str, model: str, prompt_hash: str, artifact_hash: str, extra: list[str]) -> None:
@@ -237,6 +255,25 @@ def main() -> None:
         else:
             terminal = p["judged"] + len(p["dead"]) >= TOTAL_ISSUES
 
+        if terminal:
+            # The raw count says "everything is done"; confirm no done entry is stale before
+            # believing it (fail closed if validation cannot run).
+            try:
+                stale = stale_issue_ids(mode, model, prompt_hash, artifact_hash)
+            except cv.CheckpointValidationUnavailable as exc:
+                _write_status(mode, model, prompt_hash, artifact_hash, [
+                    f"BLOCKED (hard stop): CHECKPOINT VALIDATION UNAVAILABLE -- {exc}",
+                    f"Iterations run: {iteration - 1}",
+                ])
+                print("BLOCKED (hard stop): CHECKPOINT VALIDATION UNAVAILABLE -- see RECORDING_STATUS.txt")
+                return
+            if stale:
+                # Not done: record_cassettes.py (which validates at start) re-records exactly these.
+                terminal = False
+                _write_status(mode, model, prompt_hash, artifact_hash, [
+                    f"NOT DONE: {len(stale)} checkpoint entr{'y' if len(stale) == 1 else 'ies'} stale "
+                    f"against the current code, re-recording: {sorted(stale)[:10]}...",
+                ])
         if terminal:
             _write_status(mode, model, prompt_hash, artifact_hash, [
                 "STOPPED (terminal): nothing left for a retry to accomplish in this mode.",

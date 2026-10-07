@@ -178,3 +178,47 @@ test needs cloud credentials and was run in CI instead).
 **Still open (separate changes):** the Eval page's resolution table and the README rows describe the
 superseded model; they are updated after this PR deploys. The stored CQR Q for k8s is still the old
 model's (see Consequences).
+
+## Coupling: k8s resolution features depend on retrieval's query recipe
+
+**What is coupled.** Since this ADR, the kubernetes resolution predictor's `emb_*` features are
+`PCA(64)` of the query embedding that retrieval computes (`SimilarIssueRetriever.retrieve_with_embedding`).
+The predictor was validated offline, and the k8s cassette recorded, against exactly one recipe:
+
+| Part of the recipe | Pinned value | Where it lives |
+|---|---|---|
+| Query text | `f"{title}. {body_clean}"`, no character truncation | `triage._collect_signals` |
+| Embedding model | `BAAI/bge-base-en-v1.5` (768-d) | `similar_issues.SUPPORTED_MODELS` |
+| Query instruction | `"Represent this sentence for searching relevant passages: "`, ON for k8s, OFF for vscode (ADR-0040) | `QUERY_INSTRUCTIONS`, `QUERY_INSTRUCTION_REPO_OVERRIDE` |
+| Encode call | `encode([text], normalize_embeddings=True, convert_to_numpy=True)`, float32 cast, no `max_length` | `retrieve_with_embedding` |
+| Truncation | the model's own `max_seq_length` (512), never overridden | sentence-transformers |
+| PCA input | `n_features_in_ == 768`, 64 components | the served `predictor.pca` |
+
+**Why it matters.** The recipe is shared by two consumers that used to be independent: retrieval
+(which wanted the best neighbours) and the resolution model (which wants the vector it was fit on).
+Changing retrieval, for example a better embedder, a new instruction or a longer query, would
+silently shift every k8s `emb_*` feature, hence the resolution numbers embedded in every k8s
+synthesis prompt, hence every cassette key, with no test failing. The PCA fail-soft path (zero-fill
+on a dimension mismatch) would hide even a dimension change.
+
+**What pins it.**
+- `tests/test_resolution_retrieval_coupling.py` (network-free; `encode` is a spy): the constants
+  above, the exact arguments reaching `encode`, query-text assembly, and the PCA dimension
+  contract. Five single-constant mutations (query text, instruction, k8s override, normalisation,
+  model name) were each confirmed to fail it.
+- `eval/test_resolution_query_coupling.py` (eval-gate quality job, where the BGE model is cached
+  and the served index is downloaded): encodes 3 fixed k8s eval issues live through the production
+  class and requires cosine >= 0.9999 against `eval/frozen_query_embeddings.npz`; also asserts
+  `max_seq_length == 512` and the served PCA shape. A changed model, weights or recipe fails the
+  gate even though the offline replay (which uses the frozen vectors) would stay green.
+
+**When changing the retrieval recipe.** Do not just update the pinned constant or re-freeze.
+(1) Re-validate the resolution metrics offline against the new vectors (the ADR-0062 study:
+MAE vs naive, interval coverage), and refit the PCA / predictor if the distribution moved.
+(2) Re-freeze `eval/frozen_query_embeddings.npz` (`eval/freeze_query_embeddings.py`).
+(3) Re-record the affected cassette entries: `python eval/record_cassettes.py --validate-checkpoint`
+lists exactly which `done` entries no longer replay (it recomputes each request through the current
+code), and a plain `--mode synthesis` then `--mode judge` resume re-records only those. Before
+this check existed, the checkpoint (keyed by issue, model, prompt hash and artifact hash) could not
+see a code change that altered a request, and 53 keys were deleted by hand.
+(4) Update the pins in the same PR, citing the validation.

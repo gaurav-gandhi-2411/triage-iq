@@ -25,6 +25,16 @@ from triage_iq.models.grounding import compute_grounding_status
 
 logger = logging.getLogger(__name__)
 
+# Repos whose resolution predictor gets its emb_0..63 features computed at serving time from the
+# retrieval query embedding (ADR-0062). Production predictors are trained WITH 64 PCA-of-BGE
+# emb_* features, but serving historically passed no embeddings, so emb_* were zero-filled
+# (train/serve skew). Offline study on the ADR-0041 re-split k8s test (n=2992): MAE 102.086 d vs
+# naive 104.229 d (+2.06%), bucket +6.95pp [5.55, 8.36], against the zero-filled path's
+# MAE 103.491 d (+0.71%), bucket +5.05pp [3.94, 6.22]. microsoft/vscode is deliberately NOT
+# listed: embeddings make it worse there (MAE vs naive -54% -> -82%), so its behaviour stays
+# the zero-fill path, bit-identical to before. Do not add a repo without re-running that study.
+RESOLUTION_EMBEDDINGS_REPOS: frozenset[str] = frozenset({"kubernetes/kubernetes"})
+
 
 class TruncatedCompletionError(RuntimeError):
     """Raised when Groq's finish_reason == "length" -- the completion was cut off by
@@ -791,6 +801,46 @@ class TriageAssistant:
     # Signal collection
     # ------------------------------------------------------------------
 
+    def _resolution_embedding_kwargs(self, query_emb: np.ndarray | None) -> dict:
+        """Extra engineer_features kwargs that compute emb_* from the retrieval query embedding.
+
+        Returns {} (today's zero-fill path, byte-for-byte) unless this repo is in
+        RESOLUTION_EMBEDDINGS_REPOS. For an enabled repo it fails soft: a missing embedding,
+        a predictor without a fitted PCA, or a dimension mismatch logs a WARNING with
+        structured context and returns {} rather than raising (ADR-0062).
+        """
+        if self.repo not in RESOLUTION_EMBEDDINGS_REPOS:
+            return {}
+        pca = getattr(self.predictor, "pca", None)
+        reason: str | None = None
+        if query_emb is None:
+            reason = "no_query_embedding"
+        elif pca is None:
+            reason = "predictor_has_no_pca"
+        else:
+            # Keep the retriever's float32 as-is: it is what the offline study fed pca.transform.
+            vec = np.asarray(query_emb).reshape(-1)
+            n_in = getattr(pca, "n_features_in_", None)
+            if n_in is None:
+                reason = "pca_not_fitted"
+            elif vec.shape[0] != n_in:
+                reason = "embedding_dim_mismatch"
+            elif not np.isfinite(vec).all():
+                reason = "non_finite_embedding"
+        if reason is not None:
+            logger.warning(
+                "Resolution embeddings unavailable, falling back to zero-filled emb_*: %s",
+                reason,
+                extra={
+                    "repo": self.repo,
+                    "reason": reason,
+                    "embedding_dim": None if query_emb is None else int(np.size(query_emb)),
+                    "pca_n_features_in": getattr(pca, "n_features_in_", None),
+                },
+            )
+            return {}
+        return {"embeddings": vec.reshape(1, -1), "pca": pca}
+
     def _collect_signals(self, issue: pd.Series) -> dict:
         from triage_iq.prompts.triage_prompt import build_triage_prompt
 
@@ -814,6 +864,7 @@ class TriageAssistant:
 
         # System 2: BGE top-5 similar
         t2 = time.perf_counter()
+        query_emb: np.ndarray | None = None
         try:
             num = int(issue.get("number", -1))
             exclude = num if num > 0 else None
@@ -824,10 +875,19 @@ class TriageAssistant:
                 exclude = self.detector.match_indexed_issue(
                     str(issue.get("title", "")), str(issue.get("body_clean", ""))
                 )
-            similar_raw = self.detector.retrieve(text, k=5, exclude_number=exclude)
+            if self.repo in RESOLUTION_EMBEDDINGS_REPOS and hasattr(
+                self.detector, "retrieve_with_embedding"
+            ):
+                # Same single encode as retrieve(); the vector is reused by System 3 (ADR-0062).
+                similar_raw, query_emb = self.detector.retrieve_with_embedding(
+                    text, k=5, exclude_number=exclude
+                )
+            else:
+                similar_raw = self.detector.retrieve(text, k=5, exclude_number=exclude)
         except Exception as e:
             logger.warning("Retrieval failed: %s", e)
             similar_raw = []
+            query_emb = None
         t_retrieve = time.perf_counter() - t2
 
         # System 3: resolution prediction (float + bucket)
@@ -839,7 +899,8 @@ class TriageAssistant:
             # Gold parquet uses "gold_component" — remap for engineer_features
             if "gold_component" in issue_df.columns and "component" not in issue_df.columns:
                 issue_df = issue_df.rename(columns={"gold_component": "component", "gold_priority": "priority"})
-            feats, _ = engineer_features(issue_df, train_df=self.train_df)
+            emb_kwargs = self._resolution_embedding_kwargs(query_emb)
+            feats, _ = engineer_features(issue_df, train_df=self.train_df, **emb_kwargs)
             # Align columns to what the model expects
             for col in self.predictor.feature_names:
                 if col not in feats.columns:

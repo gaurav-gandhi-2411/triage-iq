@@ -277,3 +277,75 @@ the PR comment and ADR-0062 addendum). Grounding ratchet NOT tightened (one 0/53
 Wilson interval as 1/53). Merge guard for #150: gates 1, 2, 2b, 3b, 4 PASS; gate 3 FAIL (8,874
 reviewable lines; ~6,800 are cassette JSON outside a designated path, ~330 tests, ~700 code/ADR), so it
 is queued for a human merge with the exact command. Old k8s cassette entries remain as orphans.
+
+## Round 3 (2026-10-07 evening): owner decisions D1-D6 and what happened next
+
+**D26. Owner decisions recorded.** (D1) New judge baseline APPROVED: k8s 11.9811, vscode 12.2727, pooled
+12.0312; grounding ratchet stays at ADR-0061's bound. (D2) vscode serves the naive median point estimate,
+badged. (D3) Publish a recalibrated CQR as a NEW versioned GCS object (never overwrite), update
+MANIFEST.sha256 and the loader. (D4) #140's blocker was a branch-name convention: re-created. (D5) UI #26
+merge if CI green. (D6) The 7-preview Vercel deletion stands; no causal claim is made.
+
+**D27. UI #26 merged (`b1d1e81`); D4 done.** UI production deployment `dpl_CWs6FiSktpKwNBfLTkDXY48gxXNi`
+READY and current; UI CI on main ran Node v22.23.3 and the Eval contract tests (run 37679454705, success).
+#140 re-created unchanged as #153 (branch `chore/cold-start-startup-logging`, same commits); #140 closed with a
+pointer. #153's merge gate now reports eligible (gate 1 PASS).
+
+**D28. GG merged #150 at 20:07:53 UTC (`1190119`). Its deploy FAILED at the smoke test; production unaffected.**
+Run 37679694628: candidate revision `triageiq-api-00040-hop`; `/health`, `/health?deps=1`, `/metrics` passed;
+`POST /triage` returned HTTP 500 (curl exit 22). Candidate logs (20:16-20:18 UTC):
+`groq.RateLimitError 429 ... on tokens per day (TPD): Limit 200000, Used 199717, Requested 4895. Please try
+again in 33m12s`. Not a code regression. Traffic stayed on `00038-gok` (the gate worked as designed).
+**Root cause and my part in it (owned):** the k8s cassette re-record (53 synthesis calls at ~4k tokens, 16:29-18:47 UTC)
+spent the org-wide Groq TPD budget that production serves from. The charter pre-authorized the shared-quota
+spend, but I did not flag that this budget is also the production serving budget. Consequence until the
+rolling 24 h window frees (the oldest recording tokens age out from ~16:30 UTC Oct 8, fully by ~19:00): prod
+`/triage` can serve roughly one request per ~30 minutes. Observed real impact so far: 24 POST /triage in three
+days (almost all test traffic), one 500 (the smoke test). Mitigations: (1) fix the 500 (D29); (2) retry the
+deploy after the window opens a few thousand tokens (merging #153 also deploys main, which includes #150);
+(3) schedule further LLM-spending work (vscode re-record ~45k tokens, production latency replay ~25k) after the
+budget recovers; (4) a second-model fallback with a separate budget is proposed in the ADR, not implemented.
+
+**D29. Gap found while diagnosing: provider errors become HTTP 500.** `_call_llm_verbose` degrades gracefully
+only on truncation, schema-invalid and the pre-call budget guard; `groq.RateLimitError`, connection, timeout and
+5xx errors propagate to `app.py:300` and return `{"message": "Internal server error"}`. Fix in flight on
+`fix/triage-degrade-on-llm-provider-errors` (degrade to the signals-only plan with `_degraded` true and a distinct
+`_llm_status`; keep 401/403/400 loud). The deploy smoke test's `_degraded is False` assertion is deliberately
+NOT weakened: a rate-limited candidate must still fail the gate.
+
+**D30. #150 reached production on the third deploy attempt (VERIFIED).** Main `30e6fd8` (#150 + #153) deployed
+~21:04 UTC Oct 7: drift guard, candidate, smoke test, promote all success. Serving revision
+`triageiq-api-00042-ves`, image tag `30e6fd8`; `/health?deps=1` HTTP 200 (model_store and groq healthy).
+Attempt 1 failed on a transient Google auth 503 in the drift guard (fail closed, correct); attempt 2 failed in the
+smoke test (Groq TPD still exhausted, D28); attempt 3 succeeded once a budget probe showed headroom.
+The `startup_step` timing lines from #153 are present in production logs (e.g. vscode detector 25.3 s, k8s
+detector 2.7 s, 21:02:57-21:03:32 UTC), so the cold-start breakdown is now observable.
+
+**D31. Production gap found: the runtime artifact drift check never runs (VERIFIED, fix in #157).** The same
+startup log shows `ARTIFACT_DRIFT: MANIFEST.sha256 not found at /app/data/models/MANIFEST.sha256 - skipping drift
+check`. `docker/Dockerfile.prod` never copied the manifest (git log -S shows no history of it), so
+`loader._check_manifest_drift` has been a silent no-op. The deploy-time GCS guard did run, so no gate was red:
+a control narrower than its name (rule 85a). All 11 manifest entries are already copied into the image; #157 adds
+the one COPY line plus a test that fails without it and checks every manifest entry is covered by a COPY.
+BELIEVED not harmful before: the GCS-level guard compares the same objects before they are baked in.
+
+**D32. Checkpoint validation, coupling guard, release item 6 landed in #154 (CI green, queued for human merge).**
+Gate 3 only (size, ~1,118 reviewable lines). Chosen because the stale-checkpoint trap in D25 cost a manual key
+removal; the validator now recomputes the synthesis key and compares to the recorded one.
+
+**D33. #155 (vscode naive median) first CI run failed; fixed (VERIFIED locally, CI re-running).** Failure:
+`test_k8s_signals_hash_identical_to_pre_change_branch` (CI digest 338eef33..., golden 52999f45...). Mechanism: the
+test fitted a real `PCA` on random data, which differs ~1e-12 between the laptop and the runner. I did NOT blame the
+code first: the digest computed on origin/main (30e6fd8) with the original test equalled the golden locally, so main
+had not moved it. Fix: platform-exact slice+round projection; golden recomputed on origin/main code BEFORE the PR's
+change (390cb4a1...). 19 tests pass; the k8s serving path is unchanged by #155 by construction of that test.
+Also: the Quality-regression and Structural checks on #155 were failing; they need the 11 vscode cassette entries
+re-recorded (Groq budget), so #155 stays draft. ADR number collision (0063 used by both #155 and #156): #155's
+renumbers to 0064 when its re-record lands.
+
+**D34. Process slip, owned (no data lost).** While preparing #157 I ran `git stash -q -- <path>` after my edit
+script had failed, then `git stash pop`; with nothing stashed, the pop applied an unrelated old stash
+(`stash@{0}`: another branch's WIP) to my fresh worktree and conflicted. Git kept the entry (both stashes are still in
+`git stash list`). I discarded the conflict residue with `git reset --hard HEAD` in that brand-new worktree only
+(HEAD = clean main, no edits of mine). Lesson: stashes are shared across worktrees; never `stash pop` without
+reading `git stash list` first.

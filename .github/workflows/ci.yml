@@ -105,27 +105,14 @@ jobs:
           # bypass — requires building an sdist on macOS APFS/HFS+. This repo has no
           # MANIFEST.in/setup.py, never builds an sdist, and runs on Linux everywhere.
           #
-          # PYSEC-2026-3716: datasets folder-based dataset builder path traversal via
-          # unsanitized file_name metadata in save_to_disk()/push_to_hub(). datasets==4.8.5
-          # is a transitive-in-practice dependency (declared directly in requirements.txt
-          # but never imported anywhere in this codebase — data ingestion goes through our
-          # own pandas/parquet pipeline, not datasets' loaders). No reachable surface. Fixed
-          # upstream in datasets==5.0.1, but requirements.lock cannot be bumped to it with a
-          # routine `pip-compile --upgrade-package datasets` regen: requirements.txt's
-          # sentence-transformers floor was already bumped to >=5.7.0,<6.0 by Dependabot
-          # PR #69 (2026-08-11) without a matching lock regen, so ANY fresh pip-compile run
-          # right now silently drags in the deferred transformers/sentence-transformers
-          # major-version refresh that CVE-2026-1839 and friends are explicitly waiting on.
-          # See DEPENDENCIES.md.
+          # PYSEC-2026-3716 (datasets) and CVE-2026-63374 / CVE-2026-64847 (anyio) were
+          # suppressed until 2026-10-07 only because the lock could not be regenerated without
+          # dragging in the sentence-transformers/groq refresh (floor drift, fixed in #139).
+          # They are now FIXED by a scoped regen (datasets 5.0.1, anyio 4.14.2), and their
+          # ignores are removed. So are the two new advisories multidict CVE-2026-104874 and
+          # fsspec CVE-2026-104851 (multidict 6.9.1, fsspec 2026.6.0): fixed, never suppressed.
           #
-          # CVE-2026-63374 / CVE-2026-64847 (anyio 4.13.0, fixed 4.14.2): IDNA-2003 host-name
-          # check in connect_tcp()/TLSStream.wrap() for NON-ASCII hosts, and process-pool
-          # workers blocking on an undrained stderr pipe. TriageIQ imports anyio nowhere,
-          # never uses anyio process pools (no to_process), and every outbound client is the
-          # synchronous Groq/httpx client (no anyio TLS) to hardcoded ASCII hosts. Same
-          # lock-regen blocker as PYSEC-2026-3716. See DEPENDENCIES.md.
-          #
-          # Transformers findings (all but PYSEC-2026-3447/3716): fix requires
+          # Transformers findings (all but PYSEC-2026-3447): fix requires
           # transformers>=5.0.0rc3 (needs sentence-transformers>=5.x, a triple major bump)
           # or, for CVE-2025-3000, no fix version is published at all. Revisit when a
           # planned dependency refresh is scheduled (not bundled into an unrelated PR) —
@@ -138,9 +125,6 @@ jobs:
             --ignore-vuln PYSEC-2026-2290 \
             --ignore-vuln CVE-2026-9856 \
             --ignore-vuln PYSEC-2026-3447 \
-            --ignore-vuln PYSEC-2026-3716 \
-            --ignore-vuln CVE-2026-63374 \
-            --ignore-vuln CVE-2026-64847 \
             --ignore-vuln PYSEC-2026-4164 \
             --ignore-vuln PYSEC-2026-4174
           # PYSEC-2026-4164 (sentence-transformers 2.7.0; fix only in 5.6.0) and

@@ -89,8 +89,8 @@ Why (verified by reading the code path, not by assumption): `api/app.py` attache
 (`record_cassettes._JUDGE_EXCLUDED_PLAN_FIELDS`, `run_eval.py`). The eval harness never builds a
 conformal interval. No conformal value therefore reaches a prompt, a synthesis cache key or a judged
 field, so recalibrating Q (k8s: +0.2835 h to -1.018 h, CQR v2) cannot change a recorded entry, and
-fingerprinting it only forced a 64-entry LLM re-record (about 250k tokens of a 200k/day shared budget)
-for a change with no effect on any recorded output.
+fingerprinting it only forced a 64-entry LLM re-record (more than the 200k/day shared Groq budget on its own)
+for a change with no effect on any recorded output (53 calls at about 4k tokens each, roughly 210k).
 
 Consequence: if conformal values are ever fed into a prompt (for example a calibrated range quoted to
 the model), they must be added back to `_SHARED_PATHS` in the same change.

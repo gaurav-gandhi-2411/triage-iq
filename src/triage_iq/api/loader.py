@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import logging
 import os
+import time
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -14,6 +16,18 @@ from typing import Any
 import pandas as pd
 
 logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def _timed(step: str):
+    """Log wall-clock ms for one startup step (prod cold-start profiling, see PR notes)."""
+    t0 = time.perf_counter()
+    try:
+        yield
+    finally:
+        ms = round((time.perf_counter() - t0) * 1000.0, 1)
+        logger.info("startup_step %s took %.1f ms", step, ms, extra={"step": step, "ms": ms})
+
 
 _REPO_SLUGS = {
     "microsoft/vscode": "microsoft_vscode",
@@ -127,7 +141,8 @@ class ModelStore:
         models_dir = data_dir / "models"
         processed_dir = data_dir / "processed"
 
-        _check_manifest_drift(data_dir)  # warn-not-crash: image-baked artifact integrity
+        with _timed("manifest_drift_check"):
+            _check_manifest_drift(data_dir)  # warn-not-crash: image-baked artifact integrity
 
         key = (groq_api_key if groq_api_key else os.environ.get("GROQ_API_KEY", "")).strip()
         # 2026-08-29: single source of truth is Settings.triage_max_tokens (config.py); this
@@ -143,10 +158,14 @@ class ModelStore:
             try:
                 logger.info("Loading models for %s …", repo)
                 from triage_iq.models.component_classifier import load_classifier
-                clf = load_classifier(models_dir, slug)
-                det = _load_detector(models_dir, slug)
-                pred = _load_predictor(models_dir, slug)
-                train_df = _load_train(processed_dir, slug)
+                with _timed(f"{slug}.classifier"):
+                    clf = load_classifier(models_dir, slug)
+                with _timed(f"{slug}.detector(bge+faiss)"):
+                    det = _load_detector(models_dir, slug)
+                with _timed(f"{slug}.predictor"):
+                    pred = _load_predictor(models_dir, slug)
+                with _timed(f"{slug}.train_parquet"):
+                    train_df = _load_train(processed_dir, slug)
                 asst = TriageAssistant(
                     repo=repo,
                     classifier=clf,
@@ -165,7 +184,8 @@ class ModelStore:
         if not bundles:
             raise RuntimeError("No repo models could be loaded; check data/models/")
 
-        conformal = _load_conformal_adjustments(models_dir)
+        with _timed("conformal_adjustments"):
+            conformal = _load_conformal_adjustments(models_dir)
         return cls(bundles, start_time=time.monotonic(), conformal_adjustments=conformal)
 
 

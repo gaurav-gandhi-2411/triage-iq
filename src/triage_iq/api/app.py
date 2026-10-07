@@ -126,6 +126,20 @@ _access_logger.setLevel(logging.INFO)
 _access_logger.addHandler(_access_handler)
 _access_logger.propagate = False
 
+# uvicorn only configures its own loggers, so INFO lines from the startup path (loader
+# startup_step timings, "Models ready") were silently dropped in prod -- Cloud Run showed only
+# uvicorn's "Waiting for application startup" -> "complete". Route just these loggers to the
+# same JSON stdout handler; WARNING+ from them still appears (previously via lastResort/stderr).
+for _startup_logger_name in (
+    __name__,
+    "triage_iq.api.loader",
+    "triage_iq.models.similar_issues",
+):
+    _startup_logger = logging.getLogger(_startup_logger_name)
+    _startup_logger.setLevel(logging.INFO)
+    _startup_logger.addHandler(_access_handler)
+    _startup_logger.propagate = False
+
 
 # ---------------------------------------------------------------------------
 # /metrics auth dependency
@@ -192,6 +206,7 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("LLM response cache disabled (TRIAGE_LLM_CACHE_ENABLED not set)")
 
+    _t_load = time.perf_counter()
     logger.info("Loading models from %s …", cfg.data_dir)
     app.state.store = ModelStore.load_all(
         data_dir=cfg.data_dir,
@@ -199,7 +214,10 @@ async def lifespan(app: FastAPI):
         cache=app.state.cache,
         max_tokens=cfg.triage_max_tokens,
     )
-    logger.info("Models ready: %s", app.state.store.repos)
+    logger.info(
+        "Models ready: %s (startup_step load_all took %.1f ms)",
+        app.state.store.repos, (time.perf_counter() - _t_load) * 1000.0,
+    )
     _token_set = bool(cfg.metrics_token and cfg.metrics_token.get_secret_value())
     _metrics_state = (
         "protected with token" if _token_set

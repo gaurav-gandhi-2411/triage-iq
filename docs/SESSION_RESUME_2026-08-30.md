@@ -5,7 +5,61 @@ first, then resume exactly as described below.** Production has been down since
 ~2026-08-16 (Groq retired `llama-3.1-8b-instant`); this session got as far as selecting
 a replacement and is mid-way through re-recording the eval cassette against it.
 
-## 2026-09-23 (latest): STOP after Phase 3 — restoration staged, nothing merged
+## 2026-10-05 (latest): production restored; post-launch backlog
+
+**State:** production serves `openai/gpt-oss-120b` with the retrained classifiers (main at
+`15ef0b3` when this was written: #133, #134, #136, #137, #139, #141 merged; UI #20, #22
+merged). Open: #140 (startup logging), #142 (startup probe), UI #21 (pre-warm). Pending with
+GG: external uptime monitor (UptimeRobot, free plan; `/health` not `/health?deps=1`).
+
+Backlog, each with rationale and rough effort (nothing here is started):
+
+| Item | Why | Effort |
+|---|---|---|
+| Every deploy logs `Setting IAM policy failed ... allUsers run.invoker` (deploy.yml passes `--allow-unauthenticated`; the deployer service account cannot set the IAM binding) | Harmless while the public binding exists, but a deploy cannot restore public access if the binding is ever removed. Investigate whether to grant the right role or drop the flag and manage the binding explicitly. IAM change: GG decision | S |
+| sentence-transformers 2.7.0 -> 5.x (with transformers 4 -> 5) | Deliberate future change (DEPENDENCIES.md): needs retrieval re-eval (recall@k on the gold set), embedding-shift check against the prebuilt FAISS indexes, cassette invalidation and a fresh baseline. Clears PYSEC-2026-4164 / 4174 and the older transformers suppressions | L |
+| groq 1.2.0 -> 1.7.0 | groq is the live LLM client; needs cassette replay/re-record, the eval regression gate and a staged deploy (DEPENDENCIES.md) | M |
+| `MANIFEST.sha256` is not copied into the prod image (`docker/Dockerfile.prod` has no COPY for it; verified by grep 2026-10-05) | The CI deploy job does verify artifacts against the manifest before the build (`deploy.yml`, "drift guard"), so today this is covered. A runtime check that skips when the file is absent (reported by the cold-start investigation, not re-verified) adds nothing. Either copy it or delete the dead runtime check | S |
+| ~~The informational `Dependency vulnerability audit` CI job is permanently red~~ **Done 2026-10-07: job removed** | It audited a freshly resolved environment, not the lock, so it reported every advisory the lock-based audit already suppresses with reachability analysis. A permanently red job trains everyone to ignore red. The blocking "Security audit" step audits the lock | done |
+| gg-portfolio chatbot shares TriageIQ's `openai/gpt-oss-120b` Groq daily quota (limits are per model, one org) | A portfolio traffic spike can starve TriageIQ's synthesis (degraded plans). Move the chatbot to a different Groq model | S |
+| Expand the eval set toward ~100 issues per repo using multi-LLM consensus labelling | Needed to decide the component-selection question (classifier top-1 vs LLM pick) and to make vscode (n=11) gateable. Today's per-repo bands are wide | L |
+| Scheduled Cloud Run job for future synthesis recordings | The 64-issue re-record took days of quota-paced laptop time; a scheduled job removes the dependency on a machine staying awake | M |
+| Missing ADR files 0007, 0011, 0015, 0016 | Cited in `src/`, `eval/`, `scripts/` and `tests/` comments but absent from `docs/architecture/adr/`. Write them or re-point the citations | S-M |
+| UI React warning: `<button>` nested inside a `<button>` (header Back link; also a Base UI `nativeButton` console error) | Invalid HTML, an accessibility smell, present before the pre-warm and Eval PRs | S |
+
+Related, tracked in their own PRs/issues rather than here: scikit-learn 1.7.2 pickles served
+under a 1.6.1 lock; startup probe (#142); cold-start logging (#140).
+
+### Release checklist (written after the 2026-10-05 `/eval` outage)
+
+**What happened.** Core #141 removed judge keys from `/eval/summary`; the deployed UI still read
+them; the UI fix (#22) merged but its production build was rejected by Vercel
+("Deployment rate limited"), so no deployment existed for it. The live `/eval` page was blank
+for hours. The merge order was right on paper, and it still broke, because **merge is not deploy**.
+
+1. **Merge != deploy.** Any release whose steps must land in order (UI before API, API before UI)
+   gates each step on a *confirmed production deployment*, not on a merge: the deployment ID,
+   state `READY`, and that it is the current production deployment (Vercel: deployments list /
+   `gh api repos/<repo>/deployments`; Cloud Run: `gcloud run services describe` traffic +
+   image tag equals the merge commit). A red or missing deployment status on the merge commit
+   (`gh api repos/<repo>/commits/<sha>/status`) blocks the next step.
+2. **Expand / contract for API response shapes.** The API never removes or renames a response
+   field until every consumer that reads it is confirmed deployed without it (step 1). Add the
+   new field first (expand), switch consumers, confirm, then remove the old one (contract) in a
+   separate PR. A consumer must tolerate both shapes during the window.
+3. **A CI test must fail on a breaking shape change**: the UI renders the Eval page against a
+   fixture of core `main`'s current `reports/eval_summary.json` (tracked as a backlog item until
+   it lands; do not rely on reviewers noticing).
+4. **Vercel quota.** The Hobby plan limits deployments per account, shared across every project
+   on the team (docs: 100 per 24 h, https://vercel.com/docs/limits); the status text on a
+   rejection says "retry in 24 hours". Every push to a UI branch builds a preview and counts.
+   Do not push to UI branches while a production deploy is pending; do not use a build to test
+   whether a limit has reset. A rejected production build is recovered by redeploying the same
+   commit after the limit clears, not by pushing a new commit.
+5. **Never `--prod` from a local tree** (global rule 31a): recovery is a redeploy of the merged
+   commit from Vercel/CI.
+
+## 2026-09-23: STOP after Phase 3 — restoration staged, nothing merged
 
 - GG decisions applied: baseline promoted (`reports/eval_baseline.json`, ADR-0061), k8s
   grounding ratchet = 1/53, `component_departed_from_top1_rate` report-only in `run_eval.py`.

@@ -1,0 +1,8 @@
+configfile: pyproject.toml
+plugins: anyio-4.13.0, cov-7.1.0
+collecting ... collected 15 items / 13 deselected / 2 selected
+
+eval/test_invariants.py::test_stored_sklearn_version_recorder_detects_versions PASSED [ 50%]
+eval/test_invariants.py::test_pickled_sklearn_versions_match_lock_pin PASSED [100%]
+
+======================= 2 passed, 13 deselected in 3.57s =======================

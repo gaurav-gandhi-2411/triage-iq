@@ -11,6 +11,7 @@ text-similarity pairs (see ADR-0008 for task framing).
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 from typing import Protocol, cast
 
@@ -118,7 +119,12 @@ class SimilarIssueRetriever:
         self.model_key = model_key
         model_name = SUPPORTED_MODELS.get(model_key, model_key)
         logger.info("Loading embedding model: %s", model_name)
+        t0 = time.perf_counter()
         self.model = SentenceTransformer(model_name)
+        logger.info(
+            "startup_step %s.sentence_transformer_load took %.1f ms",
+            repo, (time.perf_counter() - t0) * 1000.0,
+        )
         self.index: faiss.IndexFlatIP | None = None
         self.issue_numbers: np.ndarray | None = None
         self.texts: list[str] | None = None
@@ -323,11 +329,21 @@ class SimilarIssueRetriever:
     @classmethod
     def load(cls, out_dir: str) -> SimilarIssueRetriever:
         p = Path(out_dir)
+        t0 = time.perf_counter()
         meta = joblib.load(str(p / "meta.pkl"))
+        logger.info(
+            "startup_step %s.meta_pkl_load took %.1f ms",
+            meta["repo"], (time.perf_counter() - t0) * 1000.0,
+        )
         obj = cls(repo=meta["repo"], model_key=meta["model_key"])
+        t0 = time.perf_counter()
         # faiss.read_index()'s return type is the generic Index base class, but save()
         # only ever writes an IndexFlatIP -- narrowing here matches the actual contract.
         obj.index = cast(faiss.IndexFlatIP, faiss.read_index(str(p / "index.faiss")))
+        logger.info(
+            "startup_step %s.faiss_read took %.1f ms",
+            meta["repo"], (time.perf_counter() - t0) * 1000.0,
+        )
         obj.issue_numbers = meta["issue_numbers"]
         obj.texts = meta["texts"]
         return obj

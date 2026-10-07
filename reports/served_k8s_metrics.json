@@ -1,0 +1,145 @@
+{
+  "git_sha_at_run": "30e6fd89f313bb8150a50bf29a2e590d7a7e6a2e",
+  "seed": 42,
+  "bootstrap_resamples": 1000,
+  "n": 2992,
+  "artifact_sha256": {
+    "data/models/resolution_predictor_kubernetes_kubernetes.pkl": "038052a90225ea5c5bf88682bd71fdf1336270a918e640fc4a1448986cb06406",
+    "data/models/similar_issue_index_kubernetes_kubernetes_bge/index.faiss": "a2ff35a0f7665ec76126ef01db40a4d84471165696c54e0e0a96836de0004dab",
+    "data/models/similar_issue_index_kubernetes_kubernetes_bge/meta.pkl": "62f48f8f53c6b975c2b5d577ad49bcaef8a4423554a25a442b6a37f3495064d4",
+    "data/models/cqr_conformal_adjustments.json": "9ad1a63cfb1bffd4838a3c5b052cfd3e88e1a58424443504d15cdb36e3bda20c",
+    "data/models/cqr_conformal_adjustments_v2.json": "ee5ba3bf26853e062c73a15936f43ec287d8b9f3cafa4d6e0c7eb97818d175d5",
+    "data/processed/kubernetes_kubernetes_temporal_train.parquet": "f7988eec072804618d036d3ace03c87395773e0d7bf4281490daf63d69d8dc94",
+    "test_frame:k8s_test_frame.parquet": "fa77d080aacd394dec11332aa4cbd68fe10f5ad5bbf3284dc4cab332c9ae2e95"
+  },
+  "network_attempts": [],
+  "served_path_diagnostics": {
+    "n_rows": 2992,
+    "n_predict_calls": 2992,
+    "n_embedding_kwargs_nonempty": 2992,
+    "n_predictor_fallback_rows": 0,
+    "emb_columns": 64,
+    "emb_rows_any_nonzero_frac": 1.0,
+    "emb_cells_nonzero_frac": 1.0,
+    "collect_seconds": 1100.1,
+    "conformal_adjustments_loaded": {
+      "kubernetes/kubernetes": {
+        "q_adjustment_hours": 0.2835,
+        "target_coverage": 0.8,
+        "empirical_coverage": 0.7617,
+        "coverage_ci95_lower": 0.735,
+        "coverage_ci95_upper": 0.7865
+      },
+      "microsoft/vscode": {
+        "q_adjustment_hours": 1.2655,
+        "target_coverage": 0.8,
+        "empirical_coverage": 0.7459,
+        "coverage_ci95_lower": 0.6992,
+        "coverage_ci95_upper": 0.7876
+      }
+    },
+    "bucket_classifier_model_present": true
+  },
+  "served_metrics": {
+    "n": 2992,
+    "naive_train_median_hours": 72.8761,
+    "naive_train_median_days": 3.0365,
+    "served_mae_hours": [
+      2450.0711,
+      2253.3873,
+      2655.09
+    ],
+    "served_mae_days": [
+      102.0863,
+      93.8911,
+      110.6288
+    ],
+    "served_median_ae_hours": 174.7337,
+    "served_median_ae_days": 7.2806,
+    "naive_mae_hours": [
+      2501.4951,
+      2304.3056,
+      2711.2246
+    ],
+    "naive_mae_days": [
+      104.229,
+      96.0127,
+      112.9677
+    ],
+    "naive_median_ae_days": 3.5197,
+    "mae_gain_vs_naive_days_boot": [
+      2.1427,
+      1.837,
+      2.4467
+    ],
+    "mae_improve_pct_vs_naive": 2.056,
+    "served_bucket_accuracy_wilson": [
+      0.3295,
+      0.3129,
+      0.3466
+    ],
+    "served_bucket_is_constant": false,
+    "served_bucket_distribution": {
+      "hours": 1969,
+      "long": 657,
+      "days": 289,
+      "months": 74,
+      "weeks": 3
+    },
+    "naive_majority_bucket": "hours",
+    "naive_majority_bucket_accuracy_wilson": [
+      0.26,
+      0.2446,
+      0.276
+    ],
+    "bucket_delta_vs_naive_pp_boot": [
+      6.95,
+      5.55,
+      8.36
+    ],
+    "q_stale_hours": 0.2835,
+    "coverage_cqr_stale_served_wilson": [
+      0.8426,
+      0.8291,
+      0.8552
+    ],
+    "coverage_raw_interval_wilson": [
+      0.8326,
+      0.8187,
+      0.8455
+    ],
+    "nominal_coverage": 0.8
+  },
+  "cqr_v2": {
+    "holdout": {
+      "n_cal": 897,
+      "n_hold": 2095,
+      "eval_rows_excluded_from_cal": 0,
+      "q_fresh_hours": -1.0182,
+      "q_stale_hours": 0.2835,
+      "hold_raw_wilson": [
+        0.8286,
+        0.8119,
+        0.8442
+      ],
+      "hold_stale_q_wilson": [
+        0.8382,
+        0.8218,
+        0.8533
+      ],
+      "hold_v2_q_wilson": [
+        0.7971,
+        0.7794,
+        0.8138
+      ],
+      "all_rows_v2_q_wilson": [
+        0.7985,
+        0.7837,
+        0.8124
+      ],
+      "nominal": 0.8
+    },
+    "vscode_entry_byte_identical": true,
+    "v2_file_sha256": "ee5ba3bf26853e062c73a15936f43ec287d8b9f3cafa4d6e0c7eb97818d175d5"
+  }
+}

@@ -115,7 +115,7 @@ got worse.
 | Similar issue retriever | vscode | Index size (BGE) | 24.3 MB |
 | Resolution predictor | kubernetes | Point estimate: MAE vs naive (served) | 104.05d vs 106.29d naive (+2.1%) |
 | Resolution predictor | kubernetes | Bucket classifier: accuracy vs naive (served, ADR-0041 stale-split fix — see note) | +6.35pp [+5.08, +7.55] vs naive |
-| Resolution predictor | kubernetes | CQR conformal coverage (target 80%) | 76.2% [73.5, 78.6] |
+| Resolution predictor | kubernetes | CQR conformal coverage (target 80%) | 79.7% [77.9, 81.4] (v2, served-path calibration) |
 | Resolution predictor | kubernetes | Inference latency p50 | 1.5ms |
 | Resolution predictor | vscode | Point estimate: MAE vs naive (served — see note) | 6.02d vs 3.53d naive (**−70.5%, worse than naive**) |
 | Resolution predictor | vscode | Bucket classifier: served output (see note) | **naive-prior fallback** (~33% conf) — raw classifier loses to naive by −22.08pp [−25.81, −18.02] |

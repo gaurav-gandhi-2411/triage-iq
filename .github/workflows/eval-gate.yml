@@ -75,6 +75,7 @@ jobs:
             "gs://triageiq-prod-260812-models/models/resolution_predictor_microsoft_vscode.pkl" \
             "gs://triageiq-prod-260812-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
             "gs://triageiq-prod-260812-models/models/cqr_conformal_adjustments.json" \
+            "gs://triageiq-prod-260812-models/models/cqr_conformal_adjustments_v2.json" \
             data/models/
           gsutil -m cp -r \
             "gs://triageiq-prod-260812-models/models/similar_issue_index_microsoft_vscode_bge" \
@@ -144,6 +145,7 @@ jobs:
             "gs://triageiq-prod-260812-models/models/resolution_predictor_microsoft_vscode.pkl" \
             "gs://triageiq-prod-260812-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
             "gs://triageiq-prod-260812-models/models/cqr_conformal_adjustments.json" \
+            "gs://triageiq-prod-260812-models/models/cqr_conformal_adjustments_v2.json" \
             data/models/
           gsutil -m cp -r \
             "gs://triageiq-prod-260812-models/models/similar_issue_index_microsoft_vscode_bge" \

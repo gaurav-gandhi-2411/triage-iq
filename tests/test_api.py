@@ -794,11 +794,27 @@ def test_load_conformal_adjustments_missing_file(tmp_path):
     assert result == {}
 
 
+def test_load_conformal_adjustments_ignores_stale_v1_file(tmp_path):
+    """Serving reads only the v2 file; a lone v1 file (stale k8s Q) must not be picked up."""
+    import json
+
+    from triage_iq.api.loader import CQR_ADJUSTMENTS_FILENAME, _load_conformal_adjustments
+
+    assert CQR_ADJUSTMENTS_FILENAME == "cqr_conformal_adjustments_v2.json"
+    (tmp_path / "cqr_conformal_adjustments.json").write_text(
+        json.dumps({"repos": {"kubernetes/kubernetes": {
+            "q_adjustment_hours": 0.2835, "empirical_test_coverage": 0.76,
+            "coverage_ci95_lower": 0.73, "coverage_ci95_upper": 0.79}}}),
+        encoding="utf-8",
+    )
+    assert _load_conformal_adjustments(tmp_path) == {}
+
+
 def test_load_conformal_adjustments_parses_json(tmp_path):
     """_load_conformal_adjustments correctly parses vscode (nested) and k8s (flat) entries."""
     import json
 
-    from triage_iq.api.loader import _load_conformal_adjustments
+    from triage_iq.api.loader import CQR_ADJUSTMENTS_FILENAME, _load_conformal_adjustments
 
     payload = {
         "target_coverage": 0.80,
@@ -820,7 +836,7 @@ def test_load_conformal_adjustments_parses_json(tmp_path):
             },
         },
     }
-    (tmp_path / "cqr_conformal_adjustments.json").write_text(
+    (tmp_path / CQR_ADJUSTMENTS_FILENAME).write_text(
         json.dumps(payload), encoding="utf-8"
     )
 

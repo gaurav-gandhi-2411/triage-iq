@@ -20,6 +20,15 @@ Last updated 2026-10-07. Newest first within each urgency. Everything else is in
    is "Functions Storage" under 10 GB now? I could not read it (not logged in). The production
    deploy of the UI succeeded after I removed 7 old previews, but I cannot show the cleanup caused it.
 
+5. **Merge UI #26** (Eval page contract test: renders the Eval page against core main's JSON in
+   fixture and live modes; negative controls show it fails on the shape change that blanked `/eval`
+   on 2026-10-05). All checks green. I did not merge it: the size gate is ambiguous under rule 70a
+   (about 231 reviewable lines, plus 317 lines of verbatim core data fixtures outside a designated
+   path, plus 1,002 generated lock lines), and it edits `.github/workflows/ci.yml`, moving CI from
+   Node 20 to 22 because vitest 5 / jsdom 30 need it. Review the Node bump, then:
+   `gh pr merge 26 --repo gaurav-gandhi-2411/triage-iq-ui --squash`
+   The merge triggers one Vercel production build: confirm the deployment is READY and current.
+
 ## Low urgency
 
 4. UptimeRobot: switch the monitor's HTTP method to GET. It sends HEAD first and `/health`

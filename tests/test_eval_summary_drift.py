@@ -146,12 +146,28 @@ def test_reranker_block_matches_phase2_robustness(summary):
 
 
 def test_cqr_snapshot_is_the_manifest_pinned_production_artifact():
-    """reports/cqr_conformal_adjustments.snapshot.json is a byte copy of the gitignored
-    data/models/cqr_conformal_adjustments.json; the MANIFEST hash proves it is the served one."""
+    """reports/cqr_conformal_adjustments_v2.snapshot.json is a byte copy of the gitignored
+    data/models/cqr_conformal_adjustments_v2.json (the file loader.py serves); the MANIFEST hash
+    proves it is the served one."""
+    digest = hashlib.sha256(
+        (REPORTS / "cqr_conformal_adjustments_v2.snapshot.json").read_bytes()
+    ).hexdigest()
+    assert digest == _manifest()["data/models/cqr_conformal_adjustments_v2.json"]
+
+
+def test_cqr_v1_snapshot_still_matches_its_manifest_pin():
+    """v1 is no longer served but is still published (eval artifact fingerprint pins it)."""
     digest = hashlib.sha256(
         (REPORTS / "cqr_conformal_adjustments.snapshot.json").read_bytes()
     ).hexdigest()
     assert digest == _manifest()["data/models/cqr_conformal_adjustments.json"]
+
+
+def test_cqr_v2_vscode_entry_is_unchanged_from_v1():
+    """v2 only re-calibrates k8s; the vscode entry must be carried over verbatim."""
+    v1 = _load("cqr_conformal_adjustments.snapshot.json")["repos"]["microsoft/vscode"]
+    v2 = _load("cqr_conformal_adjustments_v2.snapshot.json")["repos"]["microsoft/vscode"]
+    assert v1 == v2
 
 
 @pytest.mark.parametrize(
@@ -159,7 +175,7 @@ def test_cqr_snapshot_is_the_manifest_pinned_production_artifact():
     [("kubernetes/kubernetes", None), ("microsoft/vscode", "40_60")],  # loader.py prefers 40_60
 )
 def test_conformal_block_matches_cqr_artifact(summary, repo, src_key):
-    art = _load("cqr_conformal_adjustments.snapshot.json")["repos"][repo]
+    art = _load("cqr_conformal_adjustments_v2.snapshot.json")["repos"][repo]
     src = art[src_key] if src_key else art
     got = summary["conformal"]["by_repo"][repo]
     assert got["n_calibration"] == src["n_calibration"]
@@ -175,7 +191,7 @@ def test_conformal_block_matches_cqr_artifact(summary, repo, src_key):
 
 
 def test_vscode_split_sensitivity_matches_cqr_artifact(summary):
-    art = _load("cqr_conformal_adjustments.snapshot.json")["repos"]["microsoft/vscode"]
+    art = _load("cqr_conformal_adjustments_v2.snapshot.json")["repos"]["microsoft/vscode"]
     s = summary["conformal"]["by_repo"]["microsoft/vscode"]["split_sensitivity"]
     assert s["split_30_70"]["empirical_coverage"] == art["30_70"]["empirical_test_coverage"]
     assert s["split_40_60"]["empirical_coverage"] == art["40_60"]["empirical_test_coverage"]

@@ -178,7 +178,7 @@ def test_vscode_path_unchanged_zero_filled_and_no_embeddings_passed(spy_engineer
     X = predictor.seen[0]
     assert (X[EMB_FEATURES].to_numpy() == 0.0).all()
     # Resolution stage ran normally (not the 7.0-day exception default).
-    assert sig["pred_days"] == pytest.approx(2.0)
+    assert sig["model_point_days"] == pytest.approx(2.0)
 
     # The frame the predictor saw equals what the pre-change code path builds.
     feats, _ = engineer_features(pd.DataFrame([_issue()]), train_df=_train_df())

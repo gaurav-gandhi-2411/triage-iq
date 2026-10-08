@@ -451,3 +451,61 @@ for repo=microsoft/vscode`, the D28 signature, so the cause is BELIEVED to be th
 captured). Production stayed on `triageiq-api-00042-ves`: the gate worked as designed. Lesson: before merging a
 PR whose paths trigger a deploy, check the Groq budget; I should have held #160 until after ~17:00 UTC. Nothing to
 roll back.
+
+## Round 5 (2026-10-08): interval coherence, deploy filter, HEAD, budget probe
+
+**D46. Owner round 5 recorded.** Priorities: (1) interval coherence before #161 is ready, (2) stop deploys from
+merges that do not change production, (3) remove GG tasks I can do (HEAD on /health, deploy hook, retention),
+(4) fix the budget probe with a regression test from the recorded 429, (5) re-record and #161, (6) post-merge
+verification. Standing: never `git stash`; recorder reserve now 40K (the gate already leaves 40K: cap 160K of 200K).
+
+**D47. vscode served-interval coverage measured; no recalibration. VERIFIED (`reports/interval_coherence_d7.json`,
+`scripts/interval_coherence_d7.py`, zero LLM calls, rows from the real `_collect_signals`).** CQR was calibrated on
+model-centred intervals, so the re-centred one had to be measured. Hold-out (chronological last 60 pct, n=370),
+nominal 80 pct: served (re-centred +/- stored Q) 82.2% [77.9, 85.7] at median width 93.4 d, against 74.1%
+[69.4, 78.3] at 146.2 d for the model-centred interval it replaces. It does not miss (point meets the target, CI
+contains 80 pct; the lower bound 77.9 does not clear it, which one 7-day window cannot settle). A fresh Q for the
+served construction (C1, `vscode_naive_serving_eval.json`) gave 80.0% [75.6, 83.8], no better, so I kept the stored
+Q and `NAIVE_INTERVAL_COVERAGE`. Caution recorded in ADR-0064: the interval the PROMPT shows has no Q and covers
+only 45.4% [40.4, 50.5]; the 82 pct is the API's conformal interval, and most of Q's effect is lifting a lower
+bound of a few hours over issues that resolve in about an hour.
+
+**D48. k8s point clamp (P1b). VERIFIED.** 5 of 2,992 served medians (0.17 pct) were below their own unchanged model
+interval (shifts 0.09 to 2.23 d, none above). `_apply_point_trust` now clamps the served point into the interval,
+returns a `clamped` flag, surfaced as `resolution_point_clamped` (response, meta, signals; false for vscode, the
+model path and the predictor-failure fallback); the prompt shows the clamped point. Effect: MAE 104.229 -> 104.227
+d, median AE 3.520 -> 3.520 d. Recorded in ADR-0064. Tests: five in `tests/test_vscode_naive_point.py`.
+
+**D49. Deploy filter is an allowlist (P2). VERIFIED by test.** `deploy.yml` moved from `paths-ignore` to `paths`:
+`src/**`, `pyproject.toml`, `requirements.lock`, `docker/Dockerfile.prod`, `reports/eval_summary.json`,
+`reports/eval_baseline.json`, `data/models/MANIFEST.sha256` (the model objects come from GCS and are pinned by that
+hash), `scripts/verify_model_manifest.py` (run by the job) and the workflow file. `tests/test_deploy_paths_filter.py`
+asserts that every git-tracked COPY source of `Dockerfile.prod` matches the filter, that the other inputs match, and
+that the #160 shape (analysis scripts, eval, tests, docs, other reports, `docker/Dockerfile`) does not. Not covered:
+a runtime read outside `src/` and the two reports (none found: `app.py` and `loader.py` read only
+`reports/eval_summary.json`, `reports/eval_baseline.json` and `data/`). A merge of #161 touches `src/**`, so it
+deploys, as it should.
+
+**D50. `/health` answers HEAD (P3a).** `@app.api_route("/health", methods=["GET", "HEAD"])`; tests assert HEAD has
+GET's status and content type with an empty body, and that `HEAD /health?deps=1` returns 503 exactly when GET does.
+UptimeRobot item leaves the queue once #161 is deployed and the monitor is seen to pass (not before).
+
+**D51. Why the budget probe passed at Used 198,924, and the fix (P4). Mechanism BELIEVED, symptom VERIFIED.** The
+old probe asked for `max_tokens=65000` with a tiny prompt and was admitted. Two further probes at about 05:25 UTC
+(prompts of 1,399 and 4,279 tokens, max_tokens 16) were admitted too, while the ledger still held about 199K, so the
+real Used had already fallen below the ledger's even-spacing seed (the seed overstates what is still in the
+window). Groq admits on prompt tokens plus a bounded slice of max_tokens; a probe can prove headroom only for the
+tokens it sends (and spends them if admitted), never for a 30K reserve, which is why the gate reads only the ledger.
+Fix: `observe_tpd_429` folds the org-wide Used from any real TPD 429 into the ledger as external spend (production,
+gg-portfolio are otherwise invisible), wired into the recorder's 429 handler; the recorded 429 body is the fixture
+`tests/fixtures/groq_tpd_429_2026-10-08.txt` and three tests pin the parse, the "probe cannot override the ledger"
+behaviour and the no-op cases. The two probes (5,710 tokens) are in the ledger. Effect on timing: none; the
+ledger is conservative, so the recorder may start later than strictly necessary.
+
+**D52. Deploy hook and retention (P3b, P3c): not done, kept in the queue.** Deploy hook: the Vercel API has the
+endpoints (hook `prod-main`, id `Xafi3lf3AT`, is readable through the project's `link.deployHooks`), and no repo
+workflow or GitHub secret uses it (grep of both repos and `gh secret list`: only `SMOKE_TEST_METRICS_TOKEN` in
+core, none in the UI repo). My create call was refused by the auto-mode permission classifier (creating a new
+secret-bearing credential), and I did not retry or route around it. Retention: re-checked, the API still rejects
+it (`PATCH /v9/projects/{id}` -> 400 "should NOT have additional property `deploymentExpiration`"; the field reads
+back as 30 days on every project). Both stay GG-only, with the reason.

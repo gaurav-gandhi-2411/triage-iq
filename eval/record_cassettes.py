@@ -837,6 +837,7 @@ def _synthesize_one(
                 n_synthesis_recorded, cassette.stats()["entries"], exc,
             )
             save_checkpoint({"done": checkpoint.get("done", {})})
+            tpd_budget_gate.observe_tpd_429(str(exc))
             resume_in_s = _parse_tpd_wait(str(exc))
             resume_at = datetime.fromtimestamp(
                 datetime.now(timezone.utc).timestamp() + resume_in_s, tz=timezone.utc

@@ -112,3 +112,28 @@ def parse_tpd_error(text: str) -> tuple[int, int, int] | None:
         return None
     m = _USED_RE.search(text)
     return (int(m.group(1)), int(m.group(2)), int(m.group(3))) if m else None
+
+
+def observe_tpd_429(
+    text: str, now: datetime | None = None, path: Path | None = None
+) -> int:
+    """Fold a real Groq TPD 429 into the ledger and return the tokens added (0 if not a TPD 429).
+
+    The 429 body is the only ground truth for the org-wide Used figure. Spend this tooling did
+    not make (production /triage, gg-portfolio) is invisible to the ledger; when Groq reports a
+    Used larger than the ledger's own trailing-24 h sum, the difference is recorded as external
+    spend, so the gate stays closed against the real cap instead of the tooling-only one.
+    Conservative on purpose: the entry ages out 24 h after the 429, not after the spend it
+    stands for.
+    """
+    parsed = parse_tpd_error(text)
+    if parsed is None:
+        return 0
+    _limit, used, _requested = parsed
+    t = now or _now()
+    p = path or ledger_path()
+    external = used - spent_last_24h(t, p)
+    if external <= 0:
+        return 0
+    record_usage(external, f"observed-429: org Used {used} exceeds ledger (external spend)", now=t, path=p)
+    return external

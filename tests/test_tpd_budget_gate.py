@@ -62,6 +62,6 @@ def test_both_synthesis_loops_call_the_gate_before_synthesizing() -> None:
         encoding="utf-8"
     )
     assert src.count("_enforce_budget_reserve(groq_key)") == 2
-    assert g.STOP_MARKER in (
+    assert "tpd_budget_gate.STOP_MARKER in output" in (
         Path(__file__).resolve().parents[1] / "scripts" / "run_recording_unattended.py"
     ).read_text(encoding="utf-8")

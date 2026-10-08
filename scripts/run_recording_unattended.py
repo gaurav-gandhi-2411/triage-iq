@@ -59,6 +59,7 @@ sys.path.insert(0, str(RECORD_SCRIPT.parent))
 import record_cassettes as rc  # noqa: E402
 import artifact_fingerprint  # noqa: E402
 import checkpoint_validation as cv  # noqa: E402
+import tpd_budget_gate  # noqa: E402
 # _parse_tpd_wait lives in record_cassettes.py, not duplicated here -- it sees the raw Groq
 # error text first and needs the identical regex to report an accurate resume estimate in
 # RECORDING_STATUS.txt at the moment it hits the wall (ADR-0060); importing it keeps this
@@ -68,6 +69,8 @@ TOTAL_ISSUES = sum(1 for _ in EVAL_SET_PATH.open(encoding="utf-8") if _.strip())
 
 CONNECTION_WAIT_S = 5 * 60
 RETRY_BUFFER_S = 60
+# Re-probe the shared Groq budget this often after a reserve stop (2026-10-08, tpd_budget_gate.py).
+BUDGET_WAIT_S = 30 * 60
 VRAM_CHECK_INTERVAL_S = 2 * 60
 MIN_FREE_VRAM_MB = 6 * 1024
 
@@ -88,9 +91,6 @@ HARD_STOP_MARKERS = [
     # so it deliberately does not appear here. Only a REPRODUCED failure (2nd
     # occurrence on the same issue) is a hard stop.
     "SCHEMA VALIDATION FAILURE REPRODUCED",
-    # 2026-10-08: the shared Groq daily budget is down to the protected reserve (eval/tpd_budget_gate.py).
-    # Not retried by waiting: the launcher cannot know when other consumers free budget.
-    "=== BUDGET RESERVE STOP ===",
 ]
 
 
@@ -325,6 +325,18 @@ def main() -> None:
                 f"Iterations run: {iteration}",
             ])
             time.sleep(wait_s)
+            continue
+
+        if tpd_budget_gate.STOP_MARKER in output:
+            # The recorder left the protected reserve untouched; Groq's daily budget refills
+            # continuously, so wait and re-probe instead of stopping. Production keeps its reserve.
+            _write_status(mode, model, prompt_hash, artifact_hash, [
+                f"WAITING (budget reserve): sleeping {BUDGET_WAIT_S}s (~{BUDGET_WAIT_S // 60}m), then "
+                "re-probing the shared Groq budget.",
+                f"Full log: {log_path}",
+                f"Iterations run: {iteration}",
+            ])
+            time.sleep(BUDGET_WAIT_S)
             continue
 
         if "=== CONNECTION LOST" in output:

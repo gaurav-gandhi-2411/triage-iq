@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""Offline before/after of serving the naive median as the vscode point estimate (ADR-0063).
+"""Offline before/after of serving the naive median as the vscode point estimate (ADR-0064).
 
 Drives the REAL TriageAssistant._collect_signals() (real predictor, real train_df, real
 engineer_features and prompt builder) over the reconstructed 616-row microsoft/vscode window,
@@ -8,7 +8,7 @@ with a no-op classifier/retriever (neither feeds the resolution stage for vscode
 call of any kind. "Before" is the raw model output the assistant also exposes
 (signals["model_*"]); "after" is what it serves (signals["pred_days"/"lo_days"/"hi_days"]).
 
-Also evaluates the candidate served intervals (ADR-0063 Decision) with the same chronological
+Also evaluates the candidate served intervals (ADR-0064 Decision) with the same chronological
 calibration / held-out split scripts/10_calibrate_cqr.py uses (30% and 40% of the window by
 created_at, eval-set rows excluded from calibration).
 

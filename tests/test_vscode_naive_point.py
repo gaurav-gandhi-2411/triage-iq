@@ -1,4 +1,4 @@
-"""ADR-0063: microsoft/vscode serves the naive median as the point estimate; k8s is untouched.
+"""ADR-0064 (owner decision D7): both repos serve the training-window median as the point estimate.
 
 Network-free and deterministic. Drives the real TriageAssistant._collect_signals(), the real
 engineer_features() and the real prompt builder with stub classifier / retriever / predictor.

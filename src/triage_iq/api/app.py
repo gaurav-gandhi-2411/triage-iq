@@ -348,7 +348,7 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         adj = store.conformal_adjustments.get(body.repo)
         if adj is not None:
             q_days = adj["q_adjustment_hours"] / 24.0
-            # ADR-0063: the stored coverage statistics describe the model-quantile interval. When
+            # ADR-0064: the stored coverage statistics describe the model-quantile interval. When
             # the served interval was re-centred on the naive median, report the coverage measured
             # for THAT interval instead (resolution.NAIVE_INTERVAL_COVERAGE), never the old one.
             cov = adj
@@ -460,7 +460,7 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     result["_model"] = bundle.assistant.model
     result["classifier_top3"] = meta.get("classifier_top3")
     result["resolution_model_beats_naive"] = _RESOLUTION_MODEL_BEATS_NAIVE.get(body.repo, True)
-    # ADR-0063 (expand-only): the point estimate the resolution stage was given and its source,
+    # ADR-0064 (expand-only): the point estimate the resolution stage was given and its source,
     # "model" or "train_median" (POINT_ESTIMATE_TRUSTED). resolution_model_beats_naive keeps its
     # meaning (a measured property of the trained model); this field says what is being served.
     result["resolution_point_days"] = meta.get("resolution_point_days")

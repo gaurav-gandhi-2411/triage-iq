@@ -828,7 +828,7 @@ class TriageAssistant:
             "predicted_resolution_days_p50": round(mid, 1),
             "resolution_bucket": plan.resolution_bucket,
             "resolution_confidence_pct": plan.resolution_confidence_pct,
-            # ADR-0063: the point estimate the prompt was given and where it came from.
+            # ADR-0064: the point estimate the prompt was given and where it came from.
             "resolution_point_days": signals["resolution_point_days"],
             "resolution_point_source": signals["resolution_point_source"],
             "resolution_interval_basis": signals["resolution_interval_basis"],
@@ -932,7 +932,7 @@ class TriageAssistant:
     def _apply_point_trust(
         self, pred_days: float, lo_days: float, hi_days: float, model_ok: bool = True
     ) -> tuple[float, float, float, str, str]:
-        """Apply POINT_ESTIMATE_TRUSTED (ADR-0063). Returns (point, lo, hi, source, basis).
+        """Apply POINT_ESTIMATE_TRUSTED (ADR-0064). Returns (point, lo, hi, source, basis).
 
         basis is "naive_scaled" when the interval was re-centred on the naive median, else
         "model" (the interval is still the model's Q10/Q90).
@@ -1046,7 +1046,7 @@ class TriageAssistant:
             predictor_ok = False
             pred_days, lo_days, hi_days = 7.0, 1.0, 30.0
             resolution_bucket, resolution_conf_pct = "days", 33.0
-        # Raw model outputs, kept for diagnostics/eval before any trust override (ADR-0063).
+        # Raw model outputs, kept for diagnostics/eval before any trust override (ADR-0064).
         model_point_days, model_lo_days, model_hi_days = pred_days, lo_days, hi_days
         pred_days, lo_days, hi_days, point_source, interval_basis = self._apply_point_trust(
             pred_days, lo_days, hi_days, model_ok=predictor_ok

@@ -1,8 +1,40 @@
-# ADR-0063 — Serve the naive median as the microsoft/vscode point estimate
+# ADR-0064 — Serve the training-window median as the point estimate (both repos)
 
-Status: Accepted (code on a draft PR stacked on #150; not merged, not deployed)
+Status: Accepted (integration branch; not merged, not deployed)
 Date: 2026-10-08
-Decider: Gaurav Gandhi (owner decision D2: "a model that loses to naive under every variant is not served")
+Decider: Gaurav Gandhi. D2 (vscode: "a model that loses to naive under every variant is not served")
+extended to k8s by D7 (2026-10-08). Numbered 0064 because 0063 is
+`0063-degrade-on-llm-provider-errors.md`; this file was 0063 on the PR #155 branch.
+
+## D7 scope change (read this first)
+
+The sections below were written for vscode only (D2). D7 applies the same decision to
+`kubernetes/kubernetes`; the vscode evidence and design stand unchanged. What D7 adds:
+
+- `POINT_ESTIMATE_TRUSTED` is `False` for both repos. `resolution_point_source` is `"model"` or
+  `"train_median"` (renamed from the draft's `"naive_median"` so the label says which median:
+  the training-window median the published naive baseline used, `median(train.resolution_hours)/24`;
+  k8s 3.0365 d, vscode 3.8374 d).
+- Evidence for k8s, served path through `_collect_signals` over all 2,992 test rows
+  (`reports/served_k8s_metrics.json`, produced at 30e6fd8): the learned point has MAE 102.09 d
+  [93.89, 110.63] vs naive 104.23 d, a +2.06% gain (paired bootstrap gain CI [1.84, 2.45] d).
+  Premise check on D7's wording: the *unpaired* CIs overlap, but the *paired* gain CI excludes zero,
+  so the mean gain is small and real. D7 stands on the other measure: **median absolute error is
+  7.28 d for the model vs 3.52 d for naive**, i.e. the model helps on the mean (a few huge
+  long-tail issues) and is worse on the typical issue. The served point is what a reader takes as
+  "how long will this one take".
+- k8s keeps its learned parts: the bucket classifier (+6.95 pp [5.55, 8.36] over always-"hours") and
+  the CQR interval around the model's Q10/Q90 (CQR v2, coverage 79.7% [77.9, 81.4] on the held-out
+  part). The k8s interval is NOT re-centred (`INTERVAL_RECENTRED[k8s] = False`): lo/hi, bucket,
+  confidence, top-3 and retrieval are bit-identical to main 30e6fd8
+  (`tests/test_vscode_naive_point.py::test_k8s_bucket_interval_and_retrieval_identical_to_pre_change_main`,
+  and the full-test-set comparison in `reports/d7_resolution_before_after.json`). vscode keeps the
+  re-centred interval below (`INTERVAL_RECENTRED[vscode] = True`) because its model point is far from
+  the median and a model-centred interval would not contain the served point.
+- Consequence for the prompt: the point and (vscode) interval printed in the synthesis prompt change
+  for every issue, so all 64 cassette entries are re-recorded (validator output: 64 of 64
+  `stale_synthesis`, 53 k8s + 11 vscode). The conformal store is not fingerprinted (ADR-0059
+  addendum), so CQR v2 does not add a re-record by itself.
 
 ## Context
 
@@ -33,13 +65,13 @@ resolution is 0.049 d and 91.4% of issues are in the "hours" bucket, while the t
 ## Decision
 
 1. `POINT_ESTIMATE_TRUSTED` (in `models/resolution.py`, next to `BUCKET_CLASSIFIER_TRUSTED`):
-   `{kubernetes_kubernetes: True, microsoft_vscode: False}`, unlisted repos default to trusted.
+   `{kubernetes_kubernetes: False, microsoft_vscode: False}` (D7), unlisted repos default to trusted.
    For an untrusted repo `TriageAssistant._collect_signals` replaces the model point with
    `naive_median_days(train_df)` = `median(resolution_hours of the training set) / 24` (vscode
    3.8374 d, identical to the study's `median(train)/24`). The raw model outputs stay available as
    `signals["model_point_days" | "model_lo_days" | "model_hi_days"]`.
 2. Response, expand-only: `resolution_point_days`, `resolution_point_source` (`"model"` or
-   `"naive_median"`), `resolution_interval_basis` (`"model"` or `"naive_scaled"`). Nothing is
+   `"train_median"`), `resolution_interval_basis` (`"model"` or `"naive_scaled"`). Nothing is
    removed or renamed; `resolution_model_beats_naive` keeps its meaning (a measured property of
    the trained model, still `false` for vscode). Bucket and `resolution_confidence_pct` are
    unchanged (vscode already serves the naive majority-class prior).
@@ -72,7 +104,9 @@ resolution is 0.049 d and 91.4% of issues are in the "hours" bucket, while the t
    non-positive) the model output is served with a WARNING (`reason: no_train_median`) and
    `resolution_point_source == "model"`; if the predictor itself throws, the naive median is still
    served with the existing fixed `[1, 30]` d interval (`resolution_interval_basis == "model"`).
-5. k8s is bit-identical: trusted repos return before touching anything new. Proven two ways:
+5. (Superseded by D7: k8s now serves the median too, with its interval, bucket and retrieval
+   bit-identical; see the D7 section. The original trusted-repo proof, kept for the record:)
+   k8s was bit-identical while trusted. Proven two ways:
    67 real k8s validation rows (every 45th of the 2991-row frame) hash identically (sha256 of
    prompt, point, interval, bucket, confidence, top-3, retrieved issues) between
    `origin/fix/k8s-resolution-embeddings-reuse` (e79cc70) and this branch, aggregate
@@ -106,8 +140,9 @@ the calibration rows).
 - Why not retrain: 10 retrains without `emb_*` (seeds None/42/1/2/3, 15- and 11-feature variants)
   gave MAE 3.56-6.54 d, none beating naive; a retrain needs a new artifact, GCS publish and cutover
   for no demonstrated gain; the data problem is distribution shift, not model capacity.
-- Cassette dependency: the vscode synthesis prompt contains the point estimate and interval, so
-  the 11 vscode eval issues' cassette keys change (verified by strict replay: 11 of 64
+- Cassette dependency (D7: now ALL 64 entries, see the D7 section; the paragraph below is the
+  original vscode-only measurement): the vscode synthesis prompt contains the point estimate and
+  interval, so the 11 vscode eval issues' cassette keys change (verified by strict replay: 11 of 64
   `CassetteMissError`, all vscode; 0 k8s; baseline with the gate forced to trusted: 0 misses):
   `vscode-239838, -278113, -286776, -311284, -311836, -311878, -312260, -312423, -4978, -4993,
   -4996`. They must be re-recorded (coordinator, after the checkpoint-validation tool lands);
@@ -128,7 +163,7 @@ evaluation." when `resolution_model_beats_naive === false`. Once vscode serves t
 text describes a model the user is no longer shown. Drive it from `resolution_point_source`
 (absent on old servers: treat as `"model"`):
 
-- `resolution_point_source === "naive_median"`: badge text **"Historical median estimate"**,
+- `resolution_point_source === "train_median"`: badge text **"Historical median estimate"**,
   tooltip **"The trained model for this repository did not beat a simple historical median in
   evaluation, so this estimate is the median resolution time of past closed issues (3.8 days),
   not a prediction for this issue. The range is wide and calibrated on a single week of data."**

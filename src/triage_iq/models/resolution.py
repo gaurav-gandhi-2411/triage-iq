@@ -105,7 +105,7 @@ def naive_median_days(train_df: pd.DataFrame | None) -> float | None:
 # point predictions have min 2.0 d on the 616-row window, so this only guards degenerate input.
 _MIN_MODEL_POINT_DAYS = 1e-3
 
-# Held-out coverage of the interval served alongside the naive median (ADR-0063, option C2):
+# Held-out coverage of the interval served alongside the naive median (ADR-0064, option C2):
 # [naive * lo/p, naive * hi/p] (the model's RELATIVE Q10/Q90 width re-centred on the naive
 # median) widened by the stored production CQR Q (cqr_conformal_adjustments.json, 40_60 split;
 # no new artifact). Measured on the chronological 60% held-out part (n=370) of the reconstructed

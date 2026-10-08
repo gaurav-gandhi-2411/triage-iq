@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -8,60 +9,59 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "eval"))
 import tpd_budget_gate as g  # noqa: E402
 
-TPD_429 = (
-    "Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-120b` "
-    "in organization `org_x` service tier `on_demand` on tokens per day (TPD): Limit 200000, "
-    "Used 170000, Requested 45000. Please try again in 1h2m3s.'}}"
-)
+NOW = datetime(2026, 10, 8, 12, 0, tzinfo=timezone.utc)
 
 
-def test_headroom_passes_and_probes_with_reserve_plus_next_call() -> None:
-    seen: list[int] = []
-    msg = g.check_budget(seen.append)
-    assert seen == [g.RESERVE_TOKENS + g.NEXT_CALL_TOKENS] == [45_000]
-    assert "ok" in msg
+def _spend(path: Path, n: int, tokens: int, start: datetime, step_min: int = 1) -> None:
+    for i in range(n):
+        g.record_usage(tokens, "t", now=start + timedelta(minutes=i * step_min), path=path)
 
 
-def test_tpd_429_stops_with_marker_and_reports_usage() -> None:
-    def probe(_: int) -> None:
-        raise RuntimeError(TPD_429)
+def test_empty_ledger_allows_a_call(tmp_path: Path) -> None:
+    assert "ok" in g.check_budget(now=NOW, path=tmp_path / "l.json")
 
+
+def test_stops_at_80_percent_of_the_daily_cap_keeping_40k(tmp_path: Path) -> None:
+    # Owner rule 2026-10-08: recorder stops at 80 pct; >= 30K stays for deploy smoke tests.
+    assert g.RECORDER_CAP_TOKENS == 0.8 * g.DAILY_CAP_TOKENS
+    assert g.DAILY_CAP_TOKENS - g.RECORDER_CAP_TOKENS >= 30_000
+    p = tmp_path / "l.json"
+    _spend(p, 31, 5_000, NOW - timedelta(hours=3))  # 155K spent, 160K cap, 5K next call: still ok
+    g.check_budget(now=NOW, path=p)
+    g.record_usage(1_000, "t", now=NOW - timedelta(hours=2), path=p)  # 156K + 5K > 160K
     with pytest.raises(g.BudgetReserveError) as ei:
-        g.check_budget(probe)
-    text = str(ei.value)
-    assert g.STOP_MARKER in text
-    assert "170000/200000" in text
+        g.check_budget(now=NOW, path=p)
+    assert g.STOP_MARKER in str(ei.value)
+    assert "156000" in str(ei.value)
 
 
-def test_reserve_is_at_least_30k_and_at_most_20_percent_of_cap() -> None:
-    # Owner rule 2026-10-08: reserve >= 30K for deploy smoke tests; recorder stops at 80 pct.
-    assert g.RESERVE_TOKENS >= 30_000
-    assert g.RESERVE_TOKENS >= 0.2 * g.DAILY_CAP_TOKENS
+def test_spend_older_than_24h_expires(tmp_path: Path) -> None:
+    p = tmp_path / "l.json"
+    _spend(p, 40, 5_000, NOW - timedelta(hours=30))  # 200K, all older than 24 h
+    assert g.spent_last_24h(now=NOW, path=p) == 0
+    g.check_budget(now=NOW, path=p)
 
 
-def test_non_tpd_errors_propagate_not_read_as_headroom() -> None:
-    # Fail closed (98a): a probe that cannot answer must stop the run, never count as headroom.
-    def probe(_: int) -> None:
-        raise ConnectionError("getaddrinfo failed")
-
-    with pytest.raises(ConnectionError):
-        g.check_budget(probe)
-
-
-def test_per_minute_429_is_not_mistaken_for_daily_exhaustion() -> None:
-    def probe(_: int) -> None:
-        raise RuntimeError("429 rate_limit_exceeded on tokens per minute (TPM): Limit 8000")
-
-    with pytest.raises(RuntimeError) as ei:
-        g.check_budget(probe)
-    assert not isinstance(ei.value, g.BudgetReserveError)
+def test_message_says_when_room_returns(tmp_path: Path) -> None:
+    p = tmp_path / "l.json"
+    start = NOW - timedelta(hours=10)
+    _spend(p, 32, 5_000, start, step_min=10)
+    with pytest.raises(g.BudgetReserveError) as ei:
+        g.check_budget(now=NOW, path=p)
+    assert (start + timedelta(hours=24)).strftime("%Y-%m-%d") in str(ei.value)
 
 
-def test_both_synthesis_loops_call_the_gate_before_synthesizing() -> None:
-    src = (Path(__file__).resolve().parents[1] / "eval" / "record_cassettes.py").read_text(
-        encoding="utf-8"
-    )
-    assert src.count("_enforce_budget_reserve(groq_key)") == 2
+def test_parse_tpd_error() -> None:
+    msg = "429 on tokens per day (TPD): Limit 200000, Used 198924, Requested 4895. Please try again in 5m."
+    assert g.parse_tpd_error(msg) == (200000, 198924, 4895)
+    assert g.parse_tpd_error("rate_limit_exceeded on tokens per minute (TPM): Limit 8000") is None
+
+
+def test_gate_and_ledger_are_wired_into_the_recorder() -> None:
+    root = Path(__file__).resolve().parents[1]
+    rec = (root / "eval" / "record_cassettes.py").read_text(encoding="utf-8")
+    assert rec.count("_enforce_budget_reserve(groq_key)") == 2
+    assert "tpd_budget_gate.record_usage(" in rec
     assert "tpd_budget_gate.STOP_MARKER in output" in (
-        Path(__file__).resolve().parents[1] / "scripts" / "run_recording_unattended.py"
+        root / "scripts" / "run_recording_unattended.py"
     ).read_text(encoding="utf-8")

@@ -111,7 +111,7 @@ def _enforce_budget_reserve(groq_key: str) -> None:
     """Stop (exit 3, marker for the unattended launcher) before the shared Groq daily budget
     drops below the protected reserve. See eval/tpd_budget_gate.py."""
     try:
-        msg = tpd_budget_gate.check_budget(tpd_budget_gate.groq_probe(groq_key, TRIAGE_MODEL))
+        msg = tpd_budget_gate.check_budget()
     except tpd_budget_gate.BudgetReserveError as exc:
         print(f"\n{exc}", flush=True)
         sys.exit(3)
@@ -743,6 +743,29 @@ def _synthesize_one(
             save_checkpoint(checkpoint)
             write_live_status(mode, current_model, current_prompt_hash, current_artifact_hash, total, last_issue_id=issue_id)
             return None, None, n_synthesis_recorded, True, None
+        reason = str(meta.get("llm_status_reason") or "")
+        if llm_status == "degraded_provider_error" and reason.startswith("rate_limited"):
+            # PR #156 turns a provider 429 into a degraded plan instead of an exception, so the
+            # TPD branch of the except below no longer sees it. Same handling, same marker: the
+            # launcher waits and resumes; this issue is NOT checkpointed (re-running retries it).
+            logger.error(
+                "STOP: Groq rate limit (%s) after %d synthesis calls. Cassette has %d entries.",
+                reason, n_synthesis_recorded, cassette.stats()["entries"],
+            )
+            save_checkpoint({"done": checkpoint.get("done", {})})
+            resume_in_s = _DEFAULT_TPD_WAIT_S
+            resume_at = datetime.fromtimestamp(
+                datetime.now(timezone.utc).timestamp() + resume_in_s, tz=timezone.utc
+            ).strftime("%Y-%m-%d %H:%M:%S UTC")
+            write_live_status(
+                mode, current_model, current_prompt_hash, current_artifact_hash, total,
+                last_issue_id=issue_id, next_resume_at=resume_at,
+                extra=[f"STOPPED: Groq rate limit ({reason}) on {issue_id}. Resume in ~{resume_in_s}s."],
+            )
+            print("\n=== TPD HIT ===")
+            print(f"Synthesis recorded: {n_synthesis_recorded}")
+            print(f"Cassette entries: {cassette.stats()['entries']}")
+            sys.exit(1)
         if llm_status not in ("ok", "parse_retry_succeeded"):
             logger.error(
                 "STOP: synthesis degraded (llm_status=%s) after %d synthesis calls. "
@@ -763,6 +786,12 @@ def _synthesize_one(
             print(f"Cassette entries: {cassette.stats()['entries']}")
             sys.exit(1)
         n_synthesis_recorded += 1
+        if not meta.get("llm_cache_hit"):
+            # Shared rolling-24h ledger behind the 80 pct recorder cap (tpd_budget_gate.py).
+            tpd_budget_gate.record_usage(
+                int(meta.get("groq_tokens_prompt", 0) or 0) + int(meta.get("groq_tokens_completion", 0) or 0),
+                f"record_cassettes:{issue_id}",
+            )
         logger.info("  synthesis → %s (cache_hit=%s)", plan.predicted_component, meta.get("llm_cache_hit"))
     except TruncatedCompletionError as exc:
         # 2026-08-28: a truncated completion means max_tokens is too small for this model --

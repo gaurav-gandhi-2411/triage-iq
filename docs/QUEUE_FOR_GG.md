@@ -1,49 +1,46 @@
 # Queue for GG (only items you must do)
 
 Last updated 2026-10-08. Everything else is in `docs/DECISION_LOG_2026-10.md`.
-Done since the last version (removed from this list): #150 merged and deployed (revision
-`triageiq-api-00042-ves`, health OK); #153 (was #140) and UI #26 merged; baseline approved (D1).
 
-## Merge commands (guard-blocked or human-only; I did not merge these)
+## The one core merge
 
-1. **Core #154** — checkpoint validation, coupling guard test, ADR-0062 coupling section, release-checklist
-   item 6. All 3 required checks green. Guard gate 3 fails on size (~1,118 reviewable lines).
-   `gh pr merge 154 --repo gaurav-gandhi-2411/triage-iq --merge`
-2. **Core #156** — provider errors (429, connection, timeout, 5xx) degrade to the signals-only plan instead of
-   HTTP 500; the deploy smoke test still requires `_degraded is False`. Touches `deploy.yml` (guard gate 4), so
-   human merge. Branch needs `gh pr update-branch 156` first if it shows BEHIND.
-   `gh pr merge 156 --repo gaurav-gandhi-2411/triage-iq --merge`
-3. **Core #157** — Dockerfile.prod never copied `MANIFEST.sha256`, so the runtime drift check has been a silent
-   no-op in production (found in the 00042-ves startup log). One COPY line plus a guard test. Deploy config
-   (gate 4), so human merge. After the deploy, startup logs should contain no `ARTIFACT_DRIFT` line.
-   `gh pr merge 157 --repo gaurav-gandhi-2411/triage-iq --merge`
-4. **Core #155 (draft)** — vscode serves the naive median (D2). NOT ready: its cassette needs the 11 vscode
-   entries re-recorded, which needs Groq budget (see FYI). I will push the re-record and queue the final command.
-5. **README PR #151 (draft)** — review and merge yourself. Full text: the README.md on
-   https://github.com/gaurav-gandhi-2411/triage-iq/blob/docs/readme-verified-numbers/README.md
-   Two marked blocks (`RESOLUTION-ROWS`, `LLM-BASELINE-BLOCK`) are refreshed by me after the served-path metrics land.
+1. **Core #161 (integration branch). NOT READY: draft, waiting on the 64-entry cassette re-record.**
+   It carries D7 (train-median point, both repos), CQR v2 serving, degrade-on-429, manifest-in-image,
+   checkpoint validation and the `/eval` data fix. I will mark it ready and put the final numbers
+   (baseline before/after, reviewable-vs-generated split) in its body when CI is green. Expected: the recorder
+   finishes about 17:00-19:00 UTC Oct 9, then a local judge pass. When it is ready, the command is:
+   `gh pr merge 161 --repo gaurav-gandhi-2411/triage-iq --merge`
+   Superseded by it (do not merge separately; kept open as the review record): #154, #155, #156, #157, #159.
+   Baseline approval: D1 approved the earlier baseline; D7 changes every prompt, so the re-derived baseline will be
+   reported before/after in #161 and needs your OK when you merge (I do not self-approve a new baseline).
 
 ## Dashboard / account actions (only you can do these)
 
-6. **Recreate the Vercel deploy hook, delete the old one** (old URL was pasted in chat; ends `...Xafi3lf3AT`).
+2. **Recreate the Vercel deploy hook, delete the old one** (old URL was pasted in chat; ends `...Xafi3lf3AT`).
    Project `triage-iq` -> Settings -> Git -> Deploy Hooks. Do not paste the new URL anywhere saved.
-7. **Set shorter Vercel deployment retention** (API cannot): projects `gaurav-gandhi` and `samidha-reviews-web`,
+3. **Set shorter Vercel deployment retention** (API cannot): projects `gaurav-gandhi` and `samidha-reviews-web`,
    previews 7 d, canceled 3 d, errored 3 d, production 30 d / keep 10.
-8. **Check the Vercel Usage page** for Functions Storage (<10 GB?). I cannot read it. No causal claim is made
-   about the preview deletion (D6).
-9. UptimeRobot: switch the monitor to GET (it sends HEAD, `/health` answers 405, two requests per check). Noise only.
+4. **Check the Vercel Usage page** for Functions Storage (<10 GB?). I cannot read it.
+5. UptimeRobot: switch the monitor to GET (it sends HEAD, `/health` answers 405, two requests per check). Noise only.
+6. **README PR #151 (draft)**: review and merge yourself. Full text:
+   https://github.com/gaurav-gandhi-2411/triage-iq/blob/docs/readme-verified-numbers/README.md
+   Its two marked blocks and the resolution limitation are refreshed by me after #161 deploys (D7 wording).
 
-## Decisions for you (recommendation first)
+## Decisions for you (recommendation first; none blocks #161)
 
-10. **vscode point estimate source.** D2 stands (naive median). Recommendation: also consider a recency-window
-    median instead of the stale train median (P5 study finding); not urgent, no action taken.
-11. **Second-model fallback on Groq 429** (a separate-budget model such as gpt-oss-20b). Proposed in the ADR for
-    #156, not implemented. Recommendation: yes, because a single org-wide free-tier budget is also the serving budget.
-12. **Retrieval-conditional k8s resolution redesign** (P5 study). Report only; recommendation: not now.
+7. **vscode point source.** The median is the 2015-16 training median (3.84 d) while current vscode traffic
+   resolves in hours (test median 0.049 d). Recommendation: a recency-window median (D7 says "the training-window
+   median the published naive baseline used", so I kept that). Say the word and it is a one-line change plus a
+   re-record.
+8. **Keep the LightGBM models for intervals/bucket** (P5, D43): recommendation yes, do not simplify to model-free
+   intervals. No action needed unless you disagree.
+9. **Retrieval-conditional k8s resolution redesign** (P5 study, earlier): recommendation not now.
 
 ## FYI (no action)
 
-- **Groq daily budget (200k tokens/day, org-wide) was exhausted by my 53-call k8s re-record** (D28). Rolling
-  window frees from ~16:30 UTC Oct 8, fully by ~19:00 UTC. Until then production `/triage` may return 500 on 429
-  (fixed by #156 once merged and deployed). I will not spend Groq tokens before then; the vscode re-record
-  (~45k tokens) and production latency replay (~25k) are scheduled after the budget probe shows headroom.
+- **Groq budget (200K tokens/day, org-wide, rolling 24 h) is exhausted until about 16:30-19:00 UTC Oct 8**
+  (Used 198,924 at 01:12 UTC). Production `/triage` degrades to the signals-only plan with a 200 only after
+  #161 deploys; until then a 429 is a 500 (existing behaviour). The recorder is gated to spend at most 160K per
+  24 h (80 pct), leaving 40K for production and deploy smoke tests. Deploys of main until ~17:00 UTC Oct 8 may
+  fail their smoke test for lack of budget: that is the budget, not a regression (see D28).
+- UI #27 (badge + `/eval` table) is merged and live; it is inert until #161 deploys.

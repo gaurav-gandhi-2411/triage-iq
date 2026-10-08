@@ -204,3 +204,48 @@ def test_vscode_split_sensitivity_matches_cqr_artifact(summary):
 def test_conformal_note_quotes_the_block_coverage(summary):
     v = summary["conformal"]["by_repo"]["microsoft/vscode"]
     assert f"{v['empirical_coverage'] * 100:.1f}%" in v["exchangeability_note"]
+
+
+# --- resolution_served (ADR-0064): what production serves, tied to code and manifest -----------
+
+
+def _builder():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "build_resolution_served_block", ROOT / "scripts" / "build_resolution_served_block.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_resolution_served_block_equals_its_source_reports(summary):
+    assert summary["resolution_served"] == _builder().build()
+
+
+def test_resolution_served_manifest_hashes_match_the_manifest(summary):
+    pinned = summary["resolution_served"]["provenance"]["manifest_sha256"]
+    manifest = _manifest()
+    assert pinned
+    for path, digest in pinned.items():
+        assert manifest[path] == digest, path
+
+
+def test_resolution_served_describes_the_point_the_code_serves(summary):
+    """The published claim "the train median is the served point" must match POINT_ESTIMATE_TRUSTED."""
+    from triage_iq.models.resolution import POINT_ESTIMATE_TRUSTED, repo_slug
+
+    block = summary["resolution_served"]
+    assert block["point_estimate"]["served"] == "train_median"
+    for repo in block["repos"]:
+        assert POINT_ESTIMATE_TRUSTED[repo_slug(repo)] is False, repo
+
+
+def test_resolution_served_k8s_interval_and_bucket_were_unchanged_by_d7(summary):
+    unchanged = summary["resolution_served"]["repos"]["kubernetes/kubernetes"]["unchanged_by_d7"]
+    assert unchanged == {"interval_lo_hi_bit_identical": True, "bucket_identical": True}
+
+
+def test_old_honest_metrics_table_is_labelled_historical(summary):
+    assert summary["leakage"]["honest_metrics_status"].startswith("historical")

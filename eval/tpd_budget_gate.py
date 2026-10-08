@@ -21,7 +21,14 @@ max_tokens against the daily budget), so it certified headroom that did not exis
 call this tooling makes is appended to a ledger shared by all worktrees, and the gate sums the
 trailing 24 h. Consumers outside this tooling (production, gg-portfolio) are not in the ledger;
 they live in the 20 pct the cap leaves untouched. A real TPD 429 is ground truth: it is logged
-with its Used figure and the recorder waits (record_cassettes.py / run_recording_unattended.py).
+with its Used figure and the recorder waits (record_cassettes.py / run_recording_unattended.py),
+and observe_tpd_429 folds any Used the ledger did not know about into the ledger.
+
+Mechanism, measured 2026-10-08 ~05:25Z: prompts of 1,399 and 4,279 tokens (max_tokens=16) were
+ADMITTED with the ledger at ~199K, so the real Used had already fallen below the ledger's
+even-spacing seed. A probe can only prove headroom for the tokens it actually sends (and spends
+them when admitted), never for a 30K reserve. The ledger errs conservative (BELIEVED: the seed
+overstates what is still inside the window), which only delays the recorder.
 """
 
 DAILY_CAP_TOKENS = 200_000

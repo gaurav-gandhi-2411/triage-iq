@@ -1,0 +1,111 @@
+{
+  "provenance": {
+    "script": "scripts/interval_coherence_d7.py",
+    "vscode_rows": "d7_vscode_after_rows.parquet",
+    "k8s_rows": "d7_k8s_after_rows.parquet",
+    "vscode_Q_hours": 1.2655,
+    "llm_calls": 0
+  },
+  "vscode": {
+    "served_recentred_plus_Q": {
+      "full_window": {
+        "n": 616,
+        "coverage_wilson95": [
+          0.8247,
+          0.7927,
+          0.8527
+        ],
+        "median_width_d": 91.692,
+        "lower_miss_frac": 0.1753,
+        "upper_miss_frac": 0.0
+      },
+      "holdout_last_60pct": {
+        "n": 370,
+        "coverage_wilson95": [
+          0.8216,
+          0.7794,
+          0.8573
+        ],
+        "median_width_d": 93.396,
+        "lower_miss_frac": 0.1784,
+        "upper_miss_frac": 0.0
+      }
+    },
+    "served_recentred_raw": {
+      "full_window": {
+        "n": 616,
+        "coverage_wilson95": [
+          0.4886,
+          0.4494,
+          0.5281
+        ],
+        "median_width_d": 91.593,
+        "lower_miss_frac": 0.5114,
+        "upper_miss_frac": 0.0
+      },
+      "holdout_last_60pct": {
+        "n": 370,
+        "coverage_wilson95": [
+          0.4541,
+          0.4041,
+          0.505
+        ],
+        "median_width_d": 93.297,
+        "lower_miss_frac": 0.5459,
+        "upper_miss_frac": 0.0
+      }
+    },
+    "before_model_centred_plus_Q": {
+      "full_window": {
+        "n": 616,
+        "coverage_wilson95": [
+          0.7695,
+          0.7346,
+          0.801
+        ],
+        "median_width_d": 139.97,
+        "lower_miss_frac": 0.2305,
+        "upper_miss_frac": 0.0
+      },
+      "holdout_last_60pct": {
+        "n": 370,
+        "coverage_wilson95": [
+          0.7405,
+          0.6936,
+          0.7826
+        ],
+        "median_width_d": 146.244,
+        "lower_miss_frac": 0.2595,
+        "upper_miss_frac": 0.0
+      }
+    },
+    "verdict": {
+      "target": 0.8,
+      "served_ci_contains_target": true,
+      "served_point_meets_target": true
+    }
+  },
+  "k8s": {
+    "n": 2992,
+    "n_point_outside_interval": 5,
+    "pct_outside": 0.167,
+    "n_below_lo": 5,
+    "n_above_hi": 0,
+    "unclamped": {
+      "mae_d": 104.229,
+      "median_ae_d": 3.5197
+    },
+    "clamped": {
+      "mae_d": 104.2272,
+      "median_ae_d": 3.5197
+    },
+    "changed_rows_abs_shift_d": [
+      0.292,
+      2.2349,
+      0.0916,
+      1.9026,
+      0.6222
+    ],
+    "interval_untouched": true
+  }
+}

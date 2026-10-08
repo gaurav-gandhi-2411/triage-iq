@@ -120,6 +120,41 @@ majority prior was already served; the study's 75.97% was the unserved classifie
 coverage over the whole window 82.5% [79.3, 85.3] at median width 91.7 d (not held out: includes
 the calibration rows).
 
+### Interval coherence (owner request 2026-10-08; `reports/interval_coherence_d7.json`)
+
+Rows: the D7 served outputs of the real `_collect_signals` (zero LLM calls), script
+`scripts/interval_coherence_d7.py`. Hold-out = the chronological last 60 pct of the vscode window
+(n=370), the part the stored Q (fitted on the first 40 pct of this window, on the MODEL-centred
+construction) never saw.
+
+**vscode: the CQR guarantee does not transfer to the re-centred interval by construction, so it was
+measured. It does not miss; no recalibration was made.** Served interval (re-centred, +/- stored Q,
+as `api/app.py` attaches it), nominal 80 pct:
+
+| Interval | hold-out coverage (Wilson 95) | median width | full window n=616 |
+|---|---|---|---|
+| before: model-centred +/- Q | 74.1% [69.4, 78.3] | 146.2 d | 77.0% [73.5, 80.1], 140.0 d |
+| served: re-centred +/- Q | 82.2% [77.9, 85.7] | 93.4 d | 82.5% [79.3, 85.3], 91.7 d |
+| re-centred, no Q (what the prompt shows) | 45.4% [40.4, 50.5] | 93.3 d | 48.9% [44.9, 52.8], 91.6 d |
+
+Width 146 -> 93 d (-36 pct) with coverage up 8 pp. The point estimate meets the target and the CI
+contains 80 pct; its lower bound (77.9) does not clear it, which is what one 7-day window supports
+and no more. A recalibration for the served construction was also computed
+(`reports/vscode_naive_serving_eval.json`, C1 = fresh Q on the first 40 pct): 80.0% [75.6, 83.8]
+hold-out (77.8% on the 30/70 split), no better than the stored Q (C2, 82.7% [78.5, 86.2]), so the
+stored Q stays and `NAIVE_INTERVAL_COVERAGE` is unchanged. Two cautions: (1) the coverage comes
+largely from Q lifting a lower bound of a few hours over issues that resolve in about 1 h; the
+interval that the PROMPT shows (no Q) covers 45 pct, so the prompt's range is not an 80 pct
+interval, the API's conformal interval is; (2) a single window, train median 3.84 d vs test
+median 0.049 d: marginal coverage elsewhere is not established.
+
+**k8s: 5 of 2,992 served points (0.17 pct, all below the lower bound; shifts 0.09-2.23 d) lay
+outside their own unchanged model interval.** The point is now clamped onto the interval
+(`min(max(median, lo), hi)`), the response carries `resolution_point_clamped: true` for exactly
+those requests (false otherwise, and always false for vscode and the model path), and the prompt
+shows the clamped point. Effect on the served-path metrics: MAE 104.229 -> 104.227 d, median AE
+3.520 -> 3.520 d (unchanged at four decimals); interval, bucket and retrieval are untouched.
+
 ## Consequences
 
 - vscode point error equals naive by construction. The product claim is now honest ("typical

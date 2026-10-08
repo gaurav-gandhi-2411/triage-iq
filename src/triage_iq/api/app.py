@@ -466,6 +466,8 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     result["resolution_point_days"] = meta.get("resolution_point_days")
     result["resolution_point_source"] = meta.get("resolution_point_source", "model")
     result["resolution_interval_basis"] = meta.get("resolution_interval_basis", "model")
+    # True when the train median fell outside the served interval and was clamped onto its edge.
+    result["resolution_point_clamped"] = bool(meta.get("resolution_point_clamped", False))
     return JSONResponse(content=result)
 
 

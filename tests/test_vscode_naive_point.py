@@ -338,3 +338,48 @@ def test_api_model_basis_keeps_artifact_coverage_and_defaults_source_to_model() 
     assert body["resolution_point_source"] == "model"
     assert body["resolution_interval_basis"] == "model"
     assert body["resolution_interval_conformal"]["empirical_coverage"] == pytest.approx(0.7459)
+
+
+# --- clamp: the served point never sits outside its own interval (GG 2026-10-08, P1b) ----------
+
+
+def test_k8s_point_below_interval_is_clamped_to_lower_edge_and_flagged() -> None:
+    a = _assistant(K8S)  # train median 30 h = 1.25 d
+    point, lo, hi, source, basis, clamped = a._apply_point_trust(9.0, 2.0, 40.0)
+    assert (point, lo, hi) == (2.0, 2.0, 40.0)  # median 1.25 d < lo 2.0 d -> lo
+    assert (source, basis, clamped) == ("train_median", "model", True)
+
+
+def test_k8s_point_above_interval_is_clamped_to_upper_edge() -> None:
+    a = _assistant(K8S)
+    point, _, hi, _, _, clamped = a._apply_point_trust(0.5, 0.1, 1.0)
+    assert (point, hi, clamped) == (1.0, 1.0, True)  # median 1.25 d > hi 1.0 d -> hi
+
+
+def test_k8s_point_inside_interval_is_not_clamped() -> None:
+    a = _assistant(K8S)
+    point, *_, clamped = a._apply_point_trust(9.0, 0.5, 40.0)
+    assert (point, clamped) == (pytest.approx(30.0 / 24.0), False)
+
+
+def test_clamped_point_is_what_the_prompt_shows_and_the_flag_is_in_signals() -> None:
+    class _NarrowHigh(_Predictor):
+        def predict_intervals(self, X):  # interval entirely above the 1.25 d median
+            return np.array([48.0]), np.array([240.0])
+
+    sig = _assistant(K8S, predictor=_NarrowHigh(_pca()))._collect_signals(_issue())
+    assert sig["resolution_point_clamped"] is True
+    assert sig["pred_days"] == sig["lo_days"] == 2.0
+    assert "2.0 days" in sig["prompt"] or "2.0 d" in sig["prompt"]
+    assert "1.2 days" not in sig["prompt"]
+
+
+def test_trusted_path_and_vscode_never_clamp() -> None:
+    assert _assistant(VSCODE)._collect_signals(_issue())["resolution_point_clamped"] is False
+    a = _assistant(K8S)
+    assert a._apply_point_trust(9.0, 0.5, 40.0, model_ok=False)[-1] is False  # fixed 1-30 d fallback
+
+
+def test_api_exposes_the_clamp_flag_defaulting_false() -> None:
+    assert _post({})["resolution_point_clamped"] is False
+    assert _post({"resolution_point_clamped": True})["resolution_point_clamped"] is True

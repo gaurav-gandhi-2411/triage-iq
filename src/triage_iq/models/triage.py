@@ -832,6 +832,7 @@ class TriageAssistant:
             "resolution_point_days": signals["resolution_point_days"],
             "resolution_point_source": signals["resolution_point_source"],
             "resolution_interval_basis": signals["resolution_interval_basis"],
+            "resolution_point_clamped": signals.get("resolution_point_clamped", False),
             "llm_status": llm_status,
             # None for every status except degraded_schema_invalid (SchemaValidationError's
             # groq_error_code, e.g. "json_validate_failed") -- surfaced for
@@ -931,8 +932,12 @@ class TriageAssistant:
 
     def _apply_point_trust(
         self, pred_days: float, lo_days: float, hi_days: float, model_ok: bool = True
-    ) -> tuple[float, float, float, str, str]:
-        """Apply POINT_ESTIMATE_TRUSTED (ADR-0064). Returns (point, lo, hi, source, basis).
+    ) -> tuple[float, float, float, str, str, bool]:
+        """Apply POINT_ESTIMATE_TRUSTED (ADR-0064). Returns (point, lo, hi, source, basis, clamped).
+
+        clamped is True when the served train median fell outside the served interval and was
+        moved onto its nearest edge, so the prompt never shows a point its own interval excludes
+        (k8s: the model-centred interval is kept and 5 of 2,992 test rows excluded the median).
 
         basis is "naive_scaled" when the interval was re-centred on the naive median, else
         "model" (the interval is still the model's Q10/Q90).
@@ -945,23 +950,24 @@ class TriageAssistant:
         a request must never fail here.
         """
         if POINT_ESTIMATE_TRUSTED.get(repo_slug(self.repo), True):
-            return pred_days, lo_days, hi_days, "model", "model"
+            return pred_days, lo_days, hi_days, "model", "model", False
         naive = self._naive_median_days()
         if naive is None:
             logger.warning(
                 "Naive median unavailable for untrusted point estimate, serving the model output",
                 extra={"repo": self.repo, "reason": "no_train_median"},
             )
-            return pred_days, lo_days, hi_days, "model", "model"
+            return pred_days, lo_days, hi_days, "model", "model", False
         if model_ok and INTERVAL_RECENTRED.get(repo_slug(self.repo), True):
             scaled = naive_scaled_interval(naive, pred_days, lo_days, hi_days)
             if scaled is not None:
-                return naive, scaled[0], scaled[1], POINT_SOURCE_TRAIN_MEDIAN, "naive_scaled"
+                return naive, scaled[0], scaled[1], POINT_SOURCE_TRAIN_MEDIAN, "naive_scaled", False
             logger.warning(
                 "Naive-scaled interval not computable, keeping the model interval",
                 extra={"repo": self.repo, "reason": "degenerate_model_point"},
             )
-        return naive, lo_days, hi_days, POINT_SOURCE_TRAIN_MEDIAN, "model"
+        point = min(max(naive, lo_days), hi_days)
+        return point, lo_days, hi_days, POINT_SOURCE_TRAIN_MEDIAN, "model", point != naive
 
     def _collect_signals(self, issue: pd.Series) -> dict:
         from triage_iq.prompts.triage_prompt import build_triage_prompt
@@ -1048,8 +1054,10 @@ class TriageAssistant:
             resolution_bucket, resolution_conf_pct = "days", 33.0
         # Raw model outputs, kept for diagnostics/eval before any trust override (ADR-0064).
         model_point_days, model_lo_days, model_hi_days = pred_days, lo_days, hi_days
-        pred_days, lo_days, hi_days, point_source, interval_basis = self._apply_point_trust(
-            pred_days, lo_days, hi_days, model_ok=predictor_ok
+        pred_days, lo_days, hi_days, point_source, interval_basis, point_clamped = (
+            self._apply_point_trust(
+                pred_days, lo_days, hi_days, model_ok=predictor_ok
+            )
         )
         t_predict = time.perf_counter() - t3
 
@@ -1078,6 +1086,7 @@ class TriageAssistant:
             "resolution_point_days": pred_days,
             "resolution_point_source": point_source,
             "resolution_interval_basis": interval_basis,
+            "resolution_point_clamped": point_clamped,
             "model_point_days": model_point_days,
             "model_lo_days": model_lo_days,
             "model_hi_days": model_hi_days,

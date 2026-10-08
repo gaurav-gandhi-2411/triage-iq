@@ -180,11 +180,17 @@ def test_vscode_non_resolution_fields_unchanged_vs_model_path(monkeypatch) -> No
     assert model["resolution_point_source"] == "model"
     for key in ("classifier_top3", "similar_raw", "resolution_bucket", "resolution_conf_pct"):
         assert served[key] == model[key]
+    # Only the System 3 block differs: numbers, plus (ADR-0064) a header and note that say the point
+    # is a historical median instead of telling the synthesis model that LightGBM predicted it.
+    drop = ("Point estimate:", "80% prediction", "--- SYSTEM 3", "Note: ")
     strip = lambda p: "\n".join(  # noqa: E731
-        ln for ln in p.splitlines() if not ln.startswith(("Point estimate:", "80% prediction"))
+        ln for ln in p.splitlines() if not ln.startswith(drop)
     )
     assert strip(served["prompt"]) == strip(model["prompt"])
     assert served["prompt"] != model["prompt"]
+    assert "RESOLUTION TIME ESTIMATE (historical median" in served["prompt"]
+    assert "RESOLUTION TIME PREDICTOR (LightGBM)" not in served["prompt"]
+    assert "RESOLUTION TIME PREDICTOR (LightGBM)" in model["prompt"]
 
 
 def test_naive_scaled_interval_guards() -> None:

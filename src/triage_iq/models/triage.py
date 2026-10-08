@@ -1066,6 +1066,7 @@ class TriageAssistant:
             repo=self.repo,
             resolution_bucket=resolution_bucket if _include_bucket else None,
             resolution_confidence_pct=resolution_conf_pct if _include_bucket else None,
+            resolution_point_source=point_source,
         )
         return {
             "prompt": prompt,
@@ -1195,6 +1196,7 @@ class TriageAssistant:
                     resolution_lower_days=signals["lo_days"],
                     resolution_upper_days=signals["hi_days"],
                     repo=self.repo,
+                    resolution_point_source=signals.get("resolution_point_source", "model"),
                     resolution_bucket=(
                         signals["resolution_bucket"] if signals["_include_bucket"] else None
                     ),

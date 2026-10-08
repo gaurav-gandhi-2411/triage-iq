@@ -3,20 +3,21 @@ name: Deploy to Cloud Run
 on:
   push:
     branches: [main]
-    # Skip paths that never reach the built image or the deploy job itself.
-    # Verified against docker/Dockerfile.prod's COPY list before adding any
-    # entry here — reports/** is ignored EXCEPT eval_summary.json and eval_baseline.json,
-    # which Dockerfile.prod bakes in directly and /eval/summary serves live.
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
-      - 'notebooks/**'
-      - 'eval/**'
-      - 'tests/**'
-      - 'deploy/**'
-      - 'reports/**'
-      - '!reports/eval_summary.json'
-      - '!reports/eval_baseline.json'  # baked in for /eval/summary's current_llm_baseline
+    # Allowlist, not paths-ignore (2026-10-08): deploy only when something baked into the image
+    # or run by this job changed. A merge that cannot change production (analysis scripts, eval,
+    # tests, docs) must not spend Groq smoke-test tokens or risk a red deploy (#160 did, twice).
+    # Pinned by tests/test_deploy_paths_filter.py against docker/Dockerfile.prod's COPY sources:
+    # add a COPY there and that test fails until the path is listed here.
+    paths:
+      - 'src/**'                            # COPY src/ (code, prompts, loader, app)
+      - 'pyproject.toml'                    # COPY pyproject.toml
+      - 'requirements.lock'                 # COPY requirements.lock (pip layer)
+      - 'docker/Dockerfile.prod'            # the image recipe itself
+      - 'reports/eval_summary.json'         # baked in, served live by /eval/summary
+      - 'reports/eval_baseline.json'        # baked in, read as current_llm_baseline
+      - 'data/models/MANIFEST.sha256'       # baked in; model objects come from GCS, pinned by hash
+      - 'scripts/verify_model_manifest.py'  # run by this job as the drift guard
+      - '.github/workflows/deploy.yml'      # the deploy job itself
   workflow_dispatch:
 
 # Serialize deploys to the same ref — two unordered concurrent `gcloud run

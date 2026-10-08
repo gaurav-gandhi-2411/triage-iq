@@ -495,7 +495,9 @@ def _check_groq(cfg) -> DependencyStatus:  # noqa: ANN001 -- Settings, avoids im
         return DependencyStatus(name="groq", healthy=False, detail=f"{type(exc).__name__}: {exc}")
 
 
-@app.get("/health", response_model=HealthResponse)
+# HEAD is routed to the same handler (same status, body dropped by the server): UptimeRobot
+# probes with HEAD first, and the 405 made every check cost two requests.
+@app.api_route("/health", methods=["GET", "HEAD"], response_model=HealthResponse)
 def health(request: Request, deps: int = 0) -> HealthResponse | JSONResponse:
     """Liveness by default (deps=0, always fast, never calls Groq — used by Cloud Run's
     startupProbe). Pass ?deps=1 for a real readiness check: exercises Groq with a live,

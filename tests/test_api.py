@@ -106,6 +106,26 @@ def test_health(client):
     assert body["uptime_s"] >= 0
 
 
+def test_health_answers_head_like_get(client):
+    """UptimeRobot probes with HEAD first; it got 405. HEAD must carry GET's status, no body."""
+    g = client.get("/health")
+    h = client.head("/health")
+    assert h.status_code == g.status_code == 200
+    assert h.content == b""
+    assert h.headers["content-type"] == g.headers["content-type"]
+
+
+def test_health_head_keeps_deps_semantics(client):
+    """HEAD /health?deps=1 must fail (503) exactly when GET does -- a monitor on HEAD must not
+    see 200 for an unhealthy dependency."""
+    from triage_iq.api.schemas import DependencyStatus
+
+    with patch("triage_iq.api.app._check_groq") as mock_check:
+        mock_check.return_value = DependencyStatus(name="groq", healthy=False, detail="down")
+        assert client.get("/health?deps=1").status_code == 503
+        assert client.head("/health?deps=1").status_code == 503
+
+
 def test_triage_returns_plan(client):
     r = client.post("/triage", json={
         "repo": "microsoft/vscode",

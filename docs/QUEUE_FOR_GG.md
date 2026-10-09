@@ -18,11 +18,10 @@ Last updated 2026-10-08 (round 5). Everything else is in `docs/DECISION_LOG_2026
 
 ## Dashboard / account actions (only you can do these)
 
-2. **Recreate the Vercel deploy hook, delete the old one** (old URL was pasted in chat; hook id `Xafi3lf3AT`,
-   name `prod-main`). Project `triage-iq` -> Settings -> Git -> Deploy Hooks. The API has the endpoints, but my
-   create call was refused by the permission classifier (a new secret-bearing credential), so it is yours.
-   Nothing uses the hook (no workflow, no GitHub secret), so delete-and-recreate breaks nothing; do not paste
-   the new URL anywhere saved (D52).
+2. **Delete the exposed Vercel deploy hook (delete only, do not recreate).** Project `triage-iq` -> Settings ->
+   Git -> Deploy Hooks -> delete `prod-main` (id `Xafi3lf3AT`; its URL was pasted in chat). Nothing uses it (no
+   workflow, no GitHub secret). You authorised the deletion; my API DELETE was refused by the permission
+   classifier on 2026-10-09 (the CLI wants a confirmation-skip flag) and I did not route around it (D54).
 3. **Set shorter Vercel deployment retention** (re-checked 2026-10-08: the API still rejects the field, 400): projects `gaurav-gandhi` and `samidha-reviews-web`,
    previews 7 d, canceled 3 d, errored 3 d, production 30 d / keep 10.
 4. **Check the Vercel Usage page** for Functions Storage (<10 GB?). I cannot read it.

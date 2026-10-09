@@ -161,6 +161,10 @@ class ModelStore:
             max_tokens if max_tokens is not None else int(os.environ.get("TRIAGE_MAX_TOKENS", "2048"))
         )
 
+        # Loaded first: the served interval is the conformal one and is fixed before synthesis.
+        with _timed("conformal_adjustments"):
+            conformal = _load_conformal_adjustments(models_dir)
+
         bundles: dict[str, RepoBundle] = {}
         for repo, slug in _REPO_SLUGS.items():
             try:
@@ -183,6 +187,7 @@ class ModelStore:
                     groq_api_key=key,
                     cache=cache,
                     max_tokens=effective_max_tokens,
+                    conformal_adjustment=conformal.get(repo),
                 )
                 bundles[repo] = RepoBundle(clf, det, pred, train_df, asst)
                 logger.info("Loaded %s — OK", repo)
@@ -192,8 +197,6 @@ class ModelStore:
         if not bundles:
             raise RuntimeError("No repo models could be loaded; check data/models/")
 
-        with _timed("conformal_adjustments"):
-            conformal = _load_conformal_adjustments(models_dir)
         return cls(bundles, start_time=time.monotonic(), conformal_adjustments=conformal)
 
 

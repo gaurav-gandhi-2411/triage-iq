@@ -713,8 +713,14 @@ class TriageAssistant:
         use_structured_output: bool = True,
         enable_validated_override_rescue: bool = False,
         artifact_hashes: dict[str, str] | None = None,
+        conformal_adjustment: dict | None = None,
     ) -> None:
         self.repo = repo
+        # CQR store entry for this repo (loader._load_conformal_adjustments). When present the
+        # served interval is the conformal one BEFORE synthesis (ADR-0059 addendum 2026-10-09):
+        # the prompt, the plan's interval fields and the API's conformal interval then carry the
+        # same numbers. None (tests, scripts, store missing) keeps the raw model interval.
+        self.conformal_adjustment = conformal_adjustment
         self.classifier = classifier
         self.detector = detector
         self.predictor = predictor
@@ -833,6 +839,9 @@ class TriageAssistant:
             "resolution_point_source": signals["resolution_point_source"],
             "resolution_interval_basis": signals["resolution_interval_basis"],
             "resolution_point_clamped": signals.get("resolution_point_clamped", False),
+            "resolution_interval_conformal_applied": signals.get(
+                "resolution_interval_conformal_applied", False
+            ),
             "llm_status": llm_status,
             # None for every status except degraded_schema_invalid (SchemaValidationError's
             # groq_error_code, e.g. "json_validate_failed") -- surfaced for
@@ -969,6 +978,27 @@ class TriageAssistant:
         point = min(max(naive, lo_days), hi_days)
         return point, lo_days, hi_days, POINT_SOURCE_TRAIN_MEDIAN, "model", point != naive
 
+    def _apply_conformal(
+        self, point: float, lo_days: float, hi_days: float, model_ok: bool
+    ) -> tuple[float, float, float, bool, bool]:
+        """Widen (or narrow) the interval by the CQR adjustment, as api/app.py used to do after
+        synthesis. Returns (point, lo, hi, applied, clamped).
+
+        Skipped (applied False) when no adjustment exists for the repo or the predictor failed:
+        the fixed fallback interval is not a model quantile interval, so Q does not belong on it.
+        The point is re-clamped into the adjusted interval, because a negative Q (k8s v2) can
+        shrink the interval past a median that sat just inside the raw one.
+        """
+        adj = self.conformal_adjustment
+        if not adj or not model_ok:
+            return point, lo_days, hi_days, False, False
+        q_days = float(adj["q_adjustment_hours"]) / 24.0
+        new_lo, new_hi = max(0.0, lo_days - q_days), hi_days + q_days
+        if new_hi < new_lo:  # an extreme negative Q on a narrow interval: keep the raw one
+            return point, lo_days, hi_days, False, False
+        clamped_point = min(max(point, new_lo), new_hi)
+        return clamped_point, new_lo, new_hi, True, clamped_point != point
+
     def _collect_signals(self, issue: pd.Series) -> dict:
         from triage_iq.prompts.triage_prompt import build_triage_prompt
 
@@ -1059,6 +1089,11 @@ class TriageAssistant:
                 pred_days, lo_days, hi_days, model_ok=predictor_ok
             )
         )
+        raw_lo_days, raw_hi_days = lo_days, hi_days  # the point-trust interval, before CQR
+        pred_days, lo_days, hi_days, conformal_applied, conformal_clamped = self._apply_conformal(
+            pred_days, lo_days, hi_days, model_ok=predictor_ok
+        )
+        point_clamped = point_clamped or conformal_clamped
         t_predict = time.perf_counter() - t3
 
         # Config C: include bucket in prompt when TRIAGE_PROMPT_INCLUDE_BUCKET=1
@@ -1075,6 +1110,7 @@ class TriageAssistant:
             resolution_bucket=resolution_bucket if _include_bucket else None,
             resolution_confidence_pct=resolution_conf_pct if _include_bucket else None,
             resolution_point_source=point_source,
+            interval_calibrated=conformal_applied,
         )
         return {
             "prompt": prompt,
@@ -1087,6 +1123,9 @@ class TriageAssistant:
             "resolution_point_source": point_source,
             "resolution_interval_basis": interval_basis,
             "resolution_point_clamped": point_clamped,
+            "resolution_interval_conformal_applied": conformal_applied,
+            "raw_lo_days": raw_lo_days,
+            "raw_hi_days": raw_hi_days,
             "model_point_days": model_point_days,
             "model_lo_days": model_lo_days,
             "model_hi_days": model_hi_days,
@@ -1206,6 +1245,7 @@ class TriageAssistant:
                     resolution_upper_days=signals["hi_days"],
                     repo=self.repo,
                     resolution_point_source=signals.get("resolution_point_source", "model"),
+                    interval_calibrated=signals.get("resolution_interval_conformal_applied", False),
                     resolution_bucket=(
                         signals["resolution_bucket"] if signals["_include_bucket"] else None
                     ),

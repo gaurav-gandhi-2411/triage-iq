@@ -155,6 +155,22 @@ those requests (false otherwise, and always false for vscode and the model path)
 shows the clamped point. Effect on the served-path metrics: MAE 104.229 -> 104.227 d, median AE
 3.520 -> 3.520 d (unchanged at four decimals); interval, bucket and retrieval are untouched.
 
+**The prompt now shows the served interval (2026-10-09, ADR-0059 addendum).** Caution (1) above is
+resolved: the CQR adjustment is applied before synthesis, so the prompt, the plan's interval fields
+and `resolution_interval_conformal` carry one interval, and the prompt line reads "80% prediction
+interval (coverage-calibrated)". Coverage of the interval now in the prompt (served path, Wilson 95,
+`reports/interval_coherence_d7.json`): vscode hold-out 82.2% [77.9, 85.7] (n=370, median width
+93.4 d; the API reports the created_at-split figure 82.7% [78.5, 86.2], same interval); k8s hold-out
+(last 70 pct, the CQR v2 split) 79.7% [77.9, 81.4] (n=2,095, 237.1 d), full window 79.9% [78.4, 81.2]
+(n=2,992). The clamp is applied against this served interval; for k8s the count stays 5 of 2,992.
+Measured before the change on the recorded cassette (zero LLM calls,
+`reports/prose_vs_conformal_interval_precheck.json`): 0 of 64 plans quote a prompt bound in prose and
+0 contradict either interval, so the old mismatch was mostly the false "80%" label and the lower
+bound (vscode 11/11 prompt lower bounds differ from the conformal ones at display precision, 0.1 d vs
+0.0 d; k8s 53/53 identical because Q is about -1 h against bounds of days). The effect on judged
+quality is unmeasured until the re-record, and confounded with the median point and the System 3
+label.
+
 ## Consequences
 
 - vscode point error equals naive by construction. The product claim is now honest ("typical

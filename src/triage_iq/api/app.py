@@ -348,6 +348,11 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         adj = store.conformal_adjustments.get(body.repo)
         if adj is not None:
             q_days = adj["q_adjustment_hours"] / 24.0
+            # When the assistant already served the conformal interval (ADR-0059 addendum
+            # 2026-10-09) the plan's interval IS the conformal one; adding Q again would apply it
+            # twice. Otherwise (store attached late, predictor fallback) fall back to adding it here.
+            if meta.get("resolution_interval_conformal_applied"):
+                q_days = 0.0
             # ADR-0064: the stored coverage statistics describe the model-quantile interval. When
             # the served interval was re-centred on the naive median, report the coverage measured
             # for THAT interval instead (resolution.NAIVE_INTERVAL_COVERAGE), never the old one.

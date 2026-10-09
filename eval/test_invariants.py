@@ -947,3 +947,27 @@ def test_no_truncated_completions_in_cassette(grounding_reports: list[dict]) -> 
         "Raise max_tokens and re-record -- retrying at the same cap reproduces the same "
         "truncation."
     )
+
+
+def test_prose_and_prompt_describe_the_served_conformal_interval() -> None:
+    """ADR-0059 addendum 2026-10-09: every current synthesis entry was written against the interval
+    the API serves (the CQR-adjusted one, marked "(coverage-calibrated)" in the prompt), and its
+    prose does not contradict that interval. Fails on every pre-change entry, whose prompt carried
+    the raw model interval (vscode coverage 45.4 pct) while the API returned the 82.2 pct one."""
+    import prose_interval_check as pic
+
+    cassette = json.loads((ROOT / "eval" / "cassettes" / "eval_cassette.json").read_text("utf-8"))
+    done = json.loads((ROOT / "eval" / "cassettes" / "recording_checkpoint.json").read_text("utf-8"))[
+        "done"
+    ]
+    keys = {r["synthesis_cache_key"] for r in done.values() if r.get("synthesis_cache_key")}
+    assert keys, "recording_checkpoint.json lists no synthesis entries"
+    bad = {}
+    for k in sorted(keys):
+        entry = cassette["entries"].get(k)
+        v = pic.violations(entry) if entry else ["checkpoint key missing from the cassette"]
+        if v:
+            bad[k[:12]] = v[0]
+    assert not bad, f"{len(bad)}/{len(keys)} synthesis entries disagree with the served interval: " + str(
+        dict(list(bad.items())[:3])
+    )

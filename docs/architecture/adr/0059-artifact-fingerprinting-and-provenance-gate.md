@@ -94,3 +94,22 @@ for a change with no effect on any recorded output (53 calls at about 4k tokens 
 
 Consequence: if conformal values are ever fed into a prompt (for example a calibrated range quoted to
 the model), they must be added back to `_SHARED_PATHS` in the same change.
+
+## Addendum 2026-10-09: the conformal store returns to the fingerprint (reversal of 2026-10-08)
+
+The consequence clause above has fired. Measuring the served vscode interval showed the prompt carried the
+raw model interval (served-path coverage 45.4% [40.4, 50.5], `reports/interval_coherence_d7.json`) while the
+API returned the CQR-adjusted one (82.2% [77.9, 85.7]), so the model wrote prose about numbers a reader never
+saw, and its prompt called a 45% interval "80%". Decision (owner, pre-authorised): the assistant now applies
+the CQR adjustment BEFORE synthesis (`TriageAssistant._apply_conformal`, store entry passed in by
+`loader.load_all`, `eval/run_eval.py` and `eval/record_cassettes.py`), and that one interval feeds the prompt
+("80% prediction interval (coverage-calibrated): [...]"), the plan's `expected_resolution_*_days` and the API's
+`resolution_interval_conformal` (which no longer adds Q a second time when the assistant already did).
+
+Consequences: `data/models/cqr_conformal_adjustments_v2.json` (the file the loader serves; sha256
+`ee5ba3bf26853e062c73a15936f43ec287d8b9f3cafa4d6e0c7eb97818d175d5`) is in `_SHARED_PATHS` again and
+`EXPECTED_ARTIFACT_HASHES.json` was regenerated through `save_expected_hashes` (11 entries, all pre-existing
+hashes unchanged). A different Q is now a different prompt and a re-record. The v1 file stays out: it is no
+longer read at serving. The 2026-10-08 reasoning was correct for the code of that day and is superseded, not
+wrong. New guard: `eval/test_invariants.py::test_prose_and_prompt_describe_the_served_conformal_interval`
+fails on every pre-change entry (64/64 on the cassette recorded before this change).

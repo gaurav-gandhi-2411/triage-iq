@@ -65,6 +65,7 @@ from triage_iq.model_config import TRIAGE_MODEL
 from triage_iq.models.component_classifier import load_classifier
 from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore, compute_judge_prompt_hash
 from triage_iq.models.resolution import ResolutionTimePredictor
+from triage_iq.api.loader import _load_conformal_adjustments
 from triage_iq.models.triage import TriageAssistant, TruncatedCompletionError
 
 # TriageJudge (and therefore Ollama) is imported lazily, only inside _build_judge() -- a
@@ -615,6 +616,7 @@ def _load_models(groq_key: str, cassette: CassettePlayer) -> dict[str, dict]:
                 groq_api_key=groq_key,
                 cache=cassette,
                 artifact_hashes=repo_artifact_hashes,
+                conformal_adjustment=_load_conformal_adjustments(models_dir).get(repo),
             )
             models[repo] = {"classifier": classifier, "predictor": predictor, "train_df": train_df, "assistant": assistant}
             logger.info("Models loaded for %s", repo)

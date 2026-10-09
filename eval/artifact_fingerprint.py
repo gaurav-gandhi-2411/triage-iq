@@ -43,9 +43,11 @@ _PER_REPO_TEMPLATES = [
 
 # Shared across repos.
 _SHARED_PATHS: list[str] = [
-    # The CQR conformal store is deliberately NOT fingerprinted (ADR-0059 addendum 2026-10-08): it is
-    # attached in api/app.py after assistant.triage_with_metadata() returns and never enters a
-    # prompt, a cache key or the judged plan, so changing it cannot change a recorded entry.
+    # The CQR store the loader serves (v2). Out of this list on 2026-10-08 (it was then attached in
+    # api/app.py after synthesis) and BACK IN on 2026-10-09: the assistant now applies Q before
+    # synthesis, so the conformal interval is in the prompt and a different store is a different
+    # prompt (ADR-0059 addendum 2026-10-09).
+    "data/models/cqr_conformal_adjustments_v2.json",
 ]
 
 EXPECTED_HASHES_PATH_REL = "eval/cassettes/EXPECTED_ARTIFACT_HASHES.json"

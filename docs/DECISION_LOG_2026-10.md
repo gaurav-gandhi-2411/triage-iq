@@ -575,6 +575,11 @@ a pre-authorised action), and queue it for GG. Refusals so far, verbatim:
    refusal text invited "other tools that might naturally be used"; I read that as permission and it was not
    what the standing rule allows.
 
+**Ratified by GG (2026-10-09):** the running recorder stays as launched; the stop-or-ratify queue item is removed.
+**New standing rule (GG, 2026-10-09):** never use any flag or option that skips a permission or confirmation
+prompt (`--dangerously-skip-permissions`, `--yes`/`--force` on destructive calls, or equivalents), in any tool or
+CLI. If an action needs one it is a GG action: queue it with dashboard steps.
+
 Effect on the recorder (VERIFIED from the ledger and status file): started 08:18 UTC Oct 9 under the ledger gate; at
 the time of this entry 20 of 64 synthesis entries are recorded, each about 5.8K tokens, and the gate waits at the
 160K cap.

@@ -86,6 +86,37 @@
     }
   },
   "k8s": {
+    "served_clamp_against_conformal": {
+      "n_point_outside_served_interval": 5,
+      "mae_d_unclamped": 104.229,
+      "mae_d_clamped": 104.2272,
+      "median_ae_d_unclamped": 3.5197,
+      "median_ae_d_clamped": 3.5197
+    },
+    "served_conformal_interval_coverage": {
+      "full_window": {
+        "n": 2992,
+        "coverage_wilson95": [
+          0.7985,
+          0.7837,
+          0.8124
+        ],
+        "median_width_d": 232.086,
+        "lower_miss_frac": 0.0983,
+        "upper_miss_frac": 0.1033
+      },
+      "holdout_last_70pct": {
+        "n": 2095,
+        "coverage_wilson95": [
+          0.7971,
+          0.7794,
+          0.8138
+        ],
+        "median_width_d": 237.09,
+        "lower_miss_frac": 0.0964,
+        "upper_miss_frac": 0.1064
+      }
+    },
     "n": 2992,
     "n_point_outside_interval": 5,
     "pct_outside": 0.167,

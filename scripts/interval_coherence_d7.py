@@ -25,6 +25,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+K8S_Q_HOURS = -1.0182  # CQR v2 (cqr_conformal_adjustments_v2.json), 30/70 split
 VSCODE_Q_HOURS = 1.2655  # stored CQR Q served for microsoft/vscode (40/60 split), v1 == v2 entry
 TARGET = 0.80
 
@@ -87,7 +88,31 @@ def k8s_block(df: pd.DataFrame) -> dict:
         ae = np.abs(p - y) / 24.0
         return {"mae_d": round(float(ae.mean()), 4), "median_ae_d": round(float(np.median(ae)), 4)}
 
+    # The interval the prompt now shows is the served conformal one: raw +/- Q (v2).
+    order = np.argsort(df.number.to_numpy())
+    y_o, lo_o, hi_o = y[order], lo[order], hi[order]
+    c_lo, c_hi = np.maximum(0.0, lo_o - K8S_Q_HOURS), hi_o + K8S_Q_HOURS
+    hold = slice(int(len(df) * 0.3), None)  # v2 calibrates on the first 30 pct
+    served_cov = {
+        "full_window": _cov(y_o, c_lo, c_hi),
+        "holdout_last_70pct": _cov(y_o[hold], c_lo[hold], c_hi[hold]),
+    }
+    # The clamp is against the SERVED (conformal) interval; negative Q can exclude a few more.
+    pt = df.pred_hours.to_numpy()
+    cl_lo, cl_hi = np.maximum(0.0, lo - K8S_Q_HOURS), hi + K8S_Q_HOURS
+    outside_c = (pt < cl_lo) | (pt > cl_hi)
+    clamped_c = np.clip(pt, cl_lo, cl_hi)
+    ae_u, ae_c = np.abs(pt - y) / 24.0, np.abs(clamped_c - y) / 24.0
+    served_clamp = {
+        "n_point_outside_served_interval": int(outside_c.sum()),
+        "mae_d_unclamped": round(float(ae_u.mean()), 4),
+        "mae_d_clamped": round(float(ae_c.mean()), 4),
+        "median_ae_d_unclamped": round(float(np.median(ae_u)), 4),
+        "median_ae_d_clamped": round(float(np.median(ae_c)), 4),
+    }
     return {
+        "served_clamp_against_conformal": served_clamp,
+        "served_conformal_interval_coverage": served_cov,
         "n": int(len(df)),
         "n_point_outside_interval": int(outside.sum()),
         "pct_outside": round(100 * float(outside.mean()), 3),

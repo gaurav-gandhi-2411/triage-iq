@@ -18,17 +18,6 @@
         "median_width_d": 91.692,
         "lower_miss_frac": 0.1753,
         "upper_miss_frac": 0.0
-      },
-      "holdout_last_60pct": {
-        "n": 370,
-        "coverage_wilson95": [
-          0.8216,
-          0.7794,
-          0.8573
-        ],
-        "median_width_d": 93.396,
-        "lower_miss_frac": 0.1784,
-        "upper_miss_frac": 0.0
       }
     },
     "served_recentred_raw": {
@@ -41,17 +30,6 @@
         ],
         "median_width_d": 91.593,
         "lower_miss_frac": 0.5114,
-        "upper_miss_frac": 0.0
-      },
-      "holdout_last_60pct": {
-        "n": 370,
-        "coverage_wilson95": [
-          0.4541,
-          0.4041,
-          0.505
-        ],
-        "median_width_d": 93.297,
-        "lower_miss_frac": 0.5459,
         "upper_miss_frac": 0.0
       }
     },
@@ -66,16 +44,46 @@
         "median_width_d": 139.97,
         "lower_miss_frac": 0.2305,
         "upper_miss_frac": 0.0
-      },
-      "holdout_last_60pct": {
+      }
+    },
+    "canonical_holdout_split_40_60_created_at": {
+      "source": "reports/vscode_naive_serving_eval.json split_40_60",
+      "n": 370,
+      "before_model_centred_plus_Q": {
         "n": 370,
         "coverage_wilson95": [
-          0.7405,
-          0.6936,
-          0.7826
+          0.7432,
+          0.6964,
+          0.7851
         ],
-        "median_width_d": 146.244,
-        "lower_miss_frac": 0.2595,
+        "median_width_d": 148.018,
+        "mean_interval_score_d": 135.4,
+        "lower_miss_frac": 0.2568,
+        "upper_miss_frac": 0.0
+      },
+      "served_recentred_plus_Q": {
+        "n": 370,
+        "coverage_wilson95": [
+          0.827,
+          0.7852,
+          0.8622
+        ],
+        "median_width_d": 93.667,
+        "mean_interval_score_d": 81.599,
+        "lower_miss_frac": 0.173,
+        "upper_miss_frac": 0.0,
+        "Q_d": 0.0527
+      },
+      "recentred_no_Q": {
+        "n": 370,
+        "coverage_wilson95": [
+          0.4595,
+          0.4094,
+          0.5104
+        ],
+        "median_width_d": 93.562,
+        "mean_interval_score_d": 81.706,
+        "lower_miss_frac": 0.5405,
         "upper_miss_frac": 0.0
       }
     },

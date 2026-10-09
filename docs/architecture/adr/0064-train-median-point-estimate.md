@@ -123,9 +123,13 @@ the calibration rows).
 ### Interval coherence (owner request 2026-10-08; `reports/interval_coherence_d7.json`)
 
 Rows: the D7 served outputs of the real `_collect_signals` (zero LLM calls), script
-`scripts/interval_coherence_d7.py`. Hold-out = the chronological last 60 pct of the vscode window
-(n=370), the part the stored Q (fitted on the first 40 pct of this window, on the MODEL-centred
-construction) never saw.
+`scripts/interval_coherence_d7.py`. **Canonical vscode figure (API, `/eval`, README, this ADR): 82.7%
+[78.5, 86.2], n=370, the served interval (re-centred, +/- stored Q) on the held-out part of the
+chronological 40/60 split by created_at** (first 40 pct calibration with the eval-set rows excluded from
+calibration, last 60 pct hold-out; `reports/vscode_naive_serving_eval.json` split_40_60 C2, produced by
+`scripts/eval_vscode_naive_serving.py`). A plain last-60-pct cut of the same rows gives 82.2% [77.9, 85.7]
+(two eval-set rows sit on the other side of the boundary); it is not used anywhere. The rows in the table
+below come from that one split; the full-window column (n=616) is not held out.
 
 **vscode: the CQR guarantee does not transfer to the re-centred interval by construction, so it was
 measured. It does not miss; no recalibration was made.** Served interval (re-centred, +/- stored Q,
@@ -133,18 +137,18 @@ as `api/app.py` attaches it), nominal 80 pct:
 
 | Interval | hold-out coverage (Wilson 95) | median width | full window n=616 |
 |---|---|---|---|
-| before: model-centred +/- Q | 74.1% [69.4, 78.3] | 146.2 d | 77.0% [73.5, 80.1], 140.0 d |
-| served: re-centred +/- Q | 82.2% [77.9, 85.7] | 93.4 d | 82.5% [79.3, 85.3], 91.7 d |
-| re-centred, no Q (what the prompt shows) | 45.4% [40.4, 50.5] | 93.3 d | 48.9% [44.9, 52.8], 91.6 d |
+| before: model-centred +/- Q | 74.3% [69.6, 78.5] | 148.0 d | 77.0% [73.5, 80.1], 140.0 d |
+| served: re-centred +/- Q | **82.7% [78.5, 86.2]** | 93.7 d | 82.5% [79.3, 85.3], 91.7 d |
+| re-centred, no Q (what the prompt showed before 2026-10-09) | 46.0% [40.9, 51.0] | 93.6 d | 48.9% [44.9, 52.8], 91.6 d |
 
-Width 146 -> 93 d (-36 pct) with coverage up 8 pp. The point estimate meets the target and the CI
-contains 80 pct; its lower bound (77.9) does not clear it, which is what one 7-day window supports
+Width 148 -> 94 d (-37 pct) with coverage up 8 pp. The point estimate meets the target and the CI
+contains 80 pct; its lower bound (78.5) does not clear it, which is what one 7-day window supports
 and no more. A recalibration for the served construction was also computed
 (`reports/vscode_naive_serving_eval.json`, C1 = fresh Q on the first 40 pct): 80.0% [75.6, 83.8]
 hold-out (77.8% on the 30/70 split), no better than the stored Q (C2, 82.7% [78.5, 86.2]), so the
 stored Q stays and `NAIVE_INTERVAL_COVERAGE` is unchanged. Two cautions: (1) the coverage comes
 largely from Q lifting a lower bound of a few hours over issues that resolve in about 1 h; the
-interval that the PROMPT shows (no Q) covers 45 pct, so the prompt's range is not an 80 pct
+interval that the PROMPT showed (no Q) covers 46 pct, so the prompt's range was not an 80 pct
 interval, the API's conformal interval is; (2) a single window, train median 3.84 d vs test
 median 0.049 d: marginal coverage elsewhere is not established.
 
@@ -159,8 +163,8 @@ shows the clamped point. Effect on the served-path metrics: MAE 104.229 -> 104.2
 resolved: the CQR adjustment is applied before synthesis, so the prompt, the plan's interval fields
 and `resolution_interval_conformal` carry one interval, and the prompt line reads "80% prediction
 interval (coverage-calibrated)". Coverage of the interval now in the prompt (served path, Wilson 95,
-`reports/interval_coherence_d7.json`): vscode hold-out 82.2% [77.9, 85.7] (n=370, median width
-93.4 d; the API reports the created_at-split figure 82.7% [78.5, 86.2], same interval); k8s hold-out
+`reports/interval_coherence_d7.json`): vscode 82.7% [78.5, 86.2] (n=370, median width 93.7 d, the
+canonical split named above, the figure the API reports); k8s hold-out
 (last 70 pct, the CQR v2 split) 79.7% [77.9, 81.4] (n=2,095, 237.1 d), full window 79.9% [78.4, 81.2]
 (n=2,992). The clamp is applied against this served interval; for k8s the count stays 5 of 2,992.
 Measured before the change on the recorded cassette (zero LLM calls,

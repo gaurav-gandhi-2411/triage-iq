@@ -1,7 +1,7 @@
 """The conformal interval is computed BEFORE synthesis (ADR-0059 addendum 2026-10-09).
 
-Until then the prompt carried the raw model interval (vscode served-path coverage 45.4 pct) while
-the API returned the conformal one (82.2 pct): prose and fields described different numbers.
+Until then the prompt carried the raw model interval (vscode served-path coverage 46.0 pct) while
+the API returned the conformal one (82.7 pct): prose and fields described different numbers.
 Now one interval is built once and shared by the prompt, the plan fields and the API's
 resolution_interval_conformal.
 """

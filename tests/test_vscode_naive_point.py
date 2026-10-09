@@ -383,3 +383,24 @@ def test_trusted_path_and_vscode_never_clamp() -> None:
 def test_api_exposes_the_clamp_flag_defaulting_false() -> None:
     assert _post({})["resolution_point_clamped"] is False
     assert _post({"resolution_point_clamped": True})["resolution_point_clamped"] is True
+
+
+def test_vscode_served_coverage_is_one_figure_across_api_eval_and_evidence() -> None:
+    """Canonical: 82.7% [78.5, 86.2], n=370, chronological 40/60 split by created_at. The API
+    constant, the /eval summary block and the evidence JSON must agree, so README/ADRs that quote
+    it have a single source (owner request 2026-10-09)."""
+    import json
+    from pathlib import Path
+
+    from triage_iq.models.resolution import NAIVE_INTERVAL_COVERAGE
+
+    root = Path(__file__).resolve().parents[1]
+    ev = json.loads((root / "reports/vscode_naive_serving_eval.json").read_text("utf-8"))
+    c2 = ev["interval"]["split_40_60"]["candidates"]["C2_naive_scaled_model_width_stored_Q"]
+    summ = json.loads((root / "reports/eval_summary.json").read_text("utf-8"))
+    iv = summ["resolution_served"]["repos"]["microsoft/vscode"]["interval"]
+    api = NAIVE_INTERVAL_COVERAGE["microsoft_vscode"]
+    assert c2["n"] == iv["n_heldout"] == 370
+    assert round(c2["coverage_wilson95"][0], 3) == iv["coverage_heldout"] == api["empirical_coverage"]
+    assert [round(x, 4) for x in c2["coverage_wilson95"][1:]] == iv["coverage_heldout_ci95"] == [
+        api["coverage_ci95_lower"], api["coverage_ci95_upper"]]

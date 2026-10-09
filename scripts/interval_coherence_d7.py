@@ -49,7 +49,7 @@ def _cov(y: np.ndarray, lo: np.ndarray, hi: np.ndarray) -> dict:
     }
 
 
-def vscode_block(df: pd.DataFrame) -> dict:
+def vscode_block(df: pd.DataFrame, canon: dict) -> dict:
     df = df.sort_values("number").reset_index(drop=True)  # issue number is monotone in time
     y = df.true_hours.to_numpy()
     q = VSCODE_Q_HOURS
@@ -57,18 +57,25 @@ def vscode_block(df: pd.DataFrame) -> dict:
     served_hi = df.hi_hours.to_numpy() + q
     model_lo = np.maximum(0.0, df.model_lo_hours.to_numpy() - q)
     model_hi = df.model_hi_hours.to_numpy() + q
-    hold = slice(int(len(df) * 0.4), None)
     out = {}
     for name, (lo, hi) in {
         "served_recentred_plus_Q": (served_lo, served_hi),
         "served_recentred_raw": (df.lo_hours.to_numpy(), df.hi_hours.to_numpy()),
         "before_model_centred_plus_Q": (model_lo, model_hi),
     }.items():
-        out[name] = {
-            "full_window": _cov(y, lo, hi),
-            "holdout_last_60pct": _cov(y[hold], lo[hold], hi[hold]),
-        }
-    served = out["served_recentred_plus_Q"]["full_window"]["coverage_wilson95"]
+        out[name] = {"full_window": _cov(y, lo, hi)}  # n=616, NOT held out
+    # The canonical held-out figures come from the study split (created_at order, first 40 pct
+    # calibration with eval rows excluded, n=370): one split for the API, /eval, README and ADRs.
+    cands = canon["interval"]["split_40_60"]["candidates"]
+    out["canonical_holdout_split_40_60_created_at"] = {
+        "source": "reports/vscode_naive_serving_eval.json split_40_60",
+        "n": cands["C2_naive_scaled_model_width_stored_Q"]["n"],
+        "before_model_centred_plus_Q": cands["A_model_quantiles_stored_Q"],
+        "served_recentred_plus_Q": cands["C2_naive_scaled_model_width_stored_Q"],
+        "recentred_no_Q": cands["C0_naive_scaled_model_width_raw"],
+    }
+    served = cands["C2_naive_scaled_model_width_stored_Q"]["coverage_wilson95"][1:]
+    served = [cands["C2_naive_scaled_model_width_stored_Q"]["coverage_wilson95"][0], *served]
     out["verdict"] = {
         "target": TARGET,
         "served_ci_contains_target": served[1] <= TARGET <= served[2],
@@ -131,6 +138,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--vscode", required=True, type=Path)
     ap.add_argument("--k8s", required=True, type=Path)
+    ap.add_argument("--vscode-eval", required=True, type=Path)
     ap.add_argument("--out", required=True, type=Path)
     a = ap.parse_args()
     res = {
@@ -141,7 +149,9 @@ def main() -> None:
             "vscode_Q_hours": VSCODE_Q_HOURS,
             "llm_calls": 0,
         },
-        "vscode": vscode_block(pd.read_parquet(a.vscode)),
+        "vscode": vscode_block(
+            pd.read_parquet(a.vscode), json.loads(a.vscode_eval.read_text(encoding="utf-8"))
+        ),
         "k8s": k8s_block(pd.read_parquet(a.k8s)),
     }
     a.out.write_text(json.dumps(res, indent=2) + "\n", encoding="utf-8")

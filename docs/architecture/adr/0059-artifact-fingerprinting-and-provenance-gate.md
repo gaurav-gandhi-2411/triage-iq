@@ -98,8 +98,8 @@ the model), they must be added back to `_SHARED_PATHS` in the same change.
 ## Addendum 2026-10-09: the conformal store returns to the fingerprint (reversal of 2026-10-08)
 
 The consequence clause above has fired. Measuring the served vscode interval showed the prompt carried the
-raw model interval (served-path coverage 45.4% [40.4, 50.5], `reports/interval_coherence_d7.json`) while the
-API returned the CQR-adjusted one (82.2% [77.9, 85.7]), so the model wrote prose about numbers a reader never
+raw model interval (served-path coverage 46.0% [40.9, 51.0], `reports/vscode_naive_serving_eval.json`) while the
+API returned the CQR-adjusted one (82.7% [78.5, 86.2], n=370, chronological 40/60 split by created_at), so the model wrote prose about numbers a reader never
 saw, and its prompt called a 45% interval "80%". Decision (owner, pre-authorised): the assistant now applies
 the CQR adjustment BEFORE synthesis (`TriageAssistant._apply_conformal`, store entry passed in by
 `loader.load_all`, `eval/run_eval.py` and `eval/record_cassettes.py`), and that one interval feeds the prompt

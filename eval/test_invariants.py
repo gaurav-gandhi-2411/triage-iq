@@ -953,7 +953,7 @@ def test_prose_and_prompt_describe_the_served_conformal_interval() -> None:
     """ADR-0059 addendum 2026-10-09: every current synthesis entry was written against the interval
     the API serves (the CQR-adjusted one, marked "(coverage-calibrated)" in the prompt), and its
     prose does not contradict that interval. Fails on every pre-change entry, whose prompt carried
-    the raw model interval (vscode coverage 45.4 pct) while the API returned the 82.2 pct one."""
+    the raw model interval (vscode coverage 46.0 pct) while the API returned the 82.7 pct one."""
     import prose_interval_check as pic
 
     cassette = json.loads((ROOT / "eval" / "cassettes" / "eval_cassette.json").read_text("utf-8"))

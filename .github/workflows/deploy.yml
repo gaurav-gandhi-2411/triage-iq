@@ -3,20 +3,21 @@ name: Deploy to Cloud Run
 on:
   push:
     branches: [main]
-    # Skip paths that never reach the built image or the deploy job itself.
-    # Verified against docker/Dockerfile.prod's COPY list before adding any
-    # entry here — reports/** is ignored EXCEPT eval_summary.json and eval_baseline.json,
-    # which Dockerfile.prod bakes in directly and /eval/summary serves live.
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
-      - 'notebooks/**'
-      - 'eval/**'
-      - 'tests/**'
-      - 'deploy/**'
-      - 'reports/**'
-      - '!reports/eval_summary.json'
-      - '!reports/eval_baseline.json'  # baked in for /eval/summary's current_llm_baseline
+    # Allowlist, not paths-ignore (2026-10-08): deploy only when something baked into the image
+    # or run by this job changed. A merge that cannot change production (analysis scripts, eval,
+    # tests, docs) must not spend Groq smoke-test tokens or risk a red deploy (#160 did, twice).
+    # Pinned by tests/test_deploy_paths_filter.py against docker/Dockerfile.prod's COPY sources:
+    # add a COPY there and that test fails until the path is listed here.
+    paths:
+      - 'src/**'                            # COPY src/ (code, prompts, loader, app)
+      - 'pyproject.toml'                    # COPY pyproject.toml
+      - 'requirements.lock'                 # COPY requirements.lock (pip layer)
+      - 'docker/Dockerfile.prod'            # the image recipe itself
+      - 'reports/eval_summary.json'         # baked in, served live by /eval/summary
+      - 'reports/eval_baseline.json'        # baked in, read as current_llm_baseline
+      - 'data/models/MANIFEST.sha256'       # baked in; model objects come from GCS, pinned by hash
+      - 'scripts/verify_model_manifest.py'  # run by this job as the drift guard
+      - '.github/workflows/deploy.yml'      # the deploy job itself
   workflow_dispatch:
 
 # Serialize deploys to the same ref — two unordered concurrent `gcloud run
@@ -69,6 +70,7 @@ jobs:
             "gs://triageiq-prod-260812-models/models/resolution_predictor_microsoft_vscode.pkl" \
             "gs://triageiq-prod-260812-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
             "gs://triageiq-prod-260812-models/models/cqr_conformal_adjustments.json" \
+            "gs://triageiq-prod-260812-models/models/cqr_conformal_adjustments_v2.json" \
             data/models/
           gsutil -m cp -r \
             "gs://triageiq-prod-260812-models/models/similar_issue_index_microsoft_vscode_bge" \
@@ -214,11 +216,15 @@ jobs:
           # test undetected and shipped to 100% traffic. Now also asserts _degraded is
           # false and triage_summary is a real, non-empty string.
           echo "=== /triage ==="
-          TBODY=$(curl -sf -X POST "$URL/triage" \
+          # Diagnostics only (assertions unchanged): capture the HTTP code and print the body
+          # on a non-200 instead of letting `curl -f` abort with a bare exit 22.
+          TRESP=$(curl -s -w "\n%{http_code}" -X POST "$URL/triage" \
             -H "Content-Type: application/json" \
             -d '{"repo":"microsoft/vscode","title":"Extension host crashes on startup","body":"Every time I open VS Code the extension host process terminates immediately."}')
-          if [ $? -ne 0 ]; then
-            echo "FAILED: /triage returned non-200"
+          TCODE=$(echo "$TRESP" | tail -1)
+          TBODY=$(echo "$TRESP" | sed '$d')
+          if [ "$TCODE" != "200" ]; then
+            echo "FAILED: /triage returned HTTP $TCODE -- body: $(echo "$TBODY" | head -c 500)"
             exit 1
           fi
           # Piped via stdin, not interpolated into the Python source -- $TBODY is
@@ -231,11 +237,12 @@ jobs:
           degraded = d.get('_degraded')
           summary = d.get('triage_summary')
           llm_status = d.get('_llm_status')
+          llm_reason = d.get('_llm_status_reason')
           failures = []
           if not component:
               failures.append('predicted_component is empty')
           if degraded is not False:
-              failures.append(f'_degraded is {degraded!r}, expected False -- llm_status={llm_status!r}')
+              failures.append(f'_degraded is {degraded!r}, expected False -- llm_status={llm_status!r} llm_status_reason={llm_reason!r}')
           if not summary or not summary.strip():
               failures.append('triage_summary is empty')
           if failures:

@@ -44,20 +44,27 @@ class RepoBundle:
     assistant: Any
 
 
+# v2 (2026-10): k8s Q re-calibrated on features actually served post-#150 (query-embedding emb_*),
+# vscode entry carried over byte-identical. The v1 file (cqr_conformal_adjustments.json) is no longer
+# read at serving; it stays published only because the eval artifact fingerprint pins it.
+CQR_ADJUSTMENTS_FILENAME = "cqr_conformal_adjustments_v2.json"
+
+
 def _load_conformal_adjustments(models_dir: Path) -> dict[str, dict]:
-    """Load per-repo CQR conformal adjustments from JSON.
+    """Load per-repo CQR conformal adjustments from JSON (CQR_ADJUSTMENTS_FILENAME).
 
     Returns a dict keyed by repo canonical name (e.g. "microsoft/vscode").
     Returns empty dict and logs a warning if the file is missing or invalid.
     Falls back gracefully — callers must handle missing repos.
     """
     import json
-    p = models_dir / "cqr_conformal_adjustments.json"
+    p = models_dir / CQR_ADJUSTMENTS_FILENAME
     if not p.exists():
         logger.warning(
-            "cqr_conformal_adjustments.json not found at %s — "
+            "%s not found at %s — "
             "resolution_interval_conformal will be None for all repos. "
             "Upload the file to GCS and rebuild the image to enable conformal intervals.",
+            CQR_ADJUSTMENTS_FILENAME,
             p,
         )
         return {}
@@ -65,7 +72,8 @@ def _load_conformal_adjustments(models_dir: Path) -> dict[str, dict]:
         raw = json.loads(p.read_text(encoding="utf-8"))
     except Exception as exc:
         logger.warning(
-            "Failed to parse cqr_conformal_adjustments.json: %s — falling back to raw intervals",
+            "Failed to parse %s: %s — falling back to raw intervals",
+            CQR_ADJUSTMENTS_FILENAME,
             exc,
         )
         return {}
@@ -153,6 +161,10 @@ class ModelStore:
             max_tokens if max_tokens is not None else int(os.environ.get("TRIAGE_MAX_TOKENS", "2048"))
         )
 
+        # Loaded first: the served interval is the conformal one and is fixed before synthesis.
+        with _timed("conformal_adjustments"):
+            conformal = _load_conformal_adjustments(models_dir)
+
         bundles: dict[str, RepoBundle] = {}
         for repo, slug in _REPO_SLUGS.items():
             try:
@@ -175,6 +187,7 @@ class ModelStore:
                     groq_api_key=key,
                     cache=cache,
                     max_tokens=effective_max_tokens,
+                    conformal_adjustment=conformal.get(repo),
                 )
                 bundles[repo] = RepoBundle(clf, det, pred, train_df, asst)
                 logger.info("Loaded %s — OK", repo)
@@ -184,8 +197,6 @@ class ModelStore:
         if not bundles:
             raise RuntimeError("No repo models could be loaded; check data/models/")
 
-        with _timed("conformal_adjustments"):
-            conformal = _load_conformal_adjustments(models_dir)
         return cls(bundles, start_time=time.monotonic(), conformal_adjustments=conformal)
 
 

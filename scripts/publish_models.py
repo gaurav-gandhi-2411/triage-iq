@@ -54,6 +54,7 @@ ARTIFACTS: list[str] = [
     "data/models/resolution_predictor_microsoft_vscode.pkl",
     "data/models/resolution_predictor_kubernetes_kubernetes.pkl",
     "data/models/cqr_conformal_adjustments.json",
+    "data/models/cqr_conformal_adjustments_v2.json",
     "data/models/similar_issue_index_microsoft_vscode_bge/index.faiss",
     "data/models/similar_issue_index_microsoft_vscode_bge/meta.pkl",
     "data/models/similar_issue_index_kubernetes_kubernetes_bge/index.faiss",

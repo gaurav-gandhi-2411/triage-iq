@@ -15,7 +15,7 @@ MODELS_DIR = ROOT / "data" / "models"
 PROCESSED_DIR = ROOT / "data" / "processed"
 EVAL_SET = ROOT / "eval" / "eval_set.jsonl"
 CALIBRATION_RESULTS = ROOT / "reports" / "calibration_results.json"
-CONFORMAL_ADJ = ROOT / "data" / "models" / "cqr_conformal_adjustments.json"
+CONFORMAL_ADJ = ROOT / "data" / "models" / "cqr_conformal_adjustments_v2.json"  # the file loader.py serves
 MANIFEST_PATH = ROOT / "data" / "models" / "MANIFEST.sha256"
 LOCK_PATH = ROOT / "requirements.lock"
 
@@ -191,7 +191,13 @@ def test_conformal_q_formula() -> None:
 
 
 def test_conformal_layer_active() -> None:
-    """Verify conformal adjustments load correctly and Q is active (non-zero) for both repos."""
+    """Conformal adjustments load for both repos and Q is a non-zero (active) adjustment.
+
+    Q is asserted != 0, not > 0: CQR Q is negative when the base quantile interval over-covers the
+    calibration split (k8s v2 after the serving-time embedding fix: Q = -1.018 h, which tightens
+    the interval, 79.7 pct held-out coverage vs the 80 pct target). A positive-only assertion would
+    fail a correctly calibrated artifact; zero is what would mean the layer is a no-op.
+    """
     from triage_iq.api.loader import _load_conformal_adjustments
 
     adjustments = _load_conformal_adjustments(MODELS_DIR)
@@ -201,7 +207,9 @@ def test_conformal_layer_active() -> None:
     for repo in REPOS:
         assert repo in adjustments, f"Repo '{repo}' not found in conformal adjustments"
         adj = adjustments[repo]
-        assert adj["q_adjustment_hours"] > 0, (
+        # != 0, not > 0: CQR Q is negative when the base quantile interval over-covers
+        # (k8s v2: -1.02h, tightens the interval); zero would mean the layer is a no-op.
+        assert adj["q_adjustment_hours"] != 0, (
             f"{repo}: q_adjustment_hours={adj['q_adjustment_hours']} — conformal layer is a no-op"
         )
         assert adj["empirical_coverage"] > 0.50, (
@@ -938,4 +946,28 @@ def test_no_truncated_completions_in_cassette(grounding_reports: list[dict]) -> 
         f"{[(c['repo'], c['issue_number']) for c in truncated_cases]}. "
         "Raise max_tokens and re-record -- retrying at the same cap reproduces the same "
         "truncation."
+    )
+
+
+def test_prose_and_prompt_describe_the_served_conformal_interval() -> None:
+    """ADR-0059 addendum 2026-10-09: every current synthesis entry was written against the interval
+    the API serves (the CQR-adjusted one, marked "(coverage-calibrated)" in the prompt), and its
+    prose does not contradict that interval. Fails on every pre-change entry, whose prompt carried
+    the raw model interval (vscode coverage 46.0 pct) while the API returned the 82.7 pct one."""
+    import prose_interval_check as pic
+
+    cassette = json.loads((ROOT / "eval" / "cassettes" / "eval_cassette.json").read_text("utf-8"))
+    done = json.loads((ROOT / "eval" / "cassettes" / "recording_checkpoint.json").read_text("utf-8"))[
+        "done"
+    ]
+    keys = {r["synthesis_cache_key"] for r in done.values() if r.get("synthesis_cache_key")}
+    assert keys, "recording_checkpoint.json lists no synthesis entries"
+    bad = {}
+    for k in sorted(keys):
+        entry = cassette["entries"].get(k)
+        v = pic.violations(entry) if entry else ["checkpoint key missing from the cassette"]
+        if v:
+            bad[k[:12]] = v[0]
+    assert not bad, f"{len(bad)}/{len(keys)} synthesis entries disagree with the served interval: " + str(
+        dict(list(bad.items())[:3])
     )

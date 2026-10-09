@@ -27,7 +27,8 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from ..config import get_settings
 from ..models.abstention import compute_abstention_status
-from ..models.triage import ConformalIntervalResult, TriagePlan
+from ..models.resolution import NAIVE_INTERVAL_COVERAGE, repo_slug
+from ..models.triage import PROVIDER_DEGRADED_STATUS, ConformalIntervalResult, TriagePlan
 from .loader import ModelStore
 from .schemas import DependencyStatus, HealthResponse, ServiceInfoResponse, TriageRequest
 
@@ -48,7 +49,12 @@ _RESOLUTION_MODEL_BEATS_NAIVE: dict[str, bool] = {
 _triage_requests_total = Counter(
     "triage_requests_total",
     "Total /triage requests by repo and outcome",
-    ["repo", "status"],  # status: success | error | fallback
+    ["repo", "status"],  # status: success | error | fallback | provider_degraded
+)
+_triage_llm_provider_errors_total = Counter(
+    "triage_llm_provider_errors_total",
+    "Triage calls degraded to the signals-only plan by an LLM provider outage, by reason",
+    ["reason"],  # rate_limited_tpd | rate_limited_tpm | provider_unavailable | provider_timeout
 )
 _triage_llm_fallback_total = Counter(
     "triage_llm_fallback_total",
@@ -342,13 +348,24 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         adj = store.conformal_adjustments.get(body.repo)
         if adj is not None:
             q_days = adj["q_adjustment_hours"] / 24.0
+            # When the assistant already served the conformal interval (ADR-0059 addendum
+            # 2026-10-09) the plan's interval IS the conformal one; adding Q again would apply it
+            # twice. Otherwise (store attached late, predictor fallback) fall back to adding it here.
+            if meta.get("resolution_interval_conformal_applied"):
+                q_days = 0.0
+            # ADR-0064: the stored coverage statistics describe the model-quantile interval. When
+            # the served interval was re-centred on the naive median, report the coverage measured
+            # for THAT interval instead (resolution.NAIVE_INTERVAL_COVERAGE), never the old one.
+            cov = adj
+            if meta.get("resolution_interval_basis") == "naive_scaled":
+                cov = {**adj, **NAIVE_INTERVAL_COVERAGE.get(repo_slug(body.repo), {})}
             plan.resolution_interval_conformal = ConformalIntervalResult(
                 lower_days=max(0.0, plan.expected_resolution_lower_days - q_days),
                 upper_days=plan.expected_resolution_upper_days + q_days,
-                target_coverage=adj["target_coverage"],
-                empirical_coverage=adj["empirical_coverage"],
-                coverage_ci95_lower=adj["coverage_ci95_lower"],
-                coverage_ci95_upper=adj["coverage_ci95_upper"],
+                target_coverage=cov["target_coverage"],
+                empirical_coverage=cov["empirical_coverage"],
+                coverage_ci95_lower=cov["coverage_ci95_lower"],
+                coverage_ci95_upper=cov["coverage_ci95_upper"],
             )
     except Exception as _conf_err:
         logger.warning(
@@ -394,10 +411,17 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         else "success"
     )
 
-    _triage_requests_total.labels(repo=body.repo, status=req_status).inc()
+    # Provider outages get their own status label so an alert/graph can separate "Groq is
+    # down or rate-limited" from "the model produced unusable output" (ADR-0063).
+    metric_status = "provider_degraded" if llm_status == PROVIDER_DEGRADED_STATUS else req_status
+    _triage_requests_total.labels(repo=body.repo, status=metric_status).inc()
     _triage_latency_seconds.observe(total_ms / 1000.0)
     if llm_status != "ok":
         _triage_llm_fallback_total.inc()
+    if llm_status == PROVIDER_DEGRADED_STATUS:
+        _triage_llm_provider_errors_total.labels(
+            reason=str(meta.get("llm_status_reason") or "unknown")
+        ).inc()
     tokens = (meta.get("groq_tokens_prompt") or 0) + (meta.get("groq_tokens_completion") or 0)
     if tokens:
         _triage_groq_tokens_total.inc(tokens)
@@ -422,6 +446,9 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     result = plan.model_dump()
     result["_request_id"] = request_id
     result["_llm_status"] = llm_status
+    # Short machine reason for a degraded status (null when the LLM answered), e.g.
+    # rate_limited_tpd | rate_limited_tpm | provider_unavailable | provider_timeout.
+    result["_llm_status_reason"] = meta.get("llm_status_reason")
     # 2026-09-03 (ADR-0055 Part P1b): explicit boolean, same logic as req_status above --
     # added because the deploy smoke test had no field it could assert on to catch a
     # revision where every request silently falls back to a classifier-only plan
@@ -438,6 +465,14 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     result["_model"] = bundle.assistant.model
     result["classifier_top3"] = meta.get("classifier_top3")
     result["resolution_model_beats_naive"] = _RESOLUTION_MODEL_BEATS_NAIVE.get(body.repo, True)
+    # ADR-0064 (expand-only): the point estimate the resolution stage was given and its source,
+    # "model" or "train_median" (POINT_ESTIMATE_TRUSTED). resolution_model_beats_naive keeps its
+    # meaning (a measured property of the trained model); this field says what is being served.
+    result["resolution_point_days"] = meta.get("resolution_point_days")
+    result["resolution_point_source"] = meta.get("resolution_point_source", "model")
+    result["resolution_interval_basis"] = meta.get("resolution_interval_basis", "model")
+    # True when the train median fell outside the served interval and was clamped onto its edge.
+    result["resolution_point_clamped"] = bool(meta.get("resolution_point_clamped", False))
     return JSONResponse(content=result)
 
 
@@ -467,7 +502,9 @@ def _check_groq(cfg) -> DependencyStatus:  # noqa: ANN001 -- Settings, avoids im
         return DependencyStatus(name="groq", healthy=False, detail=f"{type(exc).__name__}: {exc}")
 
 
-@app.get("/health", response_model=HealthResponse)
+# HEAD is routed to the same handler (same status, body dropped by the server): UptimeRobot
+# probes with HEAD first, and the 405 made every check cost two requests.
+@app.api_route("/health", methods=["GET", "HEAD"], response_model=HealthResponse)
 def health(request: Request, deps: int = 0) -> HealthResponse | JSONResponse:
     """Liveness by default (deps=0, always fast, never calls Groq — used by Cloud Run's
     startupProbe). Pass ?deps=1 for a real readiness check: exercises Groq with a live,

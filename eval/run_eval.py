@@ -30,6 +30,7 @@ from triage_iq.models.component_classifier import load_classifier
 from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore, TriageJudge
 from triage_iq.models.resolution import ResolutionTimePredictor
 from triage_iq.models.resolution_consistency import verify_resolution_consistency
+from triage_iq.api.loader import _load_conformal_adjustments
 from triage_iq.models.triage import TriageAssistant
 
 MODELS_DIR = ROOT / "data" / "models"
@@ -98,6 +99,8 @@ def _load_models(
         groq_api_key=CI_API_KEY,
         cache=cassette,
         max_tokens=TRIAGE_MAX_TOKENS,
+        # The served interval is conformal before synthesis, so the recorded prompt carries it.
+        conformal_adjustment=_load_conformal_adjustments(MODELS_DIR).get(repo),
     )
     return {
         "classifier": classifier,

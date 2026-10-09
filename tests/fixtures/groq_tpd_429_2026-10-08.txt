@@ -1,0 +1,1 @@
+Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01kpw92fcwebnbpwgabfd5r32b` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198924, Requested 5502. Please

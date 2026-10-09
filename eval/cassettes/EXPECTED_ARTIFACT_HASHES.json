@@ -1,10 +1,10 @@
 {
   "description": "Committed, human-reviewed expected SHA-256 for every model artifact that feeds a triage prompt. eval/record_cassettes.py refuses to run against a checkout whose resolved artifacts don't match this file -- see ADR-0059. Regenerate deliberately (scripts or a one-off) whenever you intend to record against a genuinely different classifier/predictor/index/conformal store; a mismatch is meant to stop the run, not be silently reconciled.",
-  "note": "ADR-0059: committed at the start of the Phase 2 re-record, from the ADR-0057 retrained classifier + existing resolution/retrieval/conformal artifacts already in this worktree (data/models, data/processed). Regenerate deliberately if any of these are intentionally retrained again.",
+  "note": "ADR-0059: committed at the start of the Phase 2 re-record, from the ADR-0057 retrained classifier + existing resolution/retrieval/conformal artifacts already in this worktree (data/models, data/processed). Regenerate deliberately if any of these are intentionally retrained again. | 2026-10-08: cqr_conformal_adjustments.json removed from the fingerprint (never enters a prompt or cache key; ADR-0059 addendum). | 2026-10-09: cqr_conformal_adjustments_v2.json added to the fingerprint (conformal interval now feeds the prompt; ADR-0059 addendum).",
   "artifact_hashes": {
     "data/models/component_classifier_kubernetes_kubernetes.pkl": "a7caf13b08e7e9cb3e7b8ae25413243345dd723a233556ca328641d606394f66",
     "data/models/component_classifier_microsoft_vscode.pkl": "5e286b1f75218373feceb43703d2a1a8a249d972393def659139eb308475313f",
-    "data/models/cqr_conformal_adjustments.json": "9ad1a63cfb1bffd4838a3c5b052cfd3e88e1a58424443504d15cdb36e3bda20c",
+    "data/models/cqr_conformal_adjustments_v2.json": "ee5ba3bf26853e062c73a15936f43ec287d8b9f3cafa4d6e0c7eb97818d175d5",
     "data/models/resolution_predictor_kubernetes_kubernetes.pkl": "038052a90225ea5c5bf88682bd71fdf1336270a918e640fc4a1448986cb06406",
     "data/models/resolution_predictor_microsoft_vscode.pkl": "60b39981d8c95dcf0114700132a474e4c62706c1c64388b055f8819378bad870",
     "data/models/similar_issue_index_kubernetes_kubernetes_bge/index.faiss": "a2ff35a0f7665ec76126ef01db40a4d84471165696c54e0e0a96836de0004dab",

@@ -598,3 +598,23 @@ reads the canonical block from the evidence JSON. The before / no-Q rows are re-
 test_vscode_served_coverage_is_one_figure_across_api_eval_and_evidence` fails if the API constant, the /eval block
 and the evidence JSON diverge. README #151 does not quote it yet; its refresh (P4f) must take the figure from the
 `/eval` block and name this split.
+
+## Round 7 (2026-10-10/11): hook gone, recorder after a shutdown
+
+**D58. The exposed deploy hook is gone (VERIFIED, read-only).** GG deleted `prod-main` (`Xafi3lf3AT`) in the
+dashboard. `GET /v9/projects/prj_KLHNcPJQtjaTi5d5oge67ysHLtYc` on 2026-10-10 20:20 UTC returns `link.deployHooks: []`
+for `triage-iq` (id/name/ref only were read, no URL). The queue item and the refusal section (R1) are removed; the
+refusals themselves stay logged in D56.
+
+**D59. Recorder after the laptop shutdown (VERIFIED from the checkpoint and cassette, not the status file).**
+No process matching `record_cassettes|run_recording_unattended` was running (launcher PID 6216 gone). Both files
+parse. Checkpoint: 117 records = 64 stale pre-change + 53 new (artifact hash `14ac2b3c50f3a675`): 53 distinct
+issues, no duplicates, 53 distinct cassette keys, each linking to exactly one cassette entry that carries the
+"(coverage-calibrated)" marker, has a plan, no error and passes `prose_interval_check.violations`. No orphan
+calibrated cassette entry exists, so there is no half-written final entry (the cassette is written before the
+checkpoint record; both ended consistent) and nothing needed removing. Done: all 11 vscode and 42 k8s. Missing (11
+k8s): 12123, 12818, 13057, 13062, 13276, 14190, 14363, 14552, 14711, 14762, 14895. Ledger: 156,481 tokens in the
+last 24 h; the gate opens at 2026-10-11 08:22 UTC, when the Oct 10 morning calls start to age out; the 11 calls
+(about 65K tokens) fit in the first minutes after that, so 64/64 is expected about 2026-10-11 08:40 UTC.
+Relaunched at 2026-10-10 20:21 UTC as a plain PowerShell `Start-Process` (launcher PID 27100, BelowNormal, hidden,
+output to `%TEMP%\rec_synth2.log`), not refused; confirmed "WAITING (budget reserve)" with 0 tokens spent.

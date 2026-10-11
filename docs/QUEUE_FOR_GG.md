@@ -1,55 +1,65 @@
 # Queue for GG (only items you must do)
 
-Last updated 2026-10-07. Newest first within each urgency. Everything else is in
-`docs/DECISION_LOG_2026-10.md`.
+Last updated 2026-10-11 (round 9). Everything else is in `docs/DECISION_LOG_2026-10.md`.
 
-## Do soon
+## The one core merge
 
-1. **Recreate the Vercel deploy hook and delete the old one.** The old URL was pasted in chat.
-   Vercel dashboard -> project `triage-iq` -> Settings -> Git -> Deploy Hooks: delete the hook
-   (`...Xafi3lf3AT`), create a new one for branch `main`. Do not paste the new URL anywhere that
-   is saved. Why: anyone with the URL can trigger production builds and burn the deploy quota.
+1. **Core #161 (integration branch). READY for your merge (baseline approved and written, CI green; see D62).**
+   It carries D7 (train-median point, both repos, clamped and flagged), the conformal interval in the prompt,
+   CQR v2 serving, degrade-on-429, manifest-in-image, checkpoint validation, the `/eval` data fix, the
+   `deploy.yml` allowlist (D49) and HEAD on `/health` (D50). Merging deploys (it changes `src/**`) and the
+   smoke test needs Groq tokens (ledger: 66,454 of 160,000 tokens in the last 24 h at 10:09 UTC Oct 11).
+   **The single merge command:**
+   `gh pr merge 161 --repo gaurav-gandhi-2411/triage-iq --merge`
+   Superseded by it (do not merge separately; kept open as the review record): #154, #155, #156, #157, #159.
+   Reviewable-vs-generated split (also in the PR body): about 2,478 hand-written non-test lines (source/scripts/
+   workflows 1,992 + docs 486), 1,898 test lines, 10,043 recorder output lines (`eval/cassettes/*`), 679
+   designated `reports/**` lines. The merge gate fails gates 3 and 4 (size, deploy config) by design: human merge.
+   Baseline (approved 2026-10-11, ADR-0064): pooled 12.031 -> 12.094; `resolution_estimate_reasonableness` fell
+   1.672 -> 1.578, recorded as an unresolved proxy signal (ground truth favours the median: MAE 3.52 d vs 7.28 d).
+   After you merge I poll for the deploy and run the post-deploy checks myself.
 
-2. **Set shorter deployment retention in the Vercel dashboard** (the API cannot). For projects
-   `gaurav-gandhi` and `samidha-reviews-web`: Settings -> (Security / Deployment Retention):
-   previews 7 days, canceled 3 days, errored 3 days; leave production at 30 days and "keep 10".
-   Why: both projects were at 30 days, so previews pile up and each READY Next.js deployment
-   stores a function bundle (the likely cause of "Exceeded free resources").
+## Dashboard / account actions (only you can do these)
 
-3. **Check the Vercel Usage page** (https://vercel.com/gaurav-gandhi-2411s-projects/~/usage):
-   is "Functions Storage" under 10 GB now? I could not read it (not logged in). The production
-   deploy of the UI succeeded after I removed 7 old previews, but I cannot show the cleanup caused it.
+3. **Set shorter Vercel deployment retention** (re-checked 2026-10-08: the API still rejects the field, 400): projects `gaurav-gandhi` and `samidha-reviews-web`,
+   previews 7 d, canceled 3 d, errored 3 d, production 30 d / keep 10.
+4. **Check the Vercel Usage page** for Functions Storage (<10 GB?). I cannot read it.
+5. ~~UptimeRobot GET~~ Done in code: `/health` answers HEAD (D50, in #161). Nothing for you to do; I remove this
+   line once #161 is deployed and the monitor is seen to pass.
+6. **README PR #151 (draft)**: review and merge yourself. Full text:
+   https://github.com/gaurav-gandhi-2411/triage-iq/blob/docs/readme-verified-numbers/README.md
+   Its two marked blocks and the resolution limitation are refreshed by me after #161 deploys (D7 wording).
 
-5. **Merge UI #26** (Eval page contract test: renders the Eval page against core main's JSON in
-   fixture and live modes; negative controls show it fails on the shape change that blanked `/eval`
-   on 2026-10-05). All checks green. I did not merge it: the size gate is ambiguous under rule 70a
-   (about 231 reviewable lines, plus 317 lines of verbatim core data fixtures outside a designated
-   path, plus 1,002 generated lock lines), and it edits `.github/workflows/ci.yml`, moving CI from
-   Node 20 to 22 because vitest 5 / jsdom 30 need it. Review the Node bump, then:
-   `gh pr merge 26 --repo gaurav-gandhi-2411/triage-iq-ui --squash`
-   The merge triggers one Vercel production build: confirm the deployment is READY and current.
+## Decisions for you (recommendation first; none blocks #161)
 
-6. **Merge core #140** (startup timing logs reach Cloud Run; tiktoken encoding baked into the image).
-   Required checks green, bit-identical outputs verified, diff reviewed (82 lines). The merge guard
-   blocks it only on gate 1: the branch is `perf/cold-start-startup` and `perf/` is not in the
-   recognized prefix list. I did not rename the branch (that is rule-gaming the gate). Merge:
-   `gh pr merge 140 --repo gaurav-gandhi-2411/triage-iq --merge`
-   Optional follow-up for your global config: add `perf/` to the prefixes in
-   `C:\Users\gaura\.claude\scripts\merge_gate.py` (also affects #137-style branches).
+7. **vscode point source.** The median is the 2015-16 training median (3.84 d) while current vscode traffic
+   resolves in hours (test median 0.049 d). Recommendation: a recency-window median (D7 says "the training-window
+   median the published naive baseline used", so I kept that). Say the word and it is a one-line change plus a
+   re-record.
+8. **Keep the LightGBM models for intervals/bucket** (P5, D43): recommendation yes, do not simplify to model-free
+   intervals. No action needed unless you disagree.
+9. **Retrieval-conditional k8s resolution redesign** (P5 study, earlier): recommendation not now.
 
-7. **Decide vscode's resolution point estimate.** Served model is -54% MAE vs naive (6.02 d reported
-   as -70.5% with embeddings; 5.45 d as served); no variant robustly beats naive (study in
-   DECISION_LOG D17). Options: (a) leave as is (README already discloses it, UI shows "Model below naive
-   baseline"); (b) serve the naive median (3.84 d) as the point estimate, like the bucket already does
-   (needs an interval design + a cassette re-record of the 11 vscode issues). My recommendation: (b)
-   when you next touch vscode; not urgent.
+## After closing #161 (queued work, not for #161; D60)
 
-8. **Publish a recalibrated CQR artifact for k8s (optional, low value).** After the embedding fix,
-   fresh Q = -1.02 h vs stored +0.2835 h; held-out coverage 83.8% -> 79.7% [77.9, 81.4]. Publishing needs a
-   new object name in `gs://triageiq-prod-260812-models/models/` plus a MANIFEST/loader change (I did not
-   overwrite the existing artifact: the bucket has no versioning).
+Groq budget-layer workstream, in order, each its own PR. Nothing here blocks #161.
 
-## Low urgency
+1. **Caching measurement.** (a) Capture `usage.prompt_tokens_details.cached_tokens` per call in
+   `_groq_completion` and store it with each cassette entry and ledger record. (b) At the next TPD 429, compare
+   Groq's "Used" with the ledger's total and its non-cached total and record which matches. (Rate-limit headers are
+   per-minute only; the daily figure exists only in the 429 body.)
+2. Make the ledger count only what Groq counts (follows from 1).
+3. Burst scheduling to keep the prompt cache warm (expiry is 2 h without use).
+4. Re-measure whether few-shot is still needed now that the schema defect is fixed (ADR-0053 evidence was confounded).
+5. Scheduled Cloud Run recording job off the laptop (cloud change, needs your go-ahead).
+6. Move the gg-portfolio chatbot to a different Groq model so it stops sharing the gpt-oss-120b pool (other repo,
+   your decision).
 
-4. UptimeRobot: switch the monitor's HTTP method to GET. It sends HEAD first and `/health`
-   answers 405, so every check logs two requests. Harmless, just noise.
+## FYI (no action)
+
+- **Groq budget (200K tokens/day, org-wide, rolling 24 h) is exhausted until about 16:30-19:00 UTC Oct 8**
+  (Used 198,924 at 01:12 UTC). Production `/triage` degrades to the signals-only plan with a 200 only after
+  #161 deploys; until then a 429 is a 500 (existing behaviour). The recorder is gated to spend at most 160K per
+  24 h (80 pct), leaving 40K for production and deploy smoke tests. Deploys of main until ~17:00 UTC Oct 8 may
+  fail their smoke test for lack of budget: that is the budget, not a regression (see D28).
+- UI #27 (badge + `/eval` table) is merged and live; it is inert until #161 deploys.

@@ -11,6 +11,7 @@ text-similarity pairs (see ADR-0008 for task framing).
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 from typing import Protocol, cast
 
@@ -118,7 +119,12 @@ class SimilarIssueRetriever:
         self.model_key = model_key
         model_name = SUPPORTED_MODELS.get(model_key, model_key)
         logger.info("Loading embedding model: %s", model_name)
+        t0 = time.perf_counter()
         self.model = SentenceTransformer(model_name)
+        logger.info(
+            "startup_step %s.sentence_transformer_load took %.1f ms",
+            repo, (time.perf_counter() - t0) * 1000.0,
+        )
         self.index: faiss.IndexFlatIP | None = None
         self.issue_numbers: np.ndarray | None = None
         self.texts: list[str] | None = None
@@ -230,6 +236,29 @@ class SimilarIssueRetriever:
         apply_query_instruction: bool | None = None,
     ) -> list[dict]:
         """Return top-k most related issues (excluding query issue itself)."""
+        hits, _ = self.retrieve_with_embedding(
+            query_text,
+            k=k,
+            exclude_number=exclude_number,
+            apply_query_instruction=apply_query_instruction,
+        )
+        return hits
+
+    def retrieve_with_embedding(
+        self,
+        query_text: str,
+        k: int = 20,
+        exclude_number: int | None = None,
+        apply_query_instruction: bool | None = None,
+    ) -> tuple[list[dict], np.ndarray]:
+        """Same as retrieve(), also returning the query embedding it computed.
+
+        The embedding is the exact vector used for the FAISS search: float32, shape (dim,),
+        L2-normalised, encoded from the query text WITH this repo's query instruction applied
+        (see _apply_query_instruction). Exposed so callers that need the vector (serving's
+        resolution stage, ADR-0062) reuse it instead of encoding the same text a second time.
+        retrieve() delegates here, so its behaviour and return type are unchanged.
+        """
         assert self.index is not None, "Call build_index first"
         assert self.issue_numbers is not None
         assert self.texts is not None
@@ -250,7 +279,7 @@ class SimilarIssueRetriever:
             results.append({"number": num, "score": float(score), "text": self.texts[idx]})
             if len(results) >= k:
                 break
-        return results
+        return results, emb[0]
 
     def retrieve_batch(
         self,
@@ -300,11 +329,21 @@ class SimilarIssueRetriever:
     @classmethod
     def load(cls, out_dir: str) -> SimilarIssueRetriever:
         p = Path(out_dir)
+        t0 = time.perf_counter()
         meta = joblib.load(str(p / "meta.pkl"))
+        logger.info(
+            "startup_step %s.meta_pkl_load took %.1f ms",
+            meta["repo"], (time.perf_counter() - t0) * 1000.0,
+        )
         obj = cls(repo=meta["repo"], model_key=meta["model_key"])
+        t0 = time.perf_counter()
         # faiss.read_index()'s return type is the generic Index base class, but save()
         # only ever writes an IndexFlatIP -- narrowing here matches the actual contract.
         obj.index = cast(faiss.IndexFlatIP, faiss.read_index(str(p / "index.faiss")))
+        logger.info(
+            "startup_step %s.faiss_read took %.1f ms",
+            meta["repo"], (time.perf_counter() - t0) * 1000.0,
+        )
         obj.issue_numbers = meta["issue_numbers"]
         obj.texts = meta["texts"]
         return obj

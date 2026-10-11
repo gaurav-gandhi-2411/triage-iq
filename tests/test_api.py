@@ -106,6 +106,26 @@ def test_health(client):
     assert body["uptime_s"] >= 0
 
 
+def test_health_answers_head_like_get(client):
+    """UptimeRobot probes with HEAD first; it got 405. HEAD must carry GET's status, no body."""
+    g = client.get("/health")
+    h = client.head("/health")
+    assert h.status_code == g.status_code == 200
+    assert h.content == b""
+    assert h.headers["content-type"] == g.headers["content-type"]
+
+
+def test_health_head_keeps_deps_semantics(client):
+    """HEAD /health?deps=1 must fail (503) exactly when GET does -- a monitor on HEAD must not
+    see 200 for an unhealthy dependency."""
+    from triage_iq.api.schemas import DependencyStatus
+
+    with patch("triage_iq.api.app._check_groq") as mock_check:
+        mock_check.return_value = DependencyStatus(name="groq", healthy=False, detail="down")
+        assert client.get("/health?deps=1").status_code == 503
+        assert client.head("/health?deps=1").status_code == 503
+
+
 def test_triage_returns_plan(client):
     r = client.post("/triage", json={
         "repo": "microsoft/vscode",
@@ -794,11 +814,27 @@ def test_load_conformal_adjustments_missing_file(tmp_path):
     assert result == {}
 
 
+def test_load_conformal_adjustments_ignores_stale_v1_file(tmp_path):
+    """Serving reads only the v2 file; a lone v1 file (stale k8s Q) must not be picked up."""
+    import json
+
+    from triage_iq.api.loader import CQR_ADJUSTMENTS_FILENAME, _load_conformal_adjustments
+
+    assert CQR_ADJUSTMENTS_FILENAME == "cqr_conformal_adjustments_v2.json"
+    (tmp_path / "cqr_conformal_adjustments.json").write_text(
+        json.dumps({"repos": {"kubernetes/kubernetes": {
+            "q_adjustment_hours": 0.2835, "empirical_test_coverage": 0.76,
+            "coverage_ci95_lower": 0.73, "coverage_ci95_upper": 0.79}}}),
+        encoding="utf-8",
+    )
+    assert _load_conformal_adjustments(tmp_path) == {}
+
+
 def test_load_conformal_adjustments_parses_json(tmp_path):
     """_load_conformal_adjustments correctly parses vscode (nested) and k8s (flat) entries."""
     import json
 
-    from triage_iq.api.loader import _load_conformal_adjustments
+    from triage_iq.api.loader import CQR_ADJUSTMENTS_FILENAME, _load_conformal_adjustments
 
     payload = {
         "target_coverage": 0.80,
@@ -820,7 +856,7 @@ def test_load_conformal_adjustments_parses_json(tmp_path):
             },
         },
     }
-    (tmp_path / "cqr_conformal_adjustments.json").write_text(
+    (tmp_path / CQR_ADJUSTMENTS_FILENAME).write_text(
         json.dumps(payload), encoding="utf-8"
     )
 

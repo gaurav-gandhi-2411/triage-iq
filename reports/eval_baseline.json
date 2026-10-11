@@ -1,7 +1,7 @@
 {
   "schema_version": "v2",
   "eval_set_hash": "0c2e57410098ea170f3f65668ff8977d3ce4942936b9a3e2ffb6696a09621bfe",
-  "cassette_hash": "f08e296d52bf8f744c8d9b4fbd4fceb8d7e4d180c736432913552525a003c3f4",
+  "cassette_hash": "e9f8861f85fec3bb96f1cd09a9f2099dfed5e4a7f1ff3cef7988832e2e8f0b85",
   "judge": {
     "model": "qwen3:8b",
     "provider": "ollama",
@@ -10,14 +10,14 @@
   "per_repo": {
     "microsoft/vscode": {
       "n": 11,
-      "mean": 12.2727,
+      "mean": 12.7273,
       "dimensions": {
         "component_match": 1.9090909090909092,
         "similar_issues_relevance": 3.0,
         "resolution_estimate_reasonableness": 1.6363636363636365,
-        "priority_alignment": 0.36363636363636365,
-        "next_steps_actionability": 3.0,
-        "overall_quality": 2.3636363636363638
+        "priority_alignment": 0.6363636363636364,
+        "next_steps_actionability": 2.909090909090909,
+        "overall_quality": 2.6363636363636362
       },
       "floor_fail_rate": 0.0,
       "fabrication_rate": 0.0,
@@ -26,24 +26,24 @@
     },
     "kubernetes/kubernetes": {
       "n": 53,
-      "mean": 11.8679,
+      "mean": 11.9623,
       "dimensions": {
         "component_match": 1.6603773584905661,
         "similar_issues_relevance": 3.0,
-        "resolution_estimate_reasonableness": 1.5849056603773586,
-        "priority_alignment": 0.3584905660377358,
+        "resolution_estimate_reasonableness": 1.5660377358490567,
+        "priority_alignment": 0.41509433962264153,
         "next_steps_actionability": 2.9622641509433962,
-        "overall_quality": 2.30188679245283
+        "overall_quality": 2.358490566037736
       },
-      "floor_fail_rate": 0.0566,
-      "fabrication_rate": 0.0189,
+      "floor_fail_rate": 0.0755,
+      "fabrication_rate": 0.0,
       "prose_number_contradiction_rate": 0.0,
-      "component_departed_from_top1_rate": 0.0943
+      "component_departed_from_top1_rate": 0.0755
     }
   },
   "overall": {
     "n": 64,
-    "mean": 11.9375
+    "mean": 12.0938
   },
   "threshold": {
     "method": "One-directional per-repo mean regression check: fires only if new_mean < baseline_mean - band. Improvements above the band never trip it.",

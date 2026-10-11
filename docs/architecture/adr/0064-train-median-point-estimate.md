@@ -175,6 +175,41 @@ bound (vscode 11/11 prompt lower bounds differ from the conformal ones at displa
 quality is unmeasured until the re-record, and confounded with the median point and the System 3
 label.
 
+### Re-record result (2026-10-11; judge pass qwen3:8b, rubric hash d807b10d518ed40e)
+
+All 64 eval issues were re-synthesized (gpt-oss-120b, prompt hash 5f845ce8697e3e7f, artifact hash
+14ac2b3c50f3a675), each carrying the "(coverage-calibrated)" marker, none dead, degraded or truncated,
+and re-judged with the same judge model and rubric as the before set (so the judge is not a confound).
+Before = the 64 entries recorded under the previous configuration (their mean equals the committed
+`reports/eval_baseline.json` to four decimals); after = `python eval/run_eval.py` on the new cassette
+(cassette SHA-256 e9f8861f85fec3bb...). Mean total score out of 15, paired by issue:
+
+| Scope | n | Before | After | Delta (paired SE) | Up / same / down |
+|---|---|---|---|---|---|
+| microsoft/vscode | 11 | 12.273 | 12.727 | +0.455 (0.434) | 4 / 5 / 2 |
+| kubernetes/kubernetes | 53 | 11.981 | 11.962 | -0.019 (0.211) | 13 / 27 / 13 |
+| Pooled | 64 | 12.031 | 12.094 | +0.063 (0.190) | 17 / 32 / 15 |
+
+Per dimension, pooled (before -> after, delta): component_match 1.672 -> 1.703 (+0.031);
+similar_issues_relevance 2.969 -> 3.000 (+0.031); **resolution_estimate_reasonableness 1.672 -> 1.578
+(-0.094, paired SE 0.066, 6 up / 12 down): it FELL**; priority_alignment 0.422 -> 0.453 (+0.031);
+next_steps_actionability 2.938 -> 2.953 (+0.016); overall_quality 2.359 -> 2.406 (+0.047). By repo,
+reasonableness: k8s 1.679 -> 1.566 (-0.113, SE 0.075, 5 up / 11 down; two-sided sign test p about
+0.21); vscode 1.636 -> 1.636 (unchanged, 1 up / 1 down). Neither the fall nor any other delta is
+distinguishable from judge noise at this n (the measured per-issue jitter is 0.748 total points,
+ADR-0019); the k8s fall is the one worth watching, because the point there is now the median rather
+than the model. Gate view: k8s moved -0.019 against a 0.22 band; vscode moved +0.455 (an
+improvement; the band only fires downwards). Floor-fail, fabrication and prose-number-contradiction
+rates: k8s 0.0755 / 0 / 0 (unchanged), vscode 0 / 0 / 0.
+
+Confounds, stated: three things changed together (the median point, the System 3 header that now
+names the training-window median, and the calibrated prompt interval) and the synthesis was
+re-sampled by a non-deterministic provider, so no delta can be attributed to any single one of them.
+Reasonableness is judged against the plan's own resolution claims and gold resolution days, so the
+fall may reflect the median point being a worse "typical" statement for k8s as much as any prompt
+effect; this ADR does not decide which. The baseline file is NOT updated here (owner approval
+required, queued): the cassette-hash test stays red until it is.
+
 ## Consequences
 
 - vscode point error equals naive by construction. The product claim is now honest ("typical
@@ -202,7 +237,8 @@ label.
   `vscode-239838, -278113, -286776, -311284, -311836, -311878, -312260, -312423, -4978, -4993,
   -4996`. They must be re-recorded (coordinator, after the checkpoint-validation tool lands);
   until then the CI cassette gate is expected to FAIL on those entries. Judge entries are keyed on
-  the plan JSON and so follow the synthesis re-record. This PR does not touch the cassette.
+  the plan JSON and so follow the synthesis re-record. (Superseded: all 64 entries were re-recorded
+  on 2026-10-11 and are committed with this PR, see "Re-record result" above.)
 - The prompt template is deliberately unchanged (it still labels System 3 "LightGBM"), because
   editing the template would also change every k8s key. The numbers differ, the label does not;
   fix the label together with a future k8s re-record if desired.

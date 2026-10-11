@@ -170,13 +170,9 @@ def test_cqr_v2_vscode_entry_is_unchanged_from_v1():
     assert v1 == v2
 
 
-@pytest.mark.parametrize(
-    "repo,src_key",
-    [("kubernetes/kubernetes", None), ("microsoft/vscode", "40_60")],  # loader.py prefers 40_60
-)
-def test_conformal_block_matches_cqr_artifact(summary, repo, src_key):
-    art = _load("cqr_conformal_adjustments_v2.snapshot.json")["repos"][repo]
-    src = art[src_key] if src_key else art
+def test_k8s_conformal_block_matches_cqr_artifact(summary):
+    repo = "kubernetes/kubernetes"
+    src = _load("cqr_conformal_adjustments_v2.snapshot.json")["repos"][repo]
     got = summary["conformal"]["by_repo"][repo]
     assert got["n_calibration"] == src["n_calibration"]
     assert got["n_true_test"] == src["n_true_test"]
@@ -190,9 +186,44 @@ def test_conformal_block_matches_cqr_artifact(summary, repo, src_key):
     assert got["median_width_conformal_days"] == src["median_width_conformal_days"]
 
 
+def test_vscode_conformal_block_is_the_served_interval_not_the_stale_one(summary):
+    """The vscode coverage shown on /eval is the SERVED interval's (median re-centred + stored Q),
+    from reports/vscode_naive_serving_eval.json, not the pre-re-centring 74.6% (found stale in the
+    2026-10-11 browser check). Calibration inputs (Q, n, raw coverage/width) stay pinned to the
+    manifest-pinned CQR artifact; loader.py serves the 40/60 split."""
+    got = summary["conformal"]["by_repo"]["microsoft/vscode"]
+    art = _load("cqr_conformal_adjustments_v2.snapshot.json")["repos"]["microsoft/vscode"]["40_60"]
+    served = _load("vscode_naive_serving_eval.json")["interval"]["split_40_60"]["candidates"][
+        "C2_naive_scaled_model_width_stored_Q"
+    ]
+    cov, lo, hi = served["coverage_wilson95"]
+    assert (got["empirical_coverage"], got["coverage_ci95_lower"], got["coverage_ci95_upper"]) == (
+        cov, lo, hi,
+    )
+    assert got["median_width_conformal_days"] == served["median_width_d"]
+    assert got["n_true_test"] == served["n"] == art["n_true_test"]
+    assert got["n_calibration"] == art["n_calibration"]
+    assert got["q_adjustment_hours"] == art["q_adjustment_hours"]
+    assert got["q_adjustment_days"] == art["q_adjustment_days"]
+    assert got["raw_interval_coverage"] == art["raw_interval_coverage"]
+    assert got["median_width_raw_days"] == art["median_width_raw_days"]
+    # and it equals what resolution_served publishes for the same interval
+    rs = summary["resolution_served"]["repos"]["microsoft/vscode"]["interval"]
+    assert got["empirical_coverage"] == rs["coverage_heldout"]
+    assert [got["coverage_ci95_lower"], got["coverage_ci95_upper"]] == rs["coverage_heldout_ci95"]
+    # the split is named in the served block
+    assert "chronological 40/60" in got["calibration_split"]
+    assert "created_at" in got["calibration_split"]
+    # the superseded number must not appear as the headline anywhere in the block
+    assert "74.6%" not in got["exchangeability_note"]
+    assert "74.6" not in got["calibration_split"]
+
+
 def test_vscode_split_sensitivity_matches_cqr_artifact(summary):
     art = _load("cqr_conformal_adjustments_v2.snapshot.json")["repos"]["microsoft/vscode"]
-    s = summary["conformal"]["by_repo"]["microsoft/vscode"]["split_sensitivity"]
+    old = summary["conformal"]["by_repo"]["microsoft/vscode"]["stored_calibration_pre_recentring"]
+    assert old["empirical_coverage_40_60"] == art["40_60"]["empirical_test_coverage"]
+    s = old["split_sensitivity"]
     assert s["split_30_70"]["empirical_coverage"] == art["30_70"]["empirical_test_coverage"]
     assert s["split_40_60"]["empirical_coverage"] == art["40_60"]["empirical_test_coverage"]
     want = round(

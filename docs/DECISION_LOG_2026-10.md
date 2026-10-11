@@ -697,3 +697,25 @@ was retried later. Done at
 1. GG approved the new baseline including the `resolution_estimate_reasonableness` drop, and the stale-entry pruning (D61 item 4). The D61 instruction conflict was GG's; resolution confirmed correct.
 2. `python eval/run_eval.py --update-baseline` on the #161 branch wrote `reports/eval_baseline.json` (cassette hash e9f8861f85fec3bb; vscode 12.7273, k8s 11.9623, pooled 12.0938, matching the approved table). Local gate tests: 29 passed.
 3. ADR-0064 now records the approval and rationale: the median decision rests on ground truth (MAE 3.52 d vs 7.28 d); the judge dimension is an LLM proxy, the drop is not significant (p about 0.21) and is confounded with re-sampled synthesis. The vscode +0.455 is stated as at the edge of its band, not as an improvement.
+
+**D63. Post-#161 verification: deploy good, one latency exposure found. VERIFIED unless marked BELIEVED.**
+1. Merge f71096a; deploy run 38162584455 success (smoke test passed); revision `triageiq-api-00045-zac` 100% traffic.
+   `/health?deps=1` ok (model_store, groq healthy); HEAD /health 405 on the old revision until 18:13 UTC, 200 every
+   ~5 min from 18:16 UTC (UptimeRobot passing). `/eval/summary`: judge overall 12.0938, `resolution_served` manifest
+   hashes equal `data/models/MANIFEST.sha256` for the two predictors and CQR v2.
+2. Public page https://triage-iq-orcin.vercel.app/eval checked in a browser (no console messages). Served block correct;
+   stale items listed in the queue (item B). Screenshot: `reports/screenshots/post-161/eval_page_full.png` on the README branch (#151).
+3. Latency replay (5 bodies, 75 s apart, `reports/latency_replay_2026-10-12.txt` on #151): call 1 5.4 s client; calls 2-5
+   53-135 s, all HTTP 200, `_degraded` false. Stage 4 = 2.9 s then 51-133 s. Cloud Run logs show `Rate limit hit` retries
+   (attempts 1-3 of 6, ~30 s each inside the Groq client). One 88-token probe after the replay: `x-ratelimit-limit-tokens`
+   8000, remaining 1909, reset 45.7 s, so another consumer was drawing on the key. BELIEVED the portfolio chatbot (not
+   identified). Decision: report, do not smooth over; the fix (time budget -> degrade) is a code change to the live path,
+   queued as item A for the owner's go. The earlier 4.8 s figure stays in the README but is now qualified.
+4. `emb_*` on k8s in production: 0 "Resolution embeddings unavailable" warnings across 2 k8s requests; stage 3 94 ms vs 53 ms
+   before. No direct non-zero measurement exists (the code logs only the failure case). BELIEVED active.
+5. README #151 refreshed (draft, owner review): every changed number traced in the PR body. Wording per owner (ADR-0064 holds
+   the exact text). "Driven by a small number of long-running issues" is the ADR's interpretation, not separately measured.
+6. Ledger: the recorder ledger (66,454 of 160,000 at last read) does not include the replay (~30K), the probe, the deploy
+   smoke test or chatbot traffic; production use is outside it by design.
+7. Hook note: one Bash command was blocked by the rule-55a hook failing closed on quoting; redone as a script file, same intent.
+

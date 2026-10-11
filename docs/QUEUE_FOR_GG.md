@@ -1,31 +1,32 @@
 # Queue for GG (only items you must do)
 
-Last updated 2026-10-11 (round 9). Everything else is in `docs/DECISION_LOG_2026-10.md`.
+Last updated 2026-10-12 (round 10). Everything else is in `docs/DECISION_LOG_2026-10.md`.
 
-## The one core merge
+## Core #161: MERGED and deployed (2026-10-11, merge f71096a, revision triageiq-api-00045-zac)
 
-1. **Core #161 (integration branch). READY for your merge (baseline approved and written, CI green; see D62).**
-   It carries D7 (train-median point, both repos, clamped and flagged), the conformal interval in the prompt,
-   CQR v2 serving, degrade-on-429, manifest-in-image, checkpoint validation, the `/eval` data fix, the
-   `deploy.yml` allowlist (D49) and HEAD on `/health` (D50). Merging deploys (it changes `src/**`) and the
-   smoke test needs Groq tokens (ledger: 66,454 of 160,000 tokens in the last 24 h at 10:09 UTC Oct 11).
-   **The single merge command:**
-   `gh pr merge 161 --repo gaurav-gandhi-2411/triage-iq --merge`
-   Superseded by it (do not merge separately; kept open as the review record): #154, #155, #156, #157, #159.
-   Reviewable-vs-generated split (also in the PR body): about 2,478 hand-written non-test lines (source/scripts/
-   workflows 1,992 + docs 486), 1,898 test lines, 10,043 recorder output lines (`eval/cassettes/*`), 679
-   designated `reports/**` lines. The merge gate fails gates 3 and 4 (size, deploy config) by design: human merge.
-   Baseline (approved 2026-10-11, ADR-0064): pooled 12.031 -> 12.094; `resolution_estimate_reasonableness` fell
-   1.672 -> 1.578, recorded as an unresolved proxy signal (ground truth favours the median: MAE 3.52 d vs 7.28 d).
-   After you merge I poll for the deploy and run the post-deploy checks myself.
+Verified live (D63): `/health?deps=1` ok, HEAD /health 200, `/eval/summary` serves the new baseline and the
+MANIFEST-hash provenance. **One production exposure found, not fixed (needs your pick, item A below):**
+the Groq 8,000 tokens/minute limit makes /triage take 50-135 s when the key's per-minute pool is used up.
+
+A. **Latency under the Groq per-minute limit (D63).** 4 of 5 replayed /triage calls spent 51-133 s in the LLM stage
+   (HTTP 200, not degraded) because the key's pool is 8,000 tokens/minute, one triage is ~6,000, and something else
+   draws on the same key. Recommendation, in this order, each its own PR: (1) a per-request time budget in the
+   Groq call that degrades to the signals-only plan instead of sleeping through 6 retries (code only, I can do it
+   now if you agree); (2) move the gg-portfolio chatbot to a different Groq model (your decision, other repo; also
+   item 6 of the budget workstream below); (3) prompt-cache accounting (item 1 of the workstream). Say "go" for (1).
+B. **Public /eval page is partly stale (UI repo + core data), found in the browser check (D63).** The served-model block
+   is correct (median point, k8s +6.95pp, coverage 79.7% / 82.7%). But: section 5 still shows vscode conformal
+   coverage 74.6% [69.9, 78.8] with a 30/70-vs-40/60 split note next to the served 82.7%; the old "RESOLUTION
+   PREDICTOR RESULTS" table header is rendered with empty columns above the "INVALIDATED" rows; the served block does
+   not name the split; and the page note uses the earlier wording, not the ADR-0064 wording. Recommendation: one
+   core PR (eval_summary conformal block: add the served 82.7% with the split named) and one UI PR (drop the empty
+   table header, new wording). Say "go" and I do both.
 
 ## Dashboard / account actions (only you can do these)
 
 3. **Set shorter Vercel deployment retention** (re-checked 2026-10-08: the API still rejects the field, 400): projects `gaurav-gandhi` and `samidha-reviews-web`,
    previews 7 d, canceled 3 d, errored 3 d, production 30 d / keep 10.
 4. **Check the Vercel Usage page** for Functions Storage (<10 GB?). I cannot read it.
-5. ~~UptimeRobot GET~~ Done in code: `/health` answers HEAD (D50, in #161). Nothing for you to do; I remove this
-   line once #161 is deployed and the monitor is seen to pass.
 6. **README PR #151 (draft)**: review and merge yourself. Full text:
    https://github.com/gaurav-gandhi-2411/triage-iq/blob/docs/readme-verified-numbers/README.md
    Its two marked blocks and the resolution limitation are refreshed by me after #161 deploys (D7 wording).

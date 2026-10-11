@@ -1,6 +1,6 @@
 # Queue for GG (only items you must do)
 
-Last updated 2026-10-12 (round 10). Everything else is in `docs/DECISION_LOG_2026-10.md`.
+Last updated 2026-10-12 (round 11). Everything else is in `docs/DECISION_LOG_2026-10.md`.
 
 ## Core #161: MERGED and deployed (2026-10-11, merge f71096a, revision triageiq-api-00045-zac)
 
@@ -8,19 +8,25 @@ Verified live (D63): `/health?deps=1` ok, HEAD /health 200, `/eval/summary` serv
 MANIFEST-hash provenance. **One production exposure found, not fixed (needs your pick, item A below):**
 the Groq 8,000 tokens/minute limit makes /triage take 50-135 s when the key's per-minute pool is used up.
 
-A. **Latency under the Groq per-minute limit (D63).** 4 of 5 replayed /triage calls spent 51-133 s in the LLM stage
-   (HTTP 200, not degraded) because the key's pool is 8,000 tokens/minute, one triage is ~6,000, and something else
-   draws on the same key. Recommendation, in this order, each its own PR: (1) a per-request time budget in the
-   Groq call that degrades to the signals-only plan instead of sleeping through 6 retries (code only, I can do it
-   now if you agree); (2) move the gg-portfolio chatbot to a different Groq model (your decision, other repo; also
-   item 6 of the budget workstream below); (3) prompt-cache accounting (item 1 of the workstream). Say "go" for (1).
-B. **Public /eval page is partly stale (UI repo + core data), found in the browser check (D63).** The served-model block
-   is correct (median point, k8s +6.95pp, coverage 79.7% / 82.7%). But: section 5 still shows vscode conformal
-   coverage 74.6% [69.9, 78.8] with a 30/70-vs-40/60 split note next to the served 82.7%; the old "RESOLUTION
-   PREDICTOR RESULTS" table header is rendered with empty columns above the "INVALIDATED" rows; the served block does
-   not name the split; and the page note uses the earlier wording, not the ADR-0064 wording. Recommendation: one
-   core PR (eval_summary conformal block: add the served 82.7% with the split named) and one UI PR (drop the empty
-   table header, new wording). Say "go" and I do both.
+A/B were approved ("GO", 2026-10-12) and are built; merges are BLOCKED BY A GUARD HOOK (D64), so they are yours.
+Run each command alone, in this order (the gate said `eligible` for #170 on head de6f70c; CI green on #170/#171, #172 and
+UI #28 pending when this was written; check `gh pr checks N` first):
+
+1. `gh pr merge 170 --repo gaurav-gandhi-2411/triage-iq --merge`   (A1: 15 s LLM time budget; hook timed out, D64 item 2)
+2. `gh pr merge 171 --repo gaurav-gandhi-2411/triage-iq --merge`   (non-zero `emb_*` count in the request log)
+3. `gh pr merge 172 --repo gaurav-gandhi-2411/triage-iq --merge`   (B core: served vscode coverage 82.7%, named splits, tail share)
+4. `gh pr merge 28 --repo gaurav-gandhi-2411/triage-iq-ui --merge` (B UI: empty header, ADR-0064 wording; Vercel builds it)
+
+Each core merge deploys (smoke test, ~6K Groq tokens). After 1, I open A3 (cached-token capture, branch
+`feat/groq-cached-tokens`, already pushed) as its own PR. After the deploys I do the live page check, the contention test and
+the README latency numbers.
+
+A2 (gg-portfolio chatbot to gpt-oss-20b) is NOT done: no network to read Groq's current docs for per-model limits
+(`console.groq.com/docs/rate-limits` unreachable), so the "limits are per model" premise is unverified, and the pricing row and
+the eval re-record (cassettes are gpt-oss-120b recordings; run-eval flags that as MODEL DRIFT) depend on it. One decision for
+you: the content pipeline's verifier stage uses `qwen/qwen3.8-27b` (a different family on purpose, for cross-family
+verification). It is not on the 120b pool, so I plan to leave it and move only curator/framer, unless you want the verifier on
+gpt-oss-20b too.
 
 ## Dashboard / account actions (only you can do these)
 

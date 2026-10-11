@@ -200,7 +200,7 @@
       },
       "microsoft/vscode": {
         "calibration_split": "chronological 40/60 split by created_at of the reconstructed 616-issue 2026-04-21..2026-04-27 window: the first 40% (246 issues) calibrate Q, the last 60% (370 issues) are the held-out test. This is the split production loads (loader.py).",
-        "interval_basis": "served interval: the model's relative interval width re-centred on the training-window median point (ADR-0064), plus the stored CQR Q. Coverage below is measured on that served interval.",
+        "interval_basis": "served interval: the model's relative interval width re-centred on the training-window median point (ADR-0064), plus the stored CQR Q. The vscode coverage and width in this section are measured on that served interval.",
         "n_calibration": 246,
         "n_true_test": 370,
         "q_adjustment_hours": 1.2655,

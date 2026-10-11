@@ -692,3 +692,8 @@ was retried later. Done at
 6. *Disagreement recorded, step skipped:* the instruction list says both "do not write the baseline" and "full CI
    green on #161, mark ready". With the hash test, those cannot both hold. I followed the explicit prohibition
    (baseline not written), so I did not mark #161 ready. Queue item 1/1a gives GG the one decision that unblocks it.
+
+**D62. Baseline approved and written on #161; reasonableness drop recorded as an unresolved proxy signal. VERIFIED (local run, commit 298fa1e), BELIEVED (CI result, see run IDs in the report).**
+1. GG approved the new baseline including the `resolution_estimate_reasonableness` drop, and the stale-entry pruning (D61 item 4). The D61 instruction conflict was GG's; resolution confirmed correct.
+2. `python eval/run_eval.py --update-baseline` on the #161 branch wrote `reports/eval_baseline.json` (cassette hash e9f8861f85fec3bb; vscode 12.7273, k8s 11.9623, pooled 12.0938, matching the approved table). Local gate tests: 29 passed.
+3. ADR-0064 now records the approval and rationale: the median decision rests on ground truth (MAE 3.52 d vs 7.28 d); the judge dimension is an LLM proxy, the drop is not significant (p about 0.21) and is confounded with re-sampled synthesis. The vscode +0.455 is stated as at the edge of its band, not as an improvement.

@@ -1,39 +1,23 @@
 # Queue for GG (only items you must do)
 
-Last updated 2026-10-11 (round 8). Everything else is in `docs/DECISION_LOG_2026-10.md`.
+Last updated 2026-10-11 (round 9). Everything else is in `docs/DECISION_LOG_2026-10.md`.
 
 ## The one core merge
 
-1. **Core #161 (integration branch). DRAFT, waiting on ONE thing: your baseline approval (item 1a).**
-   Re-record and judge pass are done and committed (D61). CI on #161: `test` and `Structural invariants` green;
-   `Quality regression` red on exactly one test, `test_cassette_hash_matches_baseline`, because the baseline still
-   holds the old cassette hash. It carries D7 (train-median point, both repos, clamped and flagged), the conformal
-   interval in the prompt, CQR v2 serving, degrade-on-429, manifest-in-image, checkpoint validation, the `/eval`
-   data fix, the `deploy.yml` allowlist (D49) and HEAD on `/health` (D50). Merging deploys (it changes `src/**`)
-   and the smoke test needs Groq tokens (ledger: 66,454 of 160,000 tokens spent in the last 24 h at 10:09 UTC Oct 11).
-   Merge command, once 1a is done and CI is green and the PR is marked ready:
+1. **Core #161 (integration branch). READY for your merge (baseline approved and written, CI green; see D62).**
+   It carries D7 (train-median point, both repos, clamped and flagged), the conformal interval in the prompt,
+   CQR v2 serving, degrade-on-429, manifest-in-image, checkpoint validation, the `/eval` data fix, the
+   `deploy.yml` allowlist (D49) and HEAD on `/health` (D50). Merging deploys (it changes `src/**`) and the
+   smoke test needs Groq tokens (ledger: 66,454 of 160,000 tokens in the last 24 h at 10:09 UTC Oct 11).
+   **The single merge command:**
    `gh pr merge 161 --repo gaurav-gandhi-2411/triage-iq --merge`
    Superseded by it (do not merge separately; kept open as the review record): #154, #155, #156, #157, #159.
    Reviewable-vs-generated split (also in the PR body): about 2,478 hand-written non-test lines (source/scripts/
    workflows 1,992 + docs 486), 1,898 test lines, 10,043 recorder output lines (`eval/cassettes/*`), 679
    designated `reports/**` lines. The merge gate fails gates 3 and 4 (size, deploy config) by design: human merge.
-
-   **1a. Baseline for approval (I did NOT write it).** Judged before/after, same judge model and rubric, paired
-   by issue (ADR-0064 "Re-record result"; `python eval/run_eval.py`, cassette sha256 e9f8861f85fe...):
-
-   | Scope | Before | After | Delta |
-   |---|---|---|---|
-   | microsoft/vscode (n=11) | 12.273 | 12.727 | +0.455 (band 0.45, improvement) |
-   | kubernetes/kubernetes (n=53) | 11.981 | 11.962 | -0.019 (band 0.22) |
-   | Pooled (n=64) | 12.031 | 12.094 | +0.063 |
-
-   Per dimension (pooled): component_match +0.031, similar_issues_relevance +0.031, **resolution_estimate_
-   reasonableness 1.672 -> 1.578 (-0.094): it FELL** (k8s -0.113, 5 up / 11 down; vscode unchanged), priority_
-   alignment +0.031, next_steps_actionability +0.016, overall_quality +0.047. None is distinguishable from judge
-   noise at this n. Confounds: median point, System 3 label and calibrated prompt interval changed together, and
-   synthesis was re-sampled. To approve: tell me, or run `python eval/run_eval.py --update-baseline` on the #161
-   branch and commit `reports/eval_baseline.json`; then CI goes green. If you would rather not accept the
-   reasonableness drop, the alternative is not to ship D7 for k8s (decision 7-9 section).
+   Baseline (approved 2026-10-11, ADR-0064): pooled 12.031 -> 12.094; `resolution_estimate_reasonableness` fell
+   1.672 -> 1.578, recorded as an unresolved proxy signal (ground truth favours the median: MAE 3.52 d vs 7.28 d).
+   After you merge I poll for the deploy and run the post-deploy checks myself.
 
 ## Dashboard / account actions (only you can do these)
 

@@ -101,6 +101,13 @@ class LLMTimeBudgetExceeded(RuntimeError):
     """
 
 
+def _cached_prompt_tokens(usage_obj: object) -> int | None:
+    """`usage.prompt_tokens_details.cached_tokens` as an int, or None if not reported."""
+    details = getattr(usage_obj, "prompt_tokens_details", None)
+    cached = getattr(details, "cached_tokens", None)
+    return cached if isinstance(cached, int) and not isinstance(cached, bool) else None
+
+
 def _retry_after_seconds(exc: BaseException) -> float:
     """Seconds from a 429's Retry-After header; 0.0 when absent or unparseable."""
     headers = getattr(getattr(exc, "response", None), "headers", None)
@@ -844,6 +851,9 @@ class TriageAssistant:
             "total_latency_ms": round(elapsed * 1000, 1),
             "groq_tokens_prompt": usage.get("prompt_tokens", 0),
             "groq_tokens_completion": usage.get("completion_tokens", 0),
+            # Prompt tokens Groq served from its prompt cache (None = not reported / cache hit
+            # from an older cassette entry); measured in the A3 cached-token study.
+            "groq_tokens_cached": usage.get("cached_tokens"),
             # 2026-09-03: was a hardcoded 0.27 for both terms (the retired
             # llama-3.1-8b-instant blended rate, duplicated inline instead of reading
             # model_config.py's constant -- that constant was itself stale and, separately,
@@ -890,12 +900,13 @@ class TriageAssistant:
             "synthesis_cache_key": usage.get("cache_key"),
         }
         logger.info(
-            "[%s] Triaged #%s in %.2fs (groq %d+%d tok)",
+            "[%s] Triaged #%s in %.2fs (groq %d+%d tok, cached prompt tok: %s)",
             self.repo,
             issue.get("number", "?"),
             elapsed,
             metadata["groq_tokens_prompt"],
             metadata["groq_tokens_completion"],
+            metadata["groq_tokens_cached"],
         )
         return plan, metadata
 
@@ -1649,6 +1660,11 @@ class TriageAssistant:
                     }
                 usage["finish_reason"] = finish_reason
                 usage["structured_output"] = self.use_structured_output
+                # Groq's automatic prompt cache: how many of prompt_tokens were served from it.
+                # None when the field is absent (older SDK/model), so "not reported" stays
+                # distinguishable from a measured 0. Stored with the cassette entry (usage is
+                # cached verbatim) and surfaced as groq_tokens_cached in the request metadata.
+                usage["cached_tokens"] = _cached_prompt_tokens(resp.usage)
                 if finish_reason == "length":
                     raise TruncatedCompletionError(
                         completion_tokens=completion_tokens,

@@ -178,7 +178,7 @@ def test_vscode_path_unchanged_zero_filled_and_no_embeddings_passed(spy_engineer
     X = predictor.seen[0]
     assert (X[EMB_FEATURES].to_numpy() == 0.0).all()
     # Resolution stage ran normally (not the 7.0-day exception default).
-    assert sig["pred_days"] == pytest.approx(2.0)
+    assert sig["model_point_days"] == pytest.approx(2.0)
 
     # The frame the predictor saw equals what the pre-change code path builds.
     feats, _ = engineer_features(pd.DataFrame([_issue()]), train_df=_train_df())
@@ -236,7 +236,7 @@ def test_k8s_fallbacks_zero_fill_and_warn(
 
     assert spy_engineer_features == [{"embeddings": None, "pca": None}], case
     assert (predictor.seen[0][EMB_FEATURES].to_numpy() == 0.0).all(), case
-    assert sig["pred_days"] == pytest.approx(2.0), case  # resolution stage did not fall to 7.0
+    assert sig["model_point_days"] == pytest.approx(2.0), case  # model output (pred_days is now the served train median, D7); resolution stage did not fall to 7.0
     rec = [r for r in caplog.records if getattr(r, "reason", None) == reason]
     assert len(rec) == 1, (case, [r.getMessage() for r in caplog.records])
     assert rec[0].levelno == logging.WARNING

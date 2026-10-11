@@ -46,6 +46,94 @@ BUCKET_CLASSIFIER_TRUSTED: dict[str, bool] = {
 }
 
 
+# Value of the response field resolution_point_source when the training-window median is served.
+POINT_SOURCE_TRAIN_MEDIAN = "train_median"
+
+# Per-repo trust decision for the POINT estimate (ADR-0064), the point-estimate analogue of
+# BUCKET_CLASSIFIER_TRUSTED. False = the trained regressor is not served; the repo's
+# training-window median resolution time is served instead (response field
+# resolution_point_source = "train_median"). Repos not listed default to trusted (unmeasured,
+# not proven untrustworthy).
+POINT_ESTIMATE_TRUSTED: dict[str, bool] = {
+    # Owner decision D7 (2026-10-08): the +2.06% mean-MAE gain vs naive on the ADR-0041 re-split
+    # test (n=2992, served path) has a bootstrap CI containing naive, and the median AE is worse
+    # than naive (7.28 d vs 3.52 d, reports/served_k8s_metrics.json): the typical issue is served
+    # worse by the model. The learned parts that stay: the bucket classifier (+6.95 pp) and the
+    # CQR interval around the model quantiles.
+    "kubernetes_kubernetes": False,
+    # Served model MAE 5.448 d vs naive 3.533 d (-54.19%, paired bootstrap gain CI
+    # [-2.089, -1.717] d, excludes zero, WRONG direction) on the reconstructed 616-row
+    # 2026-04-21..27 window; with serving-time embeddings -82.34%. No retrain beat naive in 10
+    # runs (docs/DECISION_LOG_2026-10.md D17-D18). A model that loses to naive under every
+    # variant is not served (owner decision D2).
+    "microsoft_vscode": False,
+}
+
+
+# Per-repo choice of interval served alongside the train-median point. False = keep the model Q10/Q90
+# interval unchanged (owner decision D7: the k8s interval stays bit-identical); True = re-centre the
+# model relative width on the median (naive_scaled_interval), used for vscode where the model point
+# is far from the median and a model-centred interval would not contain the served point.
+INTERVAL_RECENTRED: dict[str, bool] = {
+    "kubernetes_kubernetes": False,
+    "microsoft_vscode": True,
+}
+
+
+def repo_slug(repo: str) -> str:
+    """"owner/name" -> "owner_name", the key BUCKET_CLASSIFIER_TRUSTED / POINT_ESTIMATE_TRUSTED use."""
+    return repo.replace("/", "_")
+
+
+def naive_median_days(train_df: pd.DataFrame | None) -> float | None:
+    """Median closed-issue resolution time of the repo training set, in days; None if unavailable.
+
+    Same quantity the offline studies score against: median(train.resolution_hours) / 24
+    (vscode: 3.8374 d). NaN (open) rows are ignored by the median; non-positive or non-finite
+    results are rejected so a corrupt frame can never serve a nonsense point.
+    """
+    if train_df is None or "resolution_hours" not in train_df.columns:
+        return None
+    hrs = pd.to_numeric(train_df["resolution_hours"], errors="coerce").dropna()
+    if hrs.empty:
+        return None
+    med = float(hrs.median()) / 24.0
+    return med if np.isfinite(med) and med > 0 else None
+
+
+# Smallest model point (days) the naive-scaled interval will divide by. The served vscode model's
+# point predictions have min 2.0 d on the 616-row window, so this only guards degenerate input.
+_MIN_MODEL_POINT_DAYS = 1e-3
+
+# Held-out coverage of the interval served alongside the naive median (ADR-0064, option C2):
+# [naive * lo/p, naive * hi/p] (the model's RELATIVE Q10/Q90 width re-centred on the naive
+# median) widened by the stored production CQR Q (cqr_conformal_adjustments.json, 40_60 split;
+# no new artifact). Measured on the chronological 60% held-out part (n=370) of the reconstructed
+# 616-row window; evidence + provenance in reports/vscode_naive_serving_eval.json. These replace
+# the artifact's empirical_coverage fields, which describe a DIFFERENT interval (model quantiles).
+# Single 7-day window, train/test medians 3.84 d vs 0.049 d: marginal coverage is NOT guaranteed.
+NAIVE_INTERVAL_COVERAGE: dict[str, dict[str, float]] = {
+    "microsoft_vscode": {
+        "empirical_coverage": 0.827,
+        "coverage_ci95_lower": 0.7852,
+        "coverage_ci95_upper": 0.8622,
+    },
+}
+
+
+def naive_scaled_interval(
+    naive_days: float, model_point_days: float, model_lo_days: float, model_hi_days: float
+) -> tuple[float, float] | None:
+    """Model Q10/Q90 relative width re-centred on the naive median, or None if not computable."""
+    vals = (naive_days, model_point_days, model_lo_days, model_hi_days)
+    if not all(np.isfinite(v) for v in vals) or model_point_days < _MIN_MODEL_POINT_DAYS:
+        return None
+    return (
+        naive_days * model_lo_days / model_point_days,
+        naive_days * model_hi_days / model_point_days,
+    )
+
+
 def hours_to_bucket(hours: np.ndarray | float) -> np.ndarray:
     """Map resolution_hours to integer bucket index 0–4."""
     days = np.asarray(hours, dtype=float) / 24.0

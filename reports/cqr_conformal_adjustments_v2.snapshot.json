@@ -1,0 +1,51 @@
+{
+  "method": "CQR split-conformal, Romano et al. 2019",
+  "target_coverage": 0.8,
+  "repos": {
+    "kubernetes/kubernetes": {
+      "split": "30_70",
+      "n_calibration": 897,
+      "n_true_test": 2095,
+      "q_adjustment_hours": -1.0182,
+      "q_adjustment_days": -0.0424,
+      "empirical_test_coverage": 0.7971,
+      "coverage_ci95_lower": 0.7794,
+      "coverage_ci95_upper": 0.8138,
+      "raw_interval_coverage": 0.8286,
+      "median_width_raw_hours": 5692.1886,
+      "median_width_conformal_hours": 5690.1521,
+      "median_width_raw_days": 237.1745,
+      "median_width_conformal_days": 237.0897
+    },
+    "microsoft/vscode": {
+      "30_70": {
+        "n_calibration": 184,
+        "n_true_test": 432,
+        "q_adjustment_hours": 1.0614,
+        "q_adjustment_days": 0.0442,
+        "empirical_test_coverage": 0.6829,
+        "coverage_ci95_lower": 0.6375,
+        "coverage_ci95_upper": 0.725,
+        "raw_interval_coverage": 0.3819,
+        "median_width_raw_hours": 2826.3669,
+        "median_width_conformal_hours": 2828.4896,
+        "median_width_raw_days": 117.7653,
+        "median_width_conformal_days": 117.8537
+      },
+      "40_60": {
+        "n_calibration": 246,
+        "n_true_test": 370,
+        "q_adjustment_hours": 1.2655,
+        "q_adjustment_days": 0.0527,
+        "empirical_test_coverage": 0.7459,
+        "coverage_ci95_lower": 0.6992,
+        "coverage_ci95_upper": 0.7876,
+        "raw_interval_coverage": 0.3784,
+        "median_width_raw_hours": 2827.2094,
+        "median_width_conformal_hours": 2829.7404,
+        "median_width_raw_days": 117.8004,
+        "median_width_conformal_days": 117.9058
+      }
+    }
+  }
+}

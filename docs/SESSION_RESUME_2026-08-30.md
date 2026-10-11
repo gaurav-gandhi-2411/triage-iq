@@ -74,6 +74,26 @@ for hours. The merge order was right on paper, and it still broke, because **mer
    commit after the limit clears, not by pushing a new commit.
 5. **Never `--prod` from a local tree** (global rule 31a): recovery is a redeploy of the merged
    commit from Vercel/CI.
+6. **Every production-facing number traces to the ARTIFACT production serves, not merely to a
+   report file.** A report can match the displayed numbers exactly and still describe a
+   superseded model: the `/eval` resolution table matched `reports/w6_resolution_diagnosis.json`
+   cell for cell, but that file describes the old 2026-05-30 k8s predictor, not the one served
+   after ADR-0062 (the report carries no artifact hash, so nothing could tell). For each number a
+   page, README or API field shows, record the sha256 of the artifact that produced it and prove
+   it is the served one:
+   - served: `data/models/MANIFEST.sha256` line for the pickle (e.g.
+     `resolution_predictor_kubernetes_kubernetes.pkl`), which `scripts/verify_model_manifest.py`
+     (CI drift guard) checks against the GCS object, so manifest == GCS object == what the image
+     is built from. To check the object directly:
+     `gsutil hash -h gs://triageiq-prod-260812-models/models/<file>.pkl` (compare the md5, or
+     download and `Get-FileHash -Algorithm SHA256`).
+   - report: the hash the report names or was generated from (its artifact-hash / provenance
+     field, or the commit that generated it: `git log -1 -- <report>`, then the manifest at that
+     commit via `git show <sha>:data/models/MANIFEST.sha256`). Equal hashes = the number
+     describes the served model. Different hashes, or no hash and a commit that predates the last
+     MANIFEST change for that file = the report is stale: regenerate it from the served artifact
+     (stamping its sha256 into the output) before publishing the number.
+   A report that cannot name its artifact is not a valid source for a production-facing number.
 
 ## 2026-09-23: STOP after Phase 3 — restoration staged, nothing merged
 

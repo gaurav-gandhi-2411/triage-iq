@@ -2,3 +2,5 @@ eval/cassettes/*.json text eol=lf
 eval/*.jsonl text eol=lf
 # byte-exact copy: its sha256 is pinned by data/models/MANIFEST.sha256 (file has CRLF line endings)
 reports/cqr_conformal_adjustments.snapshot.json -text
+# byte-exact copy of data/models/cqr_conformal_adjustments_v2.json (sha256 pinned by MANIFEST.sha256)
+reports/cqr_conformal_adjustments_v2.snapshot.json -text

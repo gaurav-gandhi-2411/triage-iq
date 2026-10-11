@@ -94,6 +94,8 @@ def build_triage_prompt(
     resolution_bucket: str | None = None,
     resolution_confidence_pct: float | None = None,
     max_body_chars: int = 800,
+    resolution_point_source: str = "model",
+    interval_calibrated: bool = False,
 ) -> str:
     """Build the user-turn prompt for the triage assistant.
 
@@ -112,6 +114,12 @@ def build_triage_prompt(
             When provided (Config C), appended to System 3 section alongside floats.
             When None (Config A, default), only float signals are shown.
         resolution_confidence_pct: Bucket confidence 0–100%. Used only when bucket provided.
+        resolution_point_source: "model" (the LightGBM point) or "train_median" (the repository's
+            training-window median, ADR-0064). The System 3 header and note say which, so the
+            synthesis model is never told a model predicted a number that is a historical median.
+        interval_calibrated: True when the interval is the served CQR-adjusted one (ADR-0059
+            addendum 2026-10-09); the line then says so. False keeps the historical wording
+            byte-identical.
         max_body_chars: Cap on the body preview length. Default 800 matches historical
             behavior. Lowered by the token-budget guard (triage.py, Part B) when the
             default-length prompt wouldn't fit Groq's 8,000 TPM ceiling -- shrinking the
@@ -131,6 +139,24 @@ def build_triage_prompt(
     similar_lines = "\n".join(
         f"  #{s['number']} (similarity: {s['score']:.3f}): {s['text'][:120]}..."
         for s in similar_issues[:5]
+    )
+
+    if resolution_point_source == "train_median":
+        system3_header = "SYSTEM 3: RESOLUTION TIME ESTIMATE (historical median of this repository's closed issues)"
+        system3_note = (
+            "Note: The point estimate is the historical median resolution time for this repository, "
+            "not a prediction for this specific issue; lean on the interval, not the single number."
+        )
+    else:
+        system3_header = "SYSTEM 3: RESOLUTION TIME PREDICTOR (LightGBM)"
+        system3_note = (
+            "Note: These estimates are trained on historical data and may not account for current "
+            "team velocity or issue priority changes."
+        )
+
+    interval_label = (
+        "80% prediction interval (coverage-calibrated)" if interval_calibrated
+        else "80% prediction interval"
     )
 
     # Config C: optionally append coarse bucket alongside floats
@@ -164,10 +190,10 @@ Top-3 predictions:
 --- SYSTEM 2: SIMILAR ISSUES (BGE retrieval) ---
 {similar_lines}
 
---- SYSTEM 3: RESOLUTION TIME PREDICTOR (LightGBM) ---
+--- {system3_header} ---
 Point estimate: {resolution_point_days:.1f} days
-80% prediction interval: [{resolution_lower_days:.1f}d, {resolution_upper_days:.1f}d]{bucket_line}
-Note: These estimates are trained on historical data and may not account for current team velocity or issue priority changes.
+{interval_label}: [{resolution_lower_days:.1f}d, {resolution_upper_days:.1f}d]{bucket_line}
+{system3_note}
 
 --- TASK ---
 Produce a triage plan as valid JSON matching the schema in the system prompt.

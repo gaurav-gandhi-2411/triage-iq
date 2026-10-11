@@ -22,6 +22,14 @@ from triage_iq.model_config import (
     TRIAGE_PRICE_PROMPT_PER_MTOK,
 )
 from triage_iq.models.grounding import compute_grounding_status
+from triage_iq.models.resolution import (
+    INTERVAL_RECENTRED,
+    POINT_ESTIMATE_TRUSTED,
+    POINT_SOURCE_TRAIN_MEDIAN,
+    naive_median_days,
+    naive_scaled_interval,
+    repo_slug,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +79,73 @@ class TruncatedCompletionError(RuntimeError):
             f"retry -- retrying at the same cap reproduces the same truncation. "
             f"Content tail: ...{content_preview[-80:]!r}"
         )
+
+
+# Provider-side failures that are NOT the caller's fault degrade to the signals-only fallback
+# plan (HTTP 200, _degraded true) instead of surfacing as a 500 -- see ADR-0063. Auth (401/403)
+# and request-shape (400/422) errors are deliberately NOT here: those mean OUR bug or a bad key
+# and must stay loud.
+PROVIDER_DEGRADED_STATUS = "degraded_provider_error"
+_DAILY_QUOTA_REASONS = frozenset({"rate_limited_tpd", "rate_limited_rpd"})
+
+
+def _provider_error_body(exc: BaseException) -> dict:
+    body = getattr(exc, "body", None)
+    if isinstance(body, dict) and isinstance(body.get("error"), dict):
+        return body["error"]
+    return {}
+
+
+def _provider_message(exc: BaseException) -> str:
+    msg = _provider_error_body(exc).get("message")
+    return msg if isinstance(msg, str) else str(exc)
+
+
+def _rate_limit_reason(exc: BaseException) -> str:
+    """Classify a Groq 429 by the quota that was hit, from the structured error body.
+
+    Groq's message reads e.g. 'Rate limit reached for model ... on tokens per day (TPD): ...
+    Please try again in 7m12s'. Matching the quota wording keeps this tolerant to unrelated
+    wording changes; unknown shapes fall back to the generic reason.
+    """
+    msg = _provider_message(exc).lower()
+    for token, reason in (
+        ("(tpd)", "rate_limited_tpd"),
+        ("tokens per day", "rate_limited_tpd"),
+        ("(rpd)", "rate_limited_rpd"),
+        ("requests per day", "rate_limited_rpd"),
+        ("(tpm)", "rate_limited_tpm"),
+        ("tokens per minute", "rate_limited_tpm"),
+        ("(rpm)", "rate_limited_rpm"),
+        ("requests per minute", "rate_limited_rpm"),
+    ):
+        if token in msg:
+            return reason
+    return "rate_limited"
+
+
+def classify_provider_error(exc: BaseException) -> str | None:
+    """Return a degrade reason for provider-side failures, or None if `exc` must keep raising.
+
+    Degradable: 429 (RateLimitError), connection errors, timeouts, 5xx.
+    Not degradable (returns None): AuthenticationError/PermissionDeniedError (401/403), any
+    other 4xx (400 BadRequest, 422, 413 ...) and every non-Groq exception.
+    """
+    try:
+        import groq
+    except ImportError:
+        return None
+    if isinstance(exc, (groq.AuthenticationError, groq.PermissionDeniedError)):
+        return None
+    if isinstance(exc, groq.RateLimitError):
+        return _rate_limit_reason(exc)
+    if isinstance(exc, groq.APITimeoutError):  # subclass of APIConnectionError: check first
+        return "provider_timeout"
+    if isinstance(exc, groq.APIConnectionError):
+        return "provider_unavailable"
+    if isinstance(exc, groq.APIStatusError) and exc.status_code >= 500:
+        return "provider_unavailable"
+    return None
 
 
 class SchemaValidationError(RuntimeError):
@@ -638,8 +713,14 @@ class TriageAssistant:
         use_structured_output: bool = True,
         enable_validated_override_rescue: bool = False,
         artifact_hashes: dict[str, str] | None = None,
+        conformal_adjustment: dict | None = None,
     ) -> None:
         self.repo = repo
+        # CQR store entry for this repo (loader._load_conformal_adjustments). When present the
+        # served interval is the conformal one BEFORE synthesis (ADR-0059 addendum 2026-10-09):
+        # the prompt, the plan's interval fields and the API's conformal interval then carry the
+        # same numbers. None (tests, scripts, store missing) keeps the raw model interval.
+        self.conformal_adjustment = conformal_adjustment
         self.classifier = classifier
         self.detector = detector
         self.predictor = predictor
@@ -753,11 +834,22 @@ class TriageAssistant:
             "predicted_resolution_days_p50": round(mid, 1),
             "resolution_bucket": plan.resolution_bucket,
             "resolution_confidence_pct": plan.resolution_confidence_pct,
+            # ADR-0064: the point estimate the prompt was given and where it came from.
+            "resolution_point_days": signals["resolution_point_days"],
+            "resolution_point_source": signals["resolution_point_source"],
+            "resolution_interval_basis": signals["resolution_interval_basis"],
+            "resolution_point_clamped": signals.get("resolution_point_clamped", False),
+            "resolution_interval_conformal_applied": signals.get(
+                "resolution_interval_conformal_applied", False
+            ),
             "llm_status": llm_status,
             # None for every status except degraded_schema_invalid (SchemaValidationError's
             # groq_error_code, e.g. "json_validate_failed") -- surfaced for
             # record_cassettes.py's checkpoint/diagnostics, not used elsewhere.
             "groq_error_code": usage.get("groq_error_code"),
+            # Short machine reason for any degraded status (e.g. rate_limited_tpd,
+            # provider_unavailable, truncated); None when the LLM answered.
+            "llm_status_reason": usage.get("llm_status_reason"),
             "llm_cache_hit": cache_hit,
             "classifier_top3": signals["classifier_top3"],
             # The cassette key of the synthesis call that produced this plan -- present only
@@ -841,6 +933,72 @@ class TriageAssistant:
             return {}
         return {"embeddings": vec.reshape(1, -1), "pca": pca}
 
+    def _naive_median_days(self) -> float | None:
+        """Repo training-set median resolution time in days (cached); None if unavailable."""
+        if not hasattr(self, "_naive_days_cache"):
+            self._naive_days_cache = naive_median_days(self.train_df)
+        return self._naive_days_cache
+
+    def _apply_point_trust(
+        self, pred_days: float, lo_days: float, hi_days: float, model_ok: bool = True
+    ) -> tuple[float, float, float, str, str, bool]:
+        """Apply POINT_ESTIMATE_TRUSTED (ADR-0064). Returns (point, lo, hi, source, basis, clamped).
+
+        clamped is True when the served train median fell outside the served interval and was
+        moved onto its nearest edge, so the prompt never shows a point its own interval excludes
+        (k8s: the model-centred interval is kept and 5 of 2,992 test rows excluded the median).
+
+        basis is "naive_scaled" when the interval was re-centred on the naive median, else
+        "model" (the interval is still the model's Q10/Q90).
+
+        Trusted repos (and unlisted ones) pass through unchanged, source "model". For an
+        untrusted repo the naive median replaces the point and the model's relative Q10/Q90
+        width is re-centred on it (naive_scaled_interval) so the prompt's point lies inside its
+        interval. If the predictor itself failed (model_ok False) the fixed fallback interval is
+        kept. If the naive median cannot be computed the model output is served with a WARNING:
+        a request must never fail here.
+        """
+        if POINT_ESTIMATE_TRUSTED.get(repo_slug(self.repo), True):
+            return pred_days, lo_days, hi_days, "model", "model", False
+        naive = self._naive_median_days()
+        if naive is None:
+            logger.warning(
+                "Naive median unavailable for untrusted point estimate, serving the model output",
+                extra={"repo": self.repo, "reason": "no_train_median"},
+            )
+            return pred_days, lo_days, hi_days, "model", "model", False
+        if model_ok and INTERVAL_RECENTRED.get(repo_slug(self.repo), True):
+            scaled = naive_scaled_interval(naive, pred_days, lo_days, hi_days)
+            if scaled is not None:
+                return naive, scaled[0], scaled[1], POINT_SOURCE_TRAIN_MEDIAN, "naive_scaled", False
+            logger.warning(
+                "Naive-scaled interval not computable, keeping the model interval",
+                extra={"repo": self.repo, "reason": "degenerate_model_point"},
+            )
+        point = min(max(naive, lo_days), hi_days)
+        return point, lo_days, hi_days, POINT_SOURCE_TRAIN_MEDIAN, "model", point != naive
+
+    def _apply_conformal(
+        self, point: float, lo_days: float, hi_days: float, model_ok: bool
+    ) -> tuple[float, float, float, bool, bool]:
+        """Widen (or narrow) the interval by the CQR adjustment, as api/app.py used to do after
+        synthesis. Returns (point, lo, hi, applied, clamped).
+
+        Skipped (applied False) when no adjustment exists for the repo or the predictor failed:
+        the fixed fallback interval is not a model quantile interval, so Q does not belong on it.
+        The point is re-clamped into the adjusted interval, because a negative Q (k8s v2) can
+        shrink the interval past a median that sat just inside the raw one.
+        """
+        adj = self.conformal_adjustment
+        if not adj or not model_ok:
+            return point, lo_days, hi_days, False, False
+        q_days = float(adj["q_adjustment_hours"]) / 24.0
+        new_lo, new_hi = max(0.0, lo_days - q_days), hi_days + q_days
+        if new_hi < new_lo:  # an extreme negative Q on a narrow interval: keep the raw one
+            return point, lo_days, hi_days, False, False
+        clamped_point = min(max(point, new_lo), new_hi)
+        return clamped_point, new_lo, new_hi, True, clamped_point != point
+
     def _collect_signals(self, issue: pd.Series) -> dict:
         from triage_iq.prompts.triage_prompt import build_triage_prompt
 
@@ -918,10 +1076,24 @@ class TriageAssistant:
             buckets, confs = self.predictor.predict_bucket(feats)
             resolution_bucket   = buckets[0]
             resolution_conf_pct = round(float(confs[0]) * 100, 1)
+            predictor_ok = True
         except Exception as e:
             logger.warning("Resolution predictor failed: %s", e)
+            predictor_ok = False
             pred_days, lo_days, hi_days = 7.0, 1.0, 30.0
             resolution_bucket, resolution_conf_pct = "days", 33.0
+        # Raw model outputs, kept for diagnostics/eval before any trust override (ADR-0064).
+        model_point_days, model_lo_days, model_hi_days = pred_days, lo_days, hi_days
+        pred_days, lo_days, hi_days, point_source, interval_basis, point_clamped = (
+            self._apply_point_trust(
+                pred_days, lo_days, hi_days, model_ok=predictor_ok
+            )
+        )
+        raw_lo_days, raw_hi_days = lo_days, hi_days  # the point-trust interval, before CQR
+        pred_days, lo_days, hi_days, conformal_applied, conformal_clamped = self._apply_conformal(
+            pred_days, lo_days, hi_days, model_ok=predictor_ok
+        )
+        point_clamped = point_clamped or conformal_clamped
         t_predict = time.perf_counter() - t3
 
         # Config C: include bucket in prompt when TRIAGE_PROMPT_INCLUDE_BUCKET=1
@@ -937,6 +1109,8 @@ class TriageAssistant:
             repo=self.repo,
             resolution_bucket=resolution_bucket if _include_bucket else None,
             resolution_confidence_pct=resolution_conf_pct if _include_bucket else None,
+            resolution_point_source=point_source,
+            interval_calibrated=conformal_applied,
         )
         return {
             "prompt": prompt,
@@ -945,6 +1119,16 @@ class TriageAssistant:
             "pred_days": pred_days,
             "lo_days": lo_days,
             "hi_days": hi_days,
+            "resolution_point_days": pred_days,
+            "resolution_point_source": point_source,
+            "resolution_interval_basis": interval_basis,
+            "resolution_point_clamped": point_clamped,
+            "resolution_interval_conformal_applied": conformal_applied,
+            "raw_lo_days": raw_lo_days,
+            "raw_hi_days": raw_hi_days,
+            "model_point_days": model_point_days,
+            "model_lo_days": model_lo_days,
+            "model_hi_days": model_hi_days,
             "resolution_bucket": resolution_bucket,
             "resolution_conf_pct": resolution_conf_pct,
             "_t_classify": t_classify,
@@ -1060,6 +1244,8 @@ class TriageAssistant:
                     resolution_lower_days=signals["lo_days"],
                     resolution_upper_days=signals["hi_days"],
                     repo=self.repo,
+                    resolution_point_source=signals.get("resolution_point_source", "model"),
+                    interval_calibrated=signals.get("resolution_interval_conformal_applied", False),
                     resolution_bucket=(
                         signals["resolution_bucket"] if signals["_include_bucket"] else None
                     ),
@@ -1175,6 +1361,13 @@ class TriageAssistant:
                 "groq_error_code": exc.groq_error_code,
             }
             return plan, "", schema_invalid_usage, "degraded_schema_invalid", False
+        except Exception as exc:
+            # Provider-side outage (429/connection/timeout/5xx): degrade, never cache (the
+            # cache.set below is unreachable from here). Auth/400 errors return None -> re-raise.
+            provider_degrade = self._degrade_on_provider_error(exc, signals, "synthesis call")
+            if provider_degrade is None:
+                raise
+            return provider_degrade
 
         if cache is not None and cache_key is not None:
             cache.set(cache_key, "groq", self.model, messages, {"content": raw, "usage": usage})
@@ -1247,6 +1440,13 @@ class TriageAssistant:
                     "groq_error_code": exc2.groq_error_code,
                 }
                 return plan, "", schema_invalid_usage2, "degraded_schema_invalid", False
+            except Exception as exc2:
+                provider_degrade = self._degrade_on_provider_error(
+                    exc2, signals, "parse-retry call"
+                )
+                if provider_degrade is None:
+                    raise
+                return provider_degrade
             try:
                 plan = self._parse_plan(raw2)
                 llm_status = "parse_retry_succeeded"
@@ -1262,7 +1462,36 @@ class TriageAssistant:
 
         return plan, raw, usage, llm_status, False
 
-    def _make_fallback_plan(self, signals: dict, reason: str | None = None) -> TriagePlan:
+    def _degrade_on_provider_error(
+        self, exc: BaseException, signals: dict, where: str
+    ) -> tuple[TriagePlan, str, dict, str, bool] | None:
+        """Signals-only degrade for provider-side failures; None means the caller must re-raise.
+
+        Never sleeps (latency) and never caches. The provider text is logged (truncated to 200
+        chars, WARNING) but only the short machine reason reaches the response.
+        """
+        reason = classify_provider_error(exc)
+        if reason is None:
+            return None
+        logger.warning(
+            "LLM provider error on %s for #%s: degrading to signals-only fallback plan "
+            "(repo=%s status_code=%s error_code=%s reason=%s): %.200s",
+            where, signals.get("_number", "?"), self.repo,
+            getattr(exc, "status_code", None),
+            _provider_error_body(exc).get("code"),
+            reason, _provider_message(exc),
+        )
+        plan = self._make_fallback_plan(
+            signals,
+            reason=f"LLM provider unavailable ({reason})",
+            include_similar_issues=True,
+        )
+        usage = {"llm_status_reason": reason, "prompt_tokens": 0, "completion_tokens": 0}
+        return plan, "", usage, PROVIDER_DEGRADED_STATUS, False
+
+    def _make_fallback_plan(
+        self, signals: dict, reason: str | None = None, include_similar_issues: bool = False
+    ) -> TriagePlan:
         """Structured fallback when the LLM stage cannot produce a usable plan.
 
         `reason` defaults to the original JSON-parse-failure wording (backward compatible
@@ -1271,6 +1500,20 @@ class TriageAssistant:
         completion budget; completion truncated even at a dynamically-reduced max_tokens).
         """
         top = (signals.get("classifier_top3") or [{}])[0]
+        # Only the provider-outage degrade lists retrieved neighbours (real retrieval output,
+        # not LLM prose); the older degrade paths keep [] so their behaviour is unchanged.
+        similar = (
+            [
+                SimilarIssue(
+                    number=int(r["number"]),
+                    similarity=min(1.0, max(0.0, float(r.get("score", 0.0)))),
+                    relevance_note="Retrieved by embedding similarity; LLM summary unavailable.",
+                )
+                for r in (signals.get("similar_raw") or [])[:5]
+            ]
+            if include_similar_issues
+            else []
+        )
         if reason is None:
             priority_rationale = "LLM parse failure — priority defaulting to medium."
             triage_summary = (
@@ -1286,7 +1529,7 @@ class TriageAssistant:
         return TriagePlan(
             predicted_component=str(top.get("label", "unknown")),
             component_confidence=float(top.get("confidence", 0.0)),
-            similar_issues=[],
+            similar_issues=similar,
             expected_resolution_summary="LLM response unparseable; estimate from predictor only.",
             expected_resolution_lower_days=float(signals.get("lo_days", 1.0)),
             expected_resolution_upper_days=float(signals.get("hi_days", 30.0)),
@@ -1345,8 +1588,11 @@ class TriageAssistant:
                         prompt_tokens=prompt_tokens,
                     )
                 return content, usage
-            except RateLimitError:
-                if attempt == 5:
+            except RateLimitError as rl_exc:
+                # A daily quota (TPD/RPD) will not clear within any backoff we could afford
+                # in a request: fail fast instead of sleeping ~108s through 6 attempts before
+                # failing anyway (ADR-0063). Per-minute limits keep the existing retry.
+                if attempt == 5 or _rate_limit_reason(rl_exc) in _DAILY_QUOTA_REASONS:
                     raise
                 jitter = backoff * (0.5 + 0.5 * (attempt / 5))
                 logger.warning("Rate limit hit — sleeping %.1fs (attempt %d/6)", jitter, attempt + 1)

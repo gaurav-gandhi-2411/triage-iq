@@ -199,7 +199,7 @@ reasonableness: k8s 1.679 -> 1.566 (-0.113, SE 0.075, 5 up / 11 down; two-sided 
 distinguishable from judge noise at this n (the measured per-issue jitter is 0.748 total points,
 ADR-0019); the k8s fall is the one worth watching, because the point there is now the median rather
 than the model. Gate view: k8s moved -0.019 against a 0.22 band; vscode moved +0.455 (an
-improvement; the band only fires downwards). Floor-fail, fabrication and prose-number-contradiction
+at the edge of its 0.45 band; not claimed as an improvement). Floor-fail, fabrication and prose-number-contradiction
 rates: k8s 0.0755 / 0 / 0 (unchanged), vscode 0 / 0 / 0.
 
 Confounds, stated: three things changed together (the median point, the System 3 header that now
@@ -207,8 +207,14 @@ names the training-window median, and the calibrated prompt interval) and the sy
 re-sampled by a non-deterministic provider, so no delta can be attributed to any single one of them.
 Reasonableness is judged against the plan's own resolution claims and gold resolution days, so the
 fall may reflect the median point being a worse "typical" statement for k8s as much as any prompt
-effect; this ADR does not decide which. The baseline file is NOT updated here (owner approval
-required, queued): the cassette-hash test stays red until it is.
+effect; this ADR does not decide which.
+
+Baseline approved by the owner (2026-10-11), including the reasonableness drop, and written in this
+PR (`python eval/run_eval.py --update-baseline`). Rationale: the median-point decision rests on
+ground truth (median absolute error 3.52 d vs 7.28 d against actual resolution times); the judge
+dimension is an LLM proxy for how an estimate looks, the drop is not significant (sign test
+p about 0.21) and is confounded with re-sampled synthesis. It is recorded as an unresolved proxy
+signal, not as a reason to revert.
 
 ## Consequences
 

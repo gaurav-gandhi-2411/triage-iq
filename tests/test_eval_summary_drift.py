@@ -255,6 +255,26 @@ def test_resolution_served_block_equals_its_source_reports(summary):
     assert summary["resolution_served"] == _builder().build()
 
 
+def test_k8s_gain_tail_report_agrees_with_the_served_metrics_it_decomposes():
+    """The tail analysis decomposes the SAME mean gain served_k8s_metrics.json reports (+2.06%,
+    2.1427 d), computed from the same per-row file, so a stale or mismatched rows file fails here."""
+    tail = _load("k8s_gain_tail.json")
+    km = _load("served_k8s_metrics.json")["served_metrics"]
+    assert tail["n"] == km["n"]
+    assert tail["mean_gain_days"] == pytest.approx(km["mae_gain_vs_naive_days_boot"][0], abs=5e-4)
+    assert tail["mean_gain_pct_of_naive_mae"] == pytest.approx(
+        km["mae_improve_pct_vs_naive"], abs=5e-3
+    )
+    t10 = tail["tails"]["top_10pct_by_true_resolution"]
+    assert t10["k_issues"] == round(0.10 * tail["n"])
+    assert t10["share_ci95"][0] <= t10["share_of_total_gain"] <= t10["share_ci95"][1]
+    # the rows file the analysis hashed is the committed one
+    import hashlib
+
+    rows = (REPORTS / "served_k8s_rows.parquet").read_bytes()
+    assert tail["inputs_sha256"]["reports/served_k8s_rows.parquet"] == hashlib.sha256(rows).hexdigest()
+
+
 def test_resolution_served_manifest_hashes_match_the_manifest(summary):
     pinned = summary["resolution_served"]["provenance"]["manifest_sha256"]
     manifest = _manifest()

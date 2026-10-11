@@ -53,6 +53,7 @@ def build() -> dict:
     vs_pred = "data/models/resolution_predictor_microsoft_vscode.pkl"
     cqr = "data/models/cqr_conformal_adjustments_v2.json"
     c2 = v["interval"]["split_40_60"]["candidates"]["C2_naive_scaled_model_width_stored_Q"]
+    tail = _load("k8s_gain_tail.json")["tails"]["top_10pct_by_true_resolution"]
     return {
         "point_estimate": {
             "served": "train_median",
@@ -88,6 +89,15 @@ def build() -> dict:
                     "median_ae_days": km["served_median_ae_days"],
                     "mae_gain_vs_naive_days": km["mae_gain_vs_naive_days_boot"][0],
                     "mae_gain_ci95_days": km["mae_gain_vs_naive_days_boot"][1:],
+                    # reports/k8s_gain_tail.json (scripts/analysis_k8s_gain_tail.py): where the
+                    # +2% mean-error gain comes from. Backs the public "long-running issues" clause.
+                    "mae_gain_tail_share": {
+                        "longest_resolving_fraction": 0.10,
+                        "k_issues": tail["k_issues"],
+                        "min_resolution_days": round(tail["min_true_days_in_tail"], 1),
+                        "share_of_total_gain": tail["share_of_total_gain"],
+                        "share_ci95": tail["share_ci95"],
+                    },
                 },
                 "bucket": {
                     "served": "classifier",
@@ -104,6 +114,8 @@ def build() -> dict:
                     "coverage_cqr_v2_heldout": k["cqr_v2"]["holdout"]["hold_v2_q_wilson"][0],
                     "coverage_cqr_v2_heldout_ci95": k["cqr_v2"]["holdout"]["hold_v2_q_wilson"][1:],
                     "n_heldout": k["cqr_v2"]["holdout"]["n_hold"],
+                    "split": "chronological 30/70 split by created_at of the ADR-0041 re-split temporal test "
+                    "(897 calibration / 2,095 held-out)",
                 },
                 "unchanged_by_d7": {
                     "interval_lo_hi_bit_identical": d7[K8S]["lo_hi_bit_identical"],
@@ -137,6 +149,9 @@ def build() -> dict:
                     "coverage_heldout_ci95": c2["coverage_wilson95"][1:],
                     "n_heldout": v["interval"]["split_40_60"]["n_hold"],
                     "median_width_days": c2["median_width_d"],
+                    "split": "chronological 40/60 split by created_at of the 616-issue "
+                    "2026-04-21..27 window: first 40% (246 issues) calibrate Q, last 60% "
+                    "(370 issues) held out",
                     "caveat": "single 7-day window; train median 3.84 d vs test median "
                     "0.049 d; coverage is a measurement, not a guarantee",
                 },
@@ -167,6 +182,7 @@ def main() -> None:
     data["_sources"]["resolution_served"] = (
         "scripts/build_resolution_served_block.py from reports/served_k8s_metrics.json + "
         "reports/vscode_naive_serving_eval.json + reports/d7_resolution_before_after.json + "
+        "reports/k8s_gain_tail.json (scripts/analysis_k8s_gain_tail.py) + "
         "data/models/MANIFEST.sha256 + docs/architecture/adr/0064"
     )
     SUMMARY.write_text(

@@ -618,3 +618,33 @@ last 24 h; the gate opens at 2026-10-11 08:22 UTC, when the Oct 10 morning calls
 (about 65K tokens) fit in the first minutes after that, so 64/64 is expected about 2026-10-11 08:40 UTC.
 Relaunched at 2026-10-10 20:21 UTC as a plain PowerShell `Start-Process` (launcher PID 27100, BelowNormal, hidden,
 output to `%TEMP%\rec_synth2.log`), not refused; confirmed "WAITING (budget reserve)" with 0 tokens spent.
+
+**D60. Groq prompt caching: what is known, and the Groq budget-layer workstream (queued for after #161 closes; owner
+decision 2026-10-11).** Read-only investigation, no Groq call, recorder and ledger untouched.
+VERIFIED from the cassette and checkpoint (53 entries recorded this run): stored usage has `prompt_tokens`
+(sum 256,368; mean 4,837), `completion_tokens` (sum 60,358; mean 1,139), `finish_reason`, `structured_output`,
+`cache_key`, and NO `cached_tokens` / `prompt_tokens_details`: `_groq_completion` copies only the two counts, so
+whether caching is hitting is unknown. VERIFIED: the system message and 8 few-shot turns (14,875 chars) are
+byte-identical across all 53 calls and come first; the final user message shares only the 12-character prefix
+`Repository: `. BELIEVED (char-to-token ratio and a linear fit agree): the static prefix is about 4.1-4.2K of
+about 4.8K prompt tokens (about 84 pct), the per-issue part about 0.76K. VERIFIED: the ledger records
+`prompt_tokens + completion_tokens` as reported (53 entries, 316,726 = the checkpoint sum), with no cache
+adjustment. Groq docs (https://console.groq.com/docs/prompt-caching): gpt-oss-20b/120b/safeguard-20b; expiry after
+2 hours without use (the page also says "a few hours"); minimum prefix 128-1024 tokens by model; exact-prefix
+match; cached tokens "do not count towards your rate limits" but are "subtracted from your limits after
+processing". Calls/day under the 160K cap: about 27 today; BELIEVED about 84 if the whole static prefix were cached
+and Groq counted only the rest, with the admission caveat that requests may still be admitted at full size.
+
+Correction to my proposed design (owner): `x-ratelimit-*` headers carry per-minute tokens only; Groq exposes no daily
+figure in headers. The authoritative daily figure is "Used X" in a TPD 429 body. Measurement, therefore:
+(a) capture `usage.prompt_tokens_details.cached_tokens` per call in `_groq_completion` and store it with each
+cassette entry and each ledger record; (b) at the next TPD 429, compare Groq's "Used" against the ledger's total and
+against its non-cached total, and record which one matches.
+
+Decision: queued for AFTER #161 closes. Not run now, not in #161 (one coherent change per PR). It is step 1 of a
+Groq budget-layer workstream, in order: (1) the caching measurement above; (2) make the ledger count only what Groq
+counts; (3) burst scheduling to keep the cache warm (2 h idle expiry); (4) re-measure whether few-shot is still
+needed now that the schema defect is fixed (ADR-0053's evidence was confounded); (5) a scheduled Cloud Run
+recording job off the laptop; (6) move the gg-portfolio chatbot to a different Groq model so it stops sharing the
+gpt-oss-120b pool with TriageIQ. Items 2-6 need their own PRs; (5) and (6) touch cloud and another repo and are
+GG-gated.

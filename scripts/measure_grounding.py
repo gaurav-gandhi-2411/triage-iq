@@ -25,6 +25,7 @@ import pandas as pd
 
 from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
+from triage_iq.api.loader import _load_conformal_adjustments
 from triage_iq.models.component_classifier import load_classifier
 from triage_iq.models.grounding import compute_grounding_status
 from triage_iq.models.resolution import ResolutionTimePredictor
@@ -80,6 +81,9 @@ def _load_models(
         train_df=train_df,
         groq_api_key=CI_API_KEY,
         cache=cassette,
+        # The recorded prompts carry the served conformal interval (ADR-0059 addendum
+        # 2026-10-09); without it the replayed request differs and every key misses.
+        conformal_adjustment=_load_conformal_adjustments(MODELS_DIR).get(repo),
     )
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 """Diagnostic: compute synthesis key for vscode-2093 and print prompt excerpt."""
 import sys, json
+from pathlib import Path
 sys.path.insert(0, "src")
 sys.path.insert(0, "eval")
 import numpy as np, pandas as pd, sklearn, torch
@@ -9,6 +10,7 @@ from triage_iq.models.component_classifier import load_classifier
 from triage_iq.models.similar_issues import SimilarIssueRetriever
 from triage_iq.models.resolution import ResolutionTimePredictor
 from triage_iq.models.triage import TriageAssistant
+from triage_iq.api.loader import _load_conformal_adjustments
 from triage_iq.cache.llm_cache import LLMCache
 from cassette import CassettePlayer
 issues = [json.loads(l) for l in open("eval/eval_set.jsonl").read().splitlines() if l.strip()]
@@ -29,7 +31,8 @@ def patched(*a, **kw):
 LLMCache.compute_key = staticmethod(patched)
 cassette = CassettePlayer("eval/cassettes/eval_cassette.json", strict=False)
 asst = TriageAssistant(repo="microsoft/vscode", classifier=clf, detector=det,
-    predictor=pred, train_df=train, groq_api_key="noop", cache=cassette)
+    predictor=pred, train_df=train, groq_api_key="noop", cache=cassette,
+    conformal_adjustment=_load_conformal_adjustments(Path("data/models")).get("microsoft/vscode"))
 row = pd.Series({"title": issue["title"], "body_clean": issue["body"],
     "number": issue["number"],
     "created_at": pd.Timestamp(issue["created_at"]) if issue.get("created_at") else pd.Timestamp("now", tz="UTC")})

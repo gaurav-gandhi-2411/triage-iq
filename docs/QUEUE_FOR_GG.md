@@ -37,6 +37,21 @@ Last updated 2026-10-08 (round 5). Everything else is in `docs/DECISION_LOG_2026
    intervals. No action needed unless you disagree.
 9. **Retrieval-conditional k8s resolution redesign** (P5 study, earlier): recommendation not now.
 
+## After closing #161 (queued work, not for #161; D60)
+
+Groq budget-layer workstream, in order, each its own PR. Nothing here blocks #161.
+
+1. **Caching measurement.** (a) Capture `usage.prompt_tokens_details.cached_tokens` per call in
+   `_groq_completion` and store it with each cassette entry and ledger record. (b) At the next TPD 429, compare
+   Groq's "Used" with the ledger's total and its non-cached total and record which matches. (Rate-limit headers are
+   per-minute only; the daily figure exists only in the 429 body.)
+2. Make the ledger count only what Groq counts (follows from 1).
+3. Burst scheduling to keep the prompt cache warm (expiry is 2 h without use).
+4. Re-measure whether few-shot is still needed now that the schema defect is fixed (ADR-0053 evidence was confounded).
+5. Scheduled Cloud Run recording job off the laptop (cloud change, needs your go-ahead).
+6. Move the gg-portfolio chatbot to a different Groq model so it stops sharing the gpt-oss-120b pool (other repo,
+   your decision).
+
 ## FYI (no action)
 
 - **Groq budget (200K tokens/day, org-wide, rolling 24 h) is exhausted until about 16:30-19:00 UTC Oct 8**

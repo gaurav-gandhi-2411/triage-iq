@@ -105,3 +105,26 @@ Surfacing a banner is a separate UI change (out of scope here).
   plan at all although the signals are valid; and it reproduces "outage = error page" for users.
   200 with `_degraded: true` follows the contract already established by the other degrade paths.
 - **Degrade on 401/403 too.** Rejected: see Decision 2.
+
+## Addendum 2026-10-12: total time budget for the LLM stage
+
+The per-minute limit was not covered above (it keeps the in-request backoff). Production on
+2026-10-11 (`reports/latency_replay_2026-10-12.txt`): 4 of 5 `/triage` calls spent 51-133 s in the
+Groq stage and still returned HTTP 200 with `_degraded` false, because the shared 8,000
+tokens/minute pool was used up and each attempt also spent ~30 s inside the Groq SDK's own retries.
+
+Decision: the serving path (`api/loader.py`) gives `TriageAssistant` a total LLM-stage budget,
+`TRIAGE_LLM_TIME_BUDGET_S`, default **15 s**. One deadline covers the first call and a parse-retry
+call. With a deadline the SDK's retries are off, each attempt's timeout is the time remaining, the
+server's `Retry-After` is honoured, and a backoff that would cross the deadline raises
+`LLMTimeBudgetExceeded`, which degrades like the other provider errors: HTTP 200, `_degraded`
+true, `_llm_status_reason` = `llm_time_budget_exceeded`.
+
+Why 15 s: the unthrottled stage-4 median was 2.8-3.1 s (2026-10-07 and 2026-10-11 replays), so
+15 s is about 5x normal, long enough for a transient blip plus one or two backoffs (2.5 s, 6 s),
+short enough that a user is not left waiting minutes. It is a judgement, not a tuned value;
+revisit with the post-deploy contention test. The recorder, eval and scripts construct the
+assistant directly and stay unbounded (`llm_time_budget_s=None`).
+
+Consequence: under sustained contention more requests return the signals-only plan instead of a
+slow LLM plan. That is the intended trade; the UI already renders `_degraded`.

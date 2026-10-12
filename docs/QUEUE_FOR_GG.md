@@ -1,6 +1,6 @@
 # Queue for GG (only items you must do)
 
-Last updated 2026-10-12 (round 11). Everything else is in `docs/DECISION_LOG_2026-10.md`.
+Last updated 2026-10-12 (round 11, D66). Everything else is in `docs/DECISION_LOG_2026-10.md`.
 
 ## Core #161: MERGED and deployed (2026-10-11, merge f71096a, revision triageiq-api-00045-zac)
 
@@ -8,32 +8,20 @@ Verified live (D63): `/health?deps=1` ok, HEAD /health 200, `/eval/summary` serv
 MANIFEST-hash provenance. **One production exposure found, not fixed (needs your pick, item A below):**
 the Groq 8,000 tokens/minute limit makes /triage take 50-135 s when the key's per-minute pool is used up.
 
-Round 11 status (D65): core #170 is MERGED (f7b118c) but its deploy failed the smoke test on `rate_limited_tpd` (the shared
-120b daily pool is exhausted); production still serves 00045-zac. I merge #171, #172 and UI #28 in that order, each after the
-previous deploy is confirmed.
+Round 11 status (D66, 2026-10-12). Done and deployed: core #170, #171, #172, #174 and your #175 (production now on a revision with the 15 s LLM budget, the `emb_*` log field and the cached-token field); the shared Groq budget ledger is merged as #178, #179 and #180 (the oversized #177 is closed as superseded); gg-portfolio #308 is closed (the chatbot is not the pool consumer; branch `fix/chatbot-groq-gpt-oss-20b` kept, no cassette re-record needed). Waiting, all mine: the UI #28 production build (Vercel is rate limited until about 07:30 UTC Oct 13, see D66 item 4), the pool-dependent measurements (A3 cached-token study, 5-body replay, 3-in-60 s contention test: need about 50K tokens of 120b headroom, the pool was empty at 08:24 UTC), review-iq PR #510 (benchmark budget gate; merged by me when its guard allows).
 
-**1. Merge core #175 (smoke-test quota refinement; touches `deploy.yml`, so it is yours).** Check `gh pr checks 175` first, then run alone:
-`gh pr merge 175 --repo gaurav-gandhi-2411/triage-iq --merge`. After it merges I re-run #170's deploy (identical rerun of run 38206343184;
-it deploys the main tip, which includes #170).
+**1. README #151 (draft): your review is the one step that must be yours.** Full text: https://github.com/gaurav-gandhi-2411/triage-iq/blob/docs/readme-verified-numbers/README.md. I keep it a draft; its latency section is refreshed from the measurements when the pool allows.
 
-**2. A2 cassette re-record (gg-portfolio draft PR #308; hold the merge until this is done).** Run in YOUR OWN PowerShell window,
-outside Claude Code, so the env file never enters this session. Spends about 25K tokens on the gpt-oss-20b pool (23 recorded calls at
-about 1K each; BELIEVED, from the old cassettes' token counts). Each line separately:
+**2. OPTIONAL cleanup, not a blocker: give review-iq's benchmark its own Groq org.** Today `GROQ_API_KEY_BENCHMARK` is on the shared Personal account (the Groq console shows it used about 2,100 calls on Oct 11), so it draws on the same per-model daily pools as production; the ledger (#510) makes it wait its turn, an own-org key removes the sharing. Steps, each in your own window (keep the key out of Claude Code):
+   1. Sign in to https://console.groq.com as Samidha's own Groq account (her own org), then API Keys, Create API Key, name it `review-iq-benchmark`, copy it.
+   2. Open `C:\Users\gaura\ml-projects\review-iq\benchmark\vernacular_v2\.env.benchmark.local` in an editor and replace the value on the `GROQ_API_KEY_BENCHMARK=` line with the new key. Save.
+   3. From `C:\Users\gaura\ml-projects\review-iq` run `.venv\Scripts\python.exe benchmark\vernacular_v2\benchmark_groq_key.py`; it must print "OK" (it shows the key's first 8 and last 4 characters, do not paste them anywhere).
+   4. Because the new org has its own pools, tell the budget gate to step aside for that org: set the user environment variable `GROQ_BUDGET_SEPARATE_ORG` to `1` (PowerShell: `setx GROQ_BUDGET_SEPARATE_ORG 1`; new terminals only). Without it the ledger would count the new org's tokens against the shared pool.
+   5. Run one small benchmark script and check the Groq console of Samidha's org shows the usage (and the Personal account's `gpt-oss-120b` usage stays flat).
+   6. Delete the old key: https://console.groq.com on the Personal account, API Keys, delete the key behind the old `GROQ_API_KEY_BENCHMARK` value.
+   Nothing breaks if you skip this; it only removes the shared-pool exposure.
 
-```powershell
-Set-Location C:\Users\gaura\ml-projects\gg-portfolio-wt-groq20b
-git status --short; git branch --show-current   # expect clean, fix/chatbot-groq-gpt-oss-20b
-node --env-file="C:\Users\gaura\ml-projects\gg-portfolio\.env" evals/chatbot/run-eval.mjs --live --force
-git status --short                              # expect modified evals/chatbot/cassettes/*.json and new reports/wave16-chatbot-eval-*.md/.json
-git add evals/chatbot/cassettes reports
-git commit -m "test(chatbot): re-record eval cassettes on openai/gpt-oss-20b"
-git push origin fix/chatbot-groq-gpt-oss-20b
-```
-
-Then tell me "recorded". I will verify each committed cassette's `recordedModel` is `openai/gpt-oss-20b`, rerun the replay with no key,
-and compare the 20b numbers with the 120b baseline (recall@5 95.0%, groundedness 100%, refusal precision 100%, false-refusal 0%, on the
-same fixtures) before saying whether #308 is mergeable. If the run prints `no GROQ_API_KEY`, the env file path or variable name is wrong;
-nothing is overwritten in that case (verified: a keyless `--live --force` left every cassette untouched).
+**3. OPTIONAL, Vercel (D66 item 4): stop canceled preview deployments from counting toward the Hobby cap.** All three projects already skip builds with an Ignored Build Step (triage-iq now too, set by me through the API: build only `main` and `preview/*` branches), but a skipped deployment is still CREATED, and Vercel Hobby allows 100 created per day per account. `review-iq`'s `web/vercel.json` could add `"git": {"deploymentEnabled": {"main": true, "preview/*": true, "*": false}}` so other branches never create a deployment (BELIEVED to be the stronger fix, not tested). I did not change review-iq's `vercel.json`; say the word and I will PR it.
 
 ## Dashboard / account actions (only you can do these)
 

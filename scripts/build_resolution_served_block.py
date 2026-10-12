@@ -53,7 +53,7 @@ def build() -> dict:
     vs_pred = "data/models/resolution_predictor_microsoft_vscode.pkl"
     cqr = "data/models/cqr_conformal_adjustments_v2.json"
     c2 = v["interval"]["split_40_60"]["candidates"]["C2_naive_scaled_model_width_stored_Q"]
-    tail = _load("k8s_gain_tail.json")["tails"]["top_10pct_by_true_resolution"]
+    tail = _load("k8s_gain_tail.json")["tails"]["top_20pct_by_true_resolution"]
     return {
         "point_estimate": {
             "served": "train_median",
@@ -92,7 +92,7 @@ def build() -> dict:
                     # reports/k8s_gain_tail.json (scripts/analysis_k8s_gain_tail.py): where the
                     # +2% mean-error gain comes from. Backs the public "long-running issues" clause.
                     "mae_gain_tail_share": {
-                        "longest_resolving_fraction": 0.10,
+                        "longest_resolving_fraction": 0.20,
                         "k_issues": tail["k_issues"],
                         "min_resolution_days": round(tail["min_true_days_in_tail"], 1),
                         "share_of_total_gain": tail["share_of_total_gain"],

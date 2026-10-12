@@ -265,9 +265,10 @@ def test_k8s_gain_tail_report_agrees_with_the_served_metrics_it_decomposes():
     assert tail["mean_gain_pct_of_naive_mae"] == pytest.approx(
         km["mae_improve_pct_vs_naive"], abs=5e-3
     )
-    t10 = tail["tails"]["top_10pct_by_true_resolution"]
-    assert t10["k_issues"] == round(0.10 * tail["n"])
-    assert t10["share_ci95"][0] <= t10["share_of_total_gain"] <= t10["share_ci95"][1]
+    for key, frac in (("top_10pct_by_true_resolution", 0.10), ("top_20pct_by_true_resolution", 0.20)):
+        t = tail["tails"][key]
+        assert t["k_issues"] == round(frac * tail["n"])
+        assert t["share_ci95"][0] <= t["share_of_total_gain"] <= t["share_ci95"][1]
     # the rows file the analysis hashed is the committed one
     import hashlib
 

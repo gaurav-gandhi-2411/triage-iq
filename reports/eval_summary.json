@@ -271,13 +271,13 @@
             2.4467
           ],
           "mae_gain_tail_share": {
-            "longest_resolving_fraction": 0.1,
-            "k_issues": 299,
-            "min_resolution_days": 417.0,
-            "share_of_total_gain": 0.5683,
+            "longest_resolving_fraction": 0.2,
+            "k_issues": 598,
+            "min_resolution_days": 112.9,
+            "share_of_total_gain": 0.9585,
             "share_ci95": [
-              0.5022,
-              0.6591
+              0.8732,
+              1.069
             ]
           }
         },

@@ -79,5 +79,5 @@ Only the project that set it can clear it.
 
 - It cannot see spend that bypasses it (production, CI, a script that does not call it). The
   production reserve and `observe_429` are the safety net, not a substitute for integration.
-- `observe_429` records the gap as spend that ages out 24 h after the 429, not after the spend it stands for (conservative).
+- `observe_429` holds the gap between Groq's "Used" and the ledger as 24 hourly slices across the trailing window (the spend happened at unknown times in it), so it drains hour by hour; a newer observation replaces the previous one for that model and can correct it downwards. Before 2026-10-12 it was one block that blocked for 24 h.
 - The `benchmark` key's own pacing under the 8,000 tokens-per-minute limit is the caller's job; this ledger only does the daily pool.

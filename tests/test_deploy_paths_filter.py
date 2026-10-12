@@ -83,6 +83,7 @@ def test_job_inputs_trigger_a_deploy():
         "reports/eval_summary.json",
         "reports/eval_baseline.json",
         "scripts/verify_model_manifest.py",
+        "scripts/smoke_triage_verdict.py",
         ".github/workflows/deploy.yml",
     ):
         assert _triggers(p), p

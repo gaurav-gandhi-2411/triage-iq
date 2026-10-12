@@ -1,0 +1,3 @@
+# Extra packages for the Cloud Run recording job image (docker/Dockerfile.recorder), on top of the API image.
+# Only the GCS client; everything else the recorder imports is already in requirements.lock.
+google-cloud-storage==2.19.0

@@ -29,5 +29,7 @@
   "identical_to_base": true,
   "note": "scripts/verify_loader_equivalence.py now excludes the _t_* wall-clock timers itself"
  },
- "overlap_attempt_result": "deployed as triageiq-api-00057-yob (PR #185): production load_all 35,510 ms vs 25,396 / 28,357 / 27,688 ms on revisions 00051 / 00053 / 00055: slower; replaced by the drift-check-after-startup change"
+ "overlap_attempt_result": "deployed as triageiq-api-00057-yob (PR #185): production load_all 35,510 ms vs 25,396 / 28,357 / 27,688 ms on revisions 00051 / 00053 / 00055: slower; replaced by the drift-check-after-startup change",
+ "drift_check_after_startup_result": "deployed as triageiq-api-00059-hif (PR #186): production load_all 27,994 ms, startup 28.0 s, vs 25,396 / 28,357 / 27,688 ms (mean 27.1 s, drift check included) on 00051 / 00053 / 00055: no gain. The drift check had been prefetching the lazily-fetched image layers (faiss_read 0.2 s -> 0.9 s vscode, 0.4 s -> 1.9 s k8s), so removing it moved the same first-touch I/O into the loaders.",
+ "outcome": "both experiments reverted (fix/revert-startup-experiments); the cold start is first-touch I/O of the image layers (torch import 17.7-21 s), not reorderable work"
 }

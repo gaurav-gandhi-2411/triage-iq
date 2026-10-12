@@ -17,6 +17,7 @@ on:
       - 'reports/eval_baseline.json'        # baked in, read as current_llm_baseline
       - 'data/models/MANIFEST.sha256'       # baked in; model objects come from GCS, pinned by hash
       - 'scripts/verify_model_manifest.py'  # run by this job as the drift guard
+      - 'scripts/smoke_triage_verdict.py'   # run by this job as the smoke-test verdict
       - '.github/workflows/deploy.yml'      # the deploy job itself
   workflow_dispatch:
 
@@ -42,6 +43,7 @@ jobs:
     permissions:
       contents: read
       id-token: write  # for Workload Identity Federation (preferred over SA key)
+      issues: write    # open the smoke-pending-quota issue on a quota pass (default GITHUB_TOKEN)
 
     steps:
       - uses: actions/checkout@v7
@@ -223,34 +225,23 @@ jobs:
             -d '{"repo":"microsoft/vscode","title":"Extension host crashes on startup","body":"Every time I open VS Code the extension host process terminates immediately."}')
           TCODE=$(echo "$TRESP" | tail -1)
           TBODY=$(echo "$TRESP" | sed '$d')
-          if [ "$TCODE" != "200" ]; then
-            echo "FAILED: /triage returned HTTP $TCODE -- body: $(echo "$TBODY" | head -c 500)"
-            exit 1
-          fi
-          # Piped via stdin, not interpolated into the Python source -- $TBODY is
-          # model-generated text (untrusted) and must never be embedded directly into
-          # a script literal.
-          echo "$TBODY" | python3 -c "
-          import json, sys
-          d = json.load(sys.stdin)
-          component = d.get('predicted_component')
-          degraded = d.get('_degraded')
-          summary = d.get('triage_summary')
-          llm_status = d.get('_llm_status')
-          llm_reason = d.get('_llm_status_reason')
-          failures = []
-          if not component:
-              failures.append('predicted_component is empty')
-          if degraded is not False:
-              failures.append(f'_degraded is {degraded!r}, expected False -- llm_status={llm_status!r} llm_status_reason={llm_reason!r}')
-          if not summary or not summary.strip():
-              failures.append('triage_summary is empty')
-          if failures:
-              print('FAILED:', '; '.join(failures))
-              sys.exit(1)
-          print(f'Triage check passed — predicted_component={component} degraded={degraded} llm_status={llm_status}')
-          "
-          if [ $? -ne 0 ]; then
+          # The verdict lives in scripts/smoke_triage_verdict.py (unit-tested, one branch per
+          # outcome). Piped via stdin, never interpolated into a script literal: $TBODY is
+          # model-generated text (untrusted).
+          #
+          # 2026-10-12 quota refinement: exit 3 = the ONLY problem is a Groq daily-quota 429
+          # (reason exactly rate_limited_tpd). That is a budget state, not a build defect: a
+          # smoke test that spends ~6K tokens of a shared 200K/day pool blocked #170 (run
+          # 38206343184) although /health?deps=1 was healthy and the 15 s budget had degraded
+          # correctly. We promote with a warning and open a labelled issue; post-deploy-smoke.yml
+          # re-runs the FULL check once the pool recovers. Any other degradation, a 401 or a
+          # model 404 still fails here (exit 1).
+          RC=0
+          echo "$TBODY" | python3 scripts/smoke_triage_verdict.py "$TCODE" || RC=$?
+          if [ "$RC" = "3" ]; then
+            echo "::warning::Promoting on a QUOTA PASS: /triage degraded only on rate_limited_tpd. The LLM path is NOT verified for this revision; post-deploy-smoke.yml will verify it once the Groq pool recovers."
+            echo "quota_pass=true" >> "$GITHUB_OUTPUT"
+          elif [ "$RC" != "0" ]; then
             exit 1
           fi
 
@@ -268,6 +259,36 @@ jobs:
             --region ${{ env.GCP_REGION }} \
             --to-latest
           echo "Promoted ${{ steps.deploy.outputs.revision }} to 100% live traffic."
+
+      - name: Queue the full post-deploy smoke test (quota pass only)
+        if: success() && steps.smoke.outputs.quota_pass == 'true'
+        uses: actions/github-script@v8
+        env:
+          REVISION: ${{ steps.deploy.outputs.revision }}
+        with:
+          script: |
+            const labels = ['smoke-pending-quota'];
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              `Revision \`${process.env.REVISION}\` was promoted on a QUOTA PASS: /health?deps=1 was healthy but /triage degraded only on \`rate_limited_tpd\` (Groq daily token pool exhausted), so the LLM path of this revision is UNVERIFIED.`,
+              '',
+              `Deploy run: ${runUrl} (commit ${context.sha})`,
+              '',
+              'post-deploy-smoke.yml re-runs the full smoke test every 30 min while this issue is open, closes it on a real pass, and opens a `post-deploy-smoke-alert` issue on any other failure.',
+            ].join('\n');
+            const open = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo, state: 'open', labels: labels.join(','),
+            });
+            if (open.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo, issue_number: open.data[0].number, body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title: 'Post-deploy smoke pending: promoted on a Groq daily-quota pass', body, labels,
+              });
+            }
 
       - name: Report candidate smoke-test failure (no rollback needed)
         if: failure() && steps.smoke.conclusion == 'failure'

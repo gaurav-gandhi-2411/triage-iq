@@ -188,6 +188,34 @@ def test_vscode_path_unchanged_zero_filled_and_no_embeddings_passed(spy_engineer
     pd.testing.assert_frame_equal(X, feats[predictor.feature_names])
 
 
+def test_k8s_reports_nonzero_emb_count_in_signals_and_info_log(
+    caplog, spy_engineer_features
+) -> None:
+    """Positive production signal: the INFO line and the request-log fields say emb_* are live."""
+    pca = _fit_pca()
+    predictor = _Predictor(pca)
+    with caplog.at_level(logging.INFO, logger="triage_iq.models.triage"):
+        sig = _assistant(K8S, _EmbRetriever(_unit(1)), predictor)._collect_signals(_issue())
+    expected = int(np.count_nonzero(pca.transform(_unit(1).reshape(1, -1))[0]))
+    assert sig["resolution_emb_columns"] == N_COMP
+    assert sig["resolution_emb_nonzero"] == expected > 0
+    rec = [r for r in caplog.records if getattr(r, "emb_nonzero", None) is not None]
+    assert len(rec) == 1 and rec[0].levelno == logging.INFO
+    assert rec[0].emb_nonzero == expected and rec[0].repo == K8S
+
+
+def test_emb_count_is_none_when_not_applicable(spy_engineer_features) -> None:
+    vscode = _assistant(VSCODE, _PlainRetriever(), _Predictor(_fit_pca()))._collect_signals(
+        _issue()
+    )
+    assert vscode["resolution_emb_nonzero"] is None and vscode["resolution_emb_columns"] is None
+    # k8s fallback (no embedding): zero-filled, so there is no positive signal to report either.
+    k8s_fb = _assistant(K8S, _EmbRetriever(None), _Predictor(_fit_pca()))._collect_signals(
+        _issue()
+    )
+    assert k8s_fb["resolution_emb_nonzero"] is None
+
+
 def test_k8s_emb_features_equal_pca_transform_of_query_embedding(spy_engineer_features) -> None:
     pca = _fit_pca()
     vec = _unit(1)

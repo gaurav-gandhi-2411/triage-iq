@@ -88,6 +88,34 @@ class TruncatedCompletionError(RuntimeError):
 PROVIDER_DEGRADED_STATUS = "degraded_provider_error"
 _DAILY_QUOTA_REASONS = frozenset({"rate_limited_tpd", "rate_limited_rpd"})
 
+# Degrade reason when the LLM stage runs out of its total time budget (retries included).
+LLM_TIME_BUDGET_REASON = "llm_time_budget_exceeded"
+
+
+class LLMTimeBudgetExceeded(RuntimeError):
+    """The LLM stage's total time budget (retries and backoff included) ran out.
+
+    Raised inside _groq_completion only when a deadline was passed; classify_provider_error maps
+    it to a signals-only degrade instead of letting a per-minute rate limit hold the request for
+    minutes (production 2026-10-11: 4 of 5 /triage calls took 53-135 s, HTTP 200).
+    """
+
+
+def _cached_prompt_tokens(usage_obj: object) -> int | None:
+    """`usage.prompt_tokens_details.cached_tokens` as an int, or None if not reported."""
+    details = getattr(usage_obj, "prompt_tokens_details", None)
+    cached = getattr(details, "cached_tokens", None)
+    return cached if isinstance(cached, int) and not isinstance(cached, bool) else None
+
+
+def _retry_after_seconds(exc: BaseException) -> float:
+    """Seconds from a 429's Retry-After header; 0.0 when absent or unparseable."""
+    headers = getattr(getattr(exc, "response", None), "headers", None)
+    try:
+        return max(0.0, float(headers.get("retry-after", 0))) if headers is not None else 0.0
+    except (TypeError, ValueError):
+        return 0.0
+
 
 def _provider_error_body(exc: BaseException) -> dict:
     body = getattr(exc, "body", None)
@@ -131,6 +159,8 @@ def classify_provider_error(exc: BaseException) -> str | None:
     Not degradable (returns None): AuthenticationError/PermissionDeniedError (401/403), any
     other 4xx (400 BadRequest, 422, 413 ...) and every non-Groq exception.
     """
+    if isinstance(exc, LLMTimeBudgetExceeded):
+        return LLM_TIME_BUDGET_REASON
     try:
         import groq
     except ImportError:
@@ -714,8 +744,14 @@ class TriageAssistant:
         enable_validated_override_rescue: bool = False,
         artifact_hashes: dict[str, str] | None = None,
         conformal_adjustment: dict | None = None,
+        # Total wall-clock budget for the LLM stage of one request (all retries and backoff
+        # included). None = unbounded (recorder, eval, scripts: they want patience). The API
+        # loader sets it (TRIAGE_LLM_TIME_BUDGET_S, default 15 s: ~5x the 2.8-3.1 s unthrottled
+        # stage-4 median measured 2026-10-11) so a rate limit degrades instead of stalling.
+        llm_time_budget_s: float | None = None,
     ) -> None:
         self.repo = repo
+        self.llm_time_budget_s = llm_time_budget_s
         # CQR store entry for this repo (loader._load_conformal_adjustments). When present the
         # served interval is the conformal one BEFORE synthesis (ADR-0059 addendum 2026-10-09):
         # the prompt, the plan's interval fields and the API's conformal interval then carry the
@@ -815,6 +851,9 @@ class TriageAssistant:
             "total_latency_ms": round(elapsed * 1000, 1),
             "groq_tokens_prompt": usage.get("prompt_tokens", 0),
             "groq_tokens_completion": usage.get("completion_tokens", 0),
+            # Prompt tokens Groq served from its prompt cache (None = not reported / cache hit
+            # from an older cassette entry); measured in the A3 cached-token study.
+            "groq_tokens_cached": usage.get("cached_tokens"),
             # 2026-09-03: was a hardcoded 0.27 for both terms (the retired
             # llama-3.1-8b-instant blended rate, duplicated inline instead of reading
             # model_config.py's constant -- that constant was itself stale and, separately,
@@ -839,6 +878,9 @@ class TriageAssistant:
             "resolution_point_source": signals["resolution_point_source"],
             "resolution_interval_basis": signals["resolution_interval_basis"],
             "resolution_point_clamped": signals.get("resolution_point_clamped", False),
+            # Request-log field (INFO access log): non-zero emb_* count, None if not applicable.
+            "resolution_emb_nonzero": signals.get("resolution_emb_nonzero"),
+            "resolution_emb_columns": signals.get("resolution_emb_columns"),
             "resolution_interval_conformal_applied": signals.get(
                 "resolution_interval_conformal_applied", False
             ),
@@ -861,12 +903,13 @@ class TriageAssistant:
             "synthesis_cache_key": usage.get("cache_key"),
         }
         logger.info(
-            "[%s] Triaged #%s in %.2fs (groq %d+%d tok)",
+            "[%s] Triaged #%s in %.2fs (groq %d+%d tok, cached prompt tok: %s)",
             self.repo,
             issue.get("number", "?"),
             elapsed,
             metadata["groq_tokens_prompt"],
             metadata["groq_tokens_completion"],
+            metadata["groq_tokens_cached"],
         )
         return plan, metadata
 
@@ -1050,6 +1093,10 @@ class TriageAssistant:
 
         # System 3: resolution prediction (float + bucket)
         t3 = time.perf_counter()
+        # Positive proof that emb_* were computed (not zero-filled) for repos that use them:
+        # None = repo does not use embeddings or the predictor did not run.
+        emb_nonzero: int | None = None
+        emb_columns: int | None = None
         try:
             from triage_iq.models.resolution import engineer_features
 
@@ -1064,6 +1111,15 @@ class TriageAssistant:
                 if col not in feats.columns:
                     feats[col] = 0.0
             feats = feats[self.predictor.feature_names]
+            if emb_kwargs:
+                emb_cols = [c for c in feats.columns if c.startswith("emb_")]
+                emb_columns = len(emb_cols)
+                emb_nonzero = int(np.count_nonzero(feats[emb_cols].to_numpy()))
+                logger.info(
+                    "Resolution embeddings active: %d/%d emb_* features non-zero",
+                    emb_nonzero, emb_columns,
+                    extra={"repo": self.repo, "emb_nonzero": emb_nonzero, "emb_columns": emb_columns},
+                )
 
             # Float output → drives LLM prompt (empirically better than bucket-only)
             pred_hrs = self.predictor.predict(feats)[0]
@@ -1124,6 +1180,8 @@ class TriageAssistant:
             "resolution_interval_basis": interval_basis,
             "resolution_point_clamped": point_clamped,
             "resolution_interval_conformal_applied": conformal_applied,
+            "resolution_emb_nonzero": emb_nonzero,
+            "resolution_emb_columns": emb_columns,
             "raw_lo_days": raw_lo_days,
             "raw_hi_days": raw_hi_days,
             "model_point_days": model_point_days,
@@ -1317,8 +1375,14 @@ class TriageAssistant:
                         except (json.JSONDecodeError, ValueError):
                             pass  # retry entry also corrupted — fall through to live call
 
+        budget_s = getattr(self, "llm_time_budget_s", None)
+        deadline = None if budget_s is None else time.monotonic() + budget_s
+        # `deadline` is passed only when set, so callers/tests that stub _groq_completion with
+        # the older (messages, max_tokens) signature keep working.
+        live_kwargs: dict = {} if deadline is None else {"deadline": deadline}
+
         try:
-            raw, usage = self._groq_completion(messages, max_tokens=max_tokens)
+            raw, usage = self._groq_completion(messages, max_tokens=max_tokens, **live_kwargs)
         except TruncatedCompletionError as exc:
             # A dynamically-reduced max_tokens can still legitimately run out mid-
             # completion on an unusually long response (Part B3). Truncation is a hard
@@ -1395,7 +1459,9 @@ class TriageAssistant:
                         raw2 = cached2["content"]
                         usage = {**cached2.get("usage", {}), "cache_key": parse_retry_key}
                     else:
-                        raw2, usage = self._groq_completion(retry_messages, max_tokens=max_tokens)
+                        raw2, usage = self._groq_completion(
+                            retry_messages, max_tokens=max_tokens, **live_kwargs
+                        )
                         cache.set(
                             parse_retry_key, "groq", self.model, retry_messages,
                             {"content": raw2, "usage": usage},
@@ -1403,7 +1469,9 @@ class TriageAssistant:
                         self._tag_cache_provenance(cache, parse_retry_key)
                         usage["cache_key"] = parse_retry_key
                 else:
-                    raw2, usage = self._groq_completion(retry_messages, max_tokens=max_tokens)
+                    raw2, usage = self._groq_completion(
+                        retry_messages, max_tokens=max_tokens, **live_kwargs
+                    )
             except TruncatedCompletionError as exc2:
                 logger.warning(
                     "Completion truncated for #%s on the parse-retry call at "
@@ -1542,10 +1610,21 @@ class TriageAssistant:
             triage_summary=triage_summary,
         )
 
-    def _groq_completion(self, messages: list[dict], max_tokens: int | None = None) -> tuple[str, dict]:
+    def _groq_completion(
+        self,
+        messages: list[dict],
+        max_tokens: int | None = None,
+        deadline: float | None = None,
+    ) -> tuple[str, dict]:
         """`max_tokens` overrides `self.max_tokens` for this call only (Part B, dynamic
         per-request budget) -- defaults to `self.max_tokens` so existing callers/tests
-        that don't pass it keep today's behavior unchanged."""
+        that don't pass it keep today's behavior unchanged.
+
+        `deadline` (a time.monotonic() value) bounds the whole call, retries and backoff
+        included: the SDK's own retries are turned off (it spent ~30 s per attempt inside the
+        client on a per-minute 429), each attempt gets the remaining time as its timeout, and a
+        backoff that would cross the deadline raises LLMTimeBudgetExceeded (a signals-only
+        degrade upstream). None keeps the unbounded behaviour the recorder and eval rely on."""
         try:
             from groq import APIConnectionError, APIStatusError, Groq, RateLimitError
         except ImportError as e:
@@ -1553,12 +1632,31 @@ class TriageAssistant:
 
         effective_max_tokens = self.max_tokens if max_tokens is None else max_tokens
 
-        client = Groq(api_key=self._groq_key)
+        client = Groq(api_key=self._groq_key) if deadline is None else Groq(
+            api_key=self._groq_key, max_retries=0
+        )
         backoff = 5.0
+
+        def _remaining() -> float | None:
+            return None if deadline is None else deadline - time.monotonic()
+
+        def _sleep_within_budget(seconds: float, cause: BaseException | None = None) -> None:
+            rem = _remaining()
+            if rem is not None and seconds >= rem:
+                raise LLMTimeBudgetExceeded(
+                    f"LLM time budget exhausted (backoff {seconds:.1f}s, {max(rem, 0):.1f}s left)"
+                ) from cause
+            time.sleep(seconds)
+
         for attempt in range(6):
             kwargs: dict = {}
             if self.use_structured_output:
                 kwargs["response_format"] = _TRIAGE_PLAN_RESPONSE_FORMAT
+            rem = _remaining()
+            if rem is not None:
+                if rem <= 0:
+                    raise LLMTimeBudgetExceeded("LLM time budget exhausted before the attempt")
+                kwargs["timeout"] = rem  # the SDK default (60 s) could outlast the budget
             try:
                 resp = client.chat.completions.create(
                     model=self.model,
@@ -1580,6 +1678,11 @@ class TriageAssistant:
                     }
                 usage["finish_reason"] = finish_reason
                 usage["structured_output"] = self.use_structured_output
+                # Groq's automatic prompt cache: how many of prompt_tokens were served from it.
+                # None when the field is absent (older SDK/model), so "not reported" stays
+                # distinguishable from a measured 0. Stored with the cassette entry (usage is
+                # cached verbatim) and surfaced as groq_tokens_cached in the request metadata.
+                usage["cached_tokens"] = _cached_prompt_tokens(resp.usage)
                 if finish_reason == "length":
                     raise TruncatedCompletionError(
                         completion_tokens=completion_tokens,
@@ -1595,10 +1698,15 @@ class TriageAssistant:
                 if attempt == 5 or _rate_limit_reason(rl_exc) in _DAILY_QUOTA_REASONS:
                     raise
                 jitter = backoff * (0.5 + 0.5 * (attempt / 5))
+                if deadline is not None:
+                    # Sleeping less than the server's Retry-After only buys another 429.
+                    jitter = max(jitter, _retry_after_seconds(rl_exc))
                 logger.warning("Rate limit hit — sleeping %.1fs (attempt %d/6)", jitter, attempt + 1)
-                time.sleep(jitter)
+                _sleep_within_budget(jitter, rl_exc)
                 backoff = min(backoff * 2, 60.0)
             except APIConnectionError as e:
+                if deadline is not None and time.monotonic() >= deadline:
+                    raise LLMTimeBudgetExceeded("LLM time budget exhausted during the call") from e
                 # 2026-09-03 (ADR-0055 Part P1c/5): found by the error-shape audit --
                 # APIConnectionError/APITimeoutError are NOT subclasses of APIStatusError
                 # or RateLimitError (groq/_exceptions.py), so before this fix neither
@@ -1617,7 +1725,7 @@ class TriageAssistant:
                     "Connection error — sleeping %.1fs (attempt %d/6): %s",
                     jitter, attempt + 1, e,
                 )
-                time.sleep(jitter)
+                _sleep_within_budget(jitter, e)
                 backoff = min(backoff * 2, 60.0)
             except APIStatusError as e:
                 # 2026-09-03 (ADR-0055 Part P1a): structured access via e.body, not string
@@ -1638,7 +1746,7 @@ class TriageAssistant:
                 if isinstance(e.body, dict):
                     error_code = e.body.get("error", {}).get("code")
                 if e.status_code >= 500 and attempt < 5:
-                    time.sleep(backoff)
+                    _sleep_within_budget(backoff, e)
                     backoff = min(backoff * 2, 60.0)
                 elif e.status_code == 400 and error_code == "json_validate_failed":
                     raise SchemaValidationError(

@@ -36,6 +36,7 @@ Retryable (these just wait and re-invoke the same command):
 """
 
 import argparse
+import atexit
 import json
 import re
 import subprocess
@@ -225,6 +226,12 @@ def main() -> None:
         groq_key = _load_groq_key()
         env["GROQ_API_KEY"] = groq_key
         env["TRIAGE_PROMPT_INCLUDE_ATTRIBUTION"] = "1"
+        # Recording-active flag (shared Groq ledger, 2026-10-12): while this launcher runs, other
+        # projects' gpt-oss-120b checks wait. The flag has a TTL and a pid, so a crash cannot
+        # block them; the child record_cassettes.py must not set/clear its own copy.
+        tpd_budget_gate.start_recording()
+        atexit.register(tpd_budget_gate.stop_recording)
+        env["GROQ_BUDGET_RECORDING_PARENT"] = "1"
         # Phase 3b: cap BLAS thread pools so the classifier/TF-IDF matrix ops this process
         # does don't spin up threads competing with whatever else is on this CPU. Must be
         # set before the child process imports numpy/sklearn -- setting them here (env dict

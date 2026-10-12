@@ -17,16 +17,21 @@ Defaults (override per model in <root>/config.json, see README.md):
                         project `triageiq-recorder`: whatever is left of the 160,000 allocatable
   other models          cap 200,000, reserve 40,000, no per-project caps
 
+A project that records (TriageIQ re-recording cassettes) sets the recording-active flag; while it
+is set, other projects' `check` for those models answers "wait".
+
 Ledger root: $GROQ_BUDGET_DIR, else ~/.groq_budget. Concurrent processes are serialised with a
 lock file; writes are atomic (temp file + replace).
 """
 
 from __future__ import annotations
 
+import argparse
 import contextlib
 import json
 import os
 import re
+import sys
 import time
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -95,11 +100,33 @@ def _atomic_write(path: Path, payload: dict) -> None:
     os.replace(tmp, path)
 
 
+def _pid_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    if os.name == "nt":
+        import ctypes
+
+        handle = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+        if not handle:
+            return False
+        code = ctypes.c_ulong()
+        ctypes.windll.kernel32.GetExitCodeProcess(handle, ctypes.byref(code))
+        ctypes.windll.kernel32.CloseHandle(handle)
+        return code.value == 259  # STILL_ACTIVE
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
 # --------------------------------------------------------------------------------------- the ledger
 @dataclass(frozen=True)
 class Decision:
     allowed: bool
-    reason: str  # "ok" | "pool_exhausted" | "project_cap"
+    reason: str  # "ok" | "recording_active" | "pool_exhausted" | "project_cap"
     detail: str
     retry_after_s: int = 0
 
@@ -110,6 +137,7 @@ class Ledger:
         callers that keep an explicit ledger location, e.g. $TRIAGEIQ_GROQ_LEDGER and tests."""
         self.root = path.parent if path is not None else (root or root_dir())
         self.path = path if path is not None else self.root / "ledger.json"
+        self.recording_path = self.root / "recording.json"
 
     # ---- config
     def config_for(self, model: str) -> dict:
@@ -201,6 +229,15 @@ class Ledger:
     # ---- the decision
     def check(self, project: str, model: str, est: int, now: datetime | None = None) -> Decision:
         t = now or _now()
+        rec = self.active_recording(model, now=t)
+        if rec and rec["project"] != project:
+            wait = max(1, min(60, int(rec["expires_ts"] - t.timestamp())))
+            return Decision(
+                False,
+                "recording_active",
+                f"project {rec['project']} is recording on {model} (pid {rec['pid']}); wait for it to finish",
+                wait,
+            )
         cfg = self.config_for(model)
         total = self.spent(model, now=t)
         if total + est > cfg["allocatable"]:
@@ -247,6 +284,55 @@ class Ledger:
         )
         return external
 
+    # ---- recording-active flag
+    def start_recording(
+        self, project: str, models: list[str], ttl_s: int = 6 * 3600, pid: int | None = None
+    ) -> None:
+        now = _now().timestamp()
+        with _locked(self.root):
+            _atomic_write(
+                self.recording_path,
+                {
+                    "project": project,
+                    "models": models,
+                    "pid": pid if pid is not None else os.getpid(),
+                    "since_ts": now,
+                    "expires_ts": now + ttl_s,
+                },
+            )
+
+    def stop_recording(self, project: str) -> bool:
+        with _locked(self.root):
+            if not self.recording_path.exists():
+                return False
+            if json.loads(self.recording_path.read_text(encoding="utf-8"))["project"] != project:
+                return False
+            self.recording_path.unlink()
+            return True
+
+    def active_recording(self, model: str, now: datetime | None = None) -> dict | None:
+        """The live recording flag covering `model`, or None (expired TTL or dead pid = not active)."""
+        if not self.recording_path.exists():
+            return None
+        try:
+            rec = json.loads(self.recording_path.read_text(encoding="utf-8"))
+        except (ValueError, OSError):
+            return None
+        t = (now or _now()).timestamp()
+        if t >= rec["expires_ts"] or not _pid_alive(int(rec["pid"])) or model not in rec["models"]:
+            return None
+        return rec
+
+    def wait_until_allowed(
+        self, project: str, model: str, est: int, timeout_s: float = 3600, poll_s: float = 15
+    ) -> Decision:
+        deadline = time.monotonic() + timeout_s
+        while True:
+            d = self.check(project, model, est)
+            if d.allowed or time.monotonic() >= deadline:
+                return d
+            time.sleep(min(poll_s, max(1, d.retry_after_s or poll_s)))
+
     # ---- one-time import of the pre-shared TriageIQ ledger
     def migrate_legacy(self, legacy_path: Path) -> int:
         """Copy entries of ~/.triageiq/groq_tpd_ledger.json that are not already here (idempotent).
@@ -282,3 +368,78 @@ def parse_tpd_error(text: str) -> tuple[int, int, int] | None:
         return None
     m = _USED_RE.search(text)
     return (int(m.group(1)), int(m.group(2)), int(m.group(3))) if m else None
+
+
+# --------------------------------------------------------------------------------------------- CLI
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(prog="groq_budget", description=__doc__.split("\n")[0])
+    ap.add_argument("--root", type=Path, default=None, help="ledger directory (default $GROQ_BUDGET_DIR or ~/.groq_budget)")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    def add_common(p: argparse.ArgumentParser, est: bool = False) -> None:
+        p.add_argument("--project", required=True)
+        p.add_argument("--model", default=LEGACY_MODEL)
+        if est:
+            p.add_argument("--est", type=int, default=5_000, help="tokens the next call may spend")
+
+    add_common(sub.add_parser("check", help="exit 0 if the call may go ahead, 4 if it must wait"), est=True)
+    p = sub.add_parser("wait", help="block until check passes (or --timeout); exit 0 / 4")
+    add_common(p, est=True)
+    p.add_argument("--timeout", type=float, default=3600)
+    p = sub.add_parser("record", help="record a finished call's total tokens")
+    add_common(p)
+    p.add_argument("--tokens", type=int, required=True)
+    p.add_argument("--cached", type=int, default=None)
+    p.add_argument("--source", default="")
+    p = sub.add_parser("observe-429", help="fold a Groq TPD 429 body (--text or stdin) into the ledger")
+    p.add_argument("--model", default=LEGACY_MODEL)
+    p.add_argument("--text", default=None)
+    p = sub.add_parser("status", help="print trailing-24h usage per project")
+    p.add_argument("--model", default=LEGACY_MODEL)
+    p = sub.add_parser("recording", help="start | stop | show the recording-active flag")
+    p.add_argument("action", choices=["start", "stop", "show"])
+    p.add_argument("--project", default=RECORDER)
+    p.add_argument("--model", action="append", default=None)
+    p.add_argument("--ttl", type=int, default=6 * 3600)
+    p = sub.add_parser("migrate-legacy", help="import ~/.triageiq/groq_tpd_ledger.json")
+    p.add_argument("--from", dest="src", type=Path, default=Path.home() / ".triageiq" / "groq_tpd_ledger.json")
+
+    a = ap.parse_args(argv)
+    led = Ledger(a.root)
+    if a.cmd in ("check", "wait"):
+        d = led.check(a.project, a.model, a.est) if a.cmd == "check" else led.wait_until_allowed(
+            a.project, a.model, a.est, timeout_s=a.timeout
+        )
+        print(f"{'ALLOW' if d.allowed else 'WAIT'} [{d.reason}] {d.detail}" + (f" (retry in ~{d.retry_after_s}s)" if d.retry_after_s else ""))
+        return 0 if d.allowed else 4
+    if a.cmd == "record":
+        led.record(a.project, a.model, a.tokens, a.source, a.cached)
+        return 0
+    if a.cmd == "observe-429":
+        added = led.observe_429(a.text if a.text is not None else sys.stdin.read(), a.model)
+        print(f"added {added} external tokens")
+        return 0
+    if a.cmd == "status":
+        cfg = led.config_for(a.model)
+        usage = led.by_project(a.model)
+        print(f"{a.model}: {sum(usage.values())} used / {cfg['allocatable']} allocatable (cap {cfg['daily_cap']}, reserve {cfg['production_reserve']})")
+        for proj, n in sorted(usage.items(), key=lambda kv: -kv[1]):
+            cap = cfg["projects"].get(proj)
+            print(f"  {proj}: {n}" + (f" / {cap}" if cap else ""))
+        rec = led.active_recording(a.model)
+        print(f"  recording-active: {rec['project'] + ' pid ' + str(rec['pid']) if rec else 'no'}")
+        return 0
+    if a.cmd == "recording":
+        if a.action == "start":
+            led.start_recording(a.project, a.model or [LEGACY_MODEL], a.ttl)
+        elif a.action == "stop":
+            print("stopped" if led.stop_recording(a.project) else "no flag held by this project")
+        else:
+            print(json.dumps(led.active_recording(a.model[0] if a.model else LEGACY_MODEL)))
+        return 0
+    print(f"imported {led.migrate_legacy(a.src)} entries")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

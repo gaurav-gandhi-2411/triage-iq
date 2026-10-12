@@ -13,6 +13,7 @@ The latest snapshot is the highest sequence number under the prefix.
 from __future__ import annotations
 
 import json
+import re
 import time
 from typing import Any
 
@@ -61,12 +62,30 @@ def _key(e: dict) -> tuple:
     return (e.get("ts"), e.get("model"), e.get("project"), e.get("tokens"), e.get("source"))
 
 
+_OBS = re.compile(r"^observed-429 at (\S+):")
+
+
 def merge_ledgers(a: dict, b: dict) -> dict:
-    """Union of two ledger documents ({"entries": [...]}), de-duplicated, oldest first."""
+    """Union of two ledger documents ({"entries": [...]}), de-duplicated, oldest first.
+
+    Observed-429 slices (project external-observed) are REPLACED by each newer observation of the same
+    model (see Ledger.observe_429), so the union keeps only the slices of the latest observation per model;
+    otherwise an older snapshot would resurrect a superseded estimate."""
     seen: dict[tuple, dict] = {}
     for e in list(a.get("entries", [])) + list(b.get("entries", [])):
         seen.setdefault(_key(e), e)
-    return {"version": 2, "entries": sorted(seen.values(), key=lambda e: e["ts"])}
+    latest: dict[str, str] = {}
+    for e in seen.values():
+        m = _OBS.match(e.get("source", "")) if e.get("project") == "external-observed" else None
+        if m:
+            latest[e["model"]] = max(latest.get(e["model"], ""), m.group(1))
+    out = []
+    for e in seen.values():
+        m = _OBS.match(e.get("source", "")) if e.get("project") == "external-observed" else None
+        if m and m.group(1) != latest[e["model"]]:
+            continue
+        out.append(e)
+    return {"version": 2, "entries": sorted(out, key=lambda e: e["ts"])}
 
 
 def encode_state(ledger: dict, recording: dict | None) -> bytes:

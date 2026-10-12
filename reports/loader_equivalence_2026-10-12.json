@@ -1,0 +1,23 @@
+{
+ "base": {
+  "sha256_without_wallclock_timers": "fffe4fd177d196df2b3fbe381f5ff42135c3696f0b8728bd4ce96dc0a447e37a",
+  "n_rows": {
+   "microsoft/vscode": 15,
+   "kubernetes/kubernetes": 15
+  },
+  "triage_iq_file": "\\triage-iq-wt-startup-base\\src\\triage_iq\\__init__.py",
+  "load_all_seconds_local_warm": 104.12,
+  "sha256_raw": "0a9b89d51ea8b4728172ef7468def3b87de99ca20e93c2053d043401ac5223be"
+ },
+ "new": {
+  "sha256_without_wallclock_timers": "fffe4fd177d196df2b3fbe381f5ff42135c3696f0b8728bd4ce96dc0a447e37a",
+  "n_rows": {
+   "microsoft/vscode": 15,
+   "kubernetes/kubernetes": 15
+  },
+  "triage_iq_file": "\\triage-iq-wt-startup\\src\\triage_iq\\__init__.py",
+  "load_all_seconds_local_warm": 58.27,
+  "sha256_raw": "4600df281b2873df2e92b4b3d009fe5520e18ec8e8b4614a6450b2bce3a0c58d"
+ },
+ "identical_without_timers": true
+}

@@ -132,9 +132,11 @@ class Decision:
 
 
 class Ledger:
-    def __init__(self, root: Path | None = None) -> None:
-        self.root = root or root_dir()
-        self.path = self.root / "ledger.json"
+    def __init__(self, root: Path | None = None, path: Path | None = None) -> None:
+        """`path` pins the ledger FILE (its directory then holds the lock and flag files); used by
+        callers that keep an explicit ledger location, e.g. $TRIAGEIQ_GROQ_LEDGER and tests."""
+        self.root = path.parent if path is not None else (root or root_dir())
+        self.path = path if path is not None else self.root / "ledger.json"
         self.recording_path = self.root / "recording.json"
 
     # ---- config
@@ -240,13 +242,15 @@ class Ledger:
         total = self.spent(model, now=t)
         if total + est > cfg["allocatable"]:
             need = total + est - cfg["allocatable"]
+            wait = self._free_at(model, need, None, t)
+            when = (t + timedelta(seconds=wait)).strftime("%Y-%m-%d %H:%M UTC") if wait else "unknown"
             return Decision(
                 False,
                 "pool_exhausted",
                 f"{STOP_MARKER}\nLedger: {total} tokens spent on {model} in the last 24 h across all projects; "
                 f"allocatable is {cfg['allocatable']} ({cfg['daily_cap']} cap minus a {cfg['production_reserve']} "
-                f"production reserve that is never allocated).",
-                self._free_at(model, need, None, t),
+                f"production reserve that is never allocated). Room for one more call from about {when}.",
+                wait,
             )
         cap = cfg["projects"].get(project)
         if cap is not None:

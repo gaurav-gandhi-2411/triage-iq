@@ -124,8 +124,9 @@ def observe_tpd_429(text: str, now: datetime | None = None, path: Path | None = 
     The 429 body is the only ground truth for the org-wide Used figure. Spend this tooling did
     not make (production /triage, other projects) is invisible to the ledger; when Groq reports a
     Used larger than the ledger's trailing-24 h sum, the difference is recorded as
-    `external-observed`, so the gate stays closed against the real cap. Conservative on purpose:
-    the entry ages out 24 h after the 429, not after the spend it stands for.
+    `external-observed`, held as 24 hourly slices across the trailing window so it drains like real
+    usage does (2026-10-12: one 24 h block had kept the ledger shut all day). A newer observation
+    replaces the previous one.
     """
     return _ledger(path).observe_429(text, MODEL, now=now)
 

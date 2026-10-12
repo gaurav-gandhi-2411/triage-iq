@@ -150,20 +150,14 @@ class ModelStore:
         models_dir = data_dir / "models"
         processed_dir = data_dir / "processed"
 
-        # Cold-start overlap (2026-10-12). Production startup_step logs: the first import of the
-        # retriever stack (torch, sentence_transformers, faiss) took ~17.7 s and landed inside the
-        # FIRST repo's "detector" step (vscode 20-25 s vs k8s 0.7 s: not vscode data, whichever repo
-        # loads first pays it), and the manifest drift check added another ~4.9 s in front of it.
-        # Neither depends on the other, so run both in the background while models load. Loaded
-        # artifacts and outputs are unchanged (scripts/verify_loader_equivalence.py).
-        prewarm = threading.Thread(
-            target=_prewarm_retriever_imports, name="prewarm-retriever-imports", daemon=True
-        )
-        prewarm.start()
-        drift = threading.Thread(
-            target=_timed_manifest_check, args=(data_dir,), name="manifest-drift-check", daemon=True
-        )
-        drift.start()
+        # The manifest drift check (sha256 of every baked artifact, ~4.9 s on the production cold
+        # starts of 2026-10-12) is NOT run here any more: it only logs a warning, and the deploy job
+        # already fails a drifted image before it ships (scripts/verify_model_manifest.py). The app
+        # lifespan starts it in a background thread AFTER the models are ready
+        # (`start_manifest_check_in_background`), so it is off the cold-start critical path.
+        # An earlier attempt to overlap it (and a prewarm of the torch import) with model loading made
+        # the cold start slower (load_all 35.5 s vs 25.4-28.4 s on three earlier revisions): both steps
+        # read the lazily-fetched image layers and contended. See DECISION_LOG D67.
 
         key = (groq_api_key if groq_api_key else os.environ.get("GROQ_API_KEY", "")).strip()
         # 2026-08-29: single source of truth is Settings.triage_max_tokens (config.py); this
@@ -215,7 +209,6 @@ class ModelStore:
         if not bundles:
             raise RuntimeError("No repo models could be loaded; check data/models/")
 
-        drift.join()  # its ARTIFACT_DRIFT warnings still appear before "Models ready"
         return cls(bundles, start_time=time.monotonic(), conformal_adjustments=conformal)
 
 
@@ -223,17 +216,18 @@ class ModelStore:
 # Private helpers
 # ---------------------------------------------------------------------------
 
-def _prewarm_retriever_imports() -> None:
-    """Import the retriever stack (torch, sentence_transformers, faiss) off the critical path."""
-    try:
-        import triage_iq.models.similar_issues  # noqa: F401
-    except Exception:  # noqa: BLE001 -- _load_detector's own import reports the real failure
-        logger.debug("retriever import prewarm failed; _load_detector will raise it", exc_info=True)
-
-
 def _timed_manifest_check(data_dir: Path) -> None:
     with _timed("manifest_drift_check"):
         _check_manifest_drift(data_dir)  # warn-not-crash: image-baked artifact integrity
+
+
+def start_manifest_check_in_background(data_dir: Path | str) -> threading.Thread:
+    """Run the artifact drift check on a daemon thread; ARTIFACT_DRIFT warnings appear shortly after startup."""
+    t = threading.Thread(
+        target=_timed_manifest_check, args=(Path(data_dir),), name="manifest-drift-check", daemon=True
+    )
+    t.start()
+    return t
 
 
 def _load_detector(models_dir: Path, slug: str):

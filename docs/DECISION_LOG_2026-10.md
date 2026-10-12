@@ -843,9 +843,12 @@ intent in another form (e.g. a script file); report the exact command and hook o
    first-touch I/O of the lazily fetched image layers (Cloud Run already on 2 vCPU with startup CPU boost). Two fixes were tried and deployed, and
    measured on the candidate revision's startup log: overlapping the drift check and an import prewarm with loading (#185, revision 00057):
    `load_all` 35.5 s, WORSE; moving the drift check after startup (#186, revision 00059): 28.0 s, no change. Baseline, original code: 25.4 / 28.4 /
-   27.7 s (00051 / 00053 / 00055). The drift check had been prefetching artifacts the loaders then read (faiss_read 0.2 s -> 0.9 s), so removing it
+   27.7 s (00051 / 00053 / 00055) and, after the revert (#187, revision 00061), **22.5 s** (detector 15.2 s): identical code varies by 6 s between
+   cold instances, so the deferred-drift result (28.0 s) is inside the noise and only the overlap (35.5 s, 7 s above the original maximum) is
+   clearly out of range. The drift check had been prefetching artifacts the loaders then read (faiss_read 0.2 s -> 0.9 s), so removing it
    moved the same I/O. Both reverted (#187). Serving signals for 30 issues are bit-identical across all versions (hash `fffe4fd1...`,
-   `reports/loader_equivalence_2026-10-12.json`). n=1 per experiment: an indication, not a test. No safe fix found; what would cut it (a smaller
+   `reports/loader_equivalence_2026-10-12.json`). n=1 per experiment: an indication, not a test; telling a 3-5 s gain from instance noise would
+   need about 10 cold starts per arm. No safe fix found; what would cut it (a smaller
    embedding stack = changes outputs; an always-warm instance = costs money) is documented in #187.
 3. **Pool, caching and measurements.** `prompt_tokens_details.cached_tokens` was absent in the SDK object on 7 calls; the RAW-JSON check was refused
    by my own ledger (pool at 196,411 of 200,000) and is still open. 5-body replay after A1/A3: 4,870 and 5,324 ms for the two calls with headroom,

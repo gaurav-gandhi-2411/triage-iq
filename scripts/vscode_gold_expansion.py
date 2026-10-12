@@ -1,10 +1,10 @@
-"""Expand the vscode eval pool with ~64 new issues (zero Groq): real repo labels first, LLM consensus second.
+"""Expand the vscode eval pool with held-out issues that carry a real repo label (zero Groq).
 
-Design (v2, 2026-10-12, after owner review of v1):
-  * Ground truth is the issue's REAL repo component label wherever one exists. The held-out temporal window
-    (temporal val + test, minus every train set, the gold set, the eval set and earlier candidates) is searched
-    for labelled issues first; they are used as ground truth. LLM consensus labels only the issues that have no
-    label, and is reported as a cross-check on the labelled ones. Consensus is NEVER human ground truth.
+Design (v2, 2026-10-12, after owner review of v1; consensus-only items dropped 2026-10-13):
+  * Ground truth is the issue's REAL repo component label. The held-out temporal window (temporal val + test,
+    minus every train set, the gold set, the eval set and earlier candidates) is searched for labelled issues;
+    only those are sampled. Local LLM judges are a cross-check on the labels, never a source of labels: they
+    match the real label only ~41% of the time.
   * The judge vocabulary equals the SERVED classifier's label space: 47 classes, read from the production
     classifier artifact after its sha256 is checked against data/models/MANIFEST.sha256.
   * Judges are calibrated on labelled issues two ways: EASY (the component name appears in the title) and HARD
@@ -12,7 +12,7 @@ Design (v2, 2026-10-12, after owner review of v1):
 
 Subcommands (resumable, deterministic, seed 42):
   vocab             47-class vocabulary + provenance
-  sample            the ~64 issues (stratified over three resolution buckets by the curation script's own function)
+  sample            the labelled issues (stratified over three resolution buckets by the curation script's own function)
   calibrate-sample  easy and hard calibration sets from labelled issues outside the sample
   run               three judges from three families, BLIND (title + body + allowed list only), temperature 0,
                     JSON-schema-constrained; VRAM-gated

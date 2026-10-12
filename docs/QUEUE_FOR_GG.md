@@ -9,14 +9,31 @@ MANIFEST-hash provenance. **One production exposure found, not fixed (needs your
 the Groq 8,000 tokens/minute limit makes /triage take 50-135 s when the key's per-minute pool is used up.
 
 Round 11 status (D65): core #170 is MERGED (f7b118c) but its deploy failed the smoke test on `rate_limited_tpd` (the shared
-120b daily pool is exhausted); production still serves 00045-zac. I re-run the deploy when the pool recovers and merge #171, #172
-and UI #28 in that order, each after the previous deploy is confirmed. Nothing for you to merge.
+120b daily pool is exhausted); production still serves 00045-zac. I merge #171, #172 and UI #28 in that order, each after the
+previous deploy is confirmed.
 
-A2 is built as gg-portfolio draft PR #308 (chatbot, canary, curator, framer on gpt-oss-20b; verifier stays on qwen). **Needs you:**
-re-record the chatbot cassettes on 20b (the key is in your portfolio env file; the secret-file guard blocked me from loading it):
-run `node --env-file=<your portfolio env file> evals/chatbot/run-eval.mjs --live --force` from the PR #308 branch, commit the new
-cassettes plus the report, and compare with the 120b baseline in the PR body (recall@5 95.0%, groundedness 100%, refusal
-precision 100%, false-refusal 0%). Until then 20b answer quality is UNMEASURED; do not merge #308 before that.
+**1. Merge core #175 (smoke-test quota refinement; touches `deploy.yml`, so it is yours).** Check `gh pr checks 175` first, then run alone:
+`gh pr merge 175 --repo gaurav-gandhi-2411/triage-iq --merge`. After it merges I re-run #170's deploy (identical rerun of run 38206343184;
+it deploys the main tip, which includes #170).
+
+**2. A2 cassette re-record (gg-portfolio draft PR #308; hold the merge until this is done).** Run in YOUR OWN PowerShell window,
+outside Claude Code, so the env file never enters this session. Spends about 25K tokens on the gpt-oss-20b pool (23 recorded calls at
+about 1K each; BELIEVED, from the old cassettes' token counts). Each line separately:
+
+```powershell
+Set-Location C:\Users\gaura\ml-projects\gg-portfolio-wt-groq20b
+git status --short; git branch --show-current   # expect clean, fix/chatbot-groq-gpt-oss-20b
+node --env-file="C:\Users\gaura\ml-projects\gg-portfolio\.env" evals/chatbot/run-eval.mjs --live --force
+git status --short                              # expect modified evals/chatbot/cassettes/*.json and new reports/wave16-chatbot-eval-*.md/.json
+git add evals/chatbot/cassettes reports
+git commit -m "test(chatbot): re-record eval cassettes on openai/gpt-oss-20b"
+git push origin fix/chatbot-groq-gpt-oss-20b
+```
+
+Then tell me "recorded". I will verify each committed cassette's `recordedModel` is `openai/gpt-oss-20b`, rerun the replay with no key,
+and compare the 20b numbers with the 120b baseline (recall@5 95.0%, groundedness 100%, refusal precision 100%, false-refusal 0%, on the
+same fixtures) before saying whether #308 is mergeable. If the run prints `no GROQ_API_KEY`, the env file path or variable name is wrong;
+nothing is overwritten in that case (verified: a keyless `--live --force` left every cassette untouched).
 
 ## Dashboard / account actions (only you can do these)
 

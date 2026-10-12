@@ -785,3 +785,19 @@ intent in another form (e.g. a script file); report the exact command and hook o
    `/api/chat`), content-pipeline curator and framer, `run-eval`. Verifier stays on qwen. Unit tests 133 pass, tsc clean. NOT done: the 20b cassette
    re-record and quality comparison (needs GROQ_API_KEY, blocked as in item 1); the replay baseline on the old 120b cassettes is recall@5 95.0%,
    groundedness 100%, refusal precision 100%, false-refusal 0%.
+6. **Pool consumer, read-only identification (owner decision 1, 2026-10-12; the smoke test that failed ran at 05:10 UTC).**
+   VERIFIED: the recorder ledger holds 66,454 tokens in the 24 h before it (all `record_cassettes`, 2026-10-11 08:31-08:39 plus earlier).
+   VERIFIED from the gg-portfolio Actions history: the chat canary ran at 2026-10-11 04:58, 12:24, 21:40 UTC before the smoke test
+   (one question per run); `metrics-refresh` (Mondays 03:00 UTC) has NO run on 2026-10-12 and its last runs were dispatches on 2026-10-10
+   (06:11 and 11:32 UTC, more than 24 h earlier) after scheduled failures on 10-05 and 09-28. BELIEVED: a canary call is about 1K tokens
+   (the 23 chatbot cassettes average 957 prompt + 68 completion tokens, max 1,308), so the three canaries are about 3K. The #161 deploy
+   smoke test (10-11 18:08 UTC) is about 6K (BELIEVED, same per-call cost as the recorder). **So the identified consumers sum to roughly
+   75K of the 200K pool; about 125K is unexplained.** Candidates, none verified: live chatbot traffic (Vercel Hobby keeps 1 h of runtime
+   logs, so 24 h volume cannot be read), my own production probes and the 10-11 replays (not in the ledger), other repos sharing the org
+   key, and Groq counting differently from `usage.total_tokens` (A3 (b)). Consequence: moving the chatbot to 20b (#308) will NOT
+   obviously fix the 120b exhaustion; do not claim it does.
+7. **Smoke-test quota refinement (owner decision 2, core PR #175, touches `deploy.yml`, queued for the owner):** promote only when
+   `/health?deps=1` is healthy AND /triage degraded with exactly `rate_limited_tpd`; every other degradation, 401, or model 404 blocks.
+   Quota pass warns and opens a `smoke-pending-quota` issue; `post-deploy-smoke.yml` re-verifies every 30 min and closes it on a real pass
+   or opens a `post-deploy-smoke-alert` issue. 13 tests, one per branch.
+8. **A2 cassette re-record handed to the owner (owner decision 3):** exact PowerShell commands in `QUEUE_FOR_GG.md`; #308 stays held.

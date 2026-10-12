@@ -1,0 +1,30 @@
+{"number": 129598, "label": "git", "raw": "{\n  \"component\": \"git\"\n}", "mode": "exclusive"}
+{"number": 734, "label": "editor-rendering", "raw": "{\n  \"component\": \"editor-rendering\"\n}", "mode": "exclusive"}
+{"number": 3952, "label": "error-telemetry", "raw": "{\"component\": \"error-telemetry\"}", "mode": "exclusive"}
+{"number": 311582, "label": "error-telemetry", "raw": "{\n  \"component\": \"error-telemetry\"\n}", "mode": "exclusive"}
+{"number": 937, "label": "file-watcher", "raw": "{\n  \"component\": \"file-watcher\"\n}", "mode": "exclusive"}
+{"number": 59893, "label": "terminal", "raw": "{\"component\": \"terminal\"}", "mode": "exclusive"}
+{"number": 311583, "label": "error-telemetry", "raw": "{\"component\": \"error-telemetry\"}", "mode": "exclusive"}
+{"number": 33102, "label": "workbench-editors", "raw": "{\"component\": \"workbench-editors\"}", "mode": "exclusive"}
+{"number": 69041, "label": "emmet", "raw": "{\"component\": \"emmet\"}", "mode": "exclusive"}
+{"number": 41880, "label": "editor-rendering", "raw": "{\"component\": \"editor-rendering\"}", "mode": "exclusive"}
+{"number": 88534, "label": "extensions", "raw": "{\"component\": \"extensions\"}", "mode": "exclusive"}
+{"number": 28795, "label": "electron", "raw": "{\"component\": \"electron\"}", "mode": "exclusive"}
+{"number": 1791, "label": "tasks", "raw": "{\"component\": \"tasks\"}", "mode": "exclusive"}
+{"number": 142673, "label": "file-watcher", "raw": "{\n  \"component\": \"file-watcher\"\n}", "mode": "exclusive"}
+{"number": 112362, "label": "editor-autoclosing", "raw": "{\"component\": \"editor-autoclosing\"}", "mode": "exclusive"}
+{"number": 2246, "label": "editor-autoclosing", "raw": "{\n  \"component\": \"editor-autoclosing\"\n}", "mode": "exclusive"}
+{"number": 1267, "label": "javascript", "raw": "{\"component\": \"javascript\"}", "mode": "exclusive"}
+{"number": 686, "label": "tasks", "raw": "{\"component\": \"tasks\"}", "mode": "exclusive"}
+{"number": 58987, "label": "editor-folding", "raw": "{\"component\": \"editor-folding\"}", "mode": "exclusive"}
+{"number": 380, "label": "markdown", "raw": "{\"component\": \"markdown\"}", "mode": "exclusive"}
+{"number": 67698, "label": "editor-autoclosing", "raw": "{\"component\": \"editor-autoclosing\"}", "mode": "exclusive"}
+{"number": 2342, "label": "editor-autoclosing", "raw": "{\n  \"component\": \"editor-autoclosing\"\n}", "mode": "exclusive"}
+{"number": 4597, "label": "debug", "raw": "{\n  \"component\": \"debug\"\n}", "mode": "exclusive"}
+{"number": 1240, "label": "keybindings", "raw": "{\"component\": \"keybindings\"}", "mode": "exclusive"}
+{"number": 7301, "label": "terminal", "raw": "{\n  \"component\": \"terminal\"\n}", "mode": "exclusive"}
+{"number": 171, "label": "keybindings", "raw": "{\"component\": \"keybindings\"}", "mode": "exclusive"}
+{"number": 105558, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 23690, "label": "keyboard-layout", "raw": "{\n  \"component\": \"keyboard-layout\"\n}", "mode": "exclusive"}
+{"number": 41555, "label": "workbench-editors", "raw": "{\"component\": \"workbench-editors\"}", "mode": "exclusive"}
+{"number": 4639, "label": "keybindings", "raw": "{\n  \"component\": \"keybindings\"\n}", "mode": "exclusive"}

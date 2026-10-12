@@ -1,0 +1,64 @@
+{"number": 173253, "label": "keybindings", "raw": "{\"component\": \"keybindings\"}", "mode": "exclusive"}
+{"number": 173257, "label": "editor-find", "raw": "{\"component\": \"editor-find\"}", "mode": "exclusive"}
+{"number": 173267, "label": "keybindings", "raw": "{\"component\": \"keybindings\"}", "mode": "exclusive"}
+{"number": 173346, "label": "electron", "raw": "{\"component\": \"electron\"}", "mode": "exclusive"}
+{"number": 173354, "label": "keybindings", "raw": "{\n  \"component\": \"keybindings\"\n}", "mode": "exclusive"}
+{"number": 173622, "label": "accessibility", "raw": "{\n  \"component\": \"accessibility\"\n}", "mode": "exclusive"}
+{"number": 173626, "label": "editor-autoclosing", "raw": "{\"component\": \"editor-autoclosing\"}", "mode": "exclusive"}
+{"number": 173660, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}
+{"number": 173678, "label": "editor-autoclosing", "raw": "{\"component\": \"editor-autoclosing\"}", "mode": "exclusive"}
+{"number": 173801, "label": "keybindings", "raw": "{\"component\": \"keybindings\"}", "mode": "exclusive"}
+{"number": 173831, "label": "git", "raw": "{\"component\": \"git\"}", "mode": "exclusive"}
+{"number": 173882, "label": "typescript", "raw": "{\"component\": \"typescript\"}", "mode": "exclusive"}
+{"number": 174019, "label": "settings-sync", "raw": "{\n  \"component\": \"settings-sync\"\n}", "mode": "exclusive"}
+{"number": 174603, "label": "extensions", "raw": "{\"component\": \"extensions\"}", "mode": "exclusive"}
+{"number": 174189, "label": "extensions", "raw": "{\"component\": \"extensions\"}", "mode": "exclusive"}
+{"number": 174301, "label": "extensions", "raw": "{\n  \"component\": \"extensions\"\n}", "mode": "exclusive"}
+{"number": 174422, "label": "extensions", "raw": "{\"component\": \"extensions\"}", "mode": "exclusive"}
+{"number": 174685, "label": "extensions", "raw": "{\"component\": \"extensions\"}", "mode": "exclusive"}
+{"number": 174857, "label": "accessibility", "raw": "{\n  \"component\": \"accessibility\"\n}", "mode": "exclusive"}
+{"number": 175049, "label": "terminal", "raw": "{\"component\": \"terminal\"}", "mode": "exclusive"}
+{"number": 175236, "label": "ux", "raw": "{\n  \"component\": \"ux\"\n}", "mode": "exclusive"}
+{"number": 175505, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 175519, "label": "editor-rendering", "raw": "{\n  \"component\": \"editor-rendering\"\n}", "mode": "exclusive"}
+{"number": 176200, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 176209, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 176256, "label": "perf", "raw": "{\n  \"component\": \"perf\"\n}", "mode": "exclusive"}
+{"number": 176270, "label": "file-explorer", "raw": "{\n  \"component\": \"file-explorer\"\n}", "mode": "exclusive"}
+{"number": 178760, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 195980, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 200305, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 201797, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}
+{"number": 201901, "label": "accessibility", "raw": "{\n  \"component\": \"accessibility\"\n}", "mode": "exclusive"}
+{"number": 202003, "label": "debug", "raw": "{\n  \"component\": \"debug\"\n}", "mode": "exclusive"}
+{"number": 202010, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 202988, "label": "extensions", "raw": "{\n  \"component\": \"extensions\"\n}", "mode": "exclusive"}
+{"number": 202387, "label": "git", "raw": "{\"component\": \"git\"}", "mode": "exclusive"}
+{"number": 202763, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}
+{"number": 203114, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}
+{"number": 203218, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}
+{"number": 203863, "label": "scm", "raw": "{\n  \"component\": \"scm\"\n}", "mode": "exclusive"}
+{"number": 203873, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}
+{"number": 204537, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 205590, "label": "debug", "raw": "{\n  \"component\": \"debug\"\n}", "mode": "exclusive"}
+{"number": 206105, "label": "debug", "raw": "{\n  \"component\": \"debug\"\n}", "mode": "exclusive"}
+{"number": 206425, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 206720, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 207813, "label": "extensions", "raw": "{\"component\": \"extensions\"}", "mode": "exclusive"}
+{"number": 208106, "label": "editor-autoclosing", "raw": "{\n  \"component\": \"editor-autoclosing\"\n}", "mode": "exclusive"}
+{"number": 208629, "label": "accessibility", "raw": "{\n  \"component\": \"accessibility\"\n}", "mode": "exclusive"}
+{"number": 221354, "label": "editor-folding", "raw": "{\n  \"component\": \"editor-folding\"\n}", "mode": "exclusive"}
+{"number": 221596, "label": "file-explorer", "raw": "{\"component\": \"file-explorer\"}", "mode": "exclusive"}
+{"number": 238140, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 238339, "label": "scm", "raw": "{\"component\": \"scm\"}", "mode": "exclusive"}
+{"number": 243238, "label": "extensions", "raw": "{\"component\": \"extensions\"}", "mode": "exclusive"}
+{"number": 248696, "label": "scm", "raw": "{\n  \"component\": \"scm\"\n}", "mode": "exclusive"}
+{"number": 311554, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}
+{"number": 311562, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}
+{"number": 311574, "label": "error-telemetry", "raw": "{\"component\": \"error-telemetry\"}", "mode": "exclusive"}
+{"number": 312361, "label": "error-telemetry", "raw": "{\"component\": \"error-telemetry\"}", "mode": "exclusive"}
+{"number": 312410, "label": "extensions", "raw": "{\"component\": \"extensions\"}", "mode": "exclusive"}
+{"number": 312573, "label": "extensions", "raw": "{\"component\": \"extensions\"}", "mode": "exclusive"}
+{"number": 312790, "label": "electron", "raw": "{\"component\": \"electron\"}", "mode": "exclusive"}
+{"number": 312813, "label": "error-telemetry", "raw": "{\"component\": \"error-telemetry\"}", "mode": "exclusive"}
+{"number": 175206, "label": "settings-sync", "raw": "{\"component\": \"settings-sync\"}", "mode": "exclusive"}

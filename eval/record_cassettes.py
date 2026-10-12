@@ -793,6 +793,7 @@ def _synthesize_one(
             tpd_budget_gate.record_usage(
                 int(meta.get("groq_tokens_prompt", 0) or 0) + int(meta.get("groq_tokens_completion", 0) or 0),
                 f"record_cassettes:{issue_id}",
+                cached_tokens=meta.get("groq_tokens_cached"),
             )
         logger.info("  synthesis → %s (cache_hit=%s)", plan.predicted_component, meta.get("llm_cache_hit"))
     except TruncatedCompletionError as exc:

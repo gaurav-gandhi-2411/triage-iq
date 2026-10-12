@@ -830,3 +830,38 @@ intent in another form (e.g. a script file); report the exact command and hook o
    review-iq branch/PR churn is what trips it. Not verified. Optional stronger fix queued (`git.deploymentEnabled` in review-iq `vercel.json`).
 5. **Hook rule applied again:** the rewrite of `eval/tpd_budget_gate.py` and this entry were blocked by the rule-55a tokenizer (form) and
    redone with the Write tool. No content or policy block this round.
+
+**D67. Round 12 (TriageIQ only): degraded-mode UX, vscode cold start, vscode eval labelling, Cloud Run recording job. VERIFIED unless marked BELIEVED.**
+
+1. **Degraded-mode UX (triage-iq-ui #30, open, merge held).** When `_degraded` is true the card shows an "ML-only plan" notice with the cause
+   (daily allowance, per-minute allowance, 15-second limit, provider down, generic), keeps what is real (component + confidence, similar issues,
+   resolution interval and bucket) and labels summary, priority, assignee and next steps "not generated" instead of the API's placeholders
+   ("medium priority", assignee "unknown", "Manual triage required"). Before/after screenshots against a REAL degraded production response; 24 UI
+   tests, `tsc` and `eslint` clean. It merges only after #29's production build is verified (Vercel Hobby cap, below).
+2. **vscode cold start.** The vscode "detector" step (20-25 s) vs k8s (0.7 s) is not vscode data: the 17.7-21 s gap between the vscode classifier
+   and its index load is the first import of torch / sentence_transformers / faiss, paid by whichever repo loads first. The cold start is
+   first-touch I/O of the lazily fetched image layers (Cloud Run already on 2 vCPU with startup CPU boost). Two fixes were tried and deployed, and
+   measured on the candidate revision's startup log: overlapping the drift check and an import prewarm with loading (#185, revision 00057):
+   `load_all` 35.5 s, WORSE; moving the drift check after startup (#186, revision 00059): 28.0 s, no change. Baseline, original code: 25.4 / 28.4 /
+   27.7 s (00051 / 00053 / 00055) and, after the revert (#187, revision 00061), **22.5 s** (detector 15.2 s): identical code varies by 6 s between
+   cold instances, so the deferred-drift result (28.0 s) is inside the noise and only the overlap (35.5 s, 7 s above the original maximum) is
+   clearly out of range. The drift check had been prefetching artifacts the loaders then read (faiss_read 0.2 s -> 0.9 s), so removing it
+   moved the same I/O. Both reverted (#187). Serving signals for 30 issues are bit-identical across all versions (hash `fffe4fd1...`,
+   `reports/loader_equivalence_2026-10-12.json`). n=1 per experiment: an indication, not a test; telling a 3-5 s gain from instance noise would
+   need about 10 cold starts per arm. No safe fix found; what would cut it (a smaller
+   embedding stack = changes outputs; an always-warm instance = costs money) is documented in #187.
+3. **Pool, caching and measurements.** `prompt_tokens_details.cached_tokens` was absent in the SDK object on 7 calls; the RAW-JSON check was refused
+   by my own ledger (pool at 196,411 of 200,000) and is still open. 5-body replay after A1/A3: 4,870 and 5,324 ms for the two calls with headroom,
+   then three `rate_limited_tpd` degrades in 1.5-1.8 s, 0 retries. The 3-in-60 s contention test was attempted at 15:56 UTC: all three degraded on
+   the daily limit (the pool had room for one call), so the per-minute path is still unmeasured.
+4. **Cloud Run recording job (built, not live).** ADR-0065. Code merged (#183: GCS append-only snapshot store, entrypoint, pull_bundle, 16 tests);
+   packaging is #184 (Dockerfile.recorder on the API image, `recording-job.yml` weekly + manual, owner runbook), owner-merge because it touches
+   workflows. Needs ONE IAM binding: conditional `roles/storage.objectUser` for `triageiq-api-runtime` on `recorder/` of the models bucket (command in
+   `scripts/cloud_recording/README.md`). Read from live IAM: the deployer already has `run.developer` and `serviceAccountUser` on the runtime SA, the
+   runtime SA already has `secretAccessor` on `groq-api-key`, the bucket has uniform access (conditional bindings possible), Cloud Scheduler API is off
+   and not needed. Free-tier fit (VERIFIED amounts: 180,000 vCPU-s, 360,000 GiB-s, 5 GB-months, 0.5 GB Artifact Registry): about 5% of the compute
+   allowance weekly. UNVERIFIED: that Cloud Run JOBS use that allowance (the page quoted does not mention jobs); check Billing after the first run.
+5. **Process notes.** Branch prefix `perf/` is not in rule 35's list, so the merge gate failed gate 1; I renamed it to `fix/...` (PR #182 closed as
+   superseded by #185). A first run of my cloud-recording tests wrote a fake cassette into the tracked `eval/cassettes/eval_cassette.json` (a test
+   path bug: splitting a Windows `PYTHONPATH` on ":"); caught at `git status` before any commit, restored from HEAD after a WIP commit, fixed. Two shell
+   commands were blocked by the rule-55a/70a tokenizer (form) and redone with the Write tool or run alone.

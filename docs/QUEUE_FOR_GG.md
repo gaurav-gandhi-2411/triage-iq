@@ -1,6 +1,17 @@
 # Queue for GG (only items you must do)
 
-Last updated 2026-10-12 (round 11, D66). Everything else is in `docs/DECISION_LOG_2026-10.md`.
+Last updated 2026-10-12 (round 12, D67). Everything else is in `docs/DECISION_LOG_2026-10.md`.
+
+## Round 12: what needs you (D67)
+
+1. **Cloud Run recording job, owner steps** (built, not live; ADR-0065). Merge core #184 (touches `.github/workflows/`, so yours), then run the ONE IAM
+   binding and the three steps after it exactly as written in `scripts/cloud_recording/README.md` (steps 1-4). The binding gives the runtime service
+   account create + read on `recorder/` of the models bucket only. After the first watched run, check Billing > Reports for Cloud Run: that jobs use
+   the free allowance is BELIEVED, not verified.
+2. **Nothing else to merge by you.** Mine and waiting on the clock: triage-iq-ui #29 (Vercel `main`-only deployments; it is also the trigger for
+   the UI #28 production build after the Vercel reset at about 07:30 UTC Oct 13), triage-iq-ui #30 (degraded-mode notice; after #29's build is verified),
+   core #187 (revert of the two cold-start experiments, CI then merge), the raw-JSON caching check and the 3-in-60 s contention test (need pool
+   headroom), README #151 (stays a draft; its review is the one step that must be yours).
 
 ## Core #161: MERGED and deployed (2026-10-11, merge f71096a, revision triageiq-api-00045-zac)
 

@@ -95,3 +95,40 @@ def test_observe_ignores_non_tpd_and_known_spend(tmp_path: Path) -> None:
     assert g.observe_tpd_429("429 on tokens per minute (TPM): Limit 8000", now=NOW, path=p) == 0
     _spend(p, 40, 5_000, NOW - timedelta(hours=2))  # ledger already accounts for 200K
     assert g.observe_tpd_429(FIXTURE_429.read_text(encoding="utf-8"), now=NOW, path=p) == 0
+
+
+# --- shared machine-wide ledger (2026-10-12) ---------------------------------------------------
+def test_default_ledger_imports_the_legacy_history_once(tmp_path: Path, monkeypatch) -> None:
+    import json
+
+    legacy = tmp_path / "old.json"
+    entries = [
+        {"ts": (NOW - timedelta(hours=h)).isoformat(), "tokens": 6_000, "source": f"record_cassettes:{h}"}
+        for h in range(3)
+    ]
+    legacy.write_text(json.dumps({"entries": entries}), encoding="utf-8")
+    monkeypatch.delenv(g.LEDGER_ENV, raising=False)
+    monkeypatch.setenv("GROQ_BUDGET_DIR", str(tmp_path / "shared"))
+    monkeypatch.setattr(g, "LEGACY_LEDGER", legacy)
+    monkeypatch.setattr(g, "_MIGRATED", False)
+    assert g.spent_last_24h(now=NOW) == 18_000
+    assert g.spent_last_24h(now=NOW) == 18_000  # second use does not import again
+    assert json.loads(legacy.read_text(encoding="utf-8"))["entries"] == entries  # legacy untouched
+
+
+def test_recorder_spend_is_visible_to_other_projects_on_the_shared_ledger(tmp_path: Path) -> None:
+    import groq_budget as gb
+
+    p = tmp_path / "l.json"
+    _spend(p, 31, 5_000, NOW - timedelta(hours=3))  # recorder spent 155K of the 160K allocatable
+    d = gb.Ledger(path=p).check("benchmark", g.MODEL, 6_000, now=NOW)
+    assert not d.allowed and d.reason == "pool_exhausted"
+
+
+def test_recording_flag_is_wired_into_both_recorder_entry_points() -> None:
+    root = Path(__file__).resolve().parents[1]
+    rec = (root / "eval" / "record_cassettes.py").read_text(encoding="utf-8")
+    run = (root / "scripts" / "run_recording_unattended.py").read_text(encoding="utf-8")
+    assert "tpd_budget_gate.start_recording()" in rec and "GROQ_BUDGET_RECORDING_PARENT" in rec
+    assert "tpd_budget_gate.start_recording()" in run
+    assert 'env["GROQ_BUDGET_RECORDING_PARENT"] = "1"' in run

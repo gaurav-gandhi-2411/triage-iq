@@ -23,6 +23,11 @@ The sections below were written for vscode only (D2). D7 applies the same decisi
   7.28 d for the model vs 3.52 d for naive**, i.e. the model helps on the mean (a few huge
   long-tail issues) and is worse on the typical issue. The served point is what a reader takes as
   "how long will this one take".
+  Public wording (owner decision, 2026-10-12): "on k8s it is marginally better on mean error (+2%),
+  almost entirely from the longest-resolving 20% of issues." Measured
+  (`reports/k8s_gain_tail.json`, `scripts/analysis_k8s_gain_tail.py`): the longest-resolving 20%
+  (598 issues, 113+ d) carry 95.9% of the mean-error gain (bootstrap CI [87.3, 106.9]; above 100%
+  means the other 80% net slightly negative); the top 10% carry 56.8% [50.2, 66.0], the top 1% only 7.0%.
 - k8s keeps its learned parts: the bucket classifier (+6.95 pp [5.55, 8.36] over always-"hours") and
   the CQR interval around the model's Q10/Q90 (CQR v2, coverage 79.7% [77.9, 81.4] on the held-out
   part). The k8s interval is NOT re-centred (`INTERVAL_RECENTRED[k8s] = False`): lo/hi, bucket,

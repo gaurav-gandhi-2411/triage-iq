@@ -14,6 +14,7 @@ Subcommands (resumable, deterministic, seed 42):
   vocab             47-class vocabulary + provenance
   sample            the labelled issues (stratified over three resolution buckets by the curation script's own function)
   calibrate-sample  easy and hard calibration sets from labelled issues outside the sample
+  report            accuracy vs real labels, Fleiss kappa with an item bootstrap CI, consensus, disputed items
   run               three judges from three families, BLIND (title + body + allowed list only), temperature 0,
                     JSON-schema-constrained; VRAM-gated
 """
@@ -24,10 +25,12 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import math
 import subprocess
 import time
 import urllib.request
 from collections import Counter
+from itertools import combinations
 from pathlib import Path
 
 import numpy as np
@@ -323,6 +326,129 @@ def cmd_run(a: argparse.Namespace) -> None:
             _run_judge(kind, items[kind], judge, vocab)
 
 
+# ---------------------------------------------------------------------------------------------- stats
+def wilson(k: int, n: int, z: float = 1.96) -> list[float]:
+    if n == 0:
+        return [0.0, 0.0]
+    p = k / n
+    d = 1 + z * z / n
+    c = p + z * z / (2 * n)
+    h = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))
+    return [round((c - h) / d, 4), round((c + h) / d, 4)]
+
+
+def cohen_kappa(x: list[str], y: list[str]) -> float:
+    n = len(x)
+    po = sum(a == b for a, b in zip(x, y, strict=True)) / n
+    cx, cy = Counter(x), Counter(y)
+    pe = sum(cx[k] * cy[k] for k in set(cx) | set(cy)) / (n * n)
+    return 1.0 if pe == 1 else (po - pe) / (1 - pe)
+
+
+def fleiss_kappa(ratings: list[list[str]]) -> float:
+    n_items, n_raters = len(ratings), len(ratings[0])
+    cats = sorted({c for r in ratings for c in r})
+    counts = np.array([[r.count(c) for c in cats] for r in ratings], dtype=float)
+    p_j = counts.sum(axis=0) / (n_items * n_raters)
+    p_i = ((counts**2).sum(axis=1) - n_raters) / (n_raters * (n_raters - 1))
+    pbar, pe = p_i.mean(), (p_j**2).sum()
+    return 1.0 if pe == 1 else float((pbar - pe) / (1 - pe))
+
+
+def _fleiss_ci(mat: list[list[str]]) -> dict:
+    rng = np.random.default_rng(SEED)
+    boots = [fleiss_kappa([mat[i] for i in rng.integers(0, len(mat), len(mat))]) for _ in range(1000)]
+    return {
+        "value": round(fleiss_kappa(mat), 4),
+        "ci95_item_bootstrap": [round(float(np.percentile(boots, 2.5)), 4), round(float(np.percentile(boots, 97.5)), 4)],
+        "n_items": len(mat),
+    }
+
+
+def _acc(pred: dict[int, str], truth: dict[int, str | None]) -> dict:
+    nums = [n for n in truth if truth[n] is not None and n in pred]
+    k = sum(pred[n] == truth[n] for n in nums)
+    return {"n": len(nums), "correct": k, "accuracy": round(k / len(nums), 4) if nums else None, "wilson95": wilson(k, len(nums))}
+
+
+def cmd_report(a: argparse.Namespace) -> None:
+    sample = {r["number"]: r for r in _load(OUT_DIR / "sample.jsonl")}
+    cal = {k: {r["number"]: r["repo_label_component"] for r in _load(OUT_DIR / KINDS[k])} for k in ("calibrate_easy", "calibrate_hard")}
+    truth = {n: r["repo_label_component"] for n, r in sample.items()}
+    labs = {j["model"]: {r["number"]: r["label"] for r in _load(_file("label", j["model"]))} for j in JUDGES if _file("label", j["model"]).exists()}
+    report: dict = {
+        "note": "Every item carries its real repo component label (ground truth). Judge output is a cross-check only and is NOT used as a label.",
+        "sample_counts": json.loads((OUT_DIR / "sample_counts.json").read_text(encoding="utf-8")),
+        "vocabulary": json.loads((OUT_DIR / "vocabulary_provenance.json").read_text(encoding="utf-8")),
+        "judges": {},
+    }
+    passed = []
+    for j in JUDGES:
+        m = j["model"]
+        ent: dict = {"family": j["family"]}
+        for k in ("calibrate_easy", "calibrate_hard"):
+            f = _file(k, m)
+            ent[k] = _acc({r["number"]: r["label"] for r in _load(f)} if f.exists() else {}, cal[k])
+        ent["accuracy_vs_real_label_on_sample"] = _acc(labs.get(m, {}), truth)
+        ent["invalid_outputs"] = sum(v == "__invalid__" for v in labs.get(m, {}).values())
+        easy = ent["calibrate_easy"]["accuracy"]
+        ent["passes_pre_registered_easy_rule"] = easy is not None and easy >= CALIB_PASS
+        if ent["passes_pre_registered_easy_rule"] and m in labs:
+            passed.append(m)
+        report["judges"][m] = ent
+    report["judges_in_consensus"] = passed
+    if len(labs) == len(JUDGES):
+        # Requested for reference: Fleiss' kappa over ALL three judges even though one failed the easy-set rule,
+        # so the agreement of the full panel is visible. It is not the consensus panel.
+        all3 = sorted(n for n in sample if all(n in labs[j["model"]] for j in JUDGES))
+        mat3 = [[labs[j["model"]][n] for j in JUDGES] for n in all3]
+        lab3 = [i for i, n in enumerate(all3) if truth[n] is not None]
+        report["fleiss_kappa_all_three_judges_reference"] = {
+            "all_items": _fleiss_ci(mat3),
+            "real_labelled_items": _fleiss_ci([mat3[i] for i in lab3]),
+        }
+    nums = sorted(n for n in sample if all(n in labs[m] for m in passed)) if passed else []
+    report["items_labelled_by_all_consensus_judges"] = len(nums)
+    if len(passed) >= 2 and nums:
+        mat = [[labs[m][n] for m in passed] for n in nums]
+        report["percent_all_agree"] = round(sum(len(set(r)) == 1 for r in mat) / len(nums), 4)
+        report["pairwise_cohen_kappa"] = {
+            f"{p}|{q}": round(cohen_kappa([labs[p][n] for n in nums], [labs[q][n] for n in nums]), 4)
+            for p, q in combinations(passed, 2)
+        }
+        if len(passed) >= 3:
+            report["fleiss_kappa_all_items"] = _fleiss_ci(mat)
+            lab_idx = [i for i, n in enumerate(nums) if truth[n] is not None]
+            if len(lab_idx) >= 5:
+                report["fleiss_kappa_real_labelled_items_only"] = _fleiss_ci([mat[i] for i in lab_idx])
+        need = len(passed) // 2 + 1
+        final, cross = [], []
+        for n, row in zip(nums, mat, strict=True):
+            top, k = Counter(row).most_common(1)[0]
+            rec = {"number": n, "title": sample[n]["title"], "judge_labels": dict(zip(passed, row, strict=True)),
+                   "real_repo_label": truth[n]}
+            consensus = top if k >= need else None
+            if truth[n] is not None:
+                final.append({**rec, "label": truth[n], "label_status": "repo label (ground truth)",
+                              "consensus_cross_check": consensus, "consensus_agrees": consensus == truth[n]})
+                if consensus != truth[n]:
+                    cross.append(rec | {"consensus": consensus})
+        lab = [f for f in final if f["label_status"].startswith("repo")]
+        report.update(
+            final_items=len(final),
+            ground_truth_real_label=len(lab),
+            consensus_vs_real_label_on_labelled=_acc(
+                {f["number"]: f["consensus_cross_check"] or "__none__" for f in lab}, {f["number"]: f["label"] for f in lab}
+            ),
+            consensus_disagrees_with_real_label=len(cross),
+            labelled_items_where_the_consensus_judges_disagree=sum(f["consensus_cross_check"] is None for f in lab),
+        )
+        (OUT_DIR / "final_labels.jsonl").write_text("\n".join(json.dumps(f) for f in final) + "\n", encoding="utf-8")
+        (OUT_DIR / "disputed.jsonl").write_text("\n".join(json.dumps(d) for d in cross) + "\n", encoding="utf-8")
+    (OUT_DIR / "agreement_report.json").write_text(json.dumps(report, indent=1), encoding="utf-8")
+    print(json.dumps(report, indent=1))
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -336,8 +462,9 @@ def main() -> None:
             p.add_argument("--extra-exclude", nargs="*", default=[])
     p = sub.add_parser("run")
     p.add_argument("kind", choices=[*KINDS, "all"])
+    sub.add_parser("report")
     a = ap.parse_args()
-    {"vocab": cmd_vocab, "sample": cmd_sample, "calibrate-sample": cmd_calibrate_sample, "run": cmd_run}[a.cmd](a)
+    {"vocab": cmd_vocab, "sample": cmd_sample, "calibrate-sample": cmd_calibrate_sample, "run": cmd_run, "report": cmd_report}[a.cmd](a)
 
 
 if __name__ == "__main__":

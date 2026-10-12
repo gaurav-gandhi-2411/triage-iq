@@ -42,6 +42,7 @@ WINDOW = timedelta(hours=24)
 KEEP = 2 * WINDOW  # entries older than this are dropped on write
 RECORDER = "triageiq-recorder"
 EXTERNAL = "external-observed"
+EXTERNAL_BUCKETS = 24  # an observed gap is held as this many equal slices across the trailing window
 LEGACY_MODEL = "openai/gpt-oss-120b"  # the pre-2026-10-12 TriageIQ ledger had no model field
 STOP_MARKER = "=== BUDGET RESERVE STOP ==="  # kept: run_recording_unattended greps for it
 
@@ -77,15 +78,24 @@ def _locked(root: Path, timeout_s: float = 15.0, stale_s: float = 30.0) -> Itera
             os.write(fd, str(os.getpid()).encode())
             os.close(fd)
             break
-        except FileExistsError:
+        except (FileExistsError, PermissionError) as exc:
+            # Windows reports a lock file that another process holds open or is deleting at this very
+            # moment as PermissionError (EACCES), not FileExistsError; a genuine permission problem
+            # stays PermissionError until the deadline and is then raised as the timeout's cause.
             try:
                 if time.time() - lock.stat().st_mtime > stale_s:  # holder died; take it over
                     lock.unlink()
                     continue
             except FileNotFoundError:
+                # The lock vanished between the failed open and the stat: retry at once, but still honour the
+                # deadline (a permanent PermissionError with no lock file must not spin forever).
+                if time.monotonic() > deadline:
+                    raise TimeoutError(f"groq_budget: could not lock {lock} within {timeout_s}s") from exc
                 continue
+            except PermissionError:
+                pass  # still being deleted or held: retry below
             if time.monotonic() > deadline:
-                raise TimeoutError(f"groq_budget: could not lock {lock} within {timeout_s}s") from None
+                raise TimeoutError(f"groq_budget: could not lock {lock} within {timeout_s}s") from exc
             time.sleep(0.05)
     try:
         yield
@@ -266,22 +276,53 @@ class Ledger:
 
     # ---- Groq's own number
     def observe_429(self, text: str, model: str, now: datetime | None = None) -> int:
-        """Fold a Groq TPD 429 into the ledger; returns the tokens added (0 if not a TPD 429)."""
+        """Fold a Groq TPD 429 into the ledger; returns the external tokens now held (0 if none).
+
+        The 429 body's "Used" is the only ground truth for the whole organisation over the trailing
+        24 h. Spend the ledger did not record (production, other keys) is `used - ledger spend`, and it
+        happened at unknown times inside that window. It is therefore held as 24 equal hourly buckets
+        spread across the window, so it ages out progressively like real usage does, instead of as one
+        block that blocks for 24 h after the 429 (the 2026-10-12 defect: a 179K block observed at 14:49
+        UTC kept the ledger shut for the full day although real usage was draining hour by hour).
+
+        A new observation REPLACES the previous one for this model: its "Used" is the newer ground
+        truth, so it can correct the estimate downwards as well as upwards. The sum of the buckets is
+        exactly the external figure at the moment of observation."""
         parsed = parse_tpd_error(text)
         if parsed is None:
             return 0
         _limit, used, _requested = parsed
         t = now or _now()
-        external = used - self.spent(model, now=t)
-        if external <= 0:
-            return 0
-        self.record(
-            EXTERNAL,
-            model,
-            external,
-            f"observed-429: org Used {used} exceeds ledger (external spend)",
-            now=t,
-        )
+        with _locked(self.root):
+            entries = self._read()
+            mine = [e for e in entries if e["model"] == model and e["project"] != EXTERNAL]
+            known = sum(
+                e["tokens"] for e in mine if datetime.fromisoformat(e["ts"]) > t - WINDOW
+            )
+            external = max(0, used - known)
+            keep = [
+                e
+                for e in entries
+                if not (e["model"] == model and e["project"] == EXTERNAL)
+                and datetime.fromisoformat(e["ts"]) > t - KEEP
+            ]
+            if external > 0:
+                share, extra = divmod(external, EXTERNAL_BUCKETS)
+                step = WINDOW / EXTERNAL_BUCKETS
+                for k in range(EXTERNAL_BUCKETS):
+                    keep.append(
+                        {
+                            "ts": (t - WINDOW + step * (k + 0.5)).isoformat(),
+                            "model": model,
+                            "project": EXTERNAL,
+                            "tokens": share + (extra if k == EXTERNAL_BUCKETS - 1 else 0),
+                            "source": (
+                                f"observed-429 at {t.isoformat()}: org Used {used}, ledger {known}; "
+                                f"external {external} spread over the window, bucket {k + 1}/{EXTERNAL_BUCKETS}"
+                            ),
+                        }
+                    )
+            self._write(sorted(keep, key=lambda e: e["ts"]))
         return external
 
     # ---- recording-active flag

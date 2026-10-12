@@ -1,6 +1,18 @@
 # Queue for GG (only items you must do)
 
-Last updated 2026-10-12 (round 11, D66). Everything else is in `docs/DECISION_LOG_2026-10.md`.
+Last updated 2026-10-12 (round 12, D67-D68). Everything else is in `docs/DECISION_LOG_2026-10.md`.
+
+## Round 12: what needs you (D67)
+
+1. **ON HOLD (owner, 2026-10-12): Cloud Run recording job, core #184 and its ONE IAM binding.** Both wait until README #151 is approved. When released:
+   merge #184 (touches `.github/workflows/`, so yours), then the binding and the steps after it exactly as in `scripts/cloud_recording/README.md`
+   (steps 1-4); after the first watched run check Billing > Reports for Cloud Run (that jobs use the free allowance is BELIEVED, not verified). Nothing
+   has been granted or deployed.
+2. **Nothing else to merge by you.** Mine and waiting on the clock: triage-iq-ui #29 (Vercel `main`-only deployments; it is also the trigger for
+   the UI #28 production build after the Vercel reset at about 06:50 UTC Oct 13), triage-iq-ui #30 (degraded-mode notice; after #29's build is verified),
+   the raw-JSON caching check and the 3-in-60 s contention test (they wait for the corrected ledger to reopen, about 20:20 UTC), the vscode eval
+   labelling (running, gated by the shared GPU), README #151 (marked ready for your review once the contention result is in; its review is the one step
+   that must be yours). Open PRs of mine awaiting CI: #190 (ledger lock flake) and #191 (tracked-cassette write guard).
 
 ## Core #161: MERGED and deployed (2026-10-11, merge f71096a, revision triageiq-api-00045-zac)
 

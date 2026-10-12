@@ -34,6 +34,7 @@ Exit codes:
 """
 
 import argparse
+import atexit
 import ctypes
 import hashlib
 import json
@@ -108,9 +109,19 @@ JUDGE_MODEL = "qwen3:8b"
 JUDGE_PROVIDER = "ollama"
 
 
+_RECORDING_FLAG_SET = False
+
+
 def _enforce_budget_reserve(groq_key: str) -> None:
     """Stop (exit 3, marker for the unattended launcher) before the shared Groq daily budget
     drops below the protected reserve. See eval/tpd_budget_gate.py."""
+    global _RECORDING_FLAG_SET
+    if not _RECORDING_FLAG_SET and not os.environ.get("GROQ_BUDGET_RECORDING_PARENT"):
+        # Standalone live run: tell other projects on the shared Groq ledger to wait. The unattended
+        # launcher sets the flag itself (and GROQ_BUDGET_RECORDING_PARENT) for its child runs.
+        _RECORDING_FLAG_SET = True
+        tpd_budget_gate.start_recording()
+        atexit.register(tpd_budget_gate.stop_recording)
     try:
         msg = tpd_budget_gate.check_budget()
     except tpd_budget_gate.BudgetReserveError as exc:

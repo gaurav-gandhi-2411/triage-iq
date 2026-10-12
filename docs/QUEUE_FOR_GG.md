@@ -1,6 +1,6 @@
 # Queue for GG (only items you must do)
 
-Last updated 2026-10-12 (round 10). Everything else is in `docs/DECISION_LOG_2026-10.md`.
+Last updated 2026-10-12 (round 11). Everything else is in `docs/DECISION_LOG_2026-10.md`.
 
 ## Core #161: MERGED and deployed (2026-10-11, merge f71096a, revision triageiq-api-00045-zac)
 
@@ -8,19 +8,32 @@ Verified live (D63): `/health?deps=1` ok, HEAD /health 200, `/eval/summary` serv
 MANIFEST-hash provenance. **One production exposure found, not fixed (needs your pick, item A below):**
 the Groq 8,000 tokens/minute limit makes /triage take 50-135 s when the key's per-minute pool is used up.
 
-A. **Latency under the Groq per-minute limit (D63).** 4 of 5 replayed /triage calls spent 51-133 s in the LLM stage
-   (HTTP 200, not degraded) because the key's pool is 8,000 tokens/minute, one triage is ~6,000, and something else
-   draws on the same key. Recommendation, in this order, each its own PR: (1) a per-request time budget in the
-   Groq call that degrades to the signals-only plan instead of sleeping through 6 retries (code only, I can do it
-   now if you agree); (2) move the gg-portfolio chatbot to a different Groq model (your decision, other repo; also
-   item 6 of the budget workstream below); (3) prompt-cache accounting (item 1 of the workstream). Say "go" for (1).
-B. **Public /eval page is partly stale (UI repo + core data), found in the browser check (D63).** The served-model block
-   is correct (median point, k8s +6.95pp, coverage 79.7% / 82.7%). But: section 5 still shows vscode conformal
-   coverage 74.6% [69.9, 78.8] with a 30/70-vs-40/60 split note next to the served 82.7%; the old "RESOLUTION
-   PREDICTOR RESULTS" table header is rendered with empty columns above the "INVALIDATED" rows; the served block does
-   not name the split; and the page note uses the earlier wording, not the ADR-0064 wording. Recommendation: one
-   core PR (eval_summary conformal block: add the served 82.7% with the split named) and one UI PR (drop the empty
-   table header, new wording). Say "go" and I do both.
+Round 11 status (D65): core #170 is MERGED (f7b118c) but its deploy failed the smoke test on `rate_limited_tpd` (the shared
+120b daily pool is exhausted); production still serves 00045-zac. I merge #171, #172 and UI #28 in that order, each after the
+previous deploy is confirmed.
+
+**1. Merge core #175 (smoke-test quota refinement; touches `deploy.yml`, so it is yours).** Check `gh pr checks 175` first, then run alone:
+`gh pr merge 175 --repo gaurav-gandhi-2411/triage-iq --merge`. After it merges I re-run #170's deploy (identical rerun of run 38206343184;
+it deploys the main tip, which includes #170).
+
+**2. A2 cassette re-record (gg-portfolio draft PR #308; hold the merge until this is done).** Run in YOUR OWN PowerShell window,
+outside Claude Code, so the env file never enters this session. Spends about 25K tokens on the gpt-oss-20b pool (23 recorded calls at
+about 1K each; BELIEVED, from the old cassettes' token counts). Each line separately:
+
+```powershell
+Set-Location C:\Users\gaura\ml-projects\gg-portfolio-wt-groq20b
+git status --short; git branch --show-current   # expect clean, fix/chatbot-groq-gpt-oss-20b
+node --env-file="C:\Users\gaura\ml-projects\gg-portfolio\.env" evals/chatbot/run-eval.mjs --live --force
+git status --short                              # expect modified evals/chatbot/cassettes/*.json and new reports/wave16-chatbot-eval-*.md/.json
+git add evals/chatbot/cassettes reports
+git commit -m "test(chatbot): re-record eval cassettes on openai/gpt-oss-20b"
+git push origin fix/chatbot-groq-gpt-oss-20b
+```
+
+Then tell me "recorded". I will verify each committed cassette's `recordedModel` is `openai/gpt-oss-20b`, rerun the replay with no key,
+and compare the 20b numbers with the 120b baseline (recall@5 95.0%, groundedness 100%, refusal precision 100%, false-refusal 0%, on the
+same fixtures) before saying whether #308 is mergeable. If the run prints `no GROQ_API_KEY`, the env file path or variable name is wrong;
+nothing is overwritten in that case (verified: a keyless `--live --force` left every cassette untouched).
 
 ## Dashboard / account actions (only you can do these)
 

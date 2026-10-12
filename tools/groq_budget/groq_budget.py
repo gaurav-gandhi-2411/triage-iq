@@ -86,6 +86,10 @@ def _locked(root: Path, timeout_s: float = 15.0, stale_s: float = 30.0) -> Itera
                     lock.unlink()
                     continue
             except FileNotFoundError:
+                # The lock vanished between the failed open and the stat: retry at once, but still honour the
+                # deadline (a permanent PermissionError with no lock file must not spin forever).
+                if time.monotonic() > deadline:
+                    raise TimeoutError(f"groq_budget: could not lock {lock} within {timeout_s}s") from exc
                 continue
             except PermissionError:
                 pass  # still being deleted or held: retry below

@@ -29,7 +29,7 @@ from ..config import get_settings
 from ..models.abstention import compute_abstention_status
 from ..models.resolution import NAIVE_INTERVAL_COVERAGE, repo_slug
 from ..models.triage import PROVIDER_DEGRADED_STATUS, ConformalIntervalResult, TriagePlan
-from .loader import ModelStore, start_manifest_check_in_background
+from .loader import ModelStore
 from .schemas import DependencyStatus, HealthResponse, ServiceInfoResponse, TriageRequest
 
 logger = logging.getLogger(__name__)
@@ -223,8 +223,6 @@ async def lifespan(app: FastAPI):
         "Models ready: %s (startup_step load_all took %.1f ms)",
         app.state.store.repos, (time.perf_counter() - _t_load) * 1000.0,
     )
-    # Artifact drift check (warn-only) runs after the models are ready, off the cold-start path.
-    start_manifest_check_in_background(cfg.data_dir)
     _token_set = bool(cfg.metrics_token and cfg.metrics_token.get_secret_value())
     _metrics_state = (
         "protected with token" if _token_set

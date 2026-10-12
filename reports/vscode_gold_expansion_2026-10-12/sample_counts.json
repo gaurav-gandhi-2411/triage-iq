@@ -1,0 +1,16 @@
+{
+ "temporal_val_test_issues": 2449,
+ "after_excluding_train_gold_eval_shipped_train": 2246,
+ "closed_with_resolution": 2246,
+ "with_repo_component_label": 68,
+ "label_in_served_47_class_space": 63,
+ "label_outside_the_47_classes": 5,
+ "without_label": 2178,
+ "sampled": 63,
+ "sampled_with_real_label": 63,
+ "buckets": {
+  "<7d": 41,
+  ">30d": 11,
+  "7-30d": 11
+ }
+}

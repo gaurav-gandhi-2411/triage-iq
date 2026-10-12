@@ -1,0 +1,6 @@
+{
+ "n_classes": 47,
+ "classifier_sha256": "5e286b1f75218373feceb43703d2a1a8a249d972393def659139eb308475313f",
+ "matches_manifest": true,
+ "source": "gs://triageiq-prod-260812-models/models/component_classifier_microsoft_vscode.pkl (ADR-0057, 47 classes)"
+}

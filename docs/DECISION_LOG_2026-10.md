@@ -865,3 +865,31 @@ intent in another form (e.g. a script file); report the exact command and hook o
    superseded by #185). A first run of my cloud-recording tests wrote a fake cassette into the tracked `eval/cassettes/eval_cassette.json` (a test
    path bug: splitting a Windows `PYTHONPATH` on ":"); caught at `git status` before any commit, restored from HEAD after a WIP commit, fixed. Two shell
    commands were blocked by the rule-55a/70a tokenizer (form) and redone with the Write tool or run alone.
+
+**D68. Owner corrections to round 12 (2026-10-12). VERIFIED unless marked BELIEVED.**
+
+1. **Ledger: fix the defect, do not bypass the guard.** I had proposed running the raw caching check with the ledger check bypassed on the strength of one
+   successful production call. That would have overridden a guard on my own reading, and the owner said so. The real defect: a 429 "Used X" gap was held as
+   ONE lump stamped at the 429, so it could not age out for 24 h although real usage drains continuously (today: Used 196,411 at 14:49 UTC against 17,257
+   recorded left a 179,154 lump). Fixed in #189 (merged): the gap is held as 24 hourly slices across the trailing window, a newer observation replaces the
+   previous one (it can correct downwards), and the cloud snapshot merge cannot resurrect a superseded one. Tests reproduce today's case (the old
+   behaviour stays shut until +24 h; the new one reopens 4-8 h after the 429). The verified 14:49 body was re-folded with the corrected ledger: it reopens
+   for a 3.5K-token call at about 20:20 UTC today. A flake the full suite exposed while checking this (Windows `PermissionError` on the lock file in the
+   4-process test) is a real ledger bug and is fixed in #190.
+2. **Cold start: investigation closed.** Finding: the cold start is first-touch I/O of the lazily fetched image layers, dominated by the first import of
+   torch / sentence-transformers / faiss (17.7-21 s of a 22-28 s `load_all`), paid by whichever repo loads first. Four cold starts of identical code ranged
+   22.5-28.4 s (about 6 s of instance noise); one experiment was clearly worse (35.5 s), one inside the noise (28.0 s). The keep-warm monitor already limits cold
+   starts to about one a day, so no further work. **Standing rule (owner): never merge an experiment to `main` to measure it.** Measure with a no-traffic
+   tagged revision deployed from a branch, outside `main`; #185/#186 each put an unproven change in production for a measurement.
+3. **vscode eval expansion revised (v2; the v1 outputs are kept aside as `_superseded_v1_36class/`).** (a) Real repo labels first: in the held-out temporal
+   window (val + test, 2,449 issues; 2,246 after excluding every train set, the gold set, the eval set and earlier candidates) only 68 issues carry a component
+   label, 63 of them inside the served 47-class space and 5 outside it. All 63 are used as GROUND TRUTH; one unlabelled issue completes the 64 and is the only
+   consensus-only item. (b) The judge vocabulary is the SERVED classifier's 47 classes, read from the production artifact after its sha256 matched
+   `MANIFEST.sha256` (the local `data/models` copy is the old 28-class classifier and would have been wrong too). (c) Judges are calibrated on labelled issues
+   with the component name in the title (easy, 30 items) and WITHOUT it (hard, 40 items); both accuracies are reported and the pre-registered inclusion rule
+   is easy-set accuracy >= 0.80. (d) Report: per-judge accuracy vs the real labels of the 63 labelled items, Fleiss' kappa with an item-bootstrap CI, the
+   disputed items. Bucket mix is skewed (42 / 11 / 11 for <7 d / 7-30 d / >30 d) because labels sit on the older, faster issues.
+4. **Tracked-cassette guard (#191).** An audit hook that blocks any write, rename, replace, remove or copy resolving (against the cwd at call time) under a
+   tracked `cassettes` directory, plus a session sha256 tripwire, installed from a root `conftest.py`. The original buggy test run under it fails with
+   `TrackedCassetteWriteBlocked` and `eval/` stays untouched. A full local run of `tests` + `eval` under the guard had 0 guard hits.
+5. **Hold:** core #184 (Cloud Run job packaging, a workflow) and the one IAM binding are on hold until README #151 is approved.

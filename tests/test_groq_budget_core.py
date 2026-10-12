@@ -169,3 +169,35 @@ def test_stale_lock_from_a_dead_holder_is_taken_over(led: gb.Ledger) -> None:
 
 
 # ------------------------------------------------------------------------------------ CLI
+
+
+def test_lock_retries_on_windows_style_permission_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Windows raises PermissionError (EACCES) for a lock file another process is holding or deleting; the
+    concurrency test flaked on exactly that (2026-10-12). It must be retried like FileExistsError."""
+    real_open = os.open
+    calls = {"n": 0}
+
+    def flaky(path, flags, *a, **k):  # noqa: ANN001, ANN002, ANN003
+        if str(path).endswith("ledger.lock") and calls["n"] < 3:
+            calls["n"] += 1
+            raise PermissionError(13, "Permission denied")
+        return real_open(path, flags, *a, **k)
+
+    monkeypatch.setattr(os, "open", flaky)
+    led = gb.Ledger(tmp_path / "root")
+    led.record("benchmark", M120, 10, now=NOW)
+    assert calls["n"] == 3 and led.spent(M120, now=NOW) == 10
+
+
+def test_a_permanent_permission_problem_times_out_with_the_cause(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    real_open = os.open
+
+    def denied(path, flags, *a, **k):  # noqa: ANN001, ANN002, ANN003
+        if str(path).endswith("ledger.lock"):
+            raise PermissionError(13, "Permission denied")
+        return real_open(path, flags, *a, **k)
+
+    monkeypatch.setattr(os, "open", denied)
+    with pytest.raises(TimeoutError) as ei, gb._locked(tmp_path / "root", timeout_s=0.2):
+        pass
+    assert isinstance(ei.value.__cause__, PermissionError)

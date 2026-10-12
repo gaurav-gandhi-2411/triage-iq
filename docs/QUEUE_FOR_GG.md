@@ -8,25 +8,15 @@ Verified live (D63): `/health?deps=1` ok, HEAD /health 200, `/eval/summary` serv
 MANIFEST-hash provenance. **One production exposure found, not fixed (needs your pick, item A below):**
 the Groq 8,000 tokens/minute limit makes /triage take 50-135 s when the key's per-minute pool is used up.
 
-A/B were approved ("GO", 2026-10-12) and are built; merges are BLOCKED BY A GUARD HOOK (D64), so they are yours.
-Run each command alone, in this order (the gate said `eligible` for #170 on head de6f70c; CI green on #170/#171, #172 and
-UI #28 pending when this was written; check `gh pr checks N` first):
+Round 11 status (D65): core #170 is MERGED (f7b118c) but its deploy failed the smoke test on `rate_limited_tpd` (the shared
+120b daily pool is exhausted); production still serves 00045-zac. I re-run the deploy when the pool recovers and merge #171, #172
+and UI #28 in that order, each after the previous deploy is confirmed. Nothing for you to merge.
 
-1. `gh pr merge 170 --repo gaurav-gandhi-2411/triage-iq --merge`   (A1: 15 s LLM time budget; hook timed out, D64 item 2)
-2. `gh pr merge 171 --repo gaurav-gandhi-2411/triage-iq --merge`   (non-zero `emb_*` count in the request log)
-3. `gh pr merge 172 --repo gaurav-gandhi-2411/triage-iq --merge`   (B core: served vscode coverage 82.7%, named splits, tail share)
-4. `gh pr merge 28 --repo gaurav-gandhi-2411/triage-iq-ui --merge` (B UI: empty header, ADR-0064 wording; Vercel builds it)
-
-Each core merge deploys (smoke test, ~6K Groq tokens). After 1, I open A3 (cached-token capture, branch
-`feat/groq-cached-tokens`, already pushed) as its own PR. After the deploys I do the live page check, the contention test and
-the README latency numbers.
-
-A2 (gg-portfolio chatbot to gpt-oss-20b) is NOT done: no network to read Groq's current docs for per-model limits
-(`console.groq.com/docs/rate-limits` unreachable), so the "limits are per model" premise is unverified, and the pricing row and
-the eval re-record (cassettes are gpt-oss-120b recordings; run-eval flags that as MODEL DRIFT) depend on it. One decision for
-you: the content pipeline's verifier stage uses `qwen/qwen3.8-27b` (a different family on purpose, for cross-family
-verification). It is not on the 120b pool, so I plan to leave it and move only curator/framer, unless you want the verifier on
-gpt-oss-20b too.
+A2 is built as gg-portfolio draft PR #308 (chatbot, canary, curator, framer on gpt-oss-20b; verifier stays on qwen). **Needs you:**
+re-record the chatbot cassettes on 20b (the key is in your portfolio env file; the secret-file guard blocked me from loading it):
+run `node --env-file=<your portfolio env file> evals/chatbot/run-eval.mjs --live --force` from the PR #308 branch, commit the new
+cassettes plus the report, and compare with the 120b baseline in the PR body (recall@5 95.0%, groundedness 100%, refusal
+precision 100%, false-refusal 0%). Until then 20b answer quality is UNMEASURED; do not merge #308 before that.
 
 ## Dashboard / account actions (only you can do these)
 

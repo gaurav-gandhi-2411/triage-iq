@@ -67,12 +67,27 @@ def _write(path: Path, entries: list[dict]) -> None:
     path.write_text(json.dumps({"entries": entries}, indent=1) + "\n", encoding="utf-8")
 
 
-def record_usage(tokens: int, source: str, now: datetime | None = None, path: Path | None = None) -> None:
-    """Append one call's total tokens to the shared ledger (entries older than 48 h are dropped)."""
+def record_usage(
+    tokens: int,
+    source: str,
+    now: datetime | None = None,
+    path: Path | None = None,
+    cached_tokens: int | None = None,
+) -> None:
+    """Append one call's total tokens to the shared ledger (entries older than 48 h are dropped).
+
+    `cached_tokens` (prompt tokens Groq served from its prompt cache, when reported) is stored
+    beside `tokens` for the cached-token study. It does NOT change what the gate sums: whether
+    Groq's TPD counts cached tokens is exactly what the study has to establish at the next TPD
+    429 (compare Groq's 'Used' with the ledger's total and its non-cached total).
+    """
     p = path or ledger_path()
     t = now or _now()
     keep = [e for e in _read(p) if datetime.fromisoformat(e["ts"]) > t - 2 * WINDOW]
-    keep.append({"ts": t.isoformat(), "tokens": int(tokens), "source": source})
+    entry: dict = {"ts": t.isoformat(), "tokens": int(tokens), "source": source}
+    if cached_tokens is not None:
+        entry["cached_tokens"] = int(cached_tokens)
+    keep.append(entry)
     _write(p, keep)
 
 

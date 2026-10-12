@@ -77,15 +77,20 @@ def _locked(root: Path, timeout_s: float = 15.0, stale_s: float = 30.0) -> Itera
             os.write(fd, str(os.getpid()).encode())
             os.close(fd)
             break
-        except FileExistsError:
+        except (FileExistsError, PermissionError) as exc:
+            # Windows reports a lock file that another process holds open or is deleting at this very
+            # moment as PermissionError (EACCES), not FileExistsError; a genuine permission problem
+            # stays PermissionError until the deadline and is then raised as the timeout's cause.
             try:
                 if time.time() - lock.stat().st_mtime > stale_s:  # holder died; take it over
                     lock.unlink()
                     continue
             except FileNotFoundError:
                 continue
+            except PermissionError:
+                pass  # still being deleted or held: retry below
             if time.monotonic() > deadline:
-                raise TimeoutError(f"groq_budget: could not lock {lock} within {timeout_s}s") from None
+                raise TimeoutError(f"groq_budget: could not lock {lock} within {timeout_s}s") from exc
             time.sleep(0.05)
     try:
         yield

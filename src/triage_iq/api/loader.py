@@ -160,6 +160,10 @@ class ModelStore:
         effective_max_tokens = (
             max_tokens if max_tokens is not None else int(os.environ.get("TRIAGE_MAX_TOKENS", "2048"))
         )
+        # Serving path only: bound the LLM stage so a Groq rate limit degrades to the
+        # signals-only plan instead of stalling the request (default 15 s, ~5x the 2.8-3.1 s
+        # unthrottled median). Scripts/recorder construct TriageAssistant directly: unbounded.
+        llm_time_budget_s = float(os.environ.get("TRIAGE_LLM_TIME_BUDGET_S", "15"))
 
         # Loaded first: the served interval is the conformal one and is fixed before synthesis.
         with _timed("conformal_adjustments"):
@@ -188,6 +192,7 @@ class ModelStore:
                     cache=cache,
                     max_tokens=effective_max_tokens,
                     conformal_adjustment=conformal.get(repo),
+                    llm_time_budget_s=llm_time_budget_s,
                 )
                 bundles[repo] = RepoBundle(clf, det, pred, train_df, asst)
                 logger.info("Loaded %s — OK", repo)

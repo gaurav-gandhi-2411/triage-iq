@@ -801,3 +801,32 @@ intent in another form (e.g. a script file); report the exact command and hook o
    Quota pass warns and opens a `smoke-pending-quota` issue; `post-deploy-smoke.yml` re-verifies every 30 min and closes it on a real pass
    or opens a `post-deploy-smoke-alert` issue. 13 tests, one per branch.
 8. **A2 cassette re-record handed to the owner (owner decision 3):** exact PowerShell commands in `QUEUE_FOR_GG.md`; #308 stays held.
+
+**D66. Round 11 delegated to CC (2026-10-12): release finished, shared ledger, review-iq gate, Vercel. VERIFIED unless marked BELIEVED.**
+
+1. **Release (owner decision 4 order kept):** #170 deployed as 00049-hub (real LLM answer; #170 is an ancestor of the deployed commit; no
+   budget env var is set so the loader default of 15 s applies), #171 as 00051-duw (real answer), #172 as 00053-yus (QUOTA PASS, the
+   #175 branch worked live and opened issue #176), #174 (A3) as 00055-boy (real answer). `emb_*` VERIFIED in production: a k8s request on
+   00055-boy logged `resolution_emb_nonzero` 64 of `resolution_emb_columns` 64; vscode logged none. Cached tokens: the field is live
+   (`groq_tokens_cached`), but the one vscode call with a 4,729-token prompt reported `None` (Groq sent no `prompt_tokens_details`), so
+   the hit rate is not yet measured. UI #28 merged, but Vercel refused the build ("Deployment rate limited, retry in 24 hours").
+2. **Pool consumer (owner, Groq console):** key `GROQ_API_KEY_BENCHMARK` (review-iq benchmark, shared Personal account) made about 2,100
+   calls in 24 h; on Oct 11 gpt-oss-120b served about 340 requests / 300K tokens and gpt-oss-20b about 400 / 230K; TriageIQ a few dozen,
+   gg-portfolio 3. Located read-only by NAME: `benchmark/vernacular_v2/benchmark_groq_key.py` loads it; the matching workload is the
+   2026-10-11/12 intent-engine comparison (`engine/intent/llm_moat.py`, `engine/experiments/llm_baseline.py`,
+   `eval/experiments/no_routing_stage1.py`, `eval/run_injection_twin_control.py`), paced 25-35 s per call, with per-model 100K rolling-24h
+   caps added on 2026-10-12 only. gg-portfolio #308 closed on this evidence. The "dedicated Groq org" comment in `llm_moat.py` was false.
+3. **Shared ledger** `tools/groq_budget` merged in three parts after the 400-line gate rejected the single PR: #178 core (284 lines),
+   #179 recording flag + CLI + README (246), #180 recorder adapter (178); #177 closed as superseded. review-iq PR #510 routes every
+   benchmark/eval Groq call through it with one `httpx` patch (the `groq` SDK, `GroqProvider` and the raw `httpx.post` calls all use
+   httpx): wait before, record after, fold 429s, fail closed when the module is missing; no model, prompt or experimental parameter
+   changed; 13 hook tests plus 180 existing tests around the touched scripts pass.
+4. **Vercel.** VERIFIED from the Vercel docs (https://vercel.com/docs/limits): Hobby allows 100 deployments created per day, 100 per hour and
+   60 per five minutes, keyed per account. All three projects (triage-iq, gaurav-gandhi, samidha-reviews-web) cancel builds with an Ignored
+   Build Step except that triage-iq had none configured; I set one on the project through the API (build `main` and `preview/*` only,
+   otherwise exit 0). gg-portfolio and review-iq already carry `ignoreCommand` in their `vercel.json`. The Vercel API returned only the
+   latest 20 deployments (about 6 h: 19 samidha-reviews-web, all canceled by its Ignored Build Step, plus 1 triage-iq preview), so the
+   24 h count per project could not be read. BELIEVED: skipped deployments are still created and count toward the 100/day account cap, and
+   review-iq branch/PR churn is what trips it. Not verified. Optional stronger fix queued (`git.deploymentEnabled` in review-iq `vercel.json`).
+5. **Hook rule applied again:** the rewrite of `eval/tpd_budget_gate.py` and this entry were blocked by the rule-55a tokenizer (form) and
+   redone with the Write tool. No content or policy block this round.

@@ -868,6 +868,9 @@ class TriageAssistant:
             "resolution_point_source": signals["resolution_point_source"],
             "resolution_interval_basis": signals["resolution_interval_basis"],
             "resolution_point_clamped": signals.get("resolution_point_clamped", False),
+            # Request-log field (INFO access log): non-zero emb_* count, None if not applicable.
+            "resolution_emb_nonzero": signals.get("resolution_emb_nonzero"),
+            "resolution_emb_columns": signals.get("resolution_emb_columns"),
             "resolution_interval_conformal_applied": signals.get(
                 "resolution_interval_conformal_applied", False
             ),
@@ -1079,6 +1082,10 @@ class TriageAssistant:
 
         # System 3: resolution prediction (float + bucket)
         t3 = time.perf_counter()
+        # Positive proof that emb_* were computed (not zero-filled) for repos that use them:
+        # None = repo does not use embeddings or the predictor did not run.
+        emb_nonzero: int | None = None
+        emb_columns: int | None = None
         try:
             from triage_iq.models.resolution import engineer_features
 
@@ -1093,6 +1100,15 @@ class TriageAssistant:
                 if col not in feats.columns:
                     feats[col] = 0.0
             feats = feats[self.predictor.feature_names]
+            if emb_kwargs:
+                emb_cols = [c for c in feats.columns if c.startswith("emb_")]
+                emb_columns = len(emb_cols)
+                emb_nonzero = int(np.count_nonzero(feats[emb_cols].to_numpy()))
+                logger.info(
+                    "Resolution embeddings active: %d/%d emb_* features non-zero",
+                    emb_nonzero, emb_columns,
+                    extra={"repo": self.repo, "emb_nonzero": emb_nonzero, "emb_columns": emb_columns},
+                )
 
             # Float output → drives LLM prompt (empirically better than bucket-only)
             pred_hrs = self.predictor.predict(feats)[0]
@@ -1153,6 +1169,8 @@ class TriageAssistant:
             "resolution_interval_basis": interval_basis,
             "resolution_point_clamped": point_clamped,
             "resolution_interval_conformal_applied": conformal_applied,
+            "resolution_emb_nonzero": emb_nonzero,
+            "resolution_emb_columns": emb_columns,
             "raw_lo_days": raw_lo_days,
             "raw_hi_days": raw_hi_days,
             "model_point_days": model_point_days,

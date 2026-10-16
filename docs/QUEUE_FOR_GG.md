@@ -4,7 +4,7 @@ Last updated 2026-10-16 (round 13, D72-D75). Everything else is in `docs/DECISIO
 
 ## Round 13 (2026-10-16): README #151 is READY for your review (not merged)
 
-README #151 (`docs/readme-verified-numbers`, head `3a42c15`) is marked ready. **Do not merge until you have read it; I did not and will not.** This round added the contention result and the `component_match` finding. Text of the sections added or
+README #151 (`docs/readme-verified-numbers`, head `084beb9` as of 2026-10-17; the contention text below was pasted at `3a42c15`, and the same branch since leads the component rows with exact-match accuracy, 44/64 = 68.8%, with the judge's `component_match` shown as lenient) is marked ready. `python scripts/readme_numbers_check.py` passes on it: 10 lines, 79 numbers, 61 re-read from their source files and matching, 18 declared constants with reasons (`docs/readme_numbers.json` on that branch); altering a number (82.7 to 83.7, 68.8 to 69.8) fails it. It checks only the lines named in the manifest (the LLM rows, the component rows, both CQR rows); about 1,600 numeric tokens elsewhere in the README, including the latency and concurrency paragraphs, are not covered by it. **Do not merge until you have read it; I did not and will not.** This round added the contention result and the `component_match` finding. Text of the sections added or
 changed this round, rendered as they appear in the README (the PR itself is the full document; the other sections were number-checked by me in earlier rounds, not reviewed by you):
 
 ### Latency, concurrency and caching (README, "Latency" section)

@@ -611,6 +611,11 @@ def _load_models(groq_key: str, cassette: CassettePlayer) -> dict[str, dict]:
 
     models: dict[str, dict] = {}
     for repo, slug in REPO_MAP.items():
+        if repo not in frozen_retrievers:
+            # A separate recording set (TRIAGEIQ_RECORDING_SET_DIR) may hold one repo only; the committed
+            # set has both, so its behaviour is unchanged.
+            logger.info("No %s issues in %s; its models are not loaded", repo, EVAL_SET.name)
+            continue
         models_dir = ROOT / "data" / "models"
         processed_dir = ROOT / "data" / "processed"
         try:

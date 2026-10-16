@@ -1,0 +1,18 @@
+{
+ "microsoft/vscode": {
+  "n_features": 79,
+  "n_embedding_features": 64,
+  "n_structured_features": 15,
+  "has_pca": true,
+  "pca_n_samples": 4923,
+  "artifact_sha256": "60b39981d8c95dcf0114700132a474e4c62706c1c64388b055f8819378bad870"
+ },
+ "kubernetes/kubernetes": {
+  "n_features": 79,
+  "n_embedding_features": 64,
+  "n_structured_features": 15,
+  "has_pca": true,
+  "pca_n_samples": 23928,
+  "artifact_sha256": "038052a90225ea5c5bf88682bd71fdf1336270a918e640fc4a1448986cb06406"
+ }
+}

@@ -64,8 +64,8 @@ POST /triage {repo, title, body}
 ┌───────────────────────────────────────┐
 │ System 3: Resolution Time Predictor   │  ~53ms p50 (prod, n=5)
 │ LightGBM quantile regression, 79 feats│
-│ k8s +0.71% vs naive (as served)       │
-│ vscode -54% (WORSE than naive)        │
+│ k8s learned model +2.06% (not served) │
+│ vscode -54% (WORSE; not served)       │
 └──────────────────┬────────────────────┘
                    │ p10/p50/p90 days estimate
                    ▼
@@ -520,7 +520,7 @@ Measured against the production URL, five sequential real `/triage` calls (3 vsc
 | LLM | Groq `openai/gpt-oss-120b` (replaced the retired `llama-3.1-8b-instant`, 2026-10-05; see note under System 4 above); eval judge: local `qwen3:8b` via Ollama |
 | Config | pydantic-settings |
 | Observability | Prometheus + prometheus-fastapi-instrumentator; GitHub Actions health monitor + external UptimeRobot (see [Monitoring](#monitoring)); no Cloud Monitoring alert policies |
-| CI | GitHub Actions: ruff, mypy, pip-audit, pytest (352 tests, 78.04% coverage, gate at 60%), dependabot |
+| CI | GitHub Actions: ruff, mypy, pip-audit, pytest (coverage gate at 60%; the current test count and coverage are in each CI run's log, not pinned here), dependabot |
 | CD | GitHub Actions + Workload Identity Federation + Artifact Registry + Cloud Run |
 
 ---

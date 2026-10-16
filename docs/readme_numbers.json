@@ -1,1035 +1,1153 @@
 {
- "version": 1,
- "lines": [
-  {
-   "id": "llm-vscode",
-   "line_contains": "**Current mean, regression detector (cassette",
-   "numbers": [
-    {
-     "text": "15",
-     "constant": "the judge total is out of 15 by rubric (triage_eval.py DIMENSION_MAX)"
-    },
-    {
-     "text": "12.73",
-     "fmt": "{:.2f}",
-     "source": {
-      "file": "reports/eval_baseline.json",
-      "path": [
-       "per_repo",
-       "microsoft/vscode",
-       "mean"
-      ]
-     }
-    },
-    {
-     "text": "15",
-     "constant": "the judge total is out of 15 by rubric (triage_eval.py DIMENSION_MAX)"
-    },
-    {
-     "text": "84.8",
-     "fmt": "{:.1f}",
-     "source": {
-      "expr": "v / 15 * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "microsoft/vscode",
-         "mean"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "11",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/eval_baseline.json",
-      "path": [
-       "per_repo",
-       "microsoft/vscode",
-       "n"
-      ]
-     }
-    }
-   ]
-  },
-  {
-   "id": "llm-k8s",
-   "line_contains": "| LLM synthesis | kubernetes | **Current mean",
-   "numbers": [
-    {
-     "text": "11.96",
-     "fmt": "{:.2f}",
-     "source": {
-      "file": "reports/eval_baseline.json",
-      "path": [
-       "per_repo",
-       "kubernetes/kubernetes",
-       "mean"
-      ]
-     }
-    },
-    {
-     "text": "15",
-     "constant": "the judge total is out of 15 by rubric (triage_eval.py DIMENSION_MAX)"
-    },
-    {
-     "text": "79.7",
-     "fmt": "{:.1f}",
-     "source": {
-      "expr": "v / 15 * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "kubernetes/kubernetes",
-         "mean"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "53",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/eval_baseline.json",
-      "path": [
-       "per_repo",
-       "kubernetes/kubernetes",
-       "n"
-      ]
-     }
-    }
-   ]
-  },
-  {
-   "id": "llm-overall",
-   "line_contains": "| LLM synthesis | both | Overall mean",
-   "numbers": [
-    {
-     "text": "12.09",
-     "fmt": "{:.2f}",
-     "source": {
-      "file": "reports/eval_baseline.json",
-      "path": [
-       "overall",
-       "mean"
-      ]
-     }
-    },
-    {
-     "text": "15",
-     "constant": "the judge total is out of 15 by rubric (triage_eval.py DIMENSION_MAX)"
-    },
-    {
-     "text": "80.6",
-     "fmt": "{:.1f}",
-     "source": {
-      "expr": "v / 15 * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "overall",
-         "mean"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "64",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/eval_baseline.json",
-      "path": [
-       "overall",
-       "n"
-      ]
-     }
-    }
-   ]
-  },
-  {
-   "id": "llm-floor-fail",
-   "line_contains": "Floor-fail rate (judge's worst band",
-   "numbers": [
-    {
-     "text": "4",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "wrong_plans_scored_0"
-      ]
-     }
-    },
-    {
-     "text": "20",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "wrong_plans"
-      ]
-     }
-    },
-    {
-     "text": "0.0",
-     "fmt": "{:.1f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "microsoft/vscode",
-         "floor_fail_rate"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "0",
-     "fmt": "{:.0f}",
-     "source": {
-      "expr": "r * n",
-      "vars": {
-       "r": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "microsoft/vscode",
-         "floor_fail_rate"
-        ]
-       },
-       "n": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "microsoft/vscode",
-         "n"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "11",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/eval_baseline.json",
-      "path": [
-       "per_repo",
-       "microsoft/vscode",
-       "n"
-      ]
-     }
-    },
-    {
-     "text": "7.55",
-     "fmt": "{:.2f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "kubernetes/kubernetes",
-         "floor_fail_rate"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "4",
-     "fmt": "{:.0f}",
-     "source": {
-      "expr": "r * n",
-      "vars": {
-       "r": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "kubernetes/kubernetes",
-         "floor_fail_rate"
-        ]
-       },
-       "n": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "kubernetes/kubernetes",
-         "n"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "53",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/eval_baseline.json",
-      "path": [
-       "per_repo",
-       "kubernetes/kubernetes",
-       "n"
-      ]
-     }
-    }
-   ]
-  },
-  {
-   "id": "llm-grounding",
-   "line_contains": "Grounding check, ungrounded plans",
-   "numbers": [
-    {
-     "text": "0.0",
-     "fmt": "{:.1f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "microsoft/vscode",
-         "fabrication_rate"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "0",
-     "fmt": "{:.0f}",
-     "source": {
-      "expr": "r * n",
-      "vars": {
-       "r": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "microsoft/vscode",
-         "fabrication_rate"
-        ]
-       },
-       "n": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "microsoft/vscode",
-         "n"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "11",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/eval_baseline.json",
-      "path": [
-       "per_repo",
-       "microsoft/vscode",
-       "n"
-      ]
-     }
-    },
-    {
-     "text": "0.0",
-     "fmt": "{:.1f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "kubernetes/kubernetes",
-         "fabrication_rate"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "0",
-     "fmt": "{:.0f}",
-     "source": {
-      "expr": "r * n",
-      "vars": {
-       "r": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "kubernetes/kubernetes",
-         "fabrication_rate"
-        ]
-       },
-       "n": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "kubernetes/kubernetes",
-         "n"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "53",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/eval_baseline.json",
-      "path": [
-       "per_repo",
-       "kubernetes/kubernetes",
-       "n"
-      ]
-     }
-    },
-    {
-     "text": "1",
-     "constant": "hard ratchet: at most 1 ungrounded plan of 53 (ADR-0061; eval/test_quality_regression.py)"
-    }
-   ]
-  },
-  {
-   "id": "llm-top1",
-   "line_contains": "Component picked by the LLM differs from classifier top-1",
-   "numbers": [
-    {
-     "text": "9.1",
-     "fmt": "{:.1f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "microsoft/vscode",
-         "component_departed_from_top1_rate"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "1",
-     "fmt": "{:.0f}",
-     "source": {
-      "expr": "r * n",
-      "vars": {
-       "r": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "microsoft/vscode",
-         "component_departed_from_top1_rate"
-        ]
-       },
-       "n": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "microsoft/vscode",
-         "n"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "11",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/eval_baseline.json",
-      "path": [
-       "per_repo",
-       "microsoft/vscode",
-       "n"
-      ]
-     }
-    },
-    {
-     "text": "7.5",
-     "fmt": "{:.1f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "kubernetes/kubernetes",
-         "component_departed_from_top1_rate"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "4",
-     "fmt": "{:.0f}",
-     "source": {
-      "expr": "r * n",
-      "vars": {
-       "r": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "kubernetes/kubernetes",
-         "component_departed_from_top1_rate"
-        ]
-       },
-       "n": {
-        "file": "reports/eval_baseline.json",
-        "path": [
-         "per_repo",
-         "kubernetes/kubernetes",
-         "n"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "53",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/eval_baseline.json",
-      "path": [
-       "per_repo",
-       "kubernetes/kubernetes",
-       "n"
-      ]
-     }
-    },
-    {
-     "text": "1",
-     "constant": "'top-1' is the classifier's first-ranked label, not a measurement"
-    }
-   ]
-  },
-  {
-   "id": "component-exact",
-   "line_contains": "Component accuracy: predicted component exactly equals gold",
-   "numbers": [
-    {
-     "text": "64",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "n_judge_entries"
-      ]
-     }
-    },
-    {
-     "text": "68.8",
-     "fmt": "{:.1f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/component_match_agreement_2026-10-16.json",
-        "path": [
-         "exact_match_accuracy"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "44",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "equal_pairs"
-      ]
-     }
-    },
-    {
-     "text": "64",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "n_judge_entries"
-      ]
-     }
-    },
-    {
-     "text": "95",
-     "constant": "confidence level of the Wilson interval"
-    },
-    {
-     "text": "56.6",
-     "fmt": "{:.1f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/component_match_agreement_2026-10-16.json",
-        "path": [
-         "exact_match_accuracy_wilson95",
-         0
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "78.8",
-     "fmt": "{:.1f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/component_match_agreement_2026-10-16.json",
-        "path": [
-         "exact_match_accuracy_wilson95",
-         1
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "20",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "wrong_plans"
-      ]
-     }
-    },
-    {
-     "text": "64",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "n_judge_entries"
-      ]
-     }
-    },
-    {
-     "text": "20",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "wrong_plans"
-      ]
-     }
-    }
-   ]
-  },
-  {
-   "id": "component-judge",
-   "line_contains": "Judge `component_match` on those 64",
-   "numbers": [
-    {
-     "text": "64",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "n_judge_entries"
-      ]
-     }
-    },
-    {
-     "text": "5",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "wrong_plans_scored_2"
-      ]
-     }
-    },
-    {
-     "text": "20",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "wrong_plans"
-      ]
-     }
-    },
-    {
-     "text": "2",
-     "constant": "judge rubric score level (0/1/2 for component_match)"
-    },
-    {
-     "text": "2",
-     "constant": "judge rubric score level (0/1/2 for component_match)"
-    },
-    {
-     "text": "49",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "judge_scored_2_total"
-      ]
-     }
-    },
-    {
-     "text": "64",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "n_judge_entries"
-      ]
-     }
-    },
-    {
-     "text": "44",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "equal_pairs"
-      ]
-     }
-    },
-    {
-     "text": "5",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "wrong_plans_scored_2"
-      ]
-     }
-    },
-    {
-     "text": "1",
-     "constant": "judge rubric score level (0/1/2 for component_match)"
-    },
-    {
-     "text": "11",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "wrong_plans_scored_1"
-      ]
-     }
-    },
-    {
-     "text": "0",
-     "constant": "judge rubric score level (0/1/2 for component_match)"
-    },
-    {
-     "text": "4",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "wrong_plans_scored_0"
-      ]
-     }
-    },
-    {
-     "text": "1.70",
-     "fmt": "{:.2f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "judge_mean_component_match"
-      ]
-     }
-    },
-    {
-     "text": "2",
-     "constant": "component_match maximum (rubric)"
-    },
-    {
-     "text": "1.38",
-     "fmt": "{:.2f}",
-     "source": {
-      "file": "reports/component_match_agreement_2026-10-16.json",
-      "path": [
-       "strict_equality_mean_component_match"
-      ]
-     }
-    }
-   ]
-  },
-  {
-   "id": "cqr-k8s",
-   "line_contains": "Conformal (CQR v2) interval coverage, held-out n=2,095",
-   "numbers": [
-    {
-     "text": "2",
-     "constant": "label 'CQR v2' (version of the conformal method, ADR-0063/0064)"
-    },
-    {
-     "text": "2,095",
-     "fmt": "{:,.0f}",
-     "source": {
-      "file": "reports/eval_summary.json",
-      "path": [
-       "resolution_served",
-       "repos",
-       "kubernetes/kubernetes",
-       "interval",
-       "n_heldout"
-      ]
-     }
-    },
-    {
-     "text": "80",
-     "fmt": "{:.0f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_summary.json",
-        "path": [
-         "resolution_served",
-         "repos",
-         "kubernetes/kubernetes",
-         "interval",
-         "nominal_coverage"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "10",
-     "constant": "quantile name Q10"
-    },
-    {
-     "text": "90",
-     "constant": "quantile name Q90"
-    },
-    {
-     "text": "79.71",
-     "fmt": "{:.2f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_summary.json",
-        "path": [
-         "resolution_served",
-         "repos",
-         "kubernetes/kubernetes",
-         "interval",
-         "coverage_cqr_v2_heldout"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "77.94",
-     "fmt": "{:.2f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_summary.json",
-        "path": [
-         "resolution_served",
-         "repos",
-         "kubernetes/kubernetes",
-         "interval",
-         "coverage_cqr_v2_heldout_ci95",
-         0
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "81.38",
-     "fmt": "{:.2f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_summary.json",
-        "path": [
-         "resolution_served",
-         "repos",
-         "kubernetes/kubernetes",
-         "interval",
-         "coverage_cqr_v2_heldout_ci95",
-         1
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "83.26",
-     "fmt": "{:.2f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_summary.json",
-        "path": [
-         "resolution_served",
-         "repos",
-         "kubernetes/kubernetes",
-         "interval",
-         "coverage_raw_full_test"
-        ]
-       }
-      }
-     }
-    }
-   ]
-  },
-  {
-   "id": "cqr-vscode",
-   "line_contains": "Conformal (CQR v2) interval coverage, held-out n=370",
-   "numbers": [
-    {
-     "text": "2",
-     "constant": "label 'CQR v2' (version of the conformal method, ADR-0063/0064)"
-    },
-    {
-     "text": "370",
-     "fmt": "{:.0f}",
-     "source": {
-      "file": "reports/eval_summary.json",
-      "path": [
-       "resolution_served",
-       "repos",
-       "microsoft/vscode",
-       "interval",
-       "n_heldout"
-      ]
-     }
-    },
-    {
-     "text": "40",
-     "constant": "chronological calibration share, percent (summary: 'chronological 40/60 split')"
-    },
-    {
-     "text": "60",
-     "constant": "chronological held-out share, percent"
-    },
-    {
-     "text": "80",
-     "fmt": "{:.0f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_summary.json",
-        "path": [
-         "resolution_served",
-         "repos",
-         "microsoft/vscode",
-         "interval",
-         "nominal_coverage"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "82.7",
-     "fmt": "{:.1f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_summary.json",
-        "path": [
-         "resolution_served",
-         "repos",
-         "microsoft/vscode",
-         "interval",
-         "coverage_heldout"
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "78.5",
-     "fmt": "{:.1f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_summary.json",
-        "path": [
-         "resolution_served",
-         "repos",
-         "microsoft/vscode",
-         "interval",
-         "coverage_heldout_ci95",
-         0
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "86.2",
-     "fmt": "{:.1f}",
-     "source": {
-      "expr": "v * 100",
-      "vars": {
-       "v": {
-        "file": "reports/eval_summary.json",
-        "path": [
-         "resolution_served",
-         "repos",
-         "microsoft/vscode",
-         "interval",
-         "coverage_heldout_ci95",
-         1
-        ]
-       }
-      }
-     }
-    },
-    {
-     "text": "93.7",
-     "fmt": "{:.1f}",
-     "source": {
-      "file": "reports/eval_summary.json",
-      "path": [
-       "resolution_served",
-       "repos",
-       "microsoft/vscode",
-       "interval",
-       "median_width_days"
-      ]
-     }
-    }
-   ]
-  }
- ]
+  "version": 2,
+  "strict": true,
+  "ignore_rules": [
+    {"name": "repo nickname", "pattern": "\\bk8s\\b", "reason": "'k8s' is the repository nickname for kubernetes, not a quantity"},
+    {"name": "version / method label", "pattern": "\\b[vV]\\d+(?:\\.\\d+)*\\b", "reason": "labels such as 'CQR v2' or 'v1 gold set' name a version, not a measurement"},
+    {"name": "percentile / quantile name", "pattern": "\\bQ\\d+\\b|\\b[pP]\\d{2}\\b|\\bp\\d+/p\\d+(?:/p\\d+)?\\b", "reason": "Q10, p50, p10/p50/p90 are names of quantiles"},
+    {"name": "rank name", "pattern": "\\b[tT]op-\\d\\b", "reason": "top-1 / top-3 name a rank cutoff"},
+    {"name": "metric name", "pattern": "\\b(?:R|Recall|Precision|P|F)@\\d+(?:\\s*/\\s*@?\\d+)*|\\bF1\\b", "reason": "R@5, Recall@1 / @10, F1 name a metric and its cutoff"},
+    {"name": "numbered label", "pattern": "\\b(?:Lever|System|[Pp]hase|[Ss]tep|Wave|Sec(?:tion)?|[Ss]tage|Part|Finding|Tier)s?\\s*\\d+[a-z]?(?:\\s*[/,&-]\\s*\\d+[a-z]?)*\\b", "reason": "'System 2', 'Lever 1/2', 'Phase 2b' are labels of components or steps"},
+    {"name": "parameter count in a model name", "pattern": "\\b\\d+(?:\\.\\d+)?[BM]\\b(?=[ -]|$)", "reason": "'8B', '70B' describe a model's size class, not a result"},
+    {"name": "ordered-list marker", "pattern": "^\\s*\\d+\\.(?=\\s)", "reason": "the number of a numbered list item"},
+    {"name": "calendar year or year-month", "pattern": "\\b20(?:1\\d|2[0-6])(?:[-–]\\d{2,4})?\\b", "reason": "calendar years 2010-2026 and year-month ranges such as 2015-10 to 2016-04 are dates"},
+    {"name": "day range tail of a date span", "pattern": "\\.\\.\\d{1,2}\\b", "reason": "the '..27' in '2026-04-21..27' is the end day of a date span"},
+    {"name": "interpreter version", "pattern": "\\bPython\\s+3\\.\\d+\\+?", "reason": "a supported interpreter version, not a result"},
+    {"name": "local port", "pattern": "localhost:\\d+", "reason": "a local TCP port in a URL"},
+    {"name": "CVE identifier", "pattern": "\\bCVE-\\d{4}-\\d+", "reason": "an advisory identifier"},
+    {"name": "bare URL", "pattern": "https?://\\S+", "reason": "URLs contain project numbers and ids that are not claims"},
+    {"name": "standard name: ISO 8601", "pattern": "ISO 8601", "reason": "the name of the date-time format standard"},
+    {"name": "algorithm name: SHA-256", "pattern": "SHA-?256", "reason": "the name of the hash algorithm"},
+    {"name": "HTTP status codes of the API error contract (errors line)", "pattern": "\\*\\*Errors:\\*\\* 422 unsupported repo or missing title\\. 429 rate limit\\. 500 internal error\\.", "reason": "status codes 422/429/500 are the API's documented error responses (validation, rate limiter, unhandled error), not measurements"},
+    {"name": "HTTP status code 503 (health)", "pattern": "\\(503 if either is unhealthy\\)", "reason": "an HTTP status code in the /health contract"},
+    {"name": "HTTP status code 503 (metrics)", "pattern": "Unset in prod → 503|→ 503 \\(fail-closed", "reason": "an HTTP status code in the /metrics contract"},
+    {"name": "HTTP status code 401", "pattern": "\\(401 otherwise\\)", "reason": "an HTTP status code in the /metrics contract"},
+    {"name": "HTTP status code 405", "pattern": "\\(the API answers 405\\)", "reason": "an HTTP status code observed from the HEAD request, as stated in the sentence"},
+    {"name": "quoted superseded figure", "pattern": "the old \"~20K issues\" figure", "reason": "quotes the superseded figure that the sentence corrects; it is not a claim of the README"},
+    {"name": "model identifier", "pattern": "\\b(?:gpt-oss-\\d+b|[Ll]lama-?\\d[\\w.-]*|[Qq]wen\\d[\\w:.-]*|[Bb][Gg][Ee]-base-en-v[\\d.]+|distilbert-[\\w-]+)", "reason": "model names such as gpt-oss-120b or llama-3.1-8b-instant carry digits that are part of the name"},
+    {"name": "call index label", "pattern": "\\b[Cc]alls?\\s*\\d+(?:\\s*[–-]\\s*\\d+)?\\b", "reason": "'call 1', 'calls 2–5' index the five replayed requests"},
+    {"name": "commit or artifact hash", "pattern": "\\b(?=[0-9a-f]*\\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,64}\\b", "reason": "git commit and artifact hashes (e.g. 30e6fd8, e9f8861f85fec3bb) contain digits but identify a build"},
+    {"name": "script file name", "pattern": "\\b\\d{2}[a-z]?_[A-Za-z0-9_]+\\.py\\b", "reason": "numbered script file names"}
+  ],
+  "ignore_lines": [
+    {"name": "shell command", "pattern": "^\\s*(?:curl|gsutil|git|docker|pip|uv|npm|cd|export|ruff|pytest|python(?:3)?|\\$)\\b", "reason": "command lines carry arguments and paths, not claims"},
+    {"name": "request example", "pattern": "^\\s*\"(?:repo|title|body|issue_number|created_at)\":", "reason": "the example request body is an input, not a result"}
+  ],
+  "lines": [
+    {"id": "llm-vscode", "line_contains": "**Current mean, regression detector (cassette", "numbers": [
+      {"text": "15", "constant": "the judge total is out of 15 by rubric (triage_eval.py DIMENSION_MAX)"},
+      {"text": "12.73", "fmt": "{:.2f}", "source": {"file": "reports/eval_baseline.json", "path": ["per_repo", "microsoft/vscode", "mean"]}},
+      {"text": "15", "constant": "the judge total is out of 15 by rubric (triage_eval.py DIMENSION_MAX)"},
+      {"text": "84.8", "fmt": "{:.1f}", "source": {"expr": "v / 15 * 100", "vars": {"v": {"file": "reports/eval_baseline.json", "path": ["per_repo", "microsoft/vscode", "mean"]}}}},
+      {"text": "11", "fmt": "{:.0f}", "source": {"file": "reports/eval_baseline.json", "path": ["per_repo", "microsoft/vscode", "n"]}}
+    ]},
+    {"id": "llm-k8s", "line_contains": "| LLM synthesis | kubernetes | **Current mean", "numbers": [
+      {"text": "11.96", "fmt": "{:.2f}", "source": {"file": "reports/eval_baseline.json", "path": ["per_repo", "kubernetes/kubernetes", "mean"]}},
+      {"text": "15", "constant": "the judge total is out of 15 by rubric (triage_eval.py DIMENSION_MAX)"},
+      {"text": "79.7", "fmt": "{:.1f}", "source": {"expr": "v / 15 * 100", "vars": {"v": {"file": "reports/eval_baseline.json", "path": ["per_repo", "kubernetes/kubernetes", "mean"]}}}},
+      {"text": "53", "fmt": "{:.0f}", "source": {"file": "reports/eval_baseline.json", "path": ["per_repo", "kubernetes/kubernetes", "n"]}}
+    ]},
+    {"id": "llm-overall", "line_contains": "| LLM synthesis | both | Overall mean", "numbers": [
+      {"text": "12.09", "fmt": "{:.2f}", "source": {"file": "reports/eval_baseline.json", "path": ["overall", "mean"]}},
+      {"text": "15", "constant": "the judge total is out of 15 by rubric (triage_eval.py DIMENSION_MAX)"},
+      {"text": "80.6", "fmt": "{:.1f}", "source": {"expr": "v / 15 * 100", "vars": {"v": {"file": "reports/eval_baseline.json", "path": ["overall", "mean"]}}}},
+      {"text": "64", "fmt": "{:.0f}", "source": {"file": "reports/eval_baseline.json", "path": ["overall", "n"]}}
+    ]},
+    {"id": "llm-floor-fail", "line_contains": "Floor-fail rate (judge's worst band", "numbers": [
+      {"text": "4", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["wrong_plans_scored_0"]}},
+      {"text": "20", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["wrong_plans"]}},
+      {"text": "0.0", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_baseline.json", "path": ["per_repo", "microsoft/vscode", "floor_fail_rate"]}}}},
+      {"text": "0", "fmt": "{:.0f}", "source": {"expr": "r * n", "vars": {"r": {"file": "reports/eval_baseline.json", "path": ["per_repo", "microsoft/vscode", "floor_fail_rate"]}, "n": {"file": "reports/eval_baseline.json", "path": ["per_repo", "microsoft/vscode", "n"]}}}},
+      {"text": "11", "fmt": "{:.0f}", "source": {"file": "reports/eval_baseline.json", "path": ["per_repo", "microsoft/vscode", "n"]}},
+      {"text": "7.55", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_baseline.json", "path": ["per_repo", "kubernetes/kubernetes", "floor_fail_rate"]}}}},
+      {"text": "4", "fmt": "{:.0f}", "source": {"expr": "r * n", "vars": {"r": {"file": "reports/eval_baseline.json", "path": ["per_repo", "kubernetes/kubernetes", "floor_fail_rate"]}, "n": {"file": "reports/eval_baseline.json", "path": ["per_repo", "kubernetes/kubernetes", "n"]}}}},
+      {"text": "53", "fmt": "{:.0f}", "source": {"file": "reports/eval_baseline.json", "path": ["per_repo", "kubernetes/kubernetes", "n"]}}
+    ]},
+    {"id": "llm-grounding", "line_contains": "Grounding check, ungrounded plans", "numbers": [
+      {"text": "0.0", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_baseline.json", "path": ["per_repo", "microsoft/vscode", "fabrication_rate"]}}}},
+      {"text": "0", "fmt": "{:.0f}", "source": {"expr": "r * n", "vars": {"r": {"file": "reports/eval_baseline.json", "path": ["per_repo", "microsoft/vscode", "fabrication_rate"]}, "n": {"file": "reports/eval_baseline.json", "path": ["per_repo", "microsoft/vscode", "n"]}}}},
+      {"text": "11", "fmt": "{:.0f}", "source": {"file": "reports/eval_baseline.json", "path": ["per_repo", "microsoft/vscode", "n"]}},
+      {"text": "0.0", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_baseline.json", "path": ["per_repo", "kubernetes/kubernetes", "fabrication_rate"]}}}},
+      {"text": "0", "fmt": "{:.0f}", "source": {"expr": "r * n", "vars": {"r": {"file": "reports/eval_baseline.json", "path": ["per_repo", "kubernetes/kubernetes", "fabrication_rate"]}, "n": {"file": "reports/eval_baseline.json", "path": ["per_repo", "kubernetes/kubernetes", "n"]}}}},
+      {"text": "53", "fmt": "{:.0f}", "source": {"file": "reports/eval_baseline.json", "path": ["per_repo", "kubernetes/kubernetes", "n"]}},
+      {"text": "1", "fmt": "{:.0f}", "source": {"file": "eval/test_invariants.py", "regex": "\"kubernetes/kubernetes\": \\{[^}]*?\"ungrounded_count\": (\\d+)"}}
+    ]},
+    {"id": "llm-top1", "line_contains": "Component picked by the LLM differs from classifier top-1", "numbers": [
+      {"text": "9.1", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_baseline.json", "path": ["per_repo", "microsoft/vscode", "component_departed_from_top1_rate"]}}}},
+      {"text": "1", "fmt": "{:.0f}", "source": {"expr": "r * n", "vars": {"r": {"file": "reports/eval_baseline.json", "path": ["per_repo", "microsoft/vscode", "component_departed_from_top1_rate"]}, "n": {"file": "reports/eval_baseline.json", "path": ["per_repo", "microsoft/vscode", "n"]}}}},
+      {"text": "11", "fmt": "{:.0f}", "source": {"file": "reports/eval_baseline.json", "path": ["per_repo", "microsoft/vscode", "n"]}},
+      {"text": "7.5", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_baseline.json", "path": ["per_repo", "kubernetes/kubernetes", "component_departed_from_top1_rate"]}}}},
+      {"text": "4", "fmt": "{:.0f}", "source": {"expr": "r * n", "vars": {"r": {"file": "reports/eval_baseline.json", "path": ["per_repo", "kubernetes/kubernetes", "component_departed_from_top1_rate"]}, "n": {"file": "reports/eval_baseline.json", "path": ["per_repo", "kubernetes/kubernetes", "n"]}}}},
+      {"text": "53", "fmt": "{:.0f}", "source": {"file": "reports/eval_baseline.json", "path": ["per_repo", "kubernetes/kubernetes", "n"]}}
+    ]},
+    {"id": "component-exact", "line_contains": "Component accuracy: predicted component exactly equals gold", "numbers": [
+      {"text": "64", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["n_judge_entries"]}},
+      {"text": "68.8", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["exact_match_accuracy"]}}}},
+      {"text": "44", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["equal_pairs"]}},
+      {"text": "64", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["n_judge_entries"]}},
+      {"text": "95", "constant": "confidence level of the Wilson interval"},
+      {"text": "56.6", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["exact_match_accuracy_wilson95", 0]}}}},
+      {"text": "78.8", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["exact_match_accuracy_wilson95", 1]}}}},
+      {"text": "20", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["wrong_plans"]}},
+      {"text": "64", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["n_judge_entries"]}},
+      {"text": "20", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["wrong_plans"]}}
+    ]},
+    {"id": "component-judge", "line_contains": "Judge `component_match` on those 64", "numbers": [
+      {"text": "64", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["n_judge_entries"]}},
+      {"text": "5", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["wrong_plans_scored_2"]}},
+      {"text": "20", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["wrong_plans"]}},
+      {"text": "2", "constant": "judge rubric score level (0/1/2 for component_match)"},
+      {"text": "2", "constant": "judge rubric score level (0/1/2 for component_match)"},
+      {"text": "49", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["judge_scored_2_total"]}},
+      {"text": "64", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["n_judge_entries"]}},
+      {"text": "44", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["equal_pairs"]}},
+      {"text": "5", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["wrong_plans_scored_2"]}},
+      {"text": "1", "constant": "judge rubric score level (0/1/2 for component_match)"},
+      {"text": "11", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["wrong_plans_scored_1"]}},
+      {"text": "0", "constant": "judge rubric score level (0/1/2 for component_match)"},
+      {"text": "4", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["wrong_plans_scored_0"]}},
+      {"text": "1.70", "fmt": "{:.2f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["judge_mean_component_match"]}},
+      {"text": "2", "constant": "component_match maximum (rubric)"},
+      {"text": "1.38", "fmt": "{:.2f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["strict_equality_mean_component_match"]}}
+    ]},
+    {"id": "cqr-k8s", "line_contains": "Conformal (CQR v2) interval coverage, held-out n=2,095", "numbers": [
+      {"text": "2,095", "fmt": "{:,.0f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "interval", "n_heldout"]}},
+      {"text": "80", "fmt": "{:.0f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "interval", "nominal_coverage"]}}}},
+      {"text": "79.71", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "interval", "coverage_cqr_v2_heldout"]}}}},
+      {"text": "77.94", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "interval", "coverage_cqr_v2_heldout_ci95", 0]}}}},
+      {"text": "81.38", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "interval", "coverage_cqr_v2_heldout_ci95", 1]}}}},
+      {"text": "83.26", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "interval", "coverage_raw_full_test"]}}}}
+    ]},
+    {"id": "cqr-vscode", "line_contains": "Conformal (CQR v2) interval coverage, held-out n=370", "numbers": [
+      {"text": "370", "fmt": "{:.0f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "interval", "n_heldout"]}},
+      {"text": "40", "constant": "chronological calibration share, percent (summary: 'chronological 40/60 split')"},
+      {"text": "60", "constant": "chronological held-out share, percent"},
+      {"text": "80", "fmt": "{:.0f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "interval", "nominal_coverage"]}}}},
+      {"text": "82.7", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "interval", "coverage_heldout"]}}}},
+      {"text": "78.5", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "interval", "coverage_heldout_ci95", 0]}}}},
+      {"text": "86.2", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "interval", "coverage_heldout_ci95", 1]}}}},
+      {"text": "93.7", "fmt": "{:.1f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "interval", "median_width_days"]}}
+    ]},
+    {"id": "cls-vs-top3", "line_contains": "Top-3 accuracy (primary, multi-label — see note)**, n=423", "numbers": [
+      {"text": "47", "fmt": "{:.0f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "new", "n_classes"]}},
+      {"text": "423", "fmt": "{:.0f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "test_rows"]}},
+      {"text": "85.82", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "new", "top3"]}}}},
+      {"text": "82.17", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "new", "top3_ci95", 0]}}}},
+      {"text": "88.82", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "new", "top3_ci95", 1]}}}}
+    ]},
+    {"id": "cls-vs-top1", "line_contains": "Top-1 accuracy (secondary) | 69.98%", "numbers": [
+      {"text": "69.98", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "new", "top1"]}}}},
+      {"text": "65.44", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "new", "top1_ci95", 0]}}}},
+      {"text": "74.15", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "new", "top1_ci95", 1]}}}}
+    ]},
+    {"id": "cls-k8-top3", "line_contains": "Top-3 accuracy (primary, multi-label — see note)**, n=671", "numbers": [
+      {"text": "671", "fmt": "{:.0f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "test_rows"]}},
+      {"text": "85.99", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "new", "top3"]}}}},
+      {"text": "83.16", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "new", "top3_ci95", 0]}}}},
+      {"text": "88.41", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "new", "top3_ci95", 1]}}}}
+    ]},
+    {"id": "cls-k8-top1", "line_contains": "Top-1 accuracy (secondary) | 54.84%", "numbers": [
+      {"text": "54.84", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "new", "top1"]}}}},
+      {"text": "51.06", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "new", "top1_ci95", 0]}}}},
+      {"text": "58.57", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "new", "top1_ci95", 1]}}}}
+    ]},
+    {"id": "cls-f1", "line_contains": "Macro F1 (top-1)", "numbers": [
+      {"text": "0.5165", "fmt": "{:.4f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "new", "macro_f1_top1"]}},
+      {"text": "0.4266", "fmt": "{:.4f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "new", "macro_f1_top1"]}}
+    ]},
+    {"id": "cls-prev", "line_contains": "Previous 28/35-class classifier on the SAME fresh test rows", "numbers": [
+      {"text": "28", "fmt": "{:.0f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "old", "n_classes"]}},
+      {"text": "35", "fmt": "{:.0f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "old", "n_classes"]}},
+      {"text": "68.09", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "old", "top3"]}}}},
+      {"text": "63.50", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "old", "top3_ci95", 0]}}}},
+      {"text": "72.35", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "old", "top3_ci95", 1]}}}},
+      {"text": "83.61", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "old", "top3"]}}}},
+      {"text": "80.62", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "old", "top3_ci95", 0]}}}},
+      {"text": "86.22", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "old", "top3_ci95", 1]}}}}
+    ]},
+    {"id": "cls-delta-vs", "line_contains": "Component classifier | vscode | Retrain vs previous, paired", "numbers": [
+      {"text": "17.73", "fmt": "{:.2f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "paired_top3", "new_minus_old_pp"]}},
+      {"text": "13.06", "fmt": "{:.2f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "paired_top3", "ci95_pp", 0]}},
+      {"text": "22.40", "fmt": "{:.2f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "paired_top3", "ci95_pp", 1]}},
+      {"text": "15.37", "fmt": "{:.2f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "paired_top1", "new_minus_old_pp"]}},
+      {"text": "10.35", "fmt": "{:.2f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "paired_top1", "ci95_pp", 0]}},
+      {"text": "20.38", "fmt": "{:.2f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "paired_top1", "ci95_pp", 1]}},
+      {"text": "17.97", "fmt": "{:.2f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "gold_labels_outside_old_classifier_classes_pct"]}}
+    ]},
+    {"id": "cls-delta-k8", "line_contains": "Component classifier | kubernetes | Retrain vs previous, paired", "numbers": [
+      {"text": "2.38", "fmt": "{:.2f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "paired_top3", "new_minus_old_pp"]}},
+      {"text": "0.56", "fmt": "{:.2f}", "source": {"expr": "v * -1", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "paired_top3", "ci95_pp", 0]}}}},
+      {"text": "5.33", "fmt": "{:.2f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "paired_top3", "ci95_pp", 1]}},
+      {"text": "2.68", "fmt": "{:.2f}", "source": {"expr": "v * -1", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "paired_top1", "new_minus_old_pp"]}}}},
+      {"text": "6.68", "fmt": "{:.2f}", "source": {"expr": "v * -1", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "paired_top1", "ci95_pp", 0]}}}},
+      {"text": "1.32", "fmt": "{:.2f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "paired_top1", "ci95_pp", 1]}},
+      {"text": "47", "fmt": "{:.0f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "new", "n_classes"]}},
+      {"text": "35", "fmt": "{:.0f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "old", "n_classes"]}}
+    ]},
+    {"id": "cls-latency", "line_contains": "Inference stage latency p50 (production, n=5", "numbers": [
+      {"text": "5", "source": {"file": "reports/latency_replay_2026-10-12.txt", "contains": "Instance 0010dd86 for all 5 calls"}},
+      {"text": "7.0", "fmt": "{:.1f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "median s1: ([\\d.]+) ms"}}
+    ]},
+    {"id": "ret-k8-clean", "line_contains": "Recall@5, related task, clean eval subset", "numbers": [
+      {"text": "66", "fmt": "{:.0f}", "source": {"file": "reports/track2_k8s_clean_eval.json", "path": ["n_valid"]}},
+      {"text": "39.39", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/track2_k8s_clean_eval.json", "path": ["clean_r5"]}}}},
+      {"text": "27.3", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/track2_k8s_clean_eval.json", "path": ["clean_r5_ci95", 0]}}}},
+      {"text": "51.5", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/track2_k8s_clean_eval.json", "path": ["clean_r5_ci95", 1]}}}}
+    ]},
+    {"id": "ret-k8-unf", "line_contains": "Recall@5, related task, unfiltered eval population", "numbers": [
+      {"text": "150", "fmt": "{:.0f}", "source": {"file": "reports/lever12_eval_results.json", "path": ["results", "k8s_related", "n_evaluated"]}},
+      {"text": "56", "fmt": "{:.0f}", "source": {"expr": "x / n * 100", "vars": {"x": {"file": "reports/track2_k8s_clean_eval.json", "path": ["n_excluded"]}, "n": {"file": "reports/track2_k8s_clean_eval.json", "path": ["n_total"]}}}},
+      {"text": "24.67", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/lever12_eval_results.json", "path": ["results", "k8s_related", "lever1_2_r5"]}}}},
+      {"text": "18.0", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/lever12_eval_results.json", "path": ["results", "k8s_related", "lever1_2_r5_ci95", 0]}}}},
+      {"text": "31.3", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/lever12_eval_results.json", "path": ["results", "k8s_related", "lever1_2_r5_ci95", 1]}}}}
+    ]},
+    {"id": "ret-k8-r1r10", "line_contains": "Recall@1 / @10 (related task, unfiltered", "numbers": [
+      {"text": "9.3", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/d1_clean_eval_baseline.json", "path": ["results", 0, "recall_at_1"]}}}},
+      {"text": "23.3", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/d1_clean_eval_baseline.json", "path": ["results", 0, "recall_at_10"]}}}}
+    ]},
+    {"id": "ret-vs-r5", "line_contains": "Recall@5, duplicate task (Lever1 only shipped", "numbers": [
+      {"text": "53.50", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/lever12_eval_results.json", "path": ["results", "vscode_duplicate", "lever1_r5"]}}}},
+      {"text": "46.5", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/lever12_eval_results.json", "path": ["results", "vscode_duplicate", "lever1_r5_ci95", 0]}}}},
+      {"text": "60.5", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/lever12_eval_results.json", "path": ["results", "vscode_duplicate", "lever1_r5_ci95", 1]}}}}
+    ]},
+    {"id": "ret-vs-r1r10", "line_contains": "Recall@1 / @10 (duplicate task, pre-Lever1", "numbers": [
+      {"text": "27.0", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/d1_clean_eval_baseline.json", "path": ["results", 1, "recall_at_1"]}}}},
+      {"text": "59.5", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/d1_clean_eval_baseline.json", "path": ["results", 1, "recall_at_10"]}}}}
+    ]},
+    {"id": "ret-vs-related", "line_contains": "Recall@5, related task (directional, n=19", "numbers": [
+      {"text": "19", "fmt": "{:.0f}", "source": {"file": "reports/lever12_eval_results.json", "path": ["results", "vscode_related", "n_evaluated"]}},
+      {"text": "57.89", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/lever12_eval_results.json", "path": ["results", "vscode_related", "lever1_r5"]}}}},
+      {"text": "36.8", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/lever12_eval_results.json", "path": ["results", "vscode_related", "lever1_r5_ci95", 0]}}}},
+      {"text": "78.9", "tol": 0.051, "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/lever12_eval_results.json", "path": ["results", "vscode_related", "lever1_r5_ci95", 1]}}}}
+    ]},
+    {"id": "ret-latency", "line_contains": "Stage latency p50 (production, n=5, 2026-10-11; dominated", "numbers": [
+      {"text": "5", "source": {"file": "reports/latency_replay_2026-10-12.txt", "contains": "Instance 0010dd86 for all 5 calls"}},
+      {"text": "1,622", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "median s1: [\\d.]+ ms \\| s2: ([\\d.]+) ms"}}
+    ]},
+    {"id": "ret-index", "line_contains": "Index size (BGE, `index.faiss`", "numbers": [
+      {"text": "13,315", "fmt": "{:,.0f}", "source": {"file": "reports/served_index_facts.json", "path": ["microsoft/vscode", "ntotal"]}},
+      {"text": "40.9", "fmt": "{:.1f}", "source": {"file": "reports/served_index_facts.json", "path": ["microsoft/vscode", "file_mb_decimal"]}}
+    ]},
+    {"id": "nt-unf", "line_contains": "the unfiltered number over the full eval population is lower", "numbers": [
+      {"text": "24.67", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/track2_k8s_clean_eval.json", "path": ["overall_unfiltered_r5"]}}}},
+      {"text": "56", "fmt": "{:.0f}", "source": {"expr": "x / n * 100", "vars": {"x": {"file": "reports/track2_k8s_clean_eval.json", "path": ["n_excluded"]}, "n": {"file": "reports/track2_k8s_clean_eval.json", "path": ["n_total"]}}}}
+    ]},
+    {"id": "nt-naive", "line_contains": "Naive (majority/prior) baseline | **Not reported", "numbers": [
+      {"text": "47", "fmt": "{:.0f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "new", "n_classes"]}}
+    ]},
+    {"id": "res-k8-served", "line_contains": "Served point estimate: the training-window median, 3.04 d", "numbers": [
+      {"text": "3.04", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "served_point_days"]}},
+      {"text": "2,992", "fmt": "{:,.0f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "n_test"]}},
+      {"text": "104.23", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "served", "mae_days"]}}
+    ]},
+    {"id": "res-k8-median", "line_contains": "Median absolute error: served median vs the learned model", "numbers": [
+      {"text": "3.52", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "served", "median_ae_days"]}},
+      {"text": "7.28", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "learned_model_not_served", "median_ae_days"]}}
+    ]},
+    {"id": "res-k8-learned", "line_contains": "Mean absolute error of the learned model (not served) vs naive", "numbers": [
+      {"text": "102.09", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "learned_model_not_served", "mae_days"]}},
+      {"text": "93.89", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "learned_model_not_served", "mae_ci95_days", 0]}},
+      {"text": "110.63", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "learned_model_not_served", "mae_ci95_days", 1]}},
+      {"text": "104.23", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "served", "mae_days"]}},
+      {"text": "2.06", "fmt": "{:.2f}", "source": {"file": "reports/served_k8s_metrics.json", "path": ["served_metrics", "mae_improve_pct_vs_naive"]}},
+      {"text": "1.84", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "learned_model_not_served", "mae_gain_ci95_days", 0]}},
+      {"text": "2.45", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "learned_model_not_served", "mae_gain_ci95_days", 1]}}
+    ]},
+    {"id": "res-k8-bucket", "line_contains": "Bucket classifier (served, learned)", "numbers": [
+      {"text": "32.95", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "bucket", "accuracy"]}}}},
+      {"text": "31.29", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "bucket", "accuracy_ci95", 0]}}}},
+      {"text": "34.66", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "bucket", "accuracy_ci95", 1]}}}},
+      {"text": "26.0", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "bucket", "naive_majority_accuracy"]}}}},
+      {"text": "6.95", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "bucket", "delta_pp"]}},
+      {"text": "5.55", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "bucket", "delta_ci95_pp", 0]}},
+      {"text": "8.36", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "bucket", "delta_ci95_pp", 1]}}
+    ]},
+    {"id": "res-k8-latency", "line_contains": "Stage latency p50 (feature build + 3 predictions", "numbers": [
+      {"text": "3", "constant": "three quantile models (p10/p50/p90) are run per request, by design (src/triage_iq/models/resolution.py)"},
+      {"text": "5", "source": {"file": "reports/latency_replay_2026-10-12.txt", "contains": "Instance 0010dd86 for all 5 calls"}},
+      {"text": "93.9", "fmt": "{:.1f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "Stage 3 \\(resolution\\) ([\\d.]+) ms median"}}
+    ]},
+    {"id": "res-vs-served", "line_contains": "Served point estimate: the training-window median, 3.84 d", "numbers": [
+      {"text": "3.84", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "served_point_days"]}},
+      {"text": "616", "fmt": "{:.0f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "n_test"]}},
+      {"text": "3.53", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "served", "mae_days"]}},
+      {"text": "3.79", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "served", "median_ae_days"]}}
+    ]},
+    {"id": "res-vs-learned", "line_contains": "Learned model (not served): mean / median absolute error", "numbers": [
+      {"text": "5.45", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "learned_model_not_served", "mae_days"]}},
+      {"text": "5.80", "fmt": "{:.2f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "learned_model_not_served", "median_ae_days"]}},
+      {"text": "1.91", "fmt": "{:.2f}", "source": {"expr": "v * -1", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "learned_model_not_served", "mae_gain_vs_naive_days"]}}}},
+      {"text": "2.09", "fmt": "{:.2f}", "source": {"expr": "v * -1", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "learned_model_not_served", "mae_gain_ci95_days", 0]}}}},
+      {"text": "1.72", "fmt": "{:.2f}", "source": {"expr": "v * -1", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "learned_model_not_served", "mae_gain_ci95_days", 1]}}}}
+    ]},
+    {"id": "res-vs-bucket", "line_contains": "naive majority prior (91.4% = naive", "numbers": [
+      {"text": "91.4", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "bucket", "accuracy"]}}}},
+      {"text": "0.0", "fmt": "{:.1f}", "source": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "bucket", "delta_pp"]}}
+    ]},
+    {"id": "lat-client", "line_contains": "| End-to-end client p50", "numbers": [
+      {"text": "5,977", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[baseline_pre137\\]\\ n=5[\\s\\S]*?client p50=([\\d.]+)"}},
+      {"text": "4,834", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?client p50=([\\d.]+)"}},
+      {"text": "6,976", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?p95\\(nearest-rank, n=5 => max\\)=([\\d.]+)"}},
+      {"text": "124,254", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "client p50=([\\d.]+)"}},
+      {"text": "135,207", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "call 3: HTTP 200 (\\d+) ms"}},
+      {"text": "5,360", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "\\n1\\s+\\S+\\s+\\d+\\s+([\\d.]+)"}}
+    ]},
+    {"id": "lat-server", "line_contains": "| Server total (median)", "numbers": [
+      {"text": "4,772", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[baseline_pre137\\]\\ n=5[\\s\\S]*?median server_total: ([\\d.]+)"}},
+      {"text": "4,232", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?median server_total: ([\\d.]+)"}},
+      {"text": "123,483", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "median server_total: ([\\d.]+)"}},
+      {"text": "4,597", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "\\n1\\s+\\S+\\s+\\d+\\s+[\\d.]+\\s+([\\d.]+)"}}
+    ]},
+    {"id": "lat-s1", "line_contains": "| Stage 1 classifier (median)", "numbers": [
+      {"text": "8.6", "fmt": "{:.1f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[baseline_pre137\\]\\ n=5[\\s\\S]*?median s1: ([\\d.]+)"}},
+      {"text": "6.2", "fmt": "{:.1f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?median s1: ([\\d.]+)"}},
+      {"text": "7.0", "fmt": "{:.1f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "median s1: ([\\d.]+)"}}
+    ]},
+    {"id": "lat-s2", "line_contains": "| Stage 2 retrieval, incl. CPU query embedding", "numbers": [
+      {"text": "1,008", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[baseline_pre137\\]\\ n=5[\\s\\S]*?median s2: ([\\d.]+)"}},
+      {"text": "1,108", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?median s2: ([\\d.]+)"}},
+      {"text": "1,622", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "median s1: [\\d.]+ ms \\| s2: ([\\d.]+)"}}
+    ]},
+    {"id": "lat-s3", "line_contains": "| Stage 3 resolution (median)", "numbers": [
+      {"text": "586", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[baseline_pre137\\]\\ n=5[\\s\\S]*?median s3: ([\\d.]+)"}},
+      {"text": "52.6", "fmt": "{:.1f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?median s3: ([\\d.]+)"}},
+      {"text": "93.9", "fmt": "{:.1f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "median s1: [\\d.]+ ms \\| s2: [\\d.]+ ms \\| s3: ([\\d.]+)"}}
+    ]},
+    {"id": "lat-s4", "line_contains": "| Stage 4 LLM synthesis, Groq", "numbers": [
+      {"text": "2,842", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[baseline_pre137\\]\\ n=5[\\s\\S]*?median s4: ([\\d.]+)"}},
+      {"text": "3,060", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?median s4: ([\\d.]+)"}},
+      {"text": "121,003", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "s3: [\\d.]+ ms \\| s4: ([\\d.]+) ms"}},
+      {"text": "121,003", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "s3: [\\d.]+ ms \\| s4: ([\\d.]+) ms"}},
+      {"text": "51,288", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "\\n2\\s+\\S+\\s+\\d+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+([\\d.]+)"}},
+      {"text": "132,778", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "\\n3\\s+\\S+\\s+\\d+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+([\\d.]+)"}},
+      {"text": "123,655", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "\\n5\\s+\\S+\\s+\\d+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+([\\d.]+)"}},
+      {"text": "2,944", "fmt": "{:,.0f}", "source": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "\\n1\\s+\\S+\\s+\\d+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+([\\d.]+)"}}
+    ]},
+    {"id": "hl-intro", "line_contains": "TriageIQ turns raw GitHub issues into structured triage decisions", "numbers": [
+      {"text": "5", "fmt": "{:.0f}", "source": {"expr": "v / 1000", "vars": {"v": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?client p50=([\\d.]+)"}}}},
+      {"text": "5", "source": {"file": "reports/latency_replay_2026-10-07.txt", "contains": "(n=5 sequential real"}},
+      {"text": "4.8", "fmt": "{:.1f}", "source": {"expr": "v / 1000", "vars": {"v": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?client p50=([\\d.]+)"}}}},
+      {"text": "4.9", "fmt": "{:.1f}", "source": {"expr": "v / 1000", "vars": {"v": {"file": "reports/latency_replay_2026-10-12_post_a1.txt", "regex": "call 1: HTTP 200 (\\d+) ms"}}}},
+      {"text": "5.3", "fmt": "{:.1f}", "source": {"expr": "v / 1000", "vars": {"v": {"file": "reports/latency_replay_2026-10-12_post_a1.txt", "regex": "call 2: HTTP 200 (\\d+) ms"}}}},
+      {"text": "15", "fmt": "{:.0f}", "source": {"file": "src/triage_iq/api/loader.py", "regex": "\"TRIAGE_LLM_TIME_BUDGET_S\", \"(\\d+)\""}},
+      {"text": "135", "fmt": "{:.0f}", "source": {"expr": "v / 1000", "vars": {"v": {"file": "reports/latency_replay_2026-10-12.txt", "regex": "call 3: HTTP 200 (\\d+) ms"}}}},
+      {"text": "11", "fmt": "{:.0f}", "source": {"expr": "(a + b) / 1000", "vars": {"a": {"file": "docs/architecture/adr/0056-eval-gold-taxonomy-broader-than-classifier-label-space.md", "regex": "\\+ test 423 = ([\\d,]+)\\)"}, "b": {"file": "docs/architecture/adr/0056-eval-gold-taxonomy-broader-than-classifier-label-space.md", "regex": "\\(5,368 \\+ 671 \\+ 671 = ([\\d,]+)\\)"}}}}
+    ]},
+    {"id": "hl-rate", "line_contains": "**Rate limits:**", "numbers": [
+      {"text": "10", "fmt": "{:.0f}", "source": {"file": "src/triage_iq/config.py", "regex": "rate_limit_per_hour: str = \"(\\d+)/hour\""}},
+      {"text": "30", "fmt": "{:.0f}", "source": {"file": "src/triage_iq/config.py", "regex": "rate_limit_per_day: str = \"(\\d+)/day\""}}
+    ]},
+    {"id": "hl-latency", "line_contains": "**Latency:** ~4.8s warm p50", "numbers": [
+      {"text": "4.8", "fmt": "{:.1f}", "source": {"expr": "v / 1000", "vars": {"v": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?client p50=([\\d.]+)"}}}},
+      {"text": "41", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "606 303 ([\\d.]+)"}},
+      {"text": "5", "source": {"file": "reports/latency_replay_2026-10-07.txt", "contains": "(n=5 sequential real"}}
+    ]},
+    {"id": "dg-s1", "line_contains": "System 1: TF-IDF Component Classifier", "numbers": [
+      {"text": "6", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?median s1: ([\\d.]+) ms"}},
+      {"text": "5", "source": {"file": "reports/latency_replay_2026-10-07.txt", "contains": "(n=5 sequential real"}}
+    ]},
+    {"id": "dg-cls", "line_contains": "One-vs-rest LogReg, 47 classes", "numbers": [
+      {"text": "47", "fmt": "{:.0f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "new", "n_classes"]}}
+    ]},
+    {"id": "dg-vs", "line_contains": "vscode top-3 85.8%", "numbers": [
+      {"text": "85.8", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "new", "top3"]}}}},
+      {"text": "70.0", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "new", "top1"]}}}}
+    ]},
+    {"id": "dg-k8", "line_contains": "k8s top-3 86.0%", "numbers": [
+      {"text": "86.0", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "new", "top3"]}}}},
+      {"text": "54.8", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "new", "top1"]}}}}
+    ]},
+    {"id": "dg-s2", "line_contains": "System 2: Similar Issue Retriever", "numbers": [
+      {"text": "1.1", "fmt": "{:.1f}", "source": {"expr": "v / 1000", "vars": {"v": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?median s2: ([\\d.]+) ms"}}}},
+      {"text": "5", "source": {"file": "reports/latency_replay_2026-10-07.txt", "contains": "(n=5 sequential real"}}
+    ]},
+    {"id": "dg-k8r5", "line_contains": "k8s related R@5 39.4%", "numbers": [
+      {"text": "39.4", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/track2_k8s_clean_eval.json", "path": ["clean_r5"]}}}}
+    ]},
+    {"id": "dg-s3", "line_contains": "System 3: Resolution Time Predictor", "numbers": [
+      {"text": "53", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?median s3: ([\\d.]+) ms"}},
+      {"text": "5", "source": {"file": "reports/latency_replay_2026-10-07.txt", "contains": "(n=5 sequential real"}}
+    ]},
+    {"id": "dg-feat", "line_contains": "LightGBM quantile regression, 79 feats", "numbers": [
+      {"text": "79", "fmt": "{:.0f}", "source": {"file": "reports/resolution_feature_counts.json", "path": ["kubernetes/kubernetes", "n_features"]}}
+    ]},
+    {"id": "dg-k8learn", "line_contains": "k8s learned model +2.06% (not served)", "numbers": [
+      {"text": "2.06", "fmt": "{:.2f}", "source": {"expr": "a / b * 100", "vars": {"a": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "learned_model_not_served", "mae_gain_vs_naive_days"]}, "b": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "served", "mae_days"]}}}}
+    ]},
+    {"id": "dg-vslearn", "line_contains": "vscode -54% (WORSE; not served)", "numbers": [
+      {"text": "54", "fmt": "{:.0f}", "source": {"expr": "0 - a / b * 100", "vars": {"a": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "learned_model_not_served", "mae_gain_vs_naive_days"]}, "b": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "microsoft/vscode", "served", "mae_days"]}}}}
+    ]},
+    {"id": "dg-s4", "line_contains": "System 4: LLM Triage Assistant", "numbers": [
+      {"text": "3.1", "fmt": "{:.1f}", "source": {"expr": "v / 1000", "vars": {"v": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?median s4: ([\\d.]+) ms"}}}},
+      {"text": "5", "source": {"file": "reports/latency_replay_2026-10-07.txt", "contains": "(n=5 sequential real"}}
+    ]},
+    {"id": "dt-res", "line_contains": "| Resolution predictor (LightGBM) | 4,923 training rows", "numbers": [
+      {"text": "4,923", "fmt": "{:,.0f}", "source": {"file": "reports/resolution_feature_counts.json", "path": ["microsoft/vscode", "pca_n_samples"]}},
+      {"text": "23,928", "fmt": "{:,.0f}", "source": {"file": "reports/resolution_feature_counts.json", "path": ["kubernetes/kubernetes", "pca_n_samples"]}}
+    ]},
+    {"id": "dt-idx", "line_contains": "| Similar-issue retrieval index (BGE-base-en-v1.5", "numbers": [
+      {"text": "13,315", "fmt": "{:,.0f}", "source": {"file": "reports/served_index_facts.json", "path": ["microsoft/vscode", "ntotal"]}},
+      {"text": "29,994", "fmt": "{:,.0f}", "source": {"file": "reports/served_index_facts.json", "path": ["kubernetes/kubernetes", "ntotal"]}}
+    ]},
+    {"id": "ci-gate", "line_contains": "| CI | GitHub Actions: ruff, mypy", "numbers": [
+      {"text": "60", "fmt": "{:.0f}", "source": {"file": "pyproject.toml", "regex": "--cov-fail-under=(\\d+)"}}
+    ]},
+    {"id": "cmd-47", "line_contains": "# 47-class model is 13_train_multilabel", "numbers": [
+      {"text": "47", "fmt": "{:.0f}", "source": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "new", "n_classes"]}}
+    ]},
+    {"id": "api-rate", "line_contains": "Rate-limited: 10/hour, 30/day per IP.", "numbers": [
+      {"text": "10", "fmt": "{:.0f}", "source": {"file": "src/triage_iq/config.py", "regex": "rate_limit_per_hour: str = \"(\\d+)/hour\""}},
+      {"text": "30", "fmt": "{:.0f}", "source": {"file": "src/triage_iq/config.py", "regex": "rate_limit_per_day: str = \"(\\d+)/day\""}}
+    ]},
+    {"id": "api-title", "line_contains": "| `title` | string | Yes |", "numbers": [
+      {"text": "1", "fmt": "{:.0f}", "source": {"file": "src/triage_iq/api/schemas.py", "regex": "title: str = Field\\(min_length=(\\d+)"}},
+      {"text": "512", "fmt": "{:.0f}", "source": {"file": "src/triage_iq/api/schemas.py", "regex": "title: str = Field\\(min_length=\\d+, max_length=(\\d+)"}}
+    ]},
+    {"id": "api-body", "line_contains": "| `body` | string | No | Up to 32,000 chars", "numbers": [
+      {"text": "32,000", "fmt": "{:,.0f}", "source": {"file": "src/triage_iq/api/schemas.py", "regex": "body: str = Field\\(default=\"\", max_length=([\\d_]+)"}},
+      {"text": "800", "fmt": "{:.0f}", "source": {"file": "src/triage_iq/prompts/triage_prompt.py", "regex": "max_body_chars: int = (\\d+)"}}
+    ]},
+    {"id": "cache-64", "line_contains": "Eval re-runs: a 64-issue re-run against a warm cache costs 0 Groq tokens", "numbers": [
+      {"text": "64", "fmt": "{:.0f}", "source": {"file": "reports/eval_baseline.json", "path": ["overall", "n"]}},
+      {"text": "0", "constant": "a replay from the cassette makes no provider call by construction (eval/cassette.py CassettePlayer), so its Groq token cost is zero"}
+    ]},
+    {"id": "cache-0", "line_contains": "and near-0 for judge calls.", "numbers": [
+      {"text": "0", "constant": "a replay from the cassette makes no provider call by construction (eval/cassette.py CassettePlayer), so its Groq token cost is zero"}
+    ]},
+    {"id": "dg-vsdup", "line_contains": "vscode dup R@5 53.5% (Lever1)", "numbers": [
+      {"text": "53.5", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/lever12_eval_results.json", "path": ["results", "vscode_duplicate", "lever1_r5"]}}}}
+    ]},
+    {"id": "L121", "line_contains": "<!-- RESOLUTION-ROWS: currently-SERVED state after #161 (202", "numbers": [
+      {"text": "8", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md", "regex": "he\\ same\\ source\\ `scripts/(-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "7", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0009-resolution-predictor-diagnosis.md", "regex": "ary`\\ reports\\ as\\ of\\ 2026\\-(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "res-dim", "line_contains": "Judge dimension `resolution_estimate_reasonableness` (/3)", "quoted_from": ["docs/architecture/adr/0064-train-median-point-estimate.md"], "numbers": [
+      {"text": "3", "fmt": "{:.0f}", "source": {"file": "src/triage_iq/evaluation/triage_eval.py", "regex": "\"resolution_estimate_reasonableness\": (\\d+)"}}
+    ]},
+    {"id": "L145", "line_contains": "95% Wilson CIs shown in brackets where computed on a held-ou", "numbers": [
+      {"text": "95", "source": {"file": "docs/architecture/adr/0025-resolution-bucket-trust-and-deployment-correction.md", "contains": "95% CI (2000 resamples"}},
+      {"text": "2000", "source": {"file": "docs/architecture/adr/0025-resolution-bucket-trust-and-deployment-correction.md", "contains": "95% CI (2000 resamples, seed=42,"}},
+      {"text": "42", "source": {"file": "docs/architecture/adr/0025-resolution-bucket-trust-and-deployment-correction.md", "contains": "95% CI (2000 resamples, seed=42, paired per-issue d"}}
+    ]},
+    {"id": "L147", "line_contains": "> **How to read the LLM rows.** The judge scores come from a", "numbers": [
+      {"text": "64", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "n` non-null | 11/11 | 53/53 | 64/64 |"}},
+      {"text": "64", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "n` non-null | 11/11 | 53/53 | 64/64 |"}},
+      {"text": "11", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "| n | 11 | 53 | 64 |"}},
+      {"text": "11", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "| n | 11 | 53 | 64 |"}},
+      {"text": "53", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "   | 2/53 | [1.0%, 12.8%] |"}},
+      {"text": "53", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "   | 2/53 | [1.0%, 12.8%] |"}},
+      {"text": "53", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "   | 2/53 | [1.0%, 12.8%] |"}},
+      {"text": "53", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "   | 2/53 | [1.0%, 12.8%] |"}},
+      {"text": "53", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "   | 2/53 | [1.0%, 12.8%] |"}},
+      {"text": "0.45", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "e-record jitter bands (vscode 0.45, k8s 0.22). Swappin"}},
+      {"text": "0.45", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "e-record jitter bands (vscode 0.45, k8s 0.22). Swappin"}},
+      {"text": "0.22", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "itter bands (vscode 0.45, k8s 0.22). Swapping the clas"}},
+      {"text": "1", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "   | 1/53 | [0.3%, 9.9%] |"}},
+      {"text": "1", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "   | 1/53 | [0.3%, 9.9%] |"}},
+      {"text": "0", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "2. **n=53 cannot distinguish 0 from 2 ungrounded.*"}},
+      {"text": "0", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "2. **n=53 cannot distinguish 0 from 2 ungrounded.*"}},
+      {"text": "0.3", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "   | 1/53 | [0.3%, 9.9%] |"}},
+      {"text": "9.9", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "   | 1/53 | [0.3%, 9.9%] |"}},
+      {"text": "0.0", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "   | 0/53 | [0.0%, 6.8%] |"}},
+      {"text": "6.8", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "   | 0/53 | [0.0%, 6.8%] |"}},
+      {"text": "10.26", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": " [-0.56, +5.33]), judge rows (10.26/8.64 retired -> 11."}},
+      {"text": "15", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "| Judge mean (/15) | 12.4545 (83.0%) "}},
+      {"text": "15", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "| Judge mean (/15) | 12.4545 (83.0%) "}},
+      {"text": "8.64", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "6, +5.33]), judge rows (10.26/8.64 retired -> 11.87/12"}},
+      {"text": "18.9", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "docs/architecture/adr/0037-classifier-confidence-framing-judge-regression.md", "regex": "or_fail_rate`\\ 0\\.0943\\ \\->\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}}}},
+      {"text": "63.6", "source": {"file": "docs/architecture/adr/0058-gate-proof-and-ratchet-sizing.md", "contains": "vscode gold labels (63.6%) and 7/53 k8s gold"}},
+      {"text": "0.156", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "s, same prompt_hash): pooled −0.156"}},
+      {"text": "95", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "(95% CI [−0.51, +0.20])"}},
+      {"text": "0.51", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "(95% CI [−0.51, +0.20]); vscode −0"}},
+      {"text": "0.20", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "(95% CI [−0.51, +0.20]); vscode −0.18 ([−"}},
+      {"text": "12.03", "fmt": "{:.2f}", "source": {"file": "docs/DECISION_LOG_2026-10.md", "regex": "entical\\),\\ k8s\\ 11\\.9811\\ \\(\\+0\\.113\\),\\ overall\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "12.09", "fmt": "{:.2f}", "source": {"file": "docs/DECISION_LOG_2026-10.md", "regex": "bb;\\ vscode\\ 12\\.7273,\\ k8s\\ 11\\.9623,\\ pooled\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "12.27", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": " (10.26/8.64 retired -> 11.87/12.27), fabrication"}},
+      {"text": "12.73", "fmt": "{:.2f}", "source": {"file": "docs/DECISION_LOG_2026-10.md", "regex": "\\ 12\\.0312\\);\\ after\\ vscode\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "11.98", "fmt": "{:.2f}", "source": {"file": "docs/DECISION_LOG_2026-10.md", "regex": "\\ baseline\\ APPROVED:\\ k8s\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "11.96", "fmt": "{:.2f}", "source": {"file": "docs/DECISION_LOG_2026-10.md", "regex": "ter\\ vscode\\ 12\\.7273,\\ k8s\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "1.67", "fmt": "{:.2f}", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "regex": "delta\\):\\ component_match\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "1.58", "source": {"file": "docs/architecture/adr/0004-classifier-calibration.md", "contains": "| component_match | 1.58 | 1.68 | +0.10 |"}},
+      {"text": "3.52", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "on rests on ground truth (MAE 3.52 d vs 7.28 d); the j"}},
+      {"text": "7.28", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "n ground truth (MAE 3.52 d vs 7.28 d); the judge dimen"}}
+    ]},
+    {"id": "L149", "line_contains": "> **What the grounding numbers count, and what they do not.*", "numbers": [
+      {"text": "20", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "ls the gold component; of the 20 unequal pairs it sc"}},
+      {"text": "20", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "ls the gold component; of the 20 unequal pairs it sc"}},
+      {"text": "64", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "f component_match == 2\": **59/64 = 92.2%**; every di"}},
+      {"text": "64", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "f component_match == 2\": **59/64 = 92.2%**; every di"}},
+      {"text": "5", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "0 for 4, 1 for 11 and **2 for 5**."}},
+      {"text": "5", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "0 for 4, 1 for 11 and **2 for 5**."}}
+    ]},
+    {"id": "comp-note", "line_contains": "Component accuracy: the deterministic number is 44/64", "numbers": [
+      {"text": "44", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["equal_pairs"]}},
+      {"text": "44", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["equal_pairs"]}},
+      {"text": "44", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["equal_pairs"]}},
+      {"text": "64", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["n_judge_entries"]}},
+      {"text": "64", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["n_judge_entries"]}},
+      {"text": "64", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["n_judge_entries"]}},
+      {"text": "68.8", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["exact_match_accuracy"]}}}},
+      {"text": "68.8", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["exact_match_accuracy"]}}}},
+      {"text": "95", "constant": "confidence level of the Wilson interval"},
+      {"text": "56.6", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["exact_match_accuracy_wilson95", 0]}}}},
+      {"text": "78.8", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["exact_match_accuracy_wilson95", 1]}}}},
+      {"text": "2", "constant": "judge rubric score level for component_match (0 wrong, 1 plausible, 2 correct)"},
+      {"text": "2", "constant": "judge rubric score level for component_match (0 wrong, 1 plausible, 2 correct)"},
+      {"text": "2", "constant": "judge rubric score level for component_match (0 wrong, 1 plausible, 2 correct)"},
+      {"text": "2", "constant": "judge rubric score level for component_match (0 wrong, 1 plausible, 2 correct)"},
+      {"text": "1", "constant": "judge rubric score level for component_match (0 wrong, 1 plausible, 2 correct)"},
+      {"text": "1", "constant": "judge rubric score level for component_match (0 wrong, 1 plausible, 2 correct)"},
+      {"text": "0", "constant": "judge rubric score level for component_match (0 wrong, 1 plausible, 2 correct)"},
+      {"text": "0", "constant": "judge rubric score level for component_match (0 wrong, 1 plausible, 2 correct)"},
+      {"text": "0", "constant": "judge rubric score level for component_match (0 wrong, 1 plausible, 2 correct)"},
+      {"text": "5", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["wrong_plans_scored_2"]}},
+      {"text": "20", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["wrong_plans"]}},
+      {"text": "20", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["wrong_plans"]}},
+      {"text": "15", "constant": "the judge total is out of 15 by rubric"},
+      {"text": "11", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["wrong_plans_scored_1"]}},
+      {"text": "4", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["wrong_plans_scored_0"]}},
+      {"text": "4", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["wrong_plans_scored_0"]}},
+      {"text": "59", "fmt": "{:.0f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["agree"]}},
+      {"text": "92.2", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["agreement_rate"]}}}},
+      {"text": "1.70", "fmt": "{:.2f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["judge_mean_component_match"]}},
+      {"text": "1.38", "fmt": "{:.2f}", "source": {"file": "reports/component_match_agreement_2026-10-16.json", "path": ["strict_equality_mean_component_match"]}}
+    ]},
+    {"id": "L153", "line_contains": "> **Resolution rows.** The point estimate is the training-wi", "numbers": [
+      {"text": "3.04", "fmt": "{:.2f}", "source": {"file": "docs/DECISION_LOG_2026-10.md", "regex": "ed\\ point\\ =\\ train\\ median\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "3.84", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": "ginal test set), train median 3.84 d vs test median 0."}},
+      {"text": "3.84", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": "ginal test set), train median 3.84 d vs test median 0."}},
+      {"text": "2", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "inally better on mean error (+2%), almost entirely "}},
+      {"text": "20", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": "ly from the longest-resolving 20% of issues.\" Measur"}},
+      {"text": "598", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "   Measured support: top 20% (598 issues, 113+ d) car"}},
+      {"text": "113", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "support: top 20% (598 issues, 113+ d) carry 95.9% of "}},
+      {"text": "95.9", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "0% (598 issues, 113+ d) carry 95.9% of the gain (CI [8"}},
+      {"text": "82.7", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": " guaranteed under this shift; 82.7% is a measurement o"}},
+      {"text": "7", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": "d-out rows come from the same 7 days (reconstructed"}},
+      {"text": "40", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "split by created_at (first 40 pct calibration, ev"}},
+      {"text": "60", "source": {"file": "docs/architecture/adr/0059-artifact-fingerprinting-and-provenance-gate.md", "contains": "6.2], n=370, chronological 40/60 split by created_at"}},
+      {"text": "0.049", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": " median 3.84 d vs test median 0.049 d. Coverage is marg"}},
+      {"text": "0.71", "source": {"file": "docs/architecture/adr/0062-k8s-resolution-embeddings-at-serving.md", "contains": "rs=0, no author) | 103.491 | +0.71% | +5.05pp [3.94, 6"}},
+      {"text": "54.2", "fmt": "{:.1f}", "source": {"file": "docs/DECISION_LOG_2026-10.md", "regex": "y:\\ 6\\.023\\ d,\\ bucket\\ \\-22\\.08pp\\);\\ Z\\ served\\ \\-(-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "74.6", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "sues\" wording is present, no \"74.6\", 0 console message"}},
+      {"text": "80.81", "source": {"file": "docs/architecture/adr/0062-k8s-resolution-embeddings-at-serving.md", "contains": "split-30 held-out coverage is 80.81% today (Z) and"}},
+      {"text": "76.2", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": " the stored Q), not the stale 76.2%."}}
+    ]},
+    {"id": "L158", "line_contains": "> **Retrieval (ADR-0040):** two independent bugs fixed — cor", "quoted_from": ["docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md", "docs/architecture/adr/0041-resolution-stale-split-recency-weighting.md", "docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md", "docs/architecture/adr/0044-fabrication-rate-hard-gate-bound.md", "docs/investigations/vscode-retrieval-lexical-and-hybrid-2026-08-10.md"], "numbers": [
+    ]},
+    {"id": "L159", "line_contains": "> *characters* instead of BGE's real 512-*token* limit (drop", "quoted_from": ["docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md", "docs/architecture/adr/0041-resolution-stale-split-recency-weighting.md", "docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md", "docs/architecture/adr/0044-fabrication-rate-hard-gate-bound.md", "docs/investigations/vscode-retrieval-lexical-and-hybrid-2026-08-10.md"], "numbers": [
+      {"text": "165", "source": {"file": "docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md", "contains": "soft/vscode | 43.2% | 47.9% | 165 |"}}
+    ]},
+    {"id": "L163", "line_contains": "> significant additive win for k8s (+6.67pp) but directional", "quoted_from": ["docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md", "docs/architecture/adr/0041-resolution-stale-split-recency-weighting.md", "docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md", "docs/architecture/adr/0044-fabrication-rate-hard-gate-bound.md", "docs/investigations/vscode-retrieval-lexical-and-hybrid-2026-08-10.md"], "numbers": [
+    ]},
+    {"id": "L165", "line_contains": "> simplicity. Result: **k8s R@5 18.0%→24.67%** [18.0, 31.3],", "quoted_from": ["docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md", "docs/architecture/adr/0041-resolution-stale-split-recency-weighting.md", "docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md", "docs/architecture/adr/0044-fabrication-rate-hard-gate-bound.md", "docs/investigations/vscode-retrieval-lexical-and-hybrid-2026-08-10.md"], "numbers": [
+      {"text": "18.0", "source": {"file": "docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md", "contains": "n=150) | True (k8s) | 24.67% [18.0, 31.3] | Yes — exac"}},
+      {"text": "18.0", "source": {"file": "docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md", "contains": "n=150) | True (k8s) | 24.67% [18.0, 31.3] | Yes — exac"}},
+      {"text": "24.67", "source": {"file": "docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md", "contains": "elated (n=150) | True (k8s) | 24.67% [18.0, 31.3] | Yes"}},
+      {"text": "31.3", "source": {"file": "docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md", "contains": " | True (k8s) | 24.67% [18.0, 31.3] | Yes — exact matc"}}
+    ]},
+    {"id": "L166", "line_contains": "> [46.5, 60.5]. Live-verified through the real, un-overridde", "quoted_from": ["docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md", "docs/architecture/adr/0041-resolution-stale-split-recency-weighting.md", "docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md", "docs/architecture/adr/0044-fabrication-rate-hard-gate-bound.md", "docs/investigations/vscode-retrieval-lexical-and-hybrid-2026-08-10.md"], "numbers": [
+    ]},
+    {"id": "L171", "line_contains": "> stays open. Hybrid BM25+dense fusion was re-tested against", "quoted_from": ["docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md", "docs/architecture/adr/0041-resolution-stale-split-recency-weighting.md", "docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md", "docs/architecture/adr/0044-fabrication-rate-hard-gate-bound.md", "docs/investigations/vscode-retrieval-lexical-and-hybrid-2026-08-10.md"], "numbers": [
+    ]},
+    {"id": "L174", "line_contains": "> **Retrieval, k8s eval-population audit (2026-08-11):** the", "quoted_from": ["docs/investigations/2026-08-11-k8s-retrieval-ceiling-and-vscode-resolution-close.md"], "numbers": [
+    ]},
+    {"id": "L175", "line_contains": "> R@5 over the full 150-pair eval population, but hand-categ", "numbers": [
+      {"text": "150", "source": {"file": "docs/architecture/adr/0046-measurement-audit-before-modeling-standing-prior.md", "contains": " R@5 misses found ~56% of the 150-pair eval populatio"}}
+    ]},
+    {"id": "L181", "line_contains": "> against retrieval outcomes**, applied blind to hit/miss ac", "quoted_from": ["docs/investigations/2026-08-11-k8s-retrieval-ceiling-and-vscode-resolution-close.md"], "numbers": [
+    ]},
+    {"id": "L182", "line_contains": "> reviewers, and only *then* joined to the already-computed ", "quoted_from": ["docs/investigations/2026-08-11-k8s-retrieval-ceiling-and-vscode-resolution-close.md"], "numbers": [
+    ]},
+    {"id": "L183", "line_contains": "> fair content-similarity test; **clean-subset R@5 = 39.39% ", "numbers": [
+      {"text": "39.39", "source": {"file": "docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md", "contains": "o retrieval outcome) scores **39.39% [27.3, 51.5]** — t"}},
+      {"text": "27.3", "source": {"file": "docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md", "contains": "val outcome) scores **39.39% [27.3, 51.5]** — the unfi"}},
+      {"text": "51.5", "source": {"file": "docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md", "contains": "tcome) scores **39.39% [27.3, 51.5]** — the unfiltered"}}
+    ]},
+    {"id": "L184", "line_contains": "> the unfiltered point estimate. Excluded pairs hit at 13.1%", "quoted_from": ["docs/investigations/2026-08-11-k8s-retrieval-ceiling-and-vscode-resolution-close.md"], "numbers": [
+    ]},
+    {"id": "L190", "line_contains": "> quality problem — the unmodified BGE embedder is materiall", "quoted_from": ["docs/investigations/2026-08-11-k8s-retrieval-ceiling-and-vscode-resolution-close.md"], "numbers": [
+    ]},
+    {"id": "L191", "line_contains": "> ~60% miss rate on the clean subset is still real headroom,", "quoted_from": ["docs/investigations/2026-08-11-k8s-retrieval-ceiling-and-vscode-resolution-close.md"], "numbers": [
+    ]},
+    {"id": "L194", "line_contains": "> (regenerated 2026-05-30) against a corpus that had grown 9", "quoted_from": ["docs/architecture/adr/0041-resolution-stale-split-recency-weighting.md"], "numbers": [
+    ]},
+    {"id": "L196", "line_contains": "> bucket-classifier gain over naive: **+3.27pp→+6.35pp** [+5", "numbers": [
+      {"text": "3.27", "source": {"file": "docs/architecture/adr/0041-resolution-stale-split-recency-weighting.md", "contains": "5.31,+7.92], excludes zero | +3.27pp CI[+1.80,+4.74] ("}},
+      {"text": "6.35", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "eddings) | 101.98 (+2.16%) | +6.35 [5.08,7.55] | 80.75"}},
+      {"text": "5.08", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "s) | 101.98 (+2.16%) | +6.35 [5.08,7.55] | 80.75% |"}},
+      {"text": "7.55", "source": {"file": "docs/architecture/adr/0041-resolution-stale-split-recency-weighting.md", "contains": "ive | — | **+6.35pp CI[+5.08,+7.55]**, excludes zero |"}},
+      {"text": "5.05", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "b_*=0)** | 103.49 (+0.71%) | +5.05 [3.94,6.22] | 80.48"}},
+      {"text": "3.94", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "** | 103.49 (+0.71%) | +5.05 [3.94,6.22] | 80.48% |"}},
+      {"text": "6.22", "source": {"file": "docs/architecture/adr/0062-k8s-resolution-embeddings-at-serving.md", "contains": "491 | +0.71% | +5.05pp [3.94, 6.22] | 80.48% |"}}
+    ]},
+    {"id": "L198", "line_contains": "> 2014-2016 in calendar time even with 100% more rows, so th", "numbers": [
+      {"text": "100", "fmt": "{:.0f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "docs/architecture/adr/0041-resolution-stale-split-recency-weighting.md", "regex": "'s\\ issue\\-number\\ range\\ \\(\\#(-?\\d[\\d,]*(?:\\.\\d+)?)"}}}}
+    ]},
+    {"id": "L200", "line_contains": "> worse (-24.73pp with recency weighting), so vscode's naive", "quoted_from": ["docs/architecture/adr/0041-resolution-stale-split-recency-weighting.md"], "numbers": [
+    ]},
+    {"id": "L202", "line_contains": "> **Synthesis (ADR-0043):** ADR-0039 accepted a k8s synthesi", "quoted_from": ["docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md", "docs/architecture/adr/0037-classifier-confidence-framing-judge-regression.md", "docs/architecture/adr/0039-keep-classifier-known-failing-synthesis-gate.md", "docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md", "docs/investigations/confidence-structural-representation-2026-08-10.md"], "numbers": [
+    ]},
+    {"id": "L207", "line_contains": "> both landed anyway **recovered 61% of the original gap**: ", "quoted_from": ["docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md", "docs/architecture/adr/0037-classifier-confidence-framing-judge-regression.md", "docs/architecture/adr/0039-keep-classifier-known-failing-synthesis-gate.md", "docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md", "docs/investigations/confidence-structural-representation-2026-08-10.md"], "numbers": [
+    ]},
+    {"id": "L208", "line_contains": "> 9.8868→**10.2642**/15. Per-dimension analysis confirms *wh", "quoted_from": ["docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md", "docs/architecture/adr/0037-classifier-confidence-framing-judge-regression.md", "docs/architecture/adr/0039-keep-classifier-known-failing-synthesis-gate.md", "docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md", "docs/investigations/confidence-structural-representation-2026-08-10.md"], "numbers": [
+    ]},
+    {"id": "L212", "line_contains": "> expect if both mechanisms are real and independent. **10.2", "quoted_from": ["docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md", "docs/architecture/adr/0037-classifier-confidence-framing-judge-regression.md", "docs/architecture/adr/0039-keep-classifier-known-failing-synthesis-gate.md", "docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md", "docs/investigations/confidence-structural-representation-2026-08-10.md"], "numbers": [
+    ]},
+    {"id": "L213", "line_contains": "> (`test_k8s_quality_regression`'s `xfail` marker removed) —", "quoted_from": ["docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md", "docs/architecture/adr/0037-classifier-confidence-framing-judge-regression.md", "docs/architecture/adr/0039-keep-classifier-known-failing-synthesis-gate.md", "docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md", "docs/investigations/confidence-structural-representation-2026-08-10.md"], "numbers": [
+    ]},
+    {"id": "L215", "line_contains": "> open item this gate tracks going forward. vscode: 8.7273→8", "numbers": [
+      {"text": "8.7273", "source": {"file": "docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md", "contains": "| vscode | 8.3636 | 8.7273 | 8.6364 | +0.2728 "}},
+      {"text": "8.6364", "source": {"file": "docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md", "contains": "| vscode | 8.3636 | 8.7273 | 8.6364 | +0.2728 | -0.0909"}}
+    ]},
+    {"id": "L225", "line_contains": "> then explicitly decided **not** to add per-repo slack (e.g", "numbers": [
+      {"text": "11", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0020-attribution-fidelity-measurement.md", "regex": "\\|\\ kubernetes/kubernetes\\ \\|\\ 10\\.5185\\ \\|\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L228", "line_contains": "> continuous judge-score gate. As of 2026-08-10: 0/53 k8s, 0", "numbers": [
+      {"text": "0", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "   at 0/11. The gate is cor"}},
+      {"text": "0", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "   at 0/11. The gate is cor"}},
+      {"text": "53", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "| n | 11 | 53 | 64 |"}},
+      {"text": "53", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "| n | 11 | 53 | 64 |"}},
+      {"text": "11", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "   at 0/11. The gate is correc"}},
+      {"text": "1", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "1. **Accept 1/53 as the k8s groun"}}
+    ]},
+    {"id": "L235", "line_contains": "> duplicate-comment channel k8s never had) is **9.3% [5.3, 1", "quoted_from": ["docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md"], "numbers": [
+      {"text": "14.0", "source": {"file": "docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md", "contains": "3% | **9.3%** | 12.0% | [5.3, 14.0] | 0.059 |"}},
+      {"text": "150", "source": {"file": "docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md", "contains": "| k8s_related | 150 | 3.3% | **9.3%** |"}}
+    ]},
+    {"id": "L236", "line_contains": "> hand-verified genuine by construction) — down from the pre", "quoted_from": ["docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md"], "numbers": [
+    ]},
+    {"id": "L239", "line_contains": "> lexically-inflated) pairs, and a ~2x larger candidate corp", "numbers": [
+      {"text": "2", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0049-d3-k8s-regression-mechanism-disentanglement.md", "regex": "\\ \\|\\ 253\\ pairs,\\ 100%\\ VALID\\ \\|\\ restricted\\ \\(470\\-issue\\)\\ \\|\\ 0\\.1161\\ \\|\\ \\-12\\.12pp\\ \\|\\ \\[\\-22\\.7,\\-(-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "30,000", "source": {"file": "docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md", "contains": " ~2x larger candidate corpus (30,000 vs. the old live"}}
+    ]},
+    {"id": "L240", "line_contains": "> 15,000) that mechanically lowers recall. **vscode reverses", "numbers": [
+      {"text": "15,000", "fmt": "{:,.0f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md", "regex": "Only\\ 16\\ of\\ the\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}}}}
+    ]},
+    {"id": "L242", "line_contains": "> vscode's largest, cleanest channel (85% precision, n=2,242", "quoted_from": ["docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md"], "numbers": [
+      {"text": "85", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md", "regex": "a\\ precision\\ gain\\ \\(79\\.3%→(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L243", "line_contains": "> duplicate-task R@5 of **43.5% [37.0, 50.5]** (n=200). vsco", "numbers": [
+      {"text": "43.5", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": "aseline: vscode_duplicate R@5 43.5% [37.0, 50.5] (n=20"}},
+      {"text": "37.0", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": ": vscode_duplicate R@5 43.5% [37.0, 50.5] (n=200, 1,73"}},
+      {"text": "50.5", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": "de_duplicate R@5 43.5% [37.0, 50.5] (n=200, 1,734 clea"}},
+      {"text": "200", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": "ate R@5 43.5% [37.0, 50.5] (n=200, 1,734 clean traini"}}
+    ]},
+    {"id": "L244", "line_contains": "> task (non-duplicate) stays underpowered (n=19, directional", "quoted_from": ["docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md"], "numbers": [
+    ]},
+    {"id": "L252", "line_contains": "> harness than of a uniquely hard task.\" The audit found (1)", "numbers": [
+      {"text": "1", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0013-model-artifact-drift-guard.md", "regex": "nd\\ found\\ an\\ ECE\\ of\\ 0\\.31/(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L254", "line_contains": "> `query_body`; (2) the D2 fine-tune trained/saved **mean po", "numbers": [
+      {"text": "2", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "regex": "sult\\ is\\ \\*\\*NO\\ SIGNAL\\*\\*\\ \\(\\+(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L255", "line_contains": "> **CLS-token pooling**; (3) training truncated at 128 token", "numbers": [
+      {"text": "3", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "**3. Training truncated"}},
+      {"text": "128", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "**3. Training truncated at 128 tokens, cutting 65."}},
+      {"text": "65.73", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "ncated at 128 tokens, cutting 65.73% of examples.** Mea"}}
+    ]},
+    {"id": "L256", "line_contains": "> (measured token-length p95=230, corrected to 256); (4) all", "quoted_from": ["docs/architecture/adr/0031-retrieval-quality-improvement.md", "docs/architecture/adr/0035-retrieval-harness-correction.md", "docs/DECISION_LOG_2026-10.md"], "numbers": [
+    ]},
+    {"id": "L257", "line_contains": "> against an unaudited, pre-D1 pair population (277/292 pair", "numbers": [
+      {"text": "277", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "elect_live_product_pairs()` — 277 (k8s) / 292 (vscode"}},
+      {"text": "292", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "roduct_pairs()` — 277 (k8s) / 292 (vscode)"}},
+      {"text": "72", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "y by live-index membership, **72% (k8s) / 20% (vscod"}},
+      {"text": "20", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "dex membership, **72% (k8s) / 20% (vscode) genuine**"}}
+    ]},
+    {"id": "L259", "line_contains": "> 9.3%→18.0% [12.0, 24.0], vscode R@5 43.5%→50.5% [43.0, 57.", "numbers": [
+      {"text": "9.3", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "| k8s_related R@5 | 9.3% [5.3, 14.0] | **18"}},
+      {"text": "18.0", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "ed R@5 | 9.3% [5.3, 14.0] | **18.0% [12.0, 24.0]** |"}},
+      {"text": "12.0", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "| 9.3% [5.3, 14.0] | **18.0% [12.0, 24.0]** |"}},
+      {"text": "24.0", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": " [5.3, 14.0] | **18.0% [12.0, 24.0]** |"}},
+      {"text": "43.5", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "| vscode_duplicate R@5 | 43.5% [37.0, 50.5] | **5"}},
+      {"text": "50.5", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "_duplicate R@5 | 43.5% [37.0, 50.5] | **50.5% [43.0, 5"}},
+      {"text": "43.0", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "43.5% [37.0, 50.5] | **50.5% [43.0, 57.5]** |"}},
+      {"text": "57.5", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "[37.0, 50.5] | **50.5% [43.0, 57.5]** |"}},
+      {"text": "7", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": " nearly doubles; vscode gains 7 points. D1's actual"}}
+    ]},
+    {"id": "L262", "line_contains": "> originally reported as marginally shipping (+3.25pp k8s, +", "numbers": [
+      {"text": "3.25", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "shipping* on both repos (k8s +3.25pp CI[0.35,6.5], vsc"}},
+      {"text": "4.11", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "+3.25pp CI[0.35,6.5], vscode +4.11pp"}}
+    ]},
+    {"id": "L263", "line_contains": "> zero), it's now flat on k8s and a **significant vscode reg", "numbers": [
+      {"text": "8.0", "fmt": "{:.1f}", "source": {"file": "docs/architecture/adr/0046-measurement-audit-before-modeling-standing-prior.md", "regex": "on,\\ but\\ confirmed\\ \\(2026\\-(-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "13.5", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "on | 42.5% | **−8.0pp** | **[−13.5, −3.0]** | **No (re"}},
+      {"text": "3.0", "fmt": "{:.1f}", "source": {"file": "docs/architecture/adr/0039-keep-classifier-known-failing-synthesis-gate.md", "regex": "ode\\ top\\-1\\ \\+7\\.49pp\\ /\\ top\\-(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L264", "line_contains": "> BM25-alone (newly measured) is the *weaker* system on both", "quoted_from": ["docs/architecture/adr/0031-retrieval-quality-improvement.md", "docs/architecture/adr/0035-retrieval-harness-correction.md", "docs/DECISION_LOG_2026-10.md"], "numbers": [
+    ]},
+    {"id": "L266", "line_contains": "> is **+2.0pp R@5 (50.5%→52.5%), CI [−4.5, +8.5]** — every m", "numbers": [
+      {"text": "2.0", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "| R@10 | 59.5% | 61.5% | +2.0pp | [−4.5, +8.0] |"}},
+      {"text": "50.5", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "| **R@5** | **50.5%** | **52.5%** | **"}},
+      {"text": "52.5", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "| **R@5** | **50.5%** | **52.5%** | **+2.0pp** | *"}},
+      {"text": "4.5", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": " **52.5%** | **+2.0pp** | **[−4.5, +8.5]** |"}},
+      {"text": "8.5", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": "5%** | **+2.0pp** | **[−4.5, +8.5]** |"}}
+    ]},
+    {"id": "L267", "line_contains": "> reversal from the withdrawn \"confirmed regression\"), but n", "quoted_from": ["docs/architecture/adr/0031-retrieval-quality-improvement.md", "docs/architecture/adr/0035-retrieval-harness-correction.md", "docs/DECISION_LOG_2026-10.md"], "numbers": [
+    ]},
+    {"id": "L268", "line_contains": "> half-width is ≈±6.5pp — **this is underpowered, not dispro", "quoted_from": ["docs/architecture/adr/0031-retrieval-quality-improvement.md", "docs/architecture/adr/0035-retrieval-harness-correction.md", "docs/DECISION_LOG_2026-10.md"], "numbers": [
+    ]},
+    {"id": "L270", "line_contains": "> flagged, not fixed: corpus/query truncation asymmetry (512", "numbers": [
+      {"text": "512", "source": {"file": "docs/architecture/adr/0035-retrieval-harness-correction.md", "contains": ")` (corpus) truncates body to 512 chars;"}}
+    ]},
+    {"id": "L271", "line_contains": "> query instruction prefix, BM25 tokenization uninspected. N", "quoted_from": ["docs/architecture/adr/0031-retrieval-quality-improvement.md", "docs/architecture/adr/0035-retrieval-harness-correction.md", "docs/DECISION_LOG_2026-10.md"], "numbers": [
+    ]},
+    {"id": "L277", "line_contains": "> D1's clean, disjoint vscode_duplicate data (1,734 training", "numbers": [
+      {"text": "1,734", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": "@5 43.5% [37.0, 50.5] (n=200, 1,734 clean training"}}
+    ]},
+    {"id": "L278", "line_contains": "> 0-overlap on every run) was fine-tuned locally (BGE-base, ", "numbers": [
+      {"text": "0", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "regex": "6,\\ seed=42,\\ temperature=(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L279", "line_contains": "> run: 5 epochs, lr=2e-5). Result: **R@5 38.5% vs. the 43.5%", "quoted_from": ["docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "docs/architecture/adr/0035-retrieval-harness-correction.md", "docs/DECISION_LOG_2026-10.md"], "numbers": [
+      {"text": "5", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": "| **R@5** | **43.5%** | **3"}},
+      {"text": "5", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": "| **R@5** | **43.5%** | **3"}},
+      {"text": "38.5", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": "| **R@5** | **43.5%** | **38.5%** | **−5.0pp** | *"}},
+      {"text": "43.5", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": "| **R@5** | **43.5%** | **38.5%** | **"}},
+      {"text": "5.0", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": " | **43.5%** | **38.5%** | **−5.0pp** | **[−11.0, +0."}},
+      {"text": "11.0", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": " **38.5%** | **−5.0pp** | **[−11.0, +0.5]** | No |"}}
+    ]},
+    {"id": "L280", "line_contains": "> +0.5])** — every metric moved backward. A diagnostic leg t", "quoted_from": ["docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "docs/architecture/adr/0035-retrieval-harness-correction.md", "docs/DECISION_LOG_2026-10.md"], "numbers": [
+    ]},
+    {"id": "L281", "line_contains": "> explanation (overfitting) directly: 2 epochs, lr=1e-5 — th", "numbers": [
+      {"text": "2", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": "explains the regression. 2 epochs, lr=1e-5 (th"}},
+      {"text": "1", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": " the regression. 2 epochs, lr=1e-5 (the textbook an"}},
+      {"text": "5", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": "e regression. 2 epochs, lr=1e-5 (the textbook anti-"}}
+    ]},
+    {"id": "L282", "line_contains": "> training at a 5.7× higher, far-less-memorized loss (0.255 ", "quoted_from": ["docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "docs/architecture/adr/0035-retrieval-harness-correction.md", "docs/DECISION_LOG_2026-10.md"], "numbers": [
+      {"text": "0.255", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": "arning rate). Loss: 0.742 → **0.255** — training ends 5"}}
+    ]},
+    {"id": "L283", "line_contains": "> cause, this should have recovered some of the gap. Instead", "quoted_from": ["docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "docs/architecture/adr/0035-retrieval-harness-correction.md", "docs/DECISION_LOG_2026-10.md"], "numbers": [
+    ]},
+    {"id": "L284", "line_contains": "> (−10.0pp, CI [−16.0, −4.5], excludes zero)** — reported at", "quoted_from": ["docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "docs/architecture/adr/0035-retrieval-harness-correction.md", "docs/DECISION_LOG_2026-10.md"], "numbers": [
+      {"text": "10.0", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": " | **43.5%** | **33.5%** | **−10.0pp** | **[−16.0, −4."}},
+      {"text": "16.0", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": "**33.5%** | **−10.0pp** | **[−16.0, −4.5]** | **Yes** "}}
+    ]},
+    {"id": "L286", "line_contains": "> runs trained with mean pooling against BGE's native CLS po", "numbers": [
+      {"text": "65.73", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": "ve CLS pooling, and truncated 65.73% of training exampl"}}
+    ]},
+    {"id": "L287", "line_contains": "> training examples at 128 tokens — the diagnostic leg never", "numbers": [
+      {"text": "128", "source": {"file": "docs/architecture/adr/0046-measurement-audit-before-modeling-standing-prior.md", "contains": "xamples silently truncated at 128 tokens. WITHDRAWN b"}}
+    ]},
+    {"id": "L295", "line_contains": "> related issues\"), against the actually-deployed live index", "numbers": [
+      {"text": "23.5", "source": {"file": "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "contains": "**k8s 23.5% CI[18.4,28.5]** (n"}},
+      {"text": "18.4", "source": {"file": "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "contains": "**k8s 23.5% CI[18.4,28.5]** (n=277), **"}},
+      {"text": "28.5", "source": {"file": "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "contains": "5%** | 30.3% | 36.5% | [18.4, 28.5] |"}},
+      {"text": "277", "source": {"file": "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "contains": "*k8s 23.5% CI[18.4,28.5]** (n=277), **vscode 22.4% CI"}}
+    ]},
+    {"id": "L297", "line_contains": "> 82.5%/90.4%, resolution's real k8s bucket gains, synthesis", "numbers": [
+      {"text": "82.5", "source": {"file": "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "contains": "(ADR-0028: classifier top-3 82.5%/90.4%, resolution'"}},
+      {"text": "90.4", "source": {"file": "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "contains": "-0028: classifier top-3 82.5%/90.4%, resolution's real"}}
+    ]},
+    {"id": "L298", "line_contains": "> hand-judged precision audit (ADR-0032) confirms this numbe", "quoted_from": ["docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "docs/architecture/adr/0031-retrieval-quality-improvement.md", "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+    ]},
+    {"id": "L299", "line_contains": "> of the underlying gold pairs are genuinely related, and pu", "numbers": [
+      {"text": "28", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "regex": "@5\\ is\\ UNMEASURABLE\\ \\(ADR\\-(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L302", "line_contains": "> clear the bar** (ADR-0031): hybrid BM25+dense fusion (CI c", "quoted_from": ["docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "docs/architecture/adr/0031-retrieval-quality-improvement.md", "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+    ]},
+    {"id": "L303", "line_contains": "> cross-encoder reranker (quality regresses on both repos, +", "numbers": [
+      {"text": "190", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": "ADR-0031, quality regresses + 190–330× latency), a st"}},
+      {"text": "330", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "contains": "0031, quality regresses + 190–330× latency), a strong"}}
+    ]},
+    {"id": "L305", "line_contains": "> indistinguishable from k8s, both ~23-27%\" framing was reti", "quoted_from": ["docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "docs/architecture/adr/0031-retrieval-quality-improvement.md", "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+      {"text": "27", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "regex": "produce\\ vscode's\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L306", "line_contains": "> (ADR-0032) found vscode's gold pairs were only 20% genuine", "quoted_from": ["docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "docs/architecture/adr/0031-retrieval-quality-improvement.md", "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+      {"text": "94.9", "source": {"file": "docs/architecture/adr/0033-clean-retrieval-data-trustworthy-eval.md", "contains": "on vscode (94.9% of its live-evalua"}}
+    ]},
+    {"id": "L316", "line_contains": "> top-1 materially understated the classifier's real-world u", "quoted_from": ["reports/model_eval_audit.json"], "numbers": [
+    ]},
+    {"id": "L318", "line_contains": "> 30.4% of the kubernetes test set and 8.0% of vscode's have", "numbers": [
+      {"text": "30.4", "source": {"file": "docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md", "contains": "sue and discards the rest — **30.4% of k8s test"}},
+      {"text": "8.0", "fmt": "{:.1f}", "source": {"file": "docs/architecture/adr/0002-cross-family-judge-model.md", "regex": "outputs\\ from\\ an\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L321", "line_contains": "> further to 59.4% (k8s) / 71.7% (vscode) top-1. Full method", "quoted_from": ["reports/model_eval_audit.json", "docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md"], "numbers": [
+    ]},
+    {"id": "L329", "line_contains": "> both repos** — 88.2% vs. TF-IDF's 90.4% (vscode) and 74.5%", "numbers": [
+      {"text": "88.2", "source": {"file": "reports/phase_b_deberta_summary.md", "contains": "88.2% vs 90.4%, −2.2pp; "}},
+      {"text": "90.4", "source": {"file": "reports/phase_b_deberta_summary.md", "contains": "88.2% vs 90.4%, −2.2pp; k8s 74.5%"}},
+      {"text": "74.5", "source": {"file": "reports/phase_b_deberta_summary.md", "contains": "88.2% vs 90.4%, −2.2pp; k8s 74.5% vs 82.5%, −8pp) th"}},
+      {"text": "82.5", "source": {"file": "reports/phase_b_deberta_summary.md", "contains": "s 90.4%, −2.2pp; k8s 74.5% vs 82.5%, −8pp) than DeBERT"}},
+      {"text": "8", "source": {"file": "reports/phase_b_deberta_summary.md", "contains": "88.2% vs 90.4%, −2.2pp; k8s 74.5% vs 82.5%, −8"}}
+    ]},
+    {"id": "L330", "line_contains": "> despite appearing to *win* on vscode's top-1 (75.4% vs. 69", "quoted_from": ["docs/architecture/adr/0035-retrieval-harness-correction.md", "reports/distilbert_results_top3_corrected.json", "docs/architecture/adr/0037-classifier-confidence-framing-judge-regression.md", "reports/03_classifier_comparison.md", "reports/phase_b_deberta_summary.md"], "numbers": [
+    ]},
+    {"id": "distil-ece", "line_contains": "latency were also materially worse (ECE 0.40", "numbers": [
+      {"text": "0.40", "fmt": "{:.2f}", "source": {"file": "reports/distilbert_results.json", "path": ["microsoft_vscode", "calibration", "ece"]}},
+      {"text": "0.14", "fmt": "{:.2f}", "source": {"file": "reports/model_eval_audit.json", "path": ["models", "component_classifier", "current_metric", "values", "microsoft_vscode", "ece"]}},
+      {"text": "97.7", "fmt": "{:.1f}", "source": {"file": "reports/distilbert_results.json", "path": ["microsoft_vscode", "latency_single_cpu", "p50_ms"]}},
+      {"text": "197.2", "fmt": "{:.1f}", "source": {"file": "reports/distilbert_results.json", "path": ["kubernetes_kubernetes", "latency_single_cpu", "p50_ms"]}}
+    ]},
+    {"id": "L334", "line_contains": "> TF-IDF's ~5ms) — TF-IDF+LR remains the shipped classifier,", "quoted_from": ["docs/architecture/adr/0035-retrieval-harness-correction.md", "reports/distilbert_results_top3_corrected.json"], "numbers": [
+    ]},
+    {"id": "L339", "line_contains": "> component label per issue, discarding the rest — 30.4% of ", "numbers": [
+      {"text": "30.4", "source": {"file": "docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md", "contains": "sue and discards the rest — **30.4% of k8s test"}},
+      {"text": "8.0", "fmt": "{:.1f}", "source": {"file": "docs/architecture/adr/0017-w5-eval-set-expansion.md", "regex": "\\*:\\ api=9/60,\\ test\\-infra=(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L342", "line_contains": "> 82.5%→87.1% (+4.55pp, CI [+0.35,+8.39], excludes zero)**, ", "numbers": [
+      {"text": "82.5", "source": {"file": "docs/architecture/adr/0057-classifier-retrain-shipped-honest-comparable-baseline.md", "contains": " `README.md:309` | \"k8s top-3 82.5%→87.1%\", \"vscode to"}},
+      {"text": "87.1", "source": {"file": "docs/architecture/adr/0057-classifier-retrain-shipped-honest-comparable-baseline.md", "contains": "ME.md:309` | \"k8s top-3 82.5%→87.1%\", \"vscode top-3 fl"}},
+      {"text": "4.55", "source": {"file": "docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md", "contains": "pp [+2.67,+12.83], k8s top-3 +4.55pp [+0.35,+8.39]). v"}},
+      {"text": "0.35", "source": {"file": "docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md", "contains": ",+12.83], k8s top-3 +4.55pp [+0.35,+8.39]). vscode's t"}},
+      {"text": "8.39", "source": {"file": "docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md", "contains": "3], k8s top-3 +4.55pp [+0.35,+8.39]). vscode's top-3 i"}},
+      {"text": "90.4", "source": {"file": "docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md", "contains": "anical, explainable reason**: 90.4% is near ceiling, a"}},
+      {"text": "89.8", "source": {"file": "docs/architecture/adr/0057-classifier-retrain-shipped-honest-comparable-baseline.md", "contains": "%\", \"vscode top-3 flat (90.4%→89.8%)\" (ADR-0036 shippe"}}
+    ]},
+    {"id": "L344", "line_contains": "> (k8s +9.09pp, vscode +7.49pp, both CIs excluding zero) — c", "numbers": [
+      {"text": "9.09", "source": {"file": "docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md", "contains": "across both repos (k8s top-1 +9.09pp [+3.85,+14.69], v"}},
+      {"text": "7.49", "source": {"file": "docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md", "contains": "+7.49pp [+2.67,+12.83], k"}}
+    ]},
+    {"id": "ece-cal", "line_contains": "(0.086→0.053 vscode", "numbers": [
+      {"text": "0.086", "fmt": "{:.3f}", "source": {"file": "reports/tfidf_multilabel_calibration_and_threshold_check.json", "path": ["microsoft_vscode", "ece_raw_test"]}},
+      {"text": "0.053", "fmt": "{:.3f}", "source": {"file": "reports/tfidf_multilabel_calibration_and_threshold_check.json", "path": ["microsoft_vscode", "ece_calibrated_test"]}},
+      {"text": "0.111", "fmt": "{:.3f}", "source": {"file": "reports/tfidf_multilabel_calibration_and_threshold_check.json", "path": ["kubernetes_kubernetes", "ece_raw_test"]}},
+      {"text": "0.090", "fmt": "{:.3f}", "source": {"file": "reports/tfidf_multilabel_calibration_and_threshold_check.json", "path": ["kubernetes_kubernetes", "ece_calibrated_test"]}}
+    ]},
+    {"id": "L353", "line_contains": "> per-class sigmoids vs. a competing 35-way softmax, e.g. 0.", "quoted_from": ["docs/architecture/adr/0021-selective-prediction-abstention.md", "docs/architecture/adr/0031-retrieval-quality-improvement.md", "docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md"], "numbers": [
+    ]},
+    {"id": "L358", "line_contains": "> **Retriever metric correction (2026-07-11).** The advertis", "quoted_from": ["docs/architecture/adr/0028-per-model-eval-audit.md", "docs/architecture/adr/0031-retrieval-quality-improvement.md", "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+    ]},
+    {"id": "L359", "line_contains": "> was measured against `data/gold_related.parquet` (v1), whi", "numbers": [
+      {"text": "74.0", "fmt": "{:.1f}", "source": {"file": "docs/architecture/adr/0027-w3-retry-stratified-eval.md", "regex": "scode\\ is\\ less\\ affected\\ \\((-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L362", "line_contains": "> the actually-deployed live index, was 26.7% [21.6, 31.9] —", "quoted_from": ["docs/architecture/adr/0028-per-model-eval-audit.md", "docs/architecture/adr/0031-retrieval-quality-improvement.md", "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+      {"text": "26.7", "source": {"file": "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "contains": "3.5% [18.4, 28.5]**, **vscode 26.7%"}},
+      {"text": "21.6", "source": {"file": "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "contains": "[21.6, 31.9]**). All thre"}},
+      {"text": "31.9", "source": {"file": "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "contains": "[21.6, 31.9]**). All three reje"}}
+    ]},
+    {"id": "L363", "line_contains": "> overlap. (This superseded ADR-0028's originally-reported 2", "numbers": [
+      {"text": "22.4", "source": {"file": "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "contains": "7,028 records) | 254 | 7.5% | 22.4% | 43.7% | 71.3% | "}},
+      {"text": "17.7", "source": {"file": "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "contains": "5% | 22.4% | 43.7% | 71.3% | [17.7, 28.0] |"}},
+      {"text": "28.0", "source": {"file": "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "contains": "2.4% | 43.7% | 71.3% | [17.7, 28.0] |"}},
+      {"text": "254", "source": {"file": "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "contains": ") | live v1 (7,028 records) | 254 | 7.5% | 22.4% | 43"}}
+    ]},
+    {"id": "L365", "line_contains": "> denominator didn't match the full product stratum; 26.7%/n", "quoted_from": ["docs/architecture/adr/0028-per-model-eval-audit.md", "docs/architecture/adr/0031-retrieval-quality-improvement.md", "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+      {"text": "26.7", "fmt": "{:.1f}", "source": {"file": "docs/architecture/adr/0031-retrieval-quality-improvement.md", "regex": "ootstrap\\)\\ —\\ and\\ reproduces\\ \\*\\*n=292,\\ R@5=(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L366", "line_contains": "> number via `scripts/phaseC_vscode_live_product_eval.py`.) ", "numbers": [
+      {"text": "26.7", "fmt": "{:.1f}", "source": {"file": "docs/architecture/adr/0031-retrieval-quality-improvement.md", "regex": "ootstrap\\)\\ —\\ and\\ reproduces\\ \\*\\*n=292,\\ R@5=(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L368", "line_contains": "> computation against a gold set later found to be ~80% inci", "quoted_from": ["docs/architecture/adr/0028-per-model-eval-audit.md", "docs/architecture/adr/0031-retrieval-quality-improvement.md", "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+    ]},
+    {"id": "L377", "line_contains": "> is usable for measurement regardless of split label: 277 o", "numbers": [
+      {"text": "277", "source": {"file": "docs/architecture/adr/0028-per-model-eval-audit.md", "contains": "gardless of its split label — 277 of 776, not the 0 t"}},
+      {"text": "776", "source": {"file": "docs/architecture/adr/0028-per-model-eval-audit.md", "contains": "s of its split label — 277 of 776, not the 0 the spli"}}
+    ]},
+    {"id": "L380", "line_contains": "> result. A W3 fine-tune was evaluated against both a proxy ", "numbers": [
+      {"text": "3", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0027-w3-retry-stratified-eval.md", "regex": "product\\-task\\ \\+3\\.51pp\\ /\\ \\+(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L382", "line_contains": "> and significant (k8s +14.3pp, vscode +4.6pp) — this gate s", "quoted_from": ["docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "docs/architecture/adr/0027-w3-retry-stratified-eval.md"], "numbers": [
+      {"text": "14.3", "source": {"file": "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "contains": "ns real and significant, k8s +14.3pp, vscode +4.6pp\" c"}}
+    ]},
+    {"id": "L385", "line_contains": "> directionally positive and underpowered on both repos (k8s", "numbers": [
+      {"text": "3.5", "fmt": "{:.1f}", "source": {"file": "docs/architecture/adr/0027-w3-retry-stratified-eval.md", "regex": "\\ \\ \\ product\\-task\\ \\+(-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "3.2", "fmt": "{:.1f}", "source": {"file": "docs/architecture/adr/0027-w3-retry-stratified-eval.md", "regex": "product\\-task\\ \\+3\\.51pp\\ /\\ \\+(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L389", "line_contains": "> data ask was disproportionate anyway (~6,075 pairs, ~8x th", "numbers": [
+      {"text": "6,075", "source": {"file": "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "contains": " | 466 test pairs (+409) / **~6,075 total pairs** at th"}},
+      {"text": "8", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "regex": "\\ pairs\\*\\*\\ at\\ the\\ current\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L390", "line_contains": "> that's not the operative reason — proving a ~3.5pp lift on", "quoted_from": ["docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "docs/architecture/adr/0027-w3-retry-stratified-eval.md"], "numbers": [
+      {"text": "23.5", "source": {"file": "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "contains": "  lift (ADR-0027) on top of a 23.5% base rate, shippin"}}
+    ]},
+    {"id": "L391", "line_contains": "> would still ship a retriever that misses the related issue", "numbers": [
+      {"text": "3", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0056-eval-gold-taxonomy-broader-than-classifier-label-space.md", "regex": "irectory,\\ then\\ `scripts/(-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "4", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "regex": "ful\\ gate\\ would\\ prove\\ a\\ \\~(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L392", "line_contains": "> data gap is smaller and closeable (~664 more pairs), but c", "quoted_from": ["docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "docs/architecture/adr/0027-w3-retry-stratified-eval.md"], "numbers": [
+    ]},
+    {"id": "L393", "line_contains": "> +3.2pp lift against a ~23-27% base rate — the same weak-ba", "quoted_from": ["docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "docs/architecture/adr/0027-w3-retry-stratified-eval.md"], "numbers": [
+      {"text": "27", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "regex": "rove\\ a\\ \\+3\\.2pp\\ lift\\ \\(ADR\\-(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L397", "line_contains": "> **Retrieval-quality-lever pass (2026-07-12, ADR-0031).** H", "quoted_from": ["docs/architecture/adr/0006-cross-encoder-reranker.md", "docs/architecture/adr/0030-phaseC-product-task-feasibility.md", "docs/architecture/adr/0031-retrieval-quality-improvement.md"], "numbers": [
+    ]},
+    {"id": "L408", "line_contains": "> and marked unmeasured.** Before accepting ~23-27% as a cei", "quoted_from": ["docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+    ]},
+    {"id": "L409", "line_contains": "> sample (25/repo, fixed seed) checked whether the gold pair", "quoted_from": ["docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+    ]},
+    {"id": "L410", "line_contains": "> are genuinely related. **k8s: 72.0% precision [52.4, 85.7]", "quoted_from": ["docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+      {"text": "72.0", "source": {"file": "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "contains": "| kubernetes | 25 | 18 | **72.0%** | [52.4, 85.7] |"}},
+      {"text": "52.4", "source": {"file": "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "contains": "etes | 25 | 18 | **72.0%** | [52.4, 85.7] |"}},
+      {"text": "85.7", "source": {"file": "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "contains": " 25 | 18 | **72.0%** | [52.4, 85.7] |"}}
+    ]},
+    {"id": "L412", "line_contains": "> move R@5 outside its own CI (27.8% genuine-only vs. 23.5% ", "quoted_from": ["docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+      {"text": "27.8", "fmt": "{:.1f}", "source": {"file": "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "regex": "ne\\-only\\ point\\ estimate\\ \\((-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L414", "line_contains": "> **vscode: 20.0% precision [8.9, 39.1]** — 94.9% of its liv", "quoted_from": ["docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+      {"text": "20.0", "source": {"file": "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "contains": "| vscode | 25 | 5 | **20.0%** | [8.9, 39.1] |"}},
+      {"text": "39.1", "source": {"file": "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "contains": " | 25 | 5 | **20.0%** | [8.9, 39.1] |"}},
+      {"text": "94.9", "source": {"file": "docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md", "contains": " (n=292) | 11 (3.8%) | **277 (94.9%)** |"}}
+    ]},
+    {"id": "L416", "line_contains": "> sample is dominated by boilerplate-template collisions (\"B", "quoted_from": ["docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+    ]},
+    {"id": "L418", "line_contains": "> vscode's 26.7% is retired, not caveated** — it was measuri", "quoted_from": ["docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+    ]},
+    {"id": "L421", "line_contains": "> re-measurement exists yet (the genuine-only subsample, n=5", "quoted_from": ["docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+    ]},
+    {"id": "L422", "line_contains": "> Separately: of the genuinely-related pairs the retriever m", "quoted_from": ["docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+      {"text": "0", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0049-d3-k8s-regression-mechanism-disentanglement.md", "regex": "ated_valid_subset\\ \\|\\ 253\\ \\|\\ 4\\ \\|\\ 0\\.8557\\ \\->\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L423", "line_contains": "> vocabulary with their target (overlap up to 90 shared toke", "quoted_from": ["docs/architecture/adr/0032-product-task-gold-pair-quality-audit.md"], "numbers": [
+    ]},
+    {"id": "L426", "line_contains": "> eval — it also feeds the (HELD, unshipped) W3 fine-tune's ", "numbers": [
+      {"text": "3", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0034-d2-retrieval-finetune-honest-negative.md", "regex": "itly\\ held\\ at\\ a\\ marginal\\ \\+3\\.5pp\\ \\(k8s\\)\\ /\\ \\+(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L439", "line_contains": "> component (vscode issue #311836) scored 9/15 — *above* its", "numbers": [
+      {"text": "9", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0057-classifier-retrain-shipped-honest-comparable-baseline.md", "regex": "n`'s\\ judge\\-mean\\ fields\\)\\ \\|\\ 10\\.26/15\\ k8s,\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "15", "fmt": "{:.0f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "docs/architecture/adr/ADR-0011-eval-regression-gate.md", "regex": "ed\\ ECE\\ per\\ repo\\ within\\ ±(-?\\d[\\d,]*(?:\\.\\d+)?)"}}}},
+      {"text": "15", "fmt": "{:.0f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "docs/architecture/adr/ADR-0011-eval-regression-gate.md", "regex": "ed\\ ECE\\ per\\ repo\\ within\\ ±(-?\\d[\\d,]*(?:\\.\\d+)?)"}}}},
+      {"text": "8.36", "fmt": "{:.2f}", "source": {"file": "docs/architecture/adr/0019-local-judge-and-mean-based-gate.md", "regex": "microsoft/vscode\\ \\|\\ 11\\ \\|\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L444", "line_contains": "> averaged away — vscode's 45.5% floor-fail rate is invisibl", "numbers": [
+      {"text": "45.5", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md", "regex": "`floor_fail_rate`\\ moved\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}}}}
+    ]},
+    {"id": "L445", "line_contains": "> passable-looking 55.8% mean. **Fabrication rate** promotes", "quoted_from": ["docs/architecture/adr/0028-per-model-eval-audit.md"], "numbers": [
+    ]},
+    {"id": "L457", "line_contains": "> (MAE) is served as-is despite losing to naive (−70.5%) — t", "quoted_from": ["docs/architecture/adr/0009-resolution-predictor-diagnosis.md", "docs/architecture/adr/0010-conformal-quantile-regression.md", "docs/architecture/adr/0021-selective-prediction-abstention.md", "docs/architecture/adr/0023-resolution-diagnosticity-search.md", "docs/architecture/adr/0025-resolution-bucket-trust-and-deployment-correction.md", "reports/w6_resolution_diagnosis.json", "reports/eval_summary.json"], "numbers": [
+    ]},
+    {"id": "L460", "line_contains": "> to naive by −22.08pp, is not served — vscode's `resolution", "quoted_from": ["docs/architecture/adr/0009-resolution-predictor-diagnosis.md", "docs/architecture/adr/0010-conformal-quantile-regression.md", "docs/architecture/adr/0021-selective-prediction-abstention.md", "docs/architecture/adr/0023-resolution-diagnosticity-search.md", "docs/architecture/adr/0025-resolution-bucket-trust-and-deployment-correction.md", "reports/w6_resolution_diagnosis.json", "reports/eval_summary.json"], "numbers": [
+    ]},
+    {"id": "L465", "line_contains": "> estimate's −70.5% while describing the bucket classifier's", "quoted_from": ["docs/architecture/adr/0009-resolution-predictor-diagnosis.md", "docs/architecture/adr/0010-conformal-quantile-regression.md", "docs/architecture/adr/0021-selective-prediction-abstention.md", "docs/architecture/adr/0023-resolution-diagnosticity-search.md", "docs/architecture/adr/0025-resolution-bucket-trust-and-deployment-correction.md", "reports/w6_resolution_diagnosis.json", "reports/eval_summary.json"], "numbers": [
+    ]},
+    {"id": "L478", "line_contains": "| Component classifier (TF-IDF + one-vs-rest LogReg, 47 clas", "numbers": [
+      {"text": "47", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0049-d3-k8s-regression-mechanism-disentanglement.md", "regex": "notably\\ higher\\ than\\ ADR\\-(-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "4,226", "source": {"file": "docs/architecture/adr/0056-eval-gold-taxonomy-broader-than-classifier-label-space.md", "contains": " 3,380 + val 423 + test 423 = 4,226) — **2.27x growth**"}},
+      {"text": "3,380", "source": {"file": "docs/architecture/adr/0056-eval-gold-taxonomy-broader-than-classifier-label-space.md", "contains": "     fresh pool (train 3,380 + val 423 + test 42"}},
+      {"text": "423", "source": {"file": "docs/architecture/adr/0056-eval-gold-taxonomy-broader-than-classifier-label-space.md", "contains": "fresh pool (train 3,380 + val 423 + test 423 = 4,226)"}},
+      {"text": "423", "source": {"file": "docs/architecture/adr/0056-eval-gold-taxonomy-broader-than-classifier-label-space.md", "contains": "fresh pool (train 3,380 + val 423 + test 423 = 4,226)"}},
+      {"text": "6,710", "source": {"file": "docs/architecture/adr/0056-eval-gold-taxonomy-broader-than-classifier-label-space.md", "contains": "s. fresh (5,368 + 671 + 671 = 6,710) — **2.35x growth**"}},
+      {"text": "5,368", "source": {"file": "docs/architecture/adr/0056-eval-gold-taxonomy-broader-than-classifier-label-space.md", "contains": "286 + 286 = 2,856) vs. fresh (5,368 + 671 + 671 = 6,710"}},
+      {"text": "671", "source": {"file": "docs/architecture/adr/0056-eval-gold-taxonomy-broader-than-classifier-label-space.md", "contains": "6 = 2,856) vs. fresh (5,368 + 671 + 671 = 6,710) — **"}},
+      {"text": "671", "source": {"file": "docs/architecture/adr/0056-eval-gold-taxonomy-broader-than-classifier-label-space.md", "contains": "6 = 2,856) vs. fresh (5,368 + 671 + 671 = 6,710) — **"}}
+    ]},
+    {"id": "dt-11k", "line_contains": "The supervised models see ~11K labeled issues", "numbers": [
+      {"text": "29,994", "fmt": "{:,.0f}", "source": {"file": "reports/served_index_facts.json", "path": ["kubernetes/kubernetes", "ntotal"]}},
+      {"text": "11", "fmt": "{:.0f}", "source": {"expr": "(a + b) / 1000", "vars": {"a": {"file": "docs/architecture/adr/0056-eval-gold-taxonomy-broader-than-classifier-label-space.md", "regex": "\\+ test 423 = ([\\d,]+)\\)"}, "b": {"file": "docs/architecture/adr/0056-eval-gold-taxonomy-broader-than-classifier-label-space.md", "regex": "\\(5,368 \\+ 671 \\+ 671 = ([\\d,]+)\\)"}}}},
+      {"text": "4,226", "fmt": "{:,.0f}", "source": {"file": "docs/architecture/adr/0056-eval-gold-taxonomy-broader-than-classifier-label-space.md", "regex": "\\+ test 423 = ([\\d,]+)\\)"}},
+      {"text": "6,710", "fmt": "{:,.0f}", "source": {"file": "docs/architecture/adr/0056-eval-gold-taxonomy-broader-than-classifier-label-space.md", "regex": "\\(5,368 \\+ 671 \\+ 671 = ([\\d,]+)\\)"}}
+    ]},
+    {"id": "L486", "line_contains": "Measured against the production URL, five sequential real `/", "numbers": [
+      {"text": "3", "source": {"file": "reports/latency_replay_2026-10-12.txt", "contains": "y (5 saved real-issue bodies, 3 vscode + 2 k8s, 75 "}},
+      {"text": "2", "source": {"file": "reports/latency_replay_2026-10-12.txt", "contains": "real-issue bodies, 3 vscode + 2 k8s, 75 s spacing, "}},
+      {"text": "2", "source": {"file": "reports/latency_replay_2026-10-12.txt", "contains": "real-issue bodies, 3 vscode + 2 k8s, 75 s spacing, "}},
+      {"text": "75", "source": {"file": "reports/latency_replay_2026-10-12.txt", "contains": "sue bodies, 3 vscode + 2 k8s, 75 s spacing, sequenti"}},
+      {"text": "5", "source": {"file": "reports/latency_replay_2026-10-12.txt", "contains": "c). Instance 0010dd86 for all 5 calls."}},
+      {"text": "18", "source": {"file": "reports/latency_replay_2026-10-12.txt", "contains": "1096a), run 2026-10-11 ~18:20-18:30 UTC"}}
+    ]},
+    {"id": "lat-137", "line_contains": "#137 removed per-request work from stage 3", "numbers": [
+      {"text": "3.0", "fmt": "{:.1f}", "source": {"expr": "v / 1000", "vars": {"v": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[baseline_pre137\\]\\ n=5[\\s\\S]*?\\n4\\s+\\S+\\s+\\d+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+([\\d.]+)"}}}},
+      {"text": "3.3", "fmt": "{:.1f}", "source": {"expr": "v / 1000", "vars": {"v": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[baseline_pre137\\]\\ n=5[\\s\\S]*?\\n5\\s+\\S+\\s+\\d+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+([\\d.]+)"}}}},
+      {"text": "53", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?\\n5\\s+\\S+\\s+\\d+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+([\\d.]+)"}},
+      {"text": "65", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?\\n4\\s+\\S+\\s+\\d+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+([\\d.]+)"}},
+      {"text": "536", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[baseline_pre137\\]\\ n=5[\\s\\S]*?\\n1\\s+\\S+\\s+\\d+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+([\\d.]+)"}},
+      {"text": "586", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[baseline_pre137\\]\\ n=5[\\s\\S]*?\\n3\\s+\\S+\\s+\\d+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+([\\d.]+)"}},
+      {"text": "37", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?\\n3\\s+\\S+\\s+\\d+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+([\\d.]+)"}},
+      {"text": "77", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "\\[post137\\]\\ n=5[\\s\\S]*?\\n1\\s+\\S+\\s+\\d+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+[\\d.]+\\s+([\\d.]+)"}}
+    ]},
+    {"id": "L499", "line_contains": "**The 2026-10-11 stage-4 result is a provider rate-limit eff", "numbers": [
+      {"text": "4", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "200, `_degraded` false. Stage 4 = 2.9 s then 51-133"}},
+      {"text": "2.9", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": " `_degraded` false. Stage 4 = 2.9 s then 51-133 s. Cl"}},
+      {"text": "1", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "   (attempts 1-3 of 6, ~30 s each "}},
+      {"text": "3", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "   (attempts 1-3 of 6, ~30 s each in"}},
+      {"text": "3", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "   (attempts 1-3 of 6, ~30 s each in"}},
+      {"text": "6", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "   (attempts 1-3 of 6, ~30 s each inside "}},
+      {"text": "30", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "   (attempts 1-3 of 6, ~30 s each inside the G"}},
+      {"text": "51", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "` false. Stage 4 = 2.9 s then 51-133 s. Cloud Run lo"}},
+      {"text": "133", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "alse. Stage 4 = 2.9 s then 51-133 s. Cloud Run logs s"}},
+      {"text": "200", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "   53-135 s, all HTTP 200, `_degraded` false."}},
+      {"text": "8,000", "source": {"file": "docs/architecture/adr/0063-degrade-on-llm-provider-errors.md", "contains": "ed` false, because the shared 8,000"}},
+      {"text": "6,000", "source": {"file": "reports/latency_replay_2026-10-12.txt", "contains": "One triage uses ~6,000 tokens (stored usag"}},
+      {"text": "4,800", "source": {"file": "reports/latency_replay_2026-10-12.txt", "contains": " ~6,000 tokens (stored usage ~4,800 prompt + ~1,100 com"}},
+      {"text": "1,100", "source": {"file": "reports/latency_replay_2026-10-12.txt", "contains": "stored usage ~4,800 prompt + ~1,100 completion). The re"}},
+      {"text": "1,909", "source": {"file": "reports/latency_replay_2026-10-12.txt", "contains": "the 1,909-token remainder mea"}},
+      {"text": "45.7", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "  8000, remaining 1909, reset 45.7 s, so another consu"}},
+      {"text": "2,100", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": " Personal account) made about 2,100"}},
+      {"text": "340", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": " 11 gpt-oss-120b served about 340 requests / 300K tok"}},
+      {"text": "300", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "b served about 340 requests / 300K tokens and gpt-oss"}},
+      {"text": "52.6", "source": {"file": "reports/latency_replay_2026-10-12.txt", "contains": "resolution) 93.9 ms median vs 52.6 ms on 2026-10-07: k"}},
+      {"text": "93.9", "source": {"file": "reports/latency_replay_2026-10-12.txt", "contains": " 7.0 ms | s2: 1621.7 ms | s3: 93.9 ms | s4: 121002.6 m"}},
+      {"text": "54", "source": {"file": "reports/contention_test_2026-10-16_cloudrun_log.txt", "contains": "2026-10-16T17:54:32.759035Z\tRate lim"}},
+      {"text": "100", "source": {"file": "reports/latency_replay_2026-10-12_post_a1.txt", "contains": "sion: triageiq-api-00055-boy (100% traffic; main 0996"}},
+      {"text": "15", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "  (the 15 s budget bounds the"}}
+    ]},
+    {"id": "L501", "line_contains": "**After the 15 s budget (2026-10-12, revision `triageiq-api-", "numbers": [
+      {"text": "15", "source": {"file": "reports/latency_replay_2026-10-12_post_a1.txt", "contains": "1, Requested 5146\", log 14:49:15 UTC)."}},
+      {"text": "75", "source": {"file": "reports/latency_replay_2026-10-12_post_a1.txt", "contains": "calls were 75 s apart and one tri"}},
+      {"text": "4,870", "source": {"file": "reports/latency_replay_2026-10-12_post_a1.txt", "contains": "ered calls only (n=2): client 4,870 / 5,324 ms; stage 4"}},
+      {"text": "5,324", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "replay after A1/A3: 4,870 and 5,324 ms for the two call"}},
+      {"text": "2,737", "source": {"file": "reports/latency_replay_2026-10-12_post_a1.txt", "contains": "ent 4,870 / 5,324 ms; stage 4 2,737 / 3,672 ms"}},
+      {"text": "3,672", "source": {"file": "reports/latency_replay_2026-10-12_post_a1.txt", "contains": "0 / 5,324 ms; stage 4 2,737 / 3,672 ms"}},
+      {"text": "200,000", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "wn ledger (pool at 196,411 of 200,000) and is still open."}},
+      {"text": "35", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0040-retrieval-truncation-and-query-instruction.md", "regex": "fine\\-tune\\ of\\ ADR\\-0034/(-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "160", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "cessing\". Calls/day under the 160K cap: about 27 toda"}},
+      {"text": "200", "source": {"file": "reports/latency_replay_2026-10-12_post_a1.txt", "contains": "e signals-only plan with HTTP 200, `_degraded` true, "}},
+      {"text": "1,520", "fmt": "{:,.0f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "docs/DECISION_LOG_2026-10.md", "regex": ",\\ revision\\ 00061\\),\\ \\*\\*22\\.5\\ s\\*\\*\\ \\(detector\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}}}},
+      {"text": "1,820", "source": {"file": "reports/latency_replay_2026-10-12_post_a1.txt", "contains": "alls only (n=3): client 1,522-1,820 ms"}},
+      {"text": "429", "source": {"file": "reports/latency_replay_2026-10-12_post_a1.txt", "contains": " does not retry a daily-limit 429; it returns the sig"}}
+    ]},
+    {"id": "conc", "line_contains": "**Concurrency, stated plainly.**", "numbers": [
+      {"text": "6,000", "source": {"file": "reports/latency_replay_2026-10-12_post_a1.txt", "contains": "75 s apart and one triage is ~6,000 of the 8,000 tokens"}},
+      {"text": "8,000", "source": {"file": "reports/latency_replay_2026-10-12_post_a1.txt", "contains": "d one triage is ~6,000 of the 8,000 tokens per minute)."}},
+      {"text": "15", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "  (the 15 s budget bounds the"}},
+      {"text": "15", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "  (the 15 s budget bounds the"}},
+      {"text": "15", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "  (the 15 s budget bounds the"}},
+      {"text": "135", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "   53-135 s, all HTTP 200, `_"}},
+      {"text": "17", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "iq-api-00061-guj`, 2026-10-16 17:54 UTC, ledger ALLO"}},
+      {"text": "54", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "api-00061-guj`, 2026-10-16 17:54 UTC, ledger ALLOW a"}},
+      {"text": "8", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "LM answer, no retry. Call 2 (k8s, +8 s): HTTP 200, "}},
+      {"text": "6.2", "source": {"file": "reports/latency_replay_2026-10-07.txt", "contains": "median s1: 6.2 ms (n=5)"}},
+      {"text": "25", "source": {"file": "docs/architecture/adr/0026-corpus-growth-feasibility.md", "contains": "e observed effect. Roughly 15–25K API requests ≈ 3–5"}},
+      {"text": "14.9", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "  backoff exceeded the 14.9 s left so the reque"}},
+      {"text": "1.2", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": " stage; the other stages add ~1.2 s). 2 of 3 got an L"}},
+      {"text": "1.2", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": " stage; the other stages add ~1.2 s). 2 of 3 got an L"}},
+      {"text": "11", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "ere recorded in the ledger as 11,840"}},
+      {"text": "16.2", "fmt": "{:.1f}", "source": {"expr": "v / 1000", "vars": {"v": {"file": "reports/contention_test_2026-10-16.json", "regex": "\"i\": 3,[\\s\\S]*?\"client_ms\": ([\\d.]+)"}}}},
+      {"text": "2", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "the other stages add ~1.2 s). 2 of 3 got an LLM ans"}},
+      {"text": "2", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "the other stages add ~1.2 s). 2 of 3 got an LLM ans"}},
+      {"text": "3", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "ther stages add ~1.2 s). 2 of 3 got an LLM answer, "}},
+      {"text": "32", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "  32 s window needed an "}},
+      {"text": "1", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "s). 2 of 3 got an LLM answer, 1 of 3 degraded, 2 re"}},
+      {"text": "5", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "raded, 2 retries in total, no 5xx. Two successful c"}}
+    ]},
+    {"id": "L505", "line_contains": "**Prompt caching is intermittent, not absent.** Groq documen", "numbers": [
+      {"text": "1,536", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "tokens_details.cached_tokens` 1,536 of 1,611 prompt tok"}},
+      {"text": "1,611", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "tails.cached_tokens` 1,536 of 1,611 prompt tokens (cold"}},
+      {"text": "1", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "okens (cold: no field). About 1 hit in 5 warm direc"}},
+      {"text": "5", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "ld: no field). About 1 hit in 5 warm direct calls; "}},
+      {"text": "0", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "1 hit in 5 warm direct calls; 0 of 4 production tri"}},
+      {"text": "4", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": " in 5 warm direct calls; 0 of 4 production triage c"}},
+      {"text": "4.7", "source": {"file": "reports/latency_replay_2026-10-12_post_a1.txt", "contains": "production /triage calls with 4.7-4.9K-token prompts "}},
+      {"text": "4.9", "source": {"file": "reports/latency_replay_2026-10-12_post_a1.txt", "contains": "uction /triage calls with 4.7-4.9K-token prompts (07:"}},
+      {"text": "8,000", "source": {"file": "docs/architecture/adr/0063-degrade-on-llm-provider-errors.md", "contains": "ed` false, because the shared 8,000"}}
+    ]},
+    {"id": "cold-sec", "line_contains": "**Cold starts.** The service runs with", "numbers": [
+      {"text": "41", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "606 303 ([\\d.]+)"}},
+      {"text": "303", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "606 (303) "}},
+      {"text": "21", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "606 303 [\\d.]+ ([\\d.]+)"}},
+      {"text": "21", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "606 303 [\\d.]+ ([\\d.]+)"}},
+      {"text": "73", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "606 303 [\\d.]+ [\\d.]+ ([\\d.]+)"}},
+      {"text": "12", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "| 10-05 (monitor started 12:40; deploys + testi"}},
+      {"text": "12", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "| 10-05 (monitor started 12:40; deploys + testi"}},
+      {"text": "40", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "| 10-05 (monitor started 12:40; deploys + testing "}},
+      {"text": "6", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "written when cold starts were 6-17/day;"}},
+      {"text": "11", "fmt": "{:.0f}", "source": {"file": "reports/09_docker_local_validation.md", "regex": "\\ start\\ →\\ /health\\ 200\\)\\ \\|\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "1", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "st full day with keep-warm) | 1 | 108 | 336 |"}},
+      {"text": "0", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "| 10-07 (to 12:21 UTC) | 0 | 45 | 89 |"}}
+    ]},
+    {"id": "L658", "line_contains": "max\\_tokens). Cache hits are returned in <5 ms without a Gro", "numbers": [
+      {"text": "5", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0002-cross-family-judge-model.md", "regex": "D\\ caveat\\ \\(observed\\ 2026\\-(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L725", "line_contains": "| GitHub Actions health monitor (`.github/workflows/health-m", "numbers": [
+      {"text": "200", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "e6fd8`; `/health?deps=1` HTTP 200 (model_store and gr"}},
+      {"text": "30", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "alth?deps=1`; scheduled every 30 min, observed 3-7 h"}},
+      {"text": "8", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "ved 3-7 h apart over the last 8 runs, `gh run list`"}},
+      {"text": "3", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "eduled every 30 min, observed 3-7 h apart over the "}},
+      {"text": "7", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "uled every 30 min, observed 3-7 h apart over the la"}}
+    ]},
+    {"id": "L726", "line_contains": "| External UptimeRobot monitor (free plan, 5-minute interval", "numbers": [
+      {"text": "5", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "ernal UptimeRobot (free plan, 5-minute"}},
+      {"text": "12", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "ealth`, first ping 2026-10-05T12:39:50Z, D10) plus t"}},
+      {"text": "39", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "th`, first ping 2026-10-05T12:39:50Z, D10) plus the "}},
+      {"text": "50", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": ", first ping 2026-10-05T12:39:50Z, D10) plus the Git"}},
+      {"text": "6", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "written when cold starts were 6-17/day;"}},
+      {"text": "11", "source": {"file": "docs/architecture/adr/ADR-0011-eval-regression-gate.md", "contains": "ecord_cassettes.py`, `scripts/11_evaluate_triage.py`"}},
+      {"text": "1", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "(`/health?deps=1`; scheduled every 3"}},
+      {"text": "0", "source": {"file": "docs/SESSION_RESUME_2026-08-30.md", "contains": "works: 1 cold start on 10-06, 0 on 10-07."}}
+    ]},
+    {"id": "cold-lim", "line_contains": "**Cold-start latency.** Cloud Run scales to zero.", "numbers": [
+      {"text": "41", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "606 303 ([\\d.]+)"}},
+      {"text": "303", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "606 (303) "}},
+      {"text": "21", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "606 303 [\\d.]+ ([\\d.]+)"}},
+      {"text": "73", "fmt": "{:.0f}", "source": {"file": "reports/latency_replay_2026-10-07.txt", "regex": "606 303 [\\d.]+ [\\d.]+ ([\\d.]+)"}},
+      {"text": "1", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "st full day with keep-warm) | 1 | 108 | 336 |"}},
+      {"text": "0", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "| 10-07 (to 12:21 UTC) | 0 | 45 | 89 |"}},
+      {"text": "6", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "| 10-04 | 6 | 261 | 1,191 |"}},
+      {"text": "11", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "| n | 11 | 53 | 64 |"}},
+      {"text": "15", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "deploys + testing that day) | 15 | 1,590 | 4,753 |"}}
+    ]},
+    {"id": "L749", "line_contains": "**Resolution point estimate: the training-window median (ADR", "quoted_from": ["docs/architecture/adr/0062-k8s-resolution-embeddings-at-serving.md", "docs/architecture/adr/0064-train-median-point-estimate.md", "reports/served_k8s_metrics.json", "reports/d7_resolution_before_after.json", "docs/DECISION_LOG_2026-10.md"], "numbers": [
+      {"text": "64", "fmt": "{:.0f}", "source": {"file": "docs/DECISION_LOG_2026-10.md", "regex": "\\ the\\ typical\\ issue\\.\\ ADR\\-(-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "64", "fmt": "{:.0f}", "source": {"file": "docs/DECISION_LOG_2026-10.md", "regex": "\\ the\\ typical\\ issue\\.\\ ADR\\-(-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "64", "fmt": "{:.0f}", "source": {"file": "docs/DECISION_LOG_2026-10.md", "regex": "\\ the\\ typical\\ issue\\.\\ ADR\\-(-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "35", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0046-measurement-audit-before-modeling-standing-prior.md", "regex": "nly\\ eval\\ queries\\*\\*\\ \\(ADR\\-(-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "102.09", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": "8): the learned point has MAE 102.09 d"}},
+      {"text": "104.23", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": "  [93.89, 110.63] vs naive 104.23 d, a +2.06% gain (p"}},
+      {"text": "2.06", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": "110.63] vs naive 104.23 d, a +2.06% gain (paired boots"}},
+      {"text": "1.84", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": " PAIRED bootstrap gain CI is [1.84, 2.45] d and"}},
+      {"text": "2.45", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "D bootstrap gain CI is [1.84, 2.45] d and"}},
+      {"text": "7.28", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "verified: median AE 7.28 d vs 3.52 d, the mo"}},
+      {"text": "3.52", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": "  7.28 d for the model vs 3.52 d for naive**, i.e."}}
+    ]},
+    {"id": "L751", "line_contains": "**vscode resolution: the median is uninformative for current", "numbers": [
+      {"text": "3.84", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": "2015-16 with median 3.84 d. Train and test a"}},
+      {"text": "3.84", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": "2015-16 with median 3.84 d. Train and test a"}},
+      {"text": "3.53", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": ", 616-row window: MAE 5.45 -> 3.53 d, median AE 5.80 -"}},
+      {"text": "5.45", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": ". vscode, 616-row window: MAE 5.45 -> 3.53 d, median A"}},
+      {"text": "5.80", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "MAE 5.45 -> 3.53 d, median AE 5.80 -> 3.79 d, interval"}},
+      {"text": "91.4", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": "resolution is 0.049 d and 91.4% of issues are in t"}},
+      {"text": "91.4", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": "resolution is 0.049 d and 91.4% of issues are in t"}},
+      {"text": "0.049", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": "resolution is 0.049 d and 91.4% of issu"}},
+      {"text": "616", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "changed k8s interval. vscode, 616-row window: MAE 5.4"}},
+      {"text": "82.7", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "val on two cuts. Canonical: **82.7% [78.5, 86.2], n=37"}},
+      {"text": "82.7", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "val on two cuts. Canonical: **82.7% [78.5, 86.2], n=37"}},
+      {"text": "78.5", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "two cuts. Canonical: **82.7% [78.5, 86.2], n=370, chro"}},
+      {"text": "86.2", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "ts. Canonical: **82.7% [78.5, 86.2], n=370, chronologi"}},
+      {"text": "7", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": "`scripts/interval_coherence_d7.py`. **Canonical vs"}},
+      {"text": "370", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "ical: **82.7% [78.5, 86.2], n=370, chronological 40/6"}},
+      {"text": "40", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": ", 86.2], n=370, chronological 40/60"}},
+      {"text": "60", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "6.2], n=370, chronological 40/60"}},
+      {"text": "74.6", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "sues\" wording is present, no \"74.6\", 0 console message"}},
+      {"text": "69.9", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/resolution_train_serve_skew_2026-10-07.txt", "regex": "\\ raw\\ 0\\.3784\\ prodQ\\ 0\\.7459\\ freshQ\\ 0\\.7459\\ \\[(-?\\d[\\d,]*(?:\\.\\d+)?)"}}}},
+      {"text": "78.8", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/resolution_train_serve_skew_2026-10-07.txt", "regex": "3784\\ prodQ\\ 0\\.7459\\ freshQ\\ 0\\.7459\\ \\[0\\.6992,(-?\\d[\\d,]*(?:\\.\\d+)?)"}}}},
+      {"text": "10", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "ge figure (owner request 2026-10-09). VERIFIED by te"}}
+    ]},
+    {"id": "L753", "line_contains": "**Time-window mismatch.** The k8s corpus is 2014–2016 and vs", "numbers": [
+      {"text": "7", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0041-resolution-stale-split-recency-weighting.md", "regex": "rrent\\ corpus\\ available\\ \\((-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L755", "line_contains": "**Small, single-judge LLM evaluation.** The LLM-quality gold", "numbers": [
+      {"text": "64", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "| n | 11 | 53 | 64 |"}},
+      {"text": "11", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "| n | 11 | 53 | 64 |"}},
+      {"text": "11", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "| n | 11 | 53 | 64 |"}},
+      {"text": "53", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "| n | 11 | 53 | 64 |"}},
+      {"text": "0.45", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "e-record jitter bands (vscode 0.45, k8s 0.22). Swappin"}},
+      {"text": "0.22", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "itter bands (vscode 0.45, k8s 0.22). Swapping the clas"}},
+      {"text": "1", "source": {"file": "docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md", "contains": "rounding hard gate now fails, 1 > baseline 0:** `k8"}}
+    ]},
+    {"id": "L757", "line_contains": "**Grounding is a consistency check, not a correctness check.", "numbers": [
+      {"text": "19", "source": {"file": "docs/SESSION_RESUME_2026-08-30.md", "contains": "79b022`) recording Arm C at **19/20, 1 issue"}},
+      {"text": "20", "source": {"file": "docs/SESSION_RESUME_2026-08-30.md", "contains": "022`) recording Arm C at **19/20, 1 issue"}},
+      {"text": "1", "source": {"file": "docs/SESSION_RESUME_2026-08-30.md", "contains": ") recording Arm C at **19/20, 1 issue"}},
+      {"text": "53", "source": {"file": "docs/SESSION_RESUME_2026-08-30.md", "contains": "n append-only log stops at 10:53 (`479b022`) recordi"}},
+      {"text": "11", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "   at 0/11. The gate is correc"}}
+    ]},
+    {"id": "lim-res", "line_contains": "**Resolution predictor: modest or negative skill.**", "numbers": [
+      {"text": "14", "fmt": "{:.0f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "docs/architecture/adr/0013-model-artifact-drift-guard.md", "regex": "the\\ claimed\\ (-?\\d[\\d,]*(?:\\.\\d+)?)"}}}},
+      {"text": "2.06", "fmt": "{:.2f}", "source": {"expr": "a / b * 100", "vars": {"a": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "learned_model_not_served", "mae_gain_vs_naive_days"]}, "b": {"file": "reports/eval_summary.json", "path": ["resolution_served", "repos", "kubernetes/kubernetes", "served", "mae_days"]}}}},
+      {"text": "7.28", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": "  7.28 d for the model vs "}},
+      {"text": "3.52", "source": {"file": "docs/architecture/adr/0064-train-median-point-estimate.md", "contains": "  7.28 d for the model vs 3.52 d for naive**, i.e."}},
+      {"text": "19.1", "source": {"file": "reports/05_resolution_results.md", "contains": "and 13 others). Both vscode (+19.1%) and k8s (+3.3%) n"}},
+      {"text": "3.3", "fmt": "{:.1f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "docs/architecture/adr/0009-resolution-predictor-diagnosis.md", "regex": "\\|\\ component_match\\ \\|\\ 1\\.683\\ \\|\\ 1\\.650\\ \\|\\ −(-?\\d[\\d,]*(?:\\.\\d+)?)"}}}}
+    ]},
+    {"id": "L761", "line_contains": "**CVE-2026-1839 in transformers 4.x** (one of several suppre", "numbers": [
+      {"text": "4", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md", "regex": "rift\\*\\*,\\ undetected\\ for\\ \\~(-?\\d[\\d,]*(?:\\.\\d+)?)"}}
+    ]},
+    {"id": "L763", "line_contains": "**Synthesis judge quality gate.** The k8s \"-0.245 permanent ", "numbers": [
+      {"text": "0.245", "fmt": "{:.3f}", "source": {"file": "docs/architecture/adr/0043-combined-cutover-synthesis-quality-recovery.md", "regex": "4\\ of\\ it\\)\\.\\ The\\ residual\\ \\-(-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "10.51", "fmt": "{:.2f}", "source": {"file": "docs/architecture/adr/0039-keep-classifier-known-failing-synthesis-gate.md", "regex": "the\\ OLD\\ baseline\\ \\((-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "12.27", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "set issues (79.6%)\", per-repo 12.27"}},
+      {"text": "15", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0019-local-judge-and-mean-based-gate.md", "regex": "\\ n\\ —\\ same\\ reasoning\\ ADR\\-(-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "15", "fmt": "{:.0f}", "source": {"file": "docs/architecture/adr/0019-local-judge-and-mean-based-gate.md", "regex": "\\ n\\ —\\ same\\ reasoning\\ ADR\\-(-?\\d[\\d,]*(?:\\.\\d+)?)"}},
+      {"text": "11.87", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "(n=11) and 11.87 (n=53). Screenshot:"}},
+      {"text": "0.156", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "  moved −0.156 (95% CI [−0.51, +0."}},
+      {"text": "95", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "  moved −0.156 (95% CI [−0.51, +0.20],"}},
+      {"text": "0.51", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "  moved −0.156 (95% CI [−0.51, +0.20], n=64), whi"}},
+      {"text": "0.20", "source": {"file": "docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md", "contains": "moved −0.156 (95% CI [−0.51, +0.20], n=64), which cann"}}
+    ]},
+    {"id": "L767", "line_contains": "**Health monitor fires on an irregular cadence, not the conf", "numbers": [
+      {"text": "30", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "alth?deps=1`; scheduled every 30 min, observed 3-7 h"}},
+      {"text": "8", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "ved 3-7 h apart over the last 8 runs, `gh run list`"}},
+      {"text": "3", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "eduled every 30 min, observed 3-7 h apart over the "}},
+      {"text": "7", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "uled every 30 min, observed 3-7 h apart over the la"}},
+      {"text": "5", "source": {"file": "docs/DECISION_LOG_2026-10.md", "contains": "ernal UptimeRobot (free plan, 5-minute"}}
+    ]}
+  ]
 }

@@ -13,6 +13,8 @@ A source is one of (tier A is a re-computation, tier B an anchored quotation):
   A  {"expr", "vars"}         arithmetic (+ - * /) over named sources
   A  {"file", "regex"}        first group of the first match in a text file, converted to a number, formatted
   B  {"file", "contains"}     a phrase that must still appear verbatim in the file AND contain the number
+  C  entry-level "quoted_from": [files]   numbers on that line without an own source count as covered when each
+                                          appears as a number in one of the named records (weaker; reported apart)
 A `constant` is for definitions only (a rubric scale, a score level, a config value with no file); it needs a
 reason. A MEASURED number is never a constant: it gets a source or the README is fixed.
 
@@ -127,7 +129,19 @@ def check(readme: Path, manifest: Path, root: Path = ROOT, strict: bool | None =
         declared = Counter(n["text"] for n in entry["numbers"])
         for text in declared - present:
             errors.append(f"[{eid}] README line {idx + 1} no longer has {text!r} as a number (declared {declared[text]}x, found {present[text]}x)")
+        # Tier C, `quoted_from`: for a line that summarises named records (the dated notes cite their ADRs), a number
+        # without an individual source is accepted when it appears as a number in one of the named files. This is a
+        # containment check (the record still states that number), weaker than a re-computation; it is counted apart.
+        qbody = ""
+        for qf in entry.get("quoted_from", []):
+            try:
+                qbody += "\n" + (root / qf).read_text(encoding="utf-8")
+            except Exception as exc:  # noqa: BLE001 - an unreadable quoted file is a failed check
+                errors.append(f"[{eid}] quoted_from file {qf!r} cannot be read: {exc}")
         for text in present - declared:
+            if qbody and re.search(r"(?<![\d.,])" + re.escape(text) + r"(?!\d|\.\d)", qbody):
+                kinds["quoted"] += (present - declared)[text]
+                continue
             errors.append(f"[{eid}] README line {idx + 1} has undeclared number {text!r} (found {present[text]}x, declared {declared[text]}x); declare it with a source")
         for num in entry["numbers"]:
             text = num["text"]
@@ -197,6 +211,7 @@ def main() -> int:
     ap.add_argument("--strict", action="store_true", help="fail on any claim-bearing README line that is not declared")
     ap.add_argument("--list-uncovered", action="store_true")
     a = ap.parse_args()
+    sys.stdout.reconfigure(errors="replace")  # README lines carry box-drawing and minus characters; a console codepage must not crash the report
     errors, info = check(Path(a.readme), Path(a.manifest), strict=True if a.strict else None)
     pct = 100 * info["declared_lines"] / info["claim_lines"] if info["claim_lines"] else 100.0
     print(f"claim-bearing README lines: {info['claim_lines']}; declared: {info['declared_lines']} ({pct:.1f}%); uncovered: {len(info['uncovered'])}")

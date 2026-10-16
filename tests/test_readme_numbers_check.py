@@ -149,6 +149,21 @@ def test_unary_minus_and_a_stated_tolerance_for_low_precision_sources(tmp_path: 
     assert rnc.check(ok, tmp_path / "m.json", root=tmp_path)[0]  # exact format still exact
 
 
+def test_quoted_from_accepts_numbers_found_in_the_named_record_and_rejects_the_rest(tmp_path: Path) -> None:
+    (tmp_path / "adr.md").write_text("The audit found 66 of 150 pairs valid, recall 39.39%.\n", encoding="utf-8")
+    manifest = {"lines": [{"id": "q", "line_contains": "audit line", "quoted_from": ["adr.md"], "numbers": []}]}
+    (tmp_path / "m.json").write_text(json.dumps(manifest), encoding="utf-8")
+    readme = tmp_path / "README.md"
+    readme.write_text("audit line: 66/150, 39.39%\n", encoding="utf-8")
+    assert rnc.check(readme, tmp_path / "m.json", root=tmp_path)[0] == []
+    readme.write_text("audit line: 66/150, 39.49%\n", encoding="utf-8")  # one number the record does not state
+    errors = rnc.check(readme, tmp_path / "m.json", root=tmp_path)[0]
+    assert errors and any("39.49" in e for e in errors)
+    manifest["lines"][0]["quoted_from"] = ["missing.md"]
+    (tmp_path / "m.json").write_text(json.dumps(manifest), encoding="utf-8")
+    assert any("cannot be read" in e for e in rnc.check(readme, tmp_path / "m.json", root=tmp_path)[0])
+
+
 def test_an_ignore_rule_without_a_reason_is_an_error(tmp_path: Path) -> None:
     manifest = {"ignore_rules": [{"name": "x", "pattern": r"\bv\d+\b", "reason": ""}], "lines": []}
     assert _custom(tmp_path, "nothing 1\n", manifest)

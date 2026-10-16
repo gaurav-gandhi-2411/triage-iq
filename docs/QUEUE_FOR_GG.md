@@ -37,6 +37,23 @@ degrade, docs5, docs6, docs7, docs8, docs9, embfix, emblog, evalb, guard, ladapt
 **Run `scripts\gg_cleanup.ps1` yourself** (PowerShell, from anywhere): it prints what each step removes and the space it reclaims, asks Y/N before each, skips any worktree with uncommitted or untracked files or not
 contained in origin/main, then runs `docker builder prune -f` and `docker image prune -f` (dangling images only; tagged images are never touched). I have not run it. The worktrees stay on disk until then.
 
+**Obsolete TriageIQ Docker images (read-only audit 2026-10-17; I removed nothing).** `docker images` and `docker ps -a` list 22 images and 9 containers on this machine; four images are TriageIQ's, none has a container (`docker ps -a --filter ancestor=<image>` returned 0 for each):
+
+| Image | Size | Why it is safe to remove |
+|---|---|---|
+| `triageiq-cold:tik` | 4.56 GB | Cold-start investigation image (the production image plus `tiktoken` baked in, the #140 variant). #140 was closed unmerged on 2026-10-07 and the investigation was closed on 2026-10-12 (D68); nothing deployed or tested uses it. |
+| `triageiq-cold:base` | 4.55 GB | Baseline image for the same A/B (the production image as it was). Same reason; the production image is rebuilt by `deploy.yml`, not from this one. |
+| `tiq-sk:1.7.2` | 3.53 GB | scikit-learn version study (built from `lock_1.7.2.txt` plus pytest). The result shipped as #145 (pin scikit-learn 1.7.2, merged). |
+| `tiq-sk:1.6.1` | 3.55 GB | The same study's other arm (1.6.1, the version the artifacts were pickled with). Same reason. |
+
+Sum of the four listed sizes: 16.19 GB (layers shared between images are counted twice, so the real reclaim is somewhat less). Commands, for you to run (nothing else is touched):
+
+```
+docker rmi triageiq-cold:tik triageiq-cold:base tiq-sk:1.7.2 tiq-sk:1.6.1
+```
+
+Stopped containers: **none belong to TriageIQ**, so there is no `docker rm` to run. The stopped ones are `vfy312` and `vfy307` (Playwright, another project) and `gold-mlflow` (MLflow); I left them out as you asked. Also left alone as shared or other projects': `python:3.11-slim` (the README's `pip-audit` command uses it), the Playwright, Postgres, Supabase, `intent-router`, `nss-forecaster`, `review-iq-ci-smoke`, `shelfsense` and `mlflow` images. If a rebuild of any of the four is ever needed, they come from the repo's own Dockerfiles and lock files.
+
 ## Round 12: what needs you (D67)
 
 1. **ON HOLD (owner, 2026-10-12): Cloud Run recording job, core #184 and its ONE IAM binding.** Both wait until README #151 is approved. When released:

@@ -32,8 +32,10 @@ Not done: the README refers to a `readme_numbers_check.py` that does not exist i
 
 **Also needs you (blocked by the auto-mode classifier, not retried):** removing 29 merged worktrees (`triage-iq-wt-*`; each was checked first: branch is an ancestor of origin/main, no tracked
 changes, no untracked files). The command `git worktree remove C:/Users/gaura/ml-projects/triage-iq-wt-<name>` for these names was denied as "Irreversible Local Destruction": analysis, budget, cached, ckptval, decay,
-degrade, docs5, docs6, docs7, docs8, docs9, embfix, emblog, evalb, guard, integ, ladapt, lcore, lock, log, lrec, manifest, sklearn, smoke, startup, startup2, startup3, vscodenaive, m140, p3ro.
-Run them yourself (they hold no work), or tell me to retry. They stay on disk until then.
+degrade, docs5, docs6, docs7, docs8, docs9, embfix, emblog, evalb, guard, ladapt, lcore, lock, log, lrec, manifest, sklearn, smoke, startup, startup2, startup3, vscodenaive, m140, p3ro.
+**Correction (2026-10-17): the first version of this list had a 30th name, `integ`, which is now the worktree the vscode expansion recorder runs in; it is excluded (do not remove it until the recording is committed).**
+**Run `scripts\gg_cleanup.ps1` yourself** (PowerShell, from anywhere): it prints what each step removes and the space it reclaims, asks Y/N before each, skips any worktree with uncommitted or untracked files or not
+contained in origin/main, then runs `docker builder prune -f` and `docker image prune -f` (dangling images only; tagged images are never touched). I have not run it. The worktrees stay on disk until then.
 
 ## Round 12: what needs you (D67)
 

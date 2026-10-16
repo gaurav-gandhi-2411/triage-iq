@@ -62,6 +62,9 @@ def _eval(node: ast.AST, env: dict[str, float]) -> float:
         return float(node.value)
     if isinstance(node, ast.Name):
         return env[node.id]
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
+        v = _eval(node.operand, env)
+        return -v if isinstance(node.op, ast.USub) else v
     if isinstance(node, ast.BinOp) and type(node.op) in _OPS:
         return _OPS[type(node.op)](_eval(node.left, env), _eval(node.right, env))
     raise ValueError(f"unsupported expression element: {ast.dump(node)}")
@@ -148,6 +151,14 @@ def check(readme: Path, manifest: Path, root: Path = ROOT, strict: bool | None =
                 value = resolve(root, src)
             except Exception as exc:  # noqa: BLE001 - any unreadable source is a failed check; say which one
                 errors.append(f"[{eid}] {text!r}: source {src} failed: {exc}")
+                continue
+            if "tol" in num:
+                # For sources stored at lower precision than the README quotes (a 4-decimal JSON field behind a
+                # 1-decimal percentage): the README number must be within `tol` of the re-read value.
+                if abs(float(text.replace(",", "")) - value) <= float(num["tol"]):
+                    verified += 1
+                else:
+                    errors.append(f"[{eid}] README line {idx + 1} says {text!r} but the source gives {value} (tolerance {num['tol']}; {src})")
                 continue
             shown = num.get("fmt", "{}").format(value)
             if shown != text:

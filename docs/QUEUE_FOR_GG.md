@@ -4,8 +4,30 @@ Last updated 2026-10-16 (round 13, D72-D75). Everything else is in `docs/DECISIO
 
 ## Round 13 (2026-10-16): README #151 is READY for your review (not merged)
 
-README #151 (`docs/readme-verified-numbers`, head `084beb9` as of 2026-10-17; the contention text below was pasted at `3a42c15`, and the same branch since leads the component rows with exact-match accuracy, 44/64 = 68.8%, with the judge's `component_match` shown as lenient) is marked ready. `python scripts/readme_numbers_check.py` passes on it: 10 lines, 79 numbers, 61 re-read from their source files and matching, 18 declared constants with reasons (`docs/readme_numbers.json` on that branch); altering a number (82.7 to 83.7, 68.8 to 69.8) fails it. It checks only the lines named in the manifest (the LLM rows, the component rows, both CQR rows); about 1,600 numeric tokens elsewhere in the README, including the latency and concurrency paragraphs, are not covered by it. **Do not merge until you have read it; I did not and will not.** This round added the contention result and the `component_match` finding. Text of the sections added or
+README #151 (`docs/readme-verified-numbers`, head `eacf0c2` as of 2026-10-17; the contention text below was pasted at `3a42c15`, and the same branch since leads the component rows with exact-match accuracy, 44/64 = 68.8%, with the judge's `component_match` shown as lenient) is marked ready. `python scripts/readme_numbers_check.py` passes on it, in strict mode (full summary below). **Do not merge until you have read it; I did not and will not.** This round added the contention result and the `component_match` finding. Text of the sections added or
 changed this round, rendered as they appear in the README (the PR itself is the full document; the other sections were number-checked by me in earlier rounds, not reviewed by you):
+
+### README numbers check: full coverage summary (`scripts/readme_numbers_check.py` on #151 `eacf0c2`, 2026-10-17)
+
+```
+claim-bearing README lines: 207; declared: 207 (100.0%); uncovered: 0
+claim numbers: 798 declared, 0 uncovered; verified against a source: 675
+source kinds: constant 26, json 113, expr 113, regex 113, contains 336, quoted 97
+strict mode: True            (a README line with a claim number that is not declared fails CI)
+OK
+```
+
+- **Claims covered vs total:** 207 of 207 claim-bearing lines (headline, latency, concurrency, caching, cold starts, the evaluation tables, resolution, coverage, grounding, the pipeline diagram, training data, API contract, known limitations, and the dated notes). 798 claim numbers, none undeclared.
+- **How each number is backed (strongest first):** 339 are RE-COMPUTED from a field (JSON path 113, arithmetic over fields 113, a regex into a committed report or source file 113: re-read, reformatted and compared on every run); 336 are tied to a QUOTED PHRASE that must still exist verbatim in a named ADR/report and contain the number (this proves the record states the number, it does not recompute it); 97 are numbers on the dated notes that appear in the ADRs the paragraph cites (containment only, weakest, and rounding-aware, e.g. 0.086 for 0.0863); 26 are definitions with a written reason (judge scale /15, score levels 0/1/2, "replay costs 0 tokens" by construction, confidence level 95), never measurements.
+- **Identifiers are excluded by declared rules (26 in the manifest, 2 whole-line rules, 6 built-in patterns), not per-token constants:** code spans, ADR/PR/issue/decision references, ISO dates and years, commit and artifact hashes, versions (v2), quantile and metric names (Q10, R@5, top-3), model names, "System 2" style labels, call indexes, `k8s`, and sentence-level HTTP status codes in the API contract. Each rule has a stated reason in `docs/readme_numbers.json`.
+- **Failure proof (strict):** changing 82.7 to 83.7, 68.8 to 69.8 or 12.09 to 12.19 fails it; appending a sentence with an unsourced number fails it; 13 unit tests cover the same cases plus an unreadable source and a vanished quotation.
+- **README numbers that had no source, and what I did (never a constant for a measured number):**
+  1. The pipeline diagram said `k8s +0.71% vs naive (as served)` and `vscode -54% (WORSE than naive)`; the median has been served since D7 (MAE equals naive by construction), so both were stale. Now `k8s learned model +2.06% (not served)` / `vscode -54% (WORSE; not served)`, each re-computed from `reports/eval_summary.json`.
+  2. The CI line said `352 tests, 78.04% coverage`. A full run on `main` is 578 tests and 86.34% coverage (both drift with every PR), so the README no longer pins them; only the 60% gate (from `pyproject.toml`) is quoted.
+  3. `79 feats`, `4,923 / 23,928 training rows`, `13,315 / 29,994 vectors`, `40.9 MB` had no report behind them: new `reports/resolution_feature_counts.json` and `reports/served_index_facts.json` (scripts `resolution_feature_counts.py`, `served_index_facts.py`, merged in #212) read the served artifacts.
+  4. One rounding discrepancy found and handled openly: the vscode related-task CI upper bound is 78.9 in the README (15/19 = 0.78947) but stored as 0.7895 in `lever12_eval_results.json`; the manifest states a tolerance of 0.051 for that one number rather than changing either.
+- **Limits:** the strongest tier covers the tables and the new paragraphs; the dated notes (README lines 156-470; 67 lines carry a `quoted_from` list) rest mostly on the quoted tiers, so a mis-copied number there is caught only if the record does not contain it. Order of authority if a number looks wrong: the report file, then the ADR, then the README.
+- **Where the manifest lives:** `docs/readme_numbers.json` rides with #151 (it names lines of the #151 README, so it cannot land on `main` before the README does; `main` carries the checker, its 13 tests and an empty manifest, merged in #205, #208, #210, #211). Once #151 merges, the required `test` job fails any PR that edits the README or a source report in a way the manifest does not accept.
 
 ### Latency, concurrency and caching (README, "Latency" section)
 

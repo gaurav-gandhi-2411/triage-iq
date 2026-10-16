@@ -8,6 +8,7 @@ of the judge's recorded response, and compares them. Writes reports/component_ma
 from __future__ import annotations
 
 import json
+import math
 import re
 from collections import Counter
 from pathlib import Path
@@ -53,7 +54,24 @@ def main() -> None:
     agree = [r for r in rows if r["exact_equal"] == (r["component_match"] == 2)]
     dis = [r for r in rows if r not in agree]
     table = Counter((r["exact_equal"], r["component_match"]) for r in rows)
+    equal = sum(r["exact_equal"] for r in rows)
+    wrong = [r for r in rows if not r["exact_equal"]]
+    # Wilson 95% interval for the deterministic exact-match accuracy (same formula as the other reports).
+    z = 1.96
+    p = equal / n
+    d = 1 + z * z / n
+    centre = p + z * z / (2 * n)
+    half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))
     result = {
+        "exact_match_accuracy": round(p, 4),
+        "exact_match_accuracy_wilson95": [round((centre - half) / d, 4), round((centre + half) / d, 4)],
+        "wrong_plans": len(wrong),
+        "wrong_plans_scored_2": sum(r["component_match"] == 2 for r in wrong),
+        "wrong_plans_scored_1": sum(r["component_match"] == 1 for r in wrong),
+        "wrong_plans_scored_0": sum(r["component_match"] == 0 for r in wrong),
+        "judge_scored_2_total": sum(r["component_match"] == 2 for r in rows),
+        "judge_mean_component_match": sum(r["component_match"] for r in rows) / n,
+        "strict_equality_mean_component_match": 2 * equal / n,
         "n_judge_entries": n,
         "agreement_rule": "exact_equal iff component_match == 2",
         "agree": len(agree),

@@ -89,7 +89,45 @@ def test_a_missing_source_file_fails_instead_of_passing(tmp_path: Path) -> None:
     (tmp_path / "README.md").write_text(README, encoding="utf-8")
     (tmp_path / "m.json").write_text(json.dumps(MANIFEST), encoding="utf-8")
     errors, _ = rnc.check(tmp_path / "README.md", tmp_path / "m.json", root=tmp_path)
-    assert errors and any("cannot read source" in e for e in errors)
+    assert errors and any("failed" in e for e in errors)
+
+
+def _custom(tmp_path: Path, readme: str, manifest: dict, strict: bool | None = None) -> list[str]:
+    (tmp_path / "README.md").write_text(readme, encoding="utf-8")
+    (tmp_path / "m.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (tmp_path / "src.md").write_text("The adapter reached recall of 39.4 percent on the clean subset.\n", encoding="utf-8")
+    return rnc.check(tmp_path / "README.md", tmp_path / "m.json", root=tmp_path, strict=strict)[0]
+
+
+def _contains(text: str, phrase: str) -> dict:
+    return {"id": "c", "line_contains": "recall line", "numbers": [{"text": text, "source": {"file": "src.md", "contains": phrase}}]}
+
+
+def test_a_quoted_source_phrase_passes_and_fails_when_the_phrase_or_number_changes(tmp_path: Path) -> None:
+    ok = {"lines": [_contains("39.4", "recall of 39.4 percent")]}
+    assert _custom(tmp_path, "recall line 39.4% here\n", ok) == []
+    assert _custom(tmp_path, "recall line 39.5% here\n", ok)  # README number altered
+    stale = {"lines": [_contains("39.4", "recall of 41.0 percent")]}
+    assert _custom(tmp_path, "recall line 39.4% here\n", stale)  # the source phrase no longer exists
+
+
+def test_strict_mode_fails_on_any_undeclared_claim_line_but_declared_rules_exempt_identifiers(tmp_path: Path) -> None:
+    manifest = {
+        "strict": True,
+        "ignore_rules": [{"name": "version", "pattern": r"\bv\d+\b", "reason": "a method version label, not a result"}],
+        "ignore_lines": [{"name": "shell", "pattern": r"^\$ ", "reason": "command lines carry arguments, not claims"}],
+        "lines": [_contains("39.4", "recall of 39.4 percent")],
+    }
+    readme = "recall line 39.4% under v2\n$ run --epochs 5\n"
+    assert _custom(tmp_path, readme, manifest) == []
+    errors = _custom(tmp_path, readme + "a new claim of 87% appears\n", manifest)
+    assert errors and any("unsourced claim" in e for e in errors)
+    assert _custom(tmp_path, readme + "a new claim of 87% appears\n", {**manifest, "strict": False}) == []
+
+
+def test_an_ignore_rule_without_a_reason_is_an_error(tmp_path: Path) -> None:
+    manifest = {"ignore_rules": [{"name": "x", "pattern": r"\bv\d+\b", "reason": ""}], "lines": []}
+    assert _custom(tmp_path, "nothing 1\n", manifest)
 
 
 def test_the_repository_readme_matches_its_declared_sources() -> None:

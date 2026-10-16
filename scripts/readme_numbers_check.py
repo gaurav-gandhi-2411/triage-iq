@@ -92,6 +92,22 @@ def source_kind(src: dict) -> str:
     return "contains" if "contains" in src else "expr" if "expr" in src else "regex" if "regex" in src else "json"
 
 
+def appears_in(text: str, body: str) -> bool:
+    """`text` is a number in `body`, either verbatim or as a rounding of a more precise one (0.086 for 0.0863)."""
+    if re.search(r"(?<![\d.,])" + re.escape(text) + r"(?!\d|\.\d)", body):
+        return True
+    d = len(text.split(".")[1]) if "." in text else 0
+    for m in NUMBER.finditer(body):
+        s = m.group(0)
+        if "." in s and len(s.split(".")[1]) > d:
+            try:
+                if f"{float(s.replace(',', '')):.{d}f}" == text.replace(",", ""):
+                    return True
+            except ValueError:
+                continue
+    return False
+
+
 def claim_numbers(line: str, extra_rules: list[tuple[str, str]] | None = None, removed: Counter | None = None) -> list[str]:
     for name, pat in BUILTIN_RULES + (extra_rules or []):
         def blank(m: re.Match, name: str = name) -> str:
@@ -139,7 +155,7 @@ def check(readme: Path, manifest: Path, root: Path = ROOT, strict: bool | None =
             except Exception as exc:  # noqa: BLE001 - an unreadable quoted file is a failed check
                 errors.append(f"[{eid}] quoted_from file {qf!r} cannot be read: {exc}")
         for text in present - declared:
-            if qbody and re.search(r"(?<![\d.,])" + re.escape(text) + r"(?!\d|\.\d)", qbody):
+            if qbody and appears_in(text, qbody):
                 kinds["quoted"] += (present - declared)[text]
                 continue
             errors.append(f"[{eid}] README line {idx + 1} has undeclared number {text!r} (found {present[text]}x, declared {declared[text]}x); declare it with a source")

@@ -159,6 +159,13 @@ def test_quoted_from_accepts_numbers_found_in_the_named_record_and_rejects_the_r
     readme.write_text("audit line: 66/150, 39.49%\n", encoding="utf-8")  # one number the record does not state
     errors = rnc.check(readme, tmp_path / "m.json", root=tmp_path)[0]
     assert errors and any("39.49" in e for e in errors)
+    (tmp_path / "adr.md").write_text("ECE 0.0863 before, 0.1114 after.\n", encoding="utf-8")
+    manifest["lines"][0]["quoted_from"] = ["adr.md"]
+    (tmp_path / "m.json").write_text(json.dumps(manifest), encoding="utf-8")
+    readme.write_text("audit line: ECE 0.086 and 0.111\n", encoding="utf-8")  # rounded quotations of the record's 4-decimal values
+    assert rnc.check(readme, tmp_path / "m.json", root=tmp_path)[0] == []
+    readme.write_text("audit line: ECE 0.087\n", encoding="utf-8")  # 0.0863 does not round to 0.087
+    assert rnc.check(readme, tmp_path / "m.json", root=tmp_path)[0]
     manifest["lines"][0]["quoted_from"] = ["missing.md"]
     (tmp_path / "m.json").write_text(json.dumps(manifest), encoding="utf-8")
     assert any("cannot be read" in e for e in rnc.check(readme, tmp_path / "m.json", root=tmp_path)[0])

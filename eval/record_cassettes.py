@@ -75,9 +75,14 @@ from triage_iq.models.triage import TriageAssistant, TruncatedCompletionError
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-EVAL_SET = ROOT / "eval" / "eval_set.jsonl"
-CASSETTE_PATH = ROOT / "eval" / "cassettes" / "eval_cassette.json"
-CHECKPOINT_PATH = ROOT / "eval" / "cassettes" / "recording_checkpoint.json"
+# TRIAGEIQ_RECORDING_SET_DIR (2026-10-16): record a SEPARATE set (e.g. the vscode expansion) without touching the
+# committed eval set or its cassette. The directory holds eval_set.jsonl and a cassettes/ folder; unset (the
+# default) keeps every path exactly as before.
+_SET_DIR = Path(os.environ["TRIAGEIQ_RECORDING_SET_DIR"]) if os.environ.get("TRIAGEIQ_RECORDING_SET_DIR") else None
+EVAL_SET = _SET_DIR / "eval_set.jsonl" if _SET_DIR else ROOT / "eval" / "eval_set.jsonl"
+_CASSETTE_DIR = _SET_DIR / "cassettes" if _SET_DIR else ROOT / "eval" / "cassettes"
+CASSETTE_PATH = _CASSETTE_DIR / "eval_cassette.json"
+CHECKPOINT_PATH = _CASSETTE_DIR / "recording_checkpoint.json"
 # 2026-09-06: this used to be written only by scripts/run_recording_unattended.py, once per
 # subprocess pass -- fine for the old combined mode (a pass usually meant "this issue"), but
 # under --mode synthesis a single pass can quietly run for tens of minutes (Groq TPM backoff
@@ -86,7 +91,7 @@ CHECKPOINT_PATH = ROOT / "eval" / "cassettes" / "recording_checkpoint.json"
 # issue by issue. record_cassettes.py now writes it directly after every issue -- this is
 # the file meant for a human checking progress without a CC session, so it must reflect
 # reality at per-issue granularity, not per-subprocess-invocation granularity.
-STATUS_PATH = ROOT / "eval" / "cassettes" / "RECORDING_STATUS.txt"
+STATUS_PATH = _CASSETTE_DIR / "RECORDING_STATUS.txt"
 
 # ADR-0059: the 2026-09-05 incident that made artifact fingerprinting necessary was this
 # exact checkout being resolved as ROOT by a script actually invoked from it (ROOT is always

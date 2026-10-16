@@ -1,0 +1,163 @@
+{
+ "note": "Every item carries its real repo component label (ground truth). Judge output is a cross-check only and is NOT used as a label.",
+ "sample_counts": {
+  "temporal_val_test_issues": 2449,
+  "after_excluding_train_gold_eval_shipped_train": 2246,
+  "closed_with_resolution": 2246,
+  "with_repo_component_label": 68,
+  "label_in_served_47_class_space": 63,
+  "label_outside_the_47_classes": 5,
+  "without_label": 2178,
+  "sampled": 63,
+  "sampled_with_real_label": 63,
+  "buckets": {
+   "<7d": 41,
+   ">30d": 11,
+   "7-30d": 11
+  }
+ },
+ "vocabulary": {
+  "n_classes": 47,
+  "classifier_sha256": "5e286b1f75218373feceb43703d2a1a8a249d972393def659139eb308475313f",
+  "matches_manifest": true,
+  "source": "gs://triageiq-prod-260812-models/models/component_classifier_microsoft_vscode.pkl (ADR-0057, 47 classes)"
+ },
+ "judges": {
+  "qwen3:8b": {
+   "family": "Alibaba Qwen",
+   "calibrate_easy": {
+    "n": 30,
+    "correct": 29,
+    "accuracy": 0.9667,
+    "wilson95": [
+     0.8333,
+     0.9941
+    ]
+   },
+   "calibrate_hard": {
+    "n": 40,
+    "correct": 17,
+    "accuracy": 0.425,
+    "wilson95": [
+     0.2851,
+     0.5781
+    ]
+   },
+   "accuracy_vs_real_label_on_sample": {
+    "n": 63,
+    "correct": 33,
+    "accuracy": 0.5238,
+    "wilson95": [
+     0.4027,
+     0.6422
+    ]
+   },
+   "invalid_outputs": 0,
+   "passes_pre_registered_easy_rule": true
+  },
+  "llama3.1:8b": {
+   "family": "Meta Llama",
+   "calibrate_easy": {
+    "n": 30,
+    "correct": 17,
+    "accuracy": 0.5667,
+    "wilson95": [
+     0.392,
+     0.7262
+    ]
+   },
+   "calibrate_hard": {
+    "n": 40,
+    "correct": 15,
+    "accuracy": 0.375,
+    "wilson95": [
+     0.2422,
+     0.5297
+    ]
+   },
+   "accuracy_vs_real_label_on_sample": {
+    "n": 63,
+    "correct": 25,
+    "accuracy": 0.3968,
+    "wilson95": [
+     0.2853,
+     0.5202
+    ]
+   },
+   "invalid_outputs": 0,
+   "passes_pre_registered_easy_rule": false
+  },
+  "gemma2:9b": {
+   "family": "Google Gemma",
+   "calibrate_easy": {
+    "n": 30,
+    "correct": 24,
+    "accuracy": 0.8,
+    "wilson95": [
+     0.6269,
+     0.905
+    ]
+   },
+   "calibrate_hard": {
+    "n": 40,
+    "correct": 13,
+    "accuracy": 0.325,
+    "wilson95": [
+     0.2008,
+     0.4798
+    ]
+   },
+   "accuracy_vs_real_label_on_sample": {
+    "n": 63,
+    "correct": 28,
+    "accuracy": 0.4444,
+    "wilson95": [
+     0.3285,
+     0.5668
+    ]
+   },
+   "invalid_outputs": 0,
+   "passes_pre_registered_easy_rule": true
+  }
+ },
+ "judges_in_consensus": [
+  "qwen3:8b",
+  "gemma2:9b"
+ ],
+ "fleiss_kappa_all_three_judges_reference": {
+  "all_items": {
+   "value": 0.613,
+   "ci95_item_bootstrap": [
+    0.5114,
+    0.7064
+   ],
+   "n_items": 63
+  },
+  "real_labelled_items": {
+   "value": 0.613,
+   "ci95_item_bootstrap": [
+    0.5114,
+    0.7064
+   ],
+   "n_items": 63
+  }
+ },
+ "items_labelled_by_all_consensus_judges": 63,
+ "percent_all_agree": 0.6984,
+ "pairwise_cohen_kappa": {
+  "qwen3:8b|gemma2:9b": 0.6774
+ },
+ "final_items": 63,
+ "ground_truth_real_label": 63,
+ "consensus_vs_real_label_on_labelled": {
+  "n": 63,
+  "correct": 26,
+  "accuracy": 0.4127,
+  "wilson95": [
+   0.2996,
+   0.5358
+  ]
+ },
+ "consensus_disagrees_with_real_label": 37,
+ "labelled_items_where_the_consensus_judges_disagree": 19
+}

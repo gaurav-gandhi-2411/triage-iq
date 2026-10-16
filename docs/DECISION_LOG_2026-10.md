@@ -905,3 +905,18 @@ intent in another form (e.g. a script file); report the exact command and hook o
    tracked `cassettes` directory, plus a session sha256 tripwire, installed from a root `conftest.py`. The original buggy test run under it fails with
    `TrackedCassetteWriteBlocked` and `eval/` stays untouched. A full local run of `tests` + `eval` under the guard had 0 guard hits.
 5. **Hold:** core #184 (Cloud Run job packaging, a workflow) and the one IAM binding are on hold until README #151 is approved.
+
+### Round 12 follow-up (2026-10-13)
+
+- **D69. Groq prompt caching is intermittent, not absent.** Earlier text (README #151, "did not engage") rested on SDK-parsed usage. The RAW response JSON of a warm identical-prefix request
+  reported `usage.prompt_tokens_details.cached_tokens` 1,536 of 1,611 prompt tokens (cold: no field). About 1 hit in 5 warm direct calls; 0 of 4 production triage calls; one SDK-parsed pair
+  showed none. Decision: caching is NOT counted in any budget or concurrency planning, and whether a cached call is charged less against the per-minute counter is untested (the 3-requests-in-60 s
+  contention test is ledger-gated). README #151 corrected.
+- **D70. vscode eval expansion is real labels only.** The consensus-only item (#175206) was removed (owner, 2026-10-13): the qwen3:8b + gemma2:9b consensus matches the real label on 26/63 = 41.3%
+  (Wilson 30.0-53.6), so a consensus label is more likely wrong than right. The set is the 63 real-label issues (script #194, results #195). With the 11 vscode gold issues that is **74 vscode issues**,
+  enough for a ~5% gate; **recording the 63 against Groq is the first post-close workstream** (not started: it needs Groq budget and a new eval baseline, both owner-gated).
+- **D71. What `component_match` measures (read-only finding, nothing changed).** The TriageIQ judge prompt (`src/triage_iq/evaluation/triage_eval.py`, `_build_judge_prompt`) puts the GOLD component,
+  priority and resolution days in the prompt, so the judge compares the plan's component to a supplied label (2 = correct, 1 = plausible but not gold, 0 = wrong); it does not infer the component from the
+  issue text. The local judges' 17/40 hard-set accuracy in D70 measures a different task (inferring a label from text with no gold), so it is not an estimate of the judge's component_match error.
+  Residual caveat: the "1 = plausible" band is subjective, and the judge's agreement with exact string equality on component has not been measured. A deterministic cross-check
+  (plan component == gold component) is the cheap follow-up; the README judge numbers need that caveat only if it disagrees.

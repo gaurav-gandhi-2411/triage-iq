@@ -38,6 +38,7 @@ Retryable (these just wait and re-invoke the same command):
 import argparse
 import atexit
 import json
+import os
 import re
 import subprocess
 import sys
@@ -49,11 +50,14 @@ WORKTREE_ROOT = Path(__file__).parent.parent
 MAIN_REPO_ENV = Path(r"C:\Users\gaura\ml-projects\triage-iq\.env")
 PYTHON = WORKTREE_ROOT / ".venv" / "Scripts" / "python.exe"
 RECORD_SCRIPT = WORKTREE_ROOT / "eval" / "record_cassettes.py"
-CHECKPOINT_PATH = WORKTREE_ROOT / "eval" / "cassettes" / "recording_checkpoint.json"
-EVAL_SET_PATH = WORKTREE_ROOT / "eval" / "eval_set.jsonl"
-STATUS_PATH = WORKTREE_ROOT / "eval" / "cassettes" / "RECORDING_STATUS.txt"
-LOG_DIR = WORKTREE_ROOT / "eval" / "cassettes" / "unattended_logs"
-PID_PATH = WORKTREE_ROOT / "eval" / "cassettes" / "unattended_recorder.pid"
+# Same switch as eval/record_cassettes.py: a separate recording set lives in its own directory (see there).
+_SET_DIR = Path(os.environ["TRIAGEIQ_RECORDING_SET_DIR"]) if os.environ.get("TRIAGEIQ_RECORDING_SET_DIR") else None
+_CASSETTE_DIR = _SET_DIR / "cassettes" if _SET_DIR else WORKTREE_ROOT / "eval" / "cassettes"
+CHECKPOINT_PATH = _CASSETTE_DIR / "recording_checkpoint.json"
+EVAL_SET_PATH = _SET_DIR / "eval_set.jsonl" if _SET_DIR else WORKTREE_ROOT / "eval" / "eval_set.jsonl"
+STATUS_PATH = _CASSETTE_DIR / "RECORDING_STATUS.txt"
+LOG_DIR = _CASSETTE_DIR / "unattended_logs"
+PID_PATH = _CASSETTE_DIR / "unattended_recorder.pid"
 
 sys.path.insert(0, str(WORKTREE_ROOT / "src"))
 sys.path.insert(0, str(RECORD_SCRIPT.parent))

@@ -1,0 +1,9 @@
+{
+  "n": 63,
+  "source": "reports/vscode_gold_expansion_2026-10-12/sample.jsonl",
+  "index_faiss_sha256": "3b825bd00696b2b83c2731a0e5cde9af0123b109eded2f7e48ea1194855e3a53",
+  "k": 5,
+  "frozen_on": "cpu-float32",
+  "priority_rule": "resolution_days <1 high, <7 medium, else low (10_curate_triage_gold.py infer_priority)",
+  "label_source": "real repo component label for all rows; no LLM-derived labels"
+}

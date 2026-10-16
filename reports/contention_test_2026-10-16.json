@@ -1,0 +1,38 @@
+[
+ {
+  "i": 1,
+  "repo": "microsoft/vscode",
+  "offset_s": 0,
+  "sent_at": "2026-10-16T17:54:24.239739+00:00",
+  "http": 200,
+  "client_ms": 6183.7,
+  "degraded": false,
+  "llm_status": "ok",
+  "reason": null,
+  "request_id": "80b27df7-0e78-498d-a108-7c1237a1353a"
+ },
+ {
+  "i": 2,
+  "repo": "kubernetes/kubernetes",
+  "offset_s": 8,
+  "sent_at": "2026-10-16T17:54:32.240742+00:00",
+  "http": 200,
+  "client_ms": 1174.7,
+  "degraded": true,
+  "llm_status": "degraded_provider_error",
+  "reason": "llm_time_budget_exceeded",
+  "request_id": "c7990892-9e21-4a70-8b76-85f4ceca5a7b"
+ },
+ {
+  "i": 3,
+  "repo": "microsoft/vscode",
+  "offset_s": 16,
+  "sent_at": "2026-10-16T17:54:40.241777+00:00",
+  "http": 200,
+  "client_ms": 16176.0,
+  "degraded": false,
+  "llm_status": "ok",
+  "reason": null,
+  "request_id": "bb7d15d2-04e3-4149-8a30-2da517d347ac"
+ }
+]

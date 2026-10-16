@@ -920,3 +920,31 @@ intent in another form (e.g. a script file); report the exact command and hook o
   issue text. The local judges' 17/40 hard-set accuracy in D70 measures a different task (inferring a label from text with no gold), so it is not an estimate of the judge's component_match error.
   Residual caveat: the "1 = plausible" band is subjective, and the judge's agreement with exact string equality on component has not been measured. A deterministic cross-check
   (plan component == gold component) is the cheap follow-up; the README judge numbers need that caveat only if it disagrees.
+
+### Round 13 (2026-10-16): UI, contention, component_match
+
+- **D72. UI #29 and #30 merged and deployed.** #29 (`git.deploymentEnabled`: only `main` deploys) merged as `ee4e6f2`; Vercel production deployment `dpl_DAHAhxgqCDBH8dBr5HVfszaa1onh`
+  (`githubCommitSha` ee4e6f2a) is READY / PROMOTED (Vercel API `/v6/deployments?target=production`). `/eval` in a browser (chrome-devtools, 2026-10-16): the served block shows 82.7% [78.5, 86.2], the
+  "almost entirely from the longest-resolving 20% of issues" wording is present, no "74.6", 0 console messages; screenshot `reports/screenshots/eval-live/eval-2026-10-16.png`. Throwaway branch
+  `chore/throwaway-no-deploy-test` (one empty commit, pushed 17:48 UTC): 0 GitHub deployments for its sha and no new Vercel deployment 2 minutes later; branch deleted locally and remotely.
+  #30 (degraded notice) needed `update-branch`, then merged as `7bc1f27`; deployment `dpl_BQSK6CbT1zhCfa22AGoTpQgkcbCW` READY / PROMOTED. Degraded notice render check: the live site was driven with its
+  `fetch` stubbed to return the REAL degraded production response captured 2026-10-12 (`api-degraded-triage-2026-10-12.json`, `rate_limited_tpd`); the notice reads "The language model is busy, so this is an
+  ML-only plan ... daily token allowance is used up" (`reports/screenshots/eval-live/degraded-notice-live-2026-10-16.png`). That is a captured real response replayed through the live UI, not a live-triggered
+  degradation (the ledger allowed real traffic, so none occurred); the real degraded response from D73 call 2 was not rendered.
+- **D73. Contention test (3 requests inside 60 s, production revision `triageiq-api-00061-guj`, 2026-10-16 17:54 UTC, ledger ALLOW at 0/160K).** Offsets 0 / 8 / 16 s, three different issues
+  (two from the vscode expansion sample, one k8s eval item). Evidence `reports/contention_test_2026-10-16.json`, Cloud Run lines `reports/contention_test_2026-10-16_cloudrun_log.txt`.
+  Call 1 (vscode): HTTP 200, 6,184 ms, LLM answer, no retry. Call 2 (k8s, +8 s): HTTP 200, **1,175 ms, degraded** (`llm_time_budget_exceeded`): one `Rate limit hit ... sleeping 25.0s (attempt 1/6)`, the
+  backoff exceeded the 14.9 s left so the request degraded at once instead of waiting. Call 3 (vscode, +16 s): HTTP 200, **16,176 ms, LLM answer**, one rate-limit hit with an 11.0 s sleep, then success
+  (the 15 s budget bounds the LLM stage; the other stages add ~1.2 s). 2 of 3 got an LLM answer, 1 of 3 degraded, 2 retries in total, no 5xx. Two successful calls were recorded in the ledger as 11,840
+  tokens (5,920 each, an ESTIMATE from the 2026-10-12 stored usage; per-call usage was not captured). The README sentence "roughly one LLM-backed triage per minute" is consistent with this (2 answers in a
+  32 s window needed an 11 s wait) but n=1 run; whether caching helped call 3 is unknown (cached_tokens not captured).
+- **D74. component_match vs exact string equality (zero tokens, `scripts/component_match_agreement.py`, `reports/component_match_agreement_2026-10-16.json`).** On the 64 recorded qwen3:8b judge entries
+  in `eval/cassettes/eval_cassette.json`: the judge's score is 2 for **all 44** plans whose predicted component equals the gold component; of the 20 unequal pairs it scored 0 for 4, 1 for 11 and **2 for 5**.
+  Agreement with the rule "equal iff component_match == 2": **59/64 = 92.2%**; every disagreement is in one direction (judge more lenient than equality). The 5 leniency cases (all kubernetes labels): gold cloudprovider vs
+  predicted provider/openstack, system-requirement vs kubelet, usability vs kubectl (twice), swagger vs api. Consequence for the README: the judge's component_match mean is 109/64 = 1.70 of 2, against
+  88/64 = 1.38 under strict equality; and its worst band (component_match == 0, which feeds the floor-fail rate) caught 4 of the 20 wrong plans, so the floor-fail rate understates component misses.
+  README #151 gets this caveat. No scoring change was made.
+- **D75. Blocked: removal of merged worktrees (classifier denial).** Item 1c asked for merged worktrees to be removed. The command `for n in analysis budget ... p3ro; do git worktree remove
+  "C:/Users/gaura/ml-projects/triage-iq-wt-$n"; done` (29 worktrees, each verified before by a separate read-only listing: branch ancestor of origin/main, 0 tracked changes, 0 untracked files; no `--force`)
+  was denied by the auto-mode classifier as "Irreversible Local Destruction". Not retried in any form. Queued for GG with the exact list. Worktrees kept for a reason and NOT in the list:
+  `coldstart` (1 tracked change), `d137`/`golden`/`startup-base` (1 untracked file each), `vsx` (holds the local-only `_superseded_v1_36class/`), and the AHEAD ones (`cloudrec`, `ledger`, `readme`, `served`, `groq-model-fix`, `wif-monitoring`).

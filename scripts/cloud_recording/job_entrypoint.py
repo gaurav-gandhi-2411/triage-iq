@@ -34,6 +34,7 @@ import tarfile
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -166,7 +167,9 @@ def run_job(cfg: JobConfig) -> int:
             restored = unpack_bundle(snap[1], cfg.cassette_dir, lineage)
         before_sha = _sha(cfg.cassette_dir / "eval_cassette.json")
 
-        d = led.check(PROJECT, MODEL, NEXT_CALL_TOKENS)
+        # The job's own clock (cfg.now), not the ledger's wall clock: the budget decision must be made at the
+        # same instant the flag and the entries were stamped with (and tests that freeze cfg.now stay valid).
+        d = led.check(PROJECT, MODEL, NEXT_CALL_TOKENS, now=datetime.fromtimestamp(cfg.now(), tz=timezone.utc))
         if not d.allowed:
             summary = {"event": "skipped_budget", "reason": d.reason, "retry_after_s": d.retry_after_s}
             code = 0

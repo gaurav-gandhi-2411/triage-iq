@@ -4,7 +4,7 @@ Last updated 2026-10-16 (round 13, D72-D75). Everything else is in `docs/DECISIO
 
 ## Round 13 (2026-10-16): README #151 is READY for your review (not merged)
 
-README #151 (`docs/readme-verified-numbers`, head `3a42c15`) is marked ready. **Do not merge until you have read it; I did not and will not.** This round added the contention result and the `component_match` finding. Text of the sections added or
+README #151 (`docs/readme-verified-numbers`, head `084beb9` as of 2026-10-17; the contention text below was pasted at `3a42c15`, and the same branch since leads the component rows with exact-match accuracy, 44/64 = 68.8%, with the judge's `component_match` shown as lenient) is marked ready. `python scripts/readme_numbers_check.py` passes on it: 10 lines, 79 numbers, 61 re-read from their source files and matching, 18 declared constants with reasons (`docs/readme_numbers.json` on that branch); altering a number (82.7 to 83.7, 68.8 to 69.8) fails it. It checks only the lines named in the manifest (the LLM rows, the component rows, both CQR rows); about 1,600 numeric tokens elsewhere in the README, including the latency and concurrency paragraphs, are not covered by it. **Do not merge until you have read it; I did not and will not.** This round added the contention result and the `component_match` finding. Text of the sections added or
 changed this round, rendered as they appear in the README (the PR itself is the full document; the other sections were number-checked by me in earlier rounds, not reviewed by you):
 
 ### Latency, concurrency and caching (README, "Latency" section)
@@ -36,6 +36,23 @@ degrade, docs5, docs6, docs7, docs8, docs9, embfix, emblog, evalb, guard, ladapt
 **Correction (2026-10-17): the first version of this list had a 30th name, `integ`, which is now the worktree the vscode expansion recorder runs in; it is excluded (do not remove it until the recording is committed).**
 **Run `scripts\gg_cleanup.ps1` yourself** (PowerShell, from anywhere): it prints what each step removes and the space it reclaims, asks Y/N before each, skips any worktree with uncommitted or untracked files or not
 contained in origin/main, then runs `docker builder prune -f` and `docker image prune -f` (dangling images only; tagged images are never touched). I have not run it. The worktrees stay on disk until then.
+
+**Obsolete TriageIQ Docker images (read-only audit 2026-10-17; I removed nothing).** `docker images` and `docker ps -a` list 22 images and 9 containers on this machine; four images are TriageIQ's, none has a container (`docker ps -a --filter ancestor=<image>` returned 0 for each):
+
+| Image | Size | Why it is safe to remove |
+|---|---|---|
+| `triageiq-cold:tik` | 4.56 GB | Cold-start investigation image (the production image plus `tiktoken` baked in, the #140 variant). #140 was closed unmerged on 2026-10-07 and the investigation was closed on 2026-10-12 (D68); nothing deployed or tested uses it. |
+| `triageiq-cold:base` | 4.55 GB | Baseline image for the same A/B (the production image as it was). Same reason; the production image is rebuilt by `deploy.yml`, not from this one. |
+| `tiq-sk:1.7.2` | 3.53 GB | scikit-learn version study (built from `lock_1.7.2.txt` plus pytest). The result shipped as #145 (pin scikit-learn 1.7.2, merged). |
+| `tiq-sk:1.6.1` | 3.55 GB | The same study's other arm (1.6.1, the version the artifacts were pickled with). Same reason. |
+
+Sum of the four listed sizes: 16.19 GB (layers shared between images are counted twice, so the real reclaim is somewhat less). Commands, for you to run (nothing else is touched):
+
+```
+docker rmi triageiq-cold:tik triageiq-cold:base tiq-sk:1.7.2 tiq-sk:1.6.1
+```
+
+Stopped containers: **none belong to TriageIQ**, so there is no `docker rm` to run. The stopped ones are `vfy312` and `vfy307` (Playwright, another project) and `gold-mlflow` (MLflow); I left them out as you asked. Also left alone as shared or other projects': `python:3.11-slim` (the README's `pip-audit` command uses it), the Playwright, Postgres, Supabase, `intent-router`, `nss-forecaster`, `review-iq-ci-smoke`, `shelfsense` and `mlflow` images. If a rebuild of any of the four is ever needed, they come from the repo's own Dockerfiles and lock files.
 
 ## Round 12: what needs you (D67)
 

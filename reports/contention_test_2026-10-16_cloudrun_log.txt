@@ -1,0 +1,6 @@
+2026-10-16T17:54:29.787611Z	INFO:     169.254.169.126:30480 - "POST /triage HTTP/1.1" 200 OK
+2026-10-16T17:54:32.759035Z	Rate limit hit ? sleeping 25.0s (attempt 1/6)
+2026-10-16T17:54:32.759089Z	LLM provider error on synthesis call for #13257: degrading to signals-only fallback plan (repo=kubernetes/kubernetes status_code=None error_code=None reason=llm_time_budget_exceeded): LLM time budget exhausted (backoff 25.0s, 14.9s left)
+2026-10-16T17:54:32.760284Z	INFO:     169.254.169.126:30494 - "POST /triage HTTP/1.1" 200 OK
+2026-10-16T17:54:41.238820Z	Rate limit hit ? sleeping 11.0s (attempt 1/6)
+2026-10-16T17:54:55.766024Z	INFO:     169.254.169.126:46758 - "POST /triage HTTP/1.1" 200 OK

@@ -125,6 +125,30 @@ def test_strict_mode_fails_on_any_undeclared_claim_line_but_declared_rules_exemp
     assert _custom(tmp_path, readme + "a new claim of 87% appears\n", {**manifest, "strict": False}) == []
 
 
+def test_unary_minus_and_a_stated_tolerance_for_low_precision_sources(tmp_path: Path) -> None:
+    (tmp_path / "r.json").write_text(json.dumps({"gain": -1.91, "ci": 0.7895}), encoding="utf-8")
+    manifest = {
+        "lines": [
+            {
+                "id": "n",
+                "line_contains": "gain line",
+                "numbers": [
+                    {"text": "1.91", "fmt": "{:.2f}", "source": {"expr": "-v", "vars": {"v": {"file": "r.json", "path": ["gain"]}}}},
+                    {"text": "78.9", "tol": 0.051, "source": {"expr": "v * 100", "vars": {"v": {"file": "r.json", "path": ["ci"]}}}},
+                ],
+            }
+        ]
+    }
+    (tmp_path / "m.json").write_text(json.dumps(manifest), encoding="utf-8")
+    ok = tmp_path / "README.md"
+    ok.write_text("gain line 1.91 and 78.9\n", encoding="utf-8")
+    assert rnc.check(ok, tmp_path / "m.json", root=tmp_path)[0] == []
+    ok.write_text("gain line 1.91 and 79.1\n", encoding="utf-8")
+    assert rnc.check(ok, tmp_path / "m.json", root=tmp_path)[0]  # outside the tolerance
+    ok.write_text("gain line 1.92 and 78.9\n", encoding="utf-8")
+    assert rnc.check(ok, tmp_path / "m.json", root=tmp_path)[0]  # exact format still exact
+
+
 def test_an_ignore_rule_without_a_reason_is_an_error(tmp_path: Path) -> None:
     manifest = {"ignore_rules": [{"name": "x", "pattern": r"\bv\d+\b", "reason": ""}], "lines": []}
     assert _custom(tmp_path, "nothing 1\n", manifest)

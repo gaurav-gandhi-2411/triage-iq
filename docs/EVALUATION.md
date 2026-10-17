@@ -12,7 +12,7 @@ The full evaluation table, its sources and the notes that explain how to read it
 | Component classifier | vscode / kubernetes | Previous 28/35-class classifier on the SAME fresh test rows (top-3; the like-for-like comparator) | 68.09% [63.50, 72.35] / 83.61% [80.62, 86.22] |
 | Component classifier | vscode | Retrain vs previous, paired, top-3 / top-1 | **+17.73pp** [+13.06, +22.40] / +15.37pp [+10.35, +20.38] (CIs exclude zero; 17.97% of test rows carry a label the old model could never emit) |
 | Component classifier | kubernetes | Retrain vs previous, paired, top-3 / top-1 | +2.38pp [−0.56, +5.33] / −2.68pp [−6.68, +1.32] (**both CIs include zero: not distinguishable from the old classifier**; the retrain's gain is taxonomy coverage, 47 vs 35 classes) |
-| Component classifier | both | Naive (majority/prior) baseline | **Not reported: no majority-class baseline is committed for the 47-class test split, and the split parquets are not in the repo to recompute it. Unverified; treat the table as lacking this row.** |
+| Component classifier | both | Naive (majority/prior) baseline, same fresh test rows (most frequent training class; three most frequent for top-3) | top-3 28.84% [24.73, 33.33] (vscode) / 43.07% [39.37, 46.85] (kubernetes); top-1 13.71% / 17.73% ([`reports/classifier_majority_baseline.json`](../reports/classifier_majority_baseline.json)) |
 | Component classifier | both | Inference stage latency p50 (production, n=5, 2026-10-11) | 7.0ms |
 | Similar issue retriever | kubernetes | **Recall@5, related task, clean eval subset (n=66, blind-labeled valid pairs only — see note)** | **39.39%** [27.3, 51.5] |
 | Similar issue retriever | kubernetes | Recall@5, related task, unfiltered eval population (n=150, ~56% structurally invalid — see note) | 24.67% [18.0, 31.3] |
@@ -36,7 +36,7 @@ The full evaluation table, its sources and the notes that explain how to read it
 <!-- LLM-BASELINE-BLOCK (hand-copied from reports/eval_baseline.json; guarded by tests/test_api.py::test_eval_summary_judge_block_matches_committed_baseline). Re-derived 2026-10-11 on the re-recorded cassette e9f8861f (ADR-0064; baseline approved by the owner). -->
 | LLM synthesis (judge /15; synthesis `openai/gpt-oss-120b`, judge `qwen3:8b` local — ADR-0019/0061) | vscode | **Current mean, regression detector (cassette `e9f8861f`, 2026-10-11)** | **12.73/15 (84.8%)**, n=11 |
 | LLM synthesis | kubernetes | **Current mean, regression detector** | **11.96/15 (79.7%)**, n=53 |
-| LLM synthesis | both | Overall mean | 12.09/15 (80.6%), n=64 |
+| LLM synthesis | both | Overall mean | 12.09/15 (80.6%), n=64, bootstrap 95% CI [11.64, 12.52] (over issues; excludes judge and synthesis-sampling noise; `reports/judge_mean_ci.json`) |
 | LLM synthesis | vscode / kubernetes | Floor-fail rate (judge's worst band on component or similar-issues; it caught only 4 of the 20 wrong components, so it understates component misses) | 0.0% (0/11) / 7.55% (4/53) |
 | LLM synthesis | vscode / kubernetes | Grounding check, ungrounded plans (**a consistency check, not an error rate — see note**) | 0.0% (0/11, report-only) / 0.0% (0/53; hard ratchet ≤1, ADR-0061) |
 | LLM synthesis | vscode / kubernetes | Component picked by the LLM differs from classifier top-1 (report-only) | 9.1% (1/11) / 7.5% (4/53) |

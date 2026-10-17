@@ -52,7 +52,7 @@ numpy==2.4.4
 packaging==26.2
 pandas==3.0.2
 pillow==12.3.0
-prometheus-client==0.25.0
+prometheus-client==0.26.0
 prometheus-fastapi-instrumentator==8.0.2
 propcache==0.4.1
 pyarrow==24.0.0

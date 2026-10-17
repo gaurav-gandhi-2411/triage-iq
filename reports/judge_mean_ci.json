@@ -1,0 +1,13 @@
+{
+ "provenance": "scripts/judge_mean_ci.py over eval/cassettes/eval_cassette.json (judge qwen3:8b), checked against reports/eval_baseline.json overall",
+ "n": 64,
+ "mean": 12.0938,
+ "ci95": [
+  11.64,
+  12.52
+ ],
+ "method": "percentile bootstrap over issues",
+ "n_resamples": 2000,
+ "seed": 42,
+ "scale_max": 15
+}

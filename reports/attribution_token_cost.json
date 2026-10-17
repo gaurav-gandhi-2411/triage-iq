@@ -1,0 +1,9 @@
+{
+  "n": 64,
+  "delta_min": 46,
+  "delta_p50": 46,
+  "delta_max": 47,
+  "delta_mean": 46.23,
+  "ceiling_violations_off": 0,
+  "ceiling_violations_on": 0
+}

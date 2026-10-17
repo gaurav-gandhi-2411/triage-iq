@@ -1,0 +1,40 @@
+{"number": 311922, "label": "ux", "raw": "{\n  \"component\": \"ux\"\n}", "mode": "exclusive"}
+{"number": 1080, "label": "javascript", "raw": "{\n  \"component\": \"javascript\"\n}", "mode": "exclusive"}
+{"number": 91439, "label": "editor-rendering", "raw": "{\n  \"component\": \"editor-rendering\"\n}", "mode": "exclusive"}
+{"number": 19952, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}
+{"number": 5887, "label": "editor-folding", "raw": "{\"component\": \"editor-folding\"}", "mode": "exclusive"}
+{"number": 114075, "label": "keybindings", "raw": "{\"component\": \"keybindings\"}", "mode": "exclusive"}
+{"number": 42225, "label": "editor-rendering", "raw": "{\n  \"component\": \"editor-rendering\"\n}", "mode": "exclusive"}
+{"number": 117145, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}
+{"number": 35197, "label": "editor-autoclosing", "raw": "{\n  \"component\": \"editor-autoclosing\"\n}", "mode": "exclusive"}
+{"number": 89801, "label": "editor-rendering", "raw": "{\"component\": \"editor-rendering\"}", "mode": "exclusive"}
+{"number": 4436, "label": "l10n-platform", "raw": "{\n  \"component\": \"l10n-platform\"\n}", "mode": "exclusive"}
+{"number": 4079, "label": "themes", "raw": "{\"component\": \"themes\"}", "mode": "exclusive"}
+{"number": 17195, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}
+{"number": 41666, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 5909, "label": "layout", "raw": "{\n  \"component\": \"layout\"\n}", "mode": "exclusive"}
+{"number": 4900, "label": "l10n-platform", "raw": "{\n  \"component\": \"l10n-platform\"\n}", "mode": "exclusive"}
+{"number": 12448, "label": "file-watcher", "raw": "{\"component\": \"file-watcher\"}", "mode": "exclusive"}
+{"number": 41380, "label": "extensions", "raw": "{\"component\": \"extensions\"}", "mode": "exclusive"}
+{"number": 4836, "label": "editor-find", "raw": "{\"component\": \"editor-find\"}", "mode": "exclusive"}
+{"number": 20499, "label": "editor-autoclosing", "raw": "{\"component\": \"editor-autoclosing\"}", "mode": "exclusive"}
+{"number": 20179, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}
+{"number": 1929, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}
+{"number": 42681, "label": "editor-rendering", "raw": "{\"component\": \"editor-rendering\"}", "mode": "exclusive"}
+{"number": 6995, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}
+{"number": 39307, "label": "editor-folding", "raw": "{\"component\": \"editor-folding\"}", "mode": "exclusive"}
+{"number": 19399, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 43655, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}
+{"number": 1865, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 11889, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 4858, "label": "file-explorer", "raw": "{\"component\": \"file-explorer\"}", "mode": "exclusive"}
+{"number": 3911, "label": "editor-folding", "raw": "{\n  \"component\": \"editor-folding\"\n}", "mode": "exclusive"}
+{"number": 3754, "label": "editor-core", "raw": "{\n  \"component\": \"editor-core\"\n}", "mode": "exclusive"}
+{"number": 2270, "label": "editor-autoclosing", "raw": "{\n  \"component\": \"editor-autoclosing\"\n}", "mode": "exclusive"}
+{"number": 2340, "label": "editor-rendering", "raw": "{\"component\": \"editor-rendering\"}", "mode": "exclusive"}
+{"number": 3599, "label": "emmet", "raw": "{\n  \"component\": \"emmet\"\n}", "mode": "exclusive"}
+{"number": 1958, "label": "editor-rendering", "raw": "{\n  \"component\": \"editor-rendering\"\n}", "mode": "exclusive"}
+{"number": 68300, "label": "extensions", "raw": "{\"component\": \"extensions\"}", "mode": "exclusive"}
+{"number": 172774, "label": "extensions", "raw": "{\n  \"component\": \"extensions\"\n}", "mode": "exclusive"}
+{"number": 51229, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}
+{"number": 22289, "label": "editor-core", "raw": "{\"component\": \"editor-core\"}", "mode": "exclusive"}

@@ -64,6 +64,72 @@ def test_compute_key_is_64_hex_chars():
 
 
 # ---------------------------------------------------------------------------
+# Float canonicalization (2026-08-27) -- see llm_cache.py's _canonicalize_floats
+# docstring for the full mechanism. The 1-ULP case below is the exact one
+# reproduced via a three-environment control experiment (local machine: zero
+# misses; a container pinned to requirements.lock: reproduced the identical
+# CI cassette miss), not a synthetic example.
+# ---------------------------------------------------------------------------
+
+def _plan_message(resolution_lower_days: str) -> list[dict]:
+    return [
+        {"role": "system", "content": "Evaluate the triage plan."},
+        {
+            "role": "user",
+            "content": (
+                '{"predicted_component": "test-infra", "component_confidence": 0.582703122181352, '
+                f'"expected_resolution_lower_days": {resolution_lower_days}, '
+                '"expected_resolution_upper_days": 56.76348724576911}'
+            ),
+        },
+    ]
+
+
+def test_compute_key_hits_on_1ulp_float_noise():
+    """The exact reproduced case: two float64 representations of (approximately) the same
+    value, differing only in the last representable digit, must now hash identically."""
+    k1 = LLMCache.compute_key("ollama", "qwen3:8b", _plan_message("0.0356567072910697"), 0.0, seed=42)
+    k2 = LLMCache.compute_key("ollama", "qwen3:8b", _plan_message("0.03565670729106969"), 0.0, seed=42)
+    assert k1 == k2
+
+
+def test_compute_key_misses_on_materially_different_prediction():
+    """A real, non-noise difference (differs at the 2nd decimal, not the 15th) must still
+    produce a different key -- canonicalization must not mask an actual regression."""
+    k1 = LLMCache.compute_key("ollama", "qwen3:8b", _plan_message("0.0356567072910697"), 0.0, seed=42)
+    k2 = LLMCache.compute_key("ollama", "qwen3:8b", _plan_message("0.15"), 0.0, seed=42)
+    assert k1 != k2
+
+
+def test_compute_key_misses_on_changed_prompt_template():
+    """A real prompt/template change (not a numeric one) must still produce a different
+    key -- canonicalization only touches float literals, never surrounding text."""
+    messages_a = _plan_message("0.0356567072910697")
+    messages_b = [
+        {"role": "system", "content": "Evaluate the triage plan against a DIFFERENT rubric."},
+        messages_a[1],
+    ]
+    k1 = LLMCache.compute_key("ollama", "qwen3:8b", messages_a, 0.0, seed=42)
+    k2 = LLMCache.compute_key("ollama", "qwen3:8b", messages_b, 0.0, seed=42)
+    assert k1 != k2
+
+
+def test_compute_key_misses_on_changed_retrieval_result():
+    """A different similar-issue number cited (a real retrieval-result change, not
+    numeric noise) must still produce a different key."""
+    base = _plan_message("0.0356567072910697")
+    messages_a = [base[0], {**base[1], "content": base[1]["content"].replace(
+        "56.76348724576911}", '56.76348724576911, "similar_issues": [4343]}'
+    )}]
+    messages_b = [base[0], {**base[1], "content": base[1]["content"].replace(
+        "56.76348724576911}", '56.76348724576911, "similar_issues": [9999]}'
+    )}]
+    k1 = LLMCache.compute_key("ollama", "qwen3:8b", messages_a, 0.0, seed=42)
+    k2 = LLMCache.compute_key("ollama", "qwen3:8b", messages_b, 0.0, seed=42)
+    assert k1 != k2
+
+
+# ---------------------------------------------------------------------------
 # Miss → set → hit cycle
 # ---------------------------------------------------------------------------
 

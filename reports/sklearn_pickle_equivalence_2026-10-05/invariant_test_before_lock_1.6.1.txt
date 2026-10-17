@@ -1,0 +1,25 @@
+            if not versions:
+                if f.name.startswith(_MUST_CONTAIN_SKLEARN):
+                    problems.append(f"{f.name}: no sklearn estimator detected (recorder blind?)")
+                continue
+            expected = _KNOWN_OLDER_PICKLE_SKLEARN.get(f.name, pin)
+            if versions != {expected}:
+                problems.append(
+                    f"{f.name}: stored scikit-learn {sorted(versions)}, expected {expected} "
+                    f"(lock pin {pin})"
+                )
+        stale = [n for n in _KNOWN_OLDER_PICKLE_SKLEARN if not (MODELS_DIR / n).exists()]
+        assert not stale, f"_KNOWN_OLDER_PICKLE_SKLEARN lists artifacts that do not exist: {stale}"
+>       assert not problems, (
+            "pickled scikit-learn version != requirements.lock pin "
+            "(InconsistentVersionWarning in production):\n" + "\n".join(problems)
+        )
+E       AssertionError: pickled scikit-learn version != requirements.lock pin (InconsistentVersionWarning in production):
+E         resolution_predictor_kubernetes_kubernetes.pkl: stored scikit-learn ['1.7.2'], expected 1.6.1 (lock pin 1.6.1)
+E         resolution_predictor_microsoft_vscode.pkl: stored scikit-learn ['1.7.2'], expected 1.6.1 (lock pin 1.6.1)
+E       assert not ["resolution_predictor_kubernetes_kubernetes.pkl: stored scikit-learn ['1.7.2'], expected 1.6.1 (lock pin 1.6.1)", "resolution_predictor_microsoft_vscode.pkl: stored scikit-learn ['1.7.2'], expected 1.6.1 (lock pin 1.6.1)"]
+
+eval/test_invariants.py:587: AssertionError
+=========================== short test summary info ============================
+FAILED eval/test_invariants.py::test_pickled_sklearn_versions_match_lock_pin
+================== 1 failed, 1 passed, 13 deselected in 4.19s ==================

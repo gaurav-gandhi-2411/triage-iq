@@ -54,6 +54,7 @@ def _fake_meta() -> dict:
 def _make_store() -> ModelStore:
     bundle = MagicMock()
     bundle.assistant.triage_with_metadata.return_value = (_fake_plan(), _fake_meta())
+    bundle.assistant.model = "openai/gpt-oss-120b"
     store = MagicMock()
     store.repos = ["microsoft/vscode", "kubernetes/kubernetes"]
     store.start_time = time.monotonic() - 5.0
@@ -105,6 +106,26 @@ def test_health(client):
     assert body["uptime_s"] >= 0
 
 
+def test_health_answers_head_like_get(client):
+    """UptimeRobot probes with HEAD first; it got 405. HEAD must carry GET's status, no body."""
+    g = client.get("/health")
+    h = client.head("/health")
+    assert h.status_code == g.status_code == 200
+    assert h.content == b""
+    assert h.headers["content-type"] == g.headers["content-type"]
+
+
+def test_health_head_keeps_deps_semantics(client):
+    """HEAD /health?deps=1 must fail (503) exactly when GET does -- a monitor on HEAD must not
+    see 200 for an unhealthy dependency."""
+    from triage_iq.api.schemas import DependencyStatus
+
+    with patch("triage_iq.api.app._check_groq") as mock_check:
+        mock_check.return_value = DependencyStatus(name="groq", healthy=False, detail="down")
+        assert client.get("/health?deps=1").status_code == 503
+        assert client.head("/health?deps=1").status_code == 503
+
+
 def test_triage_returns_plan(client):
     r = client.post("/triage", json={
         "repo": "microsoft/vscode",
@@ -148,6 +169,8 @@ def test_triage_includes_resolution_prediction(client):
     assert "_request_id" in body
     assert "_llm_status" in body
     assert body["_llm_status"] in ("ok", "parse_retry_succeeded", "parse_failure")
+    # The serving LLM is reported so clients never need to hardcode it (2026-09-24).
+    assert body["_model"] == "openai/gpt-oss-120b"
 
 
 def test_triage_accepts_created_at(client):
@@ -193,6 +216,59 @@ def test_triage_propagates_assistant_error(client):
         "title": "Some issue",
     })
     assert r.status_code == 500
+
+
+def test_triage_error_carries_request_id(client):
+    """The client must be able to correlate a 500 with a server-side log line -- see
+    the 2026-08-26 diagnostic session's Part 4 SPOF audit: before this, the error body
+    was a bare {"detail": "Internal server error"} with no way to find the matching
+    Cloud Run log entry short of Cloud Run's own auto-added trace header."""
+    app.state.store.get.return_value.assistant.triage_with_metadata.side_effect = RuntimeError("groq down")
+    r = client.post("/triage", json={
+        "repo": "microsoft/vscode",
+        "title": "Some issue",
+    })
+    assert r.status_code == 500
+    assert "X-Request-Id" in r.headers
+    body = r.json()
+    assert body["detail"]["request_id"] == r.headers["X-Request-Id"]
+    assert body["detail"]["message"] == "Internal server error"
+
+
+def test_health_deps_default_unaffected(client):
+    """?deps=1 is opt-in -- the bare /health Cloud Run's startupProbe hits must stay
+    exactly as before: fast, never calls Groq, dependencies omitted."""
+    r = client.get("/health")
+    assert r.status_code == 200
+    assert r.json()["dependencies"] is None
+
+
+def test_health_deps_reports_groq_failure(client):
+    """This is the check that would have caught both 2026-08-16 and 2026-08-26 --
+    /health alone never called Groq, so it stayed 200 through both outages."""
+    with patch("triage_iq.api.app._check_groq") as mock_check:
+        from triage_iq.api.schemas import DependencyStatus
+        mock_check.return_value = DependencyStatus(
+            name="groq", healthy=False, detail="AuthenticationError: 401 Invalid API Key"
+        )
+        r = client.get("/health?deps=1")
+    assert r.status_code == 503
+    body = r.json()
+    assert body["status"] == "degraded"
+    groq_dep = next(d for d in body["dependencies"] if d["name"] == "groq")
+    assert groq_dep["healthy"] is False
+    assert "401" in groq_dep["detail"]
+
+
+def test_health_deps_all_healthy(client):
+    with patch("triage_iq.api.app._check_groq") as mock_check:
+        from triage_iq.api.schemas import DependencyStatus
+        mock_check.return_value = DependencyStatus(name="groq", healthy=True, detail="ok")
+        r = client.get("/health?deps=1")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == "ok"
+    assert all(d["healthy"] for d in body["dependencies"])
 
 
 def test_triage_response_validates_against_schema(client):
@@ -254,6 +330,9 @@ def _make_assistant() -> TriageAssistant:
     asst.temperature = 0.0
     asst.max_tokens = 1024
     asst._groq_key = "test-key"
+    # __init__'s default. Read on the attribution-prompt path, which is the default path since
+    # 2026-09-23 (attribution_prompt_enabled()) -- the legacy path this fixture predates didn't.
+    asst.use_structured_output = True
     asst.classifier = MagicMock()
     asst.detector = MagicMock()
     asst.predictor = MagicMock()
@@ -735,11 +814,27 @@ def test_load_conformal_adjustments_missing_file(tmp_path):
     assert result == {}
 
 
+def test_load_conformal_adjustments_ignores_stale_v1_file(tmp_path):
+    """Serving reads only the v2 file; a lone v1 file (stale k8s Q) must not be picked up."""
+    import json
+
+    from triage_iq.api.loader import CQR_ADJUSTMENTS_FILENAME, _load_conformal_adjustments
+
+    assert CQR_ADJUSTMENTS_FILENAME == "cqr_conformal_adjustments_v2.json"
+    (tmp_path / "cqr_conformal_adjustments.json").write_text(
+        json.dumps({"repos": {"kubernetes/kubernetes": {
+            "q_adjustment_hours": 0.2835, "empirical_test_coverage": 0.76,
+            "coverage_ci95_lower": 0.73, "coverage_ci95_upper": 0.79}}}),
+        encoding="utf-8",
+    )
+    assert _load_conformal_adjustments(tmp_path) == {}
+
+
 def test_load_conformal_adjustments_parses_json(tmp_path):
     """_load_conformal_adjustments correctly parses vscode (nested) and k8s (flat) entries."""
     import json
 
-    from triage_iq.api.loader import _load_conformal_adjustments
+    from triage_iq.api.loader import CQR_ADJUSTMENTS_FILENAME, _load_conformal_adjustments
 
     payload = {
         "target_coverage": 0.80,
@@ -761,7 +856,7 @@ def test_load_conformal_adjustments_parses_json(tmp_path):
             },
         },
     }
-    (tmp_path / "cqr_conformal_adjustments.json").write_text(
+    (tmp_path / CQR_ADJUSTMENTS_FILENAME).write_text(
         json.dumps(payload), encoding="utf-8"
     )
 
@@ -833,3 +928,77 @@ def test_cors_allows_explicit_production_origin(client):
         },
     )
     assert r.headers.get("access-control-allow-origin") == "https://triage-iq-orcin.vercel.app"
+
+
+def test_eval_summary_serves_the_committed_llm_baseline(client):
+    """The UI shows the judge score from this block instead of hardcoded copy (2026-09-24),
+    so it must equal the committed reports/eval_baseline.json, not a stale constant."""
+    import json as _json
+    from pathlib import Path as _Path
+
+    committed = _json.loads(
+        (_Path(__file__).parent.parent / "reports" / "eval_baseline.json").read_text(encoding="utf-8")
+    )
+    r = client.get("/eval/summary")
+    assert r.status_code == 200
+    b = r.json()["current_llm_baseline"]
+    assert b["overall"]["mean"] == committed["overall"]["mean"]
+    assert b["judge_model"] == committed["judge"]["model"]
+    assert set(b["per_repo"]) == set(committed["per_repo"])
+
+
+_STALE_JUDGE_KEYS = (
+    "cross_family_judge_model",
+    "cross_family_validation",
+    "w1_1_pre_calibration",
+    "w1_2_post_calibration",
+    "production_llama_score",
+)
+
+
+def test_eval_summary_judge_block_matches_committed_baseline(client):
+    """Drift guard: the judge block the /eval page renders is hand-copied from
+    reports/eval_baseline.json, so a re-baseline that forgets eval_summary.json fails here
+    (it served n=65 / 10.52 / 8.36 from a retired judge long after the baseline moved)."""
+    import json as _json
+    from pathlib import Path as _Path
+
+    from triage_iq.evaluation.triage_eval import DIMENSION_MAX
+
+    committed = _json.loads(
+        (_Path(__file__).parent.parent / "reports" / "eval_baseline.json").read_text(encoding="utf-8")
+    )
+    r = client.get("/eval/summary")
+    assert r.status_code == 200
+    judge = r.json()["judge"]
+
+    assert judge["production_judge_model"] == committed["judge"]["model"]
+    assert judge["n_issues_evaluated"] == committed["overall"]["n"]
+    assert judge["overall"] == committed["overall"]
+    assert judge["dimension_max"] == DIMENSION_MAX
+    assert set(judge["per_repo"]) == set(committed["per_repo"])
+    for repo, want in committed["per_repo"].items():
+        got = judge["per_repo"][repo]
+        assert got["n"] == want["n"]
+        assert got["mean"] == pytest.approx(want["mean"], abs=1e-4)
+        assert set(got["dimensions"]) == set(want["dimensions"])
+        for dim, mean in want["dimensions"].items():
+            assert got["dimensions"][dim] == pytest.approx(mean, abs=1e-4)
+
+
+def test_eval_summary_has_no_stale_judge_history_or_hardcoded_revision(client):
+    """Retired-judge W1-era numbers must not be served as current, and a hardcoded Cloud Run
+    revision name is wrong after the next deploy (it showed triageiq-api-00050-flt long after)."""
+    r = client.get("/eval/summary")
+    assert r.status_code == 200
+    body = r.json()
+    for key in _STALE_JUDGE_KEYS:
+        assert key not in body["judge"], key
+    assert "dimensions" not in body["judge"]
+    assert "triageiq-api-0" not in r.text
+
+
+def test_current_llm_baseline_is_none_when_file_missing(tmp_path):
+    from triage_iq.api.app import _current_llm_baseline
+
+    assert _current_llm_baseline(tmp_path / "absent.json") is None

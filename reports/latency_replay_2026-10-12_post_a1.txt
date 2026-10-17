@@ -1,0 +1,41 @@
+TriageIQ production latency replay, after A1 (15 s LLM time budget, PR #170), #171, #172 and A3 (#174); run 2026-10-12 14:44-14:49 UTC
+Revision: triageiq-api-00055-boy (100% traffic; main 09965a9 + later docs/tooling merges that do not touch src). Instance 0010dd86 for all 5 calls.
+Method: replay_triage.py (the same 5 saved real-issue bodies as the 2026-10-11 run, 3 vscode + 2 k8s, 75 s spacing,
+sequential). Per-stage timings joined from the Cloud Run access log (jsonPayload.system{1..4}_latency_ms) by request id.
+n=5: medians are indicative; p95 is the max.
+
+call 1: HTTP 200 4870 ms degraded=False
+call 2: HTTP 200 5324 ms degraded=False
+call 3: HTTP 200 1820 ms degraded=True  (reason rate_limited_tpd)
+call 4: HTTP 200 1707 ms degraded=True  (reason rate_limited_tpd)
+call 5: HTTP 200 1522 ms degraded=True  (reason rate_limited_tpd)
+
+#  repo                  issue   client_ms  srv_total  s1_cls  s2_retr  s3_pred  s4_llm  degr
+1  microsoft/vscode      339386     4870.0     4032.2     6.2   1220.8     67.7  2736.6  False
+2  microsoft/vscode      339380     5324.3     4827.1     6.6   1084.9     62.4  3672.4  False
+3  microsoft/vscode      339367     1819.6     1341.3     6.8   1082.3       62   189.3  True
+4  kubernetes/kubernetes 142526     1707.1     1260.4     6.5    788.1     86.7   378.4  True
+5  kubernetes/kubernetes 142486     1522.5     1070       6.4    853.1     93.4   116.3  True
+client p50=1820 ms (mixed: 2 LLM answers + 3 degraded), p95(nearest-rank, n=5 => max)=5324 ms
+LLM-answered calls only (n=2): client 4,870 / 5,324 ms; stage 4 2,737 / 3,672 ms
+Degraded calls only (n=3): client 1,522-1,820 ms
+
+Retries: 0. No "Rate limit hit - sleeping" line in the Cloud Run log for the window (the per-minute limit was never reached:
+calls were 75 s apart and one triage is ~6,000 of the 8,000 tokens per minute).
+Degraded calls: Groq returned a DAILY-token 429 ("tokens per day (TPD): Limit 200000, Used 196411, Requested 5146", log 14:49:15 UTC).
+The service does not retry a daily-limit 429; it returns the signals-only plan with HTTP 200, `_degraded` true, `_llm_status`
+`degraded_provider_error`, `_llm_status_reason` `rate_limited_tpd`, in 1.5-1.8 s instead of waiting.
+
+NOT measured by this run: the per-minute (TPM) contention case that produced the 53-135 s waits on 2026-10-11. See the contention test
+section of the README Latency chapter for what was and was not exercised.
+
+Cached tokens (A3), VERIFIED from 3 back-to-back identical-prefix pairs against openai/gpt-oss-120b (direct calls; 1,531-token prefix x2 pairs,
+2.6 s apart; 3,702-token prefix x1 pair, 40 s apart) and 4 production /triage calls with 4.7-4.9K-token prompts (07:34 deploy smoke test,
+14:35 probe, replay calls 1 and 2; Cloud Run access log field groq_tokens_cached): usage.prompt_tokens_details.cached_tokens was ABSENT
+(None) on every one. The per-minute counter (x-ratelimit-remaining-tokens) charged the warm call the full prompt+completion tokens:
+cold 8000 -> 6429 (-1,571 total_tokens), warm 6429 -> 5217 (-1,212 plus ~347 refilled in 2.6 s = ~1,559 vs total_tokens 1,570);
+3.7K pair: cold 8000 -> 4258 (-3,722), warm after 40 s of refill 8000 -> 4259 (-3,741). Prompt caching did not engage in any call, so
+whether cached tokens relieve the per-minute counter could NOT be tested here.
+Docs (https://console.groq.com/docs/prompt-caching, fetched 2026-10-12): supported on gpt-oss-20b / gpt-oss-120b /
+gpt-oss-safeguard-20b, minimum 128-1024 tokens depending on model, entries expire after 2 hours without use, and "Cached tokens do not
+count towards your rate limits".

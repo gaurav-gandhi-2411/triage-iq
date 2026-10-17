@@ -1,0 +1,74 @@
+[
+  {
+    "issue_id": "vscode-311284",
+    "number": 311284,
+    "llm_status": "ok",
+    "predicted_component": "scm",
+    "declared_attribution_non_null": true,
+    "component_source": "classifier_top3",
+    "component_override_reason": "",
+    "summary_cited_issues": [
+      311282,
+      311990
+    ],
+    "next_steps_cited_issues": [
+      311282
+    ]
+  },
+  {
+    "issue_id": "vscode-311836",
+    "number": 311836,
+    "llm_status": "ok",
+    "predicted_component": "api",
+    "declared_attribution_non_null": true,
+    "component_source": "classifier_top3",
+    "component_override_reason": "",
+    "summary_cited_issues": [
+      311844
+    ],
+    "next_steps_cited_issues": [
+      311844,
+      312490
+    ]
+  },
+  {
+    "issue_id": "vscode-311878",
+    "number": 311878,
+    "llm_status": "ok",
+    "predicted_component": "terminal",
+    "declared_attribution_non_null": true,
+    "component_source": "classifier_top3",
+    "component_override_reason": "",
+    "summary_cited_issues": [
+      175049,
+      68689
+    ],
+    "next_steps_cited_issues": [
+      175049,
+      68689
+    ]
+  },
+  {
+    "issue_id": "vscode-239838",
+    "number": 239838,
+    "llm_status": "ok",
+    "predicted_component": "terminal",
+    "declared_attribution_non_null": true,
+    "component_source": "classifier_top3",
+    "component_override_reason": "",
+    "summary_cited_issues": [
+      240002,
+      240145,
+      239946,
+      240064,
+      240006
+    ],
+    "next_steps_cited_issues": [
+      240002,
+      240145,
+      239946,
+      240064,
+      240006
+    ]
+  }
+]

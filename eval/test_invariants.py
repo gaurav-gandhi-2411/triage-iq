@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
+import warnings
 from pathlib import Path
 
+import joblib
 import numpy as np
 import pytest
 
@@ -12,8 +15,9 @@ MODELS_DIR = ROOT / "data" / "models"
 PROCESSED_DIR = ROOT / "data" / "processed"
 EVAL_SET = ROOT / "eval" / "eval_set.jsonl"
 CALIBRATION_RESULTS = ROOT / "reports" / "calibration_results.json"
-CONFORMAL_ADJ = ROOT / "data" / "models" / "cqr_conformal_adjustments.json"
+CONFORMAL_ADJ = ROOT / "data" / "models" / "cqr_conformal_adjustments_v2.json"  # the file loader.py serves
 MANIFEST_PATH = ROOT / "data" / "models" / "MANIFEST.sha256"
+LOCK_PATH = ROOT / "requirements.lock"
 
 REPOS = ["microsoft/vscode", "kubernetes/kubernetes"]
 REPO_SLUGS = {
@@ -27,8 +31,22 @@ _RECORDED_ECE: dict[str, float] = {
     # (eval/eval_set.jsonl, n_bins=5) for the new model -- the prior constants (0.1381/0.1558)
     # were themselves test-split ECE, not this eval-set's own ECE, and were never a tight match
     # even for the old model (old model's actual eval-set ECE: 0.2351 vscode / 0.1537 k8s).
-    "microsoft_vscode": 0.3781,
-    "kubernetes_kubernetes": 0.1299,
+    #
+    # Re-derived 2026-09-05 (ADR-0058, Phase 3): the ADR-0057 classifier retrain moved ECE
+    # 0.3781 -> 0.1875 (vscode) / 0.1299 -> 0.1210 (k8s), both computed on the IDENTICAL
+    # population as before (eval/eval_set.jsonl, n=11/n=53 unchanged) -- confirmed
+    # comparable by reproducing the OLD classifier's ECE via this exact method before
+    # re-deriving (scripts/scratch/ece_comparability_check.py): it reproduced 0.3781/0.1299
+    # exactly, ruling out the population-mismatch error shape the ADR-0057 top-3 comparison
+    # had to correct for. The improvement is a genuine, mechanistically-explained
+    # consequence of the resolved taxonomy gap (ADR-0056): 7/11 vscode gold labels (63.6%)
+    # and 7/53 k8s gold labels (13.2%) were outside the OLD classifier's class list --
+    # automatic top-1 misses regardless of confidence, which mechanically inflates ECE.
+    # vscode's in-taxonomy-only top-1 accuracy was already 75% (3/4) under the old
+    # classifier; the retrain's 90.9% overall reflects a genuinely better-calibrated model
+    # on a population it can now mostly answer, not a comparability artifact.
+    "microsoft_vscode": 0.1875,
+    "kubernetes_kubernetes": 0.1210,
 }
 _ECE_TOLERANCE = 0.15
 
@@ -76,10 +94,27 @@ _GROUNDING_BASELINE = {
     # both repos are now fully grounded (0 ungrounded claims), consistent with
     # reports/eval_baseline.json's fabrication_rate: 0.0 for both repos on the same cassette
     # (same underlying definition -- plan.grounding_status.all_grounded is False).
+    #
+    # Re-verified 2026-09-05 (ADR-0052): the model, classifier, wire schema, and prompt
+    # ALL changed since the paragraph above was written (see ADR-0054/0055/0056/0057) --
+    # the cassette this constant was originally measured against is no longer valid. The
+    # 64-issue re-record under the new configuration reproduced the identical result (0
+    # ungrounded, same n both repos) via the same zero-live-call replay, and eval_set_hash
+    # is unchanged (only the cassette recording changed, not the eval SET) -- so no value
+    # below changed, only this provenance note.
+    #
+    # 2026-09-23 (ADR-0061): the 2026-09-05 re-record above had the PRE-retrain classifier in
+    # the loop (ADR-0059 incident), so its 0/53 was void. Re-derived from the superseding
+    # recording (cassette 444ef64: gpt-oss-120b, retrained 47-class classifier, attribution
+    # ON): k8s 1/53 (k8s-12665 -- predicted `networking`, gold `ha`, outside top-3
+    # [kubectl, usability, app-lifecycle], declared model_override). GG accepted 1 as the
+    # baseline: a real error correctly flagged, not a regression -- n=53 cannot distinguish a
+    # true rate behind 0, 1 or 2 observed (Wilson 95% upper bounds 6.8% / 9.9% / 12.8%; see
+    # ADR-0061). vscode unchanged at 0/11.
     "eval_set_hash": "0c2e57410098ea170f3f65668ff8977d3ce4942936b9a3e2ffb6696a09621bfe",
     "per_repo": {
         "kubernetes/kubernetes": {
-            "ungrounded_count": 0,
+            "ungrounded_count": 1,
             "n": 53,
         },
         "microsoft/vscode": {
@@ -156,7 +191,13 @@ def test_conformal_q_formula() -> None:
 
 
 def test_conformal_layer_active() -> None:
-    """Verify conformal adjustments load correctly and Q is active (non-zero) for both repos."""
+    """Conformal adjustments load for both repos and Q is a non-zero (active) adjustment.
+
+    Q is asserted != 0, not > 0: CQR Q is negative when the base quantile interval over-covers the
+    calibration split (k8s v2 after the serving-time embedding fix: Q = -1.018 h, which tightens
+    the interval, 79.7 pct held-out coverage vs the 80 pct target). A positive-only assertion would
+    fail a correctly calibrated artifact; zero is what would mean the layer is a no-op.
+    """
     from triage_iq.api.loader import _load_conformal_adjustments
 
     adjustments = _load_conformal_adjustments(MODELS_DIR)
@@ -166,7 +207,9 @@ def test_conformal_layer_active() -> None:
     for repo in REPOS:
         assert repo in adjustments, f"Repo '{repo}' not found in conformal adjustments"
         adj = adjustments[repo]
-        assert adj["q_adjustment_hours"] > 0, (
+        # != 0, not > 0: CQR Q is negative when the base quantile interval over-covers
+        # (k8s v2: -1.02h, tightens the interval); zero would mean the layer is a no-op.
+        assert adj["q_adjustment_hours"] != 0, (
             f"{repo}: q_adjustment_hours={adj['q_adjustment_hours']} — conformal layer is a no-op"
         )
         assert adj["empirical_coverage"] > 0.50, (
@@ -457,6 +500,318 @@ def test_model_manifest_clean() -> None:
     )
 
 
+# ---------------------------------------------------------------------------
+# Pickled-artifact scikit-learn version invariant (2026-10-05)
+# ---------------------------------------------------------------------------
+# Production installs from requirements.lock, but the pickled estimators are produced on
+# whatever machine ran the retrain. A pickle saved by sklearn X and loaded by sklearn Y != X
+# emits InconsistentVersionWarning ("might lead to breaking code or invalid results"); loading a
+# NEWER pickle into an OLDER sklearn is the unsafe direction. Found live: resolution_predictor_*
+# (PCA) stored under 1.7.2 while the lock pinned 1.6.1, visible in Cloud Run startup logs.
+#
+# Artifacts whose stored version is deliberately NOT the lock pin. Both component classifiers
+# were retrained (ADR-0057) in an environment with scikit-learn 1.6.1, while the resolution
+# predictors were trained under 1.7.2, so NO single pin matches every pickle; retraining either
+# set changes the artifact bytes, which invalidates the cassette provenance gate (ADR-0059) and
+# needs a GCS publish. Pinning the lock to the newest stored version (1.7.2) means every pickle is
+# either an exact match or an OLDER-into-NEWER load, whose predictions were measured bit-for-bit
+# identical (reports/sklearn_pickle_equivalence_2026-10-05/compare_1.6.1_vs_1.7.2.txt). An entry
+# here is an explicit, reviewed exception: the test pins it to the recorded version, so a
+# retrain on a different sklearn (in either direction) fails until this table is updated.
+_KNOWN_OLDER_PICKLE_SKLEARN: dict[str, str] = {
+    "component_classifier_microsoft_vscode.pkl": "1.6.1",
+    "component_classifier_kubernetes_kubernetes.pkl": "1.6.1",
+}
+# Pickles that must contain >=1 sklearn estimator; zero detected means the recorder is blind
+# (fail closed), not that the file is clean.
+_MUST_CONTAIN_SKLEARN = ("component_classifier_", "resolution_predictor_")
+
+
+def _lock_sklearn_pin() -> str:
+    text = LOCK_PATH.read_text(encoding="utf-8")
+    m = re.search(r"^scikit-learn==(\S+)\s*$", text, flags=re.MULTILINE)
+    assert m, f"no `scikit-learn==X` pin found in {LOCK_PATH}"
+    return m.group(1)
+
+
+def _stored_sklearn_versions(path: Path) -> list[str]:
+    """scikit-learn version recorded inside every estimator of a joblib pickle.
+
+    BaseEstimator.__getstate__ stores `_sklearn_version`; __setstate__ receives it on load. We
+    record it there instead of parsing the stream, so this works under any installed sklearn
+    (a stream parse breaks on joblib's inline numpy array payloads).
+    """
+    from sklearn.base import BaseEstimator
+
+    seen: list[str] = []
+    original = BaseEstimator.__setstate__
+
+    def _recording_setstate(self, state):  # type: ignore[no-untyped-def]
+        seen.append(str(state.get("_sklearn_version", "pre-0.18")))
+        return original(self, state)
+
+    BaseEstimator.__setstate__ = _recording_setstate  # type: ignore[method-assign]
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")  # the mismatch warning is what we are reporting
+            joblib.load(path)
+    finally:
+        BaseEstimator.__setstate__ = original  # type: ignore[method-assign]
+    return seen
+
+
+def test_stored_sklearn_version_recorder_detects_versions(tmp_path: Path) -> None:
+    """Fail-closed self-check: the recorder must see a real estimator's version, otherwise
+    test_pickled_sklearn_versions_match_lock_pin could pass vacuously."""
+    import sklearn
+    from sklearn.preprocessing import LabelEncoder
+
+    f = tmp_path / "enc.pkl"
+    joblib.dump({"enc": LabelEncoder().fit(["a", "b"])}, f)
+    assert _stored_sklearn_versions(f) == [sklearn.__version__]
+
+
+def test_pickled_sklearn_versions_match_lock_pin() -> None:
+    """Every production pickle's recorded scikit-learn version equals requirements.lock's pin,
+    except the explicitly listed (and equivalence-measured) older ones above."""
+    pin = _lock_sklearn_pin()
+    files = sorted(MODELS_DIR.glob("*.pkl")) + sorted(MODELS_DIR.glob("*/meta.pkl"))
+    assert files, f"no production pickles under {MODELS_DIR} (run the GCS download step first)"
+    problems: list[str] = []
+    for f in files:
+        versions = set(_stored_sklearn_versions(f))
+        if not versions:
+            if f.name.startswith(_MUST_CONTAIN_SKLEARN):
+                problems.append(f"{f.name}: no sklearn estimator detected (recorder blind?)")
+            continue
+        expected = _KNOWN_OLDER_PICKLE_SKLEARN.get(f.name, pin)
+        if versions != {expected}:
+            problems.append(
+                f"{f.name}: stored scikit-learn {sorted(versions)}, expected {expected} "
+                f"(lock pin {pin})"
+            )
+    stale = [n for n in _KNOWN_OLDER_PICKLE_SKLEARN if not (MODELS_DIR / n).exists()]
+    assert not stale, f"_KNOWN_OLDER_PICKLE_SKLEARN lists artifacts that do not exist: {stale}"
+    assert not problems, (
+        "pickled scikit-learn version != requirements.lock pin "
+        "(InconsistentVersionWarning in production):\n" + "\n".join(problems)
+    )
+
+
+def _match_repo_by_artifact_subset(provenance: dict, current_by_repo: dict, artifact_fingerprint):
+    """Match a stamped artifact_hashes subset against whichever repo's current hashes it's
+    a subset of (ADR-0059 stamps only the triaged issue's own repo, not both). Returns
+    (matched_repo, None) on a match, or (None, diff_text) against the closest repo
+    otherwise. Shared by the synthesis-entry check and the judge-entry check below so the
+    matching logic can't drift between the two (2026-09-23, judge-provenance fix)."""
+    matched_repo = next(
+        (
+            repo for repo, current in current_by_repo.items()
+            if all(current.get(p) == h for p, h in provenance.items())
+        ),
+        None,
+    )
+    if matched_repo is not None:
+        return matched_repo, None
+    best_repo = max(
+        current_by_repo,
+        key=lambda r: sum(1 for p, h in provenance.items() if current_by_repo[r].get(p) == h),
+    )
+    diff = artifact_fingerprint.diff_against_expected(current_by_repo[best_repo], provenance)
+    return None, f"(closest match {best_repo}):\n" + "\n".join(diff)
+
+
+def test_cassette_provenance_matches_current_artifacts() -> None:
+    """Every eval_cassette.json entry's provenance must be verifiable against what's
+    currently on disk / currently configured -- synthesis entries via their stamped
+    artifact_hashes (ADR-0059), judge entries via judge_provenance (2026-09-23).
+
+    Guards against the 2026-09-05 incident this test exists to make impossible: a cassette
+    recorded against one checkout's classifier files got committed while a DIFFERENT
+    (retrained) classifier lived in this worktree's data/models -- record_cassettes.py's own
+    model/prompt_hash checkpoint tagging had no way to detect this, because neither the model
+    name nor the prompt text changed, only the classifier's fitted parameters did. A mismatch
+    here means either the cassette needs re-recording (eval/record_cassettes.py) against the
+    artifacts currently on disk, or the artifacts on disk are wrong for this cassette.
+
+    Also guards against the 2026-09-06 regression this test caught directly (ADR-0060's
+    synthesis/judge split never gave judge-mode calls a set_provenance-equivalent stamp --
+    23/68 entries, 100% of judge/ollama entries, had zero artifact_hashes): a judge entry
+    must carry judge_provenance with (a) a parent_synthesis_key pointing at an existing,
+    itself-stamped synthesis entry in this same cassette, (b) a judge_model matching the
+    currently configured judge model, (c) a judge_prompt_hash matching the current rubric,
+    and (d) inherited artifact_hashes that still match the artifacts on disk.
+
+    Entries with no provenance at all (synthesis: no artifact_hashes; judge: no
+    judge_provenance) are reported as a distinct failure category, not silently skipped --
+    an unstamped entry is exactly as unverifiable as a mismatched one, just for a different
+    reason.
+    """
+    import sys as _sys
+
+    _sys.path.insert(0, str(ROOT / "eval"))
+    import artifact_fingerprint
+    from record_cassettes import JUDGE_MODEL as _CURRENT_JUDGE_MODEL
+    from triage_iq.evaluation.triage_eval import compute_judge_prompt_hash
+
+    cassette_path = ROOT / "eval" / "cassettes" / "eval_cassette.json"
+    if not cassette_path.exists():
+        pytest.skip(reason="eval_cassette.json not found")
+
+    raw = json.loads(cassette_path.read_text(encoding="utf-8"))
+    entries = raw.get("entries", {})
+    if not entries:
+        pytest.skip(reason="eval_cassette.json has no entries")
+
+    current_by_repo = {
+        repo: artifact_fingerprint.compute_artifact_hashes(ROOT, repo=repo) for repo in REPOS
+    }
+    current_judge_prompt_hash = compute_judge_prompt_hash()
+
+    unstamped: list[str] = []
+    mismatched: list[str] = []
+    checked = 0
+    judge_unstamped: list[str] = []
+    judge_orphaned: list[str] = []
+    judge_model_stale: list[str] = []
+    judge_prompt_stale: list[str] = []
+    judge_artifact_mismatched: list[str] = []
+    judge_checked = 0
+
+    for key, entry in entries.items():
+        if not (isinstance(entry, dict) and "response" in entry):
+            continue  # legacy/pre-request-storage entry shape, not this check's concern
+
+        is_judge_entry = entry.get("provider") == "ollama" or "judge_provenance" in entry
+        if is_judge_entry:
+            judge_checked += 1
+            jp = entry.get("judge_provenance")
+            if not jp:
+                judge_unstamped.append(key[:16])
+                continue
+            parent_key = jp.get("parent_synthesis_key")
+            parent_entry = entries.get(parent_key) if parent_key else None
+            parent_ok = (
+                parent_key
+                and isinstance(parent_entry, dict)
+                and bool(parent_entry.get("artifact_hashes"))
+            )
+            if not parent_ok:
+                judge_orphaned.append(
+                    f"{key[:16]}: parent_synthesis_key={parent_key!r} "
+                    f"({'not found in this cassette' if parent_entry is None else 'exists but has no artifact_hashes of its own'})"
+                )
+            if jp.get("judge_model") != _CURRENT_JUDGE_MODEL:
+                judge_model_stale.append(
+                    f"{key[:16]}: stamped={jp.get('judge_model')!r} current={_CURRENT_JUDGE_MODEL!r}"
+                )
+            if jp.get("judge_prompt_hash") != current_judge_prompt_hash:
+                judge_prompt_stale.append(
+                    f"{key[:16]}: stamped={jp.get('judge_prompt_hash')!r} current={current_judge_prompt_hash!r}"
+                )
+            judge_provenance_hashes = jp.get("artifact_hashes") or {}
+            if not judge_provenance_hashes:
+                judge_artifact_mismatched.append(f"{key[:16]}: no inherited artifact_hashes")
+            else:
+                matched_repo, diff = _match_repo_by_artifact_subset(
+                    judge_provenance_hashes, current_by_repo, artifact_fingerprint
+                )
+                if matched_repo is None:
+                    judge_artifact_mismatched.append(f"{key[:16]} {diff}")
+            continue
+
+        provenance = entry.get("artifact_hashes")
+        if not provenance:
+            unstamped.append(key[:16])
+            continue
+        checked += 1
+        matched_repo, diff = _match_repo_by_artifact_subset(provenance, current_by_repo, artifact_fingerprint)
+        if matched_repo is None:
+            mismatched.append(f"{key[:16]} {diff}")
+
+    errors: list[str] = []
+    if unstamped:
+        errors.append(
+            f"{len(unstamped)}/{checked + len(unstamped)} synthesis entries have no "
+            f"artifact_hashes (recorded before ADR-0059, or by a path that doesn't stamp "
+            f"provenance): {unstamped[:10]}{' ...' if len(unstamped) > 10 else ''}"
+        )
+    if mismatched:
+        errors.append(
+            f"{len(mismatched)}/{checked} stamped synthesis entries do NOT match the "
+            f"artifacts currently on disk:\n" + "\n\n".join(mismatched[:5])
+            + (f"\n... and {len(mismatched) - 5} more" if len(mismatched) > 5 else "")
+        )
+    if judge_unstamped:
+        errors.append(
+            f"{len(judge_unstamped)}/{judge_checked} judge entries have no judge_provenance "
+            f"stamp at all: {judge_unstamped[:10]}{' ...' if len(judge_unstamped) > 10 else ''}"
+        )
+    if judge_orphaned:
+        errors.append(
+            f"{len(judge_orphaned)}/{judge_checked} judge entries have no valid parent "
+            f"synthesis entry:\n" + "\n".join(judge_orphaned[:10])
+        )
+    if judge_model_stale:
+        errors.append(
+            f"{len(judge_model_stale)}/{judge_checked} judge entries were scored by a "
+            f"different judge model than currently configured:\n" + "\n".join(judge_model_stale[:10])
+        )
+    if judge_prompt_stale:
+        errors.append(
+            f"{len(judge_prompt_stale)}/{judge_checked} judge entries were scored against a "
+            f"stale rubric:\n" + "\n".join(judge_prompt_stale[:10])
+        )
+    if judge_artifact_mismatched:
+        errors.append(
+            f"{len(judge_artifact_mismatched)}/{judge_checked} judge entries' inherited "
+            f"artifact_hashes do not match the artifacts currently on disk:\n"
+            + "\n\n".join(judge_artifact_mismatched[:5])
+        )
+
+    assert not errors, (
+        "Cassette provenance drift detected — re-run eval/record_cassettes.py against the "
+        "current artifacts/config and commit the updated cassette:\n\n" + "\n\n".join(errors)
+    )
+
+
+def _mojibake_strings(obj: object, path: str = "") -> list[str]:
+    """Paths of strings that are UTF-8 text mis-decoded as cp1252 and re-saved (e.g. an em-dash
+    stored as 'â€”'). Detected by reversibility: such a string re-encodes to cp1252 and then
+    decodes cleanly as UTF-8 into something different. Genuine non-ASCII text ('é', '—')
+    fails that round-trip and is left alone."""
+    if isinstance(obj, str):
+        try:
+            return [path] if obj.encode("cp1252").decode("utf-8") != obj else []
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            return []
+    if isinstance(obj, dict):
+        return [p for k, v in obj.items() for p in _mojibake_strings(v, f"{path}/{k}")]
+    if isinstance(obj, list):
+        return [p for i, v in enumerate(obj) for p in _mojibake_strings(v, f"{path}[{i}]")]
+    return []
+
+
+def test_cassette_and_checkpoint_have_no_mojibake() -> None:
+    """2026-09-23: a data-cleanup rewrite (ad7529f) read eval_cassette.json and
+    recording_checkpoint.json with the Windows default encoding (cp1252) and wrote them back
+    as UTF-8, turning every em-dash/arrow/non-breaking hyphen in 48 entries' stored requests,
+    responses and checkpoint plans into mojibake. Cache KEYS were untouched, so replay still
+    "worked" -- it just served corrupted plan text to the judge and the grounding checks.
+    Nothing caught it; it was found by accident while writing a prompt-parity test. This is
+    that check. Repaired in the same commit this test landed in (verified byte-exact against
+    the pre-corruption history at 71bd580 where it exists)."""
+    for rel in ("eval/cassettes/eval_cassette.json", "eval/cassettes/recording_checkpoint.json"):
+        path = ROOT / rel
+        if not path.exists():
+            continue
+        bad = _mojibake_strings(json.loads(path.read_text(encoding="utf-8")))
+        assert not bad, (
+            f"{rel}: {len(bad)} string(s) look like UTF-8 mis-decoded as cp1252 and re-saved "
+            f"(mojibake), e.g. {bad[:5]}. Something rewrote this file without encoding='utf-8'."
+        )
+
+
 def _eval_set_hash_guard() -> str:
     """Compute eval_set.jsonl's sha256 and return a loud failure message if it has drifted.
 
@@ -487,34 +842,132 @@ def grounding_reports() -> list[dict]:
     return compute_grounding_reports()
 
 
-def test_grounding_ratchet_no_new_ungrounded_claims(grounding_reports: list[dict]) -> None:
-    """Ungrounded-claim count on the frozen eval set must not exceed the recorded baseline.
-
-    Checked per-repo (not pooled): a regression concentrated in one repo must fail this
-    test on its own, independent of the other repo's volume. Guards against silent
-    regressions in synthesis grounding (component/similar-issue hallucination) creeping in
-    above the measured 2/30 (k8s) + 0/30 (vscode) baseline. See ADR-0015.
-
-    This is now the sole grounding regression guard — the companion named-case pin
-    (test_grounding_known_cases_still_flagged) was removed per ADR-0039 because its pinned
-    cases stopped reproducing and re-pinning to the current output would have made it
-    self-fulfilling. That reopens the no-op-verifier blind spot ADR-0015 originally added
-    the pin to close (a verifier that always returns all_grounded=True would trivially
-    satisfy `0 <= 1` here); see ADR-0039 for why that tradeoff was accepted rather than
-    re-pinned blind.
-    """
+def _grounding_ratchet_check(repo: str, grounding_reports: list[dict]) -> tuple[int, int]:
+    """Shared size/count computation for the per-repo ratchet tests below. Returns
+    (ungrounded_count, n); does not assert -- callers decide whether to gate."""
     current_hash = _eval_set_hash_guard()
     assert current_hash == _GROUNDING_BASELINE["eval_set_hash"], _HASH_DRIFT_MSG
 
-    for repo, baseline in _GROUNDING_BASELINE["per_repo"].items():
-        repo_reports = [c for c in grounding_reports if c["repo"] == repo]
-        ungrounded_count = sum(1 for c in repo_reports if not c["all_grounded"])
+    baseline = _GROUNDING_BASELINE["per_repo"][repo]
+    repo_reports = [c for c in grounding_reports if c["repo"] == repo]
+    ungrounded_count = sum(1 for c in repo_reports if not c["all_grounded"])
 
-        assert len(repo_reports) == baseline["n"], (
-            f"{repo}: eval set size changed ({len(repo_reports)} vs baseline "
-            f"{baseline['n']}) despite matching top-level hash — investigate"
-        )
-        assert ungrounded_count <= baseline["ungrounded_count"], (
-            f"{repo}: ungrounded claim count regressed: {ungrounded_count} > "
-            f"baseline {baseline['ungrounded_count']}"
-        )
+    assert len(repo_reports) == baseline["n"], (
+        f"{repo}: eval set size changed ({len(repo_reports)} vs baseline "
+        f"{baseline['n']}) despite matching top-level hash — investigate"
+    )
+    return ungrounded_count, baseline["ungrounded_count"]
+
+
+def test_grounding_ratchet_k8s(grounding_reports: list[dict]) -> None:
+    """kubernetes/kubernetes ungrounded-claim count must not exceed the recorded baseline.
+
+    Stays hard-gated (ADR-0058): n=53 gives a Wilson upper bound of ~9.9% at 0 observed --
+    genuinely informative, unlike vscode's n=11 (see test_grounding_ratchet_vscode below).
+    Guards against silent regressions in synthesis grounding (component/similar-issue
+    hallucination) creeping in above the recorded baseline. See ADR-0015.
+    """
+    ungrounded_count, baseline_count = _grounding_ratchet_check("kubernetes/kubernetes", grounding_reports)
+    assert ungrounded_count <= baseline_count, (
+        f"kubernetes/kubernetes: ungrounded claim count regressed: {ungrounded_count} > "
+        f"baseline {baseline_count}"
+    )
+
+
+def test_grounding_ratchet_vscode(grounding_reports: list[dict]) -> None:
+    """microsoft/vscode's grounding ratchet is REPORT ONLY, not gated (ADR-0058, 2026-09-05).
+
+    Was a hard `<=` ratchet identical to k8s's until this session found direct evidence it
+    cannot support one: the SAME issue (#311836) was flagged 4/11, 1/11, then 0/11 across
+    three measurements this engagement took as the classifier/prompt/model changed, and a
+    negative control (scripts/scratch/negative_control_fabrication.py) confirmed the
+    underlying grounding computation genuinely catches a real fabrication when one exists
+    -- so the flip is not the mechanism failing, it is n=11 giving a Wilson 95% CI of
+    [1.6%, 37.7%] on a single count, wide enough that a real regression and pure noise are
+    indistinguishable. Six independent live redraws of #311836 under the FINAL shipping
+    config landed in the classifier's top-3 every time (0/6 would-be-flagged) -- the
+    specific flip that motivated this change is a stable property of the current config,
+    not one lucky draw, though no equivalent repeat-draw evidence exists for vscode's other
+    10 issues. Mirrors test_vscode_no_fabrication's identical treatment and reasoning
+    (eval/test_quality_regression.py) -- these two are the same underlying signal
+    (ungrounded == not all_grounded == fabrication) read by two different consumers, so
+    they must move together. Does not assert; still prints the count for visibility. See
+    ADR-0058 for the n≈73 figure needed to support a 5%-ceiling hard gate.
+    """
+    ungrounded_count, baseline_count = _grounding_ratchet_check("microsoft/vscode", grounding_reports)
+    if ungrounded_count > baseline_count:
+        print(f"\nWARNING (informational, not gated): microsoft/vscode ungrounded_count="
+              f"{ungrounded_count} > baseline {baseline_count}. Not blocking per ADR-0058 "
+              "-- n=11 cannot support a zero-tolerance gate.")
+
+
+def test_no_fallback_plans_in_cassette(grounding_reports: list[dict]) -> None:
+    """A committed cassette must contain zero scored fallback plans.
+
+    2026-08-27 finding: a fallback-plan audit of the openai/gpt-oss-20b re-record found
+    68.75% first-attempt JSON-parse failure and a 32% k8s fallback-plan rate
+    (llm_status == "parse_failure" -- both retry attempts failed to produce parseable
+    JSON, so TriageAssistant._make_fallback_plan() shipped a predictor-only, no-LLM-text
+    plan that the judge then scored as if it were genuine model output). Nothing had ever
+    checked for this; it was found by manual audit, not CI. This is that check, so the
+    next time a model swap's re-recording contains degraded fallback plans, the eval gate
+    fails the recording instead of merging it. Zero tolerance, not a rate threshold --
+    a single scored fallback plan already means the judge scored something the model
+    never actually said.
+    """
+    fallback_cases = [c for c in grounding_reports if c.get("llm_status") == "parse_failure"]
+    assert not fallback_cases, (
+        f"{len(fallback_cases)}/{len(grounding_reports)} cases in this cassette are "
+        "fallback plans (llm_status == 'parse_failure') scored as genuine model output: "
+        f"{[(c['repo'], c['issue_number']) for c in fallback_cases]}. "
+        "Re-record against Groq (not a cassette-side fix) until every entry reflects real "
+        "LLM synthesis output, or the current model/config combination is not viable."
+    )
+
+
+def test_no_truncated_completions_in_cassette(grounding_reports: list[dict]) -> None:
+    """A committed cassette must contain zero completions truncated by max_tokens.
+
+    2026-08-28: going forward, TriageAssistant._groq_completion raises
+    TruncatedCompletionError the moment Groq reports finish_reason == "length" -- before
+    the caller ever gets content back, so a truncated completion can no longer reach
+    cache.set() at all. This test is the defense-in-depth backstop for a cassette recorded
+    before that fix landed (finish_reason wasn't even captured before 2026-08-28, so older
+    entries read as None here, not "length" -- a None is not itself a violation, just an
+    entry this check can't evaluate). Distinct from test_no_fallback_plans_in_cassette:
+    truncation and unparseable-JSON-after-retry are different failure modes that used to
+    be indistinguishable from each other (both surfaced as a generic parse error) -- this
+    is exactly the ambiguity that hid the actual defect for this engagement.
+    """
+    truncated_cases = [c for c in grounding_reports if c.get("finish_reason") == "length"]
+    assert not truncated_cases, (
+        f"{len(truncated_cases)}/{len(grounding_reports)} cases in this cassette were "
+        f"truncated by max_tokens (finish_reason == 'length'): "
+        f"{[(c['repo'], c['issue_number']) for c in truncated_cases]}. "
+        "Raise max_tokens and re-record -- retrying at the same cap reproduces the same "
+        "truncation."
+    )
+
+
+def test_prose_and_prompt_describe_the_served_conformal_interval() -> None:
+    """ADR-0059 addendum 2026-10-09: every current synthesis entry was written against the interval
+    the API serves (the CQR-adjusted one, marked "(coverage-calibrated)" in the prompt), and its
+    prose does not contradict that interval. Fails on every pre-change entry, whose prompt carried
+    the raw model interval (vscode coverage 46.0 pct) while the API returned the 82.7 pct one."""
+    import prose_interval_check as pic
+
+    cassette = json.loads((ROOT / "eval" / "cassettes" / "eval_cassette.json").read_text("utf-8"))
+    done = json.loads((ROOT / "eval" / "cassettes" / "recording_checkpoint.json").read_text("utf-8"))[
+        "done"
+    ]
+    keys = {r["synthesis_cache_key"] for r in done.values() if r.get("synthesis_cache_key")}
+    assert keys, "recording_checkpoint.json lists no synthesis entries"
+    bad = {}
+    for k in sorted(keys):
+        entry = cassette["entries"].get(k)
+        v = pic.violations(entry) if entry else ["checkpoint key missing from the cassette"]
+        if v:
+            bad[k[:12]] = v[0]
+    assert not bad, f"{len(bad)}/{len(keys)} synthesis entries disagree with the served interval: " + str(
+        dict(list(bad.items())[:3])
+    )

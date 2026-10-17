@@ -1,0 +1,77 @@
+{
+  "per_repo": {
+    "microsoft/vscode": {
+      "n": 11,
+      "component_ungrounded_count": 1,
+      "component_ungrounded_pct": 9.09
+    },
+    "kubernetes/kubernetes": {
+      "n": 53,
+      "component_ungrounded_count": 1,
+      "component_ungrounded_pct": 1.89
+    }
+  },
+  "overall": {
+    "n": 64,
+    "component_ungrounded_count": 2,
+    "component_ungrounded_pct": 3.12
+  },
+  "ungrounded_cases": [
+    {
+      "issue_number": 311836,
+      "repo": "microsoft/vscode",
+      "predicted_component": "webview",
+      "old_classifier_top3_labels": [
+        "ux",
+        "debug",
+        "accessibility"
+      ],
+      "new_classifier_top3_labels": [
+        "ux",
+        "extensions",
+        "api"
+      ],
+      "component_grounded_new": false,
+      "component_reason_new": "not in classifier_top3",
+      "all_grounded_new": false,
+      "override_applied_new": false,
+      "retrieved_numbers": [
+        43049,
+        83645,
+        311844,
+        312020,
+        312490
+      ],
+      "llm_status": "ok",
+      "finish_reason": "stop"
+    },
+    {
+      "issue_number": 14711,
+      "repo": "kubernetes/kubernetes",
+      "predicted_component": "usability",
+      "old_classifier_top3_labels": [
+        "introspection",
+        "logging",
+        "usability"
+      ],
+      "new_classifier_top3_labels": [
+        "kubectl",
+        "introspection",
+        "monitoring"
+      ],
+      "component_grounded_new": false,
+      "component_reason_new": "not in classifier_top3",
+      "all_grounded_new": false,
+      "override_applied_new": false,
+      "retrieved_numbers": [
+        2712,
+        7587,
+        24056,
+        24418,
+        25012
+      ],
+      "llm_status": "ok",
+      "finish_reason": "stop"
+    }
+  ]
+}

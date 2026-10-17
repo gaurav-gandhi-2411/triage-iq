@@ -11,6 +11,7 @@ text-similarity pairs (see ADR-0008 for task framing).
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 from typing import Protocol, cast
 
@@ -118,7 +119,12 @@ class SimilarIssueRetriever:
         self.model_key = model_key
         model_name = SUPPORTED_MODELS.get(model_key, model_key)
         logger.info("Loading embedding model: %s", model_name)
+        t0 = time.perf_counter()
         self.model = SentenceTransformer(model_name)
+        logger.info(
+            "startup_step %s.sentence_transformer_load took %.1f ms",
+            repo, (time.perf_counter() - t0) * 1000.0,
+        )
         self.index: faiss.IndexFlatIP | None = None
         self.issue_numbers: np.ndarray | None = None
         self.texts: list[str] | None = None
@@ -186,6 +192,42 @@ class SimilarIssueRetriever:
             use = bool(QUERY_INSTRUCTIONS.get(self.model_key, ""))
         return QUERY_INSTRUCTIONS.get(self.model_key, "") + text if use else text
 
+    def match_indexed_issue(self, title: str, body: str) -> int | None:
+        """Number of the indexed issue whose stored corpus text is exactly this title+body.
+
+        Users usually paste an issue that already exists, and without an issue_number the
+        index returns the issue itself as its own top "similar issue" (seen live on vscode
+        #286776, 2026-09-24). The corpus text is built from the CLEANED body
+        (preprocess.clean_text) through _build_text with this model's tokenizer, so the
+        query is canonicalized the same way before the lookup. Verified on #286776: the
+        raw GitHub body cleaned this way reproduces the indexed text byte-for-byte; the
+        raw body does not. The body is also tried as-is, for callers that already pass a
+        cleaned body. Exact-text equality only, never a similarity threshold: a
+        near-duplicate filed separately is a real result and must stay. If several indexed
+        issues share the text, nothing is excluded (ambiguous).
+        """
+        from triage_iq.data.preprocess import clean_text
+
+        if self.texts is None or self.issue_numbers is None:
+            return None
+        lookup = getattr(self, "_text_to_numbers", None)
+        if lookup is None:
+            lookup = {}
+            for text, num in zip(self.texts, self.issue_numbers, strict=True):
+                lookup.setdefault(text, []).append(int(num))
+            self._text_to_numbers = lookup
+        tokenizer = getattr(self.model, "tokenizer", None)
+        max_tokens = getattr(self.model, "max_seq_length", 512)
+        for candidate_body in dict.fromkeys((clean_text(body)[0], body)):
+            built = _build_text(
+                pd.Series([title]), pd.Series([candidate_body]),
+                tokenizer=tokenizer, max_tokens=max_tokens,
+            )[0]
+            nums = lookup.get(built)
+            if nums is not None and len(nums) == 1:
+                return nums[0]
+        return None
+
     def retrieve(
         self,
         query_text: str,
@@ -194,6 +236,29 @@ class SimilarIssueRetriever:
         apply_query_instruction: bool | None = None,
     ) -> list[dict]:
         """Return top-k most related issues (excluding query issue itself)."""
+        hits, _ = self.retrieve_with_embedding(
+            query_text,
+            k=k,
+            exclude_number=exclude_number,
+            apply_query_instruction=apply_query_instruction,
+        )
+        return hits
+
+    def retrieve_with_embedding(
+        self,
+        query_text: str,
+        k: int = 20,
+        exclude_number: int | None = None,
+        apply_query_instruction: bool | None = None,
+    ) -> tuple[list[dict], np.ndarray]:
+        """Same as retrieve(), also returning the query embedding it computed.
+
+        The embedding is the exact vector used for the FAISS search: float32, shape (dim,),
+        L2-normalised, encoded from the query text WITH this repo's query instruction applied
+        (see _apply_query_instruction). Exposed so callers that need the vector (serving's
+        resolution stage, ADR-0062) reuse it instead of encoding the same text a second time.
+        retrieve() delegates here, so its behaviour and return type are unchanged.
+        """
         assert self.index is not None, "Call build_index first"
         assert self.issue_numbers is not None
         assert self.texts is not None
@@ -214,7 +279,7 @@ class SimilarIssueRetriever:
             results.append({"number": num, "score": float(score), "text": self.texts[idx]})
             if len(results) >= k:
                 break
-        return results
+        return results, emb[0]
 
     def retrieve_batch(
         self,
@@ -264,11 +329,21 @@ class SimilarIssueRetriever:
     @classmethod
     def load(cls, out_dir: str) -> SimilarIssueRetriever:
         p = Path(out_dir)
+        t0 = time.perf_counter()
         meta = joblib.load(str(p / "meta.pkl"))
+        logger.info(
+            "startup_step %s.meta_pkl_load took %.1f ms",
+            meta["repo"], (time.perf_counter() - t0) * 1000.0,
+        )
         obj = cls(repo=meta["repo"], model_key=meta["model_key"])
+        t0 = time.perf_counter()
         # faiss.read_index()'s return type is the generic Index base class, but save()
         # only ever writes an IndexFlatIP -- narrowing here matches the actual contract.
         obj.index = cast(faiss.IndexFlatIP, faiss.read_index(str(p / "index.faiss")))
+        logger.info(
+            "startup_step %s.faiss_read took %.1f ms",
+            meta["repo"], (time.perf_counter() - t0) * 1000.0,
+        )
         obj.issue_numbers = meta["issue_numbers"]
         obj.texts = meta["texts"]
         return obj

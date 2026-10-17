@@ -1,0 +1,33 @@
+RUNTIME sklearn 1.6.1 lightgbm 4.6.0 numpy 2.4.4 pandas 3.0.2 joblib 1.5.3
+
+component_classifier_kubernetes_kubernetes.pkl sha256=a7caf13b08e7e9cb stored_sklearn_versions=['1.6.1'] n_estimators=53 warnings=0
+  top-level keys: ['T', 'label_encoder', 'max_features', 'model_kind', 'ngram_range', 'ovr', 'repo', 'vectorizer']
+  estimators: {'LabelBinarizer@1.6.1': 1, 'LabelEncoder@1.6.1': 1, 'LogisticRegression@1.6.1': 48, 'OneVsRestClassifier@1.6.1': 1, 'TfidfTransformer@1.6.1': 1, 'TfidfVectorizer@1.6.1': 1}
+
+component_classifier_microsoft_vscode.pkl sha256=5e286b1f75218373 stored_sklearn_versions=['1.6.1'] n_estimators=53 warnings=0
+  top-level keys: ['T', 'label_encoder', 'max_features', 'model_kind', 'ngram_range', 'ovr', 'repo', 'vectorizer']
+  estimators: {'LabelBinarizer@1.6.1': 1, 'LabelEncoder@1.6.1': 1, 'LogisticRegression@1.6.1': 48, 'OneVsRestClassifier@1.6.1': 1, 'TfidfTransformer@1.6.1': 1, 'TfidfVectorizer@1.6.1': 1}
+
+resolution_predictor_kubernetes_kubernetes.pkl sha256=038052a90225ea5c stored_sklearn_versions=['1.7.2'] n_estimators=1 warnings=1
+  top-level keys: ['bucket_train_distribution', 'conformal_adjustments', 'feature_names', 'model_bucket', 'model_point', 'model_q10', 'model_q90', 'pca', 'repo', 'top_components']
+  estimators: {'PCA@1.7.2': 1}
+  model_point: lightgbm.basic.Booster head=['tree', 'version=v4']
+  model_q10: lightgbm.basic.Booster head=['tree', 'version=v4']
+  model_q90: lightgbm.basic.Booster head=['tree', 'version=v4']
+  model_bucket: lightgbm.basic.Booster head=['tree', 'version=v4']
+
+resolution_predictor_microsoft_vscode.pkl sha256=60b39981d8c95dcf stored_sklearn_versions=['1.7.2'] n_estimators=1 warnings=1
+  top-level keys: ['bucket_train_distribution', 'feature_names', 'model_bucket', 'model_point', 'model_q10', 'model_q90', 'pca', 'repo', 'top_components']
+  estimators: {'PCA@1.7.2': 1}
+  model_point: lightgbm.basic.Booster head=['tree', 'version=v4']
+  model_q10: lightgbm.basic.Booster head=['tree', 'version=v4']
+  model_q90: lightgbm.basic.Booster head=['tree', 'version=v4']
+  model_bucket: lightgbm.basic.Booster head=['tree', 'version=v4']
+
+similar_issue_index_kubernetes_kubernetes_bge/meta.pkl sha256=62f48f8f53c6b975 stored_sklearn_versions=[] n_estimators=0 warnings=0
+  top-level keys: ['issue_numbers', 'model_key', 'repo', 'texts']
+  estimators: {}
+
+similar_issue_index_microsoft_vscode_bge/meta.pkl sha256=cd74345b4d539b7a stored_sklearn_versions=[] n_estimators=0 warnings=0
+  top-level keys: ['issue_numbers', 'model_key', 'repo', 'texts']
+  estimators: {}

@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "strict": true,
+  "document": "docs/repo_description.txt",
+  "ignore_rules": [
+    {"name": "repo nickname", "pattern": "\\bk8s\\b", "reason": "'k8s' is the repository nickname for kubernetes, not a quantity"},
+    {"name": "version / method label", "pattern": "\\b[vV]\\d+(?:\\.\\d+)*\\b", "reason": "labels such as 'CQR v2' or 'v1 gold set' name a version, not a measurement"},
+    {"name": "percentile / quantile name", "pattern": "\\bQ\\d+\\b|\\b[pP]\\d{2}\\b|\\bp\\d+/p\\d+(?:/p\\d+)?\\b", "reason": "Q10, p50, p10/p50/p90 are names of quantiles"},
+    {"name": "rank name", "pattern": "\\b[tT]op-\\d\\b", "reason": "top-1 / top-3 name a rank cutoff"},
+    {"name": "metric name", "pattern": "\\b(?:R|Recall|Precision|P|F)@\\d+(?:\\s*/\\s*@?\\d+)*|\\bF1\\b", "reason": "R@5, Recall@1 / @10, F1 name a metric and its cutoff"},
+    {"name": "numbered label", "pattern": "\\b(?:Lever|System|[Pp]hase|[Ss]tep|Wave|Sec(?:tion)?|[Ss]tage|Part|Finding|Tier)s?\\s*\\d+[a-z]?(?:\\s*[/,&-]\\s*\\d+[a-z]?)*\\b", "reason": "'System 2', 'Lever 1/2', 'Phase 2b' are labels of components or steps"},
+    {"name": "parameter count in a model name", "pattern": "\\b\\d+(?:\\.\\d+)?[BM]\\b(?=[ -]|$)", "reason": "'8B', '70B' describe a model's size class, not a result"},
+    {"name": "ordered-list marker", "pattern": "^\\s*\\d+\\.(?=\\s)", "reason": "the number of a numbered list item"},
+    {"name": "calendar year or year-month", "pattern": "\\b20(?:1\\d|2[0-6])(?:[-–]\\d{2,4})?\\b", "reason": "calendar years 2010-2026 and year-month ranges such as 2015-10 to 2016-04 are dates"},
+    {"name": "day range tail of a date span", "pattern": "\\.\\.\\d{1,2}\\b", "reason": "the '..27' in '2026-04-21..27' is the end day of a date span"},
+    {"name": "interpreter version", "pattern": "\\bPython\\s+3\\.\\d+\\+?", "reason": "a supported interpreter version, not a result"},
+    {"name": "local port", "pattern": "localhost:\\d+", "reason": "a local TCP port in a URL"},
+    {"name": "CVE identifier", "pattern": "\\bCVE-\\d{4}-\\d+", "reason": "an advisory identifier"},
+    {"name": "bare URL", "pattern": "https?://\\S+", "reason": "URLs contain project numbers and ids that are not claims"},
+    {"name": "standard name: ISO 8601", "pattern": "ISO 8601", "reason": "the name of the date-time format standard"},
+    {"name": "algorithm name: SHA-256", "pattern": "SHA-?256", "reason": "the name of the hash algorithm"},
+    {"name": "HTTP status codes of the API error contract (errors line)", "pattern": "\\*\\*Errors:\\*\\* 422 unsupported repo or missing title\\. 429 rate limit\\. 500 internal error\\.", "reason": "status codes 422/429/500 are the API's documented error responses (validation, rate limiter, unhandled error), not measurements"},
+    {"name": "HTTP status code 503 (health)", "pattern": "\\(503 if either is unhealthy\\)", "reason": "an HTTP status code in the /health contract"},
+    {"name": "HTTP status code 503 (metrics)", "pattern": "Unset in prod → 503|→ 503 \\(fail-closed", "reason": "an HTTP status code in the /metrics contract"},
+    {"name": "HTTP status code 401", "pattern": "\\(401 otherwise\\)", "reason": "an HTTP status code in the /metrics contract"},
+    {"name": "HTTP status code 405", "pattern": "\\(the API answers 405\\)", "reason": "an HTTP status code observed from the HEAD request, as stated in the sentence"},
+    {"name": "quoted superseded figure", "pattern": "the old \"~20K issues\" figure", "reason": "quotes the superseded figure that the sentence corrects; it is not a claim of the README"},
+    {"name": "model identifier", "pattern": "\\b(?:gpt-oss-\\d+b|[Ll]lama-?\\d[\\w.-]*|[Qq]wen\\d[\\w:.-]*|[Bb][Gg][Ee]-base-en-v[\\d.]+|distilbert-[\\w-]+)", "reason": "model names such as gpt-oss-120b or llama-3.1-8b-instant carry digits that are part of the name"},
+    {"name": "call index label", "pattern": "\\b[Cc]alls?\\s*\\d+(?:\\s*[–-]\\s*\\d+)?\\b", "reason": "'call 1', 'calls 2–5' index the five replayed requests"},
+    {"name": "commit or artifact hash", "pattern": "\\b(?=[0-9a-f]*\\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,64}\\b", "reason": "git commit and artifact hashes (e.g. 30e6fd8, e9f8861f85fec3bb) contain digits but identify a build"},
+    {"name": "script file name", "pattern": "\\b\\d{2}[a-z]?_[A-Za-z0-9_]+\\.py\\b", "reason": "numbered script file names"}
+  ],
+  "ignore_lines": [
+    {"name": "shell command", "pattern": "^\\s*(?:curl|gsutil|git|docker|pip|uv|npm|cd|export|ruff|pytest|python(?:3)?|\\$)\\b", "reason": "command lines carry arguments and paths, not claims"},
+    {"name": "request example", "pattern": "^\\s*\"(?:repo|title|body|issue_number|created_at)\":", "reason": "the example request body is an input, not a result"}
+  ],
+  "lines": [
+    {"id": "repo-description", "line_contains": "Component classifier: 85.99% (k8s)", "numbers": [{"text": "85.99", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "kubernetes_kubernetes", "new", "top3"]}}}}, {"text": "85.82", "fmt": "{:.2f}", "source": {"expr": "v * 100", "vars": {"v": {"file": "reports/classifier_old_vs_new_paired_2026-09-23.json", "path": ["per_repo", "microsoft_vscode", "new", "top3"]}}}}]}
+  ]
+}

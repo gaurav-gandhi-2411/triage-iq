@@ -1,0 +1,64 @@
+{
+  "inputs_sha256": {
+    "reports/served_k8s_rows.parquet": "b920adf454a4ddedb5764a05644b3440315de761b48195d33385c26863d26040",
+    "data/processed/kubernetes_kubernetes_temporal_train.parquet": "f7988eec072804618d036d3ace03c87395773e0d7bf4281490daf63d69d8dc94"
+  },
+  "seed": 42,
+  "n_bootstrap": 2000,
+  "n": 2992,
+  "naive_train_median_hours": 72.8761111111111,
+  "mean_gain_days": 2.1426687056691134,
+  "mean_gain_pct_of_naive_mae": 2.0557325350279116,
+  "frac_issues_learned_better": 0.6092914438502673,
+  "median_gain_days": 0.8309988544440662,
+  "tails": {
+    "top_1pct_by_true_resolution": {
+      "k_issues": 30,
+      "min_true_days_in_tail": 898.6336342592593,
+      "share_of_total_gain": 0.0704,
+      "share_ci95": [
+        0.042,
+        0.0887
+      ],
+      "gain_days_per_issue_in_tail": 15.039594320785454,
+      "gain_days_per_issue_in_rest": 2.0120448810730664,
+      "rest_mean_gain_sign": "learned better"
+    },
+    "top_5pct_by_true_resolution": {
+      "k_issues": 150,
+      "min_true_days_in_tail": 587.9495601851852,
+      "share_of_total_gain": 0.2877,
+      "share_ci95": [
+        0.2385,
+        0.3397
+      ],
+      "gain_days_per_issue_in_tail": 12.296500647251653,
+      "gain_days_per_issue_in_rest": 1.6067521711028283,
+      "rest_mean_gain_sign": "learned better"
+    },
+    "top_10pct_by_true_resolution": {
+      "k_issues": 299,
+      "min_true_days_in_tail": 417.0315625,
+      "share_of_total_gain": 0.5683,
+      "share_ci95": [
+        0.5022,
+        0.6591
+      ],
+      "gain_days_per_issue_in_tail": 12.185931576334164,
+      "gain_days_per_issue_in_rest": 1.027579363549228,
+      "rest_mean_gain_sign": "learned better"
+    },
+    "top_20pct_by_true_resolution": {
+      "k_issues": 598,
+      "min_true_days_in_tail": 112.9004861111111,
+      "share_of_total_gain": 0.9585,
+      "share_ci95": [
+        0.8732,
+        1.069
+      ],
+      "gain_days_per_issue_in_tail": 10.275763750860909,
+      "gain_days_per_issue_in_rest": 0.11109358577575723,
+      "rest_mean_gain_sign": "learned better"
+    }
+  }
+}

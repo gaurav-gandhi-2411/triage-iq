@@ -1,0 +1,45 @@
+{
+  "provenance": {
+    "purpose": "offline before/after of owner decision D7 (train-median point, both repos), ADR-0064; zero LLM calls, network blocked, seed 42",
+    "code_under_test": "7e1d09b",
+    "before_k8s": "reports/served_k8s_rows.parquet from main 30e6fd8 (PR #159 run)",
+    "scripts": [
+      "scratchpad d7_k8s_before_after.py + d7_compare.py (k8s, 2,992 rows joined on issue number)",
+      "scratchpad d7_vscode_before_after.py (vscode, 616-row reconstructed window)"
+    ],
+    "k8s_test_frame_sha256": "fa77d080aacd394dec11332aa4cbd68fe10f5ad5bbf3284dc4cab332c9ae2e95",
+    "vscode_frame_sha256": "17fe9872e1a968f52db68c1a9f29e1cfadb6e8068bb0ffb13425085a51017c01"
+  },
+  "kubernetes/kubernetes": {
+    "n": 2992,
+    "lo_hi_bit_identical": true,
+    "bucket_identical": true,
+    "model_point_bit_identical_to_before_point": true,
+    "point_source": [
+      "train_median"
+    ],
+    "interval_basis": [
+      "model"
+    ],
+    "before_model_point_mae_days": 102.08629440893277,
+    "before_model_point_median_ae_days": 7.280569568561681,
+    "after_served_point_mae_days": 104.22896311460191,
+    "after_served_point_median_ae_days": 3.5197048611111117,
+    "served_point_inside_served_interval_frac": 0.9983288770053476,
+    "served_point_outside_interval_rows": 5
+  },
+  "microsoft/vscode": {
+    "n": 616,
+    "point_source": [
+      "train_median"
+    ],
+    "interval_basis": [
+      "naive_scaled"
+    ],
+    "model_before_mae_days": 5.447663770844176,
+    "model_before_median_ae_days": 5.796693914282112,
+    "served_after_mae_days": 3.5330494115259743,
+    "served_after_median_ae_days": 3.7882407407407412,
+    "served_point_inside_served_interval_frac": 1.0
+  }
+}

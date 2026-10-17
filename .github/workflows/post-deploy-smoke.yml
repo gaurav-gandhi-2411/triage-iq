@@ -1,0 +1,108 @@
+name: Post-deploy smoke (after a quota pass)
+
+# deploy.yml promotes a revision on a QUOTA PASS (/triage degraded only on rate_limited_tpd,
+# 2026-10-12) and opens an issue labelled smoke-pending-quota. This workflow is what makes that
+# safe: while such an issue is open it re-runs the FULL smoke check against the live service
+# every 30 minutes. With no pending issue it does nothing and spends zero Groq tokens.
+#
+#   real pass            -> comment on the pending issue and close it
+#   still rate_limited_tpd -> leave it open (the pool has not recovered yet)
+#   any other failure    -> open (or comment on) a post-deploy-smoke-alert issue
+#
+# The verdict logic is scripts/smoke_triage_verdict.py, shared with deploy.yml.
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: post-deploy-smoke
+  cancel-in-progress: false
+
+env:
+  SERVICE_URL: https://triageiq-api-1014562031321.us-central1.run.app
+
+jobs:
+  recheck:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Is a quota-pass smoke test pending?
+        id: pending
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const open = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo, state: 'open', labels: 'smoke-pending-quota',
+            });
+            core.setOutput('pending', open.data.length > 0 ? 'true' : 'false');
+            core.setOutput('issue', open.data.length > 0 ? String(open.data[0].number) : '');
+
+      - uses: actions/checkout@v7
+        if: steps.pending.outputs.pending == 'true'
+
+      - name: Full smoke test against the live service
+        id: smoke
+        if: steps.pending.outputs.pending == 'true'
+        run: |
+          # /health?deps=1 first: a 401 or a down dependency is a FAIL, not a quota state.
+          DRESP=$(curl -s --max-time 90 -w "\n%{http_code}" "$SERVICE_URL/health?deps=1" || true)
+          DCODE=$(echo "$DRESP" | tail -1)
+          echo "$DRESP" | sed '$d'
+          if [ "$DCODE" != "200" ]; then
+            echo "result=fail" >> "$GITHUB_OUTPUT"
+            echo "detail=/health?deps=1 returned HTTP $DCODE" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          TRESP=$(curl -s --max-time 120 -w "\n%{http_code}" -X POST "$SERVICE_URL/triage" \
+            -H "Content-Type: application/json" \
+            -d '{"repo":"microsoft/vscode","title":"Extension host crashes on startup","body":"Every time I open VS Code the extension host process terminates immediately."}' || true)
+          TCODE=$(echo "$TRESP" | tail -1)
+          TBODY=$(echo "$TRESP" | sed '$d')
+          RC=0
+          MSG=$(echo "$TBODY" | python3 scripts/smoke_triage_verdict.py "$TCODE") || RC=$?
+          echo "$MSG"
+          case "$RC" in
+            0) echo "result=pass" >> "$GITHUB_OUTPUT" ;;
+            3) echo "result=quota" >> "$GITHUB_OUTPUT" ;;
+            *) echo "result=fail" >> "$GITHUB_OUTPUT" ;;
+          esac
+          echo "detail=$(echo "$MSG" | head -c 400 | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+
+      - name: Close, wait, or alert
+        if: steps.pending.outputs.pending == 'true'
+        uses: actions/github-script@v8
+        env:
+          RESULT: ${{ steps.smoke.outputs.result }}
+          DETAIL: ${{ steps.smoke.outputs.detail }}
+          ISSUE: ${{ steps.pending.outputs.issue }}
+        with:
+          script: |
+            const { RESULT, DETAIL, ISSUE } = process.env;
+            const issue_number = Number(ISSUE);
+            const owner = context.repo.owner, repo = context.repo.repo;
+            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            if (RESULT === 'pass') {
+              await github.rest.issues.createComment({ owner, repo, issue_number,
+                body: `Full smoke test PASSED against the live service (LLM answered, _degraded false). ${runUrl}` });
+              await github.rest.issues.update({ owner, repo, issue_number, state: 'closed' });
+            } else if (RESULT === 'quota') {
+              core.notice('Groq daily pool has not recovered yet (rate_limited_tpd); leaving the pending issue open.');
+            } else {
+              const labels = ['post-deploy-smoke-alert'];
+              const body = [
+                `The post-deploy smoke test FAILED after a quota pass: ${DETAIL || 'no detail captured'}`,
+                '', `Run: ${runUrl}`, `Time: ${new Date().toISOString()}`, '',
+                `The promoted revision is serving. Pending issue: #${issue_number}. Investigate before closing either issue.`,
+              ].join('\n');
+              const open = await github.rest.issues.listForRepo({ owner, repo, state: 'open', labels: labels.join(',') });
+              if (open.data.length > 0) {
+                await github.rest.issues.createComment({ owner, repo, issue_number: open.data[0].number, body });
+              } else {
+                await github.rest.issues.create({ owner, repo, title: 'Post-deploy smoke test FAILED after a quota pass', body, labels });
+              }
+              core.setFailed('post-deploy smoke test failed');
+            }

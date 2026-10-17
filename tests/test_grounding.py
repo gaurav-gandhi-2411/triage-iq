@@ -6,8 +6,12 @@ touching the LLM or any I/O.
 """
 from __future__ import annotations
 
-from triage_iq.models.grounding import verify_plan_grounding
-from triage_iq.models.triage import SimilarIssue, TriagePlan
+from triage_iq.models.grounding import (
+    compute_grounding_status,
+    verify_override_reason_grounded,
+    verify_plan_grounding,
+)
+from triage_iq.models.triage import DeclaredAttribution, SimilarIssue, TriagePlan
 
 CLASSIFIER_TOP3 = [
     {"label": "editor", "confidence": 0.7},
@@ -127,3 +131,105 @@ def test_case_and_whitespace_mismatch_is_ungrounded() -> None:
     # " editor " strips to "editor" which DOES match — strip() is applied per spec.
     assert report_ws.component_grounded is True
     assert report_ws.component_reason == "in classifier_top3"
+
+
+# ---------------------------------------------------------------------------
+# Validated override reason (2026-08-28, Part C/E)
+# ---------------------------------------------------------------------------
+
+
+def test_override_reason_grounded_by_cited_retrieved_number() -> None:
+    assert verify_override_reason_grounded(
+        reason="See issue #12345 which confirms this.",
+        issue_title="unrelated title",
+        issue_body="unrelated body",
+        retrieved_numbers={12345, 999},
+    ) is True
+
+
+def test_override_reason_ungrounded_when_cited_number_not_retrieved() -> None:
+    assert verify_override_reason_grounded(
+        reason="See issue #12345 which confirms this.",
+        issue_title="unrelated title",
+        issue_body="unrelated body",
+        retrieved_numbers={999},
+    ) is False
+
+
+def test_override_reason_grounded_by_verbatim_entity_from_title() -> None:
+    assert verify_override_reason_grounded(
+        reason="The issue explicitly references terminalInstance.ts behavior.",
+        issue_title="terminalInstance.ts crashes on startup",
+        issue_body="",
+        retrieved_numbers=set(),
+    ) is True
+
+
+def test_override_reason_ungrounded_when_no_evidence_cited() -> None:
+    """The exact unsound case this replaces: a plausible-sounding but unverifiable reason,
+    checked against nothing, must NOT pass."""
+    assert verify_override_reason_grounded(
+        reason="This is clearly a different component based on my analysis.",
+        issue_title="Port remaining e2e tests to Framework",
+        issue_body="Fixes namespace cleanup issues in test infra.",
+        retrieved_numbers={111, 222},
+    ) is False
+
+
+def test_override_reason_empty_string_is_ungrounded() -> None:
+    assert verify_override_reason_grounded(
+        reason="", issue_title="some title", issue_body="some body", retrieved_numbers=set(),
+    ) is False
+
+
+# ---------------------------------------------------------------------------
+# compute_grounding_status: shared production/eval function (2026-08-28, C6/E1)
+# ---------------------------------------------------------------------------
+
+
+def _make_plan_with_override(
+    predicted_component: str, override_reason: str,
+) -> TriagePlan:
+    plan = _make_plan(predicted_component=predicted_component)
+    plan.declared_attribution = DeclaredAttribution(
+        component_source="model_override",
+        component_override_reason=override_reason,
+    )
+    return plan
+
+
+def test_compute_grounding_status_matches_verify_plan_grounding_when_rescue_disabled() -> None:
+    """Default (enable_validated_override_rescue=False): identical to the plain check --
+    no divergence between production's default and eval's default."""
+    plan = _make_plan_with_override("networking", "See issue #10 which confirms this.")
+    resolved = compute_grounding_status(
+        plan, CLASSIFIER_TOP3, retrieved_numbers={10}, enable_validated_override_rescue=False,
+    )
+    assert resolved.component_grounded is False
+    assert resolved.override_applied is False
+    assert resolved.override_reason_validated is None
+
+
+def test_compute_grounding_status_rescues_validated_override_when_enabled() -> None:
+    plan = _make_plan_with_override("networking", "See issue #10 which confirms this.")
+    resolved = compute_grounding_status(
+        plan, CLASSIFIER_TOP3, retrieved_numbers={10}, enable_validated_override_rescue=True,
+    )
+    assert resolved.component_grounded is True
+    assert resolved.override_applied is True
+    assert resolved.override_reason_validated is True
+    assert resolved.all_grounded is True
+
+
+def test_compute_grounding_status_does_not_rescue_unvalidated_override_even_when_enabled() -> None:
+    """The core fix: enabling the rescue does not mean any override passes -- only a
+    checkably-grounded reason does."""
+    plan = _make_plan_with_override("networking", "This seems more accurate to me.")
+    resolved = compute_grounding_status(
+        plan, CLASSIFIER_TOP3, retrieved_numbers={10},
+        enable_validated_override_rescue=True,
+        issue_title="unrelated", issue_body="unrelated",
+    )
+    assert resolved.component_grounded is False
+    assert resolved.override_applied is False
+    assert resolved.override_reason_validated is False

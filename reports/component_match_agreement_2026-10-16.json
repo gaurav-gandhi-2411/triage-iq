@@ -1,0 +1,72 @@
+{
+ "exact_match_accuracy": 0.6875,
+ "exact_match_accuracy_wilson95": [
+  0.5661,
+  0.7877
+ ],
+ "wrong_plans": 20,
+ "wrong_plans_scored_2": 5,
+ "wrong_plans_scored_1": 11,
+ "wrong_plans_scored_0": 4,
+ "judge_scored_2_total": 49,
+ "judge_mean_component_match": 1.703125,
+ "strict_equality_mean_component_match": 1.375,
+ "n_judge_entries": 64,
+ "agreement_rule": "exact_equal iff component_match == 2",
+ "agree": 59,
+ "agreement_rate": 0.9219,
+ "equal_pairs": 44,
+ "contingency": {
+  "exact_equal=False, component_match=0": 4,
+  "exact_equal=False, component_match=1": 11,
+  "exact_equal=False, component_match=2": 5,
+  "exact_equal=True, component_match=2": 44
+ },
+ "disagreements": [
+  {
+   "key": "4a742f523ff9",
+   "title": "runtime error when using OpenStack cloud provider",
+   "gold": "cloudprovider",
+   "predicted": "provider/openstack",
+   "component_source": null,
+   "exact_equal": false,
+   "component_match": 2
+  },
+  {
+   "key": "d61564c74a2d",
+   "title": "Adjust memory overcommit on node for QoS",
+   "gold": "system-requirement",
+   "predicted": "kubelet",
+   "component_source": null,
+   "exact_equal": false,
+   "component_match": 2
+  },
+  {
+   "key": "bd5b40cacf37",
+   "title": "Support setting env vars in kubectl run",
+   "gold": "usability",
+   "predicted": "kubectl",
+   "component_source": null,
+   "exact_equal": false,
+   "component_match": 2
+  },
+  {
+   "key": "f70048ab2bf9",
+   "title": "ServicePort's API schema doesnt match actual response for TargetPort field",
+   "gold": "swagger",
+   "predicted": "api",
+   "component_source": null,
+   "exact_equal": false,
+   "component_match": 2
+  },
+  {
+   "key": "a2379d48ccb7",
+   "title": "`kubectl create -f` and `kubectl delete -f` are not glob friendly",
+   "gold": "usability",
+   "predicted": "kubectl",
+   "component_source": null,
+   "exact_equal": false,
+   "component_match": 2
+  }
+ ]
+}

@@ -1,0 +1,33 @@
+{
+  "per_repo": {
+    "microsoft/vscode": {
+      "n": 11,
+      "with_time_claim": 9,
+      "contradicts_raw": 0,
+      "contradicts_conformal": 0,
+      "plans_quoting_bound": 0,
+      "plans_with_bound_mismatch": 0,
+      "bounds_identical_at_1dp": 0
+    },
+    "kubernetes/kubernetes": {
+      "n": 53,
+      "with_time_claim": 26,
+      "contradicts_raw": 0,
+      "contradicts_conformal": 0,
+      "plans_quoting_bound": 0,
+      "plans_with_bound_mismatch": 0,
+      "bounds_identical_at_1dp": 53
+    }
+  },
+  "examples": {},
+  "provenance": {
+    "script": "scripts/prose_vs_conformal_interval.py",
+    "cassette": "eval_cassette.json",
+    "restricted_to_checkpoint": "recording_checkpoint.json",
+    "Q_hours": {
+      "kubernetes/kubernetes": -1.0182,
+      "microsoft/vscode": 1.2655
+    },
+    "llm_calls": 0
+  }
+}

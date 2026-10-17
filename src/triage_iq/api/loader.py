@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import logging
 import os
+import time
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -14,6 +16,18 @@ from typing import Any
 import pandas as pd
 
 logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def _timed(step: str):
+    """Log wall-clock ms for one startup step (prod cold-start profiling, see PR notes)."""
+    t0 = time.perf_counter()
+    try:
+        yield
+    finally:
+        ms = round((time.perf_counter() - t0) * 1000.0, 1)
+        logger.info("startup_step %s took %.1f ms", step, ms, extra={"step": step, "ms": ms})
+
 
 _REPO_SLUGS = {
     "microsoft/vscode": "microsoft_vscode",
@@ -30,20 +44,27 @@ class RepoBundle:
     assistant: Any
 
 
+# v2 (2026-10): k8s Q re-calibrated on features actually served post-#150 (query-embedding emb_*),
+# vscode entry carried over byte-identical. The v1 file (cqr_conformal_adjustments.json) is no longer
+# read at serving; it stays published only because the eval artifact fingerprint pins it.
+CQR_ADJUSTMENTS_FILENAME = "cqr_conformal_adjustments_v2.json"
+
+
 def _load_conformal_adjustments(models_dir: Path) -> dict[str, dict]:
-    """Load per-repo CQR conformal adjustments from JSON.
+    """Load per-repo CQR conformal adjustments from JSON (CQR_ADJUSTMENTS_FILENAME).
 
     Returns a dict keyed by repo canonical name (e.g. "microsoft/vscode").
     Returns empty dict and logs a warning if the file is missing or invalid.
     Falls back gracefully — callers must handle missing repos.
     """
     import json
-    p = models_dir / "cqr_conformal_adjustments.json"
+    p = models_dir / CQR_ADJUSTMENTS_FILENAME
     if not p.exists():
         logger.warning(
-            "cqr_conformal_adjustments.json not found at %s — "
+            "%s not found at %s — "
             "resolution_interval_conformal will be None for all repos. "
             "Upload the file to GCS and rebuild the image to enable conformal intervals.",
+            CQR_ADJUSTMENTS_FILENAME,
             p,
         )
         return {}
@@ -51,7 +72,8 @@ def _load_conformal_adjustments(models_dir: Path) -> dict[str, dict]:
         raw = json.loads(p.read_text(encoding="utf-8"))
     except Exception as exc:
         logger.warning(
-            "Failed to parse cqr_conformal_adjustments.json: %s — falling back to raw intervals",
+            "Failed to parse %s: %s — falling back to raw intervals",
+            CQR_ADJUSTMENTS_FILENAME,
             exc,
         )
         return {}
@@ -115,6 +137,7 @@ class ModelStore:
         data_dir: Path | None = None,
         groq_api_key: str | None = None,
         cache=None,
+        max_tokens: int | None = None,
     ) -> ModelStore:
         import time
 
@@ -126,19 +149,39 @@ class ModelStore:
         models_dir = data_dir / "models"
         processed_dir = data_dir / "processed"
 
-        _check_manifest_drift(data_dir)  # warn-not-crash: image-baked artifact integrity
+        with _timed("manifest_drift_check"):
+            _check_manifest_drift(data_dir)  # warn-not-crash: image-baked artifact integrity
 
         key = (groq_api_key if groq_api_key else os.environ.get("GROQ_API_KEY", "")).strip()
+        # 2026-08-29: single source of truth is Settings.triage_max_tokens (config.py); this
+        # env fallback exists so direct callers (scripts, tests) that don't build a Settings
+        # object still get the same documented default instead of TriageAssistant's own bare
+        # constructor default. See config.py's triage_max_tokens comment for the incident.
+        effective_max_tokens = (
+            max_tokens if max_tokens is not None else int(os.environ.get("TRIAGE_MAX_TOKENS", "2048"))
+        )
+        # Serving path only: bound the LLM stage so a Groq rate limit degrades to the
+        # signals-only plan instead of stalling the request (default 15 s, ~5x the 2.8-3.1 s
+        # unthrottled median). Scripts/recorder construct TriageAssistant directly: unbounded.
+        llm_time_budget_s = float(os.environ.get("TRIAGE_LLM_TIME_BUDGET_S", "15"))
+
+        # Loaded first: the served interval is the conformal one and is fixed before synthesis.
+        with _timed("conformal_adjustments"):
+            conformal = _load_conformal_adjustments(models_dir)
 
         bundles: dict[str, RepoBundle] = {}
         for repo, slug in _REPO_SLUGS.items():
             try:
                 logger.info("Loading models for %s …", repo)
                 from triage_iq.models.component_classifier import load_classifier
-                clf = load_classifier(models_dir, slug)
-                det = _load_detector(models_dir, slug)
-                pred = _load_predictor(models_dir, slug)
-                train_df = _load_train(processed_dir, slug)
+                with _timed(f"{slug}.classifier"):
+                    clf = load_classifier(models_dir, slug)
+                with _timed(f"{slug}.detector(bge+faiss)"):
+                    det = _load_detector(models_dir, slug)
+                with _timed(f"{slug}.predictor"):
+                    pred = _load_predictor(models_dir, slug)
+                with _timed(f"{slug}.train_parquet"):
+                    train_df = _load_train(processed_dir, slug)
                 asst = TriageAssistant(
                     repo=repo,
                     classifier=clf,
@@ -147,6 +190,9 @@ class ModelStore:
                     train_df=train_df,
                     groq_api_key=key,
                     cache=cache,
+                    max_tokens=effective_max_tokens,
+                    conformal_adjustment=conformal.get(repo),
+                    llm_time_budget_s=llm_time_budget_s,
                 )
                 bundles[repo] = RepoBundle(clf, det, pred, train_df, asst)
                 logger.info("Loaded %s — OK", repo)
@@ -156,7 +202,6 @@ class ModelStore:
         if not bundles:
             raise RuntimeError("No repo models could be loaded; check data/models/")
 
-        conformal = _load_conformal_adjustments(models_dir)
         return cls(bundles, start_time=time.monotonic(), conformal_adjustments=conformal)
 
 

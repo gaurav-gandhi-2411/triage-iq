@@ -1,0 +1,50 @@
+{
+  "microsoft_vscode": {
+    "repo": "microsoft_vscode",
+    "old_classifier_path": "data\\models\\component_classifier_microsoft_vscode_PRE_RETRAIN_2026-09-04.pkl",
+    "old_classifier_n_classes": 28,
+    "fresh_test_n": 423,
+    "fresh_test_out_of_taxonomy_gold_count": 76,
+    "fresh_test_out_of_taxonomy_gold_pct": 17.97,
+    "old_classifier_top1_on_fresh_test": 0.5461,
+    "old_classifier_top1_on_fresh_test_ci95": [
+      0.49845028909386785,
+      0.5929184997027257
+    ],
+    "old_classifier_top3_on_fresh_test": 0.6809,
+    "old_classifier_top3_on_fresh_test_ci95": [
+      0.6349707282049576,
+      0.7234760586124472
+    ],
+    "old_classifier_top3_on_fresh_test_in_taxonomy_subset_only": 0.83,
+    "old_classifier_top3_on_fresh_test_in_taxonomy_subset_only_ci95": [
+      0.7868832895810808,
+      0.8658329219514173
+    ],
+    "in_taxonomy_subset_n": 347
+  },
+  "kubernetes_kubernetes": {
+    "repo": "kubernetes_kubernetes",
+    "old_classifier_path": "data\\models\\component_classifier_kubernetes_kubernetes_PRE_RETRAIN_2026-09-04.pkl",
+    "old_classifier_n_classes": 35,
+    "fresh_test_n": 671,
+    "fresh_test_out_of_taxonomy_gold_count": 37,
+    "fresh_test_out_of_taxonomy_gold_pct": 5.51,
+    "old_classifier_top1_on_fresh_test": 0.5753,
+    "old_classifier_top1_on_fresh_test_ci95": [
+      0.5375350780045222,
+      0.6121296729533324
+    ],
+    "old_classifier_top3_on_fresh_test": 0.8361,
+    "old_classifier_top3_on_fresh_test_ci95": [
+      0.8061545138701276,
+      0.8621504631793016
+    ],
+    "old_classifier_top3_on_fresh_test_in_taxonomy_subset_only": 0.8849,
+    "old_classifier_top3_on_fresh_test_in_taxonomy_subset_only_ci95": [
+      0.8576603520538647,
+      0.9074198810322182
+    ],
+    "in_taxonomy_subset_n": 634
+  }
+}

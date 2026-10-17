@@ -134,3 +134,19 @@ structured-log warning and falls back to raw Q10/Q90 intervals; the API does not
 | **Mondrian / conditional conformal** | Provides group-conditional coverage (e.g., per-priority-bucket) rather than marginal, which is more useful but requires substantially more calibration data and group-membership assumptions. Deferred — the current calibration set sizes (246–449) are marginal for unconditional CQR; conditional CQR would need larger holdouts per group. |
 | **Use val set for calibration** | Rejected. Optuna hyperparameter tuning used the val set as its objective function (MAE minimization). Conformity scores computed on val are in-sample with respect to model selection, biasing Q downward and producing undercoverage. |
 | **Use training tail for calibration** | Rejected. The model was trained on the full training set; conformity scores computed on in-sample data are biased toward zero (the model fits its own training points well), producing Q values that are too small and resulting in systematic undercoverage on held-out data. |
+
+---
+
+## 2026-10-05 correction -- the served artifact's coverage differs from the figures above
+
+**Text above kept unedited.** The coverage figures in this ADR (k8s 76.6% [74.0, 79.1], raw 74.4%;
+vscode 40/60 74.1% [69.4, 78.3], raw 37.3%; 30/70 68.3%, a 5.8pp divergence) are not what the
+currently served `data/models/cqr_conformal_adjustments.json` (sha256 `9ad1a63c...`, pinned in
+`MANIFEST.sha256`) records. The artifact records k8s 76.17% [73.5, 78.65], raw 73.88%; vscode 40/60
+74.59% [69.92, 78.76], raw 37.84%; 30/70 68.29%, a **6.3pp** divergence. Same splits and sample
+sizes (449/1049, 246/370, 184/432); the README table already quoted the artifact's values. The
+cause of the difference (a recalibration after this ADR's date) is not recorded and was not
+investigated. `reports/eval_summary.json` (the /eval page) now serves the artifact's values, and
+`tests/test_eval_summary_drift.py` pins them to `reports/cqr_conformal_adjustments.snapshot.json`,
+a byte copy of that artifact. The qualitative conclusions (CQR leaves coverage below 80%; vscode
+is temporally non-exchangeable) are unchanged.

@@ -30,6 +30,12 @@
 >   baseline frozen at its pre-cutover value, mark the gate `xfail` — ADR-0037, ADR-0039.
 > - Judge is now local `qwen3:8b` via Ollama (zero-cost, ADR-0019), not the Cohere/70b
 >   setup this file describes below.
+> - **2026-08-28: LLM synthesis (System 4) is down.** Groq retired `llama-3.1-8b-instant`
+>   (confirmed live, absent from Groq's `/v1/models`); a replacement-model swap is halted
+>   pending a structured-output reliability fix. Every judge-mean / floor-fail /
+>   fabrication-rate number in the table below and in `README.md`'s Evaluation table was
+>   measured on that now-retired model — historical record, not current state. See
+>   `docs/architecture/adr/0052-no-valid-grounding-baseline-exists.md` (once merged).
 
 ---
 

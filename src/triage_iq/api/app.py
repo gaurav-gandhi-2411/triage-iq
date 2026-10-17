@@ -13,6 +13,7 @@ import time
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pandas as pd
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
@@ -26,9 +27,10 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from ..config import get_settings
 from ..models.abstention import compute_abstention_status
-from ..models.triage import ConformalIntervalResult, TriagePlan
+from ..models.resolution import NAIVE_INTERVAL_COVERAGE, repo_slug
+from ..models.triage import PROVIDER_DEGRADED_STATUS, ConformalIntervalResult, TriagePlan
 from .loader import ModelStore
-from .schemas import HealthResponse, ServiceInfoResponse, TriageRequest
+from .schemas import DependencyStatus, HealthResponse, ServiceInfoResponse, TriageRequest
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +42,6 @@ _RESOLUTION_MODEL_BEATS_NAIVE: dict[str, bool] = {
     "kubernetes/kubernetes": True,   # improvement +2.1% vs naive; bucket model 50 rounds
 }
 
-# llama-3.1-8b-instant pricing (per million tokens, as of 2025)
-_GROQ_PRICE_PER_MTOK = 0.27
-
 # ---------------------------------------------------------------------------
 # Prometheus custom metrics
 # ---------------------------------------------------------------------------
@@ -50,7 +49,12 @@ _GROQ_PRICE_PER_MTOK = 0.27
 _triage_requests_total = Counter(
     "triage_requests_total",
     "Total /triage requests by repo and outcome",
-    ["repo", "status"],  # status: success | error | fallback
+    ["repo", "status"],  # status: success | error | fallback | provider_degraded
+)
+_triage_llm_provider_errors_total = Counter(
+    "triage_llm_provider_errors_total",
+    "Triage calls degraded to the signals-only plan by an LLM provider outage, by reason",
+    ["reason"],  # rate_limited_tpd | rate_limited_tpm | provider_unavailable | provider_timeout
 )
 _triage_llm_fallback_total = Counter(
     "triage_llm_fallback_total",
@@ -127,6 +131,20 @@ _access_logger.setLevel(logging.INFO)
 _access_logger.addHandler(_access_handler)
 _access_logger.propagate = False
 
+# uvicorn only configures its own loggers, so INFO lines from the startup path (loader
+# startup_step timings, "Models ready") were silently dropped in prod -- Cloud Run showed only
+# uvicorn's "Waiting for application startup" -> "complete". Route just these loggers to the
+# same JSON stdout handler; WARNING+ from them still appears (previously via lastResort/stderr).
+for _startup_logger_name in (
+    __name__,
+    "triage_iq.api.loader",
+    "triage_iq.models.similar_issues",
+):
+    _startup_logger = logging.getLogger(_startup_logger_name)
+    _startup_logger.setLevel(logging.INFO)
+    _startup_logger.addHandler(_access_handler)
+    _startup_logger.propagate = False
+
 
 # ---------------------------------------------------------------------------
 # /metrics auth dependency
@@ -193,13 +211,18 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("LLM response cache disabled (TRIAGE_LLM_CACHE_ENABLED not set)")
 
+    _t_load = time.perf_counter()
     logger.info("Loading models from %s …", cfg.data_dir)
     app.state.store = ModelStore.load_all(
         data_dir=cfg.data_dir,
         groq_api_key=cfg.groq_api_key.get_secret_value(),
         cache=app.state.cache,
+        max_tokens=cfg.triage_max_tokens,
     )
-    logger.info("Models ready: %s", app.state.store.repos)
+    logger.info(
+        "Models ready: %s (startup_step load_all took %.1f ms)",
+        app.state.store.repos, (time.perf_counter() - _t_load) * 1000.0,
+    )
     _token_set = bool(cfg.metrics_token and cfg.metrics_token.get_secret_value())
     _metrics_state = (
         "protected with token" if _token_set
@@ -314,20 +337,35 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
             error=str(exc),
         )
         logger.exception("Triage failed for repo=%s", body.repo)
-        raise HTTPException(status_code=500, detail="Internal server error") from exc
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Internal server error", "request_id": request_id},
+            headers={"X-Request-Id": request_id},
+        ) from exc
 
     # Attach conformal interval — fail-safe (never blocks the response)
     try:
         adj = store.conformal_adjustments.get(body.repo)
         if adj is not None:
             q_days = adj["q_adjustment_hours"] / 24.0
+            # When the assistant already served the conformal interval (ADR-0059 addendum
+            # 2026-10-09) the plan's interval IS the conformal one; adding Q again would apply it
+            # twice. Otherwise (store attached late, predictor fallback) fall back to adding it here.
+            if meta.get("resolution_interval_conformal_applied"):
+                q_days = 0.0
+            # ADR-0064: the stored coverage statistics describe the model-quantile interval. When
+            # the served interval was re-centred on the naive median, report the coverage measured
+            # for THAT interval instead (resolution.NAIVE_INTERVAL_COVERAGE), never the old one.
+            cov = adj
+            if meta.get("resolution_interval_basis") == "naive_scaled":
+                cov = {**adj, **NAIVE_INTERVAL_COVERAGE.get(repo_slug(body.repo), {})}
             plan.resolution_interval_conformal = ConformalIntervalResult(
                 lower_days=max(0.0, plan.expected_resolution_lower_days - q_days),
                 upper_days=plan.expected_resolution_upper_days + q_days,
-                target_coverage=adj["target_coverage"],
-                empirical_coverage=adj["empirical_coverage"],
-                coverage_ci95_lower=adj["coverage_ci95_lower"],
-                coverage_ci95_upper=adj["coverage_ci95_upper"],
+                target_coverage=cov["target_coverage"],
+                empirical_coverage=cov["empirical_coverage"],
+                coverage_ci95_lower=cov["coverage_ci95_lower"],
+                coverage_ci95_upper=cov["coverage_ci95_upper"],
             )
     except Exception as _conf_err:
         logger.warning(
@@ -363,12 +401,27 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
 
     total_ms = round((time.perf_counter() - t_start) * 1000, 1)
     llm_status = meta.get("llm_status", "ok")
-    req_status = "fallback" if llm_status == "parse_failure" else "success"
+    # "degraded_*" (Part B, 2026-08-28: insufficient token budget / completion truncated
+    # even at a dynamically-reduced max_tokens) are signals-only fallback plans, same as
+    # parse_failure -- not "success". parse_retry_succeeded is deliberately excluded: that
+    # plan IS real LLM content, just needed a retry.
+    req_status = (
+        "fallback"
+        if llm_status == "parse_failure" or llm_status.startswith("degraded_")
+        else "success"
+    )
 
-    _triage_requests_total.labels(repo=body.repo, status=req_status).inc()
+    # Provider outages get their own status label so an alert/graph can separate "Groq is
+    # down or rate-limited" from "the model produced unusable output" (ADR-0063).
+    metric_status = "provider_degraded" if llm_status == PROVIDER_DEGRADED_STATUS else req_status
+    _triage_requests_total.labels(repo=body.repo, status=metric_status).inc()
     _triage_latency_seconds.observe(total_ms / 1000.0)
     if llm_status != "ok":
         _triage_llm_fallback_total.inc()
+    if llm_status == PROVIDER_DEGRADED_STATUS:
+        _triage_llm_provider_errors_total.labels(
+            reason=str(meta.get("llm_status_reason") or "unknown")
+        ).inc()
     tokens = (meta.get("groq_tokens_prompt") or 0) + (meta.get("groq_tokens_completion") or 0)
     if tokens:
         _triage_groq_tokens_total.inc(tokens)
@@ -393,34 +446,123 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     result = plan.model_dump()
     result["_request_id"] = request_id
     result["_llm_status"] = llm_status
+    # Short machine reason for a degraded status (null when the LLM answered), e.g.
+    # rate_limited_tpd | rate_limited_tpm | provider_unavailable | provider_timeout.
+    result["_llm_status_reason"] = meta.get("llm_status_reason")
+    # 2026-09-03 (ADR-0055 Part P1b): explicit boolean, same logic as req_status above --
+    # added because the deploy smoke test had no field it could assert on to catch a
+    # revision where every request silently falls back to a classifier-only plan
+    # (predicted_component stays non-empty either way, so that alone was never a
+    # sufficient check). _llm_status already carried this information as a string, but
+    # a smoke test (or any other consumer) parsing specific status string values to
+    # infer degradation is exactly the kind of narrower-than-it-looks check this
+    # engagement keeps finding -- an explicit boolean is the field a gate should assert.
+    result["_degraded"] = req_status == "fallback"
     result["_llm_cache_hit"] = meta.get("llm_cache_hit")
+    # 2026-09-24: the LLM that produced this plan, so clients (triage-iq-ui's "Under the
+    # Hood") render the serving model from the response instead of hardcoded copy -- the UI
+    # said gpt-oss-20b while production served openai/gpt-oss-120b.
+    result["_model"] = bundle.assistant.model
     result["classifier_top3"] = meta.get("classifier_top3")
     result["resolution_model_beats_naive"] = _RESOLUTION_MODEL_BEATS_NAIVE.get(body.repo, True)
+    # ADR-0064 (expand-only): the point estimate the resolution stage was given and its source,
+    # "model" or "train_median" (POINT_ESTIMATE_TRUSTED). resolution_model_beats_naive keeps its
+    # meaning (a measured property of the trained model); this field says what is being served.
+    result["resolution_point_days"] = meta.get("resolution_point_days")
+    result["resolution_point_source"] = meta.get("resolution_point_source", "model")
+    result["resolution_interval_basis"] = meta.get("resolution_interval_basis", "model")
+    # True when the train median fell outside the served interval and was clamped onto its edge.
+    result["resolution_point_clamped"] = bool(meta.get("resolution_point_clamped", False))
     return JSONResponse(content=result)
 
 
-@app.get("/health", response_model=HealthResponse)
-def health(request: Request) -> HealthResponse:
+def _check_model_store(store: ModelStore) -> DependencyStatus:
+    if store.repos:
+        return DependencyStatus(
+            name="model_store", healthy=True, detail=f"{len(store.repos)} repo(s) loaded"
+        )
+    return DependencyStatus(name="model_store", healthy=False, detail="no repos loaded")
+
+
+def _check_groq(cfg) -> DependencyStatus:  # noqa: ANN001 -- Settings, avoids importing for a type-only use
+    """Cheap authenticated Groq call — GET /models lists the catalog, costs zero tokens.
+
+    This is deliberately the only thing in this module that proves the Groq key is
+    actually accepted, not just present (see groq_key_present's docstring in schemas.py).
+    The 2026-08-16/26 outages were both invisible to the old /health precisely because
+    it never made this call. See ADR / PR discussion for the incident this closes.
+    """
+    try:
+        from groq import Groq
+
+        client = Groq(api_key=cfg.groq_api_key.get_secret_value(), timeout=5.0)
+        client.models.list()
+        return DependencyStatus(name="groq", healthy=True, detail="model catalog reachable, key accepted")
+    except Exception as exc:
+        return DependencyStatus(name="groq", healthy=False, detail=f"{type(exc).__name__}: {exc}")
+
+
+# HEAD is routed to the same handler (same status, body dropped by the server): UptimeRobot
+# probes with HEAD first, and the 405 made every check cost two requests.
+@app.api_route("/health", methods=["GET", "HEAD"], response_model=HealthResponse)
+def health(request: Request, deps: int = 0) -> HealthResponse | JSONResponse:
+    """Liveness by default (deps=0, always fast, never calls Groq — used by Cloud Run's
+    startupProbe). Pass ?deps=1 for a real readiness check: exercises Groq with a live,
+    zero-cost call and returns 503 if any dependency is unhealthy. Monitoring should call
+    ?deps=1, not the bare liveness form — a check that cannot fail when the product is
+    down is not a health check.
+    """
     cfg = get_settings()
     store: ModelStore = request.app.state.store
-    return HealthResponse(
-        status="ok",
+
+    dependencies: list[DependencyStatus] | None = None
+    all_healthy = True
+    if deps:
+        dependencies = [_check_model_store(store), _check_groq(cfg)]
+        all_healthy = all(d.healthy for d in dependencies)
+
+    resp = HealthResponse(
+        status="ok" if all_healthy else "degraded",
         repos_loaded=store.repos,
         groq_key_present=bool(cfg.groq_api_key.get_secret_value()),
         uptime_s=round(time.monotonic() - store.start_time, 1),
+        dependencies=dependencies,
     )
+    if not all_healthy:
+        return JSONResponse(status_code=503, content=resp.model_dump())
+    return resp
 
 
 @app.get("/eval/summary")
 def eval_summary() -> JSONResponse:
     """Return the static eval methodology summary from reports/eval_summary.json."""
-    from pathlib import Path
     _eval_path = Path(__file__).parent.parent.parent.parent / "reports" / "eval_summary.json"
     try:
         data = json.loads(_eval_path.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
         return JSONResponse({"detail": "eval summary not available"}, status_code=503)
+    data["current_llm_baseline"] = _current_llm_baseline(_eval_path.parent / "eval_baseline.json")
     return JSONResponse(content=data)
+
+
+def _current_llm_baseline(path: Path) -> dict | None:
+    """The committed LLM-quality baseline, read from reports/eval_baseline.json (written by
+    eval/run_eval.py --update-baseline) so the UI shows the measured number instead of
+    hardcoded copy (it showed a stale 10.93/15 from a retired model). None if the file is
+    absent or unreadable: the UI then shows no score rather than a wrong one."""
+    try:
+        b = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    return {
+        "judge_model": b.get("judge", {}).get("model"),
+        "overall": b.get("overall"),
+        "per_repo": {
+            repo: {k: v.get(k) for k in ("n", "mean", "fabrication_rate", "floor_fail_rate")}
+            for repo, v in (b.get("per_repo") or {}).items()
+        },
+        "cassette_hash": (b.get("cassette_hash") or "")[:12],
+    }
 
 
 # ---------------------------------------------------------------------------

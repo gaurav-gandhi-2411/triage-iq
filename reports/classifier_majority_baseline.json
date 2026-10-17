@@ -1,0 +1,45 @@
+{
+ "provenance": "scripts/classifier_majority_baseline.py: most frequent TRAIN label(s) predicted for every row of the regenerated fresh test split; test sizes match reports/classifier_old_vs_new_paired_2026-09-23.json",
+ "per_repo": {
+  "microsoft_vscode": {
+   "test_rows": 423,
+   "n_classes_train": 47,
+   "majority_label": "debug",
+   "top3_labels": [
+    "debug",
+    "terminal",
+    "error-telemetry"
+   ],
+   "top1": 0.1371,
+   "top1_ci95": [
+    0.1076,
+    0.1732
+   ],
+   "top3": 0.2884,
+   "top3_ci95": [
+    0.2473,
+    0.3333
+   ]
+  },
+  "kubernetes_kubernetes": {
+   "test_rows": 671,
+   "n_classes_train": 47,
+   "majority_label": "test",
+   "top3_labels": [
+    "test",
+    "test-infra",
+    "kubectl"
+   ],
+   "top1": 0.1773,
+   "top1_ci95": [
+    0.1503,
+    0.2081
+   ],
+   "top3": 0.4307,
+   "top3_ci95": [
+    0.3937,
+    0.4685
+   ]
+  }
+ }
+}

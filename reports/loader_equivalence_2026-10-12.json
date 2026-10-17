@@ -1,0 +1,35 @@
+{
+ "base": {
+  "sha256_without_wallclock_timers": "fffe4fd177d196df2b3fbe381f5ff42135c3696f0b8728bd4ce96dc0a447e37a",
+  "n_rows": {
+   "microsoft/vscode": 15,
+   "kubernetes/kubernetes": 15
+  },
+  "triage_iq_file": "\\triage-iq-wt-startup-base\\src\\triage_iq\\__init__.py",
+  "load_all_seconds_local_warm": 104.12,
+  "sha256_raw": "0a9b89d51ea8b4728172ef7468def3b87de99ca20e93c2053d043401ac5223be"
+ },
+ "new": {
+  "sha256_without_wallclock_timers": "fffe4fd177d196df2b3fbe381f5ff42135c3696f0b8728bd4ce96dc0a447e37a",
+  "n_rows": {
+   "microsoft/vscode": 15,
+   "kubernetes/kubernetes": 15
+  },
+  "triage_iq_file": "\\triage-iq-wt-startup\\src\\triage_iq\\__init__.py",
+  "load_all_seconds_local_warm": 58.27,
+  "sha256_raw": "4600df281b2873df2e92b4b3d009fe5520e18ec8e8b4614a6450b2bce3a0c58d"
+ },
+ "identical_without_timers": true,
+ "revised_loader_no_threads_drift_check_after_startup": {
+  "sha256_without_wallclock_timers": "fffe4fd177d196df2b3fbe381f5ff42135c3696f0b8728bd4ce96dc0a447e37a",
+  "n_rows": {
+   "microsoft/vscode": 15,
+   "kubernetes/kubernetes": 15
+  },
+  "identical_to_base": true,
+  "note": "scripts/verify_loader_equivalence.py now excludes the _t_* wall-clock timers itself"
+ },
+ "overlap_attempt_result": "deployed as triageiq-api-00057-yob (PR #185): production load_all 35,510 ms vs 25,396 / 28,357 / 27,688 ms on revisions 00051 / 00053 / 00055: slower; replaced by the drift-check-after-startup change",
+ "drift_check_after_startup_result": "deployed as triageiq-api-00059-hif (PR #186): production load_all 27,994 ms, startup 28.0 s, vs 25,396 / 28,357 / 27,688 ms (mean 27.1 s, drift check included) on 00051 / 00053 / 00055: no gain. The drift check had been prefetching the lazily-fetched image layers (faiss_read 0.2 s -> 0.9 s vscode, 0.4 s -> 1.9 s k8s), so removing it moved the same first-touch I/O into the loaders.",
+ "outcome": "both experiments reverted (fix/revert-startup-experiments); the cold start is first-touch I/O of the image layers (torch import 17.7-21 s), not reorderable work"
+}

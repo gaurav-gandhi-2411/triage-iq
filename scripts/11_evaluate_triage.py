@@ -34,6 +34,7 @@ ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
 from triage_iq.cache import LLMCache
+from triage_iq.model_config import TRIAGE_PRICE_COMPLETION_PER_MTOK, TRIAGE_PRICE_PROMPT_PER_MTOK
 from triage_iq.models.component_classifier import load_classifier
 from triage_iq.models.similar_issues import SimilarIssueRetriever
 from triage_iq.models.resolution import ResolutionTimePredictor
@@ -1024,7 +1025,12 @@ def main():
     # ---------- Token estimation ----------
     # Rough: ~1000 tokens per triage call, ~500 per judge call
     est_tokens = n_total * 1000 + (n_total * 3 * 500 if not args.skip_judge else 0)
-    est_usd = est_tokens / 1_000_000 * 0.27  # Groq llama 8b rate
+    # 2026-09-03: was a hardcoded 0.27 (retired llama-3.1-8b-instant rate, same stale
+    # literal found and fixed in models/triage.py and model_config.py this session).
+    # This estimate is already a rough, blended count (not split prompt/completion),
+    # so use the simple average of TRIAGE_MODEL's real published rates rather than
+    # over-engineering a precise split for an order-of-magnitude script estimate.
+    est_usd = est_tokens / 1_000_000 * ((TRIAGE_PRICE_PROMPT_PER_MTOK + TRIAGE_PRICE_COMPLETION_PER_MTOK) / 2)
 
     # ---------- Component accuracy globals ----------
     all_llm = [r["full_comp_correct"] for r in eval_records]

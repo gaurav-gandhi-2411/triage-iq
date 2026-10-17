@@ -46,6 +46,94 @@ BUCKET_CLASSIFIER_TRUSTED: dict[str, bool] = {
 }
 
 
+# Value of the response field resolution_point_source when the training-window median is served.
+POINT_SOURCE_TRAIN_MEDIAN = "train_median"
+
+# Per-repo trust decision for the POINT estimate (ADR-0064), the point-estimate analogue of
+# BUCKET_CLASSIFIER_TRUSTED. False = the trained regressor is not served; the repo's
+# training-window median resolution time is served instead (response field
+# resolution_point_source = "train_median"). Repos not listed default to trusted (unmeasured,
+# not proven untrustworthy).
+POINT_ESTIMATE_TRUSTED: dict[str, bool] = {
+    # Owner decision D7 (2026-10-08): the +2.06% mean-MAE gain vs naive on the ADR-0041 re-split
+    # test (n=2992, served path) has a bootstrap CI containing naive, and the median AE is worse
+    # than naive (7.28 d vs 3.52 d, reports/served_k8s_metrics.json): the typical issue is served
+    # worse by the model. The learned parts that stay: the bucket classifier (+6.95 pp) and the
+    # CQR interval around the model quantiles.
+    "kubernetes_kubernetes": False,
+    # Served model MAE 5.448 d vs naive 3.533 d (-54.19%, paired bootstrap gain CI
+    # [-2.089, -1.717] d, excludes zero, WRONG direction) on the reconstructed 616-row
+    # 2026-04-21..27 window; with serving-time embeddings -82.34%. No retrain beat naive in 10
+    # runs (docs/DECISION_LOG_2026-10.md D17-D18). A model that loses to naive under every
+    # variant is not served (owner decision D2).
+    "microsoft_vscode": False,
+}
+
+
+# Per-repo choice of interval served alongside the train-median point. False = keep the model Q10/Q90
+# interval unchanged (owner decision D7: the k8s interval stays bit-identical); True = re-centre the
+# model relative width on the median (naive_scaled_interval), used for vscode where the model point
+# is far from the median and a model-centred interval would not contain the served point.
+INTERVAL_RECENTRED: dict[str, bool] = {
+    "kubernetes_kubernetes": False,
+    "microsoft_vscode": True,
+}
+
+
+def repo_slug(repo: str) -> str:
+    """"owner/name" -> "owner_name", the key BUCKET_CLASSIFIER_TRUSTED / POINT_ESTIMATE_TRUSTED use."""
+    return repo.replace("/", "_")
+
+
+def naive_median_days(train_df: pd.DataFrame | None) -> float | None:
+    """Median closed-issue resolution time of the repo training set, in days; None if unavailable.
+
+    Same quantity the offline studies score against: median(train.resolution_hours) / 24
+    (vscode: 3.8374 d). NaN (open) rows are ignored by the median; non-positive or non-finite
+    results are rejected so a corrupt frame can never serve a nonsense point.
+    """
+    if train_df is None or "resolution_hours" not in train_df.columns:
+        return None
+    hrs = pd.to_numeric(train_df["resolution_hours"], errors="coerce").dropna()
+    if hrs.empty:
+        return None
+    med = float(hrs.median()) / 24.0
+    return med if np.isfinite(med) and med > 0 else None
+
+
+# Smallest model point (days) the naive-scaled interval will divide by. The served vscode model's
+# point predictions have min 2.0 d on the 616-row window, so this only guards degenerate input.
+_MIN_MODEL_POINT_DAYS = 1e-3
+
+# Held-out coverage of the interval served alongside the naive median (ADR-0064, option C2):
+# [naive * lo/p, naive * hi/p] (the model's RELATIVE Q10/Q90 width re-centred on the naive
+# median) widened by the stored production CQR Q (cqr_conformal_adjustments.json, 40_60 split;
+# no new artifact). Measured on the chronological 60% held-out part (n=370) of the reconstructed
+# 616-row window; evidence + provenance in reports/vscode_naive_serving_eval.json. These replace
+# the artifact's empirical_coverage fields, which describe a DIFFERENT interval (model quantiles).
+# Single 7-day window, train/test medians 3.84 d vs 0.049 d: marginal coverage is NOT guaranteed.
+NAIVE_INTERVAL_COVERAGE: dict[str, dict[str, float]] = {
+    "microsoft_vscode": {
+        "empirical_coverage": 0.827,
+        "coverage_ci95_lower": 0.7852,
+        "coverage_ci95_upper": 0.8622,
+    },
+}
+
+
+def naive_scaled_interval(
+    naive_days: float, model_point_days: float, model_lo_days: float, model_hi_days: float
+) -> tuple[float, float] | None:
+    """Model Q10/Q90 relative width re-centred on the naive median, or None if not computable."""
+    vals = (naive_days, model_point_days, model_lo_days, model_hi_days)
+    if not all(np.isfinite(v) for v in vals) or model_point_days < _MIN_MODEL_POINT_DAYS:
+        return None
+    return (
+        naive_days * model_lo_days / model_point_days,
+        naive_days * model_hi_days / model_point_days,
+    )
+
+
 def hours_to_bucket(hours: np.ndarray | float) -> np.ndarray:
     """Map resolution_hours to integer bucket index 0–4."""
     days = np.asarray(hours, dtype=float) / 24.0
@@ -137,7 +225,15 @@ def engineer_features(
 
     # ── Author features (leak-proof: only past info) ──────────────
     if train_df is not None:
-        all_df = pd.concat([train_df, df], sort=False).drop_duplicates(subset=["number"])
+        # Only these columns are read below. Concatenating the full frames also copied every
+        # training row's text columns on each request. Sorting and dedup are keyed on
+        # created_at / number alone, so the row order is unchanged.
+        _author_cols = ["number", "author", "created_at", "resolution_hours", "state"]
+        all_df = pd.concat(
+            [train_df[[c for c in _author_cols if c in train_df.columns]],
+             df[[c for c in _author_cols if c in df.columns]]],
+            sort=False,
+        ).drop_duplicates(subset=["number"])
         all_df = all_df.sort_values("created_at")
 
         author_prior_count: dict[str, int] = {}
@@ -145,18 +241,35 @@ def engineer_features(
         author_count_at = {}
         author_median_at = {}
 
-        for _, row in all_df.iterrows():
-            num = row["number"]
-            author = row.get("author", "")
+        # 2026-09-24 perf: this loop runs on every /triage request over the FULL training set
+        # (23,928 k8s rows). It used all_df.iterrows(), which builds a pandas Series per row,
+        # and took np.median of every row's history although only df's rows are read back:
+        # ~2.4 s per k8s request, ~0.43 s per vscode request (measured locally, matches
+        # production's System 3 latency). Same algorithm over plain column lists --
+        # identical row order, identical dict-key objects (the same values iterrows would
+        # yield, including NaN/None authors), identical closed/resolution filter -- with the
+        # median computed only for the rows this call returns. Output verified
+        # element-for-element identical to the iterrows version.
+        n_rows = len(all_df)
+        numbers = all_df["number"].tolist()
+        authors = all_df["author"].tolist() if "author" in all_df.columns else [""] * n_rows
+        resolutions = (
+            all_df["resolution_hours"].tolist() if "resolution_hours" in all_df.columns else [None] * n_rows
+        )
+        states = all_df["state"].tolist() if "state" in all_df.columns else [None] * n_rows
+        wanted = set(df["number"].tolist())
+
+        for num, author, res_hrs, state in zip(numbers, authors, resolutions, states, strict=True):
             count = author_prior_count.get(author, 0)
-            medians = author_prior_resolutions.get(author, [])
-            author_count_at[num] = count
-            author_median_at[num] = np.median(medians) if medians else np.nan
+            if num in wanted:
+                medians = author_prior_resolutions.get(author, [])
+                author_count_at[num] = count
+                author_median_at[num] = np.median(medians) if medians else np.nan
 
             # Update for future rows
             author_prior_count[author] = count + 1
-            if pd.notna(row.get("resolution_hours")) and row.get("state") == "closed":
-                author_prior_resolutions.setdefault(author, []).append(row["resolution_hours"])
+            if pd.notna(res_hrs) and state == "closed":
+                author_prior_resolutions.setdefault(author, []).append(res_hrs)
 
         feats["author_prior_count"] = df["number"].map(author_count_at).fillna(0)
         feats["is_first_author"] = (feats["author_prior_count"] == 0).astype(int)

@@ -75,6 +75,19 @@ DIMENSION_MAX = {
 MAX_TOTAL = sum(DIMENSION_MAX.values())  # 15
 
 
+def compute_judge_prompt_hash() -> str:
+    """Fingerprint of the rubric text + scoring schema this judge sends, mirroring
+    record_cassettes.py's _compute_prompt_hash for the synthesis side. A rubric wording
+    change or a DIMENSION_MAX change is exactly as much "a different judge call" as a
+    synthesis prompt change is a different synthesis call -- this hash exists so
+    test_cassette_provenance_matches_current_artifacts and the judge checkpoint can detect
+    it the same way (2026-09-23, judge-provenance fix)."""
+    import hashlib
+
+    payload = json.dumps({"rubric": RUBRIC_DESCRIPTION, "dimension_max": DIMENSION_MAX}, sort_keys=True)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+
+
 class JudgeScore(BaseModel):
     component_match: int = Field(ge=0, le=2)
     similar_issues_relevance: int = Field(ge=0, le=3)
@@ -162,7 +175,7 @@ class TriageJudge:
     def __init__(
         self,
         groq_api_key: str | None = None,
-        model: str = "llama-3.3-70b-versatile",
+        model: str | None = None,
         temperature: float = 0.0,
         provider: str = "groq",
         gemini_api_key: str | None = None,
@@ -171,6 +184,12 @@ class TriageJudge:
         ollama_seed: int = 42,
         cache=None,
     ) -> None:
+        # No default model: the old default was model_config.JUDGE_MODEL
+        # ("llama-3.3-70b-versatile"), which Groq retired on 2026-08-16. Every real call site
+        # already passes its judge explicitly (local qwen3:8b per ADR-0019), so a missing
+        # model is a caller bug and must fail at construction, not at the first API call.
+        if not model:
+            raise ValueError("TriageJudge requires an explicit model (e.g. 'qwen3:8b' with provider='ollama').")
         self.model = model
         self.temperature = temperature
         self.provider = provider
@@ -215,6 +234,9 @@ class TriageJudge:
         issue_body: str,
         triage_plan_json: str,
         gold: dict,
+        *,
+        parent_synthesis_key: str | None = None,
+        artifact_hashes: dict[str, str] | None = None,
     ) -> JudgeScore:
         """Score a single triage plan.
 
@@ -224,6 +246,15 @@ class TriageJudge:
             triage_plan_json: JSON string of the TriagePlan.
             gold: Gold standard dict with keys:
                 component, priority, actual_resolution_days.
+            parent_synthesis_key: cassette key of the synthesis entry that produced
+                `triage_plan_json`, and artifact_hashes: that entry's own stamped
+                artifact_hashes (ADR-0059), inherited rather than recomputed here --
+                a judge entry's own prompt has no direct classifier/predictor/retrieval-
+                index dependency. Both optional; only a caller recording via
+                eval/record_cassettes.py supplies them. When supplied and `cache` supports
+                it, a fresh (non-cache-hit) call stamps judge_provenance on the written
+                entry (2026-09-23, judge-provenance fix -- see cassette.py's
+                set_judge_provenance).
         """
         from triage_iq.cache import LLMCache
 
@@ -264,6 +295,14 @@ class TriageJudge:
 
         if cache is not None and cache_key is not None:
             cache.set(cache_key, self.provider, self.model, messages, {"content": raw})
+            if parent_synthesis_key is not None and hasattr(cache, "set_judge_provenance"):
+                cache.set_judge_provenance(
+                    cache_key,
+                    parent_synthesis_key=parent_synthesis_key,
+                    judge_model=self.model,
+                    judge_prompt_hash=compute_judge_prompt_hash(),
+                    artifact_hashes=artifact_hashes or {},
+                )
 
         return self._parse_score(raw)
 

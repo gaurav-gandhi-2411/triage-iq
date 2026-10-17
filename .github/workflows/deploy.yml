@@ -3,19 +3,22 @@ name: Deploy to Cloud Run
 on:
   push:
     branches: [main]
-    # Skip paths that never reach the built image or the deploy job itself.
-    # Verified against docker/Dockerfile.prod's COPY list before adding any
-    # entry here — reports/** is ignored EXCEPT eval_summary.json, which
-    # Dockerfile.prod bakes in directly and /eval/summary serves live.
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
-      - 'notebooks/**'
-      - 'eval/**'
-      - 'tests/**'
-      - 'deploy/**'
-      - 'reports/**'
-      - '!reports/eval_summary.json'
+    # Allowlist, not paths-ignore (2026-10-08): deploy only when something baked into the image
+    # or run by this job changed. A merge that cannot change production (analysis scripts, eval,
+    # tests, docs) must not spend Groq smoke-test tokens or risk a red deploy (#160 did, twice).
+    # Pinned by tests/test_deploy_paths_filter.py against docker/Dockerfile.prod's COPY sources:
+    # add a COPY there and that test fails until the path is listed here.
+    paths:
+      - 'src/**'                            # COPY src/ (code, prompts, loader, app)
+      - 'pyproject.toml'                    # COPY pyproject.toml
+      - 'requirements.lock'                 # COPY requirements.lock (pip layer)
+      - 'docker/Dockerfile.prod'            # the image recipe itself
+      - 'reports/eval_summary.json'         # baked in, served live by /eval/summary
+      - 'reports/eval_baseline.json'        # baked in, read as current_llm_baseline
+      - 'data/models/MANIFEST.sha256'       # baked in; model objects come from GCS, pinned by hash
+      - 'scripts/verify_model_manifest.py'  # run by this job as the drift guard
+      - 'scripts/smoke_triage_verdict.py'   # run by this job as the smoke-test verdict
+      - '.github/workflows/deploy.yml'      # the deploy job itself
   workflow_dispatch:
 
 # Serialize deploys to the same ref — two unordered concurrent `gcloud run
@@ -40,6 +43,7 @@ jobs:
     permissions:
       contents: read
       id-token: write  # for Workload Identity Federation (preferred over SA key)
+      issues: write    # open the smoke-pending-quota issue on a quota pass (default GITHUB_TOKEN)
 
     steps:
       - uses: actions/checkout@v7
@@ -68,6 +72,7 @@ jobs:
             "gs://triageiq-prod-260812-models/models/resolution_predictor_microsoft_vscode.pkl" \
             "gs://triageiq-prod-260812-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
             "gs://triageiq-prod-260812-models/models/cqr_conformal_adjustments.json" \
+            "gs://triageiq-prod-260812-models/models/cqr_conformal_adjustments_v2.json" \
             data/models/
           gsutil -m cp -r \
             "gs://triageiq-prod-260812-models/models/similar_issue_index_microsoft_vscode_bge" \
@@ -104,6 +109,12 @@ jobs:
           # newest deploy" behavior for every deploy after it -- see issue #22. Under the old
           # flow, a pinned service meant new revisions landed at 0% traffic while the smoke
           # test still curled the public URL and passed against stale, already-live code.)
+          # Startup probe 10s period / 10s timeout / 30 failures (was 60/45/3). The app takes
+          # ~41s p50 (n=303 prod cold starts, 2026-09-05..10-05) to finish lifespan, so the old
+          # first probe at t=0 always failed and the next one fired at t=60s: readiness landed on
+          # 60s boundaries and any start >60s jumped to 120s. Probing every 10s makes the
+          # instance ready ~5-10s after the app is up. timeoutSeconds must not exceed
+          # periodSeconds (Cloud Run docs); 30 x 10s = a 300s ceiling, more than the old 3 x 60s.
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image ${{ env.IMAGE }}:${{ github.sha }} \
             --region ${{ env.GCP_REGION }} \
@@ -116,7 +127,7 @@ jobs:
             --concurrency 8 \
             --cpu-throttling \
             --timeout 300 \
-            --startup-probe="httpGet.path=/health,httpGet.port=8080,timeoutSeconds=45,periodSeconds=60,failureThreshold=3" \
+            --startup-probe="httpGet.path=/health,httpGet.port=8080,timeoutSeconds=10,periodSeconds=10,failureThreshold=30" \
             --service-account ${{ env.RUNTIME_SA }} \
             --update-secrets GROQ_API_KEY=groq-api-key:latest,METRICS_TOKEN=metrics-token:latest \
             --update-env-vars ENVIRONMENT=prod \
@@ -163,6 +174,26 @@ jobs:
           fi
           echo "Health: $(curl -sf "$URL/health")"
 
+          # 1b. Dependency readiness (2026-09-24). Bare /health is liveness only -- it reports
+          # groq_key_present, never whether Groq ACCEPTS the key. On 2026-09-24 a revoked
+          # production key passed /health and was only caught by the /triage 500 below, with no
+          # indication of the cause. ?deps=1 makes one zero-token authenticated Groq call and
+          # returns 503 with a per-dependency detail, so a rejected key fails here, named.
+          echo "=== /health?deps=1 ==="
+          DRESP=$(curl -s -w "\n%{http_code}" "$URL/health?deps=1")
+          DCODE=$(echo "$DRESP" | tail -1)
+          DBODY=$(echo "$DRESP" | sed '$d')
+          echo "$DBODY"
+          if [ "$DCODE" != "200" ]; then
+            if echo "$DBODY" | grep -q -E '401|invalid_api_key|AuthenticationError'; then
+              echo "FAILED: Groq REJECTED the production API key (401). Add a new Secret Manager version of groq-api-key, then re-run this deploy."
+            else
+              echo "FAILED: /health?deps=1 returned HTTP $DCODE -- a dependency is unhealthy (see body above)."
+            fi
+            exit 1
+          fi
+          echo "Dependency check passed"
+
           # 2. Metrics endpoint — requires bearer token
           echo "=== /metrics ==="
           if [ -n "$SMOKE_METRICS_TOKEN" ]; then
@@ -178,20 +209,41 @@ jobs:
           fi
 
           # 3. Triage endpoint — synthetic issue
+          #
+          # 2026-09-03 (ADR-0055 Part P1b): predicted_component alone was NOT a
+          # sufficient check -- it stays non-empty even when the LLM is fully dead and
+          # every request silently degrades to a classifier-only fallback plan (the
+          # exact failure mode PR #103's graceful-degradation change can produce). A
+          # build where the LLM never actually answers would have passed this smoke
+          # test undetected and shipped to 100% traffic. Now also asserts _degraded is
+          # false and triage_summary is a real, non-empty string.
           echo "=== /triage ==="
-          TBODY=$(curl -sf -X POST "$URL/triage" \
+          # Diagnostics only (assertions unchanged): capture the HTTP code and print the body
+          # on a non-200 instead of letting `curl -f` abort with a bare exit 22.
+          TRESP=$(curl -s -w "\n%{http_code}" -X POST "$URL/triage" \
             -H "Content-Type: application/json" \
             -d '{"repo":"microsoft/vscode","title":"Extension host crashes on startup","body":"Every time I open VS Code the extension host process terminates immediately."}')
-          if [ $? -ne 0 ]; then
-            echo "FAILED: /triage returned non-200"
+          TCODE=$(echo "$TRESP" | tail -1)
+          TBODY=$(echo "$TRESP" | sed '$d')
+          # The verdict lives in scripts/smoke_triage_verdict.py (unit-tested, one branch per
+          # outcome). Piped via stdin, never interpolated into a script literal: $TBODY is
+          # model-generated text (untrusted).
+          #
+          # 2026-10-12 quota refinement: exit 3 = the ONLY problem is a Groq daily-quota 429
+          # (reason exactly rate_limited_tpd). That is a budget state, not a build defect: a
+          # smoke test that spends ~6K tokens of a shared 200K/day pool blocked #170 (run
+          # 38206343184) although /health?deps=1 was healthy and the 15 s budget had degraded
+          # correctly. We promote with a warning and open a labelled issue; post-deploy-smoke.yml
+          # re-runs the FULL check once the pool recovers. Any other degradation, a 401 or a
+          # model 404 still fails here (exit 1).
+          RC=0
+          echo "$TBODY" | python3 scripts/smoke_triage_verdict.py "$TCODE" || RC=$?
+          if [ "$RC" = "3" ]; then
+            echo "::warning::Promoting on a QUOTA PASS: /triage degraded only on rate_limited_tpd. The LLM path is NOT verified for this revision; post-deploy-smoke.yml will verify it once the Groq pool recovers."
+            echo "quota_pass=true" >> "$GITHUB_OUTPUT"
+          elif [ "$RC" != "0" ]; then
             exit 1
           fi
-          COMPONENT=$(echo "$TBODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['predicted_component'])")
-          if [ -z "$COMPONENT" ]; then
-            echo "FAILED: predicted_component is empty"
-            exit 1
-          fi
-          echo "Triage check passed — predicted_component=$COMPONENT"
 
       - name: Promote candidate to live traffic
         id: promote
@@ -207,6 +259,36 @@ jobs:
             --region ${{ env.GCP_REGION }} \
             --to-latest
           echo "Promoted ${{ steps.deploy.outputs.revision }} to 100% live traffic."
+
+      - name: Queue the full post-deploy smoke test (quota pass only)
+        if: success() && steps.smoke.outputs.quota_pass == 'true'
+        uses: actions/github-script@v8
+        env:
+          REVISION: ${{ steps.deploy.outputs.revision }}
+        with:
+          script: |
+            const labels = ['smoke-pending-quota'];
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              `Revision \`${process.env.REVISION}\` was promoted on a QUOTA PASS: /health?deps=1 was healthy but /triage degraded only on \`rate_limited_tpd\` (Groq daily token pool exhausted), so the LLM path of this revision is UNVERIFIED.`,
+              '',
+              `Deploy run: ${runUrl} (commit ${context.sha})`,
+              '',
+              'post-deploy-smoke.yml re-runs the full smoke test every 30 min while this issue is open, closes it on a real pass, and opens a `post-deploy-smoke-alert` issue on any other failure.',
+            ].join('\n');
+            const open = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo, state: 'open', labels: labels.join(','),
+            });
+            if (open.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo, issue_number: open.data[0].number, body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title: 'Post-deploy smoke pending: promoted on a Groq daily-quota pass', body, labels,
+              });
+            }
 
       - name: Report candidate smoke-test failure (no rollback needed)
         if: failure() && steps.smoke.conclusion == 'failure'

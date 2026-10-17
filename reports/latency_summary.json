@@ -1,0 +1,337 @@
+{
+ "provenance": "scripts/latency_summary.py over reports/latency_replay_*.txt and reports/contention_test_2026-10-16*",
+ "runs": {
+  "pre_137": {
+   "n": 5,
+   "client_ms_as_logged": [
+    5042,
+    5977,
+    5710,
+    7840,
+    7546
+   ],
+   "calls": [
+    {
+     "client_ms": 5042.5,
+     "server_total_ms": 3712.9,
+     "stage1_ms": 8.2,
+     "stage2_ms": 610.1,
+     "stage3_ms": 535.8,
+     "stage4_ms": 2558.1,
+     "degraded": false
+    },
+    {
+     "client_ms": 5976.7,
+     "server_total_ms": 4772.2,
+     "stage1_ms": 8.6,
+     "stage2_ms": 1012.6,
+     "stage3_ms": 560.7,
+     "stage4_ms": 3189.4,
+     "degraded": false
+    },
+    {
+     "client_ms": 5709.7,
+     "server_total_ms": 4448.6,
+     "stage1_ms": 11.9,
+     "stage2_ms": 1008.1,
+     "stage3_ms": 585.8,
+     "stage4_ms": 2842.2,
+     "degraded": false
+    },
+    {
+     "client_ms": 7840.0,
+     "server_total_ms": 7315.2,
+     "stage1_ms": 9.3,
+     "stage2_ms": 1225.3,
+     "stage3_ms": 3032.6,
+     "stage4_ms": 3047.1,
+     "degraded": false
+    },
+    {
+     "client_ms": 7546.2,
+     "server_total_ms": 6744.8,
+     "stage1_ms": 8.6,
+     "stage2_ms": 925.2,
+     "stage3_ms": 3268.1,
+     "stage4_ms": 2541.9,
+     "degraded": false
+    }
+   ],
+   "max_client_ms_as_logged": 7840,
+   "median_client_ms_as_logged": 5977,
+   "median": {
+    "client_ms": 5976.7,
+    "server_total_ms": 4772.2,
+    "stage1_ms": 8.6,
+    "stage2_ms": 1008.1,
+    "stage3_ms": 585.8,
+    "stage4_ms": 2842.2
+   },
+   "max_client_ms": 7840.0,
+   "llm_answered_n": 5,
+   "degraded_n": 0
+  },
+  "post_137": {
+   "n": 5,
+   "client_ms_as_logged": [
+    6976,
+    5924,
+    4834,
+    4422,
+    4338
+   ],
+   "calls": [
+    {
+     "client_ms": 6975.8,
+     "server_total_ms": 4994.0,
+     "stage1_ms": 6.6,
+     "stage2_ms": 1645.6,
+     "stage3_ms": 76.9,
+     "stage4_ms": 3263.9,
+     "degraded": false
+    },
+    {
+     "client_ms": 5924.0,
+     "server_total_ms": 5436.2,
+     "stage1_ms": 6.2,
+     "stage2_ms": 1107.5,
+     "stage3_ms": 39.8,
+     "stage4_ms": 4282.1,
+     "degraded": false
+    },
+    {
+     "client_ms": 4834.0,
+     "server_total_ms": 4231.5,
+     "stage1_ms": 6.2,
+     "stage2_ms": 1128.1,
+     "stage3_ms": 36.6,
+     "stage4_ms": 3059.8,
+     "degraded": false
+    },
+    {
+     "client_ms": 4422.3,
+     "server_total_ms": 3923.6,
+     "stage1_ms": 6.8,
+     "stage2_ms": 986.0,
+     "stage3_ms": 64.7,
+     "stage4_ms": 2865.6,
+     "degraded": false
+    },
+    {
+     "client_ms": 4337.6,
+     "server_total_ms": 3801.0,
+     "stage1_ms": 5.8,
+     "stage2_ms": 847.4,
+     "stage3_ms": 52.6,
+     "stage4_ms": 2894.5,
+     "degraded": false
+    }
+   ],
+   "max_client_ms_as_logged": 6976,
+   "median_client_ms_as_logged": 4834,
+   "median": {
+    "client_ms": 4834.0,
+    "server_total_ms": 4231.5,
+    "stage1_ms": 6.2,
+    "stage2_ms": 1107.5,
+    "stage3_ms": 52.6,
+    "stage4_ms": 3059.8
+   },
+   "max_client_ms": 6975.8,
+   "llm_answered_n": 5,
+   "degraded_n": 0
+  },
+  "post_161": {
+   "n": 5,
+   "client_ms_as_logged": [
+    5360,
+    53245,
+    135207,
+    124254,
+    125798
+   ],
+   "calls": [
+    {
+     "client_ms": 5360.3,
+     "server_total_ms": 4596.7,
+     "stage1_ms": 8.7,
+     "stage2_ms": 1541.9,
+     "stage3_ms": 100.5,
+     "stage4_ms": 2943.9,
+     "degraded": false
+    },
+    {
+     "client_ms": 53244.6,
+     "server_total_ms": 52813.8,
+     "stage1_ms": 6.2,
+     "stage2_ms": 1465.0,
+     "stage3_ms": 53.7,
+     "stage4_ms": 51288.2,
+     "degraded": false
+    },
+    {
+     "client_ms": 135206.5,
+     "server_total_ms": 134766.4,
+     "stage1_ms": 6.0,
+     "stage2_ms": 1927.8,
+     "stage3_ms": 54.3,
+     "stage4_ms": 132777.5,
+     "degraded": false
+    },
+    {
+     "client_ms": 124254.0,
+     "server_total_ms": 123483.4,
+     "stage1_ms": 7.2,
+     "stage2_ms": 2378.3,
+     "stage3_ms": 94.5,
+     "stage4_ms": 121002.6,
+     "degraded": false
+    },
+    {
+     "client_ms": 125797.7,
+     "server_total_ms": 125378.6,
+     "stage1_ms": 7.0,
+     "stage2_ms": 1621.7,
+     "stage3_ms": 93.9,
+     "stage4_ms": 123655.1,
+     "degraded": false
+    }
+   ],
+   "max_client_ms_as_logged": 135207,
+   "median_client_ms_as_logged": 124254,
+   "median": {
+    "client_ms": 124254.0,
+    "server_total_ms": 123483.4,
+    "stage1_ms": 7.0,
+    "stage2_ms": 1621.7,
+    "stage3_ms": 93.9,
+    "stage4_ms": 121002.6
+   },
+   "max_client_ms": 135206.5,
+   "llm_answered_n": 5,
+   "degraded_n": 0
+  },
+  "post_a1": {
+   "n": 5,
+   "client_ms_as_logged": [
+    4870,
+    5324,
+    1820,
+    1707,
+    1522
+   ],
+   "calls": [
+    {
+     "client_ms": 4870.0,
+     "server_total_ms": 4032.2,
+     "stage1_ms": 6.2,
+     "stage2_ms": 1220.8,
+     "stage3_ms": 67.7,
+     "stage4_ms": 2736.6,
+     "degraded": false
+    },
+    {
+     "client_ms": 5324.3,
+     "server_total_ms": 4827.1,
+     "stage1_ms": 6.6,
+     "stage2_ms": 1084.9,
+     "stage3_ms": 62.4,
+     "stage4_ms": 3672.4,
+     "degraded": false
+    },
+    {
+     "client_ms": 1819.6,
+     "server_total_ms": 1341.3,
+     "stage1_ms": 6.8,
+     "stage2_ms": 1082.3,
+     "stage3_ms": 62.0,
+     "stage4_ms": 189.3,
+     "degraded": true
+    },
+    {
+     "client_ms": 1707.1,
+     "server_total_ms": 1260.4,
+     "stage1_ms": 6.5,
+     "stage2_ms": 788.1,
+     "stage3_ms": 86.7,
+     "stage4_ms": 378.4,
+     "degraded": true
+    },
+    {
+     "client_ms": 1522.5,
+     "server_total_ms": 1070.0,
+     "stage1_ms": 6.4,
+     "stage2_ms": 853.1,
+     "stage3_ms": 93.4,
+     "stage4_ms": 116.3,
+     "degraded": true
+    }
+   ],
+   "max_client_ms_as_logged": 5324,
+   "median_client_ms_as_logged": 1820,
+   "median": {
+    "client_ms": 1819.6,
+    "server_total_ms": 1341.3,
+    "stage1_ms": 6.5,
+    "stage2_ms": 1082.3,
+    "stage3_ms": 67.7,
+    "stage4_ms": 378.4
+   },
+   "max_client_ms": 5324.3,
+   "llm_answered_n": 2,
+   "degraded_n": 3,
+   "degraded_client_ms_min": 1522.5,
+   "degraded_client_ms_max": 1819.6
+  }
+ },
+ "cold_start": {
+  "log_lines": 606,
+  "cold_starts": 303,
+  "median_s": 40.978689,
+  "min_s": 21.079142,
+  "max_s": 73.416575
+ },
+ "contention_2026_10_16": {
+  "n": 3,
+  "calls": [
+   {
+    "i": 1,
+    "repo": "microsoft/vscode",
+    "offset_s": 0,
+    "http": 200,
+    "client_ms": 6183.7,
+    "degraded": false,
+    "reason": null
+   },
+   {
+    "i": 2,
+    "repo": "kubernetes/kubernetes",
+    "offset_s": 8,
+    "http": 200,
+    "client_ms": 1174.7,
+    "degraded": true,
+    "reason": "llm_time_budget_exceeded"
+   },
+   {
+    "i": 3,
+    "repo": "microsoft/vscode",
+    "offset_s": 16,
+    "http": 200,
+    "client_ms": 16176.0,
+    "degraded": false,
+    "reason": null
+   }
+  ],
+  "llm_answered_n": 2,
+  "degraded_n": 1,
+  "http_5xx_n": 0,
+  "rate_limit_sleeps_s": [
+   25.0,
+   11.0
+  ],
+  "retries_n": 2,
+  "window_s": 16,
+  "span_to_last_response_s": 32.176,
+  "budget_left_at_degrade_s": 14.9
+ }
+}

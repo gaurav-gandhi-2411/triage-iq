@@ -221,6 +221,14 @@ dimension is an LLM proxy for how an estimate looks, the drop is not significant
 p about 0.21) and is confounded with re-sampled synthesis. It is recorded as an unresolved proxy
 signal, not as a reason to revert.
 
+Public wording (README and the `/eval` page, kept identical to this ADR): "The point estimate is
+the training-window median. The learned model did not beat it on the typical issue in either repo
+(median absolute error); on k8s it is marginally better on mean error (+2%), driven by a small
+number of long-running issues. The learned parts in production are the k8s bucket classifier and
+the conformal intervals." The "driven by a small number of long-running issues" clause is the
+interpretation recorded in the Decision section (a mean gain with a worse median); the tail
+contribution itself was not measured separately.
+
 ## Consequences
 
 - vscode point error equals naive by construction. The product claim is now honest ("typical

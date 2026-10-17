@@ -1,0 +1,48 @@
+TriageIQ production latency replay, after PR #161 (merge f71096a), run 2026-10-11 ~18:20-18:30 UTC
+Revision: triageiq-api-00045-zac (100% traffic). Instance 0010dd86 for all 5 calls.
+Method: replay_triage.py (5 saved real-issue bodies, 3 vscode + 2 k8s, 75 s spacing, sequential). Per-stage
+timings joined from the Cloud Run access log (jsonPayload.system{1..4}_latency_ms) by request id.
+n=5: medians are indicative; p95 is the max.
+
+call 1: HTTP 200 5360 ms degraded=False
+call 2: HTTP 200 53245 ms degraded=False
+call 3: HTTP 200 135207 ms degraded=False
+call 4: HTTP 200 124254 ms degraded=False
+call 5: HTTP 200 125798 ms degraded=False
+
+#  repo                  issue   client_ms  srv_total  s1_cls  s2_retr  s3_pred  s4_llm  degr   instance
+1  microsoft/vscode      339386     5360.3     4596.7     8.7   1541.9    100.5  2943.9  False  0010dd86
+2  microsoft/vscode      339380    53244.6    52813.8     6.2     1465     53.7 51288.2  False  0010dd86
+3  microsoft/vscode      339367   135206.5   134766.4       6   1927.8     54.3 132777.5  False  0010dd86
+4  kubernetes/kubernetes 142526   124254.0   123483.4     7.2   2378.3     94.5 121002.6  False  0010dd86
+5  kubernetes/kubernetes 142486   125797.7   125378.6       7   1621.7     93.9 123655.1  False  0010dd86
+client p50=124254 ms  p95(nearest-rank, n=5 => max)=135206 ms
+median server_total: 123483.4 ms (n=5)
+median s1: 7.0 ms | s2: 1621.7 ms | s3: 93.9 ms | s4: 121002.6 ms
+
+Cause of the stage-4 times (calls 2-5), VERIFIED from Cloud Run logs of revision 00045:
+  18:21:07 "Rate limit hit - sleeping 2.5s (attempt 1/6)"
+  18:21:39 "Rate limit hit - sleeping 6.0s (attempt 2/6)"
+  18:22:08 "Rate limit hit - sleeping 14.0s (attempt 3/6)"
+  18:22:28 POST /triage 200
+  (the same 1-3 attempt pattern repeats for the other slow calls: 18:24:30/18:25:13, 18:27:45/18:28:18/18:28:51)
+  Consecutive retry log lines are ~30 s apart although the sleeps are 2.5-14 s, i.e. each attempt itself
+  spent ~30 s inside the Groq client before returning a rate-limit error.
+
+Groq limits, VERIFIED from one 88-token probe call (openai/gpt-oss-120b, max_tokens 16) made after the replay finished:
+  x-ratelimit-limit-tokens: 8000          (per minute)
+  x-ratelimit-remaining-tokens: 1909
+  x-ratelimit-reset-tokens: 45.682s
+  x-ratelimit-limit-requests: 1000, remaining 739   (per day)
+One triage uses ~6,000 tokens (stored usage ~4,800 prompt + ~1,100 completion). The replay had finished, so
+the 1,909-token remainder means another consumer was drawing on the same key. BELIEVED to be the portfolio
+chatbot sharing the key; the data do not identify it.
+
+Stage 3 (resolution) 93.9 ms median vs 52.6 ms on 2026-10-07: k8s calls 94.5 / 93.9 ms, vscode 100.5 / 53.7 / 54.3 ms.
+BELIEVED to be the k8s PCA-of-query-embedding transform (PR #150); not measured separately.
+
+Other checks, same window (revision 00045):
+  HEAD /health: 405 on the previous revision (17:57-18:13 UTC, UptimeRobot every ~5 min), 200 from 18:16 UTC onward.
+  "Resolution embeddings unavailable" warnings: 0 across 2 k8s /triage requests. Absence of the fallback warning,
+  not a direct measurement of non-zero emb_* features.
+  Groq tokens spent by this replay: ~5 calls x ~6K = ~30K (not recorded in the recorder ledger, which only counts the recorder).

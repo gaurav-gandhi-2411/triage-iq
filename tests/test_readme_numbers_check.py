@@ -176,6 +176,20 @@ def test_an_ignore_rule_without_a_reason_is_an_error(tmp_path: Path) -> None:
     assert _custom(tmp_path, "nothing 1\n", manifest)
 
 
-def test_the_repository_readme_matches_its_declared_sources() -> None:
-    errors, _ = rnc.check(ROOT / "README.md", ROOT / "docs" / "readme_numbers.json")
+def test_the_repository_documents_match_their_declared_sources() -> None:
+    """README.md and every docs/numbers/*.json document: each claim number re-reads to its source (strict)."""
+    pairs = rnc.manifests()
+    assert len(pairs) >= 2, "the moved documents' manifests are missing"
+    errors: list[str] = []
+    for doc, manifest in pairs:
+        errs, _ = rnc.check(doc, manifest, strict=True)
+        errors += [f"{doc.name}: {e}" for e in errs]
     assert errors == [], "\n".join(errors)
+
+
+def test_latency_summary_report_is_current() -> None:
+    """reports/latency_summary.json is the recomputation the README latency numbers are checked against."""
+    import latency_summary
+
+    committed = (ROOT / "reports" / "latency_summary.json").read_text(encoding="utf-8")
+    assert committed == json.dumps(latency_summary.build(), indent=1) + "\n", "re-run scripts/latency_summary.py"

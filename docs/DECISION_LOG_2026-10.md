@@ -698,6 +698,18 @@ was retried later. Done at
 2. `python eval/run_eval.py --update-baseline` on the #161 branch wrote `reports/eval_baseline.json` (cassette hash e9f8861f85fec3bb; vscode 12.7273, k8s 11.9623, pooled 12.0938, matching the approved table). Local gate tests: 29 passed.
 3. ADR-0064 now records the approval and rationale: the median decision rests on ground truth (MAE 3.52 d vs 7.28 d); the judge dimension is an LLM proxy, the drop is not significant (p about 0.21) and is confounded with re-sampled synthesis. The vscode +0.455 is stated as at the edge of its band, not as an improvement.
 
+## README accuracy pass (2026-10-07)
+
+**D21b. Monitoring decision recorded** (numbered D21 on the README branch; collided with main's D21). Uptime/keep-warm = external UptimeRobot (free plan, 5-minute
+`/health`, first ping 2026-10-05T12:39:50Z, D10) plus the GitHub Actions health monitor
+(`/health?deps=1`; scheduled every 30 min, observed 3-7 h apart over the last 8 runs, `gh run list`
+2026-10-07). Cloud Monitoring alerting is NOT adopted: alerting could not be verified free and the
+project runs on a zero-spend rule. VERIFIED: `gcloud monitoring policies list` and
+`gcloud monitoring uptime list-configs` on `triageiq-prod-260812` (read-only, explicit
+`--account`) returned empty on 2026-10-07. `scripts/setup_monitoring.sh` stays as a reference only.
+The README now states this as a decision, not an open gap. README numbers were re-derived from their
+sources by `readme_numbers_check.py` (PR body has the mismatch table).
+
 **D63. Post-#161 verification: deploy good, one latency exposure found. VERIFIED unless marked BELIEVED.**
 1. Merge f71096a; deploy run 38162584455 success (smoke test passed); revision `triageiq-api-00045-zac` 100% traffic.
    `/health?deps=1` ok (model_store, groq healthy); HEAD /health 405 on the old revision until 18:13 UTC, 200 every

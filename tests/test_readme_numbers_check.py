@@ -193,3 +193,11 @@ def test_latency_summary_report_is_current() -> None:
 
     committed = (ROOT / "reports" / "latency_summary.json").read_text(encoding="utf-8")
     assert committed == json.dumps(latency_summary.build(), indent=1) + "\n", "re-run scripts/latency_summary.py"
+
+
+def test_judge_mean_ci_report_is_current() -> None:
+    """reports/judge_mean_ci.json is recomputed from the committed cassette (no network, no model)."""
+    import judge_mean_ci
+
+    committed = (ROOT / "reports" / "judge_mean_ci.json").read_text(encoding="utf-8")
+    assert committed == json.dumps(judge_mean_ci.build(), indent=1) + "\n", "re-run scripts/judge_mean_ci.py"

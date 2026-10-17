@@ -27,7 +27,11 @@ The check, per declared line:
 With "strict": true in the manifest (or --strict) a README line that still carries a claim number but is not
 declared is also an error, so a new unsourced number cannot enter the README.
 
-Usage: python scripts/readme_numbers_check.py [--readme README.md] [--manifest docs/readme_numbers.json]
+Several documents are checked the same way: every docs/numbers/*.json is a manifest with a top-level "document"
+(the file it describes, relative to the repository root); `--all` checks README.md plus all of them and prints the
+combined tier split.
+
+Usage: python scripts/readme_numbers_check.py [--readme README.md] [--manifest docs/readme_numbers.json] [--all]
                                               [--strict] [--list-uncovered]
 Exit 0 = every declared number matches (and, in strict mode, nothing is undeclared); 1 otherwise.
 """
@@ -220,14 +224,48 @@ def check(readme: Path, manifest: Path, root: Path = ROOT, strict: bool | None =
     return errors, info
 
 
+def manifests() -> list[tuple[Path, Path]]:
+    """(document, manifest) pairs: README.md with docs/readme_numbers.json, then each docs/numbers/*.json."""
+    pairs = [(ROOT / "README.md", ROOT / "docs" / "readme_numbers.json")]
+    for m in sorted((ROOT / "docs" / "numbers").glob("*.json")):
+        doc = json.loads(m.read_text(encoding="utf-8")).get("document")
+        pairs.append((ROOT / doc if doc else ROOT / "README.md", m))
+    return pairs
+
+
+def main_all(strict: bool) -> int:
+    sys.stdout.reconfigure(errors="replace")
+    total_errors: list[str] = []
+    kinds: Counter = Counter()
+    claim_lines = declared = numbers = verified = 0
+    for doc, man in manifests():
+        errors, info = check(doc, man, strict=True if strict else None)
+        total_errors += [f"{doc.name}: {e}" for e in errors]
+        kinds.update(info["source_kinds"])
+        claim_lines += info["claim_lines"]
+        declared += info["declared_lines"]
+        numbers += info["claim_numbers_declared"]
+        verified += info["verified_numbers"]
+        print(f"{doc.relative_to(ROOT).as_posix():<44} lines {info['declared_lines']:>3}/{info['claim_lines']:<3} numbers {info['claim_numbers_declared']:>4}  {dict(info['source_kinds'])}  {'OK' if not errors else str(len(errors)) + ' problem(s)'}")
+    print(f"TOTAL claim-bearing lines {claim_lines}, declared {declared}; claim numbers {numbers}; verified against a source {verified}")
+    print(f"source kinds: {dict(kinds)}")
+    for e in total_errors:
+        print("FAIL", e)
+    print("OK" if not total_errors else f"{len(total_errors)} problem(s)")
+    return 1 if total_errors else 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--readme", default=str(ROOT / "README.md"))
     ap.add_argument("--manifest", default=str(ROOT / "docs" / "readme_numbers.json"))
     ap.add_argument("--strict", action="store_true", help="fail on any claim-bearing README line that is not declared")
     ap.add_argument("--list-uncovered", action="store_true")
+    ap.add_argument("--all", action="store_true", help="check README.md and every docs/numbers/*.json manifest")
     a = ap.parse_args()
     sys.stdout.reconfigure(errors="replace")  # README lines carry box-drawing and minus characters; a console codepage must not crash the report
+    if a.all:
+        return main_all(a.strict)
     errors, info = check(Path(a.readme), Path(a.manifest), strict=True if a.strict else None)
     pct = 100 * info["declared_lines"] / info["claim_lines"] if info["claim_lines"] else 100.0
     print(f"claim-bearing README lines: {info['claim_lines']}; declared: {info['declared_lines']} ({pct:.1f}%); uncovered: {len(info['uncovered'])}")

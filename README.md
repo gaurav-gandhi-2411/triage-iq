@@ -1,6 +1,6 @@
 # TriageIQ
 
-TriageIQ turns raw GitHub issues into structured triage decisions in about 5 seconds when the LLM provider has token headroom (production client p50 4.8 s on 2026-10-07, n=5; the two calls with headroom on 2026-10-12 took 4.9 and 5.3 s. When the provider's free-tier token limits are exhausted the request returns a signals-only plan flagged `_degraded` within 15 s instead of waiting up to 135 s as it did on 2026-10-11 — see [Latency](#latency)). Given an issue title and body, it runs a four-stage ML pipeline — component classification, similar issue retrieval, resolution-time prediction, and LLM synthesis — and returns a JSON `TriagePlan` with predicted component, similar issues, expected resolution window, priority assessment, and suggested next steps. It is built on real issues from `microsoft/vscode` and `kubernetes/kubernetes` (what each model was actually trained or indexed on is itemised in [Training data](#training-data) — the supervised models see ~11K labeled issues, not the full corpus), deployed to Cloud Run, and built to demonstrate a full production ML lifecycle: evaluation, reproducible builds, Prometheus metrics, fail-closed auth, Workload Identity Federation CI/CD, and CVE-audited dependencies.
+TriageIQ turns a raw GitHub issue into a structured triage decision: predicted component, similar issues, an expected resolution window, a priority assessment and suggested next steps. It runs a four-stage pipeline (TF-IDF component classifier, BGE + FAISS similar-issue retrieval, resolution-time prediction, LLM synthesis) on real `microsoft/vscode` and `kubernetes/kubernetes` issues and is deployed on Cloud Run. A request takes about 4.8 s when the LLM provider has token headroom (production client p50, n=5); when the free-tier token limits are exhausted it returns a signals-only plan flagged `_degraded` instead of waiting (see [Latency](#latency)). It exists to show a full production ML lifecycle: evaluation with confidence intervals, reproducible builds, Prometheus metrics, fail-closed auth and Workload Identity Federation CI/CD.
 
 ![TriageIQ four-stage triage pipeline](docs/screenshots/pipeline-diagram.svg)
 
@@ -10,19 +10,10 @@ TriageIQ turns raw GitHub issues into structured triage decisions in about 5 sec
 
 **Base URL:** `https://triageiq-api-1014562031321.us-central1.run.app`
 
-> Served from GCP project `triageiq-prod-260812` (region `us-central1`), a dedicated project under
-> its own GCP identity, still under an IAM-scoped deploy identity with zero project-level grants.
-> This is the second migration: the original project (`triageiq-portfolio-495022`) had its billing
-> account closed (2026-08-05); the co-tenant stopgap that replaced it (`expense-tracker-498014`)
-> then had ITS billing disabled too (2026-08-12), caught this time via CI failing rather than an
-> undetected outage. Full rationale and the new billing-status monitoring added specifically to
-> catch a third occurrence:
+> Served from GCP project `triageiq-prod-260812` (`us-central1`) under an IAM-scoped deploy identity. This is the second project migration after two billing outages; rationale and the billing monitoring added to catch a third:
 > [`docs/architecture/adr/0050-second-billing-outage-dedicated-project-migration.md`](docs/architecture/adr/0050-second-billing-outage-dedicated-project-migration.md).
 
 ```bash
-# Service info
-curl https://triageiq-api-1014562031321.us-central1.run.app/
-
 # Triage an issue
 curl -s -X POST https://triageiq-api-1014562031321.us-central1.run.app/triage \
   -H "Content-Type: application/json" \
@@ -36,6 +27,30 @@ curl -s -X POST https://triageiq-api-1014562031321.us-central1.run.app/triage \
 **Supported repos:** `microsoft/vscode`, `kubernetes/kubernetes`  
 **Rate limits:** 10 requests/hour, 30/day per IP. `/`, `/health`, and `/metrics` are not rate-limited.  
 **Latency:** ~4.8s warm p50 end-to-end, ~41s cold start (measured; kept rare by a keep-warm monitor) — details, per-stage numbers and the n=5 caveat in [Latency](#latency).
+
+---
+
+## Headline results
+
+95% intervals in brackets. The full table (every row, comparator and source) is [`docs/EVALUATION.md`](docs/EVALUATION.md); the record of measurement errors found and corrected is [`docs/EVALUATION_HISTORY.md`](docs/EVALUATION_HISTORY.md).
+
+| Stage | Repo | Metric | Result |
+|---|---|---|---|
+| Component classifier (47 classes) | vscode / kubernetes | Top-3 accuracy, fresh test rows (n=423 / 671) | **85.82%** [82.17, 88.82] / **85.99%** [83.16, 88.41] |
+| Component classifier | vscode / kubernetes | Top-1 accuracy | 69.98% [65.44, 74.15] / 54.84% [51.06, 58.57] |
+| Similar-issue retriever | kubernetes | Recall@5, related task, clean subset (n=66) | **39.39%** [27.3, 51.5] |
+| Similar-issue retriever | vscode | Recall@5, duplicate task | **53.50%** [46.5, 60.5] |
+| Resolution predictor | kubernetes | Served point estimate: training-window median (ADR-0064); bucket accuracy vs always-majority | 3.04 d; 32.95% [31.29, 34.66] vs 26.0% |
+| Resolution predictor | vscode | Served point estimate: training-window median (ADR-0064) | 3.84 d |
+| Resolution predictor | kubernetes / vscode | Conformal 80% interval coverage (held-out) | 79.71% [77.94, 81.38] / 82.7% [78.5, 86.2] |
+| LLM synthesis (judge /15) | both | Judge mean, regression detector, n=64 | 12.09/15 (80.6%) |
+| LLM synthesis | both | Component accuracy: predicted equals gold (exact string match) | **68.8% (44/64)**, Wilson 95% [56.6, 78.8] |
+
+No majority-class baseline is committed for the 47-class classifier split, so the classifier rows have no naive comparator here; the resolution rows are compared with the naive median in the full table.
+
+## How it is evaluated
+
+Each stage is scored on held-out data with Wilson or bootstrap intervals (2000 resamples, seed 42). LLM quality comes from one local judge (`qwen3:8b`) on a 64-issue gold set (vscode n=11, k8s n=53) replayed from a recorded cassette, so CI makes zero live LLM calls. Two caveats matter when reading the LLM rows: the judge's `component_match` is lenient on neighbouring labels, so the exact-match 44/64 above is the number to quote; and the grounding check is a consistency check against the pipeline's own top-3, not a correctness check against gold, because all 20 wrong-component plans still pass it. Details and sources: [`docs/EVALUATION.md`](docs/EVALUATION.md).
 
 ---
 
@@ -81,98 +96,20 @@ expected_resolution_days, priority_guess,
 suggested_next_steps, triage_summary
 ```
 
-\*\* **System 4 is live again on `openai/gpt-oss-120b` (Groq).** Groq retired the original
-`llama-3.1-8b-instant` on 2026-08-16; triage requests failed outright until the replacement was
-selected, re-evaluated and deployed (production restored 2026-10-05 — see
-[`docs/SESSION_RESUME_2026-08-30.md`](docs/SESSION_RESUME_2026-08-30.md); model choice:
-[ADR-0054](docs/architecture/adr/0054-model-selection-underpowered-judge-mean.md)). A live
-`POST /triage` on 2026-10-07 returned `_llm_status: ok`. The retired model's historical numbers
-that remain in [`docs/EVALUATION_HISTORY.md`](docs/EVALUATION_HISTORY.md) are labeled with the model they were measured on.
+\*\* System 4 runs on `openai/gpt-oss-120b` (Groq); Groq retired the original `llama-3.1-8b-instant` on 2026-08-16 and the replacement was selected, re-evaluated and deployed before production was restored ([ADR-0054](docs/architecture/adr/0054-model-selection-underpowered-judge-mean.md), [`docs/SESSION_RESUME_2026-08-30.md`](docs/SESSION_RESUME_2026-08-30.md)).
 
-\* k8s R@5 on a hand-verified clean eval subset — see the Evaluation table and note below;
+\* k8s R@5 on a hand-verified clean eval subset — see the full table in [`docs/EVALUATION.md`](docs/EVALUATION.md);
 the unfiltered number over the full eval population is lower (24.67%) because ~56% of that
 population turns out to be structurally invalid as a retrieval test, not because the retriever
 got worse.
 
----
-
-## Evaluation
-
-| System | Repo | Metric | Value |
-|---|---|---|---|
-| Component classifier (47-class retrain, ADR-0057) | vscode | **Top-3 accuracy (primary, multi-label — see note)**, n=423 fresh test rows | **85.82%** [82.17, 88.82] |
-| Component classifier | vscode | Top-1 accuracy (secondary) | 69.98% [65.44, 74.15] |
-| Component classifier | kubernetes | **Top-3 accuracy (primary, multi-label — see note)**, n=671 fresh test rows | **85.99%** [83.16, 88.41] |
-| Component classifier | kubernetes | Top-1 accuracy (secondary) | 54.84% [51.06, 58.57] |
-| Component classifier | vscode / kubernetes | Macro F1 (top-1) | 0.5165 / 0.4266 |
-| Component classifier | vscode / kubernetes | Previous 28/35-class classifier on the SAME fresh test rows (top-3; the like-for-like comparator) | 68.09% [63.50, 72.35] / 83.61% [80.62, 86.22] |
-| Component classifier | vscode | Retrain vs previous, paired, top-3 / top-1 | **+17.73pp** [+13.06, +22.40] / +15.37pp [+10.35, +20.38] (CIs exclude zero; 17.97% of test rows carry a label the old model could never emit) |
-| Component classifier | kubernetes | Retrain vs previous, paired, top-3 / top-1 | +2.38pp [−0.56, +5.33] / −2.68pp [−6.68, +1.32] (**both CIs include zero: not distinguishable from the old classifier**; the retrain's gain is taxonomy coverage, 47 vs 35 classes) |
-| Component classifier | both | Naive (majority/prior) baseline | **Not reported: no majority-class baseline is committed for the 47-class test split, and the split parquets are not in the repo to recompute it. Unverified; treat the table as lacking this row.** |
-| Component classifier | both | Inference stage latency p50 (production, n=5, 2026-10-11) | 7.0ms |
-| Similar issue retriever | kubernetes | **Recall@5, related task, clean eval subset (n=66, blind-labeled valid pairs only — see note)** | **39.39%** [27.3, 51.5] |
-| Similar issue retriever | kubernetes | Recall@5, related task, unfiltered eval population (n=150, ~56% structurally invalid — see note) | 24.67% [18.0, 31.3] |
-| Similar issue retriever | kubernetes | Recall@1 / @10 (related task, unfiltered, pre-Lever1/2 — not yet re-measured) | 9.3% / 23.3% |
-| Similar issue retriever | vscode | **Recall@5, duplicate task (Lever1 only shipped, ADR-0040 — see note)** | **53.50%** [46.5, 60.5] |
-| Similar issue retriever | vscode | Recall@1 / @10 (duplicate task, pre-Lever1 — not yet re-measured) | 27.0% / 59.5% |
-| Similar issue retriever | vscode | Recall@5, related task (directional, n=19, post-Lever1 — see note) | 57.89% [36.8, 78.9] |
-| Similar issue retriever | both | Stage latency p50 (production, n=5, 2026-10-11; dominated by CPU query embedding) | 1,622ms |
-| Similar issue retriever | vscode | Index size (BGE, `index.faiss`, 13,315 vectors) | 40.9 MB |
-<!-- RESOLUTION-ROWS: currently-SERVED state after #161 (2026-10-11). Source: reports/eval_summary.json `resolution_served`, built by scripts/build_resolution_served_block.py from reports/served_k8s_metrics.json (produced at 30e6fd8) and reports/vscode_naive_serving_eval.json; before/after in reports/d7_resolution_before_after.json; decision ADR-0064. Verified identical to the live /eval/summary on 2026-10-11. -->
-| Resolution predictor | kubernetes | **Served point estimate: the training-window median, 3.04 d** (ADR-0064). Mean absolute error, n=2,992 re-split test, served path | 104.23d, equal to the naive baseline by construction |
-| Resolution predictor | kubernetes | Median absolute error: served median vs the learned model (not served) | **3.52d vs 7.28d** |
-| Resolution predictor | kubernetes | Mean absolute error of the learned model (not served) vs naive | 102.09d [93.89, 110.63] vs 104.23d (+2.06%; paired gain CI [1.84, 2.45] d) |
-| Resolution predictor | kubernetes | Bucket classifier (served, learned): accuracy vs always-predict-the-majority-bucket | 32.95% [31.29, 34.66] vs 26.0%: **+6.95pp [+5.55, +8.36]** |
-| Resolution predictor | kubernetes | Conformal (CQR v2) interval coverage, held-out n=2,095 (target 80%) / raw model Q10–Q90 on the full test | **79.71% [77.94, 81.38]** / 83.26% |
-| Resolution predictor | kubernetes | Stage latency p50 (feature build + 3 predictions; production, n=5, 2026-10-11) | 93.9ms |
-| Resolution predictor | vscode | **Served point estimate: the training-window median, 3.84 d** (ADR-0064). Mean / median absolute error, n=616 reconstructed window (2026-04-21..27) | 3.53d / 3.79d (MAE equals naive by construction) |
-| Resolution predictor | vscode | Learned model (not served): mean / median absolute error | 5.45d / 5.80d (MAE gain vs naive −1.91d, CI [−2.09, −1.72]) |
-| Resolution predictor | vscode | Bucket output | naive majority prior (91.4% = naive, delta 0.0pp; the classifier is not trusted here, ADR-0025) |
-| Resolution predictor | vscode | Conformal (CQR v2) interval coverage, held-out n=370 (chronological 40/60 split by `created_at`; target 80%) | **82.7% [78.5, 86.2]**; median width 93.7d |
-<!-- LLM-BASELINE-BLOCK (hand-copied from reports/eval_baseline.json; guarded by tests/test_api.py::test_eval_summary_judge_block_matches_committed_baseline). Re-derived 2026-10-11 on the re-recorded cassette e9f8861f (ADR-0064; baseline approved by the owner). -->
-| LLM synthesis (judge /15; synthesis `openai/gpt-oss-120b`, judge `qwen3:8b` local — ADR-0019/0061) | vscode | **Current mean, regression detector (cassette `e9f8861f`, 2026-10-11)** | **12.73/15 (84.8%)**, n=11 |
-| LLM synthesis | kubernetes | **Current mean, regression detector** | **11.96/15 (79.7%)**, n=53 |
-| LLM synthesis | both | Overall mean | 12.09/15 (80.6%), n=64 |
-| LLM synthesis | vscode / kubernetes | Floor-fail rate (judge's worst band on component or similar-issues; it caught only 4 of the 20 wrong components, so it understates component misses) | 0.0% (0/11) / 7.55% (4/53) |
-| LLM synthesis | vscode / kubernetes | Grounding check, ungrounded plans (**a consistency check, not an error rate — see note**) | 0.0% (0/11, report-only) / 0.0% (0/53; hard ratchet ≤1, ADR-0061) |
-| LLM synthesis | vscode / kubernetes | Component picked by the LLM differs from classifier top-1 (report-only) | 9.1% (1/11) / 7.5% (4/53) |
-| LLM synthesis | both | **Component accuracy: predicted component exactly equals gold (deterministic string equality, n=64)** | **68.8% (44/64)**, Wilson 95% [56.6, 78.8]; the other 20/64 are wrong and all 20 still pass the grounding check |
-| LLM synthesis | both | Judge `component_match` on those 64 (lenient, see note: 5 of the 20 wrong components scored 2) | scored 2 for 49/64 (44 exact + 5 near-labels), 1 for 11, 0 for 4; mean 1.70 of 2 vs 1.38 under strict equality |
-| LLM synthesis | both | Judge dimension `resolution_estimate_reasonableness` (/3), before → after the 2026-10-11 re-record (median point, label and calibrated interval changed together) | **1.67 → 1.58 (fell)**; k8s 1.68 → 1.57 (5 up / 11 down, sign test p≈0.21), vscode 1.64 → 1.64; not significant, unresolved proxy signal (ADR-0064) |
-
-Sources (all re-read by `readme_numbers_check.py` at PR time): classifier — `reports/classifier_old_vs_new_paired_2026-09-23.json`, `reports/multilabel_classifier_final_training.json`, [ADR-0057](docs/architecture/adr/0057-classifier-retrain-shipped-honest-comparable-baseline.md); retriever — `reports/lever12_eval_results.json`, `reports/track2_k8s_clean_eval.json`, `reports/d1_clean_eval_baseline.json`, the served `index.faiss` (`ntotal`, `MANIFEST.sha256`); resolution — [`reports/resolution_train_serve_skew_2026-10-07.txt`](reports/resolution_train_serve_skew_2026-10-07.txt) (= `docs/DECISION_LOG_2026-10.md` D17–D19), `reports/cqr_conformal_adjustments.snapshot.json`, `reports/w6_resolution_diagnosis.json`; LLM — `reports/eval_baseline.json`, `reports/eval_baseline_candidate_2026-09-23.json`, [ADR-0058](docs/architecture/adr/0058-gate-proof-and-ratchet-sizing.md), [ADR-0061](docs/architecture/adr/0061-baseline-2026-09-23-k8s-grounding-1-of-53.md); latency — [`reports/latency_replay_2026-10-07.txt`](reports/latency_replay_2026-10-07.txt). The live `/eval/summary` endpoint serves the judge and calibration blocks from the same files.
-
-95% Wilson CIs shown in brackets where computed on a held-out test split (bootstrap CIs, 2000 resamples, seed 42, for resolution deltas and retrieval).
-
-> **How to read the LLM rows.** The judge scores come from a single judge (`qwen3:8b`, run locally) on a 64-issue gold set (vscode n=11, k8s n=53) replayed from a recorded cassette, so CI runs make zero live LLM calls. n=11 gives vscode a wide band (the regression gate fires at −0.45 for vscode, −0.22 for k8s), and the grounding ratchet (≤1/53, ADR-0061) is currently met with 0/53, which sits inside the same Wilson interval as 1/53 ([0.3, 9.9]% vs [0.0, 6.8]%). The previous rows (10.26/15 k8s, 8.64/15 vscode, floor-fail 18.9% / 63.6%, fabrication 0/53) were measured with a different judge and the retired `llama-3.1-8b-instant` on a different gold set; they are **not comparable** and were removed from the table (they remain in git history and in [`docs/EVALUATION_HISTORY.md`](docs/EVALUATION_HISTORY.md)). The classifier retrain moved the judge mean −0.156 (95% CI [−0.51, +0.20], n=64) against the voided pre-retrain run: no quality-improvement claim is made (ADR-0061). The 2026-10-11 re-record (ADR-0064) changed three things together (the median point, the 'historical median' label, the calibrated interval in the prompt) and re-sampled the synthesis: pooled mean 12.03 → 12.09, vscode 12.27 → 12.73 (at the edge of its 0.45 band, not claimed as an improvement), k8s 11.98 → 11.96. `resolution_estimate_reasonableness` fell (1.67 → 1.58, see the row above); it is an LLM proxy for how the estimate reads, the drop is not significant and is confounded, and the median-point decision rests on ground truth (median absolute error 3.52d vs 7.28d), so it is recorded as an unresolved signal, not a reason to revert.
->
-> **What the grounding numbers count, and what they do not.** `fabrication_rate` and the grounding ratchet count plans where `grounding_status.all_grounded` is false: the predicted component is not in the classifier's own top-3, or a cited similar-issue number was not in the retrieved set. That is a **consistency check against the pipeline's upstream outputs, not a correctness check against gold labels**: 20 of the 64 plans predict a component that is wrong versus gold, and all 20 are scored "grounded" because the wrong guess still falls inside the classifier's top-3 (recomputed on the 2026-10-11 cassette with `scripts/measure_grounding.py` and the gold labels in `eval/eval_set.jsonl`; method: ADR-0058 addendum). `0/53` and `0/11` must therefore not be read as error rates. The report-only metric that tracks the LLM overriding the classifier is `component_departed_from_top1_rate` (5 of 64 plans; all 5 wrong vs gold).
->
-> **Component accuracy: the deterministic number is 44/64 = 68.8%; the judge's `component_match` is more lenient.** The number to quote is exact string equality between the plan's predicted component and the gold label: **44 of 64 plans (68.8%, Wilson 95% [56.6, 78.8])**, computed without any model by `scripts/component_match_agreement.py` from the committed cassette (`reports/component_match_agreement_2026-10-16.json`). The judge's `component_match` (the LLM-judge rows above, kept as reported) is a comparison of the plan's component with the gold component printed in its own prompt (2 correct, 1 plausible but not gold, 0 wrong), not an inference from the issue text, and it is lenient on hierarchical neighbours: it scored 2 for all 44 exact matches and also for **5 of the 20 wrong plans**, all kubernetes near-labels (e.g. gold `cloudprovider` vs predicted `provider/openstack`; the others are `system-requirement`/`kubelet`, `usability`/`kubectl` twice, `swagger`/`api`); of the other 15 wrong plans it scored 11 as 1 and 4 as 0. Agreement with "equal iff 2" is 59/64 = 92.2%, and every disagreement is the judge being more lenient. Consequences: the judge's mean `component_match` (1.70 of 2) is higher than strict equality would give (1.38), and the judge's worst band (`component_match` = 0, one of the two inputs to the floor-fail rate) caught only 4 of the 20 wrong components, so **the floor-fail rate understates component misses**.
->
-> **Resolution rows.** The point estimate is the training-window median (owner decision D7, [ADR-0064](docs/architecture/adr/0064-train-median-point-estimate.md): k8s 3.04 d, vscode 3.84 d). The learned model did not beat it on the typical issue in either repo (median absolute error); on k8s it is marginally better on mean error (+2%), almost entirely from the longest-resolving 20% of issues (598 issues, 113+ days; they carry 95.9% of the gain, `reports/k8s_gain_tail.json`). The learned parts in production are the k8s bucket classifier and the conformal intervals. Where this came from: the learned point estimates had a train/serve skew (the `emb_*` features were zero-filled at serving, found 2026-10-07, DECISION_LOG D17); the k8s side was fixed by reusing the retrieval query embedding (PR #150, ADR-0062) and the point estimate was then replaced by the median because the median is the better answer for the typical issue. The vscode intervals use the median as their centre and the stored CQR adjustment; the 82.7% coverage is measured on one reconstructed 7-day window (2026-04-21..27, chronological 40/60 split by `created_at`), where the 2015–16 training median (3.84 d) is far above the test median (0.049 d), so the interval's lower bound collapses toward zero and it is effectively an upper bound; coverage is a measurement on that window, not a guarantee. The numbers this replaces (k8s "as served" +0.71%, vscode −54.2% worse than naive, vscode conformal coverage 74.6%, k8s 80.81%/76.2%) were measured on the pre-D7 served state and remain in DECISION_LOG D17–D19 and git history.
-
-> **Measurement history.** The dated notes that record each measurement error found and corrected (retrieval harness bugs, retired gold sets, metric corrections, superseded cutovers) are in [`docs/EVALUATION_HISTORY.md`](docs/EVALUATION_HISTORY.md); where they conflict with the table above, the table wins.
-
-Full evaluation reports: [`reports/`](reports/)
+What each model was trained or indexed on is in [`docs/EVALUATION.md`](docs/EVALUATION.md#training-data).
 
 ---
-
-## Training data
-
-What each model actually saw (the old "~20K issues" figure did not describe any one of these):
-
-| Model | microsoft/vscode | kubernetes/kubernetes | Source |
-|---|---|---|---|
-| Component classifier (TF-IDF + one-vs-rest LogReg, 47 classes) | 4,226 labeled issues (train 3,380 / val 423 / test 423) | 6,710 labeled issues (train 5,368 / val 671 / test 671) | [ADR-0056](docs/architecture/adr/0056-eval-gold-taxonomy-broader-than-classifier-label-space.md); test sizes re-read from `reports/classifier_old_vs_new_paired_2026-09-23.json` |
-| Resolution predictor (LightGBM) | 4,923 training rows (created 2015-10 to 2016-04) | 23,928 training rows (created 2014–2016, ADR-0041) | `PCA.n_samples_` of the served `resolution_predictor_*.pkl` (hashes in `data/models/MANIFEST.sha256`) |
-| Similar-issue retrieval index (BGE-base-en-v1.5, off-the-shelf, **not fine-tuned**) | 13,315 indexed issues | 29,994 indexed issues | `index.faiss` `ntotal` of the served indexes |
-
-The 29,994 figure is the **k8s retrieval index size**, not a training-set size: no model is trained on it. The supervised models see ~11K labeled issues (4,226 + 6,710) plus the resolution rows above. The k8s corpus covers 2014–2016 in calendar time, so live issues arrive about ten years after the data the resolution model learned from.
 
 ## Latency
 
-Measured against the production URL, five sequential real `/triage` calls (3 vscode, 2 k8s) to one warm instance, 75 s apart, twice. **n=5 each: medians are indicative; the p95 is just the max.** Raw output: [`reports/latency_replay_2026-10-07.txt`](reports/latency_replay_2026-10-07.txt) (after PR #137, revision `15ef0b3`) and [`reports/latency_replay_2026-10-12.txt`](reports/latency_replay_2026-10-12.txt) (after #161, revision `triageiq-api-00045-zac`, run 2026-10-11 18:2x UTC).
+Measured against the production URL: five sequential real `/triage` calls to one warm instance, 75 s apart. **n=5 each: medians are indicative; the p95 is just the max.** Raw rows and recomputed medians: [`reports/latency_summary.json`](reports/latency_summary.json) (from [`reports/latency_replay_2026-10-07.txt`](reports/latency_replay_2026-10-07.txt) and [`reports/latency_replay_2026-10-12.txt`](reports/latency_replay_2026-10-12.txt)).
 
 | Metric | Before #137 (2026-10-07) | After #137 (2026-10-07) | After #161 (2026-10-11) |
 |---|---|---|---|
@@ -183,114 +120,28 @@ Measured against the production URL, five sequential real `/triage` calls (3 vsc
 | Stage 3 resolution (median) | 586 ms | **52.6 ms** | 93.9 ms |
 | Stage 4 LLM synthesis, Groq `openai/gpt-oss-120b` (median) | 2,842 ms | 3,060 ms | **121,003 ms** (calls 2–5: 51,288 / 132,778 / 121,003 / 123,655 ms; call 1: 2,944 ms) |
 
-#137 removed per-request work from stage 3: the k8s resolution stage went from 3.0–3.3 s to 53–65 ms and the vscode stage from 536–586 ms to 37–77 ms (same replay files). The LLM call and query embedding then dominated.
+**The 2026-10-11 column is a provider rate-limit effect, not a pipeline regression, and it is a real production exposure.** Groq's free tier allows 8,000 tokens per minute for this model and one triage uses about 6,000, so the service sustains roughly **one LLM-backed triage per minute**; a burst cannot all get an LLM answer. Since PR #170 a request that cannot get an LLM answer within 15 s total (retries included) returns the signals-only plan with `_degraded` true and `_llm_status_reason`, instead of waiting up to 135 s as on 2026-10-11. After the daily pool ran out on 2026-10-12, the degraded calls returned in 1.5–1.8 s. Write-up and evidence: [`docs/incidents/2026-10-11-groq-pool.md`](docs/incidents/2026-10-11-groq-pool.md).
 
-**The 2026-10-11 stage-4 result is a provider rate-limit effect, not a pipeline regression, and it is a real production exposure.** The first call had token headroom and ran in 2.9 s (stage 4). Calls 2–5 each logged `Rate limit hit — sleeping` (attempts 1–3 of 6, Cloud Run logs) and every attempt itself took about 30 s inside the Groq client, so stage 4 took 51–133 s; all five returned HTTP 200 with `_degraded` false. Groq's free-tier limit for this model is **8,000 tokens per minute** (response header `x-ratelimit-limit-tokens: 8000`) and one triage consumes about 6,000 tokens (stored usage: ~4,800 prompt + ~1,100 completion), so a second call inside the same minute, or any other traffic on the same key, exhausts the minute. A single probe call after the replay finished saw 1,909 tokens remaining with a 45.7 s reset, so something else was drawing on the pool. The Groq console later identified it (owner-reported, 2026-10-12): a review-iq benchmark key on the same Groq account made about 2,100 calls on 2026-10-11 (about 340 requests and 300K tokens on this model), TriageIQ only a few dozen and the portfolio chatbot 3, so it was not the chatbot. Stage 3 rose from 52.6 to 93.9 ms; BELIEVED to be the k8s query-embedding PCA transform added in PR #150 (the two vscode calls ran 54–100 ms), not measured separately. Evidence: [`reports/latency_replay_2026-10-12.txt`](reports/latency_replay_2026-10-12.txt). What changed since: a 15-second total budget for the LLM stage shipped (PR #170, ADR-0063 addendum), the benchmark key now waits on a shared per-model budget ledger (`tools/groq_budget`; review-iq PR #510), and the cached-token field is logged (PR #174).
+**Concurrency, one live run (2026-10-16, three different issues sent 8 s apart; [`reports/contention_test_2026-10-16.json`](reports/contention_test_2026-10-16.json)):** 2 of 3 requests inside 32 s received an LLM answer (6.2 s and 16.2 s, the second after an 11 s rate-limit wait), 1 degraded at once in 1.2 s because the 25 s backoff exceeded the 14.9 s of budget left, and there were no server errors. That is one run: it shows the mechanism works as designed, not a rate.
 
-**After the 15 s budget (2026-10-12, revision `triageiq-api-00055-boy`), same five bodies, 75 s apart:** the two calls that had token headroom took **4,870 ms and 5,324 ms** end to end (stage 4: 2,737 and 3,672 ms; no retries, no `Rate limit hit` line). The Groq daily pool then ran out (`Used 196411` of 200,000, TriageIQ's own calls in that window were about 35K, so the rest, about 160K, is BELIEVED to be other keys on the same account that the TriageIQ side cannot see), and calls 3–5 returned HTTP 200 with `_degraded` true, reason `rate_limited_tpd`, in **1,520–1,820 ms** instead of waiting. A daily-limit 429 is not retried; the response is the signals-only plan (component, similar issues, resolution estimate, no LLM text). Evidence: [`reports/latency_replay_2026-10-12_post_a1.txt`](reports/latency_replay_2026-10-12_post_a1.txt).
-
-**Concurrency, stated plainly.** One triage costs about 6,000 of the key's 8,000 tokens per minute, so the free tier serves roughly **one LLM-backed triage per minute**; a burst of simultaneous requests cannot all get an LLM answer. Since PR #170 a request that cannot get one inside 15 s total (retries included) returns the signals-only plan with `_degraded` true and `_llm_status_reason` instead of waiting up to 135 s as on 2026-10-11. VERIFIED: nine unit tests (rate limit degrades within 15 s, a long `Retry-After` degrades immediately, a normal call is unaffected) and the daily-limit path above in production. VERIFIED live, one run (2026-10-16 17:54 UTC, revision `triageiq-api-00061-guj`, three different issues sent 8 s apart; [`reports/contention_test_2026-10-16.json`](reports/contention_test_2026-10-16.json), Cloud Run lines in [`reports/contention_test_2026-10-16_cloudrun_log.txt`](reports/contention_test_2026-10-16_cloudrun_log.txt)): call 1 got an LLM answer in 6.2 s with no retry; call 2 hit a rate limit whose 25 s backoff exceeded the 14.9 s left and **degraded at once, in 1.2 s** (`llm_time_budget_exceeded`); call 3 hit a rate limit, slept 11 s and got an LLM answer in 16.2 s (the 15 s budget bounds the LLM stage, the other stages add about 1.2 s). So 2 of 3 requests inside 32 s received an LLM answer, 1 degraded, there were 2 retries in total and no 5xx. That is one run, so it shows the mechanism works as designed, not a rate; whether prompt caching helped call 3 was not captured.
-
-**Prompt caching is intermittent, not absent.** Groq documents prompt caching for `openai/gpt-oss-120b` ("cached tokens do not count towards your rate limits"). An earlier version of this paragraph said it never engaged; that was read through the SDK. Reading the RAW response JSON of a repeated identical-prefix request, the warm call reported `usage.prompt_tokens_details.cached_tokens` = 1,536 of 1,611 prompt tokens (the cold call carried no such field). Across the direct tests that is about 1 hit in 5 warm calls, and 0 of 4 production triage calls (4.7–4.9K-token prompts) showed the field; one SDK-parsed pair of the same request showed no hit. So caching can happen but cannot be relied on: it is NOT counted in the budget planning above (the 8,000 tokens-per-minute figure is treated as unrelieved), and whether a cached call is charged less against the per-minute counter is untested.
-
-**Cold starts.** The service runs with `min-instances 0`. A cold start (model, FAISS and predictor load) takes a median ~41 s from "Started server process" to "Application startup complete" (n=303 cold starts logged 2026-09-05 to 2026-10-05, range 21–73 s; `reports/latency_replay_2026-10-07.txt`). Since the external keep-warm monitor started (2026-10-05 12:40 UTC) cold starts fell from 6–11 per day to 1 on 2026-10-06 and 0 on 2026-10-07 (to 12:21 UTC), counted from Cloud Run logs (`docs/DECISION_LOG_2026-10.md` D10 in the Phase 5 section). If the monitor stops, the first request after idle pays the full cold start.
+**Cold starts.** The service runs with `min-instances 0`; a cold start takes a median ~41 s (n=303, range 21–73 s). An external keep-warm monitor keeps it rare, but it is a free third-party service, not an SLA. Prompt caching is intermittent and is not relied on. Full chapter: [`docs/LATENCY.md`](docs/LATENCY.md).
 
 ---
 
-## Tech Stack
+## Known limitations
 
-| Layer | Technology |
-|---|---|
-| API | FastAPI + Uvicorn on Cloud Run |
-| Classification | scikit-learn TF-IDF + Logistic Regression |
-| Embeddings | `sentence-transformers` BAAI/bge-base-en-v1.5 |
-| Retrieval | FAISS (cosine, CPU) |
-| Prediction | LightGBM quantile regression |
-| LLM | Groq `openai/gpt-oss-120b` (replaced the retired `llama-3.1-8b-instant`, 2026-10-05; see note under System 4 above); eval judge: local `qwen3:8b` via Ollama |
-| Config | pydantic-settings |
-| Observability | Prometheus + prometheus-fastapi-instrumentator; GitHub Actions health monitor + external UptimeRobot (see [Monitoring](#monitoring)); no Cloud Monitoring alert policies |
-| CI | GitHub Actions: ruff, mypy, pip-audit, pytest (coverage gate at 60%; the current test count and coverage are in each CI run's log, not pinned here), dependabot |
-| CD | GitHub Actions + Workload Identity Federation + Artifact Registry + Cloud Run |
+The short list; the full text with evidence is [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md).
 
----
-
-## Local Development
-
-### Prerequisites
-
-- Python 3.11+
-- A [Groq API key](https://console.groq.com) (free tier works)
-
-### Setup
-
-```bash
-git clone https://github.com/gaurav-gandhi-2411/triage-iq.git
-cd triage-iq
-
-pip install torch --index-url https://download.pytorch.org/whl/cpu
-pip install -r requirements-dev.txt
-pip install -e .
-
-export GROQ_API_KEY=your_groq_key
-```
-
-> The API requires trained model artifacts in `data/models/` to serve `/triage`. Tests mock the model store so they run without artifacts.
-
-### Run tests
-
-```bash
-pytest tests/
-# With coverage:
-pytest tests/ --cov=src/triage_iq --cov-report=term-missing
-```
-
-### Run the server locally
-
-```bash
-uvicorn triage_iq.api.app:app --reload
-# → http://localhost:8000
-```
-
----
-
-## Retraining from Scratch
-
-Scripts are numbered in execution order. Run from the repo root with `GITHUB_TOKEN` set for scraping.
-
-```bash
-python scripts/01_scrape_issues.py        # scrape from GitHub API
-python scripts/02_preprocess.py           # clean bodies, extract features
-python scripts/03_split.py                # temporal train/val/test splits
-python scripts/04_train_classifier.py     # original single-label TF-IDF classifier (superseded: the shipped
-                                          # 47-class model is 13_train_multilabel_classifier.py + calibrate_multilabel_classifier.py)
-python scripts/07_extract_related_pairs.py   # extract related-issue pairs for training/eval
-python scripts/08_build_similar_issue_index.py # BGE+FAISS index
-python scripts/09_train_resolution.py     # LightGBM resolution predictor
-python scripts/10_curate_triage_gold.py   # gold triage examples for eval
-python scripts/11_evaluate_triage.py      # full pipeline evaluation
-
-# Optional: verify LLM priority calibration against test cases
-python scripts/11b_verify_priority_calibration.py
-```
-
-> Scripts `05_train_distilbert.py` and `06_eval_llm_fewshot.py` explored alternative architectures that are not used in the production pipeline — DistilBERT loses to TF-IDF+LR on the product's real metric (top-3), on both repos; see the DistilBERT dismissal correction note above for the corrected numbers and why the original top-1-based dismissal was measuring the wrong thing.
-
-After retraining, upload artifacts to GCS:
-
-```bash
-gsutil -m cp data/models/component_classifier_*.pkl gs://triageiq-prod-260812-models/models/
-gsutil -m cp data/models/resolution_predictor_*.pkl gs://triageiq-prod-260812-models/models/
-gsutil -m cp -r data/models/similar_issue_index_*_bge gs://triageiq-prod-260812-models/models/
-gsutil -m cp data/processed/*_temporal_train.parquet gs://triageiq-prod-260812-models/processed/
-```
+- **Resolution time is coarse guidance.** The served point is the training-window median (k8s 3.04 d, vscode 3.84 d). The learned model is not served: on k8s it is marginally better on mean error (102.09d vs 104.23d, +2.06%) but worse on median error (7.28d vs 3.52d); on vscode it is worse (5.45d vs 3.53d mean error). The vscode median is a 2015–16 value while current issues resolve in hours.
+- **Time-window mismatch.** The corpora are 2014–2016 while live issues are about ten years later; nothing here measures transfer, and the vscode resolution test is a single 7-day window.
+- **Small, single-judge LLM evaluation.** 64 issues (vscode n=11), one local judge, cassette replay: deterministic, but it does not detect live-provider drift.
+- **Grounding is a consistency check, not a correctness check** (see above).
+- **Cold start and free-tier limits.** A ~41 s cold start when the instance is idle, and roughly one LLM-backed triage per minute; the zero-spend rule rules out `min-instances=1` and paid tiers.
+- **Priority calibration** was measured on the retired 8B model and is not re-verified for the current one; **image-only issue bodies** fall back to title-only triage; suppressed dependency advisories are analysed in [`DEPENDENCIES.md`](DEPENDENCIES.md).
 
 ---
 
 ## API Reference
-
-### `GET /`
-
-Service discovery. No auth required. Returns name, version, and endpoint links.
 
 ### `POST /triage`
 
@@ -312,57 +163,13 @@ Rate-limited: 10/hour, 30/day per IP.
 
 **Errors:** 422 unsupported repo or missing title. 429 rate limit. 500 internal error.
 
-### `GET /health`
-
-Returns `{"status": "ok", "repos_loaded": [...], "groq_key_present": bool, "uptime_s": float, "dependencies": null}`. `GET /health?deps=1` additionally checks the model store and makes one zero-token authenticated Groq call (503 if either is unhealthy); the keep-warm monitor uses the bare `/health`.
-
-### `GET /metrics`
-
-Prometheus text format. Auth behavior — see [Monitoring](#monitoring).
-
-**Interactive docs:** `/docs` (Swagger UI, auto-generated).
-
----
-
-## Configuration
-
-All values from environment variables or `.env` file. Managed by `src/triage_iq/config.py`.
-
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `GROQ_API_KEY` | **Yes** | — | Groq API key. Empty string raises `ValidationError` at startup. |
-| `ENVIRONMENT` | No | `prod` | `dev` / `test` / `prod`. Controls `/metrics` fail-closed behavior. |
-| `METRICS_TOKEN` | No | — | Bearer token for `/metrics`. Unset in prod → 503 (fail-closed). |
-| `DATA_DIR` | No | `<repo-root>/data` | Path to `models/` and `processed/` subdirectories. |
-| `PORT` | No | `8080` | Uvicorn listen port (Cloud Run sets this automatically). |
-| `LOG_LEVEL` | No | `INFO` | Python logging level. |
-| `RATE_LIMIT_ENABLED` | No | `true` | Set `false` to disable rate limiting (tests use this). |
-| `LLM_CACHE_ENABLED` | No | `false` | Set `true` to enable the SQLite LLM response cache. |
-| `LLM_CACHE_PATH` | No | `<repo-root>/data/llm_cache.sqlite` | Path to the SQLite cache DB. |
-
-### Response cache
-
-An opt-in SQLite-backed cache (`LLM_CACHE_ENABLED=true`) stores LLM responses
-keyed on SHA-256 of the canonical request (provider + model + messages + temperature +
-max\_tokens). Cache hits are returned in <5 ms without a Groq call.
-
-Useful for:
-- Eval re-runs: a 64-issue re-run against a warm cache costs 0 Groq tokens for triage
-  and near-0 for judge calls.
-- Development loops: identical `/triage` requests during testing skip the LLM.
-
-Admin: `python scripts/13_cache_admin.py stats|clear|clear-provider|clear-model`.
-
-On Cloud Run the cache is per-instance (ephemeral disk); each cold start begins empty.
-This is acceptable for Stage A — warmup is fast and correctness never depends on the cache.
+Other endpoints: `GET /` (service discovery), `GET /health` (readiness; `?deps=1` also checks the model store and one zero-token Groq call), `GET /metrics` (Prometheus, bearer-token protected and fail-closed in prod), `/docs` (Swagger UI).
 
 ---
 
 ## Deployment
 
 CD pipeline: `.github/workflows/deploy.yml`, triggered on every push to `main`.
-
-### Steps
 
 1. Authenticate to GCP via Workload Identity Federation (no static SA key in GitHub)
 2. Download production models from GCS
@@ -371,99 +178,23 @@ CD pipeline: `.github/workflows/deploy.yml`, triggered on every push to `main`.
 5. Deploy to Cloud Run with `GROQ_API_KEY` + `METRICS_TOKEN` injected from Secret Manager
 6. Smoke test `/health`, `/metrics`, `/triage` — auto-rollback to previous revision on failure
 
-### WIF setup (one-time)
+WIF setup, lock-file regeneration, manual redeploy and monitoring (health monitor, UptimeRobot keep-warm, log filters): [`docs/OPERATIONS.md`](docs/OPERATIONS.md). Local setup, the retraining script order and configuration: [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
-```bash
-bash scripts/setup_wif.sh
-# Prints GCP_WIF_PROVIDER → add as GitHub repository variable
-# Settings → Secrets and variables → Actions → Variables tab
-```
+## Tech Stack
 
-### Lock file regeneration
-
-```bash
-# Must run on Linux for correct wheel hashes
-docker run --rm -v "$PWD":/src -w /src python:3.11-slim \
-  pip-compile requirements.txt --output-file=requirements.lock --no-header --no-annotate
-```
-
-### Manual redeploy
-
-Trigger via GitHub Actions UI: `Actions → Deploy to Cloud Run → Run workflow → Branch: main`.
-
----
-
-## Monitoring
-
-### Prometheus metrics
-
-```bash
-curl https://triageiq-api-1014562031321.us-central1.run.app/metrics \
-  -H "Authorization: Bearer $METRICS_TOKEN"
-```
-
-Auth behavior:
-- `METRICS_TOKEN` set → requires `Authorization: Bearer <token>` (401 otherwise)
-- No token + `ENVIRONMENT=prod` → 503 (fail-closed, prevents silent exposure)
-- No token + `ENVIRONMENT=dev` → open (local dev only)
-
-### Uptime, keep-warm and alerting (decision, not an open gap)
-
-| Layer | What it does | Evidence |
-|---|---|---|
-| GitHub Actions health monitor (`.github/workflows/health-monitor.yml`) | `GET /health?deps=1` (model store + one zero-token Groq call), fails loudly on anything but 200 + `status=ok`. Scheduled every 30 min, but GitHub runs it irregularly: the last 8 runs (2026-10-05 to 2026-10-07) were 3–7 h apart, so treat the detection window as hours | `gh run list --workflow=health-monitor.yml` |
-| External UptimeRobot monitor (free plan, 5-minute interval, bare `/health`) | Uptime check **and** keep-warm: first ping 2026-10-05 12:39:50 UTC; cold starts fell from 6–11/day to 1 (2026-10-06) and 0 (2026-10-07) | `docs/DECISION_LOG_2026-10.md` D10 (Phase 5), Cloud Run request logs |
-| Cloud Monitoring alert policies / uptime checks | **Not adopted.** Alerting could not be verified to be free, and this project runs on a zero-spend rule. A read-only `gcloud monitoring policies list` and `uptime list-configs` against `triageiq-prod-260812` on 2026-10-07 returned no policies and no uptime checks | owner decision; `scripts/setup_monitoring.sh` is kept as a reference for a future paid setup, **not** applied |
-
-UptimeRobot currently sends `HEAD` first (the API answers 405) and then `GET`; switching the monitor to `GET` is queued in `docs/QUEUE_FOR_GG.md`.
-
-### Log filtering (Cloud Logging)
-
-```
-jsonPayload.log_type="access"                                      # all access logs
-jsonPayload.log_type="access" AND jsonPayload.status="error"       # failed requests
-jsonPayload.log_type="access" AND jsonPayload.llm_status="parse_failure"  # LLM degraded
-```
-
----
-
-## Known Limitations
-
-**Priority calibration.** (Measured on the retired 8B `llama-3.1-8b-instant`; not re-verified for the current `gpt-oss-120b`.) The 8B model could be steered away from a prior "high" bias using PRIORITY GUIDELINES in the system prompt, but cannot reliably distinguish "edge-case + workaround → low" from "core regression + workaround → medium" when both have workarounds. Resolving this requires fine-tuning, a larger model, or rule-based post-processing. See [`reports/06_triage_assistant.md §4.1`](reports/06_triage_assistant.md).
-
-**Image-only bodies.** Issues whose body contains only screenshots or links are stripped to empty during preprocessing. The LLM falls back to title-only triage, which is ambiguous for many real issues. Documented in [`reports/01_data_card.md`](reports/01_data_card.md).
-
-**Cold-start latency.** Cloud Run scales to zero. A cold start takes a median ~41 s (n=303, range 21–73 s; see [Latency](#latency)). The external keep-warm monitor keeps instances warm (1 cold start on 2026-10-06, 0 on 2026-10-07 vs 6–11/day before), but it is a free third-party service, not an SLA; `min-instances=1` (~$15/month) would be the guaranteed fix and is not adopted under the zero-spend rule.
-
-**Resolution point estimate: the training-window median (ADR-0064).** Both learned resolution models were trained with 64 PCA-of-BGE `emb_*` features that serving originally never passed (zero-filled; found 2026-10-07, D17). The k8s skew is fixed by reusing the retrieval query embedding (PR #150, ADR-0062; VERIFIED active in production: a k8s `/triage` request on revision `triageiq-api-00055-boy` (2026-10-12 07:35 UTC) logged `resolution_emb_nonzero` 64 of `resolution_emb_columns` 64; a vscode request logged none, as expected), and the served point is now the training-window median in both repos. The learned k8s model has MAE 102.09d vs the median's 104.23d (+2.06%, paired gain CI [1.84, 2.45] d) but median absolute error 7.28d vs 3.52d: it helps on a few very long-running issues and is worse on the typical one, which is what a user reads as "how long will this take". Evidence: `reports/served_k8s_metrics.json`, `reports/d7_resolution_before_after.json`, `docs/DECISION_LOG_2026-10.md` D7, D17–D19.
-
-**vscode resolution: the median is uninformative for current traffic.** The served point (3.84 d) equals the naive baseline by construction (MAE 3.53d; the learned model, not served, is worse: 5.45d / median AE 5.80d). The bucket output is the naive prior (91.4% = naive), and a transparency badge is shown. The 3.84d median is the 2015–16 training median; the 2026 test window resolves in hours (median 0.049 d; 91.4% of the 616 issues resolved within the "hours" bucket, `reports/w6_resolution_diagnosis.json`), so the point overstates and the interval's lower bound collapses toward zero. Conformal coverage is 82.7% [78.5, 86.2] on one 7-day window (n=370 held out, chronological 40/60 split by `created_at`); the stored calibration file separately records 74.6% [69.9, 78.8] for the interval before it was re-centred on the median (BELIEVED to be why the two figures differ; not re-measured), so treat 82.7% as a measurement on that window, not a guarantee. No retrain without embeddings beat naive in 10 runs (D17/D18).
-
-**Time-window mismatch.** The k8s corpus is 2014–2016 and vscode's resolution training window is 2015-10 to 2016-04, while live issues are about ten years later. Nothing here measures how well the models transfer to current issues; the vscode held-out test is a single 7-day window (2026-04-21 to 2026-04-27).
-
-**Small, single-judge LLM evaluation.** The LLM-quality gold set is 64 issues (vscode **n=11**, k8s n=53), scored by one local judge (`qwen3:8b`), so per-repo means carry wide bands (±0.45 vscode, ±0.22 k8s for the regression gate) and a vscode rate cannot move by less than 1/11. The judge baseline was re-derived on 2026-10-11 after the median-point change (see the marked block in the Evaluation table and ADR-0064). CI replays recorded cassettes: it makes **zero live LLM calls**, which makes it deterministic but means it does not detect live-provider drift; the recorded synthesis model is `openai/gpt-oss-120b`.
-
-**Grounding is a consistency check, not a correctness check.** See the note under the Evaluation table: 19 of the 20 plans whose component is wrong versus gold still pass because they land in the classifier's top-3. k8s is gated by a ratchet at 1/53 (ADR-0061); vscode is report-only (n=11 cannot support a gate, ADR-0058).
-
-**Resolution predictor: modest or negative skill.** After fixing the temporal split (`closed_at` to `created_at`) and removing 14 leaky triage-assigned features (`has_priority` and related label columns), the learned point estimate beats the naive median by only +2.06% on mean error on k8s (and loses on median error, 7.28d vs 3.52d) and loses to it on vscode (see the two notes above); neither is served. The earlier numbers (vscode +19.1%, k8s +3.3%) were artifacts of a broken evaluation — see ADR-0009. Resolution time is close to unlearnable from issue-creation features; the determinants are organizational (who picks the issue up, team priorities, release cycles), none of which are captured at creation time. The LLM uses the float signals for narrative generation but the resolution estimate should be treated as coarse guidance, not a precise forecast.
-
-**CVE-2026-1839 in transformers 4.x** (one of several suppressed advisories, each with a reachability analysis in [`DEPENDENCIES.md`](DEPENDENCIES.md)). Suppressed in `pip-audit` — the vulnerable code path (`Trainer._load_rng_state`) is not reachable in an inference-only service. Fix requires `sentence-transformers 2→5` + `transformers 4→5` (triple major bump). Tracked in [`DEPENDENCIES.md`](DEPENDENCIES.md).
-
-**Synthesis judge quality gate.** The k8s "-0.245 permanent residual" vs a 10.51 baseline described in earlier versions of this README belonged to the retired `llama-3.1-8b-instant` judge setup and gold set; it no longer exists. The committed baseline is `reports/eval_baseline.json` (judge `qwen3:8b`, synthesis `openai/gpt-oss-120b`; vscode 12.27/15, k8s 11.87/15; see the Evaluation table), protected by `test_k8s_quality_regression` / the vscode equivalent as one-directional mean-band regression checks. The 2026-09-23 retrain was **not** shown to improve judge quality (paired mean change −0.156, 95% CI [−0.51, +0.20]); its measured gains are classifier taxonomy coverage and top-3 accuracy (ADR-0057, ADR-0061). The history of the earlier ADR-0036/0037/0039/0043 judge-score investigation is in those ADRs and the dated notes above.
-
-**Eval gate.** `.github/workflows/eval-gate.yml`'s two jobs (`Structural invariants (no LLM)` and `Quality regression (cassette-replayed judge)`) had `continue-on-error: true` removed 2026-08-10 (PR #57) after silently masking real failures for weeks, and are now **required** branch-protection checks alongside `test` (verified via the GitHub branch-protection API on 2026-10-07; strict mode on). The Hugging Face model fetch that made them flaky is now cached (`actions/cache` on `~/.cache/huggingface` in `eval-gate.yml`). Consequence of required + cassette-replayed: a PR that changes any prompt input (for example PR #150, which changes the k8s resolution numbers embedded in the prompt) fails the gate until the affected cassette entries are re-recorded.
-
-**Health monitor fires on an irregular cadence, not the configured 30 minutes.** `health-monitor.yml` is configured for `cron: '*/30 * * * *'`, but the last 8 scheduled runs (2026-10-05 to 2026-10-07) were 3–7 h apart (`gh run list`) — a known characteristic of GitHub Actions' scheduled-workflow queue for low-traffic repos. That is why the external UptimeRobot 5-minute monitor exists (see [Monitoring](#monitoring)). Cloud Monitoring alerting is deliberately not adopted (zero-spend rule); UptimeRobot's notification routing lives in its own dashboard and is not verified here.
-
----
-
-## Reports
-
-| Report | Contents |
+| Layer | Technology |
 |---|---|
-| [`reports/01_data_card.md`](reports/01_data_card.md) | Dataset, preprocessing, known data quality issues |
-| [`reports/03_classifier_baseline.md`](reports/03_classifier_baseline.md) | TF-IDF baseline evaluation |
-| [`reports/03_classifier_comparison.md`](reports/03_classifier_comparison.md) | Classifier ablation (TF-IDF vs LLM few-shot) |
-| [`reports/04_duplicate_detection.md`](reports/04_duplicate_detection.md) | BGE vs MiniLM retrieval comparison |
-| [`reports/05_resolution_results.md`](reports/05_resolution_results.md) | LightGBM resolution predictor evaluation |
-| [`reports/06_triage_assistant.md`](reports/06_triage_assistant.md) | LLM triage pipeline evaluation + priority calibration |
+| API | FastAPI + Uvicorn on Cloud Run |
+| Classification | scikit-learn TF-IDF + Logistic Regression |
+| Embeddings | `sentence-transformers` BAAI/bge-base-en-v1.5 |
+| Retrieval | FAISS (cosine, CPU) |
+| Prediction | LightGBM quantile regression |
+| LLM | Groq `openai/gpt-oss-120b` (replaced the retired `llama-3.1-8b-instant`, 2026-10-05; see note under System 4 above); eval judge: local `qwen3:8b` via Ollama |
+| Config | pydantic-settings |
+| Observability | Prometheus + prometheus-fastapi-instrumentator; GitHub Actions health monitor + external UptimeRobot (see [Monitoring](docs/OPERATIONS.md#monitoring)); no Cloud Monitoring alert policies |
+| CI | GitHub Actions: ruff, mypy, pip-audit, pytest (coverage gate at 60%; the current test count and coverage are in each CI run's log, not pinned here), dependabot |
+| CD | GitHub Actions + Workload Identity Federation + Artifact Registry + Cloud Run |
+
+## Documentation
+
+[`docs/EVALUATION.md`](docs/EVALUATION.md) (full table) · [`docs/EVALUATION_HISTORY.md`](docs/EVALUATION_HISTORY.md) (measurement errors found and corrected) · [`docs/LATENCY.md`](docs/LATENCY.md) · [`docs/incidents/2026-10-11-groq-pool.md`](docs/incidents/2026-10-11-groq-pool.md) · [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md) · [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) · [`docs/OPERATIONS.md`](docs/OPERATIONS.md) · [`docs/architecture/adr/`](docs/architecture/adr/) · [`reports/`](reports/) (index of the numbered reports in [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md#reports))

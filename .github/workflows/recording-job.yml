@@ -1,0 +1,102 @@
+name: Recording job (Cloud Run)
+
+# Runs the Groq synthesis recorder as a Cloud Run JOB in triageiq-prod-260812 so recordings no longer depend on
+# the laptop (ADR-0065). Two manual/scheduled paths, no production traffic involved:
+#   deploy-job  workflow_dispatch only: build the recorder image on top of the current API image and create/update
+#               the job. Nothing runs and no Groq token is spent.
+#   run-job     weekly schedule (and workflow_dispatch): execute the job and wait. The job itself enforces the
+#               shared Groq budget (40K production reserve never touched), so a run that finds no budget exits 0.
+#
+# NOT active until the one IAM binding in scripts/cloud_recording/README.md has been granted and `deploy-job`
+# has been dispatched once; until then run-job fails fast on "job not found" (it spends nothing).
+
+on:
+  schedule:
+    - cron: '17 4 * * 1'   # Mondays 04:17 UTC: weekly keeps the free-tier fit obvious (ADR-0065)
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "deploy-job = build image + create/update the job; run-job = execute it now"
+        type: choice
+        options: [run-job, deploy-job]
+        default: run-job
+
+concurrency:
+  group: recording-job
+  cancel-in-progress: false
+
+env:
+  GCP_REGION: us-central1
+  GCP_PROJECT: triageiq-prod-260812
+  JOB_NAME: triageiq-recorder
+  API_IMAGE: us-central1-docker.pkg.dev/triageiq-prod-260812/triageiq/api:latest
+  RECORDER_IMAGE: us-central1-docker.pkg.dev/triageiq-prod-260812/triageiq/recorder
+  RUNTIME_SA: triageiq-api-runtime@triageiq-prod-260812.iam.gserviceaccount.com
+  STATE_BUCKET: triageiq-prod-260812-models
+
+jobs:
+  deploy-job:
+    if: github.event_name == 'workflow_dispatch' && inputs.action == 'deploy-job'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: triageiq-deployer@triageiq-prod-260812.iam.gserviceaccount.com
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push the recorder image (one thin layer on the API image)
+        run: |
+          docker pull "$API_IMAGE"
+          docker build -f docker/Dockerfile.recorder --build-arg API_IMAGE="$API_IMAGE" \
+            -t "$RECORDER_IMAGE:${{ github.sha }}" -t "$RECORDER_IMAGE:latest" .
+          docker push "$RECORDER_IMAGE:${{ github.sha }}"
+          docker push "$RECORDER_IMAGE:latest"
+
+      - name: Create or update the Cloud Run job
+        run: |
+          # Runs as the existing runtime SA, which already has secretAccessor on groq-api-key. Its only extra
+          # need is the one conditional objectUser binding on recorder/ (scripts/cloud_recording/README.md).
+          # --max-retries 0: a failed recording must not silently re-spend Groq tokens.
+          gcloud run jobs deploy "$JOB_NAME" \
+            --image "$RECORDER_IMAGE:${{ github.sha }}" \
+            --region "$GCP_REGION" --project "$GCP_PROJECT" \
+            --service-account "$RUNTIME_SA" \
+            --tasks 1 --parallelism 1 --max-retries 0 \
+            --task-timeout 3300s --cpu 1 --memory 2Gi \
+            --set-secrets GROQ_API_KEY=groq-api-key:latest \
+            --set-env-vars "RECORD_GCS_BUCKET=$STATE_BUCKET,RECORD_GCS_PREFIX=recorder,RECORD_TIMEOUT_S=3000"
+
+  run-job:
+    if: github.event_name == 'schedule' || inputs.action == 'run-job'
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: triageiq-deployer@triageiq-prod-260812.iam.gserviceaccount.com
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Execute the recording job and wait for it
+        run: |
+          # --wait makes this workflow fail (and GitHub email the owner) when the job fails; the job's own
+          # output line (event, recorder_exit, tokens_spent_this_run, bundle published) is in Cloud Logging.
+          gcloud run jobs execute "$JOB_NAME" --region "$GCP_REGION" --project "$GCP_PROJECT" --wait

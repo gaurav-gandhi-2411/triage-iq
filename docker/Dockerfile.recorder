@@ -1,0 +1,33 @@
+# Cloud Run JOB image for the Groq synthesis recorder (ADR-0065).
+#
+# Built ON TOP of the production API image so it adds one thin layer: the models, indexes, train parquets,
+# python packages and HuggingFace cache are the API image's own layers (Artifact Registry stores shared layers
+# once, which matters against its 0.5 GB free allowance). Only the recorder code, the eval inputs and the GCS
+# client are added here.
+#
+#   docker build -f docker/Dockerfile.recorder \
+#     --build-arg API_IMAGE=us-central1-docker.pkg.dev/triageiq-prod-260812/triageiq/api:latest \
+#     -t us-central1-docker.pkg.dev/triageiq-prod-260812/triageiq/recorder:latest .
+ARG API_IMAGE=us-central1-docker.pkg.dev/triageiq-prod-260812/triageiq/api:latest
+FROM ${API_IMAGE}
+
+USER root
+WORKDIR /app
+
+COPY requirements-recorder.txt .
+RUN pip install --no-cache-dir -r requirements-recorder.txt
+
+# Recorder inputs: eval_set.jsonl, frozen embeddings/retrieval provenance, the committed cassette and
+# checkpoint (the starting lineage), and the checkpoint/artifact validators it imports.
+COPY eval/ eval/
+# The shared Groq budget ledger (+ GCS snapshot store) and the job entrypoint.
+COPY tools/ tools/
+COPY scripts/cloud_recording/ scripts/cloud_recording/
+
+RUN chown -R appuser /app
+USER appuser
+
+# Local working copy of the ledger; the job pulls/pushes it to GCS around the run.
+ENV GROQ_BUDGET_DIR=/tmp/groq_budget
+# No uvicorn here: a job runs once and exits.
+CMD ["python", "scripts/cloud_recording/job_entrypoint.py"]

@@ -934,8 +934,12 @@ class TriageAssistant:
         """Apply component_decision.decide_component to `plan` in place (flag on only)."""
         top3 = signals["classifier_top3"]
         d = decide_component(
-            plan.predicted_component, top3, plan.declared_attribution,
-            str(issue.get("title", "")), str(issue.get("body_clean", "")), retrieved_numbers,
+            plan.predicted_component,
+            top3,
+            plan.declared_attribution,
+            str(issue.get("title", "")),
+            str(issue.get("body_clean", "")),
+            retrieved_numbers,
         )
         old = plan.predicted_component
         plan.predicted_component = d.component  # classifier spelling
@@ -952,6 +956,17 @@ class TriageAssistant:
             plan.suggested_next_steps = [
                 repair_component_text(t, old, d.component) for t in plan.suggested_next_steps
             ]
+            plan.priority_rationale = repair_component_text(
+                plan.priority_rationale, old, d.component
+            )
+            plan.expected_resolution_summary = repair_component_text(
+                plan.expected_resolution_summary, old, d.component
+            )
+            for s in plan.similar_issues:
+                s.relevance_note = repair_component_text(s.relevance_note, old, d.component)
+            # The declared attribution describes the LLM's old label; keeping it would misstate
+            # the served one. Cleared (not a new field), so no plan/judge schema change.
+            plan.declared_attribution = None
         return d
 
     def triage_batch(

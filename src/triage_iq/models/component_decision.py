@@ -80,10 +80,12 @@ def decide_component(
 def repair_component_text(text: str, old: str, new: str) -> str:
     """Replace the whole-word, case-insensitive component name `old` by `new` in `text`.
 
-    Word edges are alphanumerics/underscore, so replacing "git" leaves "github" alone. A no-op
-    when `old` is empty or equals `new` ignoring case.
+    A match is a whole token: it must not touch [A-Za-z0-9_./-] on either side, so "git" is left
+    alone inside "github", "git-lfs" and "area/git", and "editor-core" survives replacing
+    "editor". A sentence-final "editor." or "editor," is still replaced ("editor.js" is not).
+    A no-op when `old` is empty or equals `new` ignoring case.
     """
     if not old.strip() or _norm(old) == _norm(new):
         return text
-    pattern = rf"(?<![A-Za-z0-9_]){re.escape(old.strip())}(?![A-Za-z0-9_])"
+    pattern = rf"(?<![A-Za-z0-9_./-]){re.escape(old.strip())}(?![A-Za-z0-9_/-])(?!\.[A-Za-z0-9_])"
     return re.sub(pattern, lambda _m: new, text, flags=re.IGNORECASE)

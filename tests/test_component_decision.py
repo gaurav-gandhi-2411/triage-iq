@@ -157,3 +157,47 @@ def test_api_exposes_decision_keys_only_when_present() -> None:
     assert "_component_decided_by" not in off
     on = _post({"component_decided_by": "classifier", "component_llm_proposal": "area/x"})
     assert (on["_component_decided_by"], on["_component_llm_proposal"]) == ("classifier", "area/x")
+
+
+@pytest.mark.parametrize(
+    ("text", "old", "new", "expected"),
+    [
+        ("editor-core is fine", "editor", "workbench", "editor-core is fine"),
+        ("use git-lfs here", "git", "area/git", "use git-lfs here"),
+        ("see area/git and git/foo", "git", "core", "see area/git and git/foo"),
+        ("a_editor and editor_b", "editor", "workbench", "a_editor and editor_b"),
+        ("editor.js is separate", "editor", "workbench", "editor.js is separate"),
+        ("It is the editor.", "editor", "workbench", "It is the workbench."),
+        (
+            "editor, then (editor) or editor!",
+            "editor",
+            "workbench",
+            "workbench, then (workbench) or workbench!",
+        ),
+        ("Editor\neditor", "editor", "workbench", "workbench\nworkbench"),
+    ],
+)
+def test_repair_treats_hyphen_slash_dot_underscore_as_part_of_a_token(
+    text: str, old: str, new: str, expected: str
+) -> None:
+    assert repair_component_text(text, old, new) == expected
+
+
+def test_switch_repairs_all_prose_fields_and_clears_stale_attribution(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    plan = _plan("b", DeclaredAttribution(component_source="classifier_top3"))
+    plan.priority_rationale = "b is blocking"
+    plan.expected_resolution_summary = "Owners of b usually fix it"
+    plan.similar_issues[0].relevance_note = "same b regression"
+    out, _ = _run(monkeypatch, True, plan)
+    assert out.predicted_component == "a"
+    assert out.priority_rationale == "a is blocking"
+    assert out.expected_resolution_summary == "Owners of a usually fix it"
+    assert out.similar_issues[0].relevance_note == "same a regression"
+    assert out.declared_attribution is None
+
+
+def test_kept_override_keeps_its_declared_attribution(monkeypatch: pytest.MonkeyPatch) -> None:
+    out, _ = _run(monkeypatch, True, _plan("b", _override("same root cause as #7")))
+    assert out.declared_attribution is not None

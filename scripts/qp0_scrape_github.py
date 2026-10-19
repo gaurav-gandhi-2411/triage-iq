@@ -59,8 +59,9 @@ totalCount pageInfo{{hasNextPage endCursor}} nodes{{__typename
 ... on DemilestonedEvent{{{_TL_ACTOR} milestoneTitle}}}}}}"""
 _COMMON = "id number title body state createdAt closedAt authorAssociation author{login}"
 _LABELS = "labels(first:50){nodes{name}} comments{totalCount}"
+# lastComments is best-effort: the closing comment is usually, not always, among the last 5
 ISSUE_FIELDS = f"""... on Issue{{{_COMMON} stateReason updatedAt milestone{{number title dueOn}}
-{_LABELS} lastComments: comments(last:3){{nodes{{body createdAt authorAssociation author{{login}}}}}}
+{_LABELS} lastComments: comments(last:5){{nodes{{body createdAt authorAssociation author{{login}}}}}}
 {TIMELINE}}}"""
 PR_FIELDS = f"""... on PullRequest{{{_COMMON} merged mergedAt {_LABELS} changedFiles additions
 deletions mergeCommit{{oid}}
@@ -146,15 +147,22 @@ class Client:
             msg = str(body.get("message", "")) + " ".join(
                 str(e.get("message", "")) for e in body.get("errors") or []
             )
-            secondary = status in (403, 429) or "secondary rate limit" in msg.lower()
-            secondary = secondary or "abuse" in msg.lower()
+            low = msg.lower()
+            hinted = any(k in low for k in ("rate limit", "secondary", "abuse"))
+            hinted = hinted or any(h.lower() == "retry-after" for h in headers)
+            # a bare 403 (no access, SAML) is not a rate limit: fail fast, don't back off
+            secondary = status == 429 or hinted
+            bad_partial = (
+                status == 200 and body.get("errors") and body.get("data") and not _benign(body)
+            )
             if secondary:
                 if attempt + 1 >= sec_tries:
                     raise ScrapeError(f"secondary rate limit persisted: HTTP {status}: {msg[:200]}")
-                wait = float(headers.get("Retry-After") or 60 * 2**attempt)
+                ra = next((v for h, v in headers.items() if h.lower() == "retry-after"), None)
+                wait = float(ra or 60 * 2**attempt)
                 log.warning("secondary rate limit (HTTP %s); sleeping %.0fs", status, wait)
                 time.sleep(wait)
-            elif status >= 500:
+            elif status >= 500 or bad_partial:
                 if attempt + 1 >= tries:
                     raise TransientError(f"HTTP {status} after {tries} tries: {msg[:200]}")
                 wait = min(2 ** (attempt + 1), 60) + random.uniform(0, 1)  # noqa: S311
@@ -164,12 +172,25 @@ class Client:
                 raise ScrapeError(f"GraphQL failure HTTP {status}: {msg[:300]}")
             else:
                 if body.get("errors"):
-                    log.warning("partial GraphQL errors: %s", msg[:200])
+                    log.warning("ignored %d inaccessible-source errors", len(body["errors"]))
                 data = body["data"]
                 if data.get("rateLimit"):
                     self._pace(data["rateLimit"])
                 return data
         raise ScrapeError("retries exhausted")
+
+
+def _benign(body: dict[str, Any]) -> bool:
+    """True if every error is NOT_FOUND/FORBIDDEN under timelineItems/closer/source.
+
+    Those are cross-repo private sources GitHub cannot resolve; any other error next to
+    partial ``data`` may mean silently missing fields, so the caller retries instead.
+    """
+    return all(
+        e.get("type") in ("NOT_FOUND", "FORBIDDEN")
+        and {"timelineItems", "closer", "source"} & set(map(str, e.get("path") or []))
+        for e in body["errors"]
+    )
 
 
 def _atomic_write(path: Path, write: Callable[[Path], None]) -> None:

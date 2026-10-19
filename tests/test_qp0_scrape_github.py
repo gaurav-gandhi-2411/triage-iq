@@ -275,3 +275,35 @@ def test_summary_counts_disk_and_checkpoint(tmp_path: Path) -> None:
         D0, D0 + timedelta(days=2, seconds=-1)
     )
     assert qp0.summarize(tmp_path) == {"o__r/issues": {"ckpt:2023": 3, "disk:2023": 3}}
+
+
+def test_bare_403_fails_fast(no_sleep: list[float]) -> None:
+    fake = FakeGitHub([])
+    fake.scripted = [(403, {}, {"message": "Resource protected by organization SAML"})]
+    with pytest.raises(qp0.ScrapeError, match="HTTP 403"):
+        qp0.Client(fake).query("query{x}", {})
+    assert no_sleep == [] and len(fake.calls) == 1
+
+
+def test_403_with_retry_after_is_rate_limit(no_sleep: list[float]) -> None:
+    ok = {"data": {"x": 1}}
+    fake = FakeGitHub([])
+    fake.scripted = [(403, {"retry-after": "3"}, {"message": "Forbidden"}), (200, {}, ok)]
+    assert qp0.Client(fake).query("query{x}", {}) == {"x": 1}
+    assert no_sleep == [3.0]
+
+
+def test_partial_errors_retried_unless_benign(no_sleep: list[float]) -> None:
+    data = {"data": {"x": 1}}
+    bad = {**data, "errors": [{"type": "INTERNAL", "path": ["search"], "message": "boom"}]}
+    benign = {
+        **data,
+        "errors": [{"type": "FORBIDDEN", "path": ["search", "nodes", 0, "timelineItems"]}],
+    }
+    fake = FakeGitHub([])
+    fake.scripted = [(200, {}, bad), (200, {}, benign)]
+    assert qp0.Client(fake).query("query{x}", {}) == {"x": 1}
+    assert len(fake.calls) == 2 and len(no_sleep) == 1  # bad one retried, benign accepted
+    fake.scripted = [(200, {}, bad)] * 10
+    with pytest.raises(qp0.TransientError):
+        qp0.Client(fake).query("query{x}", {}, tries=3)

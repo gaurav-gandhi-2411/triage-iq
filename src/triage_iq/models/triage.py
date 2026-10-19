@@ -721,6 +721,9 @@ class TriageAssistant:
         plan = assistant.triage(issue_row)
     """
 
+    # Class-level default so tests that build an assistant via __new__ (no __init__) stay off.
+    classifier_decides_component: bool = False
+
     def __init__(
         self,
         repo: str,

@@ -1,0 +1,1321 @@
+{
+ "repo": "kubernetes/kubernetes",
+ "seed": 42,
+ "per_stratum": 30,
+ "method": "closed_event_closer_pr",
+ "population": {
+  "2023": 603,
+  "2024": 483,
+  "2025": 492,
+  "2026": 378
+ },
+ "rules": "(pre-registered 2026-10-20, GG decision D79 item 2; do not change after results)\n  a. GET /repos/{repo}/pulls/{pr}: 404 => WRONG(pr_not_in_repo); merged != true =>\n     WRONG(pr_not_merged).\n  b. Closed events come from /issues/{n}/events (plus /timeline when fetched). CONFIRMED if\n     (1) a closed event's commit_id equals the PR's merge_commit_sha [commit_match], OR (2) the\n     timeline has a cross-referenced event whose source.issue is that PR AND a closed event is\n     within 120 s of the PR's merged_at [cross_ref_timing], OR (3) the PR title/body has a\n     closing keyword + the issue number AND a closed event is within 120 s of merged_at\n     [keyword_timing]. The first kind in that order is recorded as the evidence.\n  c. WRONG(closed_before_pr_merged) if the LAST closed event precedes merged_at by > 1 h and\n     the issue was not reopened after it; WRONG(no_relation) if the PR is merged in the repo,\n     there is no cross-reference, no commit match and no keyword, and the last closed event\n     differs from merged_at by > 1 h.\n  d. Everything else => UNVERIFIABLE with a reason (api_error, issue_gone, issue_transferred,\n     no_closed_event, reopened_after_close, ambiguous_timing, structural_evidence_but_timing).",
+ "generated_with": "scripts/qp0_fixlink_audit.py",
+ "overall": {
+  "n_sampled": 120,
+  "verdicts": {
+   "CONFIRMED": 118,
+   "UNVERIFIABLE": 2
+  },
+  "reasons": {
+   "CONFIRMED:cross_ref_timing": 118,
+   "UNVERIFIABLE:issue_transferred": 2
+  },
+  "primary_precision": 0.9833333333333333,
+  "primary_wilson95": [
+   0.9413,
+   0.9954
+  ],
+  "decided_precision": 1.0,
+  "decided_wilson95": [
+   0.9685,
+   1.0
+  ]
+ },
+ "per_stratum_summary": {
+  "2023": {
+   "n_sampled": 30,
+   "verdicts": {
+    "CONFIRMED": 30
+   },
+   "reasons": {
+    "CONFIRMED:cross_ref_timing": 30
+   },
+   "primary_precision": 1.0,
+   "primary_wilson95": [
+    0.8865,
+    1.0
+   ],
+   "decided_precision": 1.0,
+   "decided_wilson95": [
+    0.8865,
+    1.0
+   ]
+  },
+  "2024": {
+   "n_sampled": 30,
+   "verdicts": {
+    "CONFIRMED": 28,
+    "UNVERIFIABLE": 2
+   },
+   "reasons": {
+    "CONFIRMED:cross_ref_timing": 28,
+    "UNVERIFIABLE:issue_transferred": 2
+   },
+   "primary_precision": 0.9333333333333333,
+   "primary_wilson95": [
+    0.7868,
+    0.9815
+   ],
+   "decided_precision": 1.0,
+   "decided_wilson95": [
+    0.8794,
+    1.0
+   ]
+  },
+  "2025": {
+   "n_sampled": 30,
+   "verdicts": {
+    "CONFIRMED": 30
+   },
+   "reasons": {
+    "CONFIRMED:cross_ref_timing": 30
+   },
+   "primary_precision": 1.0,
+   "primary_wilson95": [
+    0.8865,
+    1.0
+   ],
+   "decided_precision": 1.0,
+   "decided_wilson95": [
+    0.8865,
+    1.0
+   ]
+  },
+  "2026": {
+   "n_sampled": 30,
+   "verdicts": {
+    "CONFIRMED": 30
+   },
+   "reasons": {
+    "CONFIRMED:cross_ref_timing": 30
+   },
+   "primary_precision": 1.0,
+   "primary_wilson95": [
+    0.8865,
+    1.0
+   ],
+   "decided_precision": 1.0,
+   "decided_wilson95": [
+    0.8865,
+    1.0
+   ]
+  }
+ },
+ "acceptance": {
+  "threshold": 0.95,
+  "primary_precision": 0.9833333333333333,
+  "wilson_lower_bound": 0.9413,
+  "result": "pass"
+ },
+ "links": [
+  {
+   "issue": 114845,
+   "pr": 115096,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/114845",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/115096"
+  },
+  {
+   "issue": 115175,
+   "pr": 121735,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/115175",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/121735"
+  },
+  {
+   "issue": 115188,
+   "pr": 115846,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/115188",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/115846"
+  },
+  {
+   "issue": 115232,
+   "pr": 115230,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/115232",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/115230"
+  },
+  {
+   "issue": 115263,
+   "pr": 116332,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/115263",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/116332"
+  },
+  {
+   "issue": 116028,
+   "pr": 116089,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/116028",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/116089"
+  },
+  {
+   "issue": 116137,
+   "pr": 119877,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/116137",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/119877"
+  },
+  {
+   "issue": 116139,
+   "pr": 116140,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/116139",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/116140"
+  },
+  {
+   "issue": 116225,
+   "pr": 116251,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/116225",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/116251"
+  },
+  {
+   "issue": 116340,
+   "pr": 116341,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/116340",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/116341"
+  },
+  {
+   "issue": 116710,
+   "pr": 116746,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/116710",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/116746"
+  },
+  {
+   "issue": 116946,
+   "pr": 116948,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/116946",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/116948"
+  },
+  {
+   "issue": 116998,
+   "pr": 117000,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/116998",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/117000"
+  },
+  {
+   "issue": 117533,
+   "pr": 117534,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/117533",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/117534"
+  },
+  {
+   "issue": 117761,
+   "pr": 118160,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/117761",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/118160"
+  },
+  {
+   "issue": 117767,
+   "pr": 128186,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/117767",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/128186"
+  },
+  {
+   "issue": 117824,
+   "pr": 117830,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/117824",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/117830"
+  },
+  {
+   "issue": 117873,
+   "pr": 118846,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/117873",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/118846"
+  },
+  {
+   "issue": 118037,
+   "pr": 129369,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/118037",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/129369"
+  },
+  {
+   "issue": 118138,
+   "pr": 132194,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/118138",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/132194"
+  },
+  {
+   "issue": 118660,
+   "pr": 118721,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/118660",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/118721"
+  },
+  {
+   "issue": 118671,
+   "pr": 118686,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/118671",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/118686"
+  },
+  {
+   "issue": 119384,
+   "pr": 118984,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/119384",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/118984"
+  },
+  {
+   "issue": 119423,
+   "pr": 132028,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/119423",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/132028"
+  },
+  {
+   "issue": 120268,
+   "pr": 120330,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/120268",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/120330"
+  },
+  {
+   "issue": 120326,
+   "pr": 120327,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/120326",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/120327"
+  },
+  {
+   "issue": 120652,
+   "pr": 120750,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/120652",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/120750"
+  },
+  {
+   "issue": 121424,
+   "pr": 121429,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/121424",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/121429"
+  },
+  {
+   "issue": 121909,
+   "pr": 121919,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/121909",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/121919"
+  },
+  {
+   "issue": 122116,
+   "pr": 123942,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/122116",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/123942"
+  },
+  {
+   "issue": 123037,
+   "pr": 129684,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/123037",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/129684"
+  },
+  {
+   "issue": 123043,
+   "pr": 123044,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/123043",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/123044"
+  },
+  {
+   "issue": 123276,
+   "pr": 123611,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/123276",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/123611"
+  },
+  {
+   "issue": 123414,
+   "pr": 123469,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/123414",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/123469"
+  },
+  {
+   "issue": 123559,
+   "pr": 138940,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/123559",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/138940"
+  },
+  {
+   "issue": 123688,
+   "pr": 131927,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/123688",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/131927"
+  },
+  {
+   "issue": 124057,
+   "pr": 124048,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/124057",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/124048"
+  },
+  {
+   "issue": 124608,
+   "pr": 124617,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/124608",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/124617"
+  },
+  {
+   "issue": 125012,
+   "pr": 125040,
+   "year": 2024,
+   "verdict": "UNVERIFIABLE",
+   "reason": "issue_transferred",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/125012",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/125040"
+  },
+  {
+   "issue": 125354,
+   "pr": 125359,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/125354",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/125359"
+  },
+  {
+   "issue": 125500,
+   "pr": 138003,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/125500",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/138003"
+  },
+  {
+   "issue": 125538,
+   "pr": 126029,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/125538",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/126029"
+  },
+  {
+   "issue": 125702,
+   "pr": 125703,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/125702",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/125703"
+  },
+  {
+   "issue": 125704,
+   "pr": 125706,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/125704",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/125706"
+  },
+  {
+   "issue": 126367,
+   "pr": 126386,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/126367",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/126386"
+  },
+  {
+   "issue": 126823,
+   "pr": 127255,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/126823",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/127255"
+  },
+  {
+   "issue": 126885,
+   "pr": 126888,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/126885",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/126888"
+  },
+  {
+   "issue": 126956,
+   "pr": 126991,
+   "year": 2024,
+   "verdict": "UNVERIFIABLE",
+   "reason": "issue_transferred",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/126956",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/126991"
+  },
+  {
+   "issue": 127217,
+   "pr": 127221,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/127217",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/127221"
+  },
+  {
+   "issue": 127295,
+   "pr": 127695,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/127295",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/127695"
+  },
+  {
+   "issue": 127362,
+   "pr": 127363,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/127362",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/127363"
+  },
+  {
+   "issue": 127782,
+   "pr": 128076,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/127782",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/128076"
+  },
+  {
+   "issue": 128047,
+   "pr": 128292,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/128047",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/128292"
+  },
+  {
+   "issue": 128156,
+   "pr": 128212,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/128156",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/128212"
+  },
+  {
+   "issue": 128660,
+   "pr": 128661,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/128660",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/128661"
+  },
+  {
+   "issue": 128730,
+   "pr": 128764,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/128730",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/128764"
+  },
+  {
+   "issue": 128783,
+   "pr": 128875,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/128783",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/128875"
+  },
+  {
+   "issue": 128871,
+   "pr": 128966,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/128871",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/128966"
+  },
+  {
+   "issue": 128984,
+   "pr": 128985,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/128984",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/128985"
+  },
+  {
+   "issue": 129230,
+   "pr": 129231,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/129230",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/129231"
+  },
+  {
+   "issue": 129877,
+   "pr": 130068,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/129877",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/130068"
+  },
+  {
+   "issue": 129908,
+   "pr": 130024,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/129908",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/130024"
+  },
+  {
+   "issue": 130001,
+   "pr": 130348,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/130001",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/130348"
+  },
+  {
+   "issue": 130584,
+   "pr": 132351,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/130584",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/132351"
+  },
+  {
+   "issue": 130656,
+   "pr": 132613,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/130656",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/132613"
+  },
+  {
+   "issue": 130952,
+   "pr": 130985,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/130952",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/130985"
+  },
+  {
+   "issue": 131045,
+   "pr": 131213,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/131045",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/131213"
+  },
+  {
+   "issue": 131132,
+   "pr": 131042,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/131132",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/131042"
+  },
+  {
+   "issue": 131269,
+   "pr": 131299,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/131269",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/131299"
+  },
+  {
+   "issue": 131451,
+   "pr": 131593,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/131451",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/131593"
+  },
+  {
+   "issue": 131513,
+   "pr": 131617,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/131513",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/131617"
+  },
+  {
+   "issue": 131548,
+   "pr": 135503,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/131548",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/135503"
+  },
+  {
+   "issue": 131957,
+   "pr": 131968,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/131957",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/131968"
+  },
+  {
+   "issue": 132024,
+   "pr": 132061,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/132024",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/132061"
+  },
+  {
+   "issue": 132027,
+   "pr": 132034,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/132027",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/132034"
+  },
+  {
+   "issue": 132066,
+   "pr": 136695,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/132066",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/136695"
+  },
+  {
+   "issue": 132482,
+   "pr": 132623,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/132482",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/132623"
+  },
+  {
+   "issue": 133091,
+   "pr": 137231,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/133091",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/137231"
+  },
+  {
+   "issue": 133474,
+   "pr": 136502,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/133474",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/136502"
+  },
+  {
+   "issue": 133600,
+   "pr": 133873,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/133600",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/133873"
+  },
+  {
+   "issue": 133651,
+   "pr": 133721,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/133651",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/133721"
+  },
+  {
+   "issue": 133787,
+   "pr": 133817,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/133787",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/133817"
+  },
+  {
+   "issue": 133919,
+   "pr": 133952,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/133919",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/133952"
+  },
+  {
+   "issue": 134023,
+   "pr": 135327,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/134023",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/135327"
+  },
+  {
+   "issue": 134321,
+   "pr": 134623,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/134321",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/134623"
+  },
+  {
+   "issue": 134494,
+   "pr": 134495,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/134494",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/134495"
+  },
+  {
+   "issue": 135086,
+   "pr": 135100,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/135086",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/135100"
+  },
+  {
+   "issue": 135222,
+   "pr": 135234,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/135222",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/135234"
+  },
+  {
+   "issue": 135315,
+   "pr": 135395,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/135315",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/135395"
+  },
+  {
+   "issue": 135825,
+   "pr": 136598,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/135825",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/136598"
+  },
+  {
+   "issue": 136260,
+   "pr": 136420,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/136260",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/136420"
+  },
+  {
+   "issue": 136472,
+   "pr": 136621,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/136472",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/136621"
+  },
+  {
+   "issue": 136545,
+   "pr": 136640,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/136545",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/136640"
+  },
+  {
+   "issue": 137179,
+   "pr": 137338,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/137179",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/137338"
+  },
+  {
+   "issue": 137184,
+   "pr": 137593,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/137184",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/137593"
+  },
+  {
+   "issue": 137368,
+   "pr": 137369,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/137368",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/137369"
+  },
+  {
+   "issue": 137674,
+   "pr": 137719,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/137674",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/137719"
+  },
+  {
+   "issue": 137724,
+   "pr": 138024,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/137724",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/138024"
+  },
+  {
+   "issue": 137823,
+   "pr": 137831,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/137823",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/137831"
+  },
+  {
+   "issue": 137915,
+   "pr": 137916,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/137915",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/137916"
+  },
+  {
+   "issue": 138112,
+   "pr": 138386,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/138112",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/138386"
+  },
+  {
+   "issue": 138124,
+   "pr": 138131,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/138124",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/138131"
+  },
+  {
+   "issue": 138133,
+   "pr": 138260,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/138133",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/138260"
+  },
+  {
+   "issue": 138527,
+   "pr": 138642,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/138527",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/138642"
+  },
+  {
+   "issue": 138614,
+   "pr": 138656,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/138614",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/138656"
+  },
+  {
+   "issue": 139200,
+   "pr": 139714,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/139200",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/139714"
+  },
+  {
+   "issue": 139348,
+   "pr": 139472,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/139348",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/139472"
+  },
+  {
+   "issue": 139389,
+   "pr": 139390,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/139389",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/139390"
+  },
+  {
+   "issue": 140087,
+   "pr": 140089,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/140087",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/140089"
+  },
+  {
+   "issue": 140096,
+   "pr": 140519,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/140096",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/140519"
+  },
+  {
+   "issue": 140438,
+   "pr": 140600,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/140438",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/140600"
+  },
+  {
+   "issue": 140906,
+   "pr": 141077,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/140906",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/141077"
+  },
+  {
+   "issue": 140915,
+   "pr": 140916,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/140915",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/140916"
+  },
+  {
+   "issue": 140940,
+   "pr": 140941,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/140940",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/140941"
+  },
+  {
+   "issue": 141495,
+   "pr": 141499,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/141495",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/141499"
+  },
+  {
+   "issue": 141508,
+   "pr": 141509,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/141508",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/141509"
+  },
+  {
+   "issue": 141617,
+   "pr": 141618,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/141617",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/141618"
+  },
+  {
+   "issue": 141987,
+   "pr": 142018,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/141987",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/142018"
+  },
+  {
+   "issue": 142094,
+   "pr": 142095,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/142094",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/142095"
+  },
+  {
+   "issue": 142606,
+   "pr": 142607,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/kubernetes/kubernetes/issues/142606",
+   "pr_url": "https://github.com/kubernetes/kubernetes/pull/142607"
+  }
+ ]
+}

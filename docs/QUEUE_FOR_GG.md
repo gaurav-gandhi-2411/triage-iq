@@ -1,6 +1,12 @@
 # Queue for GG (only items you must do)
 
-Last updated 2026-10-16 (round 13, D72-D75). Everything else is in `docs/DECISION_LOG_2026-10.md`.
+Last updated 2026-10-19 (round 13, D72-D77). Everything else is in `docs/DECISION_LOG_2026-10.md`.
+
+## Decision for you (2026-10-19): vscode gate and baseline after the 63-issue expansion
+
+The recording is finished (63/63 synthesized, 63/63 judged, local qwen3:8b). Results: vscode n=74 judge mean 12.554/15, 95% CI [12.14, 12.92]; component exact match 58/74 = 78.4% (the n=11 figure of 90.9% was optimistic). The proposal (pooled n=74 as the vscode gate set, band 0.174 instead of 0.45, report-only metrics unchanged) and the steps to adopt it are in `docs/VSCODE_EXPANSION_GATE_PROPOSAL_2026-10.md`. Nothing was changed: writing a baseline is yours. Also yours, when convenient: `git worktree remove` for `triage-iq-wt-integ` (the recording is committed; remove it after PR for the results merges, I kept it only for the judge pass) and the recorder's untracked set-dir copy under it goes with it.
+
+**Corrections to the open-PR list below (2026-10-19):** #100, #104 and #105 were closed as superseded; #98 was replaced by #219 (scoped prometheus-client lock bump); #96 and #99 merged. Open now: #184, #138, #94 (all yours).
 
 ## Round 13 (2026-10-16): README #151 was READY for your review (now merged; see the 2026-10-17 status below)
 

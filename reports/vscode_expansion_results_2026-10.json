@@ -1,0 +1,86 @@
+{
+ "provenance": "scripts/vscode_expansion_results.py over eval/cassettes/eval_cassette.json (committed 11) and reports/vscode_expansion_2026-10-12/eval_cassette.json (63 recorded 2026-10-16..19, synthesis openai/gpt-oss-120b, judge qwen3:8b); committed-11 mean checked against reports/eval_baseline.json",
+ "committed11": {
+  "n": 11,
+  "mean": 12.7273,
+  "ci95": [
+   11.64,
+   13.64
+  ],
+  "std_per_issue": 1.737,
+  "dimensions": {
+   "component_match": 1.9091,
+   "similar_issues_relevance": 3.0,
+   "resolution_estimate_reasonableness": 1.6364,
+   "priority_alignment": 0.6364,
+   "next_steps_actionability": 2.9091,
+   "overall_quality": 2.6364
+  },
+  "floor_fail_rate": 0.0,
+  "fabrication_rate": 0.0,
+  "component_exact_match": 0.9091,
+  "component_exact_match_count": 10,
+  "judge_component_match_full_marks": 0.9091,
+  "band_if_gated_at_this_n": 0.451
+ },
+ "expansion63": {
+  "n": 63,
+  "mean": 12.5238,
+  "ci95": [
+   12.08,
+   12.92
+  ],
+  "std_per_issue": 1.74,
+  "dimensions": {
+   "component_match": 1.746,
+   "similar_issues_relevance": 2.9524,
+   "resolution_estimate_reasonableness": 1.8889,
+   "priority_alignment": 0.4921,
+   "next_steps_actionability": 2.9683,
+   "overall_quality": 2.4762
+  },
+  "floor_fail_rate": 0.0317,
+  "fabrication_rate": 0.0159,
+  "component_exact_match": 0.7619,
+  "component_exact_match_count": 48,
+  "judge_component_match_full_marks": 0.7778,
+  "band_if_gated_at_this_n": 0.188
+ },
+ "pooled74": {
+  "n": 74,
+  "mean": 12.5541,
+  "ci95": [
+   12.14,
+   12.92
+  ],
+  "std_per_issue": 1.729,
+  "dimensions": {
+   "component_match": 1.7703,
+   "similar_issues_relevance": 2.9595,
+   "resolution_estimate_reasonableness": 1.8514,
+   "priority_alignment": 0.5135,
+   "next_steps_actionability": 2.9595,
+   "overall_quality": 2.5
+  },
+  "floor_fail_rate": 0.027,
+  "fabrication_rate": 0.0135,
+  "component_exact_match": 0.7838,
+  "component_exact_match_count": 58,
+  "judge_component_match_full_marks": 0.7973,
+  "band_if_gated_at_this_n": 0.174
+ },
+ "expansion63_minus_committed11": {
+  "mean_diff": -0.2035,
+  "ci95": [
+   -1.26,
+   0.93
+  ],
+  "method": "percentile bootstrap of the difference of arm means"
+ },
+ "baseline_vscode_mean_n11": 12.7273,
+ "baseline_vscode_band_n11": 0.45,
+ "n_resamples": 2000,
+ "seed": 42,
+ "scale_max": 15,
+ "caveat": "Intervals are over issues only (no judge or synthesis sampling noise). Component exact match compares the judged plan's predicted_component with the real repo component label."
+}

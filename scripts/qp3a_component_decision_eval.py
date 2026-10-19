@@ -186,8 +186,15 @@ def _verify_manifest(models_dir: Path) -> None:
 def main(argv: list[str]) -> None:
     import run_eval
 
-    if argv and argv[0] == "--models-dir":
-        run_eval.MODELS_DIR = Path(argv[1])
+    out = OUT
+    while argv:
+        flag, value, argv = argv[0], argv[1], argv[2:]
+        if flag == "--models-dir":
+            run_eval.MODELS_DIR = Path(value)
+        elif flag == "--out":
+            out = Path(value)
+        else:
+            raise SystemExit(f"unknown option {flag}")
     _verify_manifest(run_eval.MODELS_DIR)
     rows = replay(*COMMITTED) + replay(*EXPANSION)
     ids = [r["id"] for r in rows]
@@ -197,8 +204,8 @@ def main(argv: list[str]) -> None:
     report = {
         "generated_by": "scripts/qp3a_component_decision_eval.py",
         "sources": {
-            "committed": [str(p.relative_to(ROOT)) for p in COMMITTED],
-            "expansion": [str(p.relative_to(ROOT)) for p in EXPANSION],
+            "committed": [p.relative_to(ROOT).as_posix() for p in COMMITTED],
+            "expansion": [p.relative_to(ROOT).as_posix() for p in EXPANSION],
         },
         "note": "Legacy recordings carry no declared_attribution, so flag ON == classifier top-1.",
         "pooled": summarize(rows),
@@ -206,7 +213,7 @@ def main(argv: list[str]) -> None:
         "microsoft/vscode": summarize(vscode),
         "rows": rows,
     }
-    OUT.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    out.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(
         json.dumps(
             {k: report[k] for k in ("pooled", "kubernetes/kubernetes", "microsoft/vscode")},

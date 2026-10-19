@@ -2,12 +2,12 @@
   "generated_by": "scripts/qp3a_component_decision_eval.py",
   "sources": {
     "committed": [
-      "eval\\cassettes\\eval_cassette.json",
-      "eval\\eval_set.jsonl"
+      "eval/cassettes/eval_cassette.json",
+      "eval/eval_set.jsonl"
     ],
     "expansion": [
-      "reports\\vscode_expansion_2026-10-12\\eval_cassette.json",
-      "eval\\expansions\\vscode_2026-10-12\\eval_set.jsonl"
+      "reports/vscode_expansion_2026-10-12/eval_cassette.json",
+      "eval/expansions/vscode_2026-10-12/eval_set.jsonl"
     ]
   },
   "note": "Legacy recordings carry no declared_attribution, so flag ON == classifier top-1.",

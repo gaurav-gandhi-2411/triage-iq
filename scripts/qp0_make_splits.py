@@ -90,7 +90,11 @@ def make_splits(issues: pd.DataFrame, pairs: pd.DataFrame) -> tuple[pd.DataFrame
             }
         )  # fmt: skip
     cols = ["source", "canonical", "split_of_source", "split_of_canonical"]
-    return df, pd.DataFrame(rows, columns=cols + ["canonical_in_table", "exact_text_dup"])
+    out = pd.DataFrame(rows, columns=cols + ["canonical_in_table", "exact_text_dup"])
+    # explicit nullable dtypes: a bare None in an object column becomes NaN under pandas 3, so
+    # "undatable canonical" would not survive a parquet round trip as a proper missing value
+    out = out.astype({"split_of_canonical": "string", "exact_text_dup": "boolean"})
+    return df, out
 
 
 def digest_numbers(numbers: pd.Series) -> str:

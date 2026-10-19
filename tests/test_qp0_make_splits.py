@@ -98,8 +98,13 @@ def test_dup_task_pairs_selection() -> None:
     _, dup = run(rows, [(2, 1), (3, 2), (2, 3), (4, 99), (5, 1)])
     got = {(r.source, r.canonical): r for r in dup.itertuples()}
     assert set(got) == {(2, 1), (3, 2), (4, 99)}  # (2,3): canonical newer; (5,1): train source
-    assert got[(2, 1)].exact_text_dup is True and got[(3, 2)].exact_text_dup is False
-    assert got[(4, 99)].canonical_in_table is False and got[(4, 99)].split_of_canonical is None
+    assert bool(got[(2, 1)].exact_text_dup) is True and bool(got[(3, 2)].exact_text_dup) is False
+    assert pd.isna(got[(4, 99)].exact_text_dup)  # undatable canonical: missing, not False
+    assert got[(4, 99)].canonical_in_table is False and pd.isna(got[(4, 99)].split_of_canonical)
+    assert (
+        str(dup["split_of_canonical"].dtype) == "string"
+        and str(dup["exact_text_dup"].dtype) == "boolean"
+    )
     assert got[(3, 2)].split_of_canonical == "validation"
 
 

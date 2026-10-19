@@ -32,7 +32,8 @@ STATS_TABLES = ("issues", "duplicate_pairs", "fix_links", "fix_groups", "prs")
 def label_frequency(iss: pd.DataFrame) -> pd.DataFrame:
     """Every label (final or t72h) with counts overall, per creation year and at t72h."""
     fin = iss[["created_year", "labels_final"]].explode("labels_final").dropna()
-    fin = fin.rename(columns={"labels_final": "label"})
+    # explode repeats each issue's index per label; pandas 3 crosstab cannot align duplicates
+    fin = fin.rename(columns={"labels_final": "label"}).reset_index(drop=True)
     t72 = iss["labels_t72h"].explode().dropna().value_counts()
     idx = fin["label"].value_counts().index.union(t72.index)
     out = pd.DataFrame(index=idx)

@@ -337,3 +337,23 @@ HEDGED = [
 def _echo(quoted: str) -> dict[str, Any]:
     body = "@h: Closing this issue.\n\n<details>\n\nIn response to [this](x):\n\n" + quoted
     return comment(body + "\n\n\nInstructions for interacting with me", login="k8s-ci-robot")
+
+
+def test_label_frequency_with_multi_label_issues() -> None:
+    # exploding lists repeats the issue index; pandas 3 crosstab refuses duplicate-label reindexing
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    from qp0_derive_stats import label_frequency
+
+    iss = pd.DataFrame(
+        {
+            "created_year": [2023, 2024, 2024],
+            "labels_final": [["a", "b"], ["a"], ["a", "b", "c"]],
+            "labels_t72h": [["a"], [], ["a", "b"]],
+        }
+    )
+    f = label_frequency(iss).set_index("label")
+    assert f["n_issues_final"].to_dict() == {"a": 3, "b": 2, "c": 1}
+    assert f["n_issues_2023"].to_dict() == {"a": 1, "b": 1, "c": 0}
+    assert f["n_issues_2024"].to_dict() == {"a": 2, "b": 1, "c": 1}
+    assert f["n_issues_t72h"].to_dict() == {"a": 2, "b": 1, "c": 0}
+    assert f["first_seen_year"].to_dict() == {"a": 2023, "b": 2023, "c": 2024}

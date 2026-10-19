@@ -28,7 +28,15 @@ DUP_RE = re.compile(
     re.I,
 )
 SLASH_DUP_RE = re.compile(r"(?:^|\s)/duplicate\s+(?:" + _REF + r"|(?P<sd>\d+))", re.I)
-CLOSE_RE = re.compile(r"(?:^|\s)/close\b")
+CLOSE_RE = re.compile(r"(?:^|\s)/close\b|\bclos(?:e|ing|ed)\s+(?:this\s+)?(?:issue\s+)?as\b", re.I)
+# hedged / question / conditional wording in the phrase's own line: not a duplicate claim
+HEDGE_RE = re.compile(
+    r"\?|\b(?:if|whether|may|might|could|would|possible|possibly|maybe|perhaps|probably|unsure"
+    r"|doubt|unless)\b|not sure|but it is not|is wrong|can you|please check|i think",
+    re.I,
+)
+# negation / disagreement AFTER the phrase in the same line ("... #30 but it is not")
+NEG_AFTER_RE = re.compile(r"\bnot\b|n['’]t\b|\bnope\b|disagree|\bwrong\b", re.I)
 # negation within ~40 chars before the phrase: "is not a duplicate of", "isn't", "no longer"
 NEG_RE = re.compile(r"\bnot\b|n['’]t\b|\bno longer\b|\bnever\b", re.I)
 SEGMENT_RE = re.compile(r"\n\s*\n|(?<=[.!?])\s+")  # paragraph / sentence boundaries
@@ -125,9 +133,12 @@ def _comment_text(c: dict[str, Any]) -> tuple[str | None, str]:
     human's "/close" comment as a ">" quote: that echo is the only evidence when the original
     is older than the last-5 saved comments, so there ONLY the quoted lines are kept."""
     who, body = login(c), (c.get("body") or "").replace("\r", "")
-    quoted = [ln.lstrip()[1:] for ln in body.splitlines() if ln.lstrip()[:1] == ">"]
     if who == "k8s-ci-robot":
-        return who, "\n".join(quoted) if "In response to" in body else ""
+        # ">>" and deeper are someone else's words quoted inside the closer's comment
+        one = [ln.lstrip()[1:] for ln in body.splitlines() if ln.lstrip()[:1] == ">"]
+        text = "\n".join(ln for ln in one if ln[:1] != ">")
+        # only a closer's own "/close" inside the echoed block makes it a closing comment
+        return who, text if "In response to" in body and CLOSE_RE.search(text) else ""
     return who, "\n".join(ln for ln in body.splitlines() if ln.lstrip()[:1] != ">")
 
 
@@ -141,11 +152,16 @@ def _targets(text: str, repo: str) -> tuple[list[int], str]:
             m = rx.search(seg)
             if not m or NEG_RE.search(seg[max(0, m.start() - 40) : m.start()]):
                 continue
+            end = seg.find("\n", m.end())
+            end = len(seg) if end < 0 else end
+            line = seg[seg.rfind("\n", 0, m.start()) + 1 : end]
+            if HEDGE_RE.search(line) or NEG_AFTER_RE.search(seg[m.end() : end]):
+                continue
             bare = m.groupdict().get("sd")  # "/duplicate 12" without a '#'
             nums = (
                 [int(bare)]
                 if bare
-                else [_ref_number(r, repo) for r in REF_RE.finditer(seg, m.start())]
+                else [_ref_number(r, repo) for r in REF_RE.finditer(seg, m.start(), end)]
             )
             found += [x for x in nums if x is not None]
             if not evidence and any(x is not None for x in nums):

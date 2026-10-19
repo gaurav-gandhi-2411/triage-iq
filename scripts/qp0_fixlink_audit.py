@@ -22,6 +22,9 @@ VERDICT RULES (pre-registered 2026-10-20, GG decision D79 item 2; do not change 
 Primary precision = CONFIRMED / n_sampled (UNVERIFIABLE counts as NOT confirmed). Precision
 among decided = CONFIRMED / (CONFIRMED + WRONG). Both with Wilson 95% intervals. Acceptance:
 "pass" iff the primary point estimate >= 0.95; the Wilson lower bound is always printed beside.
+Post-audit hardening (keyword word boundary, repo-scoped references, no-timestamp guard) can
+only turn a keyword_timing CONFIRMED into UNVERIFIABLE; the committed k8s report's 118
+confirmations were all cross_ref_timing, so it is unaffected.
 The token comes from `gh auth token` inside the process and is never printed or written.
 """
 
@@ -51,7 +54,7 @@ MAX_PAGES = 40  # 4000 events; a longer thread is reported as unverifiable, not 
 METHOD = "closed_event_closer_pr"
 RULES = __doc__.split("VERDICT RULES", 1)[1].split("Primary precision")[0].strip()
 Transport = Callable[[str, dict[str, Any]], tuple[int, dict[str, str], Any]]
-KEYWORD = r"(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s+(?:[\w.-]+/[\w.-]+#|#|https?://\S*/)"
+KEYWORD = r"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s+"  # \b: not "prefix"/"disclose"
 
 
 class ApiError(RuntimeError):
@@ -158,9 +161,12 @@ def ts(s: str | None) -> datetime | None:
     return datetime.fromisoformat(s.replace("Z", "+00:00")) if s else None
 
 
-def has_keyword(text: str, issue: int) -> bool:
-    """Closing keyword directly followed by a reference to ``issue`` (not #12 inside #123)."""
-    return re.search(KEYWORD + rf"{issue}(?!\d)", text, re.I) is not None
+def has_keyword(text: str, issue: int, repo: str) -> bool:
+    """Closing keyword directly followed by a reference to ``issue`` of ``repo`` (not #12 inside
+    #123; a cross-repo ``other/x#7`` or URL is a different issue and must not match)."""
+    r = re.escape(repo)
+    ref = rf"(?:(?:{r})?#|https?://github\.com/{r}/issues/){issue}(?!\d)"
+    return re.search(KEYWORD + ref, text, re.I) is not None
 
 
 def has_cross_ref(timeline: list[dict[str, Any]], pr: int) -> bool:
@@ -207,10 +213,12 @@ def judge(api: Api, repo: str, issue: int, pr: int) -> dict[str, Any]:
         for e in closed + [x for x in tl if x.get("event") == "closed"]
         if (t := ts(e.get("created_at")))
     )
+    if not times:  # closed events without created_at: no usable timing, nothing to index
+        return v("UNVERIFIABLE", "no_closed_event_time")
     gaps = [abs((t - merged_at).total_seconds()) for t in times]
     near = any(g <= NEAR_S for g in gaps)
     xref = has_cross_ref(tl, pr)
-    kw = has_keyword(f"{p.get('title') or ''}\n{p.get('body') or ''}", issue)
+    kw = has_keyword(f"{p.get('title') or ''}\n{p.get('body') or ''}", issue, repo)
     if xref and near:
         return v("CONFIRMED", "cross_ref_timing", evidence="cross_ref_timing")
     if kw and near:

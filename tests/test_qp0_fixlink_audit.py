@@ -88,11 +88,11 @@ def test_keyword_with_timing() -> None:
 
 
 def test_keyword_must_match_exact_issue_number() -> None:
-    assert qp0a.has_keyword("fixes #7", 7)
-    assert qp0a.has_keyword("Closes o/r#7.", 7)
-    assert qp0a.has_keyword("resolves https://github.com/o/r/issues/7", 7)
-    assert not qp0a.has_keyword("fixes #77", 7)
-    assert not qp0a.has_keyword("see #7", 7)
+    assert qp0a.has_keyword("fixes #7", 7, REPO)
+    assert qp0a.has_keyword("Closes o/r#7.", 7, REPO)
+    assert qp0a.has_keyword("resolves https://github.com/o/r/issues/7", 7, REPO)
+    assert not qp0a.has_keyword("fixes #77", 7, REPO)
+    assert not qp0a.has_keyword("see #7", 7, REPO)
 
 
 def test_pr_404_is_wrong() -> None:
@@ -192,3 +192,19 @@ def test_run_audit_end_to_end(tmp_path: Path) -> None:
     assert rep["overall"]["n_sampled"] == 1  # the 2022 issue is outside the strata
     assert rep["acceptance"]["result"] == "pass"
     assert rep["links"][0]["pr_url"] == f"https://github.com/{REPO}/pull/{PR}"
+
+
+def test_keyword_adversarial_prefix_and_foreign_repo() -> None:
+    assert not qp0a.has_keyword("prefix #7", 7, REPO)  # "fix" inside a word
+    assert not qp0a.has_keyword("we disclose #7", 7, REPO)  # "close" inside a word
+    assert not qp0a.has_keyword("fixes https://github.com/x/y/issues/7", 7, REPO)
+    assert not qp0a.has_keyword("fixes x/y#7", 7, REPO)
+    assert qp0a.has_keyword("Fixes: #7", 7, REPO)
+
+
+def test_closed_events_without_timestamps_do_not_crash() -> None:
+    r = routes()
+    r[f"/repos/{REPO}/issues/{ISSUE}/events"] = (200, [{"event": "closed"}])
+    r[f"/repos/{REPO}/issues/{ISSUE}/timeline"] = (200, [{"event": "closed"}])
+    res = judge(r)
+    assert (res["verdict"], res["reason"]) == ("UNVERIFIABLE", "no_closed_event_time")

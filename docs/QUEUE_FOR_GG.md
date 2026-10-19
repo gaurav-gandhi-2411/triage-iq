@@ -1,10 +1,14 @@
 # Queue for GG (only items you must do)
 
-Last updated 2026-10-19 (round 13, D72-D77). Everything else is in `docs/DECISION_LOG_2026-10.md`.
+Last updated 2026-10-20 (quality push, D78-D80). Everything else is in `docs/DECISION_LOG_2026-10.md`.
 
-## Decision for you (2026-10-19): vscode gate and baseline after the 63-issue expansion
+## Yours, when convenient (2026-10-20)
 
-The recording is finished (63/63 synthesized, 63/63 judged, local qwen3:8b). Results: vscode n=74 judge mean 12.554/15, 95% CI [12.14, 12.92]; component exact match 58/74 = 78.4% (the n=11 figure of 90.9% was optimistic). The proposal (pooled n=74 as the vscode gate set, band 0.174 instead of 0.45, report-only metrics unchanged) and the steps to adopt it are in `docs/VSCODE_EXPANSION_GATE_PROPOSAL_2026-10.md`. Nothing was changed: writing a baseline is yours. Also yours, when convenient: `git worktree remove` for `triage-iq-wt-integ` (the recording is committed; remove it after PR for the results merges, I kept it only for the judge pass) and the recorder's untracked set-dir copy under it goes with it.
+- `git worktree remove` for `triage-iq-wt-integ` (the vscode recording is committed; it only held the judge pass) and delete the leftover folder `triage-iq-wt-embfix`.
+- Delete `D:\triageiq-data\raw_schema1_discard` and `D:\triageiq-data\logs_schema1` (superseded schema-1 scrape output) if you like.
+- A 4 MB verifier scratch dir `C:\Users\gaura\AppData\Local\Temp\claude\triage-iq\20261020\verify2` could not be deleted (the delete was denied and not retried).
+- Open PRs that are yours: #184 (on hold, with its IAM binding), #138, #94.
+- The vscode gate/baseline proposal was DECLINED on 2026-10-20 and is parked (`docs/VSCODE_EXPANSION_GATE_PROPOSAL_2026-10.md`); gates are re-proposed only after the quality push, on the new numbers.
 
 **Corrections to the open-PR list below (2026-10-19):** #100, #104 and #105 were closed as superseded; #98 was replaced by #219 (scoped prometheus-client lock bump); #96 and #99 merged. Open now: #184, #138, #94 (all yours).
 

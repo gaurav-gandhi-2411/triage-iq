@@ -89,6 +89,7 @@ All values from environment variables or `.env` file. Managed by `src/triage_iq/
 | `RATE_LIMIT_ENABLED` | No | `true` | Set `false` to disable rate limiting (tests use this). |
 | `LLM_CACHE_ENABLED` | No | `false` | Set `true` to enable the SQLite LLM response cache. |
 | `LLM_CACHE_PATH` | No | `<repo-root>/data/llm_cache.sqlite` | Path to the SQLite cache DB. |
+| `TRIAGE_CLASSIFIER_DECIDES_COMPONENT` | No | unset (off) | Set `1` to serve the classifier top-1 as `predicted_component`; the LLM may differ only inside top-3 with a grounded `model_override` reason (Phase 3a). Adds `_component_decided_by` and `_component_llm_proposal` to the response. |
 
 ### Response cache
 

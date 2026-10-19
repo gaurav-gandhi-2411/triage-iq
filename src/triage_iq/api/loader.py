@@ -193,6 +193,9 @@ class ModelStore:
                     max_tokens=effective_max_tokens,
                     conformal_adjustment=conformal.get(repo),
                     llm_time_budget_s=llm_time_budget_s,
+                    classifier_decides_component=(
+                        os.environ.get("TRIAGE_CLASSIFIER_DECIDES_COMPONENT") == "1"
+                    ),
                 )
                 bundles[repo] = RepoBundle(clf, det, pred, train_df, asst)
                 logger.info("Loaded %s — OK", repo)

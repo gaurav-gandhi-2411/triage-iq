@@ -21,6 +21,7 @@ from triage_iq.model_config import (
     TRIAGE_PRICE_COMPLETION_PER_MTOK,
     TRIAGE_PRICE_PROMPT_PER_MTOK,
 )
+from triage_iq.models.component_decision import decide_component, repair_component_text
 from triage_iq.models.grounding import compute_grounding_status
 from triage_iq.models.resolution import (
     INTERVAL_RECENTRED,
@@ -749,8 +750,12 @@ class TriageAssistant:
         # loader sets it (TRIAGE_LLM_TIME_BUDGET_S, default 15 s: ~5x the 2.8-3.1 s unthrottled
         # stage-4 median measured 2026-10-11) so a rate limit degrades instead of stalling.
         llm_time_budget_s: float | None = None,
+        # Phase 3a (spec-quality-push.md sec. 5): serve the classifier's top-1 unless the LLM
+        # validly overrides within top-3. Off by default: behaviour is unchanged when off.
+        classifier_decides_component: bool = False,
     ) -> None:
         self.repo = repo
+        self.classifier_decides_component = classifier_decides_component
         self.llm_time_budget_s = llm_time_budget_s
         # CQR store entry for this repo (loader._load_conformal_adjustments). When present the
         # served interval is the conformal one BEFORE synthesis (ADR-0059 addendum 2026-10-09):
@@ -812,6 +817,11 @@ class TriageAssistant:
         plan.resolution_confidence_pct = signals["resolution_conf_pct"]
         plan.resolution_bucket = signals["resolution_bucket"]
 
+        retrieved_numbers = {s["number"] for s in signals["similar_raw"]}
+        decision = None
+        if self.classifier_decides_component:
+            decision = self._decide_component(plan, signals, issue, retrieved_numbers)
+
         # Grounding: reconstruction of what the LLM already emitted (component + similar-issue
         # refs), not new attribution elicited from a prompt change — the synthesis prompt is
         # unchanged this iteration. See ADR-0015.
@@ -819,7 +829,6 @@ class TriageAssistant:
             component_source=plan.predicted_component,
             similar_issue_refs=[s.number for s in plan.similar_issues],
         )
-        retrieved_numbers = {s["number"] for s in signals["similar_raw"]}
         resolved = compute_grounding_status(
             plan,
             signals["classifier_top3"],
@@ -902,6 +911,9 @@ class TriageAssistant:
             # judge-provenance fix).
             "synthesis_cache_key": usage.get("cache_key"),
         }
+        if decision is not None:
+            metadata["component_decided_by"] = decision.decided_by
+            metadata["component_llm_proposal"] = decision.llm_proposal
         logger.info(
             "[%s] Triaged #%s in %.2fs (groq %d+%d tok, cached prompt tok: %s)",
             self.repo,
@@ -912,6 +924,32 @@ class TriageAssistant:
             metadata["groq_tokens_cached"],
         )
         return plan, metadata
+
+    def _decide_component(
+        self, plan: TriagePlan, signals: dict, issue: pd.Series, retrieved_numbers: set[int]
+    ):
+        """Apply component_decision.decide_component to `plan` in place (flag on only)."""
+        top3 = signals["classifier_top3"]
+        d = decide_component(
+            plan.predicted_component, top3, plan.declared_attribution,
+            str(issue.get("title", "")), str(issue.get("body_clean", "")), retrieved_numbers,
+        )
+        old = plan.predicted_component
+        plan.predicted_component = d.component  # classifier spelling
+        if d.changed:
+            # The LLM's confidence belonged to its own pick; report the classifier's instead.
+            plan.component_confidence = next(
+                (e["confidence"] for e in top3 if e["label"] == d.component),
+                plan.component_confidence,
+            )
+            plan.triage_summary = repair_component_text(plan.triage_summary, old, d.component)
+            plan.suggested_assignee_class = repair_component_text(
+                plan.suggested_assignee_class, old, d.component
+            )
+            plan.suggested_next_steps = [
+                repair_component_text(t, old, d.component) for t in plan.suggested_next_steps
+            ]
+        return d
 
     def triage_batch(
         self, df: pd.DataFrame, delay: float = 0.5

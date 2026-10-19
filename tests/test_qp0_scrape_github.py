@@ -307,3 +307,29 @@ def test_partial_errors_retried_unless_benign(no_sleep: list[float]) -> None:
     fake.scripted = [(200, {}, bad)] * 10
     with pytest.raises(qp0.TransientError):
         qp0.Client(fake).query("query{x}", {}, tries=3)
+
+
+def test_timeline_query_selects_repository_on_cross_repo_targets() -> None:
+    q = " ".join(qp0.TIMELINE.split())
+    repo = "repository{nameWithOwner}"
+    # closer PR (fix links), canonical (duplicates), subject (connected): all can be cross-repo
+    assert f"closer{{ ... on PullRequest{{number merged mergedAt title {repo}}}" in q
+    for ev, field in (
+        ("MarkedAsDuplicateEvent", "canonical"),
+        ("UnmarkedAsDuplicateEvent", "canonical"),
+        ("ConnectedEvent", "subject"),
+        ("DisconnectedEvent", "subject"),
+    ):
+        want = f"{ev}{{createdAt actor{{login}} {field}{{... on Issue{{number {repo}}} "
+        assert want + f"... on PullRequest{{number {repo}}}" in q.replace(
+            "{ createdAt", "{createdAt"
+        )
+
+
+@pytest.mark.parametrize("kind", ["issues", "prs"])
+def test_saved_records_carry_schema_version(tmp_path: Path, kind: str) -> None:
+    scraper(FakeGitHub(make_items({0: 2})), tmp_path, kind).run(
+        D0, D0 + timedelta(days=1, seconds=-1)
+    )
+    rows = read_rows(tmp_path / "raw" / "o__r" / kind)
+    assert qp0.SCHEMA_VERSION == 2 and [r["_schema"] for r in rows] == [2, 2]

@@ -1,0 +1,630 @@
+{
+ "all_duplicate_pairs": {
+  "canonical_breakdown": {
+   "indexed": {
+    "k": 49,
+    "n": 75,
+    "rate": 0.6533333333333333,
+    "wilson95": [
+     0.5405453495587379,
+     0.7511788163638208
+    ]
+   },
+   "newer_or_equal": {
+    "k": 14,
+    "n": 75,
+    "rate": 0.18666666666666668,
+    "wilson95": [
+     0.11458005622312066,
+     0.2892879525438247
+    ]
+   },
+   "older_than_scrape_window": {
+    "k": 12,
+    "n": 75,
+    "rate": 0.16,
+    "wilson95": [
+     0.09396421323774289,
+     0.25916915797745316
+    ]
+   },
+   "other_missing": {
+    "k": 0,
+    "n": 75,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.04872554590470005
+    ]
+   },
+   "pr": {
+    "k": 0,
+    "n": 75,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.04872554590470005
+    ]
+   }
+  },
+  "cosine_query_target": {
+   "n": 49,
+   "quantiles_min_q1_med_q3_max": [
+    0.03059411607682705,
+    0.2023283839225769,
+    0.37960368394851685,
+    0.5970117449760437,
+    0.908822238445282
+   ],
+   "share_ge_0.1": 0.9591836734693877,
+   "share_ge_0.2": 0.7551020408163265,
+   "share_ge_0.3": 0.6122448979591837,
+   "share_ge_0.5": 0.32653061224489793
+  },
+  "n_pairs": 75,
+  "tfidf_baseline_recall_all_pairs_unindexed_are_misses": {
+   "recall@1": {
+    "k": 17,
+    "n": 75,
+    "rate": 0.22666666666666666,
+    "wilson95": [
+     0.14661247942117506,
+     0.33335748567339424
+    ]
+   },
+   "recall@10": {
+    "k": 39,
+    "n": 75,
+    "rate": 0.52,
+    "wilson95": [
+     0.4087401957316927,
+     0.6293107824321194
+    ]
+   },
+   "recall@5": {
+    "k": 33,
+    "n": 75,
+    "rate": 0.44,
+    "wilson95": [
+     0.3333127597678485,
+     0.5525343057407155
+    ]
+   },
+   "recall@50": {
+    "k": 42,
+    "n": 75,
+    "rate": 0.56,
+    "wilson95": [
+     0.44746569425928456,
+     0.6666872402321515
+    ]
+   }
+  },
+  "tfidf_baseline_recall_indexed_queries_only": {
+   "recall@1": {
+    "k": 17,
+    "n": 49,
+    "rate": 0.3469387755102041,
+    "wilson95": [
+     0.2292420960931444,
+     0.4868906478056021
+    ]
+   },
+   "recall@10": {
+    "k": 39,
+    "n": 49,
+    "rate": 0.7959183673469388,
+    "wilson95": [
+     0.6636272988905616,
+     0.885182729571862
+    ]
+   },
+   "recall@5": {
+    "k": 33,
+    "n": 49,
+    "rate": 0.673469387755102,
+    "wilson95": [
+     0.5337894368740628,
+     0.7879267867073578
+    ]
+   },
+   "recall@50": {
+    "k": 42,
+    "n": 49,
+    "rate": 0.8571428571428571,
+    "wilson95": [
+     0.7333202681083708,
+     0.9290366627945541
+    ]
+   }
+  }
+ },
+ "design": "(2026-10-20; do not change after seeing results). No model is trained or\nscored; TF-IDF (sublinear tf, English stop words, min_df 2, fitted on all issues' title + first\n1000 chars of body) is a text-similarity MEASUREMENT and the TF-IDF rank is a labelled BASELINE,\nnot a ceiling. The index for a query is all issues created strictly BEFORE it.\n (a) Duplicate task, for dup_task_pairs.parquet (queries in validation/test) and, separately,\n     all duplicate_pairs.parquet. Each (source, canonical) pair is one query/target sample.\n     Reported: share whose canonical is in the index (in the table AND earlier than the query),\n     share of canonicals older than the scrape window (not in the table, not a PR, number below\n     the smallest scraped issue number), share that are PRs / other missing / newer; TF-IDF\n     cosine between query and target (min, quartiles, max; share >= 0.1/0.2/0.3/0.5); TF-IDF\n     rank of the target among all earlier issues -> Recall@1/5/10/50 with Wilson 95%, under TWO\n     denominators: indexed queries only, and all pairs (unindexed counted as misses). Rank =\n     1 + number of earlier issues with strictly higher cosine than the target.\n (b) Fix-linked task. Groups = issues fixed by the same merged same-repo PR from\n     fix_links.parquet, method closed_event_closer_pr only (the only method the fix-link audit\n     validated). Reported: number of groups, size distribution, per split the number of\n     ANSWERABLE queries (issues with >= 1 earlier group member), cosine quantiles over\n     (query, earlier member) pairs, Recall@k of the best-ranked member, and a CONTROL of one\n     random earlier same-year issue per query (random.Random(42)). Emitted only if\n     reports/qp0_fixlink_audit_<slug>_2026-10.json exists with acceptance.result == 'pass';\n     otherwise {withheld: reason}.\n (c) Every section states its query count n; small n limits any claim.",
+ "duplicate_task_pairs_val_test": {
+  "canonical_breakdown": {
+   "indexed": {
+    "k": 11,
+    "n": 12,
+    "rate": 0.9166666666666666,
+    "wilson95": [
+     0.6461140782014047,
+     0.9851352905492264
+    ]
+   },
+   "newer_or_equal": {
+    "k": 0,
+    "n": 12,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.2425007574992425
+    ]
+   },
+   "older_than_scrape_window": {
+    "k": 1,
+    "n": 12,
+    "rate": 0.08333333333333333,
+    "wilson95": [
+     0.014864709450773478,
+     0.35388592179859524
+    ]
+   },
+   "other_missing": {
+    "k": 0,
+    "n": 12,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.2425007574992425
+    ]
+   },
+   "pr": {
+    "k": 0,
+    "n": 12,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.2425007574992425
+    ]
+   }
+  },
+  "cosine_query_target": {
+   "n": 11,
+   "quantiles_min_q1_med_q3_max": [
+    0.1932382881641388,
+    0.35624852776527405,
+    0.40810954570770264,
+    0.4715097099542618,
+    0.7315815091133118
+   ],
+   "share_ge_0.1": 1.0,
+   "share_ge_0.2": 0.9090909090909091,
+   "share_ge_0.3": 0.8181818181818182,
+   "share_ge_0.5": 0.18181818181818182
+  },
+  "n_pairs": 12,
+  "tfidf_baseline_recall_all_pairs_unindexed_are_misses": {
+   "recall@1": {
+    "k": 5,
+    "n": 12,
+    "rate": 0.4166666666666667,
+    "wilson95": [
+     0.19325746190524656,
+     0.6804926643446272
+    ]
+   },
+   "recall@10": {
+    "k": 10,
+    "n": 12,
+    "rate": 0.8333333333333334,
+    "wilson95": [
+     0.5519636426153274,
+     0.9530358523851776
+    ]
+   },
+   "recall@5": {
+    "k": 7,
+    "n": 12,
+    "rate": 0.5833333333333334,
+    "wilson95": [
+     0.3195073356553728,
+     0.8067425380947535
+    ]
+   },
+   "recall@50": {
+    "k": 10,
+    "n": 12,
+    "rate": 0.8333333333333334,
+    "wilson95": [
+     0.5519636426153274,
+     0.9530358523851776
+    ]
+   }
+  },
+  "tfidf_baseline_recall_indexed_queries_only": {
+   "recall@1": {
+    "k": 5,
+    "n": 11,
+    "rate": 0.45454545454545453,
+    "wilson95": [
+     0.21270957543988045,
+     0.7199122443100118
+    ]
+   },
+   "recall@10": {
+    "k": 10,
+    "n": 11,
+    "rate": 0.9090909090909091,
+    "wilson95": [
+     0.6226353745137962,
+     0.9837682477371741
+    ]
+   },
+   "recall@5": {
+    "k": 7,
+    "n": 11,
+    "rate": 0.6363636363636364,
+    "wilson95": [
+     0.35379677689163724,
+     0.8483377638586862
+    ]
+   },
+   "recall@50": {
+    "k": 10,
+    "n": 11,
+    "rate": 0.9090909090909091,
+    "wilson95": [
+     0.6226353745137962,
+     0.9837682477371741
+    ]
+   }
+  }
+ },
+ "fix_linked": {
+  "fix_groups_parquet_rows_reference": 28,
+  "group_size_dist": {
+   "2": 16,
+   "3": 4,
+   "4": 1,
+   "5": 1
+  },
+  "n_groups": 22,
+  "note": "groups use only the audited closed_event_closer_pr method; n is small",
+  "test": {
+   "control_random_same_year": {
+    "cosine": {
+     "n": 2,
+     "quantiles_min_q1_med_q3_max": [
+      0.018693361431360245,
+      0.018800077959895134,
+      0.018906794488430023,
+      0.019013511016964912,
+      0.0191202275454998
+     ],
+     "share_ge_0.1": 0.0,
+     "share_ge_0.2": 0.0,
+     "share_ge_0.3": 0.0,
+     "share_ge_0.5": 0.0
+    },
+    "recall": {
+     "recall@1": {
+      "k": 0,
+      "n": 2,
+      "rate": 0.0,
+      "wilson95": [
+       0.0,
+       0.6576280471103807
+      ]
+     },
+     "recall@10": {
+      "k": 0,
+      "n": 2,
+      "rate": 0.0,
+      "wilson95": [
+       0.0,
+       0.6576280471103807
+      ]
+     },
+     "recall@5": {
+      "k": 0,
+      "n": 2,
+      "rate": 0.0,
+      "wilson95": [
+       0.0,
+       0.6576280471103807
+      ]
+     },
+     "recall@50": {
+      "k": 0,
+      "n": 2,
+      "rate": 0.0,
+      "wilson95": [
+       0.0,
+       0.6576280471103807
+      ]
+     }
+    }
+   },
+   "cosine_query_earlier_member": {
+    "n": 2,
+    "quantiles_min_q1_med_q3_max": [
+     0.16829535365104675,
+     0.2672889605164528,
+     0.3662825673818588,
+     0.46527617424726486,
+     0.5642697811126709
+    ],
+    "share_ge_0.1": 1.0,
+    "share_ge_0.2": 0.5,
+    "share_ge_0.3": 0.5,
+    "share_ge_0.5": 0.5
+   },
+   "n_answerable_queries": 2,
+   "n_fix_linked_issues": 4,
+   "n_split_issues": 1585,
+   "tfidf_baseline_recall": {
+    "recall@1": {
+     "k": 1,
+     "n": 2,
+     "rate": 0.5,
+     "wilson95": [
+      0.09452865480086614,
+      0.9054713451991339
+     ]
+    },
+    "recall@10": {
+     "k": 2,
+     "n": 2,
+     "rate": 1.0,
+     "wilson95": [
+      0.34237195288961925,
+      1.0
+     ]
+    },
+    "recall@5": {
+     "k": 2,
+     "n": 2,
+     "rate": 1.0,
+     "wilson95": [
+      0.34237195288961925,
+      1.0
+     ]
+    },
+    "recall@50": {
+     "k": 2,
+     "n": 2,
+     "rate": 1.0,
+     "wilson95": [
+      0.34237195288961925,
+      1.0
+     ]
+    }
+   }
+  },
+  "train": {
+   "control_random_same_year": {
+    "cosine": {
+     "n": 22,
+     "quantiles_min_q1_med_q3_max": [
+      0.0,
+      0.00738645950332284,
+      0.017519629560410976,
+      0.04427661933004856,
+      0.12971118092536926
+     ],
+     "share_ge_0.1": 0.09090909090909091,
+     "share_ge_0.2": 0.0,
+     "share_ge_0.3": 0.0,
+     "share_ge_0.5": 0.0
+    },
+    "recall": {
+     "recall@1": {
+      "k": 0,
+      "n": 22,
+      "rate": 0.0,
+      "wilson95": [
+       1.3877787807814457e-17,
+       0.14865952572596125
+      ]
+     },
+     "recall@10": {
+      "k": 0,
+      "n": 22,
+      "rate": 0.0,
+      "wilson95": [
+       1.3877787807814457e-17,
+       0.14865952572596125
+      ]
+     },
+     "recall@5": {
+      "k": 0,
+      "n": 22,
+      "rate": 0.0,
+      "wilson95": [
+       1.3877787807814457e-17,
+       0.14865952572596125
+      ]
+     },
+     "recall@50": {
+      "k": 1,
+      "n": 22,
+      "rate": 0.045454545454545456,
+      "wilson95": [
+       0.008069219301147859,
+       0.21798489499518053
+      ]
+     }
+    }
+   },
+   "cosine_query_earlier_member": {
+    "n": 31,
+    "quantiles_min_q1_med_q3_max": [
+     0.0,
+     0.18409404158592224,
+     0.29385942220687866,
+     0.47116486728191376,
+     0.8896840810775757
+    ],
+    "share_ge_0.1": 0.9032258064516129,
+    "share_ge_0.2": 0.7096774193548387,
+    "share_ge_0.3": 0.4838709677419355,
+    "share_ge_0.5": 0.16129032258064516
+   },
+   "n_answerable_queries": 22,
+   "n_fix_linked_issues": 38,
+   "n_split_issues": 5235,
+   "tfidf_baseline_recall": {
+    "recall@1": {
+     "k": 9,
+     "n": 22,
+     "rate": 0.4090909090909091,
+     "wilson95": [
+      0.23255559668820378,
+      0.6126552261710619
+     ]
+    },
+    "recall@10": {
+     "k": 16,
+     "n": 22,
+     "rate": 0.7272727272727273,
+     "wilson95": [
+      0.5184787630099802,
+      0.8684941798418556
+     ]
+    },
+    "recall@5": {
+     "k": 15,
+     "n": 22,
+     "rate": 0.6818181818181818,
+     "wilson95": [
+      0.47318222782839336,
+      0.8363961264530752
+     ]
+    },
+    "recall@50": {
+     "k": 19,
+     "n": 22,
+     "rate": 0.8636363636363636,
+     "wilson95": [
+      0.6666458812053,
+      0.9525108273576373
+     ]
+    }
+   }
+  },
+  "validation": {
+   "control_random_same_year": {
+    "cosine": {
+     "n": 7,
+     "quantiles_min_q1_med_q3_max": [
+      0.0,
+      0.0,
+      0.0,
+      0.01807694137096405,
+      0.062189534306526184
+     ],
+     "share_ge_0.1": 0.0,
+     "share_ge_0.2": 0.0,
+     "share_ge_0.3": 0.0,
+     "share_ge_0.5": 0.0
+    },
+    "recall": {
+     "recall@1": {
+      "k": 0,
+      "n": 7,
+      "rate": 0.0,
+      "wilson95": [
+       0.0,
+       0.35433884297520657
+      ]
+     },
+     "recall@10": {
+      "k": 0,
+      "n": 7,
+      "rate": 0.0,
+      "wilson95": [
+       0.0,
+       0.35433884297520657
+      ]
+     },
+     "recall@5": {
+      "k": 0,
+      "n": 7,
+      "rate": 0.0,
+      "wilson95": [
+       0.0,
+       0.35433884297520657
+      ]
+     },
+     "recall@50": {
+      "k": 0,
+      "n": 7,
+      "rate": 0.0,
+      "wilson95": [
+       0.0,
+       0.35433884297520657
+      ]
+     }
+    }
+   },
+   "cosine_query_earlier_member": {
+    "n": 11,
+    "quantiles_min_q1_med_q3_max": [
+     0.016227874904870987,
+     0.4713533967733383,
+     0.5242887735366821,
+     0.6645060479640961,
+     0.7976260185241699
+    ],
+    "share_ge_0.1": 0.9090909090909091,
+    "share_ge_0.2": 0.9090909090909091,
+    "share_ge_0.3": 0.9090909090909091,
+    "share_ge_0.5": 0.6363636363636364
+   },
+   "n_answerable_queries": 7,
+   "n_fix_linked_issues": 11,
+   "n_split_issues": 887,
+   "tfidf_baseline_recall": {
+    "recall@1": {
+     "k": 2,
+     "n": 7,
+     "rate": 0.2857142857142857,
+     "wilson95": [
+      0.0822171657090155,
+      0.6410709098517873
+     ]
+    },
+    "recall@10": {
+     "k": 6,
+     "n": 7,
+     "rate": 0.8571428571428571,
+     "wilson95": [
+      0.48686549668097007,
+      0.9743210440510253
+     ]
+    },
+    "recall@5": {
+     "k": 6,
+     "n": 7,
+     "rate": 0.8571428571428571,
+     "wilson95": [
+      0.48686549668097007,
+      0.9743210440510253
+     ]
+    },
+    "recall@50": {
+     "k": 6,
+     "n": 7,
+     "rate": 0.8571428571428571,
+     "wilson95": [
+      0.48686549668097007,
+      0.9743210440510253
+     ]
+    }
+   }
+  }
+ },
+ "generated_with": "scripts/qp0_ceiling_retrieval.py",
+ "n_issues_indexed": 7707,
+ "repo": "kubernetes/kubernetes"
+}

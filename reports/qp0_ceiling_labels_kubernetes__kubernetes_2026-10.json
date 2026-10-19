@@ -1,0 +1,703 @@
+{
+ "baselines": {
+  "majority_class": "sig/node",
+  "modelled_classes": [
+   "sig/api-machinery",
+   "sig/apps",
+   "sig/architecture",
+   "sig/auth",
+   "sig/autoscaling",
+   "sig/cli",
+   "sig/cloud-provider",
+   "sig/cluster-lifecycle",
+   "sig/docs",
+   "sig/etcd",
+   "sig/instrumentation",
+   "sig/k8s-infra",
+   "sig/network",
+   "sig/node",
+   "sig/release",
+   "sig/scalability",
+   "sig/scheduling",
+   "sig/security",
+   "sig/storage",
+   "sig/testing",
+   "sig/windows"
+  ],
+  "n_train_labelled": 4639,
+  "other_share": 0.002371200689803837,
+  "test": {
+   "majority_any_valid": {
+    "k": 462,
+    "n": 1386,
+    "rate": 0.3333333333333333,
+    "wilson95": [
+     0.3090059701418335,
+     0.35858204852158826
+    ]
+   },
+   "majority_top1": {
+    "k": 428,
+    "n": 1386,
+    "rate": 0.3088023088023088,
+    "wilson95": [
+     0.28503575094319894,
+     0.3336258289087784
+    ]
+   },
+   "n": 1386,
+   "prior_sampling_expected_top1": 0.14496783186155895
+  },
+  "train_class_table": {
+   "other": {
+    "n": 11,
+    "share": 0.002371200689803837
+   },
+   "sig/api-machinery": {
+    "n": 837,
+    "share": 0.1804268161241647
+   },
+   "sig/apps": {
+    "n": 269,
+    "share": 0.057986635050657466
+   },
+   "sig/architecture": {
+    "n": 92,
+    "share": 0.019831860314723
+   },
+   "sig/auth": {
+    "n": 214,
+    "share": 0.046130631601638286
+   },
+   "sig/autoscaling": {
+    "n": 66,
+    "share": 0.014227204138823023
+   },
+   "sig/cli": {
+    "n": 136,
+    "share": 0.029316663073938348
+   },
+   "sig/cloud-provider": {
+    "n": 56,
+    "share": 0.01207156714809226
+   },
+   "sig/cluster-lifecycle": {
+    "n": 58,
+    "share": 0.012502694546238414
+   },
+   "sig/docs": {
+    "n": 25,
+    "share": 0.0053890924768269025
+   },
+   "sig/etcd": {
+    "n": 17,
+    "share": 0.0036645828842422935
+   },
+   "sig/instrumentation": {
+    "n": 70,
+    "share": 0.015089458935115327
+   },
+   "sig/k8s-infra": {
+    "n": 15,
+    "share": 0.0032334554860961413
+   },
+   "sig/network": {
+    "n": 390,
+    "share": 0.08406984263849968
+   },
+   "sig/node": {
+    "n": 1270,
+    "share": 0.27376589782280664
+   },
+   "sig/release": {
+    "n": 87,
+    "share": 0.01875404181935762
+   },
+   "sig/scalability": {
+    "n": 51,
+    "share": 0.01099374865272688
+   },
+   "sig/scheduling": {
+    "n": 365,
+    "share": 0.07868075016167278
+   },
+   "sig/security": {
+    "n": 58,
+    "share": 0.012502694546238414
+   },
+   "sig/storage": {
+    "n": 328,
+    "share": 0.07070489329596896
+   },
+   "sig/testing": {
+    "n": 139,
+    "share": 0.02996335417115758
+   },
+   "sig/windows": {
+    "n": 85,
+    "share": 0.018322914421211468
+   }
+  },
+  "validation": {
+   "majority_any_valid": {
+    "k": 230,
+    "n": 727,
+    "rate": 0.31636863823933975,
+    "wilson95": [
+     0.2836028160317044,
+     0.3510649423443925
+    ]
+   },
+   "majority_top1": {
+    "k": 219,
+    "n": 727,
+    "rate": 0.3012379642365887,
+    "wilson95": [
+     0.2690031407262208,
+     0.3355623355685058
+    ]
+   },
+   "n": 727,
+   "prior_sampling_expected_top1": 0.14242859934299032
+  }
+ },
+ "ceiling_proxies": {
+  "any_valid_label_ceiling": 0.9666666666666667,
+  "any_valid_label_ceiling_interval95": [
+   0.8863601247107462,
+   0.9908108735098498
+  ],
+  "group_used": "tfidf_top1_nn_cos_ge_0.9",
+  "n_pairs": 60,
+  "note": "PROXIES from label inconsistency on near-identical content, not a bound; small n limits the claim",
+  "top1_ceiling_estimate": 0.9,
+  "top1_ceiling_interval95": [
+   0.7985030550748895,
+   0.9533578005427641
+  ]
+ },
+ "design": "(2026-10-20; do not change after seeing results). No model is trained or\nscored. Taxonomy per ADR-0067: the label family (default `sig/*`); primary label = the family\nlabel with the earliest `labeled` event among the labels still present at the end (ties:\nalphabetical; literal earliest event, even if later removed and re-added); modelled classes =\nfamily labels carried by >= 30 TRAIN-split issues, the rest `other`. Population: issues with\n>= 1 family label at the end (\"labelled\"). Everything per split (train / validation / test) and\noverall, Wilson 95% intervals on every proportion.\n (a) multi-label rate (>= 2 labels) and the label-set size distribution.\n (b) timing / churn: P(set at 72 h == final set), P(primary present at 72 h), and for issues whose\n     primary was NOT present at 72 h the median hours until it first appears.\n (c) first-vs-final: among issues with >= 1 family label at 72 h, P(earliest-applied label of\n     the 72 h set == final primary) and P(final primary in the 72 h set).\n (d) INCONSISTENCY on near-identical content, the direct proxy for irreducible top-1 error, on\n     pairs where both issues are labelled: (i) duplicate pairs, (ii) exact text_hash groups\n     (adjacent issue numbers within a group, to avoid quadratic cluster blow-up), (iii) top-1\n     nearest neighbours at TF-IDF cosine >= 0.9 among labelled issues (title + first 1000 chars\n     of body; neighbours with an equal text_hash are masked so (ii) and (iii) are disjoint).\n     Per group: n pairs, P(primary labels differ), P(label sets disjoint). A pair belongs to the\n     split of its LATER issue. top1_ceiling_estimate = 1 - P(differ) and any_valid_label_ceiling\n     = 1 - P(disjoint) from the largest-n group, with interval and n: PROXIES, not a bound;\n     small n limits the claim.\n (e) train class table (counts, shares, `other` mass) and the baselines for top-1 accuracy on\n     validation and test from TRAIN priors only: majority class, and the expected accuracy of\n     sampling a class from the train prior. Also any-valid accuracy of the majority class.",
+ "generated_with": "scripts/qp0_ceiling_labels.py",
+ "inconsistency": {
+  "duplicate_pairs": {
+   "all": {
+    "n_pairs": 55,
+    "primary_differs": {
+     "k": 11,
+     "n": 55,
+     "rate": 0.2,
+     "wilson95": [
+      0.1155209712045974,
+      0.3236513150690593
+     ]
+    },
+    "sets_disjoint": {
+     "k": 4,
+     "n": 55,
+     "rate": 0.07272727272727272,
+     "wilson95": [
+      0.028643596503688543,
+      0.17260178091636796
+     ]
+    }
+   },
+   "test": {
+    "n_pairs": 7,
+    "primary_differs": {
+     "k": 0,
+     "n": 7,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.35433884297520657
+     ]
+    },
+    "sets_disjoint": {
+     "k": 0,
+     "n": 7,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.35433884297520657
+     ]
+    }
+   },
+   "train": {
+    "n_pairs": 43,
+    "primary_differs": {
+     "k": 10,
+     "n": 43,
+     "rate": 0.23255813953488372,
+     "wilson95": [
+      0.1315353846924483,
+      0.37744808299439414
+     ]
+    },
+    "sets_disjoint": {
+     "k": 4,
+     "n": 43,
+     "rate": 0.09302325581395349,
+     "wilson95": [
+      0.036771045103346514,
+      0.2160298839853268
+     ]
+    }
+   },
+   "validation": {
+    "n_pairs": 5,
+    "primary_differs": {
+     "k": 1,
+     "n": 5,
+     "rate": 0.2,
+     "wilson95": [
+      0.03622316096978745,
+      0.6244717358814613
+     ]
+    },
+    "sets_disjoint": {
+     "k": 0,
+     "n": 5,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.43449149475208104
+     ]
+    }
+   }
+  },
+  "exact_text_hash_adjacent": {
+   "all": {
+    "n_pairs": 6,
+    "primary_differs": {
+     "k": 1,
+     "n": 6,
+     "rate": 0.16666666666666666,
+     "wilson95": [
+      0.03005258587173032,
+      0.563509436563646
+     ]
+    },
+    "sets_disjoint": {
+     "k": 0,
+     "n": 6,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.3903430336530645
+     ]
+    }
+   },
+   "test": {
+    "n_pairs": 4,
+    "primary_differs": {
+     "k": 1,
+     "n": 4,
+     "rate": 0.25,
+     "wilson95": [
+      0.045586062644636216,
+      0.6993639475573634
+     ]
+    },
+    "sets_disjoint": {
+     "k": 0,
+     "n": 4,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.48990002040399916
+     ]
+    }
+   },
+   "train": {
+    "n_pairs": 0,
+    "primary_differs": {
+     "k": 0,
+     "n": 0,
+     "rate": null,
+     "wilson95": null
+    },
+    "sets_disjoint": {
+     "k": 0,
+     "n": 0,
+     "rate": null,
+     "wilson95": null
+    }
+   },
+   "validation": {
+    "n_pairs": 2,
+    "primary_differs": {
+     "k": 0,
+     "n": 2,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.6576280471103807
+     ]
+    },
+    "sets_disjoint": {
+     "k": 0,
+     "n": 2,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.6576280471103807
+     ]
+    }
+   }
+  },
+  "tfidf_top1_nn_cos_ge_0.9": {
+   "all": {
+    "n_pairs": 60,
+    "primary_differs": {
+     "k": 6,
+     "n": 60,
+     "rate": 0.1,
+     "wilson95": [
+      0.04664219945723587,
+      0.20149694492511044
+     ]
+    },
+    "sets_disjoint": {
+     "k": 2,
+     "n": 60,
+     "rate": 0.03333333333333333,
+     "wilson95": [
+      0.009189126490150246,
+      0.11363987528925378
+     ]
+    }
+   },
+   "test": {
+    "n_pairs": 33,
+    "primary_differs": {
+     "k": 3,
+     "n": 33,
+     "rate": 0.09090909090909091,
+     "wilson95": [
+      0.03140337104926305,
+      0.23572943534351032
+     ]
+    },
+    "sets_disjoint": {
+     "k": 1,
+     "n": 33,
+     "rate": 0.030303030303030304,
+     "wilson95": [
+      0.005369272089651725,
+      0.15319061673168066
+     ]
+    }
+   },
+   "train": {
+    "n_pairs": 24,
+    "primary_differs": {
+     "k": 3,
+     "n": 24,
+     "rate": 0.125,
+     "wilson95": [
+      0.04344255039315584,
+      0.3100428814785757
+     ]
+    },
+    "sets_disjoint": {
+     "k": 1,
+     "n": 24,
+     "rate": 0.041666666666666664,
+     "wilson95": [
+      0.007393265354805126,
+      0.20242226248842232
+     ]
+    }
+   },
+   "validation": {
+    "n_pairs": 3,
+    "primary_differs": {
+     "k": 0,
+     "n": 3,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.5615060804490177
+     ]
+    },
+    "sets_disjoint": {
+     "k": 0,
+     "n": 3,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.5615060804490177
+     ]
+    }
+   }
+  }
+ },
+ "label_prefix": "sig/",
+ "labels": {
+  "all": {
+   "earliest72_equals_final_primary": {
+    "k": 6322,
+    "n": 6447,
+    "rate": 0.9806111369629285,
+    "wilson95": [
+     0.9769478709861444,
+     0.9837019766244371
+    ]
+   },
+   "final_primary_in_set72": {
+    "k": 6363,
+    "n": 6447,
+    "rate": 0.9869706840390879,
+    "wilson95": [
+     0.9838982007981476,
+     0.9894631665000357
+    ]
+   },
+   "median_hours_until_primary_if_absent_at_72h": 297.24888888888887,
+   "multi_label": {
+    "k": 1146,
+    "n": 6752,
+    "rate": 0.16972748815165878,
+    "wilson95": [
+     0.1609616792247046,
+     0.17886890531712363
+    ]
+   },
+   "n_issues": 7707,
+   "n_labelled": 6752,
+   "n_primary_absent_at_72h": 389,
+   "primary_present_at_72h": {
+    "k": 6363,
+    "n": 6752,
+    "rate": 0.9423874407582938,
+    "wilson95": [
+     0.9365738417949544,
+     0.9476979268030542
+    ]
+   },
+   "set72_equals_final": {
+    "k": 6121,
+    "n": 6752,
+    "rate": 0.9065462085308057,
+    "wilson95": [
+     0.8993703798541853,
+     0.9132596853622638
+    ]
+   },
+   "set_size_dist": {
+    "1": 5606,
+    "2": 1016,
+    "3": 111,
+    "4": 19
+   },
+   "share_labelled": {
+    "k": 6752,
+    "n": 7707,
+    "rate": 0.8760866744517971,
+    "wilson95": [
+     0.8685426799852783,
+     0.8832559304284021
+    ]
+   }
+  },
+  "test": {
+   "earliest72_equals_final_primary": {
+    "k": 1316,
+    "n": 1324,
+    "rate": 0.9939577039274925,
+    "wilson95": [
+     0.9881220749898931,
+     0.9969351788271283
+    ]
+   },
+   "final_primary_in_set72": {
+    "k": 1320,
+    "n": 1324,
+    "rate": 0.9969788519637462,
+    "wilson95": [
+     0.9922575233199763,
+     0.9988245455051005
+    ]
+   },
+   "median_hours_until_primary_if_absent_at_72h": 331.0494444444445,
+   "multi_label": {
+    "k": 219,
+    "n": 1386,
+    "rate": 0.15800865800865802,
+    "wilson95": [
+     0.13975423076397103,
+     0.1781536516882451
+    ]
+   },
+   "n_issues": 1585,
+   "n_labelled": 1386,
+   "n_primary_absent_at_72h": 66,
+   "primary_present_at_72h": {
+    "k": 1320,
+    "n": 1386,
+    "rate": 0.9523809523809523,
+    "wilson95": [
+     0.9398647780817788,
+     0.9623963141175047
+    ]
+   },
+   "set72_equals_final": {
+    "k": 1293,
+    "n": 1386,
+    "rate": 0.9329004329004329,
+    "wilson95": [
+     0.9184957695817662,
+     0.9449119741496057
+    ]
+   },
+   "set_size_dist": {
+    "1": 1167,
+    "2": 190,
+    "3": 25,
+    "4": 4
+   },
+   "share_labelled": {
+    "k": 1386,
+    "n": 1585,
+    "rate": 0.8744479495268139,
+    "wilson95": [
+     0.8572246906753613,
+     0.8898604813140931
+    ]
+   }
+  },
+  "train": {
+   "earliest72_equals_final_primary": {
+    "k": 4334,
+    "n": 4440,
+    "rate": 0.9761261261261261,
+    "wilson95": [
+     0.9712072965378649,
+     0.9802217552987262
+    ]
+   },
+   "final_primary_in_set72": {
+    "k": 4367,
+    "n": 4440,
+    "rate": 0.9835585585585586,
+    "wilson95": [
+     0.9793783116212645,
+     0.9869027547425769
+    ]
+   },
+   "median_hours_until_primary_if_absent_at_72h": 245.98055555555555,
+   "multi_label": {
+    "k": 799,
+    "n": 4639,
+    "rate": 0.1722353955593878,
+    "wilson95": [
+     0.16164198669215352,
+     0.18337120522893208
+    ]
+   },
+   "n_issues": 5235,
+   "n_labelled": 4639,
+   "n_primary_absent_at_72h": 272,
+   "primary_present_at_72h": {
+    "k": 4367,
+    "n": 4639,
+    "rate": 0.9413666738521232,
+    "wilson95": [
+     0.934233652913721,
+     0.947769299760779
+    ]
+   },
+   "set72_equals_final": {
+    "k": 4176,
+    "n": 4639,
+    "rate": 0.9001940073291658,
+    "wilson95": [
+     0.8912344715052101,
+     0.9084912826536222
+    ]
+   },
+   "set_size_dist": {
+    "1": 3840,
+    "2": 712,
+    "3": 74,
+    "4": 13
+   },
+   "share_labelled": {
+    "k": 4639,
+    "n": 5235,
+    "rate": 0.8861509073543458,
+    "wilson95": [
+     0.877261925458029,
+     0.8944735666018953
+    ]
+   }
+  },
+  "validation": {
+   "earliest72_equals_final_primary": {
+    "k": 672,
+    "n": 683,
+    "rate": 0.9838945827232797,
+    "wilson95": [
+     0.9713924752424665,
+     0.9909837116396327
+    ]
+   },
+   "final_primary_in_set72": {
+    "k": 676,
+    "n": 683,
+    "rate": 0.9897510980966325,
+    "wilson95": [
+     0.9789968984868711,
+     0.9950268065420613
+    ]
+   },
+   "median_hours_until_primary_if_absent_at_72h": 370.8677777777778,
+   "multi_label": {
+    "k": 128,
+    "n": 727,
+    "rate": 0.17606602475928473,
+    "wilson95": [
+     0.1501023630739494,
+     0.20543514327489557
+    ]
+   },
+   "n_issues": 887,
+   "n_labelled": 727,
+   "n_primary_absent_at_72h": 51,
+   "primary_present_at_72h": {
+    "k": 676,
+    "n": 727,
+    "rate": 0.9298486932599724,
+    "wilson95": [
+     0.9089349843499019,
+     0.9462434838708451
+    ]
+   },
+   "set72_equals_final": {
+    "k": 652,
+    "n": 727,
+    "rate": 0.8968363136176066,
+    "wilson95": [
+     0.8725991119229555,
+     0.9169016499384384
+    ]
+   },
+   "set_size_dist": {
+    "1": 599,
+    "2": 114,
+    "3": 12,
+    "4": 2
+   },
+   "share_labelled": {
+    "k": 727,
+    "n": 887,
+    "rate": 0.8196166854565953,
+    "wilson95": [
+     0.7929509191762986,
+     0.8435258686162789
+    ]
+   }
+  }
+ },
+ "repo": "kubernetes/kubernetes"
+}

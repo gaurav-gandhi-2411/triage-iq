@@ -4,11 +4,13 @@ import gzip
 import importlib.util
 import json
 import sys
+from collections import Counter
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import pytest
 
 _SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(_SCRIPTS))  # qp0_derive_tables imports its sibling qp0_derive_stats
@@ -18,6 +20,12 @@ sys.modules["qp0d"] = qp0d
 _SPEC.loader.exec_module(qp0d)
 
 REPO = "o/r"
+
+
+def CANON(n: int, repo: str | None = "o/r") -> dict[str, Any]:  # noqa: N802
+    return {"number": n, **({"repository": {"nameWithOwner": repo}} if repo else {})}
+
+
 T0 = datetime(2024, 3, 1, 12, 0, tzinfo=UTC)
 
 
@@ -63,6 +71,7 @@ def issue(
         "lastComments": {"nodes": comments or []},
         "timelineItems": {"nodes": nodes or []},
         "_scraped_at": "2026-10-19T00:00:00Z",
+        "_schema": 2,
     }
 
 
@@ -91,8 +100,10 @@ def pr_rec(number: int, merged: bool, refs: list[int]) -> dict[str, Any]:
     }
 
 
-def closed_by(pr: int, merged: bool) -> dict[str, Any]:
+def closed_by(pr: int, merged: bool, repo: str | None = REPO) -> dict[str, Any]:
     closer = {"number": pr, "merged": merged, "mergedAt": ts(5) if merged else None}
+    if repo:
+        closer["repository"] = {"nameWithOwner": repo}
     return {"__typename": "ClosedEvent", "createdAt": ts(6), "actor": None, "closer": closer}
 
 
@@ -112,7 +123,7 @@ def test_replay_removed_and_readded() -> None:
 
 def test_label_after_72h_cutoff_excluded_from_t72h() -> None:
     rec = issue(labels=["early", "late"], nodes=[lab(1, "early"), lab(73, "late")])
-    row, ev = qp0d.issue_row(rec)
+    row, ev = qp0d.issue_row(rec, REPO)
     assert row["labels_t72h"] == ["early"]
     assert row["labels_final"] == ["early", "late"]
     assert row["first_label_ts"] == T0 + timedelta(hours=1)
@@ -129,10 +140,10 @@ def test_replay_orders_by_timestamp_not_list_order() -> None:
 
 def test_marked_as_duplicate_event() -> None:
     node = {"__typename": "MarkedAsDuplicateEvent", "createdAt": ts(2), "actor": {"login": "m"}}
-    rec = issue(5, nodes=[{**node, "canonical": {"number": 9}}])
+    rec = issue(5, nodes=[{**node, "canonical": CANON(9)}])
     [d] = qp0d.extract_duplicates(rec, REPO)
     assert (d["source"], d["canonical"], d["method"]) == (5, 9, "marked_as_duplicate_event")
-    unmark = {**node, "__typename": "UnmarkedAsDuplicateEvent", "canonical": {"number": 9}}
+    unmark = {**node, "__typename": "UnmarkedAsDuplicateEvent", "canonical": CANON(9)}
     rec["timelineItems"]["nodes"].append(unmark)
     assert qp0d.extract_duplicates(rec, REPO) == []
 
@@ -164,7 +175,11 @@ def test_cross_repo_url_and_bare_mention_ignored() -> None:
 
 
 def test_duplicate_label_with_ref_and_unresolved() -> None:
-    rec = issue(5, labels=["triage/duplicate"], comments=[comment("see #20 /triage duplicate #20")])
+    rec = issue(
+        5,
+        labels=["triage/duplicate"],
+        comments=[comment("Looks like a dup of #20\n/triage duplicate")],
+    )
     [d] = qp0d.extract_duplicates(rec, REPO)
     assert (d["canonical"], d["method"]) == (20, "dup_label_with_ref")
     bare = issue(6, labels=["*duplicate"], comments=[comment("thanks")])
@@ -176,7 +191,7 @@ def test_self_reference_excluded_and_best_method_wins() -> None:
     selfref = comment("duplicate of #5\n/close")
     assert qp0d.extract_duplicates(issue(5, comments=[selfref]), REPO) == []
     ev = {"__typename": "MarkedAsDuplicateEvent", "createdAt": ts(2), "actor": None}
-    ev["canonical"] = {"number": 9}
+    ev["canonical"] = CANON(9)
     both = issue(5, nodes=[ev], comments=[comment("duplicate of #9\n/close")])
     [d] = qp0d.extract_duplicates(both, REPO)
     assert d["method"] == "marked_as_duplicate_event"
@@ -206,28 +221,6 @@ def test_pr_table_overrides_closer_flag_and_closing_refs() -> None:
     assert df["pr_merged"].all()
 
 
-def test_xref_willclose_same_repo_only() -> None:
-    def xref(repo: str, cross: bool) -> dict[str, Any]:
-        src = {
-            "number": 50,
-            "merged": True,
-            "mergedAt": ts(5),
-            "repository": {"nameWithOwner": repo},
-        }
-        return {
-            "__typename": "CrossReferencedEvent",
-            "createdAt": ts(5),
-            "actor": None,
-            "willCloseTarget": True,
-            "isCrossRepository": cross,
-            "source": src,
-        }
-
-    ok = _links(issue(1, nodes=[xref(REPO, False)]), {}, {})
-    assert ok["method"].tolist() == ["xref_willclose_merged"]
-    assert _links(issue(1, nodes=[xref("x/y", True)]), {}, {}).empty
-
-
 def test_same_pr_group_of_two_issues() -> None:
     a = _links(issue(1, nodes=[closed_by(60, True)]), {}, {})
     b = _links(issue(2, nodes=[closed_by(60, True)]), {}, {})
@@ -241,9 +234,9 @@ def test_text_hash_normalises_case_and_whitespace() -> None:
 
 
 def test_censored_open_issue_and_resolution_hours() -> None:
-    row, _ = qp0d.issue_row(issue(1, state="OPEN"))
+    row, _ = qp0d.issue_row(issue(1, state="OPEN"), REPO)
     assert row["censored"] is True and row["resolution_hours"] is None
-    closed, _ = qp0d.issue_row(issue(2, state="CLOSED"))
+    closed, _ = qp0d.issue_row(issue(2, state="CLOSED"), REPO)
     assert closed["censored"] is False and closed["resolution_hours"] == 48
 
 
@@ -281,3 +274,139 @@ def test_end_to_end_idempotent_rerun(tmp_path: Path) -> None:
     assert (out / "label_frequency.csv").exists() and (out / "priority_signals.csv").exists()
     assert not list(tmp_path.glob("raw/**/*.tmp"))
     assert qp0d.stats_from_parquet(REPO, base, out)["repo"] == REPO  # --stats-only path
+
+
+def _closed(*comments: dict[str, Any], **kw: Any) -> dict[str, Any]:
+    return issue(5, comments=list(comments), **kw)
+
+
+def test_closer_must_be_same_repo_schema2() -> None:
+    nodes = [closed_by(1, True, "x/y"), closed_by(2, True, None), closed_by(3, True)]
+    rec = issue(9, nodes=nodes)
+    row, _ = qp0d.issue_row(rec, REPO)
+    assert row["closed_by_prs"] == [3]
+    assert (row["closer_foreign_repo"], row["closer_repo_unknown"]) == (1, 1)
+    assert _links(rec, {}, {})["pr"].tolist() == [3]
+    v1 = {**rec}
+    del v1["_schema"]  # schema-1 rows: closer repo cannot be trusted at all
+    row1, _ = qp0d.issue_row(v1, REPO)
+    assert row1["closed_by_prs"] == [] and row1["closer_repo_unknown"] == 3
+    assert _links(v1, {}, {}).empty
+
+
+def test_foreign_or_unknown_canonical_dropped_and_counted() -> None:
+    mk = {"__typename": "MarkedAsDuplicateEvent", "createdAt": ts(2), "actor": None}
+    nodes = [{**mk, "canonical": CANON(7, "x/y")}, {**mk, "canonical": CANON(8, None)}]
+    diag: Counter[str] = Counter()
+    assert qp0d.extract_duplicates(issue(5, nodes=nodes), REPO, diag) == []
+    assert (diag["canon_foreign_repo"], diag["canon_repo_unknown"]) == (1, 1)
+
+
+def test_xref_events_make_no_fix_links() -> None:
+    # willCloseTarget is cleared by GitHub on merge (1 of 375 xrefs true, 0 merged in schema-2 data)
+    src = {"number": 50, "merged": True, "repository": {"nameWithOwner": REPO}}
+    x = {"__typename": "CrossReferencedEvent", "willCloseTarget": True, "source": src}
+    assert _links(issue(1, nodes=[{**x, "createdAt": ts(5), "actor": None}]), {}, {}).empty
+
+
+def _dups(body: str, **kw: Any) -> list[dict[str, Any]]:
+    return qp0d.extract_duplicates(_closed(comment(body), **kw), REPO)
+
+
+def test_false_positive_probes_rejected() -> None:
+    assert _dups("This is not a duplicate of #123.\n/close") == []
+    assert _dups("/close\nNot a dup of #5, but related to #6") == []
+    assert _dups("> duplicate of #77 from someone else\n\nno, different. /close") == []
+    assert _dups("/close\nthe duplicate issue #44 was fixed in PR") == []
+    assert _dups("It isn" + "'" + "t a duplicate of #8\n/close") == []
+
+
+def test_target_taken_from_same_line_and_n_targets() -> None:
+    [d] = _dups("Fixed by #99 earlier.\nDuplicate of #12 and #13\n/close")
+    assert (d["canonical"], d["n_targets"]) == (12, 2)
+
+
+def test_ref_forms_and_slash_duplicate() -> None:
+    assert _dups("/duplicate 12\n/close")[0]["canonical"] == 12
+    assert _dups("duplicate of o/r#14\n/close")[0]["canonical"] == 14
+    assert _dups("dup of other/repo#14\n/close") == []
+
+
+def test_comment_pairs_require_closed_issue() -> None:
+    assert _dups("duplicate of #12\n/close", state="OPEN") == []
+
+
+def test_state_reason_duplicate_counted_unresolved() -> None:
+    rec = issue(5)
+    rec["stateReason"] = "DUPLICATE"
+    row, _ = qp0d.issue_row(rec, REPO)
+    assert row["closed_as_duplicate"] is True
+    assert qp0d.extract_duplicates(rec, REPO) == []
+
+
+def _tables(tmp_path: Path, recs: list[dict[str, Any]]) -> tuple[Path, dict[str, pd.DataFrame]]:
+    base = tmp_path / "raw" / "o__r"
+    _write_raw(base, "issues", recs)
+    _write_raw(base, "prs", [])
+    return base, qp0d.build_tables(REPO, base)
+
+
+def test_canonical_newer_and_in_table(tmp_path: Path) -> None:
+    older = issue(1)
+    newer = issue(3)
+    newer["createdAt"] = ts(10)
+    mk = {"__typename": "MarkedAsDuplicateEvent", "createdAt": ts(2), "actor": None}
+    src = issue(2, nodes=[{**mk, "canonical": CANON(3)}, {**mk, "canonical": CANON(404)}])
+    _, t = _tables(tmp_path, [older, src, newer])
+    d = t["duplicate_pairs"].set_index("canonical")
+    assert bool(d.loc[3, "canonical_newer"]) is True and bool(d.loc[3, "canonical_in_table"])
+    assert pd.isna(d.loc[404, "canonical_newer"]) and not d.loc[404, "canonical_in_table"]
+
+
+def test_stats_with_empty_links_and_dups(tmp_path: Path) -> None:
+    base, t = _tables(tmp_path, [issue(1, state="OPEN")])
+    stats = qp0d.write_outputs(t, REPO, base, tmp_path / "out")
+    assert stats["duplicates"]["n_pairs"] == 0 and stats["fix_links"]["issues_with_merged_fix"] == 0
+    assert qp0d.stats_from_parquet(REPO, base, tmp_path / "out")["duplicates"]["n_pairs"] == 0
+
+
+def test_malformed_input_names_file_line_and_issue(tmp_path: Path) -> None:
+    base = tmp_path / "raw" / "o__r"
+    good = issue(1)
+    bad = issue(2)
+    bad["timelineItems"] = None
+    _write_raw(base, "issues", [good, bad])
+    with pytest.raises(qp0d.RawDataError, match=r"2024-03-01\.jsonl\.gz:2 .*issue #2.*timeline"):
+        qp0d.build_tables(REPO, base)
+    del bad["timelineItems"]
+    _write_raw(base, "issues", [good, bad])
+    with pytest.raises(qp0d.RawDataError, match="issue #2"):
+        qp0d.build_tables(REPO, base)
+    bad["timelineItems"] = {"nodes": [{"createdAt": ts(1)}]}
+    _write_raw(base, "issues", [good, bad])
+    with pytest.raises(qp0d.RawDataError, match="__typename"):
+        qp0d.build_tables(REPO, base)
+    with gzip.open(base / "issues" / "2024" / "2024-03-01.jsonl.gz", "wt") as f:
+        f.write(json.dumps(good) + "\n{not json\n")
+    with pytest.raises(qp0d.RawDataError, match=r"2024-03-01\.jsonl\.gz:2"):
+        qp0d.build_tables(REPO, base)
+
+
+def test_unknown_typename_ignored_and_closed_without_closed_at(tmp_path: Path) -> None:
+    rec = issue(1, nodes=[{"__typename": "SomethingNew", "createdAt": ts(1)}])
+    rec["closedAt"] = None
+    row, _ = qp0d.issue_row(rec, REPO)
+    assert row["resolution_hours"] is None and row["anomaly_closed_no_closed_at"] is True
+    base, t = _tables(tmp_path, [rec])
+    stats = qp0d.write_outputs(t, REPO, base, tmp_path / "out")
+    assert stats["anomalies"] == {"closed_without_closed_at": 1}
+
+
+def test_stats_deterministic_apart_from_volatile(tmp_path: Path) -> None:
+    base, t = _tables(tmp_path, [issue(1, labels=["a"]), issue(2, state="OPEN")])
+    s1 = qp0d.write_outputs(t, REPO, base, tmp_path / "o1")
+    s2 = qp0d.write_outputs(t, REPO, base, tmp_path / "o2")
+    s1.pop("volatile")  # storage size varies with the out dir contents
+    s2.pop("volatile")
+    assert json.dumps(s1, sort_keys=True) == json.dumps(s2, sort_keys=True)
+    assert "scraped_at" in t["issues"].columns

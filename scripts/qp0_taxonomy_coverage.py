@@ -14,8 +14,11 @@ Metrics per family, overall and per created year 2023-2026, on ISSUES (not PRs):
  (3) churn: among issues with >= 1 final family label, share whose t72h family set != final set;
  (4) median / p90 hours from creation to the first family `labeled` event (issues never
      receiving one are excluded and counted);
- (5) who applied that first event: bot (login ends 'bot' / '[bot]', or k8s-ci-robot) / human /
-     unknown (no actor);
+ (5) who executed that first event: prow_bot (login ends 'bot' / '[bot]', or k8s-ci-robot, or
+     kubernetes-prow, which replaced k8s-ci-robot on 2026-06-20) / other / unknown (no actor).
+     CAVEAT: Prow applies sig/* and area/* on behalf of humans' `/sig x` and `/area x`
+     comments, so this says "Prow executed it", NOT "automatic labelling"; bot-vs-other is
+     no evidence about routing intent;
  (6) class table: per label the final count and per-year counts; number of classes with >= 30
      and >= 100 issues; share of family-labelled issues having >= 1 label in a class >= 30;
  (7) stability: classes with >= 5 issues in every year vs only some years;
@@ -49,7 +52,7 @@ TYPE_WORKFLOW = {
     "upstream-issue-linked", "duplicate", "invalid", "wontfix", "help wanted", "good first issue",
 }  # fmt: skip
 Pred = Callable[[str], bool]
-BOT_RE = re.compile(r"(bot|\[bot\])$|^k8s-ci-robot$", re.I)
+BOT_RE = re.compile(r"(bot|\[bot\])$|^(k8s-ci-robot|kubernetes-prow)$", re.I)
 
 
 def is_type_workflow(label: str) -> bool:
@@ -86,11 +89,11 @@ def families(repo: str, issues: pd.DataFrame) -> dict[str, Pred]:
 def first_events(events: pd.DataFrame, pred: Pred, issues: pd.DataFrame) -> pd.DataFrame:
     """First family `labeled` event per issue with hours since creation and actor kind."""
     e = events[(events["action"] == "labeled") & events["label"].map(pred)]
-    e = e.sort_values(["number", "ts"]).drop_duplicates("number")
+    e = e.sort_values(["number", "ts", "label"], kind="stable").drop_duplicates("number")
     e = e.merge(issues[["number", "created_at"]], on="number")
     e["hours"] = (e["ts"] - e["created_at"]).dt.total_seconds() / 3600
     e["kind"] = [
-        "unknown" if a is None or a != a else "bot" if BOT_RE.search(a) else "human"
+        "unknown" if a is None or a != a else "prow_bot" if BOT_RE.search(a) else "other"
         for a in e["actor"]
     ]
     return e
@@ -134,7 +137,9 @@ def metrics(df: pd.DataFrame, pred: Pred, fe: pd.DataFrame) -> dict[str, Any]:
             "n_with_label": len(f),
             "n_never_labelled": n - len(f),
         },  # fmt: skip
-        "first_label_actor": {k: int((f["kind"] == k).sum()) for k in ("bot", "human", "unknown")},
+        "first_label_actor_prow_bot_vs_other": {
+            k: int((f["kind"] == k).sum()) for k in ("prow_bot", "other", "unknown")
+        },
         "classes": class_metrics(fin),
     }
 
@@ -171,7 +176,10 @@ def cooccurrence(issues: pd.DataFrame) -> dict[str, Any]:
             per_sig.setdefault(sig, Counter()).update(aa)
     n_sig = {sig: sum(sig in x for x in s) for sig in per_sig}
     top = {
-        sig: {"n_issues": n_sig[sig], "top3_area": per_sig[sig].most_common(3)}
+        sig: {
+            "n_issues": n_sig[sig],
+            "top3_area": sorted(per_sig[sig].items(), key=lambda kv: (-kv[1], kv[0]))[:3],
+        }
         for sig in sorted(per_sig, key=lambda k: -n_sig[k])
     }
     return {

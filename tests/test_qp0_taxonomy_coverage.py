@@ -57,7 +57,7 @@ def test_coverage_exactly_one_ge2_and_churn() -> None:
 
 
 def test_time_to_first_label_and_bot_vs_human() -> None:
-    df = issues([(1, [], ["area/a"]), (2, [], ["area/a"]), (3, [], ["area/a"]), (4, [], [])])
+    df = issues([(i, [], ["area/a"]) for i in (1, 2, 3, 5, 6)] + [(4, [], [])])
     ev = events(
         [
             (1, 2.0, "area/a", "k8s-ci-robot", "labeled"),
@@ -66,14 +66,17 @@ def test_time_to_first_label_and_bot_vs_human() -> None:
             (3, 4.0, "area/a", "dependabot[bot]", "labeled"),
             (3, 1.0, "area/a", "x", "unlabeled"),  # unlabel events never count
             (4, 5.0, "area/zzz", None, "labeled"),
+            (5, 1.0, "area/a", "kubernetes-prow", "labeled"),  # replaced k8s-ci-robot 2026-06
+            (6, 1.0, "area/a", "vscodebot", "labeled"),
         ]
     )
     fe = qp0t.first_events(ev, AREA, df)
     m = qp0t.metrics(df, AREA, fe)
-    assert m["first_label_actor"] == {"bot": 2, "human": 1, "unknown": 1}
+    # Prow executes humans' /sig and /area commands: "who executed", not routing intent
+    assert m["first_label_actor_prow_bot_vs_other"] == {"prow_bot": 4, "other": 1, "unknown": 1}
     h = m["hours_to_first_label"]
-    assert h["median"] == 4.5 and h["n_with_label"] == 4 and h["n_never_labelled"] == 0
-    only = issues([(5, [], [])])
+    assert h["median"] == 3.0 and h["n_with_label"] == 6 and h["n_never_labelled"] == 0
+    only = issues([(99, [], [])])
     assert qp0t.metrics(only, AREA, fe)["hours_to_first_label"]["n_never_labelled"] == 1
 
 

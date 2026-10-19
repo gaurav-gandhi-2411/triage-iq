@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sys
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -99,8 +100,16 @@ def build_replay_context(
     """
     import run_eval  # light import; shares MODELS_DIR / REPO_MAP / constants with replay tests
 
-    cassette_path = cassette_path or run_eval.CASSETTE_PATH
-    eval_set_path = eval_set_path or run_eval.EVAL_SET_PATH
+    # A separate recording set (TRIAGEIQ_RECORDING_SET_DIR, see record_cassettes.py) lives in its own
+    # directory. Defaulting to the committed paths here made every entry of such a set read as
+    # "issue not in the eval set" (stale_synthesis) and blocked --mode judge on the vscode expansion.
+    set_dir = os.environ.get("TRIAGEIQ_RECORDING_SET_DIR")
+    cassette_path = cassette_path or (
+        Path(set_dir) / "cassettes" / "eval_cassette.json" if set_dir else run_eval.CASSETTE_PATH
+    )
+    eval_set_path = eval_set_path or (
+        Path(set_dir) / "eval_set.jsonl" if set_dir else run_eval.EVAL_SET_PATH
+    )
     for p in (cassette_path, eval_set_path):
         if not Path(p).exists():
             raise CheckpointValidationUnavailable(f"required input missing: {p}")
@@ -111,9 +120,11 @@ def build_replay_context(
         from frozen_retriever import build_frozen_retrievers
 
         frozen = build_frozen_retrievers(eval_set_path)
+        # A set may hold one repo only (record_cassettes._load_models skips the others too).
         assistants = {
             repo: run_eval._load_models(repo, slug, cassette, frozen)["assistant"]
             for repo, slug in run_eval.REPO_MAP.items()
+            if repo in frozen
         }
         judge = None
         if need_judge:

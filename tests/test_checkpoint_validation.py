@@ -299,3 +299,12 @@ def test_unattended_driver_does_not_declare_done_on_stale_entries(monkeypatch) -
     monkeypatch.setattr(ru.cv, "validate_from_disk", unavailable)
     with pytest.raises(cv.CheckpointValidationUnavailable):
         ru.stale_issue_ids("judge", "m", "p", "a")
+
+
+def test_recording_set_dir_env_redirects_the_default_paths(tmp_path: Path, monkeypatch) -> None:  # noqa: ANN001
+    """A separate recording set (TRIAGEIQ_RECORDING_SET_DIR) must be validated against ITS
+    eval set and cassette, not the committed ones -- otherwise every entry reads as stale."""
+    monkeypatch.setenv("TRIAGEIQ_RECORDING_SET_DIR", str(tmp_path / "setdir"))
+    with pytest.raises(cv.CheckpointValidationUnavailable) as err:
+        cv.build_replay_context(need_judge=False)
+    assert str(tmp_path / "setdir") in str(err.value)

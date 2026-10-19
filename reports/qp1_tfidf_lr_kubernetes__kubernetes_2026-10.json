@@ -1,0 +1,405 @@
+{
+ "classes": [
+  "sig/api-machinery",
+  "sig/apps",
+  "sig/architecture",
+  "sig/auth",
+  "sig/autoscaling",
+  "sig/cli",
+  "sig/cloud-provider",
+  "sig/cluster-lifecycle",
+  "sig/docs",
+  "sig/etcd",
+  "sig/instrumentation",
+  "sig/k8s-infra",
+  "sig/network",
+  "sig/node",
+  "sig/release",
+  "sig/scalability",
+  "sig/scheduling",
+  "sig/security",
+  "sig/storage",
+  "sig/testing",
+  "sig/windows",
+  "other"
+ ],
+ "design": "(2026-10-20; do not change after seeing test results). Gold per ADR-0067:\nthe set of sig/* labels at FINAL; primary = earliest `labeled` event among labels still present\n(qp0_ceiling_labels.per_issue, imported, not reimplemented); modelled classes = the sig/* labels\ncarried by >= 30 TRAIN issues + `other` (all remaining sig labels). Population = issues with >= 1\nsig/* label at final. Train on train-split issues with classifier_eligible; select on validation\n(classifier_eligible); the TEST split's labels are loaded only by the explicit `--final-test`\nstage, which evaluates test (classifier_eligible issues) exactly once per report file.\nInput text = title + \"\n\" + body[:4000], lowercased by the vectoriser, nothing else.\nModel: TfidfVectorizer(word 1-2 grams, min_df=2, sublinear_tf, max_features=200000) fitted on the\ntrain texts + LogisticRegression (multinomial, lbfgs, max_iter 300, seed 42). Grid on\nVALIDATION: C in {1, 4, 16, 64} x class_weight in {None, 'balanced'}; selection = validation\ntop-3 accuracy, tie-break validation macro-F1, then smaller C. CPU only, threads capped at 4,\nBelowNormal priority. Metrics, conformal sets, temperature scaling and CIs: qp1_eval.py.\nProbabilities for train / validation / test go to <models-dir>/tfidf_lr/, never the repo.",
+ "harness_design": "(2026-10-20; do not change after seeing test results). Pure functions on\n(y_true_primary, y_true_sets, proba, classes); labels are strings already mapped to the modelled\nclasses + `other`.\n * top-1 / top-3 accuracy against the PRIMARY label; any-valid top-1 (prediction in the true\n   label set) and any-valid top-3 (any of the top-3 in the set); macro-F1 over the classes present\n   in y_true; NLL (probabilities clipped at 1e-12); ECE with 15 equal-width bins on the top-1\n   confidence. Ties in probability are broken by class order (stable sort).\n * Conformal sets by APS, non-randomised: a label's score is the cumulative probability mass of\n   all classes ranked at or above it; calibration scores use the PRIMARY label on VALIDATION;\n   qhat = the ceil((n + 1)(1 - alpha))-th smallest score (inf when that exceeds n), alpha = 0.05;\n   a class is in the set iff its score <= qhat, and the top-1 class is always included (non-empty\n   sets; conservative). Reported: coverage w.r.t. primary, coverage w.r.t. any-valid (set meets\n   the true set), mean / median set size.\n * Temperature scaling: T fitted on VALIDATION by minimising NLL of softmax(log p / T), T in\n   [0.05, 20]; ECE reported before and after.\n * Bootstrap 95% percentile CIs over issues: 2000 resamples, seed 42, paired differences use the\n   same resampled indices; Wilson 95% for proportions.\n * Guard: test metrics are computed only with final=True, and ResultsWriter refuses a second test\n   evaluation of the same model id in the same report file. Each entry records the model id, the\n   sha256 of the prediction file and the sha256 of the frozen split manifest.",
+ "models": {
+  "tfidf_lr_v1": {
+   "split_manifest_sha256": "b8c0dfee4e228c3a13cea52ccd008fad837294629de91c5ee7047288c8559247",
+   "test": {
+    "anyvalid_top1": {
+     "ci95": [
+      0.819364161849711,
+      0.8591040462427746
+     ],
+     "n": 1384,
+     "point": 0.8403179190751445
+    },
+    "anyvalid_top3": {
+     "ci95": [
+      0.9566473988439307,
+      0.9754335260115607
+     ],
+     "n": 1384,
+     "point": 0.9660404624277457
+    },
+    "calibration": {
+     "ece_after": 0.06695600443520584,
+     "ece_before": 0.05049989033624694,
+     "nll_after": 0.7730695047508056,
+     "temperature": 0.8029050753659823,
+     "validation_ece_after": 0.07346010918418605,
+     "validation_ece_before": 0.07926291999107239
+    },
+    "conformal_alpha_0.05_raw_proba": {
+     "coverage_any_valid": {
+      "k": 1378,
+      "n": 1384,
+      "rate": 0.9956647398843931,
+      "wilson95": [
+       0.9905737711775805,
+       0.99801166969694
+      ]
+     },
+     "coverage_primary": {
+      "k": 1377,
+      "n": 1384,
+      "rate": 0.994942196531792,
+      "wilson95": [
+       0.9895964581345398,
+       0.9975478960914756
+      ]
+     },
+     "n": 1384,
+     "qhat": 0.9901051046556935,
+     "set_size_mean": 12.90606936416185,
+     "set_size_median": 15.0
+    },
+    "conformal_alpha_0.05_temperature_scaled": {
+     "coverage_any_valid": {
+      "k": 1378,
+      "n": 1384,
+      "rate": 0.9956647398843931,
+      "wilson95": [
+       0.9905737711775805,
+       0.99801166969694
+      ]
+     },
+     "coverage_primary": {
+      "k": 1377,
+      "n": 1384,
+      "rate": 0.994942196531792,
+      "wilson95": [
+       0.9895964581345398,
+       0.9975478960914756
+      ]
+     },
+     "n": 1384,
+     "qhat": 0.9982788285582146,
+     "set_size_mean": 13.798410404624278,
+     "set_size_median": 16.0
+    },
+    "context_baselines_from_ceiling_report": {
+     "ceiling_proxies": {
+      "any_valid_label_ceiling": 0.9666666666666667,
+      "any_valid_label_ceiling_interval95": [
+       0.8863601247107462,
+       0.9908108735098498
+      ],
+      "group_used": "tfidf_top1_nn_cos_ge_0.9",
+      "n_pairs": 60,
+      "note": "PROXIES from label inconsistency on near-identical content, not a bound; small n limits the claim",
+      "top1_ceiling_estimate": 0.9,
+      "top1_ceiling_interval95": [
+       0.7985030550748895,
+       0.9533578005427641
+      ]
+     },
+     "majority_any_valid_test": {
+      "k": 462,
+      "n": 1386,
+      "rate": 0.3333333333333333,
+      "wilson95": [
+       0.3090059701418335,
+       0.35858204852158826
+      ]
+     },
+     "majority_top1_test_all_labelled": {
+      "k": 428,
+      "n": 1386,
+      "rate": 0.3088023088023088,
+      "wilson95": [
+       0.28503575094319894,
+       0.3336258289087784
+      ]
+     }
+    },
+    "ece": {
+     "ci95": [
+      0.040262083722585953,
+      0.07370034332584965
+     ],
+     "n": 1384,
+     "point": 0.05049989033624694
+    },
+    "macro_f1": {
+     "ci95": [
+      0.5062043937518717,
+      0.6054165513532017
+     ],
+     "n": 1384,
+     "point": 0.5452729843059451
+    },
+    "n": 1384,
+    "n_test_eligible_labelled": 1384,
+    "nll": {
+     "ci95": [
+      0.7306927569247265,
+      0.8468968482750702
+     ],
+     "n": 1384,
+     "point": 0.7889793399446335
+    },
+    "per_class_f1": {
+     "other": 0.0,
+     "sig/api-machinery": 0.7616,
+     "sig/apps": 0.813953488372093,
+     "sig/architecture": 0.2033898305084746,
+     "sig/auth": 0.65,
+     "sig/autoscaling": 0.8780487804878049,
+     "sig/cli": 0.676056338028169,
+     "sig/cloud-provider": 0.5454545454545454,
+     "sig/cluster-lifecycle": 0.5714285714285714,
+     "sig/docs": 0.0,
+     "sig/etcd": 0.0,
+     "sig/instrumentation": 0.6666666666666666,
+     "sig/k8s-infra": 0.0,
+     "sig/network": 0.8368794326241135,
+     "sig/node": 0.8577981651376146,
+     "sig/release": 0.6666666666666666,
+     "sig/scalability": 0.76,
+     "sig/scheduling": 0.856353591160221,
+     "sig/security": 0.46153846153846156,
+     "sig/storage": 0.7868852459016393,
+     "sig/testing": 0.4578313253012048,
+     "sig/windows": 0.5454545454545454
+    },
+    "per_class_support": {
+     "other": 2,
+     "sig/api-machinery": 267,
+     "sig/apps": 42,
+     "sig/architecture": 49,
+     "sig/auth": 43,
+     "sig/autoscaling": 23,
+     "sig/cli": 46,
+     "sig/cloud-provider": 14,
+     "sig/cluster-lifecycle": 7,
+     "sig/docs": 1,
+     "sig/etcd": 5,
+     "sig/instrumentation": 13,
+     "sig/k8s-infra": 10,
+     "sig/network": 71,
+     "sig/node": 427,
+     "sig/release": 11,
+     "sig/scalability": 28,
+     "sig/scheduling": 199,
+     "sig/security": 6,
+     "sig/storage": 57,
+     "sig/testing": 36,
+     "sig/windows": 27
+    },
+    "pred_file": "test.parquet",
+    "pred_sha256": "06b0acbd146a5a5f628ea1ff5236ea1132d6ccb745619e106cf36bc45f574645",
+    "split": "test",
+    "timing": {
+     "inference_ms_per_issue": 1.1836115606924478,
+     "train_seconds": 39.134367999999085
+    },
+    "top1": {
+     "ci95": [
+      0.7485549132947977,
+      0.7933526011560693
+     ],
+     "n": 1384,
+     "point": 0.7709537572254336
+    },
+    "top1_wilson95": [
+     0.7480823965860575,
+     0.792325096603367
+    ],
+    "top3": {
+     "ci95": [
+      0.9429190751445087,
+      0.9645953757225434
+     ],
+     "n": 1384,
+     "point": 0.953757225433526
+    }
+   },
+   "validation": {
+    "anyvalid_top1": {
+     "ci95": [
+      0.7944827586206896,
+      0.8510344827586207
+     ],
+     "n": 725,
+     "point": 0.8234482758620689
+    },
+    "anyvalid_top3": {
+     "ci95": [
+      0.9544827586206897,
+      0.9806896551724138
+     ],
+     "n": 725,
+     "point": 0.9682758620689655
+    },
+    "ece": {
+     "ci95": [
+      0.06988909862820554,
+      0.11809581207881413
+     ],
+     "n": 725,
+     "point": 0.07926291999107239
+    },
+    "macro_f1": {
+     "ci95": [
+      0.5650970202830373,
+      0.681041803450777
+     ],
+     "n": 725,
+     "point": 0.6267076180945612
+    },
+    "n": 725,
+    "nll": {
+     "ci95": [
+      0.7661297372938874,
+      0.9311279665729792
+     ],
+     "n": 725,
+     "point": 0.845815433146327
+    },
+    "pred_file": "validation.parquet",
+    "pred_sha256": "6af082befab5837d8e8d7b47ca62cc3f829f74b9ab657a52d50d1914b730cbc4",
+    "split": "validation",
+    "top1": {
+     "ci95": [
+      0.743448275862069,
+      0.8027931034482757
+     ],
+     "n": 725,
+     "point": 0.7737931034482759
+    },
+    "top1_wilson95": [
+     0.7419415241415963,
+     0.8027584490761783
+    ],
+    "top3": {
+     "ci95": [
+      0.9227586206896552,
+      0.9572413793103448
+     ],
+     "n": 725,
+     "point": 0.9406896551724138
+    }
+   }
+  }
+ },
+ "repo": "kubernetes/kubernetes",
+ "selected_config": {
+  "C": 64,
+  "class_weight": "balanced"
+ },
+ "split_manifest_sha256": "b8c0dfee4e228c3a13cea52ccd008fad837294629de91c5ee7047288c8559247",
+ "validation_grid": [
+  {
+   "C": 1,
+   "anyvalid_top1": 0.7103448275862069,
+   "anyvalid_top3": 0.8744827586206897,
+   "class_weight": null,
+   "fit_seconds": 31.21322330000112,
+   "macro_f1": 0.3359935082978722,
+   "nll": 1.3896840701089082,
+   "top1": 0.6662068965517242,
+   "top3": 0.8234482758620689
+  },
+  {
+   "C": 4,
+   "anyvalid_top1": 0.7806896551724138,
+   "anyvalid_top3": 0.9420689655172414,
+   "class_weight": null,
+   "fit_seconds": 42.39067930000601,
+   "macro_f1": 0.5028976502776539,
+   "nll": 1.0595569272709555,
+   "top1": 0.7296551724137931,
+   "top3": 0.903448275862069
+  },
+  {
+   "C": 16,
+   "anyvalid_top1": 0.7986206896551724,
+   "anyvalid_top3": 0.9544827586206897,
+   "class_weight": null,
+   "fit_seconds": 47.55751249999594,
+   "macro_f1": 0.5455380506738684,
+   "nll": 0.9132493143420259,
+   "top1": 0.7489655172413793,
+   "top3": 0.9186206896551724
+  },
+  {
+   "C": 64,
+   "anyvalid_top1": 0.8041379310344827,
+   "anyvalid_top3": 0.9586206896551724,
+   "class_weight": null,
+   "fit_seconds": 43.248540599997796,
+   "macro_f1": 0.5543086149318265,
+   "nll": 0.8608776665585159,
+   "top1": 0.7517241379310344,
+   "top3": 0.9255172413793104
+  },
+  {
+   "C": 1,
+   "anyvalid_top1": 0.7889655172413793,
+   "anyvalid_top3": 0.9544827586206897,
+   "class_weight": "balanced",
+   "fit_seconds": 14.390459500005818,
+   "macro_f1": 0.615352478013547,
+   "nll": 1.841210050134482,
+   "top1": 0.7241379310344828,
+   "top3": 0.9241379310344827
+  },
+  {
+   "C": 4,
+   "anyvalid_top1": 0.8220689655172414,
+   "anyvalid_top3": 0.9641379310344828,
+   "class_weight": "balanced",
+   "fit_seconds": 28.83408509999572,
+   "macro_f1": 0.6266603155687263,
+   "nll": 1.2407210846913732,
+   "top1": 0.76,
+   "top3": 0.9337931034482758
+  },
+  {
+   "C": 16,
+   "anyvalid_top1": 0.8179310344827586,
+   "anyvalid_top3": 0.9655172413793104,
+   "class_weight": "balanced",
+   "fit_seconds": 36.76330069999676,
+   "macro_f1": 0.6231624908636532,
+   "nll": 0.9530949171152228,
+   "top1": 0.7613793103448275,
+   "top3": 0.9365517241379311
+  },
+  {
+   "C": 64,
+   "anyvalid_top1": 0.8234482758620689,
+   "anyvalid_top3": 0.9682758620689655,
+   "class_weight": "balanced",
+   "fit_seconds": 39.038028800001484,
+   "macro_f1": 0.6267076180945612,
+   "nll": 0.845815433146327,
+   "top1": 0.7737931034482759,
+   "top3": 0.9406896551724138
+  }
+ ]
+}

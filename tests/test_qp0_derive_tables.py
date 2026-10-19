@@ -410,3 +410,64 @@ def test_stats_deterministic_apart_from_volatile(tmp_path: Path) -> None:
     s2.pop("volatile")
     assert json.dumps(s1, sort_keys=True) == json.dumps(s2, sort_keys=True)
     assert "scraped_at" in t["issues"].columns
+
+
+HEDGED = [
+    "possible duplicate of #12 but not sure\n/close",
+    "this may be a dup of #3\n/close",
+    "Is this a duplicate of #8? I doubt it.\n/close",
+    "If this is a duplicate of #10 please close\n/close",
+    "Can you check whether this is a duplicate of #15?\n/close",
+    "Someone said this was a duplicate of #30 but it is not\n/close",
+    "would be a duplicate of #32 unless the fix landed\n/close",
+    "/close\nI think it is a duplicate of #33",
+    "duplicate of #34, nope\n/close",
+]
+
+
+def test_hedged_question_and_conditional_phrasings_rejected() -> None:
+    for body in HEDGED:
+        assert _dups(body) == [], body
+
+
+def test_true_positive_forms_keep_recall() -> None:
+    cases = {
+        "Duplicate of #12 /close": 12,
+        "Closing as duplicate of #16": 16,
+        "dup of o/r#88\n/close": 88,
+        "duplicate of [#9](https://github.com/o/r/issues/9)\n/close": 9,
+        "/duplicate #19\n/close": 19,
+        "Looks good.\nDuplicate of #12\n/close\nThanks, it would help to retest.": 12,
+    }
+    for body, want in cases.items():
+        got = _dups(body)
+        assert [d["canonical"] for d in got] == [want], body
+    bot = comment("Closed this one as a duplicate of #21", login="vscode-triage-bot")
+    assert qp0d.extract_duplicates(_closed(bot), REPO)[0]["canonical"] == 21
+
+
+def _echo(quoted: str) -> dict[str, Any]:
+    body = "@h: Closing this issue.\n\n<details>\n\nIn response to [this](x):\n\n" + quoted
+    return comment(body + "\n\n\nInstructions for interacting with me", login="k8s-ci-robot")
+
+
+def test_robot_echo_nested_quotes_and_missing_close_ignored() -> None:
+    assert (
+        qp0d.extract_duplicates(_closed(_echo(">/close\n>> bob said: duplicate of #50")), REPO)
+        == []
+    )
+    hedged = ">/close\n>duplicate of #51 (bob" + "'" + "s suggestion, I disagree)"
+    assert qp0d.extract_duplicates(_closed(_echo(hedged)), REPO) == []
+    # the closer's own /close line must be inside the echoed block
+    assert qp0d.extract_duplicates(_closed(_echo(">duplicate of #52")), REPO) == []
+    [d] = qp0d.extract_duplicates(_closed(_echo(">Dup of #53\n>/close")), REPO)
+    assert d["canonical"] == 53
+    labeled = _closed(_echo(">duplicate of #54"), labels=["triage/duplicate"])
+    assert qp0d.extract_duplicates(labeled, REPO) == []
+
+
+def test_label_pair_needs_unhedged_unquoted_comment() -> None:
+    guess = comment("/remove-lifecycle stale\n>duplicate of #60 was my guess")
+    assert qp0d.extract_duplicates(_closed(guess, labels=["triage/duplicate"]), REPO) == []
+    maybe = comment("maybe a dup of #61 /triage duplicate")
+    assert qp0d.extract_duplicates(_closed(maybe, labels=["triage/duplicate"]), REPO) == []

@@ -92,7 +92,8 @@ def compute_stats(t: dict[str, pd.DataFrame], repo: str, size_mb: float) -> dict
             "open": int((i["state"] == "OPEN").sum()),
             "prs": int((pr_years == y).sum()),
         }
-    mf = fix[fix["pr_merged"]]  # only merged PRs count as fixes
+    mf = fix[fix["pr_merged"].astype(bool)]  # only merged PRs count as fixes
+    flag = lambda s: int(s.fillna(False).astype(bool).sum())  # noqa: E731 - empty-table safe
     return {
         "repo": repo,
         "scrape_cutoff": str(iss["scraped_at_max"].max()),
@@ -105,9 +106,21 @@ def compute_stats(t: dict[str, pd.DataFrame], repo: str, size_mb: float) -> dict
         "duplicates": {
             "by_method": dup["method"].value_counts().to_dict(),
             "n_pairs": len(dup),
-            "canonical_is_pr": int(dup["canonical_is_pr"].sum()),
-            "unresolved_dup_labels": int(iss["dup_label_unresolved"].sum()),
+            "canonical_is_pr": flag(dup["canonical_is_pr"]),
+            "canonical_newer": flag(dup["canonical_newer"]),
+            "canonical_not_in_table": len(dup) - flag(dup["canonical_in_table"]),
+            "pairs_with_multiple_targets": int((dup["n_targets"] > 1).sum()),
+            "unresolved_dup_labels": flag(iss["dup_label_unresolved"]),
+            "closed_as_duplicate_state_reason": flag(iss["closed_as_duplicate"]),
+            "closed_as_duplicate_unresolved": flag(iss["closed_as_duplicate_unresolved"]),
+            "event_canonical_foreign_repo": int(iss["canon_foreign_repo"].sum()),
+            "event_canonical_repo_unknown": int(iss["canon_repo_unknown"].sum()),
         },
+        "closers": {  # ClosedEvent closer PRs excluded because their repo is not verifiable
+            "closer_repo_unknown": int(iss["closer_repo_unknown"].sum()),
+            "closer_foreign_repo": int(iss["closer_foreign_repo"].sum()),
+        },
+        "anomalies": {"closed_without_closed_at": flag(iss["anomaly_closed_no_closed_at"])},
         "fix_links": {
             "by_method_all": fix["method"].value_counts().to_dict(),
             "by_method_merged": mf["method"].value_counts().to_dict(),
@@ -116,8 +129,12 @@ def compute_stats(t: dict[str, pd.DataFrame], repo: str, size_mb: float) -> dict
         },
         "multilabel": _multilabel(iss),
         "censored_open_issues": int(iss["censored"].sum()),
-        "storage_mb_raw_plus_derived": round(size_mb, 1),
-        "priority_signals": priority_signals(iss).to_dict("records"),
+        "priority_signals": [  # NaN is not valid JSON: inapplicable cells become null
+            {k: None if pd.isna(v) else int(v) if k.startswith("n_") else v for k, v in r.items()}
+            for r in priority_signals(iss).to_dict("records")
+        ],
+        # everything outside this key is a pure function of the raw data; disk usage is not
+        "volatile": {"storage_mb_raw_plus_derived": round(size_mb, 1)},
     }
 
 

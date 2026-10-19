@@ -24,6 +24,7 @@ import requests
 log = logging.getLogger("qp0")
 API = "https://api.github.com/graphql"
 SEARCH_CAP = 1000  # GitHub search returns at most 1000 results per query
+SCHEMA_VERSION = 2  # 2 = cross-repo targets carry repository{nameWithOwner}; 1 = rows before that
 PAGE_SIZES = (100, 50, 25)
 # (status, headers, parsed JSON body); transports raise TimeoutError/ConnectionError on I/O failure
 Transport = Callable[[dict[str, Any]], tuple[int, dict[str, str], dict[str, Any]]]
@@ -38,7 +39,7 @@ class TransientError(ScrapeError):
 
 
 _TL_ACTOR = "createdAt actor{login}"
-_NUM = "... on Issue{number} ... on PullRequest{number}"
+_NUM = "... on Issue{number repository{nameWithOwner}} ... on PullRequest{number repository{nameWithOwner}}"
 TIMELINE = f"""timelineItems(first:100, after:$tl, itemTypes:[LABELED_EVENT, UNLABELED_EVENT,
 MARKED_AS_DUPLICATE_EVENT, UNMARKED_AS_DUPLICATE_EVENT, CROSS_REFERENCED_EVENT, CLOSED_EVENT,
 REOPENED_EVENT, CONNECTED_EVENT, DISCONNECTED_EVENT, MILESTONED_EVENT, DEMILESTONED_EVENT]){{
@@ -51,7 +52,7 @@ totalCount pageInfo{{hasNextPage endCursor}} nodes{{__typename
  ... on Issue{{number repository{{nameWithOwner}}}}
  ... on PullRequest{{number merged mergedAt repository{{nameWithOwner}}}}}}}}
 ... on ClosedEvent{{{_TL_ACTOR} stateReason closer{{
- ... on PullRequest{{number merged mergedAt title}} ... on Commit{{oid}}}}}}
+ ... on PullRequest{{number merged mergedAt title repository{{nameWithOwner}}}} ... on Commit{{oid}}}}}}
 ... on ReopenedEvent{{{_TL_ACTOR}}}
 ... on ConnectedEvent{{{_TL_ACTOR} subject{{{_NUM}}}}}
 ... on DisconnectedEvent{{{_TL_ACTOR} subject{{{_NUM}}}}}
@@ -268,6 +269,7 @@ class Scraper:
                 if node:
                     self._complete_timeline(node)
                     node["_scraped_at"] = _fmt(_now())
+                    node["_schema"] = SCHEMA_VERSION
                     rows[node["id"]] = node
             if not s["pageInfo"]["hasNextPage"]:
                 break

@@ -1,6 +1,6 @@
 # Proposal for GG: gate and baseline for microsoft/vscode after the 63-issue expansion (2026-10-19)
 
-Status: PROPOSAL ONLY. No threshold, band, baseline, `eval/eval_set.jsonl` or committed cassette was changed. Every number below comes from `reports/vscode_expansion_results_2026-10.json` (produced by `scripts/vscode_expansion_results.py` from the recorded judge entries; a test fails if the report goes stale). Recording artifacts: `reports/vscode_expansion_2026-10-12/` (cassette, checkpoint). Synthesis `openai/gpt-oss-120b`, judge `qwen3:8b` (local, zero Groq), 63/63 synthesized and judged, 0 permanently dead.
+Status: PARKED. GG declined this proposal on 2026-10-20: gates and baselines are re-proposed only after the quality push (spec-quality-push.md), on the new numbers. The measurements below remain valid as measurements; the proposal section is not scheduled. Original status: PROPOSAL ONLY. No threshold, band, baseline, `eval/eval_set.jsonl` or committed cassette was changed. Every number below comes from `reports/vscode_expansion_results_2026-10.json` (produced by `scripts/vscode_expansion_results.py` from the recorded judge entries; a test fails if the report goes stale). Recording artifacts: `reports/vscode_expansion_2026-10-12/` (cassette, checkpoint). Synthesis `openai/gpt-oss-120b`, judge `qwen3:8b` (local, zero Groq), 63/63 synthesized and judged, 0 permanently dead.
 
 ## What was measured
 

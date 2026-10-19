@@ -1,0 +1,2198 @@
+{
+ "repo": "kubernetes/kubernetes",
+ "design": "(GG decision D79 item 4, 2026-10-20): the taxonomy is decided on label coverage\nand routing semantics ONLY, before any model is scored. This script imports and trains no\nclassifier and reports no accuracy and no comparison with any earlier class count.\nCandidate families. k8s: A = `area/*`, S = `sig/*`, SA = an issue with either. vscode: V_old =\nthe component list in preprocess.LABEL_FACET_PATTERNS['microsoft/vscode']['component']\n(imported, case-insensitive); V_new = labels not in V_old and not in TYPE_WORKFLOW (a heuristic\nexclusion set) with >= 100 issues in the data; V_all = V_old union V_new. Label-frequency\ntables of every other prefix family are listed so non-components are visible.\nMetrics per family, overall and per created year 2023-2026, on ISSUES (not PRs):\n (1) coverage_t72h / coverage_final: share with >= 1 family label at 72 h / at the end;\n (2) share with exactly 1 and with >= 2 family labels (final);\n (3) churn: among issues with >= 1 final family label, share whose t72h family set != final set;\n (4) median / p90 hours from creation to the first family `labeled` event (issues never\n     receiving one are excluded and counted);\n (5) who applied that first event: bot (login ends 'bot' / '[bot]', or k8s-ci-robot) / human /\n     unknown (no actor);\n (6) class table: per label the final count and per-year counts; number of classes with >= 30\n     and >= 100 issues; share of family-labelled issues having >= 1 label in a class >= 30;\n (7) stability: classes with >= 5 issues in every year vs only some years;\n (8) k8s: co-occurrence of S and A (share of S issues with an A label and vice versa) and, per\n     sig/*, its top 3 co-occurring area/* labels.",
+ "generated_with": "scripts/qp0_taxonomy_coverage.py",
+ "n_issues": 7707,
+ "families": {
+  "A": {
+   "overall": {
+    "n_issues": 7707,
+    "coverage_t72h": 0.061632282340729205,
+    "coverage_final": 0.06915790839496562,
+    "exactly_1": 0.0613727779940314,
+    "ge_2": 0.007785130400934216,
+    "churn": 0.1669793621013133,
+    "hours_to_first_label": {
+     "median": 0.06458333333333333,
+     "p90": 176.78247222222214,
+     "n_with_label": 564,
+     "n_never_labelled": 7143
+    },
+    "first_label_actor": {
+     "bot": 458,
+     "human": 106,
+     "unknown": 0
+    },
+    "classes": {
+     "n_classes": 43,
+     "classes_ge30": 7,
+     "classes_ge100": 0,
+     "share_labelled_in_ge30": 0.6716697936210131
+    }
+   },
+   "per_year": {
+    "2023": {
+     "n_issues": 2261,
+     "coverage_t72h": 0.06103494029190624,
+     "coverage_final": 0.0725342768686422,
+     "exactly_1": 0.06368863334807608,
+     "ge_2": 0.008845643520566122,
+     "churn": 0.1951219512195122,
+     "hours_to_first_label": {
+      "median": 0.4463888888888889,
+      "p90": 210.91813888888896,
+      "n_with_label": 168,
+      "n_never_labelled": 2093
+     },
+     "first_label_actor": {
+      "bot": 152,
+      "human": 16,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 33,
+      "classes_ge30": 0,
+      "classes_ge100": 0,
+      "share_labelled_in_ge30": 0.0
+     }
+    },
+    "2024": {
+     "n_issues": 2002,
+     "coverage_t72h": 0.04995004995004995,
+     "coverage_final": 0.05444555444555445,
+     "exactly_1": 0.05194805194805195,
+     "ge_2": 0.0024975024975024975,
+     "churn": 0.09174311926605505,
+     "hours_to_first_label": {
+      "median": 0.03763888888888889,
+      "p90": 49.02894444444446,
+      "n_with_label": 110,
+      "n_never_labelled": 1892
+     },
+     "first_label_actor": {
+      "bot": 98,
+      "human": 12,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 22,
+      "classes_ge30": 0,
+      "classes_ge100": 0,
+      "share_labelled_in_ge30": 0.0
+     }
+    },
+    "2025": {
+     "n_issues": 1859,
+     "coverage_t72h": 0.047875201721355565,
+     "coverage_final": 0.06132329209252286,
+     "exactly_1": 0.052716514254975796,
+     "ge_2": 0.008606777837547068,
+     "churn": 0.2631578947368421,
+     "hours_to_first_label": {
+      "median": 0.2608333333333333,
+      "p90": 992.2065277777779,
+      "n_with_label": 116,
+      "n_never_labelled": 1743
+     },
+     "first_label_actor": {
+      "bot": 104,
+      "human": 12,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 21,
+      "classes_ge30": 0,
+      "classes_ge100": 0,
+      "share_labelled_in_ge30": 0.0
+     }
+    },
+    "2026": {
+     "n_issues": 1585,
+     "coverage_t72h": 0.09337539432176656,
+     "coverage_final": 0.09211356466876972,
+     "exactly_1": 0.08012618296529968,
+     "ge_2": 0.011987381703470032,
+     "churn": 0.11643835616438356,
+     "hours_to_first_label": {
+      "median": 0.004166666666666667,
+      "p90": 116.98372222222221,
+      "n_with_label": 170,
+      "n_never_labelled": 1415
+     },
+     "first_label_actor": {
+      "bot": 104,
+      "human": 66,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 26,
+      "classes_ge30": 2,
+      "classes_ge100": 0,
+      "share_labelled_in_ge30": 0.4589041095890411
+     }
+    }
+   },
+   "class_table": {
+    "classes": {
+     "area/code-organization": {
+      "total": 89,
+      "2023": 21,
+      "2024": 23,
+      "2025": 26,
+      "2026": 19
+     },
+     "area/kubelet": {
+      "total": 85,
+      "2023": 19,
+      "2024": 15,
+      "2025": 16,
+      "2026": 35
+     },
+     "area/security": {
+      "total": 53,
+      "2023": 12,
+      "2024": 9,
+      "2025": 17,
+      "2026": 15
+     },
+     "area/test": {
+      "total": 43,
+      "2023": 12,
+      "2024": 11,
+      "2025": 13,
+      "2026": 7
+     },
+     "area/kube-proxy": {
+      "total": 39,
+      "2023": 20,
+      "2024": 10,
+      "2025": 4,
+      "2026": 5
+     },
+     "area/api-validation": {
+      "total": 34,
+      "2023": 0,
+      "2024": 0,
+      "2025": 2,
+      "2026": 32
+     },
+     "area/conformance": {
+      "total": 30,
+      "2023": 10,
+      "2024": 6,
+      "2025": 12,
+      "2026": 2
+     },
+     "area/ipvs": {
+      "total": 26,
+      "2023": 17,
+      "2024": 3,
+      "2025": 5,
+      "2026": 1
+     },
+     "area/kubeadm": {
+      "total": 21,
+      "2023": 11,
+      "2024": 5,
+      "2025": 3,
+      "2026": 2
+     },
+     "area/code-organization/future-dependencies": {
+      "total": 21,
+      "2023": 0,
+      "2024": 0,
+      "2025": 12,
+      "2026": 9
+     },
+     "area/apiserver": {
+      "total": 19,
+      "2023": 6,
+      "2024": 3,
+      "2025": 0,
+      "2026": 10
+     },
+     "area/logging": {
+      "total": 15,
+      "2023": 6,
+      "2024": 4,
+      "2025": 5,
+      "2026": 0
+     },
+     "area/kubectl": {
+      "total": 14,
+      "2023": 5,
+      "2024": 2,
+      "2025": 1,
+      "2026": 6
+     },
+     "area/provider/gcp": {
+      "total": 13,
+      "2023": 7,
+      "2024": 4,
+      "2025": 1,
+      "2026": 1
+     },
+     "area/code-generation": {
+      "total": 12,
+      "2023": 6,
+      "2024": 1,
+      "2025": 4,
+      "2026": 1
+     },
+     "area/dependency": {
+      "total": 12,
+      "2023": 2,
+      "2024": 2,
+      "2025": 2,
+      "2026": 6
+     },
+     "area/api": {
+      "total": 8,
+      "2023": 4,
+      "2024": 0,
+      "2025": 2,
+      "2026": 2
+     },
+     "area/controller-manager": {
+      "total": 7,
+      "2023": 2,
+      "2024": 4,
+      "2025": 1,
+      "2026": 0
+     },
+     "area/e2e-test-framework": {
+      "total": 6,
+      "2023": 1,
+      "2024": 1,
+      "2025": 0,
+      "2026": 4
+     },
+     "area/provider/azure": {
+      "total": 5,
+      "2023": 1,
+      "2024": 4,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/dns": {
+      "total": 4,
+      "2023": 3,
+      "2024": 0,
+      "2025": 0,
+      "2026": 1
+     },
+     "area/cadvisor": {
+      "total": 3,
+      "2023": 3,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/usability": {
+      "total": 3,
+      "2023": 1,
+      "2024": 0,
+      "2025": 1,
+      "2026": 1
+     },
+     "area/workload-api/job": {
+      "total": 3,
+      "2023": 3,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/provider/aws": {
+      "total": 3,
+      "2023": 1,
+      "2024": 2,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/network-policy": {
+      "total": 3,
+      "2023": 2,
+      "2024": 0,
+      "2025": 0,
+      "2026": 1
+     },
+     "area/release-eng": {
+      "total": 3,
+      "2023": 0,
+      "2024": 2,
+      "2025": 0,
+      "2026": 1
+     },
+     "area/admission-control": {
+      "total": 3,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 3
+     },
+     "area/test-infra": {
+      "total": 2,
+      "2023": 1,
+      "2024": 1,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/etcd": {
+      "total": 2,
+      "2023": 2,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/pod-lifecycle": {
+      "total": 2,
+      "2023": 1,
+      "2024": 0,
+      "2025": 1,
+      "2026": 0
+     },
+     "area/client-libraries": {
+      "total": 2,
+      "2023": 0,
+      "2024": 1,
+      "2025": 0,
+      "2026": 1
+     },
+     "area/hw-accelerators": {
+      "total": 2,
+      "2023": 0,
+      "2024": 1,
+      "2025": 1,
+      "2026": 0
+     },
+     "area/monitoring": {
+      "total": 1,
+      "2023": 1,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/workload-api/cronjob": {
+      "total": 1,
+      "2023": 1,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/app-lifecycle": {
+      "total": 1,
+      "2023": 1,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/declarative-configuration": {
+      "total": 1,
+      "2023": 1,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/stable-metrics": {
+      "total": 1,
+      "2023": 1,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/custom-resources": {
+      "total": 1,
+      "2023": 1,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/node-e2e": {
+      "total": 1,
+      "2023": 0,
+      "2024": 0,
+      "2025": 1,
+      "2026": 0
+     },
+     "area/batch": {
+      "total": 1,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 1
+     },
+     "area/ipv6": {
+      "total": 1,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 1
+     },
+     "area/cloudprovider": {
+      "total": 1,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 1
+     }
+    },
+    "stability": {
+     "present_ge5_every_year": [
+      "area/code-organization",
+      "area/kubelet",
+      "area/security",
+      "area/test"
+     ],
+     "present_ge5_some_years": [
+      "area/api-validation",
+      "area/apiserver",
+      "area/code-generation",
+      "area/code-organization/future-dependencies",
+      "area/conformance",
+      "area/dependency",
+      "area/ipvs",
+      "area/kube-proxy",
+      "area/kubeadm",
+      "area/kubectl",
+      "area/logging",
+      "area/provider/gcp"
+     ],
+     "never_ge5_in_a_year": [
+      "area/admission-control",
+      "area/api",
+      "area/app-lifecycle",
+      "area/batch",
+      "area/cadvisor",
+      "area/client-libraries",
+      "area/cloudprovider",
+      "area/controller-manager",
+      "area/custom-resources",
+      "area/declarative-configuration",
+      "area/dns",
+      "area/e2e-test-framework",
+      "area/etcd",
+      "area/hw-accelerators",
+      "area/ipv6",
+      "area/monitoring",
+      "area/network-policy",
+      "area/node-e2e",
+      "area/pod-lifecycle",
+      "area/provider/aws",
+      "area/provider/azure",
+      "area/release-eng",
+      "area/stable-metrics",
+      "area/test-infra",
+      "area/usability",
+      "area/workload-api/cronjob",
+      "area/workload-api/job"
+     ]
+    }
+   }
+  },
+  "S": {
+   "overall": {
+    "n_issues": 7707,
+    "coverage_t72h": 0.8372907746204749,
+    "coverage_final": 0.8760866744517971,
+    "exactly_1": 0.7273906837939536,
+    "ge_2": 0.14869599065784353,
+    "churn": 0.09345379146919432,
+    "hours_to_first_label": {
+     "median": 0.020277777777777777,
+     "p90": 14.041222222222222,
+     "n_with_label": 6773,
+     "n_never_labelled": 934
+    },
+    "first_label_actor": {
+     "bot": 6058,
+     "human": 715,
+     "unknown": 0
+    },
+    "classes": {
+     "n_classes": 25,
+     "classes_ge30": 21,
+     "classes_ge100": 16,
+     "share_labelled_in_ge30": 0.9985189573459715
+    }
+   },
+   "per_year": {
+    "2023": {
+     "n_issues": 2261,
+     "coverage_t72h": 0.8390092879256966,
+     "coverage_final": 0.8819106590004423,
+     "exactly_1": 0.7187085360459974,
+     "ge_2": 0.16320212295444494,
+     "churn": 0.11434302908726178,
+     "hours_to_first_label": {
+      "median": 0.03638888888888889,
+      "p90": 14.078888888888887,
+      "n_with_label": 2003,
+      "n_never_labelled": 258
+     },
+     "first_label_actor": {
+      "bot": 1967,
+      "human": 36,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 25,
+      "classes_ge30": 18,
+      "classes_ge100": 8,
+      "share_labelled_in_ge30": 0.9874623871614845
+     }
+    },
+    "2024": {
+     "n_issues": 2002,
+     "coverage_t72h": 0.8841158841158842,
+     "coverage_final": 0.903096903096903,
+     "exactly_1": 0.7502497502497503,
+     "ge_2": 0.15284715284715283,
+     "churn": 0.08019911504424779,
+     "hours_to_first_label": {
+      "median": 0.034722222222222224,
+      "p90": 8.589055555555564,
+      "n_with_label": 1812,
+      "n_never_labelled": 190
+     },
+     "first_label_actor": {
+      "bot": 1792,
+      "human": 20,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 22,
+      "classes_ge30": 16,
+      "classes_ge100": 6,
+      "share_labelled_in_ge30": 0.9811946902654868
+     }
+    },
+    "2025": {
+     "n_issues": 1859,
+     "coverage_t72h": 0.7864443249058634,
+     "coverage_final": 0.841312533620226,
+     "exactly_1": 0.7057557826788596,
+     "ge_2": 0.13555675094136632,
+     "churn": 0.10549872122762148,
+     "hours_to_first_label": {
+      "median": 0.020972222222222222,
+      "p90": 28.269416666666682,
+      "n_with_label": 1572,
+      "n_never_labelled": 287
+     },
+     "first_label_actor": {
+      "bot": 1554,
+      "human": 18,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 22,
+      "classes_ge30": 14,
+      "classes_ge100": 5,
+      "share_labelled_in_ge30": 0.960997442455243
+     }
+    },
+    "2026": {
+     "n_issues": 1585,
+     "coverage_t72h": 0.8353312302839117,
+     "coverage_final": 0.8744479495268139,
+     "exactly_1": 0.7362776025236593,
+     "ge_2": 0.1381703470031546,
+     "churn": 0.0670995670995671,
+     "hours_to_first_label": {
+      "median": 0.001388888888888889,
+      "p90": 11.614722222222223,
+      "n_with_label": 1386,
+      "n_never_labelled": 199
+     },
+     "first_label_actor": {
+      "bot": 745,
+      "human": 641,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 22,
+      "classes_ge30": 13,
+      "classes_ge100": 3,
+      "share_labelled_in_ge30": 0.9574314574314574
+     }
+    }
+   },
+   "class_table": {
+    "classes": {
+     "sig/node": {
+      "total": 2103,
+      "2023": 560,
+      "2024": 590,
+      "2025": 491,
+      "2026": 462
+     },
+     "sig/api-machinery": {
+      "total": 1399,
+      "2023": 351,
+      "2024": 377,
+      "2025": 357,
+      "2026": 314
+     },
+     "sig/scheduling": {
+      "total": 696,
+      "2023": 152,
+      "2024": 159,
+      "2025": 162,
+      "2026": 223
+     },
+     "sig/network": {
+      "total": 592,
+      "2023": 206,
+      "2024": 163,
+      "2025": 139,
+      "2026": 84
+     },
+     "sig/storage": {
+      "total": 509,
+      "2023": 187,
+      "2024": 142,
+      "2025": 111,
+      "2026": 69
+     },
+     "sig/apps": {
+      "total": 385,
+      "2023": 155,
+      "2024": 109,
+      "2025": 71,
+      "2026": 50
+     },
+     "sig/auth": {
+      "total": 335,
+      "2023": 134,
+      "2024": 85,
+      "2025": 63,
+      "2026": 53
+     },
+     "sig/testing": {
+      "total": 318,
+      "2023": 102,
+      "2024": 82,
+      "2025": 76,
+      "2026": 58
+     },
+     "sig/cli": {
+      "total": 246,
+      "2023": 80,
+      "2024": 61,
+      "2025": 51,
+      "2026": 54
+     },
+     "sig/architecture": {
+      "total": 229,
+      "2023": 58,
+      "2024": 58,
+      "2025": 54,
+      "2026": 59
+     },
+     "sig/windows": {
+      "total": 188,
+      "2023": 51,
+      "2024": 51,
+      "2025": 48,
+      "2026": 38
+     },
+     "sig/instrumentation": {
+      "total": 176,
+      "2023": 47,
+      "2024": 51,
+      "2025": 45,
+      "2026": 33
+     },
+     "sig/scalability": {
+      "total": 153,
+      "2023": 41,
+      "2024": 31,
+      "2025": 35,
+      "2026": 46
+     },
+     "sig/release": {
+      "total": 142,
+      "2023": 51,
+      "2024": 46,
+      "2025": 31,
+      "2026": 14
+     },
+     "sig/autoscaling": {
+      "total": 118,
+      "2023": 40,
+      "2024": 36,
+      "2025": 18,
+      "2026": 24
+     },
+     "sig/security": {
+      "total": 110,
+      "2023": 59,
+      "2024": 25,
+      "2025": 15,
+      "2026": 11
+     },
+     "sig/cluster-lifecycle": {
+      "total": 99,
+      "2023": 41,
+      "2024": 24,
+      "2025": 24,
+      "2026": 10
+     },
+     "sig/cloud-provider": {
+      "total": 97,
+      "2023": 33,
+      "2024": 31,
+      "2025": 16,
+      "2026": 17
+     },
+     "sig/k8s-infra": {
+      "total": 51,
+      "2023": 14,
+      "2024": 15,
+      "2025": 9,
+      "2026": 13
+     },
+     "sig/etcd": {
+      "total": 46,
+      "2023": 10,
+      "2024": 11,
+      "2025": 17,
+      "2026": 8
+     },
+     "sig/docs": {
+      "total": 45,
+      "2023": 19,
+      "2024": 14,
+      "2025": 11,
+      "2026": 1
+     },
+     "sig/contributor-experience": {
+      "total": 15,
+      "2023": 4,
+      "2024": 4,
+      "2025": 5,
+      "2026": 2
+     },
+     "sig/usability": {
+      "total": 2,
+      "2023": 2,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "sig/multicluster": {
+      "total": 1,
+      "2023": 1,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "sig/ui": {
+      "total": 1,
+      "2023": 1,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     }
+    },
+    "stability": {
+     "present_ge5_every_year": [
+      "sig/api-machinery",
+      "sig/apps",
+      "sig/architecture",
+      "sig/auth",
+      "sig/autoscaling",
+      "sig/cli",
+      "sig/cloud-provider",
+      "sig/cluster-lifecycle",
+      "sig/etcd",
+      "sig/instrumentation",
+      "sig/k8s-infra",
+      "sig/network",
+      "sig/node",
+      "sig/release",
+      "sig/scalability",
+      "sig/scheduling",
+      "sig/security",
+      "sig/storage",
+      "sig/testing",
+      "sig/windows"
+     ],
+     "present_ge5_some_years": [
+      "sig/contributor-experience",
+      "sig/docs"
+     ],
+     "never_ge5_in_a_year": [
+      "sig/multicluster",
+      "sig/ui",
+      "sig/usability"
+     ]
+    }
+   }
+  },
+  "SA": {
+   "overall": {
+    "n_issues": 7707,
+    "coverage_t72h": 0.8409238354742442,
+    "coverage_final": 0.8793304787855196,
+    "exactly_1": 0.6800311405216037,
+    "ge_2": 0.1992993382639159,
+    "churn": 0.10417588903644681,
+    "hours_to_first_label": {
+     "median": 0.019444444444444445,
+     "p90": 13.980944444444447,
+     "n_with_label": 6797,
+     "n_never_labelled": 910
+    },
+    "first_label_actor": {
+     "bot": 6080,
+     "human": 717,
+     "unknown": 0
+    },
+    "classes": {
+     "n_classes": 68,
+     "classes_ge30": 28,
+     "classes_ge100": 16,
+     "share_labelled_in_ge30": 0.9974915154198023
+    }
+   },
+   "per_year": {
+    "2023": {
+     "n_issues": 2261,
+     "coverage_t72h": 0.8434321096859797,
+     "coverage_final": 0.8854489164086687,
+     "exactly_1": 0.6749226006191951,
+     "ge_2": 0.21052631578947367,
+     "churn": 0.12487512487512488,
+     "hours_to_first_label": {
+      "median": 0.035833333333333335,
+      "p90": 14.000833333333333,
+      "n_with_label": 2011,
+      "n_never_labelled": 250
+     },
+     "first_label_actor": {
+      "bot": 1975,
+      "human": 36,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 58,
+      "classes_ge30": 18,
+      "classes_ge100": 8,
+      "share_labelled_in_ge30": 0.9835164835164835
+     }
+    },
+    "2024": {
+     "n_issues": 2002,
+     "coverage_t72h": 0.8856143856143857,
+     "coverage_final": 0.9040959040959041,
+     "exactly_1": 0.7062937062937062,
+     "ge_2": 0.1978021978021978,
+     "churn": 0.08342541436464089,
+     "hours_to_first_label": {
+      "median": 0.03166666666666667,
+      "p90": 8.480555555555558,
+      "n_with_label": 1814,
+      "n_never_labelled": 188
+     },
+     "first_label_actor": {
+      "bot": 1794,
+      "human": 20,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 44,
+      "classes_ge30": 16,
+      "classes_ge100": 6,
+      "share_labelled_in_ge30": 0.980110497237569
+     }
+    },
+    "2025": {
+     "n_issues": 1859,
+     "coverage_t72h": 0.7928994082840237,
+     "coverage_final": 0.8477676169983862,
+     "exactly_1": 0.6713286713286714,
+     "ge_2": 0.1764389456697149,
+     "churn": 0.11802030456852793,
+     "hours_to_first_label": {
+      "median": 0.020833333333333332,
+      "p90": 28.571944444444426,
+      "n_with_label": 1583,
+      "n_never_labelled": 276
+     },
+     "first_label_actor": {
+      "bot": 1564,
+      "human": 19,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 43,
+      "classes_ge30": 14,
+      "classes_ge100": 5,
+      "share_labelled_in_ge30": 0.9536802030456852
+     }
+    },
+    "2026": {
+     "n_issues": 1585,
+     "coverage_t72h": 0.8372239747634069,
+     "coverage_final": 0.8763406940063091,
+     "exactly_1": 0.6643533123028391,
+     "ge_2": 0.21198738170347003,
+     "churn": 0.08567314614830814,
+     "hours_to_first_label": {
+      "median": 0.001388888888888889,
+      "p90": 10.574000000000018,
+      "n_with_label": 1389,
+      "n_never_labelled": 196
+     },
+     "first_label_actor": {
+      "bot": 747,
+      "human": 642,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 48,
+      "classes_ge30": 15,
+      "classes_ge100": 3,
+      "share_labelled_in_ge30": 0.9553635709143269
+     }
+    }
+   },
+   "class_table": {
+    "classes": {
+     "sig/node": {
+      "total": 2103,
+      "2023": 560,
+      "2024": 590,
+      "2025": 491,
+      "2026": 462
+     },
+     "sig/api-machinery": {
+      "total": 1399,
+      "2023": 351,
+      "2024": 377,
+      "2025": 357,
+      "2026": 314
+     },
+     "sig/scheduling": {
+      "total": 696,
+      "2023": 152,
+      "2024": 159,
+      "2025": 162,
+      "2026": 223
+     },
+     "sig/network": {
+      "total": 592,
+      "2023": 206,
+      "2024": 163,
+      "2025": 139,
+      "2026": 84
+     },
+     "sig/storage": {
+      "total": 509,
+      "2023": 187,
+      "2024": 142,
+      "2025": 111,
+      "2026": 69
+     },
+     "sig/apps": {
+      "total": 385,
+      "2023": 155,
+      "2024": 109,
+      "2025": 71,
+      "2026": 50
+     },
+     "sig/auth": {
+      "total": 335,
+      "2023": 134,
+      "2024": 85,
+      "2025": 63,
+      "2026": 53
+     },
+     "sig/testing": {
+      "total": 318,
+      "2023": 102,
+      "2024": 82,
+      "2025": 76,
+      "2026": 58
+     },
+     "sig/cli": {
+      "total": 246,
+      "2023": 80,
+      "2024": 61,
+      "2025": 51,
+      "2026": 54
+     },
+     "sig/architecture": {
+      "total": 229,
+      "2023": 58,
+      "2024": 58,
+      "2025": 54,
+      "2026": 59
+     },
+     "sig/windows": {
+      "total": 188,
+      "2023": 51,
+      "2024": 51,
+      "2025": 48,
+      "2026": 38
+     },
+     "sig/instrumentation": {
+      "total": 176,
+      "2023": 47,
+      "2024": 51,
+      "2025": 45,
+      "2026": 33
+     },
+     "sig/scalability": {
+      "total": 153,
+      "2023": 41,
+      "2024": 31,
+      "2025": 35,
+      "2026": 46
+     },
+     "sig/release": {
+      "total": 142,
+      "2023": 51,
+      "2024": 46,
+      "2025": 31,
+      "2026": 14
+     },
+     "sig/autoscaling": {
+      "total": 118,
+      "2023": 40,
+      "2024": 36,
+      "2025": 18,
+      "2026": 24
+     },
+     "sig/security": {
+      "total": 110,
+      "2023": 59,
+      "2024": 25,
+      "2025": 15,
+      "2026": 11
+     },
+     "sig/cluster-lifecycle": {
+      "total": 99,
+      "2023": 41,
+      "2024": 24,
+      "2025": 24,
+      "2026": 10
+     },
+     "sig/cloud-provider": {
+      "total": 97,
+      "2023": 33,
+      "2024": 31,
+      "2025": 16,
+      "2026": 17
+     },
+     "area/code-organization": {
+      "total": 89,
+      "2023": 21,
+      "2024": 23,
+      "2025": 26,
+      "2026": 19
+     },
+     "area/kubelet": {
+      "total": 85,
+      "2023": 19,
+      "2024": 15,
+      "2025": 16,
+      "2026": 35
+     },
+     "area/security": {
+      "total": 53,
+      "2023": 12,
+      "2024": 9,
+      "2025": 17,
+      "2026": 15
+     },
+     "sig/k8s-infra": {
+      "total": 51,
+      "2023": 14,
+      "2024": 15,
+      "2025": 9,
+      "2026": 13
+     },
+     "sig/etcd": {
+      "total": 46,
+      "2023": 10,
+      "2024": 11,
+      "2025": 17,
+      "2026": 8
+     },
+     "sig/docs": {
+      "total": 45,
+      "2023": 19,
+      "2024": 14,
+      "2025": 11,
+      "2026": 1
+     },
+     "area/test": {
+      "total": 43,
+      "2023": 12,
+      "2024": 11,
+      "2025": 13,
+      "2026": 7
+     },
+     "area/kube-proxy": {
+      "total": 39,
+      "2023": 20,
+      "2024": 10,
+      "2025": 4,
+      "2026": 5
+     },
+     "area/api-validation": {
+      "total": 34,
+      "2023": 0,
+      "2024": 0,
+      "2025": 2,
+      "2026": 32
+     },
+     "area/conformance": {
+      "total": 30,
+      "2023": 10,
+      "2024": 6,
+      "2025": 12,
+      "2026": 2
+     },
+     "area/ipvs": {
+      "total": 26,
+      "2023": 17,
+      "2024": 3,
+      "2025": 5,
+      "2026": 1
+     },
+     "area/kubeadm": {
+      "total": 21,
+      "2023": 11,
+      "2024": 5,
+      "2025": 3,
+      "2026": 2
+     },
+     "area/code-organization/future-dependencies": {
+      "total": 21,
+      "2023": 0,
+      "2024": 0,
+      "2025": 12,
+      "2026": 9
+     },
+     "area/apiserver": {
+      "total": 19,
+      "2023": 6,
+      "2024": 3,
+      "2025": 0,
+      "2026": 10
+     },
+     "sig/contributor-experience": {
+      "total": 15,
+      "2023": 4,
+      "2024": 4,
+      "2025": 5,
+      "2026": 2
+     },
+     "area/logging": {
+      "total": 15,
+      "2023": 6,
+      "2024": 4,
+      "2025": 5,
+      "2026": 0
+     },
+     "area/kubectl": {
+      "total": 14,
+      "2023": 5,
+      "2024": 2,
+      "2025": 1,
+      "2026": 6
+     },
+     "area/provider/gcp": {
+      "total": 13,
+      "2023": 7,
+      "2024": 4,
+      "2025": 1,
+      "2026": 1
+     },
+     "area/code-generation": {
+      "total": 12,
+      "2023": 6,
+      "2024": 1,
+      "2025": 4,
+      "2026": 1
+     },
+     "area/dependency": {
+      "total": 12,
+      "2023": 2,
+      "2024": 2,
+      "2025": 2,
+      "2026": 6
+     },
+     "area/api": {
+      "total": 8,
+      "2023": 4,
+      "2024": 0,
+      "2025": 2,
+      "2026": 2
+     },
+     "area/controller-manager": {
+      "total": 7,
+      "2023": 2,
+      "2024": 4,
+      "2025": 1,
+      "2026": 0
+     },
+     "area/e2e-test-framework": {
+      "total": 6,
+      "2023": 1,
+      "2024": 1,
+      "2025": 0,
+      "2026": 4
+     },
+     "area/provider/azure": {
+      "total": 5,
+      "2023": 1,
+      "2024": 4,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/dns": {
+      "total": 4,
+      "2023": 3,
+      "2024": 0,
+      "2025": 0,
+      "2026": 1
+     },
+     "area/cadvisor": {
+      "total": 3,
+      "2023": 3,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/usability": {
+      "total": 3,
+      "2023": 1,
+      "2024": 0,
+      "2025": 1,
+      "2026": 1
+     },
+     "area/workload-api/job": {
+      "total": 3,
+      "2023": 3,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/provider/aws": {
+      "total": 3,
+      "2023": 1,
+      "2024": 2,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/network-policy": {
+      "total": 3,
+      "2023": 2,
+      "2024": 0,
+      "2025": 0,
+      "2026": 1
+     },
+     "area/release-eng": {
+      "total": 3,
+      "2023": 0,
+      "2024": 2,
+      "2025": 0,
+      "2026": 1
+     },
+     "area/admission-control": {
+      "total": 3,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 3
+     },
+     "sig/usability": {
+      "total": 2,
+      "2023": 2,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/test-infra": {
+      "total": 2,
+      "2023": 1,
+      "2024": 1,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/etcd": {
+      "total": 2,
+      "2023": 2,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/pod-lifecycle": {
+      "total": 2,
+      "2023": 1,
+      "2024": 0,
+      "2025": 1,
+      "2026": 0
+     },
+     "area/client-libraries": {
+      "total": 2,
+      "2023": 0,
+      "2024": 1,
+      "2025": 0,
+      "2026": 1
+     },
+     "area/hw-accelerators": {
+      "total": 2,
+      "2023": 0,
+      "2024": 1,
+      "2025": 1,
+      "2026": 0
+     },
+     "sig/multicluster": {
+      "total": 1,
+      "2023": 1,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/monitoring": {
+      "total": 1,
+      "2023": 1,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "sig/ui": {
+      "total": 1,
+      "2023": 1,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/workload-api/cronjob": {
+      "total": 1,
+      "2023": 1,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/app-lifecycle": {
+      "total": 1,
+      "2023": 1,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/declarative-configuration": {
+      "total": 1,
+      "2023": 1,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/stable-metrics": {
+      "total": 1,
+      "2023": 1,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/custom-resources": {
+      "total": 1,
+      "2023": 1,
+      "2024": 0,
+      "2025": 0,
+      "2026": 0
+     },
+     "area/node-e2e": {
+      "total": 1,
+      "2023": 0,
+      "2024": 0,
+      "2025": 1,
+      "2026": 0
+     },
+     "area/batch": {
+      "total": 1,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 1
+     },
+     "area/ipv6": {
+      "total": 1,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 1
+     },
+     "area/cloudprovider": {
+      "total": 1,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 1
+     }
+    },
+    "stability": {
+     "present_ge5_every_year": [
+      "area/code-organization",
+      "area/kubelet",
+      "area/security",
+      "area/test",
+      "sig/api-machinery",
+      "sig/apps",
+      "sig/architecture",
+      "sig/auth",
+      "sig/autoscaling",
+      "sig/cli",
+      "sig/cloud-provider",
+      "sig/cluster-lifecycle",
+      "sig/etcd",
+      "sig/instrumentation",
+      "sig/k8s-infra",
+      "sig/network",
+      "sig/node",
+      "sig/release",
+      "sig/scalability",
+      "sig/scheduling",
+      "sig/security",
+      "sig/storage",
+      "sig/testing",
+      "sig/windows"
+     ],
+     "present_ge5_some_years": [
+      "area/api-validation",
+      "area/apiserver",
+      "area/code-generation",
+      "area/code-organization/future-dependencies",
+      "area/conformance",
+      "area/dependency",
+      "area/ipvs",
+      "area/kube-proxy",
+      "area/kubeadm",
+      "area/kubectl",
+      "area/logging",
+      "area/provider/gcp",
+      "sig/contributor-experience",
+      "sig/docs"
+     ],
+     "never_ge5_in_a_year": [
+      "area/admission-control",
+      "area/api",
+      "area/app-lifecycle",
+      "area/batch",
+      "area/cadvisor",
+      "area/client-libraries",
+      "area/cloudprovider",
+      "area/controller-manager",
+      "area/custom-resources",
+      "area/declarative-configuration",
+      "area/dns",
+      "area/e2e-test-framework",
+      "area/etcd",
+      "area/hw-accelerators",
+      "area/ipv6",
+      "area/monitoring",
+      "area/network-policy",
+      "area/node-e2e",
+      "area/pod-lifecycle",
+      "area/provider/aws",
+      "area/provider/azure",
+      "area/release-eng",
+      "area/stable-metrics",
+      "area/test-infra",
+      "area/usability",
+      "area/workload-api/cronjob",
+      "area/workload-api/job",
+      "sig/multicluster",
+      "sig/ui",
+      "sig/usability"
+     ]
+    }
+   }
+  }
+ },
+ "cooccurrence_S_A": {
+  "share_S_issues_with_A": 0.07523696682464455,
+  "share_A_issues_with_S": 0.9530956848030019,
+  "n_S_issues": 6752,
+  "n_A_issues": 533,
+  "per_sig_top3_areas": {
+   "sig/node": {
+    "n_issues": 2103,
+    "top3_area": [
+     [
+      "area/kubelet",
+      74
+     ],
+     [
+      "area/test",
+      28
+     ],
+     [
+      "area/api",
+      6
+     ]
+    ]
+   },
+   "sig/api-machinery": {
+    "n_issues": 1399,
+    "top3_area": [
+     [
+      "area/api-validation",
+      34
+     ],
+     [
+      "area/code-organization",
+      16
+     ],
+     [
+      "area/apiserver",
+      15
+     ]
+    ]
+   },
+   "sig/scheduling": {
+    "n_issues": 696,
+    "top3_area": [
+     [
+      "area/hw-accelerators",
+      1
+     ],
+     [
+      "area/conformance",
+      1
+     ],
+     [
+      "area/code-organization",
+      1
+     ]
+    ]
+   },
+   "sig/network": {
+    "n_issues": 592,
+    "top3_area": [
+     [
+      "area/kube-proxy",
+      36
+     ],
+     [
+      "area/ipvs",
+      26
+     ],
+     [
+      "area/security",
+      12
+     ]
+    ]
+   },
+   "sig/storage": {
+    "n_issues": 509,
+    "top3_area": [
+     [
+      "area/security",
+      5
+     ],
+     [
+      "area/kubelet",
+      4
+     ],
+     [
+      "area/conformance",
+      3
+     ]
+    ]
+   },
+   "sig/apps": {
+    "n_issues": 385,
+    "top3_area": [
+     [
+      "area/workload-api/job",
+      3
+     ],
+     [
+      "area/controller-manager",
+      2
+     ],
+     [
+      "area/conformance",
+      2
+     ]
+    ]
+   },
+   "sig/auth": {
+    "n_issues": 335,
+    "top3_area": [
+     [
+      "area/security",
+      6
+     ],
+     [
+      "area/code-organization",
+      4
+     ],
+     [
+      "area/kubelet",
+      4
+     ]
+    ]
+   },
+   "sig/testing": {
+    "n_issues": 318,
+    "top3_area": [
+     [
+      "area/conformance",
+      13
+     ],
+     [
+      "area/code-organization",
+      13
+     ],
+     [
+      "area/test",
+      10
+     ]
+    ]
+   },
+   "sig/cli": {
+    "n_issues": 246,
+    "top3_area": [
+     [
+      "area/kubectl",
+      14
+     ],
+     [
+      "area/workload-api/cronjob",
+      1
+     ],
+     [
+      "area/app-lifecycle",
+      1
+     ]
+    ]
+   },
+   "sig/architecture": {
+    "n_issues": 229,
+    "top3_area": [
+     [
+      "area/code-organization",
+      64
+     ],
+     [
+      "area/conformance",
+      21
+     ],
+     [
+      "area/code-organization/future-dependencies",
+      15
+     ]
+    ]
+   },
+   "sig/windows": {
+    "n_issues": 188,
+    "top3_area": [
+     [
+      "area/kubelet",
+      8
+     ],
+     [
+      "area/security",
+      6
+     ],
+     [
+      "area/kube-proxy",
+      5
+     ]
+    ]
+   },
+   "sig/instrumentation": {
+    "n_issues": 176,
+    "top3_area": [
+     [
+      "area/logging",
+      11
+     ],
+     [
+      "area/code-organization",
+      2
+     ],
+     [
+      "area/cadvisor",
+      1
+     ]
+    ]
+   },
+   "sig/scalability": {
+    "n_issues": 153,
+    "top3_area": [
+     [
+      "area/code-organization/future-dependencies",
+      1
+     ],
+     [
+      "area/provider/gcp",
+      1
+     ]
+    ]
+   },
+   "sig/release": {
+    "n_issues": 142,
+    "top3_area": [
+     [
+      "area/code-organization",
+      4
+     ],
+     [
+      "area/release-eng",
+      3
+     ],
+     [
+      "area/kubeadm",
+      2
+     ]
+    ]
+   },
+   "sig/autoscaling": {
+    "n_issues": 118,
+    "top3_area": [
+     [
+      "area/code-generation",
+      1
+     ],
+     [
+      "area/provider/gcp",
+      1
+     ],
+     [
+      "area/controller-manager",
+      1
+     ]
+    ]
+   },
+   "sig/security": {
+    "n_issues": 110,
+    "top3_area": [
+     [
+      "area/code-organization",
+      5
+     ],
+     [
+      "area/security",
+      3
+     ],
+     [
+      "area/network-policy",
+      2
+     ]
+    ]
+   },
+   "sig/cluster-lifecycle": {
+    "n_issues": 99,
+    "top3_area": [
+     [
+      "area/kubeadm",
+      17
+     ],
+     [
+      "area/security",
+      3
+     ],
+     [
+      "area/provider/aws",
+      2
+     ]
+    ]
+   },
+   "sig/cloud-provider": {
+    "n_issues": 97,
+    "top3_area": [
+     [
+      "area/provider/gcp",
+      11
+     ],
+     [
+      "area/provider/azure",
+      3
+     ],
+     [
+      "area/provider/aws",
+      1
+     ]
+    ]
+   },
+   "sig/k8s-infra": {
+    "n_issues": 51,
+    "top3_area": [
+     [
+      "area/provider/gcp",
+      1
+     ],
+     [
+      "area/kubeadm",
+      1
+     ]
+    ]
+   },
+   "sig/etcd": {
+    "n_issues": 46,
+    "top3_area": [
+     [
+      "area/etcd",
+      2
+     ],
+     [
+      "area/code-organization",
+      1
+     ]
+    ]
+   },
+   "sig/docs": {
+    "n_issues": 45,
+    "top3_area": []
+   },
+   "sig/contributor-experience": {
+    "n_issues": 15,
+    "top3_area": []
+   },
+   "sig/usability": {
+    "n_issues": 2,
+    "top3_area": []
+   },
+   "sig/multicluster": {
+    "n_issues": 1,
+    "top3_area": [
+     [
+      "area/kubeadm",
+      1
+     ]
+    ]
+   },
+   "sig/ui": {
+    "n_issues": 1,
+    "top3_area": []
+   }
+  }
+ },
+ "other_label_families": {
+  "sig/": {
+   "n_labels": 25,
+   "sum_issue_labels_final": 8056,
+   "top10": [
+    {
+     "label": "sig/node",
+     "n_issues_final": 2103
+    },
+    {
+     "label": "sig/api-machinery",
+     "n_issues_final": 1399
+    },
+    {
+     "label": "sig/scheduling",
+     "n_issues_final": 696
+    },
+    {
+     "label": "sig/network",
+     "n_issues_final": 592
+    },
+    {
+     "label": "sig/storage",
+     "n_issues_final": 509
+    },
+    {
+     "label": "sig/apps",
+     "n_issues_final": 385
+    },
+    {
+     "label": "sig/auth",
+     "n_issues_final": 335
+    },
+    {
+     "label": "sig/testing",
+     "n_issues_final": 318
+    },
+    {
+     "label": "sig/cli",
+     "n_issues_final": 246
+    },
+    {
+     "label": "sig/architecture",
+     "n_issues_final": 229
+    }
+   ]
+  },
+  "kind/": {
+   "n_labels": 12,
+   "sum_issue_labels_final": 6960,
+   "top10": [
+    {
+     "label": "kind/bug",
+     "n_issues_final": 3155
+    },
+    {
+     "label": "kind/feature",
+     "n_issues_final": 1360
+    },
+    {
+     "label": "kind/failing-test",
+     "n_issues_final": 830
+    },
+    {
+     "label": "kind/flake",
+     "n_issues_final": 718
+    },
+    {
+     "label": "kind/support",
+     "n_issues_final": 541
+    },
+    {
+     "label": "kind/cleanup",
+     "n_issues_final": 168
+    },
+    {
+     "label": "kind/documentation",
+     "n_issues_final": 96
+    },
+    {
+     "label": "kind/regression",
+     "n_issues_final": 81
+    },
+    {
+     "label": "kind/dependency",
+     "n_issues_final": 3
+    },
+    {
+     "label": "kind/deprecation",
+     "n_issues_final": 3
+    }
+   ]
+  },
+  "needs-*": {
+   "n_labels": 4,
+   "sum_issue_labels_final": 6053,
+   "top10": [
+    {
+     "label": "needs-triage",
+     "n_issues_final": 5144
+    },
+    {
+     "label": "needs-sig",
+     "n_issues_final": 856
+    },
+    {
+     "label": "needs-kind",
+     "n_issues_final": 42
+    },
+    {
+     "label": "needs-priority",
+     "n_issues_final": 11
+    }
+   ]
+  },
+  "triage/": {
+   "n_labels": 5,
+   "sum_issue_labels_final": 2765,
+   "top10": [
+    {
+     "label": "triage/accepted",
+     "n_issues_final": 2452
+    },
+    {
+     "label": "triage/needs-information",
+     "n_issues_final": 274
+    },
+    {
+     "label": "triage/duplicate",
+     "n_issues_final": 23
+    },
+    {
+     "label": "triage/unresolved",
+     "n_issues_final": 9
+    },
+    {
+     "label": "triage/not-reproducible",
+     "n_issues_final": 7
+    }
+   ]
+  },
+  "lifecycle/": {
+   "n_labels": 4,
+   "sum_issue_labels_final": 1694,
+   "top10": [
+    {
+     "label": "lifecycle/rotten",
+     "n_issues_final": 1346
+    },
+    {
+     "label": "lifecycle/stale",
+     "n_issues_final": 230
+    },
+    {
+     "label": "lifecycle/frozen",
+     "n_issues_final": 106
+    },
+    {
+     "label": "lifecycle/active",
+     "n_issues_final": 12
+    }
+   ]
+  },
+  "priority/": {
+   "n_labels": 5,
+   "sum_issue_labels_final": 1103,
+   "top10": [
+    {
+     "label": "priority/important-longterm",
+     "n_issues_final": 356
+    },
+    {
+     "label": "priority/important-soon",
+     "n_issues_final": 338
+    },
+    {
+     "label": "priority/backlog",
+     "n_issues_final": 257
+    },
+    {
+     "label": "priority/critical-urgent",
+     "n_issues_final": 115
+    },
+    {
+     "label": "priority/awaiting-more-evidence",
+     "n_issues_final": 37
+    }
+   ]
+  },
+  "area/": {
+   "n_labels": 44,
+   "sum_issue_labels_final": 597,
+   "top10": [
+    {
+     "label": "area/code-organization",
+     "n_issues_final": 89
+    },
+    {
+     "label": "area/kubelet",
+     "n_issues_final": 85
+    },
+    {
+     "label": "area/security",
+     "n_issues_final": 53
+    },
+    {
+     "label": "area/test",
+     "n_issues_final": 43
+    },
+    {
+     "label": "area/kube-proxy",
+     "n_issues_final": 39
+    },
+    {
+     "label": "area/api-validation",
+     "n_issues_final": 34
+    },
+    {
+     "label": "area/conformance",
+     "n_issues_final": 30
+    },
+    {
+     "label": "area/ipvs",
+     "n_issues_final": 26
+    },
+    {
+     "label": "area/code-organization/future-dependencies",
+     "n_issues_final": 21
+    },
+    {
+     "label": "area/kubeadm",
+     "n_issues_final": 21
+    }
+   ]
+  },
+  "wg/": {
+   "n_labels": 13,
+   "sum_issue_labels_final": 398,
+   "top10": [
+    {
+     "label": "wg/device-management",
+     "n_issues_final": 243
+    },
+    {
+     "label": "wg/workload-aware-scheduling",
+     "n_issues_final": 56
+    },
+    {
+     "label": "wg/batch",
+     "n_issues_final": 34
+    },
+    {
+     "label": "wg/security-audit",
+     "n_issues_final": 19
+    },
+    {
+     "label": "wg/api-expression",
+     "n_issues_final": 18
+    },
+    {
+     "label": "wg/structured-logging",
+     "n_issues_final": 15
+    },
+    {
+     "label": "wg/node-lifecycle",
+     "n_issues_final": 7
+    },
+    {
+     "label": "wg/policy",
+     "n_issues_final": 2
+    },
+    {
+     "label": "wg/cluster-api",
+     "n_issues_final": 1
+    },
+    {
+     "label": "wg/data-protection",
+     "n_issues_final": 1
+    }
+   ]
+  },
+  "(no prefix)": {
+   "n_labels": 5,
+   "sum_issue_labels_final": 341,
+   "top10": [
+    {
+     "label": "help wanted",
+     "n_issues_final": 218
+    },
+    {
+     "label": "official-cve-feed",
+     "n_issues_final": 45
+    },
+    {
+     "label": "release-blocker",
+     "n_issues_final": 40
+    },
+    {
+     "label": "good first issue",
+     "n_issues_final": 38
+    },
+    {
+     "label": "api-review",
+     "n_issues_final": 0
+    }
+   ]
+  },
+  "committee/": {
+   "n_labels": 1,
+   "sum_issue_labels_final": 49,
+   "top10": [
+    {
+     "label": "committee/security-response",
+     "n_issues_final": 49
+    }
+   ]
+  }
+ }
+}

@@ -21,7 +21,7 @@
  "n_issues": 7707,
  "repo": "kubernetes/kubernetes",
  "rules": "(spec section 4.3, 2026-10-20; do not change after seeing results)\n 1. Pure temporal split on created_at (UTC): train < 2025-07-01T00:00:00Z (i.e. <= 2025-06-30\n    23:59:59), validation 2025-07-01 .. 2025-12-31, test >= 2026-01-01. Issues only (PRs are\n    not split). Every issue gets exactly one split. Nothing is dropped.\n 2. Leakage flags for validation/test issues (train issues: False by definition):\n    leak_texthash = text_hash equals that of some issue in an EARLIER split (train for\n    validation; train or validation for test); leak_dup_pair = the issue is the source or the\n    canonical of a duplicate pair whose other end lies in an earlier split (both ends must be\n    issues in the table). classifier_eligible = not (leak_texthash or leak_dup_pair): the rule\n    \"remove near-duplicate leakage across splits\" for the CLASSIFIER and RESOLUTION tasks only.\n 3. Retrieval keeps cross-split duplicate pairs: dup_task_pairs = pairs whose source (the query)\n    is in validation or test and whose canonical was created strictly before the source. A\n    canonical outside the issues table (PR, or older than the scrape window) cannot be dated, is\n    kept and marked canonical_in_table False. exact_text_dup = equal text_hash. Duplicate\n    groups inside one split (same text_hash) are counted, not flagged.\n 4. Report = counts, hashes, rules; no issue ids. sha256 of each split's sorted newline-joined\n    issue numbers (and of the eligible subsets), of each input file, and the commit of this script.",
- "script_commit": "f6dc74b24d6b09760982e42d44baf7f82bd7a9bd",
+ "script_commit": "cf890d25c759a30e64e93d541e9f5dd6638e9a5c",
  "test": {
   "by_year_month": {
    "2026-01": 144,

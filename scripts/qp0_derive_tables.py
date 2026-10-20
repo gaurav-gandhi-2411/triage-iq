@@ -45,9 +45,24 @@ def text_hash(title: str | None, body: str | None) -> str:
     return hashlib.sha1(f"{_norm(title)}\n{_norm((body or '')[:BODY_CAP])}".encode()).hexdigest()  # noqa: S324
 
 
-def replay_labels(events: list[dict[str, Any]], at: datetime) -> list[str]:
-    """Label set at time ``at`` (inclusive), replayed in timestamp order (stable on ties)."""
-    state: dict[str, None] = {}
+def creation_labels(events: list[dict[str, Any]], final: list[str]) -> set[str]:
+    """Labels present from creation: issue templates / forms apply them without a LabeledEvent.
+
+    A label whose FIRST event is an unlabel existed before it; a final label with no event at all
+    was never touched since creation.
+    """
+    first: dict[str, str] = {}
+    for e in sorted(events, key=lambda e: e["ts"]):
+        first.setdefault(e["label"], e["action"])
+    return {k for k, a in first.items() if a == "unlabeled"} | {x for x in final if x not in first}
+
+
+def replay_labels(
+    events: list[dict[str, Any]], at: datetime, initial: set[str] | frozenset[str] = frozenset()
+) -> list[str]:
+    """Label set at time ``at`` (inclusive), replayed in timestamp order (stable on ties),
+    starting from the ``initial`` (creation-time) labels."""
+    state: dict[str, None] = dict.fromkeys(initial)
     for e in sorted(events, key=lambda e: e["ts"]):
         if e["ts"] > at:
             break
@@ -89,7 +104,7 @@ def issue_row(rec: dict[str, Any], repo: str) -> tuple[dict[str, Any], list[dict
         "n_comments": rec["comments"]["totalCount"],
         "milestone_title": (rec.get("milestone") or {}).get("title"),
         "labels_final": ls,
-        "labels_t72h": replay_labels(ev, created + HORIZON),
+        "labels_t72h": replay_labels(ev, created + HORIZON, creation_labels(ev, ls)),
         "first_label_ts": min(labeled) if labeled else None,
         "text_hash": text_hash(rec.get("title"), body),
         "created_year": created.year,

@@ -413,3 +413,37 @@ def test_dup_targets_pair_from_other_side_clears_that_issues_flag(tmp_path: Path
     t = qp0d.build_tables(REPO, base)
     assert [(r.source, r.canonical) for r in t["duplicate_pairs"].itertuples()] == [(9, 5)]
     assert not t["issues"].set_index("number").at[9, "dup_label_unresolved"]
+
+
+# --- labels present from creation (templates / forms apply them without any LabeledEvent) -------
+def test_label_without_events_is_present_from_creation() -> None:
+    rec = issue(labels=["template", "later"], nodes=[lab(80, "later")])
+    row, _ = qp0d.issue_row(rec, REPO)
+    assert row["labels_t72h"] == [
+        "template"
+    ]  # never touched -> there since creation; "later" came after 72 h
+    assert row["labels_final"] == ["template", "later"]
+
+
+def test_creation_label_removed_and_readded_is_present_until_the_first_unlabel() -> None:
+    ev = events(issue(nodes=[lab(10, "x", False), lab(100, "x")]))
+    init = qp0d.creation_labels(ev, ["x"])
+    assert init == {"x"}  # its first event is an unlabel, so it existed before that
+    assert qp0d.replay_labels(ev, T0 + timedelta(hours=5), init) == ["x"]
+    assert qp0d.replay_labels(ev, T0 + timedelta(hours=50), init) == []  # removed at 10 h
+    assert qp0d.replay_labels(ev, T0 + timedelta(hours=101), init) == ["x"]  # re-added at 100 h
+
+
+def test_label_with_only_an_unlabel_event_was_there_until_removed() -> None:
+    ev = events(issue(nodes=[lab(10, "gone", False)]))
+    init = qp0d.creation_labels(ev, [])  # not in the final set
+    assert init == {"gone"}
+    assert qp0d.replay_labels(ev, T0 + timedelta(hours=9), init) == ["gone"]
+    assert qp0d.replay_labels(ev, T0 + timedelta(hours=11), init) == []
+    row, _ = qp0d.issue_row(issue(nodes=[lab(10, "gone", False)]), REPO)
+    assert row["labels_t72h"] == [] and row["labels_final"] == []
+
+
+def test_label_first_labeled_then_removed_is_not_a_creation_label() -> None:
+    ev = events(issue(nodes=[lab(1, "a"), lab(2, "a", False)]))
+    assert qp0d.creation_labels(ev, []) == set()

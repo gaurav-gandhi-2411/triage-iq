@@ -44,13 +44,21 @@ NEG_AFTER_RE = re.compile(r"\bnot\b|n['’]t\b|\bnope\b|disagree|\bwrong\b", re.
 NEG_RE = re.compile(r"\bnot\b|n['’]t\b|\bno longer\b|\bnever\b", re.I)
 # vscode maintainers close with "/duplicate <ref>" (also a backslash; the ref may follow other words
 # on later lines) or prose like "I will go ahead and close this issue as a duplicate"
-SLASH_CMD_RE = re.compile(r"(?:^|\s)[/\\]duplicate\b", re.I)
+SLASH_CMD_RE = re.compile(r"(?:^|\s)[/\\]duplicate(?![\w-])", re.I)  # not "/duplicate-check"
+NEG_CMD_RE = re.compile(
+    r"\b(?:not|n['’]t|no longer|never)(?:\s+(?:a|an|the))?(?:\s+dup\w*\W*)?\s*$", re.I
+)
+PULL_RE = re.compile(r"/pull/\d+")
+# hedges that matter AFTER a command's target ("#28 maybe"); "if you need ..." is just explanation
+TRAIL_HEDGE_RE = re.compile(
+    r"\?(?=\s|$)|\b(?:maybe|perhaps|probably|possibly|unsure|not sure)\b|i think", re.I
+)
 PROSE_RE = re.compile(r"\bclos(?:e|ing|ed)\b[^\n.]{0,30}\bas (?:a )?dup", re.I)
 # a staff comment that is just "Duplicate <ref>" (no "of"), as vscode maintainers often write
 PLAIN_DUP_RE = re.compile(
     r"^[ \t>*_-]*dup(?:licate|e)?\b[\s:\-]*(?=https?://|#\d|[\w.-]+/[\w.-]+#\d)", re.I | re.M
 )
-BARE_NUM_RE = re.compile(r"\s*(?:of\s+)?#?(\d+)\b")
+BARE_NUM_RE = re.compile(r"[ \t]*(?:of[ \t]+)?#?(\d+)\b")  # same line only
 STAFF = {"OWNER", "MEMBER", "COLLABORATOR"}
 SEGMENT_RE = re.compile(r"\n\s*\n|(?<=[.!?])\s+")  # paragraph / sentence boundaries
 
@@ -182,33 +190,81 @@ def _targets(text: str, repo: str) -> tuple[list[int], str]:
     return found, evidence
 
 
-def _cmd_target(text: str, repo: str) -> tuple[int, str] | None:
-    """Same-repo target of a "/duplicate" command: the first reference within 300 chars after it."""
+def _cmd_target(text: str, repo: str) -> tuple[int, str, int] | None:
+    """Same-repo target (number, evidence, n_targets) of a "/duplicate" command.
+
+    The target is the first reference after the command: at most 3 words may separate them (a
+    bare number must follow on the same line) and, when words do separate them, no other
+    reference may follow on that line. Refs joined by and / & / , / or count in n_targets. The
+    command's own line must carry no hedge ("?", maybe, could, ...), no negation tied to the
+    command ("not a /duplicate", "not a duplicate: /duplicate"), and no disagreement after the
+    target ("... but it is not"). A "don't" in an unrelated clause does not matter.
+    """
     m = SLASH_CMD_RE.search(text) or PLAIN_DUP_RE.search(text)
     if not m:
+        return None
+    ls = text.rfind("\n", 0, m.start()) + 1
+    if NEG_CMD_RE.search(text[ls : m.start()]):
         return None
     tail = text[m.end() : m.end() + 300]
     bare, ref = BARE_NUM_RE.match(tail), REF_RE.search(tail)
     if bare and (not ref or bare.start(1) <= ref.start()):
-        num: int | None = int(bare.group(1))
+        pos, num, first_end = bare.start(1), int(bare.group(1)), bare.end(1)
     elif ref:
-        num = _ref_number(ref, repo)  # a foreign-repo first reference is not a usable pair
+        pos, num, first_end = ref.start(), _ref_number(ref, repo), ref.end()
     else:
         return None
-    return (num, " ".join(text[max(0, m.start() - 20) : m.end() + 120].split())) if num else None
+    words = len(re.findall(r"[A-Za-z']+", tail[:pos]))
+    if num is None or words > 3:
+        return None
+    eol = tail.find("\n", first_end)
+    eol = len(tail) if eol < 0 else eol
+    after = tail[first_end:eol]
+    # full hedge list before the target (the URL itself may contain "?"); only a few markers after
+    if HEDGE_RE.search(text[ls : m.end() + pos]) or TRAIL_HEDGE_RE.search(after):
+        return None
+    if NEG_AFTER_RE.search(after):
+        return None
+    others = [r for r in REF_RE.finditer(tail, first_end, eol) if _ref_number(r, repo) != num]
+    n_targets, prev, later = (
+        1,
+        first_end,
+        others,
+    )  # "[#5](url)" repeats the same target: not "other"
+    for r in later:
+        if re.fullmatch(r"\s*(?:,|&|and|or)?\s*", tail[prev : r.start()], re.I):
+            n_targets, prev = n_targets + 1, r.end()
+        else:
+            break
+    if later and words:
+        return None  # words before the first ref AND another ref on the line: ambiguous
+    return num, " ".join(text[max(0, m.start() - 20) : m.end() + 120].split()), n_targets
 
 
-def _prose_target(text: str, repo: str) -> tuple[int, str] | None:
-    """Target of "close this as a duplicate" prose: needs exactly one reference in the comment."""
+def _prose_target(text: str, repo: str, prs: set[int] | None) -> tuple[int, str] | None:
+    """Target of "close this as a duplicate" prose: exactly one reference, and it is not a PR."""
     refs, m = list(REF_RE.finditer(text)), PROSE_RE.search(text)
-    num = _ref_number(refs[0], repo) if len(refs) == 1 else None
-    return (
-        (num, " ".join(text[max(0, m.start() - 60) : m.end() + 60].split())) if m and num else None
+    if not m or len(refs) != 1 or PULL_RE.search(text):
+        return None
+    num = _ref_number(refs[0], repo)
+    if num is None or (prs and num in prs):
+        return None
+    return num, " ".join(text[max(0, m.start() - 60) : m.end() + 60].split())
+
+
+def _human(c: dict[str, Any]) -> bool:
+    """A real user: not typed Bot and a login that does not end in bot / [bot]."""
+    a = c.get("author") or {}
+    return a.get("__typename", "User") == "User" and not (a.get("login") or "").lower().endswith(
+        ("bot", "[bot]")
     )
 
 
 def extract_duplicates(
-    rec: dict[str, Any], repo: str, diag: Counter[str] | None = None
+    rec: dict[str, Any],
+    repo: str,
+    diag: Counter[str] | None = None,
+    pr_numbers: set[int] | None = None,
 ) -> list[dict[str, Any]]:
     """Duplicate pairs (source=this issue) from events, comments and a ``*duplicate`` label.
 
@@ -254,12 +310,12 @@ def extract_duplicates(
         return list(found.values())
     for c in (c for c in rec["lastComments"]["nodes"] if c):
         who, text = _comment_text(c)
-        staff = c.get("authorAssociation") in STAFF
+        staff = c.get("authorAssociation") in STAFF and _human(c)
         if staff and (hit := _cmd_target(text, repo)):
-            add(hit[0], "slash_duplicate_cmd", c["createdAt"], hit[1])
+            add(hit[0], "slash_duplicate_cmd", c["createdAt"], hit[1], hit[2])
             continue
         targets, ev = _targets(text, repo)
-        if not targets and staff and (hit := _prose_target(text, repo)):
+        if not targets and staff and (hit := _prose_target(text, repo, pr_numbers)):
             add(hit[0], "close_as_duplicate_prose", c["createdAt"], hit[1])
             continue
         if not targets:

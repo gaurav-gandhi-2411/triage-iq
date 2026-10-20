@@ -304,3 +304,89 @@ def test_staff_plain_duplicate_comment_without_of() -> None:
         == []
     )
     assert qp0d.extract_duplicates(_closed(_staff("This is not a duplicate. See #164")), REPO) == []
+
+
+# --- review round: hedge / negation, adjacency, human-only, PR targets --------------------------
+def _staff_pairs(body: str, **kw: Any) -> list[tuple[int, str, int]]:
+    got = qp0d.extract_duplicates(_closed(_staff(body)), REPO, **kw)
+    return [(p["canonical"], p["method"], p["n_targets"]) for p in got]
+
+
+def test_command_paths_reject_hedged_and_negated_wording() -> None:
+    for body in [
+        "not a duplicate: /duplicate #5",
+        "this is not a /duplicate #12",
+        "could this be a /duplicate #9?",
+        "/duplicate #26 but it is not",
+        "/duplicate #27 is wrong, it is not a dup",
+        "Duplicate #28 maybe",
+        "is this a Duplicate #29",
+    ]:
+        assert _staff_pairs(body) == [], body
+
+
+def test_real_staff_command_survives_unrelated_negation() -> None:
+    # the "dont" belongs to another clause, not to the target sentence
+    assert _staff_pairs("pls dont open duplicate issues /duplicate #212322") == [
+        (212322, "slash_duplicate_cmd", 1)
+    ]
+    assert _staff_pairs("please don't open duplicates.\n/duplicate #3") == [
+        (3, "slash_duplicate_cmd", 1)
+    ]
+
+
+def test_command_target_must_be_adjacent_and_unambiguous() -> None:
+    for body in [
+        "/duplicate fixed in #5, canonical is #9",
+        "/duplicate\nThanks for the report, this is similar to #44 maybe",
+        "/duplicate\n2 of the above",
+        "/duplicate-check #31",
+        "/duplicate one two three four five #8",
+    ]:
+        assert _staff_pairs(body) == [], body
+    assert _staff_pairs("Duplicate #34 and #35") == [(34, "slash_duplicate_cmd", 2)]
+    assert _staff_pairs("/duplicate #1 & #2") == [(1, "slash_duplicate_cmd", 2)]
+    assert _staff_pairs("/duplicate https://github.com/o/r/issues/7 Related: #8") == [
+        (7, "slash_duplicate_cmd", 1)
+    ]
+    assert _staff_pairs("/duplicate\r\n\r\nUse Profiles feature - #116") == [
+        (116, "slash_duplicate_cmd", 1)
+    ]
+
+
+def test_staff_gated_methods_need_a_human_user() -> None:
+    bot = {**_staff("/duplicate #12", login="some-bot"), "author": {"login": "some-bot"}}
+    assert "slash_duplicate_cmd" not in {
+        p["method"] for p in qp0d.extract_duplicates(_closed(bot), REPO)
+    }
+    app = {**_staff("/duplicate #12"), "author": {"login": "octo", "__typename": "Bot"}}
+    assert qp0d.extract_duplicates(_closed(app), REPO) == []
+    suffix = {
+        **_staff("I will close this as a duplicate, tracked in #12"),
+        "author": {"login": "dependabot[bot]"},
+    }
+    assert qp0d.extract_duplicates(_closed(suffix), REPO) == []
+    user = {**_staff("/duplicate #12"), "author": {"login": "octo", "__typename": "User"}}
+    assert len(qp0d.extract_duplicates(_closed(user), REPO)) == 1
+
+
+def test_prose_rejects_pull_requests() -> None:
+    body = "The fix is in #77, I will close this as a duplicate."
+    assert _staff_pairs(body) == [(77, "close_as_duplicate_prose", 1)]  # unknown to be a PR
+    assert _staff_pairs(body, pr_numbers={77}) == []  # known PR number
+    url = "Fixed by https://github.com/o/r/pull/77 and #9, I will close this as a duplicate."
+    assert _staff_pairs(url) == []  # a /pull/ URL is a second, non-issue reference
+    assert _staff_pairs("closing as a duplicate of https://github.com/o/r/pull/77") == []
+
+
+def test_command_accepts_markdown_link_query_urls_and_trailing_explanation() -> None:
+    cmd = "slash_duplicate_cmd"
+    assert _staff_pairs("/duplicate [#194841](https://github.com/o/r/issues/194841)") == [
+        (194841, cmd, 1)
+    ]
+    assert _staff_pairs(
+        "/duplicate https://github.com/o/r/issues/246652?dupRef=o%2Fr%2F229301"
+    ) == [(246652, cmd, 1)]
+    assert _staff_pairs(
+        "/duplicate https://github.com/o/r/issues/122951 , if you need admin mode see there"
+    ) == [(122951, cmd, 1)]

@@ -203,6 +203,7 @@ def build_tables(repo: str, base: Path, limit: int | None = None) -> dict[str, p
         for r in iter_records(base / "prs", limit)
     }
     prs = {k: {"merged": v["merged"], "merged_at": v["merged_at"]} for k, v in prs_rows.items()}
+    pr_set = set(prs_rows)  # prose pairs whose target is a known PR are dropped
     refs: dict[int, list[int]] = {}
     for k, v in prs_rows.items():
         for i in v["closing_issue_numbers"]:
@@ -217,7 +218,7 @@ def build_tables(repo: str, base: Path, limit: int | None = None) -> dict[str, p
     for n, rec in recs.items():
         diag: Counter[str] = Counter()
         row, ev = _derive(rec, lambda x: issue_row(x, repo))
-        d = _derive(rec, lambda x, dg=diag: extract_duplicates(x, repo, dg))
+        d = _derive(rec, lambda x, dg=diag: extract_duplicates(x, repo, dg, pr_set))
         row["canon_foreign_repo"] = diag["canon_foreign_repo"]
         row["canon_repo_unknown"] = diag["canon_repo_unknown"]
         row["canon_self"] = diag["canon_self"]

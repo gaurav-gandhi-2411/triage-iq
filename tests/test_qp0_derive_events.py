@@ -218,3 +218,89 @@ def test_label_pair_needs_unhedged_unquoted_comment() -> None:
     assert qp0d.extract_duplicates(_closed(guess, labels=["triage/duplicate"]), REPO) == []
     maybe = comment("maybe a dup of #61 /triage duplicate")
     assert qp0d.extract_duplicates(_closed(maybe, labels=["triage/duplicate"]), REPO) == []
+
+
+# --- vscode wording (the extractor was first built on kubernetes only) ---------------------------
+def _staff(body: str, login: str = "maint") -> dict[str, Any]:
+    return {**comment(body, login), "authorAssociation": "MEMBER"}
+
+
+def test_slash_duplicate_command_forms_seen_in_vscode() -> None:
+    for body, want in [
+        ("/duplicate of https://github.com/o/r/issues/12", 12),
+        ("/duplicate\r\n\r\nUse Profiles feature - https://github.com/o/r/issues/116", 116),
+        ("\duplicate #170073 ", 170073),
+        ("/duplicate 44", 44),
+    ]:
+        got = qp0d.extract_duplicates(_closed(_staff(body)), REPO)
+        assert [(p["canonical"], p["method"]) for p in got] == [(want, "slash_duplicate_cmd")], body
+
+
+def test_slash_duplicate_needs_staff_and_same_repo() -> None:
+    assert _dups("/duplicate https://github.com/o/r/issues/12") == []  # not staff, no label
+    got = qp0d.extract_duplicates(
+        _closed(_staff("/duplicate https://github.com/x/y/issues/9")), REPO
+    )
+    assert got == []  # a foreign repo is not a usable pair
+    labelled = _dups("/duplicate #12", labels=["*duplicate"])
+    assert [p["method"] for p in labelled] == ["dup_label_with_ref"]  # unchanged k8s-era path
+
+
+def test_dupe_wording_is_a_duplicate_phrase() -> None:
+    body = _staff("dupe of https://github.com/o/r/issues/7")
+    got = qp0d.extract_duplicates(issue(5, labels=["*duplicate"], comments=[body]), REPO)
+    assert [p["canonical"] for p in got] == [7]
+
+
+def test_close_as_duplicate_prose_needs_staff_and_exactly_one_ref() -> None:
+    one = "Tracked here - https://github.com/o/r/issues/597. I will go ahead and close this issue as a duplicate."
+    got = qp0d.extract_duplicates(_closed(_staff(one)), REPO)
+    assert [(p["canonical"], p["method"]) for p in got] == [(597, "close_as_duplicate_prose")]
+    two = one + " See also #12."
+    assert qp0d.extract_duplicates(_closed(_staff(two)), REPO) == []
+    assert qp0d.extract_duplicates(_closed(comment(one)), REPO) == []  # not staff
+    other = "Tracked in #597, closing."
+    assert qp0d.extract_duplicates(_closed(_staff(other)), REPO) == []  # no duplicate wording
+
+
+def test_self_canonical_marked_event_is_counted_not_paired() -> None:
+    # vscode: every MarkedAsDuplicateEvent has canonical == the issue itself (the target is in the
+    # `duplicate` field, which the scrape did not request); it must be visible, not silent
+    node = {
+        "__typename": "MarkedAsDuplicateEvent",
+        "createdAt": ts(2),
+        "actor": {"login": "m"},
+        "canonical": CANON(5),
+    }
+    diag: Counter[str] = Counter()
+    assert qp0d.extract_duplicates(issue(5, nodes=[node]), REPO, diag) == []
+    assert diag["canon_self"] == 1
+
+
+def test_closed_event_duplicate_of_target_is_a_pair() -> None:
+    # GraphQL ClosedEvent.duplicateOf carries the target of a UI "close as duplicate" (not yet scraped)
+    closed = {
+        "__typename": "ClosedEvent",
+        "createdAt": ts(5),
+        "actor": {"login": "m"},
+        "stateReason": "DUPLICATE",
+        "duplicateOf": CANON(9),
+    }
+    got = qp0d.extract_duplicates(issue(5, nodes=[closed]), REPO)
+    assert [(p["canonical"], p["method"]) for p in got] == [(9, "closed_event_duplicate_of")]
+    foreign = {**closed, "duplicateOf": CANON(9, "x/y")}
+    assert qp0d.extract_duplicates(issue(5, nodes=[foreign]), REPO) == []
+    assert qp0d.extract_duplicates(issue(5, nodes=[{**closed, "duplicateOf": None}]), REPO) == []
+
+
+def test_staff_plain_duplicate_comment_without_of() -> None:
+    for body in ("Duplicate https://github.com/o/r/issues/164", "Dup: #164", "duplicate\r\n#164"):
+        got = qp0d.extract_duplicates(_closed(_staff(body)), REPO)
+        assert [(p["canonical"], p["method"]) for p in got] == [(164, "slash_duplicate_cmd")], body
+    assert (
+        qp0d.extract_duplicates(
+            _closed(comment("Duplicate https://github.com/o/r/issues/164")), REPO
+        )
+        == []
+    )
+    assert qp0d.extract_duplicates(_closed(_staff("This is not a duplicate. See #164")), REPO) == []

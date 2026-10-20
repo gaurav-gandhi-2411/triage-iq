@@ -11,9 +11,12 @@ from typing import Any
 # lower rank wins when several methods find the same (source, canonical) pair
 METHOD_RANK = {
     "marked_as_duplicate_event": 0,
+    "closed_event_duplicate_of": 0,  # GitHub's own target of "close as duplicate" (needs a re-scrape)
     "vscode_bot_comment": 1,
-    "k8s_close_comment": 2,
-    "dup_label_with_ref": 3,
+    "slash_duplicate_cmd": 2,  # a maintainer's explicit /duplicate command (vscode)
+    "k8s_close_comment": 3,
+    "dup_label_with_ref": 4,
+    "close_as_duplicate_prose": 5,  # weakest: a maintainer says "close this as a duplicate" + one link
 }
 _REF = (
     r"(?:https?://github\.com/(?P<ur>[\w.-]+/[\w.-]+)/issues/(?P<un>\d+)"
@@ -23,7 +26,7 @@ REF_RE = re.compile(_REF)
 # a connector word is required ("duplicate of/with/to/as"): "the duplicate issue #44 was fixed"
 # is not a duplicate statement. "Duplicate of issue #5" / "of [x](url)" are accepted.
 DUP_RE = re.compile(
-    r"\b(?:duplicate[sd]?|dups?)\b(?:\s+(?:of|with|to|as))+[\s:]*(?:issue\s+)?"
+    r"\b(?:duplicate[sd]?|dup(?:e[sd]?|s)?)\b(?:\s+(?:of|with|to|as))+[\s:]*(?:issue\s+)?"
     r"(?:\[[^\]]*\]\(\s*)?" + _REF,
     re.I,
 )
@@ -39,6 +42,16 @@ HEDGE_RE = re.compile(
 NEG_AFTER_RE = re.compile(r"\bnot\b|n['’]t\b|\bnope\b|disagree|\bwrong\b", re.I)
 # negation within ~40 chars before the phrase: "is not a duplicate of", "isn't", "no longer"
 NEG_RE = re.compile(r"\bnot\b|n['’]t\b|\bno longer\b|\bnever\b", re.I)
+# vscode maintainers close with "/duplicate <ref>" (also a backslash; the ref may follow other words
+# on later lines) or prose like "I will go ahead and close this issue as a duplicate"
+SLASH_CMD_RE = re.compile(r"(?:^|\s)[/\\]duplicate\b", re.I)
+PROSE_RE = re.compile(r"\bclos(?:e|ing|ed)\b[^\n.]{0,30}\bas (?:a )?dup", re.I)
+# a staff comment that is just "Duplicate <ref>" (no "of"), as vscode maintainers often write
+PLAIN_DUP_RE = re.compile(
+    r"^[ \t>*_-]*dup(?:licate|e)?\b[\s:\-]*(?=https?://|#\d|[\w.-]+/[\w.-]+#\d)", re.I | re.M
+)
+BARE_NUM_RE = re.compile(r"\s*(?:of\s+)?#?(\d+)\b")
+STAFF = {"OWNER", "MEMBER", "COLLABORATOR"}
 SEGMENT_RE = re.compile(r"\n\s*\n|(?<=[.!?])\s+")  # paragraph / sentence boundaries
 
 
@@ -169,6 +182,31 @@ def _targets(text: str, repo: str) -> tuple[list[int], str]:
     return found, evidence
 
 
+def _cmd_target(text: str, repo: str) -> tuple[int, str] | None:
+    """Same-repo target of a "/duplicate" command: the first reference within 300 chars after it."""
+    m = SLASH_CMD_RE.search(text) or PLAIN_DUP_RE.search(text)
+    if not m:
+        return None
+    tail = text[m.end() : m.end() + 300]
+    bare, ref = BARE_NUM_RE.match(tail), REF_RE.search(tail)
+    if bare and (not ref or bare.start(1) <= ref.start()):
+        num: int | None = int(bare.group(1))
+    elif ref:
+        num = _ref_number(ref, repo)  # a foreign-repo first reference is not a usable pair
+    else:
+        return None
+    return (num, " ".join(text[max(0, m.start() - 20) : m.end() + 120].split())) if num else None
+
+
+def _prose_target(text: str, repo: str) -> tuple[int, str] | None:
+    """Target of "close this as a duplicate" prose: needs exactly one reference in the comment."""
+    refs, m = list(REF_RE.finditer(text)), PROSE_RE.search(text)
+    num = _ref_number(refs[0], repo) if len(refs) == 1 else None
+    return (
+        (num, " ".join(text[max(0, m.start() - 60) : m.end() + 60].split())) if m and num else None
+    )
+
+
 def extract_duplicates(
     rec: dict[str, Any], repo: str, diag: Counter[str] | None = None
 ) -> list[dict[str, Any]]:
@@ -193,12 +231,22 @@ def extract_duplicates(
     for n in timeline(rec):
         canon = n.get("canonical") or {}
         if n["__typename"] == "MarkedAsDuplicateEvent":
-            if _same_repo(canon, rec, repo, diag, "canon"):
+            if canon.get("number") == src:
+                diag["canon_self"] += 1  # vscode: canonical is the issue itself, target not scraped
+            elif _same_repo(canon, rec, repo, diag, "canon"):
                 add(
                     canon.get("number"),
                     "marked_as_duplicate_event",
                     n["createdAt"],
                     f"marked by {login(n)}",
+                )
+        elif n["__typename"] == "ClosedEvent" and n.get("duplicateOf"):
+            if _same_repo(n["duplicateOf"], rec, repo, diag, "canon"):
+                add(
+                    n["duplicateOf"].get("number"),
+                    "closed_event_duplicate_of",
+                    n["createdAt"],
+                    "closed as duplicate",
                 )
         elif n["__typename"] == "UnmarkedAsDuplicateEvent":
             found.pop(canon.get("number"), None)  # un-marking later retracts the pair
@@ -206,7 +254,14 @@ def extract_duplicates(
         return list(found.values())
     for c in (c for c in rec["lastComments"]["nodes"] if c):
         who, text = _comment_text(c)
+        staff = c.get("authorAssociation") in STAFF
+        if staff and (hit := _cmd_target(text, repo)):
+            add(hit[0], "slash_duplicate_cmd", c["createdAt"], hit[1])
+            continue
         targets, ev = _targets(text, repo)
+        if not targets and staff and (hit := _prose_target(text, repo)):
+            add(hit[0], "close_as_duplicate_prose", c["createdAt"], hit[1])
+            continue
         if not targets:
             continue
         if who and who != "k8s-ci-robot" and who.lower().endswith(("bot", "[bot]")):

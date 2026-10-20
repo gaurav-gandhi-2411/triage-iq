@@ -220,6 +220,7 @@ def build_tables(repo: str, base: Path, limit: int | None = None) -> dict[str, p
         d = _derive(rec, lambda x, dg=diag: extract_duplicates(x, repo, dg))
         row["canon_foreign_repo"] = diag["canon_foreign_repo"]
         row["canon_repo_unknown"] = diag["canon_repo_unknown"]
+        row["canon_self"] = diag["canon_self"]
         row["dup_label_unresolved"] = has_dup_label(rec) and not d
         row["closed_as_duplicate_unresolved"] = row["closed_as_duplicate"] and not d
         issues[n] = row

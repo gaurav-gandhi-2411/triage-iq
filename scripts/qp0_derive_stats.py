@@ -116,6 +116,7 @@ def compute_stats(t: dict[str, pd.DataFrame], repo: str, size_mb: float) -> dict
             "closed_as_duplicate_unresolved": flag(iss["closed_as_duplicate_unresolved"]),
             "event_canonical_foreign_repo": int(iss["canon_foreign_repo"].sum()),
             "event_canonical_repo_unknown": int(iss["canon_repo_unknown"].sum()),
+            "event_canonical_is_self_unusable": int(iss["canon_self"].sum()),
         },
         "closers": {  # ClosedEvent closer PRs excluded because their repo is not verifiable
             "closer_repo_unknown": int(iss["closer_repo_unknown"].sum()),

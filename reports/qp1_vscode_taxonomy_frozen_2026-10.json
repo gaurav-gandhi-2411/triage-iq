@@ -1,0 +1,908 @@
+{
+ "class_train_counts_per_year": {
+  "accessibility": {
+   "2023": 544,
+   "2024": 381,
+   "2025": 169,
+   "train_total": 1094
+  },
+  "api": {
+   "2023": 128,
+   "2024": 172,
+   "2025": 55,
+   "train_total": 355
+  },
+  "authentication": {
+   "2023": 37,
+   "2024": 22,
+   "2025": 26,
+   "train_total": 85
+  },
+  "comments": {
+   "2023": 59,
+   "2024": 52,
+   "2025": 19,
+   "train_total": 130
+  },
+  "config": {
+   "2023": 31,
+   "2024": 34,
+   "2025": 12,
+   "train_total": 77
+  },
+  "css-less-scss": {
+   "2023": 25,
+   "2024": 14,
+   "2025": 3,
+   "train_total": 42
+  },
+  "debug": {
+   "2023": 209,
+   "2024": 253,
+   "2025": 89,
+   "train_total": 551
+  },
+  "dictation": {
+   "2023": 17,
+   "2024": 97,
+   "2025": 14,
+   "train_total": 128
+  },
+  "diff-editor": {
+   "2023": 275,
+   "2024": 134,
+   "2025": 25,
+   "train_total": 434
+  },
+  "editor-autoindent": {
+   "2023": 30,
+   "2024": 77,
+   "2025": 38,
+   "train_total": 145
+  },
+  "editor-code-actions": {
+   "2023": 51,
+   "2024": 39,
+   "2025": 8,
+   "train_total": 98
+  },
+  "editor-color-picker": {
+   "2023": 53,
+   "2024": 18,
+   "2025": 13,
+   "train_total": 84
+  },
+  "editor-core": {
+   "2023": 82,
+   "2024": 63,
+   "2025": 35,
+   "train_total": 180
+  },
+  "editor-find": {
+   "2023": 69,
+   "2024": 64,
+   "2025": 20,
+   "train_total": 153
+  },
+  "editor-folding": {
+   "2023": 18,
+   "2024": 18,
+   "2025": 5,
+   "train_total": 41
+  },
+  "editor-hover": {
+   "2023": 61,
+   "2024": 88,
+   "2025": 27,
+   "train_total": 176
+  },
+  "editor-multicursor": {
+   "2023": 12,
+   "2024": 17,
+   "2025": 4,
+   "train_total": 33
+  },
+  "editor-rendering": {
+   "2023": 22,
+   "2024": 22,
+   "2025": 2,
+   "train_total": 46
+  },
+  "editor-sticky-scroll": {
+   "2023": 94,
+   "2024": 72,
+   "2025": 24,
+   "train_total": 190
+  },
+  "editor-wrapping": {
+   "2023": 15,
+   "2024": 22,
+   "2025": 5,
+   "train_total": 42
+  },
+  "electron": {
+   "2023": 79,
+   "2024": 63,
+   "2025": 23,
+   "train_total": 165
+  },
+  "emmet": {
+   "2023": 20,
+   "2024": 15,
+   "2025": 3,
+   "train_total": 38
+  },
+  "error-list": {
+   "2023": 25,
+   "2024": 9,
+   "2025": 5,
+   "train_total": 39
+  },
+  "extension-host": {
+   "2023": 105,
+   "2024": 21,
+   "2025": 6,
+   "train_total": 132
+  },
+  "extensions": {
+   "2023": 227,
+   "2024": 176,
+   "2025": 111,
+   "train_total": 514
+  },
+  "file-explorer": {
+   "2023": 119,
+   "2024": 121,
+   "2025": 49,
+   "train_total": 289
+  },
+  "file-io": {
+   "2023": 44,
+   "2024": 36,
+   "2025": 14,
+   "train_total": 94
+  },
+  "file-watcher": {
+   "2023": 18,
+   "2024": 35,
+   "2025": 8,
+   "train_total": 61
+  },
+  "git": {
+   "2023": 504,
+   "2024": 369,
+   "2025": 185,
+   "train_total": 1058
+  },
+  "grammar": {
+   "2023": 61,
+   "2024": 68,
+   "2025": 20,
+   "train_total": 149
+  },
+  "html": {
+   "2023": 23,
+   "2024": 16,
+   "2025": 8,
+   "train_total": 47
+  },
+  "inline-chat": {
+   "2023": 70,
+   "2024": 170,
+   "2025": 28,
+   "train_total": 268
+  },
+  "inline-completions": {
+   "2023": 93,
+   "2024": 42,
+   "2025": 44,
+   "train_total": 179
+  },
+  "install-update": {
+   "2023": 34,
+   "2024": 72,
+   "2025": 17,
+   "train_total": 123
+  },
+  "issue-reporter": {
+   "2023": 32,
+   "2024": 70,
+   "2025": 20,
+   "train_total": 122
+  },
+  "javascript": {
+   "2023": 57,
+   "2024": 25,
+   "2025": 7,
+   "train_total": 89
+  },
+  "json": {
+   "2023": 28,
+   "2024": 24,
+   "2025": 9,
+   "train_total": 61
+  },
+  "keybindings": {
+   "2023": 85,
+   "2024": 19,
+   "2025": 8,
+   "train_total": 112
+  },
+  "l10n-platform": {
+   "2023": 23,
+   "2024": 5,
+   "2025": 5,
+   "train_total": 33
+  },
+  "languages-basic": {
+   "2023": 22,
+   "2024": 12,
+   "2025": 5,
+   "train_total": 39
+  },
+  "layout": {
+   "2023": 65,
+   "2024": 74,
+   "2025": 18,
+   "train_total": 157
+  },
+  "markdown-ext": {
+   "2023": 149,
+   "2024": 75,
+   "2025": 34,
+   "train_total": 258
+  },
+  "menus": {
+   "2023": 54,
+   "2024": 44,
+   "2025": 8,
+   "train_total": 106
+  },
+  "merge-editor": {
+   "2023": 52,
+   "2024": 29,
+   "2025": 22,
+   "train_total": 103
+  },
+  "multi-diff-editor": {
+   "2023": 17,
+   "2024": 60,
+   "2025": 13,
+   "train_total": 90
+  },
+  "network": {
+   "2023": 11,
+   "2024": 17,
+   "2025": 6,
+   "train_total": 34
+  },
+  "notebook": {
+   "2023": 80,
+   "2024": 149,
+   "2025": 54,
+   "train_total": 283
+  },
+  "notebook-output": {
+   "2023": 93,
+   "2024": 41,
+   "2025": 23,
+   "train_total": 157
+  },
+  "output": {
+   "2023": 13,
+   "2024": 13,
+   "2025": 16,
+   "train_total": 42
+  },
+  "panel-chat": {
+   "2023": 66,
+   "2024": 142,
+   "2025": 14,
+   "train_total": 222
+  },
+  "perf": {
+   "2023": 105,
+   "2024": 68,
+   "2025": 32,
+   "train_total": 205
+  },
+  "quick-open": {
+   "2023": 54,
+   "2024": 21,
+   "2025": 6,
+   "train_total": 81
+  },
+  "quick-pick": {
+   "2023": 51,
+   "2024": 55,
+   "2025": 35,
+   "train_total": 141
+  },
+  "remote": {
+   "2023": 86,
+   "2024": 67,
+   "2025": 25,
+   "train_total": 178
+  },
+  "scm": {
+   "2023": 110,
+   "2024": 267,
+   "2025": 93,
+   "train_total": 470
+  },
+  "search": {
+   "2023": 171,
+   "2024": 156,
+   "2025": 27,
+   "train_total": 354
+  },
+  "settings-editor": {
+   "2023": 100,
+   "2024": 70,
+   "2025": 52,
+   "train_total": 222
+  },
+  "settings-sync": {
+   "2023": 60,
+   "2024": 32,
+   "2025": 5,
+   "train_total": 97
+  },
+  "snippets": {
+   "2023": 50,
+   "2024": 47,
+   "2025": 9,
+   "train_total": 106
+  },
+  "suggest": {
+   "2023": 109,
+   "2024": 59,
+   "2025": 29,
+   "train_total": 197
+  },
+  "tasks": {
+   "2023": 201,
+   "2024": 88,
+   "2025": 50,
+   "train_total": 339
+  },
+  "telemetry": {
+   "2023": 23,
+   "2024": 7,
+   "2025": 7,
+   "train_total": 37
+  },
+  "terminal": {
+   "2023": 265,
+   "2024": 158,
+   "2025": 59,
+   "train_total": 482
+  },
+  "terminal-conpty": {
+   "2023": 25,
+   "2024": 61,
+   "2025": 20,
+   "train_total": 106
+  },
+  "terminal-input": {
+   "2023": 50,
+   "2024": 26,
+   "2025": 6,
+   "train_total": 82
+  },
+  "terminal-links": {
+   "2023": 72,
+   "2024": 59,
+   "2025": 15,
+   "train_total": 146
+  },
+  "terminal-process": {
+   "2023": 86,
+   "2024": 36,
+   "2025": 14,
+   "train_total": 136
+  },
+  "terminal-rendering": {
+   "2023": 82,
+   "2024": 45,
+   "2025": 23,
+   "train_total": 150
+  },
+  "terminal-shell-integration": {
+   "2023": 68,
+   "2024": 84,
+   "2025": 36,
+   "train_total": 188
+  },
+  "terminal-shell-pwsh": {
+   "2023": 12,
+   "2024": 46,
+   "2025": 22,
+   "train_total": 80
+  },
+  "terminal-tabs": {
+   "2023": 47,
+   "2024": 34,
+   "2025": 15,
+   "train_total": 96
+  },
+  "testing": {
+   "2023": 82,
+   "2024": 111,
+   "2025": 26,
+   "train_total": 219
+  },
+  "themes": {
+   "2023": 87,
+   "2024": 45,
+   "2025": 20,
+   "train_total": 152
+  },
+  "titlebar": {
+   "2023": 41,
+   "2024": 45,
+   "2025": 22,
+   "train_total": 108
+  },
+  "typescript": {
+   "2023": 75,
+   "2024": 62,
+   "2025": 26,
+   "train_total": 163
+  },
+  "user-profiles": {
+   "2023": 165,
+   "2024": 93,
+   "2025": 30,
+   "train_total": 288
+  },
+  "ux": {
+   "2023": 121,
+   "2024": 115,
+   "2025": 147,
+   "train_total": 383
+  },
+  "vscode-build": {
+   "2023": 28,
+   "2024": 28,
+   "2025": 16,
+   "train_total": 72
+  },
+  "web": {
+   "2023": 79,
+   "2024": 45,
+   "2025": 26,
+   "train_total": 150
+  },
+  "webview": {
+   "2023": 70,
+   "2024": 55,
+   "2025": 22,
+   "train_total": 147
+  },
+  "workbench-auxwindow": {
+   "2023": 146,
+   "2024": 60,
+   "2025": 13,
+   "train_total": 219
+  },
+  "workbench-editor-grid": {
+   "2023": 17,
+   "2024": 13,
+   "2025": 3,
+   "train_total": 33
+  },
+  "workbench-editors": {
+   "2023": 51,
+   "2024": 48,
+   "2025": 16,
+   "train_total": 115
+  },
+  "workbench-hover": {
+   "2023": 23,
+   "2024": 55,
+   "2025": 20,
+   "train_total": 98
+  },
+  "workbench-multiroot": {
+   "2023": 13,
+   "2024": 19,
+   "2025": 6,
+   "train_total": 38
+  },
+  "workbench-os-integration": {
+   "2023": 41,
+   "2024": 36,
+   "2025": 17,
+   "train_total": 94
+  },
+  "workbench-tabs": {
+   "2023": 102,
+   "2024": 70,
+   "2025": 25,
+   "train_total": 197
+  },
+  "workbench-views": {
+   "2023": 85,
+   "2024": 51,
+   "2025": 16,
+   "train_total": 152
+  },
+  "workbench-window": {
+   "2023": 31,
+   "2024": 41,
+   "2025": 19,
+   "train_total": 91
+  }
+ },
+ "classes": [
+  "accessibility",
+  "api",
+  "authentication",
+  "comments",
+  "config",
+  "css-less-scss",
+  "debug",
+  "dictation",
+  "diff-editor",
+  "editor-autoindent",
+  "editor-code-actions",
+  "editor-color-picker",
+  "editor-core",
+  "editor-find",
+  "editor-folding",
+  "editor-hover",
+  "editor-multicursor",
+  "editor-rendering",
+  "editor-sticky-scroll",
+  "editor-wrapping",
+  "electron",
+  "emmet",
+  "error-list",
+  "extension-host",
+  "extensions",
+  "file-explorer",
+  "file-io",
+  "file-watcher",
+  "git",
+  "grammar",
+  "html",
+  "inline-chat",
+  "inline-completions",
+  "install-update",
+  "issue-reporter",
+  "javascript",
+  "json",
+  "keybindings",
+  "l10n-platform",
+  "languages-basic",
+  "layout",
+  "markdown-ext",
+  "menus",
+  "merge-editor",
+  "multi-diff-editor",
+  "network",
+  "notebook",
+  "notebook-output",
+  "output",
+  "panel-chat",
+  "perf",
+  "quick-open",
+  "quick-pick",
+  "remote",
+  "scm",
+  "search",
+  "settings-editor",
+  "settings-sync",
+  "snippets",
+  "suggest",
+  "tasks",
+  "telemetry",
+  "terminal",
+  "terminal-conpty",
+  "terminal-input",
+  "terminal-links",
+  "terminal-process",
+  "terminal-rendering",
+  "terminal-shell-integration",
+  "terminal-shell-pwsh",
+  "terminal-tabs",
+  "testing",
+  "themes",
+  "titlebar",
+  "typescript",
+  "user-profiles",
+  "ux",
+  "vscode-build",
+  "web",
+  "webview",
+  "workbench-auxwindow",
+  "workbench-editor-grid",
+  "workbench-editors",
+  "workbench-hover",
+  "workbench-multiroot",
+  "workbench-os-integration",
+  "workbench-tabs",
+  "workbench-views",
+  "workbench-window"
+ ],
+ "classes_sha256": "b554891fe741330ffc575ea1bf2e2c8d5ffd98dedcd3845fb8993fe02ebaf0d4",
+ "design": "(2026-10-20; do not change after seeing results).\n * FAMILY F = V_all of qp0_taxonomy_coverage.py (V_old union V_new, labels with >= 100 issues, with\n   its exclusion set, which was itself extended post hoc on 2026-10-20 after reading the real label\n   list) MINUS NON_OWNERSHIP = {error-telemetry, chat-ext-issue, api-proposal} (bot crash reports, a\n   triage marker, an issue type).\n * CLASSES = labels in F with >= 30 issues among issues created <= 2025-06-30 (train period) AND >= 5\n   issues in each of the calendar years 2023 and 2024 (stable classes). Every other F label (new in\n   2025+ or sparse) maps to `other`.\n * Primary label = the earliest `labeled` event among the F labels still present at the end, ties\n   alphabetical (qp0_ceiling_labels.per_issue). Population = issues with >= 1 F label at the end.\n * Splits by created_at with the boundaries of qp0_make_splits (train < 2025-07-01, validation\n   2025-07-01 .. 2025-12-31, test >= 2026-01-01). Only created_at is used, so this report does not\n   depend on the (not yet final) duplicate-pair leakage flags of the split manifest, which will be\n   recomputed after the re-derive; classifier_eligible filtering is NOT applied here.\n * Reported (counts only): the class list with train counts per year and its sha256; per split the\n   labelled issues, the share whose primary is a class vs `other`, and for the test split the share\n   of `other` whose primary label has ZERO train issues (never seen) vs sparse; coverage of F at 72 h\n   and at the end per split (share of all issues in the split); the majority class share on train and\n   the always-majority accuracy on validation / test from TRAIN priors (a label-only baseline).",
+ "f_labels_not_classes": {
+  "NES": {
+   "2023": 0,
+   "2024": 1,
+   "2025": 15,
+   "train_total": 16
+  },
+  "VIM": {
+   "2023": 0,
+   "2024": 2,
+   "2025": 3,
+   "train_total": 5
+  },
+  "agent-behavior": {
+   "2023": 0,
+   "2024": 0,
+   "2025": 7,
+   "train_total": 7
+  },
+  "agent-host": {
+   "2023": 0,
+   "2024": 0,
+   "2025": 1,
+   "train_total": 1
+  },
+  "browser-integration": {
+   "2023": 0,
+   "2024": 0,
+   "2025": 2,
+   "train_total": 2
+  },
+  "capi": {
+   "2023": 0,
+   "2024": 0,
+   "2025": 2,
+   "train_total": 2
+  },
+  "chat": {
+   "2023": 1,
+   "2024": 115,
+   "2025": 170,
+   "train_total": 286
+  },
+  "chat-agent": {
+   "2023": 0,
+   "2024": 0,
+   "2025": 50,
+   "train_total": 50
+  },
+  "chat-agent-editing": {
+   "2023": 0,
+   "2024": 0,
+   "2025": 9,
+   "train_total": 9
+  },
+  "chat-agents-view": {
+   "2023": 0,
+   "2024": 1,
+   "2025": 0,
+   "train_total": 1
+  },
+  "chat-billing": {
+   "2023": 0,
+   "2024": 0,
+   "2025": 10,
+   "train_total": 10
+  },
+  "chat-customizations": {
+   "2023": 0,
+   "2024": 1,
+   "2025": 26,
+   "train_total": 27
+  },
+  "chat-input": {
+   "2023": 0,
+   "2024": 0,
+   "2025": 40,
+   "train_total": 40
+  },
+  "chat-mcp": {
+   "2023": 0,
+   "2024": 0,
+   "2025": 202,
+   "train_total": 202
+  },
+  "chat-mcp-management": {
+   "2023": 0,
+   "2024": 0,
+   "2025": 6,
+   "train_total": 6
+  },
+  "chat-terminal": {
+   "2023": 0,
+   "2024": 0,
+   "2025": 21,
+   "train_total": 21
+  },
+  "chat-tools": {
+   "2023": 0,
+   "2024": 4,
+   "2025": 41,
+   "train_total": 45
+  },
+  "editor-autoclosing": {
+   "2023": 8,
+   "2024": 8,
+   "2025": 0,
+   "train_total": 16
+  },
+  "editor-bracket-matching": {
+   "2023": 16,
+   "2024": 2,
+   "2025": 0,
+   "train_total": 18
+  },
+  "editor-commands": {
+   "2023": 7,
+   "2024": 4,
+   "2025": 2,
+   "train_total": 13
+  },
+  "editor-edit-context": {
+   "2023": 0,
+   "2024": 46,
+   "2025": 31,
+   "train_total": 77
+  },
+  "editor-gpu": {
+   "2023": 0,
+   "2024": 107,
+   "2025": 22,
+   "train_total": 129
+  },
+  "editor-input": {
+   "2023": 10,
+   "2024": 14,
+   "2025": 5,
+   "train_total": 29
+  },
+  "extension-signature": {
+   "2023": 6,
+   "2024": 3,
+   "2025": 36,
+   "train_total": 45
+  },
+  "keyboard-layout": {
+   "2023": 9,
+   "2024": 15,
+   "2025": 3,
+   "train_total": 27
+  },
+  "model-byok": {
+   "2023": 0,
+   "2024": 0,
+   "2025": 7,
+   "train_total": 7
+  },
+  "model-picker": {
+   "2023": 0,
+   "2024": 0,
+   "2025": 3,
+   "train_total": 3
+  },
+  "nodejs": {
+   "2023": 7,
+   "2024": 2,
+   "2025": 2,
+   "train_total": 11
+  },
+  "php": {
+   "2023": 7,
+   "2024": 8,
+   "2025": 4,
+   "train_total": 19
+  },
+  "release-notes": {
+   "2023": 4,
+   "2024": 13,
+   "2025": 0,
+   "train_total": 17
+  },
+  "terminal-accessibility": {
+   "2023": 125,
+   "2024": 3,
+   "2025": 0,
+   "train_total": 128
+  },
+  "terminal-inline-chat": {
+   "2023": 0,
+   "2024": 81,
+   "2025": 7,
+   "train_total": 88
+  },
+  "terminal-suggest": {
+   "2023": 0,
+   "2024": 179,
+   "2025": 272,
+   "train_total": 451
+  },
+  "workbench-copilot": {
+   "2023": 0,
+   "2024": 1,
+   "2025": 24,
+   "train_total": 25
+  },
+  "workbench-diagnostics": {
+   "2023": 15,
+   "2024": 3,
+   "2025": 1,
+   "train_total": 19
+  },
+  "workbench-electron": {
+   "2023": 1,
+   "2024": 0,
+   "2025": 1,
+   "train_total": 2
+  },
+  "workbench-run-as-admin": {
+   "2023": 5,
+   "2024": 7,
+   "2025": 3,
+   "train_total": 15
+  }
+ },
+ "generated_with": "scripts/qp1_vscode_taxonomy_freeze.py",
+ "n_classes": 89,
+ "non_ownership_excluded": [
+  "api-proposal",
+  "chat-ext-issue",
+  "error-telemetry"
+ ],
+ "per_split": {
+  "test": {
+   "always_majority_accuracy": 0.7167536664180959,
+   "coverage_f_72h": 0.18009136116572222,
+   "coverage_f_final": 0.2326240314559963,
+   "issues": 34588,
+   "labelled": 8046,
+   "other_never_seen_in_train": 2522,
+   "other_sparse_seen_in_train": 3245,
+   "primary_is_class": 2279,
+   "primary_is_other": 5767,
+   "primary_without_labeled_event": 1013,
+   "share_primary_is_class": 0.28324633358190404
+  },
+  "train": {
+   "coverage_f_72h": 0.20781129003435062,
+   "coverage_f_final": 0.3086789905287612,
+   "issues": 50363,
+   "labelled": 15546,
+   "other_never_seen_in_train": 0,
+   "other_sparse_seen_in_train": 1570,
+   "primary_is_class": 13976,
+   "primary_is_other": 1570,
+   "primary_without_labeled_event": 971,
+   "share_primary_is_class": 0.8990093914833398
+  },
+  "validation": {
+   "always_majority_accuracy": 0.576276938740879,
+   "coverage_f_72h": 0.1569404865155082,
+   "coverage_f_final": 0.2433816544831289,
+   "issues": 24213,
+   "labelled": 5893,
+   "other_never_seen_in_train": 73,
+   "other_sparse_seen_in_train": 3323,
+   "primary_is_class": 2497,
+   "primary_is_other": 3396,
+   "primary_without_labeled_event": 1482,
+   "share_primary_is_class": 0.423723061259121
+  }
+ },
+ "repo": "microsoft/vscode",
+ "train_majority": {
+  "class": "other",
+  "other_share": 0.10099060851666024,
+  "share_of_labelled_train": 0.10099060851666024
+ }
+}

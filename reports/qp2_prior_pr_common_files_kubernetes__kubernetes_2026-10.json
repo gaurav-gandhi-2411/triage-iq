@@ -1,0 +1,199 @@
+{
+ "files": [
+  "api/openapi-spec/swagger.json",
+  "api/openapi-spec/v3/api__v1_openapi.json",
+  "api/openapi-spec/v3/apis__apps__v1_openapi.json",
+  "api/openapi-spec/v3/apis__batch__v1_openapi.json",
+  "build/common.sh",
+  "build/dependencies.yaml",
+  "go.mod",
+  "go.sum",
+  "hack/unwanted-dependencies.json",
+  "pkg/apis/core/types.go",
+  "pkg/apis/core/validation/validation.go",
+  "pkg/apis/core/validation/validation_test.go",
+  "pkg/controller/job/job_controller.go",
+  "pkg/features/kube_features.go",
+  "pkg/features/versioned_kube_features.go",
+  "pkg/generated/openapi/zz_generated.openapi.go",
+  "pkg/kubelet/kubelet.go",
+  "pkg/kubelet/kubelet_pods.go",
+  "pkg/kubelet/kubelet_test.go",
+  "pkg/scheduler/framework/types.go",
+  "staging/publishing/rules.yaml",
+  "staging/src/k8s.io/api/core/v1/generated.proto",
+  "staging/src/k8s.io/api/core/v1/types.go",
+  "staging/src/k8s.io/api/core/v1/types_swagger_doc_generated.go",
+  "staging/src/k8s.io/api/go.mod",
+  "staging/src/k8s.io/api/go.sum",
+  "staging/src/k8s.io/apiextensions-apiserver/go.mod",
+  "staging/src/k8s.io/apiextensions-apiserver/go.sum",
+  "staging/src/k8s.io/apimachinery/go.mod",
+  "staging/src/k8s.io/apimachinery/go.sum",
+  "staging/src/k8s.io/apiserver/go.mod",
+  "staging/src/k8s.io/apiserver/go.sum",
+  "staging/src/k8s.io/apiserver/pkg/features/kube_features.go",
+  "staging/src/k8s.io/apiserver/pkg/storage/cacher/cacher_whitebox_test.go",
+  "staging/src/k8s.io/cli-runtime/go.mod",
+  "staging/src/k8s.io/cli-runtime/go.sum",
+  "staging/src/k8s.io/client-go/applyconfigurations/internal/internal.go",
+  "staging/src/k8s.io/client-go/go.mod",
+  "staging/src/k8s.io/client-go/go.sum",
+  "staging/src/k8s.io/cloud-provider/go.mod",
+  "staging/src/k8s.io/cloud-provider/go.sum",
+  "staging/src/k8s.io/cluster-bootstrap/go.mod",
+  "staging/src/k8s.io/cluster-bootstrap/go.sum",
+  "staging/src/k8s.io/code-generator/examples/go.mod",
+  "staging/src/k8s.io/code-generator/examples/go.sum",
+  "staging/src/k8s.io/code-generator/go.mod",
+  "staging/src/k8s.io/code-generator/go.sum",
+  "staging/src/k8s.io/component-base/go.mod",
+  "staging/src/k8s.io/component-base/go.sum",
+  "staging/src/k8s.io/component-helpers/go.mod",
+  "staging/src/k8s.io/component-helpers/go.sum",
+  "staging/src/k8s.io/controller-manager/go.mod",
+  "staging/src/k8s.io/controller-manager/go.sum",
+  "staging/src/k8s.io/csi-translation-lib/go.mod",
+  "staging/src/k8s.io/csi-translation-lib/go.sum",
+  "staging/src/k8s.io/dynamic-resource-allocation/go.mod",
+  "staging/src/k8s.io/dynamic-resource-allocation/go.sum",
+  "staging/src/k8s.io/endpointslice/go.mod",
+  "staging/src/k8s.io/endpointslice/go.sum",
+  "staging/src/k8s.io/kms/go.sum",
+  "staging/src/k8s.io/kube-aggregator/go.mod",
+  "staging/src/k8s.io/kube-aggregator/go.sum",
+  "staging/src/k8s.io/kube-controller-manager/go.sum",
+  "staging/src/k8s.io/kube-proxy/go.mod",
+  "staging/src/k8s.io/kube-proxy/go.sum",
+  "staging/src/k8s.io/kube-scheduler/go.sum",
+  "staging/src/k8s.io/kubectl/go.mod",
+  "staging/src/k8s.io/kubectl/go.sum",
+  "staging/src/k8s.io/kubelet/go.mod",
+  "staging/src/k8s.io/kubelet/go.sum",
+  "staging/src/k8s.io/legacy-cloud-providers/go.mod",
+  "staging/src/k8s.io/legacy-cloud-providers/go.sum",
+  "staging/src/k8s.io/metrics/go.mod",
+  "staging/src/k8s.io/metrics/go.sum",
+  "staging/src/k8s.io/mount-utils/go.mod",
+  "staging/src/k8s.io/pod-security-admission/go.mod",
+  "staging/src/k8s.io/pod-security-admission/go.sum",
+  "staging/src/k8s.io/sample-apiserver/go.mod",
+  "staging/src/k8s.io/sample-apiserver/go.sum",
+  "staging/src/k8s.io/sample-cli-plugin/go.mod",
+  "staging/src/k8s.io/sample-cli-plugin/go.sum",
+  "staging/src/k8s.io/sample-controller/go.mod",
+  "staging/src/k8s.io/sample-controller/go.sum",
+  "test/e2e/feature/feature.go",
+  "test/featuregates_linter/test_data/versioned_feature_list.yaml",
+  "test/utils/image/manifest.go",
+  "vendor/modules.txt"
+ ],
+ "frozen": true,
+ "n_files": 87,
+ "n_train_prs": 6779,
+ "sha256_sorted_newline_joined": "a05445d6129f358e9a135ab1b5df724f828672afd591c0d70469686da51743ee",
+ "threshold": 0.01,
+ "top25": [
+  {
+   "path": "pkg/features/kube_features.go",
+   "share": 0.05797315238235728
+  },
+  {
+   "path": "vendor/modules.txt",
+   "share": 0.04440182917834489
+  },
+  {
+   "path": "pkg/generated/openapi/zz_generated.openapi.go",
+   "share": 0.04248414220386488
+  },
+  {
+   "path": "go.mod",
+   "share": 0.040713969612037174
+  },
+  {
+   "path": "go.sum",
+   "share": 0.037468653193686384
+  },
+  {
+   "path": "api/openapi-spec/swagger.json",
+   "share": 0.03407582239268329
+  },
+  {
+   "path": "staging/src/k8s.io/apiextensions-apiserver/go.sum",
+   "share": 0.025815016964154006
+  },
+  {
+   "path": "staging/src/k8s.io/apiserver/go.mod",
+   "share": 0.025815016964154006
+  },
+  {
+   "path": "staging/src/k8s.io/kube-aggregator/go.sum",
+   "share": 0.025815016964154006
+  },
+  {
+   "path": "staging/src/k8s.io/sample-apiserver/go.sum",
+   "share": 0.025815016964154006
+  },
+  {
+   "path": "staging/src/k8s.io/apiextensions-apiserver/go.mod",
+   "share": 0.025667502581501696
+  },
+  {
+   "path": "staging/src/k8s.io/apiserver/go.sum",
+   "share": 0.025372473816197078
+  },
+  {
+   "path": "staging/src/k8s.io/cloud-provider/go.sum",
+   "share": 0.025372473816197078
+  },
+  {
+   "path": "staging/src/k8s.io/controller-manager/go.sum",
+   "share": 0.02507744505089246
+  },
+  {
+   "path": "staging/src/k8s.io/pod-security-admission/go.sum",
+   "share": 0.02507744505089246
+  },
+  {
+   "path": "staging/src/k8s.io/kube-aggregator/go.mod",
+   "share": 0.02448738752028323
+  },
+  {
+   "path": "staging/src/k8s.io/sample-apiserver/go.mod",
+   "share": 0.023749815607021683
+  },
+  {
+   "path": "staging/src/k8s.io/cloud-provider/go.mod",
+   "share": 0.023602301224369376
+  },
+  {
+   "path": "staging/src/k8s.io/pod-security-admission/go.mod",
+   "share": 0.022864729311107834
+  },
+  {
+   "path": "staging/src/k8s.io/controller-manager/go.mod",
+   "share": 0.022422186163150906
+  },
+  {
+   "path": "staging/src/k8s.io/kubelet/go.sum",
+   "share": 0.021832128632541675
+  },
+  {
+   "path": "staging/src/k8s.io/dynamic-resource-allocation/go.sum",
+   "share": 0.021389585484584746
+  },
+  {
+   "path": "staging/src/k8s.io/kubectl/go.sum",
+   "share": 0.021389585484584746
+  },
+  {
+   "path": "build/dependencies.yaml",
+   "share": 0.020947042336627822
+  },
+  {
+   "path": "pkg/features/versioned_kube_features.go",
+   "share": 0.02020947042336628
+  }
+ ],
+ "train_end": "2025-06-30 23:59:59+00:00"
+}

@@ -182,13 +182,25 @@ def test_script_imports_no_classifier() -> None:
         )
 
 
-def test_final_label_without_a_labeled_event_does_not_crash_and_ranks_last() -> None:
-    iss = pd.DataFrame([issue(1, ["sig/z", "sig/a"], ["sig/a"]), issue(2, ["sig/z"], [])])
-    ev = events(
-        [(1, 3, "sig/z", "labeled")]
-    )  # sig/a (issue 1) and sig/z (issue 2) have no labeled event
+def test_label_without_events_counts_as_applied_at_creation_and_ranks_first() -> None:
+    iss = pd.DataFrame([issue(1, ["sig/z", "sig/a", "sig/m"], ["sig/z", "sig/a", "sig/m"])])
+    ev = events([(1, 3, "sig/m", "labeled")])  # sig/z and sig/a come from the issue template
     d = cl.per_issue(iss, ev, SIG).set_index("number")
     assert (
-        d.at[1, "primary"] == "sig/z" and d.at[1, "primary_hours"] == 3.0
-    )  # the event-backed label wins
-    assert d.at[2, "primary"] == "sig/z" and pd.isna(d.at[2, "primary_hours"])  # no event at all
+        d.at[1, "primary"] == "sig/a" and d.at[1, "primary_hours"] == 0.0
+    )  # creation ties: alphabetical
+    assert d.at[1, "earliest72"] == "sig/a"
+
+
+def test_label_whose_first_event_is_an_unlabel_was_there_from_creation() -> None:
+    iss = pd.DataFrame([issue(1, ["sig/b", "sig/a"], ["sig/a"])])
+    ev = events(
+        [(1, 5, "sig/b", "unlabeled"), (1, 100, "sig/b", "labeled"), (1, 2, "sig/a", "labeled")]
+    )
+    d = cl.per_issue(iss, ev, SIG).set_index("number")
+    assert (
+        d.at[1, "primary"] == "sig/b" and d.at[1, "primary_hours"] == 0.0
+    )  # existed before its unlabel
+    assert (
+        d.at[1, "earliest72"] == "sig/a"
+    )  # sig/b was removed at 5 h, so it is not in the 72 h set

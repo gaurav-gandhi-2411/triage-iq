@@ -24,6 +24,11 @@ overall, Wilson 95% intervals on every proportion.
  (e) train class table (counts, shares, `other` mass) and the baselines for top-1 accuracy on
      validation and test from TRAIN priors only: majority class, and the expected accuracy of
      sampling a class from the train prior. Also any-valid accuracy of the majority class.
+AMENDMENT (2026-10-20, after the original k8s run): a label with no event at all, or whose first
+event is an unlabel, was applied at creation (issue templates / forms add labels without a
+LabeledEvent), so its applied time is created_at and it ranks first for the primary label (ties
+alphabetical). The first version treated such a label as applied last. Reports computed before the
+amendment are marked by their git commit.
 """
 
 from __future__ import annotations
@@ -55,26 +60,32 @@ def rate(k: int, n: int) -> dict[str, Any]:
 
 
 def per_issue(issues: pd.DataFrame, events: pd.DataFrame, family: Family) -> pd.DataFrame:
-    """One row per issue with its family label sets and primary label (see module docstring)."""
-    ev = events[(events["action"] == "labeled") & events["label"].map(family)]
-    first = ev.groupby(["number", "label"])["ts"].min().to_dict()
-    ev72: dict[int, list[tuple[Any, str]]] = {}
+    """One row per issue with its family label sets and primary label (see module docstring).
+
+    Applied time of a label = its earliest `labeled` event, EXCEPT that a label with no event at all,
+    or whose first event is an unlabel, was present from creation (issue templates apply labels
+    without a LabeledEvent): its applied time is created_at.
+    """
+    ev = events[events["label"].map(family)].sort_values(["number", "ts"], kind="stable")
+    first = ev[ev["action"] == "labeled"].groupby(["number", "label"])["ts"].min().to_dict()
+    first_action = ev.groupby(["number", "label"])["action"].first().to_dict()
     created = dict(zip(issues["number"], issues["created_at"], strict=True))
-    for (n, lbl), ts in first.items():
-        if ts <= created[n] + H72:
-            ev72.setdefault(n, []).append((ts, lbl))
+
+    def applied(n: int, x: str) -> Any:
+        if first_action.get((n, x)) == "unlabeled" or (n, x) not in first:
+            return created[n]
+        return first[(n, x)]
+
     rows = []
     for r in issues.itertuples():
         fin = frozenset(x for x in r.labels_final if family(x))
         t72 = frozenset(x for x in r.labels_t72h if family(x))
-        key = lambda x, n=r.number: (first.get((n, x), pd.Timestamp.max.tz_localize("UTC")), x)  # noqa: E731
-        prim = min(fin, key=key) if fin else None
-        early = min((e for e in ev72.get(r.number, []) if e[1] in t72), default=(None, None))[1]
-        hrs = (
-            (first[(r.number, prim)] - r.created_at).total_seconds() / 3600
-            if (r.number, prim) in first
-            else None
-        )
+        prim = min(fin, key=lambda x, n=r.number: (applied(n, x), x)) if fin else None
+        cand = [
+            (applied(r.number, x), x) for x in t72 if applied(r.number, x) <= r.created_at + H72
+        ]
+        early = min(cand)[1] if cand else None
+        hrs = (applied(r.number, prim) - r.created_at).total_seconds() / 3600 if prim else None
         rows.append(
             {"number": r.number, "final": fin, "t72": t72, "primary": prim, "earliest72": early,
              "primary_hours": hrs, "text_hash": r.text_hash, "created_at": r.created_at}

@@ -24,6 +24,18 @@ Metrics per family, overall and per created year 2023-2026, on ISSUES (not PRs):
  (7) stability: classes with >= 5 issues in every year vs only some years;
  (8) k8s: co-occurrence of S and A (share of S issues with an A label and vice versa) and, per
      sig/*, its top 3 co-occurring area/* labels.
+POST-HOC AMENDMENT (2026-10-20, vscode run): the V_new exclusion set and the bot-account rule were
+extended AFTER reading the real vscode label list and first-label actors, so they are NOT
+pre-registered. Added to the exclusion set: process / triage markers (triage-needed, spam, stale,
+candidate, confirmation-pending, polish, debt, wont-fix, regression, recent-regression, papercut,
+author-verification-requested, on-release-notes, new release, stable-anomaly, endgame-plan,
+engineering, modernization), test-plan and test-failure labels (testplan-item, on-testplan,
+plan-item, under-discussion, smoke-/integration-/unit-test-failure), platform labels (windows,
+linux, macos, wsl), ai-* machine labels (ai-translated, ai-generated, ai-analyzed, ai-triaged),
+freeze-slow-crash-leak, plus the rules "starts with *" (vscode triage resolutions) and "starts with
+translation-required". Bot-account rule: vs-code-engineering and vscodenpa count as the bot side.
+Sensitivity (V_all final coverage .282): dropping chat-ext-issue .279, error-telemetry .273,
+api-proposal .282, extension .282; dropping the first three .270; all four .269.
 """
 
 from __future__ import annotations
@@ -247,6 +259,10 @@ def build_report(repo: str, derived: Path) -> dict[str, Any]:
     if repo.lower() == "microsoft/vscode":
         old = {x.lower() for x in LABEL_FACET_PATTERNS["microsoft/vscode"]["component"]}
         report["v_new_labels"] = v_new_labels(issues, old)
+        report["bot_accounts_note"] = (
+            "first_label_actor_prow_bot_vs_other: for this run vs-code-engineering and vscodenpa "
+            "(the two most active labelers) count as the bot side; the key name is historical"
+        )
     if repo.lower() == "kubernetes/kubernetes":
         report["cooccurrence_S_A"] = cooccurrence(issues)
     report["other_label_families"] = other_families(freq)

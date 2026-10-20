@@ -179,3 +179,20 @@ def test_vscode_automation_accounts_count_as_the_bot_side() -> None:
     for login in ("vs-code-engineering", "vscodenpa", "kubernetes-prow", "k8s-ci-robot", "x[bot]"):
         assert qp0t.BOT_RE.search(login), login
     assert not qp0t.BOT_RE.search("bpasero")
+
+
+def test_vscode_report_carries_amendment_and_bot_account_notes(tmp_path: Path) -> None:
+    issues([(1, ["chat"], ["chat", "triage-needed"])]).to_parquet(tmp_path / "issues.parquet")
+    events([(1, 3.0, "chat", "vs-code-engineering", "labeled")]).to_parquet(
+        tmp_path / "label_events.parquet"
+    )
+    pd.DataFrame({"label": ["chat"], "n_issues_final": [1]}).to_csv(
+        tmp_path / "label_frequency.csv", index=False
+    )
+    rep = qp0t.build_report("microsoft/vscode", tmp_path)
+    assert (
+        "vs-code-engineering" in rep["bot_accounts_note"]
+        and "vscodenpa" in rep["bot_accounts_note"]
+    )
+    assert "AFTER reading the real vscode label list" in rep["design"]
+    assert "bot_accounts_note" not in qp0t.build_report("kubernetes/kubernetes", tmp_path)

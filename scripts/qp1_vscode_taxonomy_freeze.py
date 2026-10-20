@@ -83,7 +83,7 @@ def freeze(issues: pd.DataFrame, events: pd.DataFrame, family: Pred) -> dict[str
         sub, alls = lab[lab["split"] == s], d[d["split"] == s]
         other = sub[sub["mapped"] == "other"]
         out[s] = {
-            "issues": len(alls), "labelled": len(sub),
+            "issues": len(alls), "labelled": len(sub), "primary_without_labeled_event": int(sub["primary_hours"].isna().sum()),
             "coverage_f_final": float(alls["final"].map(bool).mean()), "coverage_f_72h": float(alls["t72"].map(bool).mean()),
             "primary_is_class": int((sub["mapped"] != "other").sum()), "primary_is_other": len(other),
             "share_primary_is_class": float((sub["mapped"] != "other").mean()),

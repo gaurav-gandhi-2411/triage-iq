@@ -89,6 +89,7 @@ def test_per_split_counts_unseen_vs_sparse_and_majority_baseline() -> None:
         te["other_never_seen_in_train"] == 3 and te["other_sparse_seen_in_train"] == 2
     )  # unseen vs c (sparse)
     assert te["coverage_f_final"] == 15 / 16 and "always_majority_accuracy" in te
+    assert te["primary_without_labeled_event"] == 0  # every fixture label has a labeled event
     # train priors: class a 32 vs other 92 -> the majority is `other`, so test accuracy = share of other
     out = run()
     assert out["train_majority"]["class"] == "other"

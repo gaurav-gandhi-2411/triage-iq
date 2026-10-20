@@ -1,6 +1,10 @@
 # Queue for GG (only items you must do)
 
-Last updated 2026-10-20 (quality push, D78-D80). Everything else is in `docs/DECISION_LOG_2026-10.md`.
+Last updated 2026-10-20 (quality push, D78-D82). Everything else is in `docs/DECISION_LOG_2026-10.md`.
+
+## Decision for you (2026-10-20): what is the k8s retrieval headline? (recommendation first)
+
+Your decision (ADR-0066) made same-PR fix-linked retrieval the k8s retrieval headline. Evidence (D82; `reports/qp0_ceiling_retrieval_kubernetes__kubernetes_2026-10.json`, recomputed independently under five definitions): there are only 22 groups of issues fixed by the same merged PR (28 under every definition combined), and the frozen test split has 2 answerable queries (7 in validation), so that task cannot produce a scored result. k8s duplicates are also scarce (75 pairs, 12 in val/test). **Recommendation: add "issue -> fixing PR" retrieval for k8s** (query = issue text, target = title and body of the merged PR that closed it; 1,956 closer links audited at 98.3% precision, so hundreds of test queries). It is a new task, not a replacement of a missed target, it would be pre-registered before any model is scored, and it produces exactly the evidence Phase 3b needs for grounded next steps. Until you answer, k8s retrieval is reported descriptively and nothing is built on the new task. Alternatives: keep k8s retrieval report-only (no headline), or enlarge the same-PR population (not possible with this scrape: every definition tried gives <= 2 test queries).
 
 ## Yours, when convenient (2026-10-20)
 

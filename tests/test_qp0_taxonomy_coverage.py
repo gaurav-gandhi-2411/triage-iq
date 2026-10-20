@@ -156,3 +156,20 @@ def test_script_imports_no_model_or_ml_modules() -> None:
     assert not [m for m in mods if m.split(".")[0] in banned]
     assert not [m for m in mods if "model" in m or "classif" in m or "eval" in m]
     assert "triage_iq.data.preprocess" in mods  # only the label-pattern list is borrowed
+
+
+def test_v_new_excludes_vscode_process_platform_and_star_labels() -> None:
+    noise = ["triage-needed", "*duplicate", "*caused-by-extension", "spam", "stale", "candidate", "windows", "linux", "macos",
+             "WSL", "regression", "papercut :drop_of_blood:", "testplan-item", "translation-required-chinese-simplified",
+             "ai-translated", "smoke-test-failure", "freeze-slow-crash-leak", "wont-fix", "polish", "debt", "ai-generated"]  # fmt: skip
+    comps = [
+        "chat",
+        "notebook",
+        "terminal-suggest",
+        "agent-host",
+        "ai-customizations",
+        "NES",
+        "remote",
+    ]
+    df = issues([(i, [], [*noise, *comps]) for i in range(100)])
+    assert qp0t.v_new_labels(df, set()) == sorted(comps)

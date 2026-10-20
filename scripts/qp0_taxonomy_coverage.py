@@ -50,6 +50,14 @@ TYPE_WORKFLOW = {
     "needs more info", "verified", "verification-needed", "verification-found",
     "insiders-released", "unreleased", "confirmed", "important", "upstream",
     "upstream-issue-linked", "duplicate", "invalid", "wontfix", "help wanted", "good first issue",
+    # added 2026-10-20 after reading the real vscode label list (process / triage / platform / test-
+    # infra labels that are not components); vscode's "*" labels are triage resolutions
+    "triage-needed", "spam", "stale", "candidate", "confirmation-pending", "polish", "debt", "wont-fix",
+    "regression", "recent-regression", "papercut :drop_of_blood:", "author-verification-requested",
+    "testplan-item", "on-testplan", "plan-item", "under-discussion", "on-release-notes", "new release",
+    "stable-anomaly", "endgame-plan", "engineering", "modernization", "windows", "linux", "macos", "wsl",
+    "ai-translated", "ai-generated", "ai-analyzed", "ai-triaged", "smoke-test-failure",
+    "integration-test-failure", "unit-test-failure", "freeze-slow-crash-leak",
 }  # fmt: skip
 Pred = Callable[[str], bool]
 BOT_RE = re.compile(r"(bot|\[bot\])$|^(k8s-ci-robot|kubernetes-prow)$", re.I)
@@ -57,7 +65,11 @@ BOT_RE = re.compile(r"(bot|\[bot\])$|^(k8s-ci-robot|kubernetes-prow)$", re.I)
 
 def is_type_workflow(label: str) -> bool:
     low = label.lower()
-    return low in TYPE_WORKFLOW or low.endswith(("-wontfix", "wontfix"))
+    return (
+        low in TYPE_WORKFLOW
+        or low.endswith(("-wontfix", "wontfix"))
+        or low.startswith(("*", "translation-required"))
+    )
 
 
 def v_new_labels(issues: pd.DataFrame, v_old: set[str], min_issues: int = 100) -> list[str]:

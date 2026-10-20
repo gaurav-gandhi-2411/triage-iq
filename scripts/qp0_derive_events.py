@@ -10,13 +10,13 @@ from typing import Any
 
 # lower rank wins when several methods find the same (source, canonical) pair
 METHOD_RANK = {
-    "marked_as_duplicate_event": 0,
-    "closed_event_duplicate_of": 0,  # GitHub's own target of "close as duplicate" (needs a re-scrape)
-    "vscode_bot_comment": 1,
-    "slash_duplicate_cmd": 2,  # a maintainer's explicit /duplicate command (vscode)
-    "k8s_close_comment": 3,
-    "dup_label_with_ref": 4,
-    "close_as_duplicate_prose": 5,  # weakest: a maintainer says "close this as a duplicate" + one link
+    "closed_event_duplicate_of": 0,  # GitHub's own target of "close as duplicate" (dup_targets scrape)
+    "marked_as_duplicate_event": 1,  # .duplicate of a MarkedAsDuplicateEvent, direction resolved
+    "vscode_bot_comment": 2,
+    "slash_duplicate_cmd": 3,  # a maintainer's explicit /duplicate command (vscode)
+    "k8s_close_comment": 4,
+    "dup_label_with_ref": 5,
+    "close_as_duplicate_prose": 6,  # weakest: a maintainer says "close this as a duplicate" + one link
 }
 _REF = (
     r"(?:https?://github\.com/(?P<ur>[\w.-]+/[\w.-]+)/issues/(?P<un>\d+)"
@@ -329,4 +329,65 @@ def extract_duplicates(
         else:
             continue  # a bare mention without close / label / bot author is not a pair
         add(targets[0], method, c["createdAt"], ev, len(set(targets)))
+    return list(found.values())
+
+
+def _dup_side(rec: dict[str, Any]) -> bool:
+    """True if the issue itself says it is the duplicate: closed with a duplicate label / reason."""
+    return rec["state"] == "CLOSED" and (has_dup_label(rec) or closed_as_duplicate(rec))
+
+
+def target_pairs(
+    dt: dict[str, Any], recs: dict[int, dict[str, Any]], repo: str, diag: Counter[str]
+) -> list[dict[str, Any]]:
+    """Pairs from a dup_targets row (the issue's CLOSED / MarkedAsDuplicate / Unmarked events).
+
+    ClosedEvent.duplicateOf is the real target of a UI "close as duplicate" (null for slash
+    commands). On an issue's own timeline MarkedAsDuplicateEvent.canonical is that issue itself and
+    .duplicate the OTHER issue of the pair, so the direction comes from which side is the closed
+    duplicate (label / stateReason in ``recs``); both or neither, or a foreign repo, is skipped
+    (ambiguity counted in ``diag``). Un-marking retracts. Row source = the duplicate side.
+    """
+    x = dt["number"]
+    found: dict[tuple[int, int], dict[str, Any]] = {}
+
+    def add(src: int, canon: int | None, method: str, node: dict[str, Any], ev: str) -> None:
+        if canon is not None and canon != src:
+            row = {
+                "source": src,
+                "canonical": canon,
+                "method": method,
+                "ts": parse_ts(node["createdAt"]),
+            }
+            found[(src, canon)] = row | {"evidence": ev, "n_targets": 1}
+
+    if dt.get("missing"):
+        return []
+    for n in dt["timelineItems"]["nodes"]:
+        if not n:
+            continue
+        kind, other = n["__typename"], n.get("duplicate") or {}
+        if kind == "ClosedEvent" and n.get("duplicateOf"):
+            if _same_repo(n["duplicateOf"], dt, repo, diag, "canon"):
+                add(
+                    x,
+                    n["duplicateOf"]["number"],
+                    "closed_event_duplicate_of",
+                    n,
+                    "closed as duplicate",
+                )
+        elif kind == "MarkedAsDuplicateEvent":
+            if not _same_repo(other, dt, repo, diag, "canon"):
+                continue
+            y = other["number"]
+            x_dup = x in recs and _dup_side(recs[x])
+            y_dup = y in recs and _dup_side(recs[y])
+            if x_dup == y_dup:
+                diag["dup_target_ambiguous"] += 1
+            else:
+                src, canon = (x, y) if x_dup else (y, x)
+                add(src, canon, "marked_as_duplicate_event", n, f"marked by {login(n)}")
+        elif kind == "UnmarkedAsDuplicateEvent" and other.get("number"):
+            found.pop((x, other["number"]), None)
+            found.pop((other["number"], x), None)
     return list(found.values())

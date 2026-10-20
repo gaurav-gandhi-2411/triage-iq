@@ -60,7 +60,9 @@ TYPE_WORKFLOW = {
     "integration-test-failure", "unit-test-failure", "freeze-slow-crash-leak",
 }  # fmt: skip
 Pred = Callable[[str], bool]
-BOT_RE = re.compile(r"(bot|\[bot\])$|^(k8s-ci-robot|kubernetes-prow)$", re.I)
+BOT_RE = re.compile(
+    r"(bot|\[bot\])$|^(k8s-ci-robot|kubernetes-prow|vs-code-engineering|vscodenpa)$", re.I
+)
 
 
 def is_type_workflow(label: str) -> bool:

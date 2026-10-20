@@ -173,3 +173,9 @@ def test_v_new_excludes_vscode_process_platform_and_star_labels() -> None:
     ]
     df = issues([(i, [], [*noise, *comps]) for i in range(100)])
     assert qp0t.v_new_labels(df, set()) == sorted(comps)
+
+
+def test_vscode_automation_accounts_count_as_the_bot_side() -> None:
+    for login in ("vs-code-engineering", "vscodenpa", "kubernetes-prow", "k8s-ci-robot", "x[bot]"):
+        assert qp0t.BOT_RE.search(login), login
+    assert not qp0t.BOT_RE.search("bpasero")

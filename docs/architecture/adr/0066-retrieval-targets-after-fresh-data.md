@@ -1,6 +1,8 @@
 # ADR-0066 — Retrieval targets for the quality push: vscode duplicates, k8s fix-linked
 
-Status: Accepted
+Status: Accepted; decision item 3 (the k8s headline is same-PR fix-linked retrieval) is SUPERSEDED on 2026-10-20 by the
+prior-PR retrieval task of ADR-0068, because the frozen k8s test split has only 2 answerable same-PR queries (22 groups
+in total under the audited definition, 28 under the union of every definition tried; D82). Items 1, 2 and 4 stand.
 Date: 2026-10-20
 Decider: Gaurav Gandhi (decision of 2026-10-20 on spec-quality-push.md section 7.1)
 Numbered 0066 because 0065 is reserved by the open Cloud Run recording-job PR (#184).

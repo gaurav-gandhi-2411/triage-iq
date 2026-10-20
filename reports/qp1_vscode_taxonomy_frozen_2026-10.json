@@ -18,6 +18,36 @@
    "2025": 26,
    "train_total": 85
   },
+  "chat": {
+   "2023": 1,
+   "2024": 115,
+   "2025": 170,
+   "train_total": 286
+  },
+  "chat-agent": {
+   "2023": 0,
+   "2024": 0,
+   "2025": 50,
+   "train_total": 50
+  },
+  "chat-input": {
+   "2023": 0,
+   "2024": 0,
+   "2025": 40,
+   "train_total": 40
+  },
+  "chat-mcp": {
+   "2023": 0,
+   "2024": 0,
+   "2025": 202,
+   "train_total": 202
+  },
+  "chat-tools": {
+   "2023": 0,
+   "2024": 4,
+   "2025": 41,
+   "train_total": 45
+  },
   "comments": {
    "2023": 59,
    "2024": 52,
@@ -78,6 +108,12 @@
    "2025": 35,
    "train_total": 180
   },
+  "editor-edit-context": {
+   "2023": 0,
+   "2024": 46,
+   "2025": 31,
+   "train_total": 77
+  },
   "editor-find": {
    "2023": 69,
    "2024": 64,
@@ -89,6 +125,12 @@
    "2024": 18,
    "2025": 5,
    "train_total": 41
+  },
+  "editor-gpu": {
+   "2023": 0,
+   "2024": 107,
+   "2025": 22,
+   "train_total": 129
   },
   "editor-hover": {
    "2023": 61,
@@ -143,6 +185,12 @@
    "2024": 21,
    "2025": 6,
    "train_total": 132
+  },
+  "extension-signature": {
+   "2023": 6,
+   "2024": 3,
+   "2025": 36,
+   "train_total": 45
   },
   "extensions": {
    "2023": 227,
@@ -378,11 +426,23 @@
    "2025": 59,
    "train_total": 482
   },
+  "terminal-accessibility": {
+   "2023": 125,
+   "2024": 3,
+   "2025": 0,
+   "train_total": 128
+  },
   "terminal-conpty": {
    "2023": 25,
    "2024": 61,
    "2025": 20,
    "train_total": 106
+  },
+  "terminal-inline-chat": {
+   "2023": 0,
+   "2024": 81,
+   "2025": 7,
+   "train_total": 88
   },
   "terminal-input": {
    "2023": 50,
@@ -419,6 +479,12 @@
    "2024": 46,
    "2025": 22,
    "train_total": 80
+  },
+  "terminal-suggest": {
+   "2023": 0,
+   "2024": 179,
+   "2025": 272,
+   "train_total": 451
   },
   "terminal-tabs": {
    "2023": 47,
@@ -539,6 +605,11 @@
   "accessibility",
   "api",
   "authentication",
+  "chat",
+  "chat-agent",
+  "chat-input",
+  "chat-mcp",
+  "chat-tools",
   "comments",
   "config",
   "css-less-scss",
@@ -549,8 +620,10 @@
   "editor-code-actions",
   "editor-color-picker",
   "editor-core",
+  "editor-edit-context",
   "editor-find",
   "editor-folding",
+  "editor-gpu",
   "editor-hover",
   "editor-multicursor",
   "editor-rendering",
@@ -560,6 +633,7 @@
   "emmet",
   "error-list",
   "extension-host",
+  "extension-signature",
   "extensions",
   "file-explorer",
   "file-io",
@@ -599,13 +673,16 @@
   "tasks",
   "telemetry",
   "terminal",
+  "terminal-accessibility",
   "terminal-conpty",
+  "terminal-inline-chat",
   "terminal-input",
   "terminal-links",
   "terminal-process",
   "terminal-rendering",
   "terminal-shell-integration",
   "terminal-shell-pwsh",
+  "terminal-suggest",
   "terminal-tabs",
   "testing",
   "themes",
@@ -626,8 +703,8 @@
   "workbench-views",
   "workbench-window"
  ],
- "classes_sha256": "b554891fe741330ffc575ea1bf2e2c8d5ffd98dedcd3845fb8993fe02ebaf0d4",
- "design": "(2026-10-20; do not change after seeing results).\n * FAMILY F = V_all of qp0_taxonomy_coverage.py (V_old union V_new, labels with >= 100 issues, with\n   its exclusion set, which was itself extended post hoc on 2026-10-20 after reading the real label\n   list) MINUS NON_OWNERSHIP = {error-telemetry, chat-ext-issue, api-proposal} (bot crash reports, a\n   triage marker, an issue type).\n * CLASSES = labels in F with >= 30 issues among issues created <= 2025-06-30 (train period) AND >= 5\n   issues in each of the calendar years 2023 and 2024 (stable classes). Every other F label (new in\n   2025+ or sparse) maps to `other`.\n * Primary label = the earliest `labeled` event among the F labels still present at the end, ties\n   alphabetical (qp0_ceiling_labels.per_issue). Population = issues with >= 1 F label at the end.\n * Splits by created_at with the boundaries of qp0_make_splits (train < 2025-07-01, validation\n   2025-07-01 .. 2025-12-31, test >= 2026-01-01). Only created_at is used, so this report does not\n   depend on the (not yet final) duplicate-pair leakage flags of the split manifest, which will be\n   recomputed after the re-derive; classifier_eligible filtering is NOT applied here.\n * Reported (counts only): the class list with train counts per year and its sha256; per split the\n   labelled issues, the share whose primary is a class vs `other`, and for the test split the share\n   of `other` whose primary label has ZERO train issues (never seen) vs sparse; coverage of F at 72 h\n   and at the end per split (share of all issues in the split); the majority class share on train and\n   the always-majority accuracy on validation / test from TRAIN priors (a label-only baseline).",
+ "classes_sha256": "c08dc61d7d96860383749983ca6b697d5e23669763940a2170f1156880b43e17",
+ "design": "(2026-10-20; do not change after seeing results).\n * FAMILY F = V_all of qp0_taxonomy_coverage.py (V_old union V_new, labels with >= 100 issues, with\n   its exclusion set, which was itself extended post hoc on 2026-10-20 after reading the real label\n   list) MINUS NON_OWNERSHIP = {error-telemetry, chat-ext-issue, api-proposal} (bot crash reports, a\n   triage marker, an issue type).\n * CLASSES = labels in F with >= 30 issues among issues created <= 2025-06-30 (train period); no\n   stability condition (mirrors k8s). Every other F label (sparse in the train period) maps to\n   `other`. REPLACED RULE: the first version (2026-10-20, same day, BEFORE any model was scored) also\n   required >= 5 issues in each of 2023 and 2024 and gave 89 classes; it was replaced because it\n   dropped 11 classes with >= 30 train issues that are real product areas (terminal-suggest, chat,\n   chat-mcp, ...), a rule artefact. Both versions are reported side by side in `rule_comparison`;\n   the choice rests on the TRAIN / VALIDATION shares there, the test shares are descriptive only.\n * Primary label = the earliest `labeled` event among the F labels still present at the end, ties\n   alphabetical (qp0_ceiling_labels.per_issue). Population = issues with >= 1 F label at the end.\n * Splits by created_at with the boundaries of qp0_make_splits (train < 2025-07-01, validation\n   2025-07-01 .. 2025-12-31, test >= 2026-01-01). Only created_at is used, so this report does not\n   depend on the (not yet final) duplicate-pair leakage flags of the split manifest, which will be\n   recomputed after the re-derive; classifier_eligible filtering is NOT applied here.\n * Reported (counts only): the class list with train counts per year and its sha256; per split the\n   labelled issues, the share whose primary is a class vs `other`, and for the test split the share\n   of `other` whose primary label has ZERO train issues (never seen) vs sparse; coverage of F at 72 h\n   and at the end per split (share of all issues in the split); the majority class share on train and\n   the always-majority accuracy on validation / test from TRAIN priors (a label-only baseline).",
  "f_labels_not_classes": {
   "NES": {
    "2023": 0,
@@ -665,18 +742,6 @@
    "2025": 2,
    "train_total": 2
   },
-  "chat": {
-   "2023": 1,
-   "2024": 115,
-   "2025": 170,
-   "train_total": 286
-  },
-  "chat-agent": {
-   "2023": 0,
-   "2024": 0,
-   "2025": 50,
-   "train_total": 50
-  },
   "chat-agent-editing": {
    "2023": 0,
    "2024": 0,
@@ -701,18 +766,6 @@
    "2025": 26,
    "train_total": 27
   },
-  "chat-input": {
-   "2023": 0,
-   "2024": 0,
-   "2025": 40,
-   "train_total": 40
-  },
-  "chat-mcp": {
-   "2023": 0,
-   "2024": 0,
-   "2025": 202,
-   "train_total": 202
-  },
   "chat-mcp-management": {
    "2023": 0,
    "2024": 0,
@@ -724,12 +777,6 @@
    "2024": 0,
    "2025": 21,
    "train_total": 21
-  },
-  "chat-tools": {
-   "2023": 0,
-   "2024": 4,
-   "2025": 41,
-   "train_total": 45
   },
   "editor-autoclosing": {
    "2023": 8,
@@ -749,29 +796,11 @@
    "2025": 2,
    "train_total": 13
   },
-  "editor-edit-context": {
-   "2023": 0,
-   "2024": 46,
-   "2025": 31,
-   "train_total": 77
-  },
-  "editor-gpu": {
-   "2023": 0,
-   "2024": 107,
-   "2025": 22,
-   "train_total": 129
-  },
   "editor-input": {
    "2023": 10,
    "2024": 14,
    "2025": 5,
    "train_total": 29
-  },
-  "extension-signature": {
-   "2023": 6,
-   "2024": 3,
-   "2025": 36,
-   "train_total": 45
   },
   "keyboard-layout": {
    "2023": 9,
@@ -809,24 +838,6 @@
    "2025": 0,
    "train_total": 17
   },
-  "terminal-accessibility": {
-   "2023": 125,
-   "2024": 3,
-   "2025": 0,
-   "train_total": 128
-  },
-  "terminal-inline-chat": {
-   "2023": 0,
-   "2024": 81,
-   "2025": 7,
-   "train_total": 88
-  },
-  "terminal-suggest": {
-   "2023": 0,
-   "2024": 179,
-   "2025": 272,
-   "train_total": 451
-  },
   "workbench-copilot": {
    "2023": 0,
    "2024": 1,
@@ -853,7 +864,7 @@
   }
  },
  "generated_with": "scripts/qp1_vscode_taxonomy_freeze.py",
- "n_classes": 89,
+ "n_classes": 100,
  "non_ownership_excluded": [
   "api-proposal",
   "chat-ext-issue",
@@ -861,48 +872,178 @@
  ],
  "per_split": {
   "test": {
-   "always_majority_accuracy": 0.7167536664180959,
-   "coverage_f_72h": 0.18009136116572222,
+   "always_majority_accuracy": 0.025975640069599803,
+   "coverage_f_72h": 0.20937897536717937,
    "coverage_f_final": 0.2326240314559963,
    "issues": 34588,
    "labelled": 8046,
-   "other_never_seen_in_train": 2522,
-   "other_sparse_seen_in_train": 3245,
-   "primary_is_class": 2279,
-   "primary_is_other": 5767,
-   "primary_without_labeled_event": 1013,
-   "share_primary_is_class": 0.28324633358190404
+   "other_never_seen_in_train": 2538,
+   "other_sparse_seen_in_train": 2602,
+   "primary_applied_at_creation": 1092,
+   "primary_is_class": 2906,
+   "primary_is_other": 5140,
+   "share_primary_is_class": 0.3611732537907035
   },
   "train": {
-   "coverage_f_72h": 0.20781129003435062,
+   "coverage_f_72h": 0.22681333518654567,
    "coverage_f_final": 0.3086789905287612,
    "issues": 50363,
    "labelled": 15546,
    "other_never_seen_in_train": 0,
-   "other_sparse_seen_in_train": 1570,
-   "primary_is_class": 13976,
-   "primary_is_other": 1570,
-   "primary_without_labeled_event": 971,
-   "share_primary_is_class": 0.8990093914833398
+   "other_sparse_seen_in_train": 275,
+   "primary_applied_at_creation": 2782,
+   "primary_is_class": 15271,
+   "primary_is_other": 275,
+   "share_primary_is_class": 0.9823105622024958
   },
   "validation": {
-   "always_majority_accuracy": 0.576276938740879,
-   "coverage_f_72h": 0.1569404865155082,
+   "always_majority_accuracy": 0.026641778381130153,
+   "coverage_f_72h": 0.21777557510428283,
    "coverage_f_final": 0.2433816544831289,
    "issues": 24213,
    "labelled": 5893,
-   "other_never_seen_in_train": 73,
-   "other_sparse_seen_in_train": 3323,
-   "primary_is_class": 2497,
-   "primary_is_other": 3396,
-   "primary_without_labeled_event": 1482,
-   "share_primary_is_class": 0.423723061259121
+   "other_never_seen_in_train": 82,
+   "other_sparse_seen_in_train": 2172,
+   "primary_applied_at_creation": 1562,
+   "primary_is_class": 3639,
+   "primary_is_other": 2254,
+   "share_primary_is_class": 0.6175123027320549
   }
  },
  "repo": "microsoft/vscode",
+ "rule_comparison": {
+  "note": "selection rests on train / validation shares; test shares are descriptive",
+  "v1_stability_replaced": {
+   "classes_sha256": "b554891fe741330ffc575ea1bf2e2c8d5ffd98dedcd3845fb8993fe02ebaf0d4",
+   "n_classes": 89,
+   "test_never_seen_share_of_labelled": 0.31543624161073824,
+   "test_share_primary_in_class": 0.2827491921451653,
+   "train_never_seen_share_of_labelled": 0.0,
+   "train_share_primary_in_class": 0.8986234401132124,
+   "validation_never_seen_share_of_labelled": 0.013914814186322755,
+   "validation_share_primary_in_class": 0.42389275411505173
+  },
+  "v2_final": {
+   "classes_sha256": "c08dc61d7d96860383749983ca6b697d5e23669763940a2170f1156880b43e17",
+   "n_classes": 100,
+   "test_never_seen_share_of_labelled": 0.31543624161073824,
+   "test_share_primary_in_class": 0.3611732537907035,
+   "train_never_seen_share_of_labelled": 0.0,
+   "train_share_primary_in_class": 0.9823105622024958,
+   "validation_never_seen_share_of_labelled": 0.013914814186322755,
+   "validation_share_primary_in_class": 0.6175123027320549
+  }
+ },
+ "superseded_rule_v1_stability": {
+  "classes": [
+   "accessibility",
+   "api",
+   "authentication",
+   "comments",
+   "config",
+   "css-less-scss",
+   "debug",
+   "dictation",
+   "diff-editor",
+   "editor-autoindent",
+   "editor-code-actions",
+   "editor-color-picker",
+   "editor-core",
+   "editor-find",
+   "editor-folding",
+   "editor-hover",
+   "editor-multicursor",
+   "editor-rendering",
+   "editor-sticky-scroll",
+   "editor-wrapping",
+   "electron",
+   "emmet",
+   "error-list",
+   "extension-host",
+   "extensions",
+   "file-explorer",
+   "file-io",
+   "file-watcher",
+   "git",
+   "grammar",
+   "html",
+   "inline-chat",
+   "inline-completions",
+   "install-update",
+   "issue-reporter",
+   "javascript",
+   "json",
+   "keybindings",
+   "l10n-platform",
+   "languages-basic",
+   "layout",
+   "markdown-ext",
+   "menus",
+   "merge-editor",
+   "multi-diff-editor",
+   "network",
+   "notebook",
+   "notebook-output",
+   "output",
+   "panel-chat",
+   "perf",
+   "quick-open",
+   "quick-pick",
+   "remote",
+   "scm",
+   "search",
+   "settings-editor",
+   "settings-sync",
+   "snippets",
+   "suggest",
+   "tasks",
+   "telemetry",
+   "terminal",
+   "terminal-conpty",
+   "terminal-input",
+   "terminal-links",
+   "terminal-process",
+   "terminal-rendering",
+   "terminal-shell-integration",
+   "terminal-shell-pwsh",
+   "terminal-tabs",
+   "testing",
+   "themes",
+   "titlebar",
+   "typescript",
+   "user-profiles",
+   "ux",
+   "vscode-build",
+   "web",
+   "webview",
+   "workbench-auxwindow",
+   "workbench-editor-grid",
+   "workbench-editors",
+   "workbench-hover",
+   "workbench-multiroot",
+   "workbench-os-integration",
+   "workbench-tabs",
+   "workbench-views",
+   "workbench-window"
+  ],
+  "dropped_vs_final": [
+   "chat",
+   "chat-agent",
+   "chat-input",
+   "chat-mcp",
+   "chat-tools",
+   "editor-edit-context",
+   "editor-gpu",
+   "extension-signature",
+   "terminal-accessibility",
+   "terminal-inline-chat",
+   "terminal-suggest"
+  ],
+  "n_classes": 89
+ },
  "train_majority": {
-  "class": "other",
-  "other_share": 0.10099060851666024,
-  "share_of_labelled_train": 0.10099060851666024
+  "class": "accessibility",
+  "other_share": 0.01768943779750418,
+  "share_of_labelled_train": 0.06709121317380677
  }
 }

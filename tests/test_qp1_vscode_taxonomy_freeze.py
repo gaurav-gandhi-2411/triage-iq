@@ -51,23 +51,41 @@ def run() -> dict[str, Any]:
     return fz.freeze(issues, events, FAM)
 
 
-def test_class_rule_requires_train_volume_and_stability_in_2023_and_2024() -> None:
+def test_class_rule_is_train_volume_only_no_stability_condition() -> None:
     rep = run()
-    assert rep["classes"] == ["a"] and rep["n_classes"] == 1
-    assert rep["class_train_counts_per_year"]["a"] == {
-        "2023": 6,
-        "2024": 6,
-        "2025": 20,
-        "train_total": 32,
+    assert rep["classes"] == ["a", "b", "newlab"] and rep["n_classes"] == 3  # >= 30 train issues
+    assert rep["class_train_counts_per_year"]["b"] == {
+        "2023": 40,
+        "2024": 0,
+        "2025": 0,
+        "train_total": 40,
     }
-    assert set(rep["f_labels_not_classes"]) >= {
-        "b",
-        "c",
-        "newlab",
-        "tie1",
-        "tie2",
-    }  # unstable / sparse / new
-    assert rep["f_labels_not_classes"]["b"]["2024"] == 0
+    assert (
+        rep["class_train_counts_per_year"]["newlab"]["train_total"] == 40
+    )  # new in 2025: still a class
+    assert set(rep["f_labels_not_classes"]) == {"c", "tie1", "tie2"}  # sparse (< 30 train issues)
+    old = rep[
+        "superseded_rule_v1_stability"
+    ]  # the first version kept only labels stable in 2023 and 2024
+    assert old["classes"] == ["a"] and old["n_classes"] == 1
+
+
+def test_rule_comparison_reports_both_versions_side_by_side() -> None:
+    cmp_ = run()["rule_comparison"]
+    assert set(cmp_) == {"v1_stability_replaced", "v2_final", "note"}
+    v1, v2 = cmp_["v1_stability_replaced"], cmp_["v2_final"]
+    assert (v1["n_classes"], v2["n_classes"]) == (1, 3)
+    assert (
+        v1["validation_share_primary_in_class"] == 10 / 14
+        and v2["validation_share_primary_in_class"] == 1.0
+    )
+    assert (
+        v1["test_share_primary_in_class"] == v2["test_share_primary_in_class"] == 10 / 15
+    )  # a only in test
+    assert (
+        v2["test_never_seen_share_of_labelled"] == 3 / 15
+        and v2["validation_never_seen_share_of_labelled"] == 0.0
+    )
 
 
 def test_primary_ties_alphabetical_and_mapping_to_other() -> None:
@@ -78,22 +96,27 @@ def test_primary_ties_alphabetical_and_mapping_to_other() -> None:
 
 
 def test_per_split_counts_unseen_vs_sparse_and_majority_baseline() -> None:
-    rep = run()["per_split"]
+    out = run()
+    rep = out["per_split"]
     tr = rep["train"]
-    assert tr["labelled"] == 6 + 6 + 20 + 40 + 6 + 40 + 6 and tr["primary_is_class"] == 32
+    assert tr["labelled"] == 6 + 6 + 20 + 40 + 6 + 40 + 6 and tr["primary_is_class"] == 32 + 40 + 40
     assert tr["issues"] == 127  # 3 train issues carry no family label
     te = rep["test"]
     assert (te["issues"], te["labelled"]) == (16, 15)  # one test issue has no label
     assert te["primary_is_class"] == 10 and te["primary_is_other"] == 5
     assert (
         te["other_never_seen_in_train"] == 3 and te["other_sparse_seen_in_train"] == 2
-    )  # unseen vs c (sparse)
+    )  # unseen vs c
     assert te["coverage_f_final"] == 15 / 16 and "always_majority_accuracy" in te
-    assert te["primary_without_labeled_event"] == 0  # every fixture label has a labeled event
-    # train priors: class a 32 vs other 92 -> the majority is `other`, so test accuracy = share of other
-    out = run()
-    assert out["train_majority"]["class"] == "other"
-    assert te["always_majority_accuracy"] == 5 / 15
+    assert (
+        te["primary_applied_at_creation"] == 0
+    )  # every fixture label has a labeled event 1 h after creation
+    # train priors: b 40 and newlab 40 tie (alphabetical -> b), a 32, other 12
+    assert (
+        out["train_majority"]["class"] == "b"
+        and out["train_majority"]["share_of_labelled_train"] == 40 / 124
+    )
+    assert te["always_majority_accuracy"] == 0.0  # no test issue has primary b
 
 
 def test_deterministic_and_hash_stable() -> None:

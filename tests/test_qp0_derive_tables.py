@@ -357,3 +357,59 @@ def test_label_frequency_with_multi_label_issues() -> None:
     assert f["n_issues_2024"].to_dict() == {"a": 2, "b": 1, "c": 1}
     assert f["n_issues_t72h"].to_dict() == {"a": 2, "b": 1, "c": 0}
     assert f["first_seen_year"].to_dict() == {"a": 2023, "b": 2023, "c": 2024}
+
+
+def _write_dup_targets(base: Path, rows: list[dict[str, Any]]) -> None:
+    d = base / "dup_targets"
+    d.mkdir(parents=True, exist_ok=True)
+    with gzip.open(d / "00000.jsonl.gz", "wt", encoding="utf-8") as f:
+        f.writelines(json.dumps(r) + "\n" for r in rows)
+    (d / "checkpoint.json").write_text("{}")  # must not be read as data
+
+
+def test_dup_targets_add_pairs_resolve_direction_and_flags(tmp_path: Path) -> None:
+    dup_labelled, plain = issue(5, labels=["*duplicate"]), issue(9)
+    ui_closed = issue(7, labels=["*duplicate"])
+    ui_closed["stateReason"] = "DUPLICATE"
+    base = tmp_path / "raw" / "o__r"
+    _write_raw(base, "issues", [dup_labelled, plain, ui_closed, issue(3)])
+    _write_raw(base, "prs", [])
+    marked = {
+        "__typename": "MarkedAsDuplicateEvent", "createdAt": ts(3), "actor": {"login": "m"},
+        "canonical": CANON(5), "duplicate": CANON(9),
+    }  # fmt: skip
+    closed = {
+        "__typename": "ClosedEvent", "createdAt": ts(4), "stateReason": "DUPLICATE",
+        "duplicateOf": CANON(3),
+    }  # fmt: skip
+    _write_dup_targets(
+        base,
+        [
+            {"number": 5, "timelineItems": {"totalCount": 1, "nodes": [marked]}, "_schema": 2},
+            {"number": 7, "timelineItems": {"totalCount": 1, "nodes": [closed]}, "_schema": 2},
+            {"number": 9, "missing": True, "_schema": 2},
+        ],
+    )
+    t = qp0d.build_tables(REPO, base)
+    pairs = {(r.source, r.canonical): r.method for r in t["duplicate_pairs"].itertuples()}
+    assert pairs == {(5, 9): "marked_as_duplicate_event", (7, 3): "closed_event_duplicate_of"}
+    iss = t["issues"].set_index("number")
+    assert not iss.at[5, "dup_label_unresolved"] and not iss.at[7, "dup_label_unresolved"]
+    assert not iss.at[7, "closed_as_duplicate_unresolved"]
+
+
+def test_dup_targets_pair_from_other_side_clears_that_issues_flag(tmp_path: Path) -> None:
+    # the event sits on X's (5) timeline but Y (9) is the closed duplicate: the pair is 9 -> 5
+    base = tmp_path / "raw" / "o__r"
+    _write_raw(base, "issues", [issue(5), issue(9, labels=["*duplicate"])])
+    _write_raw(base, "prs", [])
+    marked = {
+        "__typename": "MarkedAsDuplicateEvent", "createdAt": ts(3), "actor": {"login": "m"},
+        "canonical": CANON(5), "duplicate": CANON(9),
+    }  # fmt: skip
+    _write_dup_targets(
+        base, [{"number": 5, "timelineItems": {"totalCount": 1, "nodes": [marked]}, "_schema": 2}]
+    )
+    t = qp0d.build_tables(REPO, base)
+    assert [(r.source, r.canonical) for r in t["duplicate_pairs"].itertuples()] == [(9, 5)]
+    assert not t["issues"].set_index("number").at[9, "dup_label_unresolved"]

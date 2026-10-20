@@ -390,3 +390,85 @@ def test_command_accepts_markdown_link_query_urls_and_trailing_explanation() -> 
     assert _staff_pairs(
         "/duplicate https://github.com/o/r/issues/122951 , if you need admin mode see there"
     ) == [(122951, cmd, 1)]
+
+
+# --- dup_targets re-scrape: MarkedAsDuplicateEvent.duplicate / ClosedEvent.duplicateOf ----------
+def _dt(number: int, nodes: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "number": number,
+        "timelineItems": {"totalCount": len(nodes), "nodes": nodes},
+        "_schema": 2,
+    }
+
+
+def _marked(self_n: int, other: int, repo: str = "o/r") -> dict[str, Any]:
+    return {
+        "__typename": "MarkedAsDuplicateEvent",
+        "createdAt": ts(3),
+        "actor": {"login": "m"},
+        "canonical": CANON(self_n),
+        "duplicate": CANON(other, repo),
+    }
+
+
+def _dupish(number: int, dup: bool) -> dict[str, Any]:
+    return issue(number, labels=["*duplicate"] if dup else [])
+
+
+def _tp(dt: dict[str, Any], recs: list[dict[str, Any]], diag: Counter[str] | None = None):  # noqa: ANN202
+    lookup = {r["number"]: r for r in recs}
+    return qp0d.target_pairs(dt, lookup, REPO, diag if diag is not None else Counter())
+
+
+def test_marked_event_direction_follows_the_closed_duplicate_side() -> None:
+    nodes = [_marked(5, 9)]
+    # X (5) carries the dup label, Y (9) does not: source = 5, canonical = 9
+    got = _tp(_dt(5, nodes), [_dupish(5, True), _dupish(9, False)])
+    assert [(p["source"], p["canonical"], p["method"]) for p in got] == [
+        (5, 9, "marked_as_duplicate_event")
+    ]
+    # Y is the duplicate side: the pair is Y -> X even though the event sits on X's timeline
+    got = _tp(_dt(5, nodes), [_dupish(5, False), _dupish(9, True)])
+    assert [(p["source"], p["canonical"]) for p in got] == [(9, 5)]
+    # Y outside the table (older than the window): X is the source
+    assert [(p["source"], p["canonical"]) for p in _tp(_dt(5, nodes), [_dupish(5, True)])] == [
+        (5, 9)
+    ]
+
+
+def test_marked_event_ambiguous_direction_is_skipped_and_counted() -> None:
+    for x_dup, y_dup in ((True, True), (False, False)):
+        diag: Counter[str] = Counter()
+        assert _tp(_dt(5, [_marked(5, 9)]), [_dupish(5, x_dup), _dupish(9, y_dup)], diag) == []
+        assert diag["dup_target_ambiguous"] == 1
+
+
+def test_marked_event_foreign_repo_and_unmark_retraction() -> None:
+    assert _tp(_dt(5, [_marked(5, 9, "x/y")]), [_dupish(5, True)]) == []
+    unmark = {
+        "__typename": "UnmarkedAsDuplicateEvent",
+        "createdAt": ts(4),
+        "canonical": CANON(5),
+        "duplicate": CANON(9),
+    }
+    assert _tp(_dt(5, [_marked(5, 9), unmark]), [_dupish(5, True)]) == []
+
+
+def test_closed_event_duplicate_of_in_dup_targets_and_missing_rows() -> None:
+    closed = {
+        "__typename": "ClosedEvent",
+        "createdAt": ts(5),
+        "stateReason": "DUPLICATE",
+        "duplicateOf": CANON(7),
+    }
+    got = _tp(_dt(5, [closed]), [_dupish(5, True)])
+    assert [(p["source"], p["canonical"], p["method"]) for p in got] == [
+        (5, 7, "closed_event_duplicate_of")
+    ]
+    assert _tp(_dt(5, [{**closed, "duplicateOf": None}]), [_dupish(5, True)]) == []  # slash closure
+    assert _tp({"number": 5, "missing": True, "_schema": 2}, []) == []
+    assert (
+        qp0d.METHOD_RANK["closed_event_duplicate_of"]
+        < qp0d.METHOD_RANK["marked_as_duplicate_event"]
+    )
+    assert qp0d.METHOD_RANK["marked_as_duplicate_event"] < qp0d.METHOD_RANK["slash_duplicate_cmd"]

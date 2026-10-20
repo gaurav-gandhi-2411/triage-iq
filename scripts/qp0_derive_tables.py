@@ -17,6 +17,7 @@ from typing import Any, TypeVar
 
 import pandas as pd
 from qp0_derive_events import (
+    METHOD_RANK,
     RawDataError,
     closed_as_duplicate,
     closers,
@@ -25,6 +26,7 @@ from qp0_derive_events import (
     label_events,
     login,
     parse_ts,
+    target_pairs,
 )
 from qp0_derive_stats import stats_from_parquet, write_stats
 
@@ -188,6 +190,27 @@ def iter_records(kind_dir: Path, limit: int | None = None) -> Iterator[dict[str,
                 yield {**rec, "_loc": f"{f}:{i}"}
 
 
+def load_dup_targets(base: Path) -> dict[int, dict[str, Any]]:
+    """Rows of <base>/dup_targets/<NNNNN>.jsonl.gz (the duplicate-target re-scrape), by number."""
+    out: dict[int, dict[str, Any]] = {}
+    for f in sorted((base / "dup_targets").glob("*.jsonl.gz")):
+        with gzip.open(f, "rt", encoding="utf-8") as fh:
+            for line in fh:
+                row = json.loads(line)
+                out[row["number"]] = row
+    return out
+
+
+def best_pairs(pairs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """One row per (source, canonical): the best-ranked method wins (first seen on a tie)."""
+    best: dict[tuple[int, int], dict[str, Any]] = {}
+    for p in pairs:
+        k = (p["source"], p["canonical"])
+        if k not in best or METHOD_RANK[p["method"]] < METHOD_RANK[best[k]["method"]]:
+            best[k] = p
+    return list(best.values())
+
+
 def _derive(rec: dict[str, Any], fn: Callable[[dict[str, Any]], T], kind: str = "issue") -> T:
     """Run a per-record derivation; any malformed-record failure names file:line and number."""
     try:
@@ -203,6 +226,7 @@ def build_tables(repo: str, base: Path, limit: int | None = None) -> dict[str, p
         for r in iter_records(base / "prs", limit)
     }
     prs = {k: {"merged": v["merged"], "merged_at": v["merged_at"]} for k, v in prs_rows.items()}
+    pr_set = set(prs_rows)  # prose pairs whose target is a known PR are dropped
     refs: dict[int, list[int]] = {}
     for k, v in prs_rows.items():
         for i in v["closing_issue_numbers"]:
@@ -212,21 +236,37 @@ def build_tables(repo: str, base: Path, limit: int | None = None) -> dict[str, p
     dups: list[dict[str, Any]] = []
     fixes: list[dict[str, Any]] = []
     recs = {r["number"]: r for r in iter_records(base / "issues", limit)}  # last copy wins
+    targets = load_dup_targets(base)
+    other_side: list[dict[str, Any]] = []  # pairs whose source is not the issue carrying the event
     if not recs:
         raise SystemExit(f"no issue files under {base / 'issues'}")
     for n, rec in recs.items():
         diag: Counter[str] = Counter()
         row, ev = _derive(rec, lambda x: issue_row(x, repo))
-        d = _derive(rec, lambda x, dg=diag: extract_duplicates(x, repo, dg))
+        d = _derive(rec, lambda x, dg=diag: extract_duplicates(x, repo, dg, pr_set))
         row["canon_foreign_repo"] = diag["canon_foreign_repo"]
         row["canon_repo_unknown"] = diag["canon_repo_unknown"]
+        row["canon_self"] = diag["canon_self"]
+        if n in targets:
+            tp = _derive(rec, lambda x, dg=diag, dt=targets[n]: target_pairs(dt, recs, repo, dg))
+            d, other_side = (
+                d + [p for p in tp if p["source"] == n],
+                other_side + [p for p in tp if p["source"] != n],
+            )
+        row["dup_target_ambiguous"] = diag["dup_target_ambiguous"]
         row["dup_label_unresolved"] = has_dup_label(rec) and not d
         row["closed_as_duplicate_unresolved"] = row["closed_as_duplicate"] and not d
         issues[n] = row
         events += ev
         dups += d
         fixes += _derive(rec, lambda x: extract_fix_links(x, repo, prs, refs))
+    dups = best_pairs(dups + other_side)
     iss = pd.DataFrame(list(issues.values()))
+    has_pair = iss["number"].isin(
+        {p["source"] for p in dups}
+    )  # incl. pairs found from the other side
+    iss["dup_label_unresolved"] &= ~has_pair
+    iss["closed_as_duplicate_unresolved"] &= ~has_pair
     cutoff = max(
         [iss["scraped_at"].max()] + [v["scraped_at"] for v in prs_rows.values() if v["scraped_at"]]
     )

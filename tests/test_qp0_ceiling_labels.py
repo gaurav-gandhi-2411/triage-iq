@@ -180,3 +180,15 @@ def test_script_imports_no_classifier() -> None:
         assert not any(
             w in src for w in (".fit(", "LogisticRegression", "RandomForest", "predict(")
         )
+
+
+def test_final_label_without_a_labeled_event_does_not_crash_and_ranks_last() -> None:
+    iss = pd.DataFrame([issue(1, ["sig/z", "sig/a"], ["sig/a"]), issue(2, ["sig/z"], [])])
+    ev = events(
+        [(1, 3, "sig/z", "labeled")]
+    )  # sig/a (issue 1) and sig/z (issue 2) have no labeled event
+    d = cl.per_issue(iss, ev, SIG).set_index("number")
+    assert (
+        d.at[1, "primary"] == "sig/z" and d.at[1, "primary_hours"] == 3.0
+    )  # the event-backed label wins
+    assert d.at[2, "primary"] == "sig/z" and pd.isna(d.at[2, "primary_hours"])  # no event at all

@@ -70,7 +70,11 @@ def per_issue(issues: pd.DataFrame, events: pd.DataFrame, family: Family) -> pd.
         key = lambda x, n=r.number: (first.get((n, x), pd.Timestamp.max.tz_localize("UTC")), x)  # noqa: E731
         prim = min(fin, key=key) if fin else None
         early = min((e for e in ev72.get(r.number, []) if e[1] in t72), default=(None, None))[1]
-        hrs = (first[(r.number, prim)] - r.created_at).total_seconds() / 3600 if prim else None
+        hrs = (
+            (first[(r.number, prim)] - r.created_at).total_seconds() / 3600
+            if (r.number, prim) in first
+            else None
+        )
         rows.append(
             {"number": r.number, "final": fin, "t72": t72, "primary": prim, "earliest72": early,
              "primary_hours": hrs, "text_hash": r.text_hash, "created_at": r.created_at}

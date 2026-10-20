@@ -1,0 +1,2855 @@
+{
+ "repo": "microsoft/vscode",
+ "design": "(GG decision D79 item 4, 2026-10-20): the taxonomy is decided on label coverage\nand routing semantics ONLY, before any model is scored. This script imports and trains no\nclassifier and reports no accuracy and no comparison with any earlier class count.\nCandidate families. k8s: A = `area/*`, S = `sig/*`, SA = an issue with either. vscode: V_old =\nthe component list in preprocess.LABEL_FACET_PATTERNS['microsoft/vscode']['component']\n(imported, case-insensitive); V_new = labels not in V_old and not in TYPE_WORKFLOW (a heuristic\nexclusion set) with >= 100 issues in the data; V_all = V_old union V_new. Label-frequency\ntables of every other prefix family are listed so non-components are visible.\nMetrics per family, overall and per created year 2023-2026, on ISSUES (not PRs):\n (1) coverage_t72h / coverage_final: share with >= 1 family label at 72 h / at the end;\n (2) share with exactly 1 and with >= 2 family labels (final);\n (3) churn: among issues with >= 1 final family label, share whose t72h family set != final set;\n (4) median / p90 hours from creation to the first family `labeled` event (issues never\n     receiving one are excluded and counted);\n (5) who executed that first event: prow_bot (login ends 'bot' / '[bot]', or k8s-ci-robot, or\n     kubernetes-prow, which replaced k8s-ci-robot on 2026-06-20) / other / unknown (no actor).\n     CAVEAT: Prow applies sig/* and area/* on behalf of humans' `/sig x` and `/area x`\n     comments, so this says \"Prow executed it\", NOT \"automatic labelling\"; bot-vs-other is\n     no evidence about routing intent;\n (6) class table: per label the final count and per-year counts; number of classes with >= 30\n     and >= 100 issues; share of family-labelled issues having >= 1 label in a class >= 30;\n (7) stability: classes with >= 5 issues in every year vs only some years;\n (8) k8s: co-occurrence of S and A (share of S issues with an A label and vice versa) and, per\n     sig/*, its top 3 co-occurring area/* labels.",
+ "generated_with": "scripts/qp0_taxonomy_coverage.py",
+ "n_issues": 109164,
+ "families": {
+  "V_old": {
+   "overall": {
+    "n_issues": 109164,
+    "coverage_t72h": 0.08590744201385073,
+    "coverage_final": 0.12662599391740867,
+    "exactly_1": 0.1181433439595471,
+    "ge_2": 0.008482649957861566,
+    "churn": 0.3428344064240758,
+    "hours_to_first_label": {
+     "median": 7.13875,
+     "p90": 463.30305555555555,
+     "n_with_label": 12746,
+     "n_never_labelled": 96418
+    },
+    "first_label_actor_prow_bot_vs_other": {
+     "prow_bot": 1683,
+     "other": 11063,
+     "unknown": 0
+    },
+    "classes": {
+     "n_classes": 62,
+     "classes_ge30": 50,
+     "classes_ge100": 33,
+     "share_labelled_in_ge30": 0.987484627070824
+    }
+   },
+   "per_year": {
+    "2023": {
+     "n_issues": 21382,
+     "coverage_t72h": 0.13684407445514918,
+     "coverage_final": 0.19956037788794312,
+     "exactly_1": 0.1841268356561594,
+     "ge_2": 0.015433542231783743,
+     "churn": 0.3433325521443637,
+     "hours_to_first_label": {
+      "median": 10.874722222222223,
+      "p90": 530.5708333333333,
+      "n_with_label": 4081,
+      "n_never_labelled": 17301
+     },
+     "first_label_actor_prow_bot_vs_other": {
+      "prow_bot": 429,
+      "other": 3652,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 59,
+      "classes_ge30": 31,
+      "classes_ge100": 15,
+      "share_labelled_in_ge30": 0.9104757440824935
+     }
+    },
+    "2024": {
+     "n_issues": 19217,
+     "coverage_t72h": 0.1235884893583806,
+     "coverage_final": 0.18644949784045375,
+     "exactly_1": 0.17141073008273924,
+     "ge_2": 0.015038767757714523,
+     "churn": 0.3589171085682389,
+     "hours_to_first_label": {
+      "median": 13.410833333333333,
+      "p90": 1031.3979166666666,
+      "n_with_label": 3506,
+      "n_never_labelled": 15711
+     },
+     "first_label_actor_prow_bot_vs_other": {
+      "prow_bot": 368,
+      "other": 3138,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 59,
+      "classes_ge30": 30,
+      "classes_ge100": 11,
+      "share_labelled_in_ge30": 0.9095729835333519
+     }
+    },
+    "2025": {
+     "n_issues": 33977,
+     "coverage_t72h": 0.0666627424434176,
+     "coverage_final": 0.10395267386761634,
+     "exactly_1": 0.09815463401712923,
+     "ge_2": 0.0057980398504870944,
+     "churn": 0.37967157417893543,
+     "hours_to_first_label": {
+      "median": 5.896388888888889,
+      "p90": 346.6507777777785,
+      "n_with_label": 3009,
+      "n_never_labelled": 30968
+     },
+     "first_label_actor_prow_bot_vs_other": {
+      "prow_bot": 301,
+      "other": 2708,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 59,
+      "classes_ge30": 25,
+      "classes_ge100": 10,
+      "share_labelled_in_ge30": 0.9077010192525481
+     }
+    },
+    "2026": {
+     "n_issues": 34588,
+     "coverage_t72h": 0.05238811148375159,
+     "coverage_final": 0.07057360934428125,
+     "exactly_1": 0.0673933156007864,
+     "ge_2": 0.0031802937434948536,
+     "churn": 0.26505530520278575,
+     "hours_to_first_label": {
+      "median": 0.15388888888888888,
+      "p90": 123.4097777777778,
+      "n_with_label": 2150,
+      "n_never_labelled": 32438
+     },
+     "first_label_actor_prow_bot_vs_other": {
+      "prow_bot": 585,
+      "other": 1565,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 60,
+      "classes_ge30": 18,
+      "classes_ge100": 5,
+      "share_labelled_in_ge30": 0.8734125358459648
+     }
+    }
+   },
+   "class_table": {
+    "classes": {
+     "accessibility": {
+      "total": 1486,
+      "2023": 544,
+      "2024": 381,
+      "2025": 339,
+      "2026": 222
+     },
+     "git": {
+      "total": 1369,
+      "2023": 504,
+      "2024": 369,
+      "2025": 413,
+      "2026": 83
+     },
+     "error-telemetry": {
+      "total": 1364,
+      "2023": 296,
+      "2024": 293,
+      "2025": 258,
+      "2026": 517
+     },
+     "ux": {
+      "total": 1237,
+      "2023": 121,
+      "2024": 115,
+      "2025": 589,
+      "2026": 412
+     },
+     "terminal": {
+      "total": 717,
+      "2023": 265,
+      "2024": 158,
+      "2025": 132,
+      "2026": 162
+     },
+     "debug": {
+      "total": 644,
+      "2023": 209,
+      "2024": 253,
+      "2025": 142,
+      "2026": 40
+     },
+     "scm": {
+      "total": 642,
+      "2023": 110,
+      "2024": 267,
+      "2025": 226,
+      "2026": 39
+     },
+     "extensions": {
+      "total": 625,
+      "2023": 227,
+      "2024": 176,
+      "2025": 165,
+      "2026": 57
+     },
+     "tasks": {
+      "total": 470,
+      "2023": 201,
+      "2024": 88,
+      "2025": 148,
+      "2026": 33
+     },
+     "api": {
+      "total": 452,
+      "2023": 128,
+      "2024": 172,
+      "2025": 106,
+      "2026": 46
+     },
+     "search": {
+      "total": 420,
+      "2023": 171,
+      "2024": 156,
+      "2025": 82,
+      "2026": 11
+     },
+     "install-update": {
+      "total": 380,
+      "2023": 34,
+      "2024": 72,
+      "2025": 55,
+      "2026": 219
+     },
+     "file-explorer": {
+      "total": 370,
+      "2023": 119,
+      "2024": 121,
+      "2025": 96,
+      "2026": 34
+     },
+     "perf": {
+      "total": 343,
+      "2023": 105,
+      "2024": 68,
+      "2025": 80,
+      "2026": 90
+     },
+     "workbench-tabs": {
+      "total": 294,
+      "2023": 102,
+      "2024": 70,
+      "2025": 41,
+      "2026": 81
+     },
+     "editor-core": {
+      "total": 262,
+      "2023": 82,
+      "2024": 63,
+      "2025": 99,
+      "2026": 18
+     },
+     "suggest": {
+      "total": 232,
+      "2023": 109,
+      "2024": 59,
+      "2025": 46,
+      "2026": 18
+     },
+     "layout": {
+      "total": 231,
+      "2023": 65,
+      "2024": 74,
+      "2025": 52,
+      "2026": 40
+     },
+     "electron": {
+      "total": 214,
+      "2023": 79,
+      "2024": 63,
+      "2025": 48,
+      "2026": 24
+     },
+     "themes": {
+      "total": 209,
+      "2023": 87,
+      "2024": 45,
+      "2025": 37,
+      "2026": 40
+     },
+     "typescript": {
+      "total": 194,
+      "2023": 75,
+      "2024": 62,
+      "2025": 47,
+      "2026": 10
+     },
+     "editor-find": {
+      "total": 178,
+      "2023": 69,
+      "2024": 64,
+      "2025": 28,
+      "2026": 17
+     },
+     "workbench-editors": {
+      "total": 152,
+      "2023": 51,
+      "2024": 48,
+      "2025": 38,
+      "2026": 15
+     },
+     "snippets": {
+      "total": 137,
+      "2023": 50,
+      "2024": 47,
+      "2025": 23,
+      "2026": 17
+     },
+     "vscode-build": {
+      "total": 136,
+      "2023": 28,
+      "2024": 28,
+      "2025": 36,
+      "2026": 44
+     },
+     "keybindings": {
+      "total": 131,
+      "2023": 85,
+      "2024": 19,
+      "2025": 13,
+      "2026": 14
+     },
+     "menus": {
+      "total": 125,
+      "2023": 54,
+      "2024": 44,
+      "2025": 16,
+      "2026": 11
+     },
+     "workbench-os-integration": {
+      "total": 120,
+      "2023": 41,
+      "2024": 36,
+      "2025": 30,
+      "2026": 13
+     },
+     "telemetry": {
+      "total": 117,
+      "2023": 23,
+      "2024": 7,
+      "2025": 53,
+      "2026": 34
+     },
+     "file-io": {
+      "total": 115,
+      "2023": 44,
+      "2024": 36,
+      "2025": 25,
+      "2026": 10
+     },
+     "settings-sync": {
+      "total": 113,
+      "2023": 60,
+      "2024": 32,
+      "2025": 14,
+      "2026": 7
+     },
+     "javascript": {
+      "total": 108,
+      "2023": 57,
+      "2024": 25,
+      "2025": 22,
+      "2026": 4
+     },
+     "config": {
+      "total": 105,
+      "2023": 31,
+      "2024": 34,
+      "2025": 23,
+      "2026": 17
+     },
+     "json": {
+      "total": 84,
+      "2023": 28,
+      "2024": 24,
+      "2025": 21,
+      "2026": 11
+     },
+     "file-watcher": {
+      "total": 73,
+      "2023": 18,
+      "2024": 35,
+      "2025": 11,
+      "2026": 9
+     },
+     "html": {
+      "total": 63,
+      "2023": 23,
+      "2024": 16,
+      "2025": 17,
+      "2026": 7
+     },
+     "editor-folding": {
+      "total": 59,
+      "2023": 18,
+      "2024": 18,
+      "2025": 17,
+      "2026": 6
+     },
+     "editor-rendering": {
+      "total": 57,
+      "2023": 22,
+      "2024": 22,
+      "2025": 7,
+      "2026": 6
+     },
+     "workbench-multiroot": {
+      "total": 55,
+      "2023": 13,
+      "2024": 19,
+      "2025": 15,
+      "2026": 8
+     },
+     "editor-wrapping": {
+      "total": 54,
+      "2023": 15,
+      "2024": 22,
+      "2025": 11,
+      "2026": 6
+     },
+     "output": {
+      "total": 53,
+      "2023": 13,
+      "2024": 13,
+      "2025": 20,
+      "2026": 7
+     },
+     "css-less-scss": {
+      "total": 52,
+      "2023": 25,
+      "2024": 14,
+      "2025": 7,
+      "2026": 6
+     },
+     "languages-basic": {
+      "total": 47,
+      "2023": 22,
+      "2024": 12,
+      "2025": 11,
+      "2026": 2
+     },
+     "error-list": {
+      "total": 46,
+      "2023": 25,
+      "2024": 9,
+      "2025": 9,
+      "2026": 3
+     },
+     "editor-input": {
+      "total": 44,
+      "2023": 10,
+      "2024": 14,
+      "2025": 14,
+      "2026": 6
+     },
+     "emmet": {
+      "total": 42,
+      "2023": 20,
+      "2024": 15,
+      "2025": 4,
+      "2026": 3
+     },
+     "l10n-platform": {
+      "total": 41,
+      "2023": 23,
+      "2024": 5,
+      "2025": 8,
+      "2026": 5
+     },
+     "editor-multicursor": {
+      "total": 37,
+      "2023": 12,
+      "2024": 17,
+      "2025": 7,
+      "2026": 1
+     },
+     "workbench-editor-grid": {
+      "total": 35,
+      "2023": 17,
+      "2024": 13,
+      "2025": 3,
+      "2026": 2
+     },
+     "keyboard-layout": {
+      "total": 32,
+      "2023": 9,
+      "2024": 15,
+      "2025": 5,
+      "2026": 3
+     },
+     "editor-autoclosing": {
+      "total": 27,
+      "2023": 8,
+      "2024": 8,
+      "2025": 2,
+      "2026": 9
+     },
+     "release-notes": {
+      "total": 25,
+      "2023": 4,
+      "2024": 13,
+      "2025": 4,
+      "2026": 4
+     },
+     "markdown": {
+      "total": 25,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 25
+     },
+     "workbench-run-as-admin": {
+      "total": 20,
+      "2023": 5,
+      "2024": 7,
+      "2025": 5,
+      "2026": 3
+     },
+     "php": {
+      "total": 20,
+      "2023": 7,
+      "2024": 8,
+      "2025": 4,
+      "2026": 1
+     },
+     "workbench-diagnostics": {
+      "total": 19,
+      "2023": 15,
+      "2024": 3,
+      "2025": 1,
+      "2026": 0
+     },
+     "editor-bracket-matching": {
+      "total": 18,
+      "2023": 16,
+      "2024": 2,
+      "2025": 0,
+      "2026": 0
+     },
+     "performance": {
+      "total": 18,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 18
+     },
+     "editor-commands": {
+      "total": 15,
+      "2023": 7,
+      "2024": 4,
+      "2025": 2,
+      "2026": 2
+     },
+     "nodejs": {
+      "total": 13,
+      "2023": 7,
+      "2024": 2,
+      "2025": 2,
+      "2026": 2
+     },
+     "workbench-electron": {
+      "total": 8,
+      "2023": 1,
+      "2024": 0,
+      "2025": 1,
+      "2026": 6
+     },
+     "VIM": {
+      "total": 7,
+      "2023": 0,
+      "2024": 2,
+      "2025": 4,
+      "2026": 1
+     }
+    },
+    "stability": {
+     "present_ge5_every_year": [
+      "accessibility",
+      "api",
+      "config",
+      "css-less-scss",
+      "debug",
+      "editor-core",
+      "editor-find",
+      "editor-folding",
+      "editor-input",
+      "editor-rendering",
+      "editor-wrapping",
+      "electron",
+      "error-telemetry",
+      "extensions",
+      "file-explorer",
+      "file-io",
+      "file-watcher",
+      "git",
+      "html",
+      "install-update",
+      "json",
+      "keybindings",
+      "l10n-platform",
+      "layout",
+      "menus",
+      "output",
+      "perf",
+      "scm",
+      "search",
+      "settings-sync",
+      "snippets",
+      "suggest",
+      "tasks",
+      "telemetry",
+      "terminal",
+      "themes",
+      "typescript",
+      "ux",
+      "vscode-build",
+      "workbench-editors",
+      "workbench-multiroot",
+      "workbench-os-integration",
+      "workbench-tabs"
+     ],
+     "present_ge5_some_years": [
+      "editor-autoclosing",
+      "editor-bracket-matching",
+      "editor-commands",
+      "editor-multicursor",
+      "emmet",
+      "error-list",
+      "javascript",
+      "keyboard-layout",
+      "languages-basic",
+      "markdown",
+      "nodejs",
+      "performance",
+      "php",
+      "release-notes",
+      "workbench-diagnostics",
+      "workbench-editor-grid",
+      "workbench-electron",
+      "workbench-run-as-admin"
+     ],
+     "never_ge5_in_a_year": [
+      "VIM"
+     ]
+    }
+   }
+  },
+  "V_new": {
+   "overall": {
+    "n_issues": 109164,
+    "coverage_t72h": 0.1292367447143747,
+    "coverage_final": 0.17613865376864168,
+    "exactly_1": 0.1644223370341871,
+    "ge_2": 0.011716316734454581,
+    "churn": 0.2899937591013106,
+    "hours_to_first_label": {
+     "median": 0.20583333333333334,
+     "p90": 169.93202777777782,
+     "n_with_label": 19502,
+     "n_never_labelled": 89662
+    },
+    "first_label_actor_prow_bot_vs_other": {
+     "prow_bot": 1682,
+     "other": 17799,
+     "unknown": 21
+    },
+    "classes": {
+     "n_classes": 79,
+     "classes_ge30": 79,
+     "classes_ge100": 79,
+     "share_labelled_in_ge30": 1.0
+    }
+   },
+   "per_year": {
+    "2023": {
+     "n_issues": 21382,
+     "coverage_t72h": 0.10106631746328687,
+     "coverage_final": 0.14044523430923206,
+     "exactly_1": 0.13436535403610514,
+     "ge_2": 0.006079880273126929,
+     "churn": 0.307026307026307,
+     "hours_to_first_label": {
+      "median": 8.124166666666667,
+      "p90": 389.7946111111113,
+      "n_with_label": 2897,
+      "n_never_labelled": 18485
+     },
+     "first_label_actor_prow_bot_vs_other": {
+      "prow_bot": 14,
+      "other": 2883,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 46,
+      "classes_ge30": 38,
+      "classes_ge100": 7,
+      "share_labelled_in_ge30": 0.971028971028971
+     }
+    },
+    "2024": {
+     "n_issues": 19217,
+     "coverage_t72h": 0.10865379611802051,
+     "coverage_final": 0.15782900556798668,
+     "exactly_1": 0.14851433626476557,
+     "ge_2": 0.009314669303221106,
+     "churn": 0.34190570392350805,
+     "hours_to_first_label": {
+      "median": 8.356388888888889,
+      "p90": 1151.731833333334,
+      "n_with_label": 2957,
+      "n_never_labelled": 16260
+     },
+     "first_label_actor_prow_bot_vs_other": {
+      "prow_bot": 45,
+      "other": 2912,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 55,
+      "classes_ge30": 41,
+      "classes_ge100": 8,
+      "share_labelled_in_ge30": 0.9518628420705572
+     }
+    },
+    "2025": {
+     "n_issues": 33977,
+     "coverage_t72h": 0.12873414368543426,
+     "coverage_final": 0.1891868028372134,
+     "exactly_1": 0.1768843629514083,
+     "ge_2": 0.012302439885805103,
+     "churn": 0.3383634100808961,
+     "hours_to_first_label": {
+      "median": 0.021944444444444444,
+      "p90": 152.15744444444437,
+      "n_with_label": 6389,
+      "n_never_labelled": 27588
+     },
+     "first_label_actor_prow_bot_vs_other": {
+      "prow_bot": 685,
+      "other": 5693,
+      "unknown": 11
+     },
+     "classes": {
+      "n_classes": 75,
+      "classes_ge30": 58,
+      "classes_ge100": 16,
+      "share_labelled_in_ge30": 0.9710640945861855
+     }
+    },
+    "2026": {
+     "n_issues": 34588,
+     "coverage_t72h": 0.1585810107551752,
+     "coverage_final": 0.195559153463629,
+     "exactly_1": 0.17959986122354574,
+     "ge_2": 0.015959292240083266,
+     "churn": 0.21318746303962152,
+     "hours_to_first_label": {
+      "median": 0.005,
+      "p90": 49.699888888888886,
+      "n_with_label": 7259,
+      "n_never_labelled": 27329
+     },
+     "first_label_actor_prow_bot_vs_other": {
+      "prow_bot": 938,
+      "other": 6311,
+      "unknown": 10
+     },
+     "classes": {
+      "n_classes": 79,
+      "classes_ge30": 34,
+      "classes_ge100": 20,
+      "share_labelled_in_ge30": 0.9207569485511532
+     }
+    }
+   },
+   "class_table": {
+    "classes": {
+     "chat": {
+      "total": 1317,
+      "2023": 1,
+      "2024": 115,
+      "2025": 759,
+      "2026": 442
+     },
+     "agents-window": {
+      "total": 1263,
+      "2023": 0,
+      "2024": 0,
+      "2025": 1,
+      "2026": 1262
+     },
+     "chat-billing": {
+      "total": 1018,
+      "2023": 0,
+      "2024": 0,
+      "2025": 610,
+      "2026": 408
+     },
+     "agent-host": {
+      "total": 801,
+      "2023": 0,
+      "2024": 0,
+      "2025": 1,
+      "2026": 800
+     },
+     "chat-terminal": {
+      "total": 753,
+      "2023": 0,
+      "2024": 0,
+      "2025": 480,
+      "2026": 273
+     },
+     "terminal-suggest": {
+      "total": 636,
+      "2023": 0,
+      "2024": 179,
+      "2025": 429,
+      "2026": 28
+     },
+     "copilot-cli-agent": {
+      "total": 490,
+      "2023": 0,
+      "2024": 0,
+      "2025": 84,
+      "2026": 406
+     },
+     "diff-editor": {
+      "total": 473,
+      "2023": 275,
+      "2024": 134,
+      "2025": 52,
+      "2026": 12
+     },
+     "chat-agents-view": {
+      "total": 421,
+      "2023": 0,
+      "2024": 1,
+      "2025": 257,
+      "2026": 163
+     },
+     "inline-chat": {
+      "total": 389,
+      "2023": 70,
+      "2024": 170,
+      "2025": 85,
+      "2026": 64
+     },
+     "browser-integration": {
+      "total": 385,
+      "2023": 0,
+      "2024": 0,
+      "2025": 12,
+      "2026": 373
+     },
+     "notebook": {
+      "total": 355,
+      "2023": 80,
+      "2024": 149,
+      "2025": 106,
+      "2026": 20
+     },
+     "chat-agent": {
+      "total": 352,
+      "2023": 0,
+      "2024": 0,
+      "2025": 279,
+      "2026": 73
+     },
+     "chat-ext-issue": {
+      "total": 345,
+      "2023": 0,
+      "2024": 0,
+      "2025": 165,
+      "2026": 180
+     },
+     "model-byok": {
+      "total": 343,
+      "2023": 0,
+      "2024": 0,
+      "2025": 75,
+      "2026": 268
+     },
+     "chat-customizations": {
+      "total": 333,
+      "2023": 0,
+      "2024": 1,
+      "2025": 227,
+      "2026": 105
+     },
+     "chat-mcp": {
+      "total": 331,
+      "2023": 0,
+      "2024": 0,
+      "2025": 294,
+      "2026": 37
+     },
+     "user-profiles": {
+      "total": 322,
+      "2023": 165,
+      "2024": 93,
+      "2025": 50,
+      "2026": 14
+     },
+     "markdown-ext": {
+      "total": 318,
+      "2023": 149,
+      "2024": 75,
+      "2025": 68,
+      "2026": 26
+     },
+     "settings-editor": {
+      "total": 288,
+      "2023": 100,
+      "2024": 70,
+      "2025": 98,
+      "2026": 20
+     },
+     "inline-completions": {
+      "total": 273,
+      "2023": 93,
+      "2024": 42,
+      "2025": 126,
+      "2026": 12
+     },
+     "testing": {
+      "total": 259,
+      "2023": 82,
+      "2024": 111,
+      "2025": 45,
+      "2026": 21
+     },
+     "panel-chat": {
+      "total": 253,
+      "2023": 66,
+      "2024": 142,
+      "2025": 36,
+      "2026": 9
+     },
+     "terminal-shell-integration": {
+      "total": 247,
+      "2023": 68,
+      "2024": 84,
+      "2025": 77,
+      "2026": 18
+     },
+     "dictation": {
+      "total": 243,
+      "2023": 17,
+      "2024": 97,
+      "2025": 40,
+      "2026": 89
+     },
+     "workbench-auxwindow": {
+      "total": 238,
+      "2023": 146,
+      "2024": 60,
+      "2025": 25,
+      "2026": 7
+     },
+     "terminal-rendering": {
+      "total": 228,
+      "2023": 82,
+      "2024": 45,
+      "2025": 44,
+      "2026": 57
+     },
+     "remote": {
+      "total": 225,
+      "2023": 86,
+      "2024": 67,
+      "2025": 48,
+      "2026": 24
+     },
+     "NES": {
+      "total": 220,
+      "2023": 0,
+      "2024": 1,
+      "2025": 186,
+      "2026": 33
+     },
+     "editor-sticky-scroll": {
+      "total": 218,
+      "2023": 94,
+      "2024": 72,
+      "2025": 44,
+      "2026": 8
+     },
+     "chat-tools": {
+      "total": 216,
+      "2023": 0,
+      "2024": 4,
+      "2025": 139,
+      "2026": 73
+     },
+     "model-picker": {
+      "total": 213,
+      "2023": 0,
+      "2024": 0,
+      "2025": 62,
+      "2026": 151
+     },
+     "editor-hover": {
+      "total": 211,
+      "2023": 61,
+      "2024": 88,
+      "2025": 49,
+      "2026": 13
+     },
+     "quick-pick": {
+      "total": 208,
+      "2023": 51,
+      "2024": 55,
+      "2025": 89,
+      "2026": 13
+     },
+     "grammar": {
+      "total": 194,
+      "2023": 61,
+      "2024": 68,
+      "2025": 42,
+      "2026": 23
+     },
+     "webview": {
+      "total": 193,
+      "2023": 70,
+      "2024": 55,
+      "2025": 35,
+      "2026": 33
+     },
+     "terminal-process": {
+      "total": 192,
+      "2023": 86,
+      "2024": 36,
+      "2025": 49,
+      "2026": 21
+     },
+     "workbench-views": {
+      "total": 188,
+      "2023": 85,
+      "2024": 51,
+      "2025": 38,
+      "2026": 14
+     },
+     "UBB": {
+      "total": 183,
+      "2023": 0,
+      "2024": 0,
+      "2025": 1,
+      "2026": 182
+     },
+     "terminal-links": {
+      "total": 177,
+      "2023": 72,
+      "2024": 59,
+      "2025": 28,
+      "2026": 18
+     },
+     "web": {
+      "total": 174,
+      "2023": 79,
+      "2024": 45,
+      "2025": 36,
+      "2026": 14
+     },
+     "ai-customizations": {
+      "total": 172,
+      "2023": 0,
+      "2024": 0,
+      "2025": 1,
+      "2026": 171
+     },
+     "notebook-output": {
+      "total": 165,
+      "2023": 93,
+      "2024": 41,
+      "2025": 30,
+      "2026": 1
+     },
+     "editor-autoindent": {
+      "total": 164,
+      "2023": 30,
+      "2024": 77,
+      "2025": 47,
+      "2026": 10
+     },
+     "issue-reporter": {
+      "total": 159,
+      "2023": 32,
+      "2024": 70,
+      "2025": 49,
+      "2026": 8
+     },
+     "agent-sandbox": {
+      "total": 159,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 159
+     },
+     "agent-behavior": {
+      "total": 158,
+      "2023": 0,
+      "2024": 0,
+      "2025": 71,
+      "2026": 87
+     },
+     "extension-host": {
+      "total": 157,
+      "2023": 105,
+      "2024": 21,
+      "2025": 13,
+      "2026": 18
+     },
+     "authentication": {
+      "total": 155,
+      "2023": 37,
+      "2024": 22,
+      "2025": 74,
+      "2026": 22
+     },
+     "capi": {
+      "total": 153,
+      "2023": 0,
+      "2024": 0,
+      "2025": 106,
+      "2026": 47
+     },
+     "agentic-workflows": {
+      "total": 152,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 152
+     },
+     "editor-gpu": {
+      "total": 151,
+      "2023": 0,
+      "2024": 107,
+      "2025": 34,
+      "2026": 10
+     },
+     "terminal-input": {
+      "total": 149,
+      "2023": 50,
+      "2024": 26,
+      "2025": 25,
+      "2026": 48
+     },
+     "terminal-conpty": {
+      "total": 149,
+      "2023": 25,
+      "2024": 61,
+      "2025": 48,
+      "2026": 15
+     },
+     "comments": {
+      "total": 140,
+      "2023": 59,
+      "2024": 52,
+      "2025": 26,
+      "2026": 3
+     },
+     "terminal-tabs": {
+      "total": 140,
+      "2023": 47,
+      "2024": 34,
+      "2025": 37,
+      "2026": 22
+     },
+     "chat-input": {
+      "total": 139,
+      "2023": 0,
+      "2024": 0,
+      "2025": 86,
+      "2026": 53
+     },
+     "agents": {
+      "total": 135,
+      "2023": 0,
+      "2024": 0,
+      "2025": 1,
+      "2026": 134
+     },
+     "titlebar": {
+      "total": 131,
+      "2023": 41,
+      "2024": 45,
+      "2025": 30,
+      "2026": 15
+     },
+     "terminal-accessibility": {
+      "total": 130,
+      "2023": 125,
+      "2024": 3,
+      "2025": 0,
+      "2026": 2
+     },
+     "terminal-shell-pwsh": {
+      "total": 128,
+      "2023": 12,
+      "2024": 46,
+      "2025": 49,
+      "2026": 21
+     },
+     "workbench-copilot": {
+      "total": 128,
+      "2023": 0,
+      "2024": 1,
+      "2025": 120,
+      "2026": 7
+     },
+     "api-proposal": {
+      "total": 127,
+      "2023": 41,
+      "2024": 31,
+      "2025": 35,
+      "2026": 20
+     },
+     "chat-mcp-management": {
+      "total": 127,
+      "2023": 0,
+      "2024": 0,
+      "2025": 110,
+      "2026": 17
+     },
+     "extension-signature": {
+      "total": 126,
+      "2023": 6,
+      "2024": 3,
+      "2025": 97,
+      "2026": 20
+     },
+     "claude-agent": {
+      "total": 125,
+      "2023": 0,
+      "2024": 0,
+      "2025": 1,
+      "2026": 124
+     },
+     "merge-editor": {
+      "total": 124,
+      "2023": 52,
+      "2024": 29,
+      "2025": 42,
+      "2026": 1
+     },
+     "workbench-window": {
+      "total": 123,
+      "2023": 31,
+      "2024": 41,
+      "2025": 32,
+      "2026": 19
+     },
+     "workbench-hover": {
+      "total": 122,
+      "2023": 23,
+      "2024": 55,
+      "2025": 33,
+      "2026": 11
+     },
+     "quick-open": {
+      "total": 119,
+      "2023": 54,
+      "2024": 21,
+      "2025": 35,
+      "2026": 9
+     },
+     "editor-edit-context": {
+      "total": 118,
+      "2023": 0,
+      "2024": 46,
+      "2025": 64,
+      "2026": 8
+     },
+     "network": {
+      "total": 115,
+      "2023": 11,
+      "2024": 17,
+      "2025": 50,
+      "2026": 37
+     },
+     "chat-agent-editing": {
+      "total": 115,
+      "2023": 0,
+      "2024": 0,
+      "2025": 76,
+      "2026": 39
+     },
+     "extension": {
+      "total": 113,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 113
+     },
+     "terminal-inline-chat": {
+      "total": 110,
+      "2023": 0,
+      "2024": 81,
+      "2025": 18,
+      "2026": 11
+     },
+     "multi-diff-editor": {
+      "total": 109,
+      "2023": 17,
+      "2024": 60,
+      "2025": 19,
+      "2026": 13
+     },
+     "editor-color-picker": {
+      "total": 106,
+      "2023": 53,
+      "2024": 18,
+      "2025": 22,
+      "2026": 13
+     },
+     "editor-code-actions": {
+      "total": 104,
+      "2023": 51,
+      "2024": 39,
+      "2025": 10,
+      "2026": 4
+     },
+     "mcp": {
+      "total": 103,
+      "2023": 0,
+      "2024": 0,
+      "2025": 1,
+      "2026": 102
+     }
+    },
+    "stability": {
+     "present_ge5_every_year": [
+      "api-proposal",
+      "authentication",
+      "dictation",
+      "diff-editor",
+      "editor-autoindent",
+      "editor-color-picker",
+      "editor-hover",
+      "editor-sticky-scroll",
+      "extension-host",
+      "grammar",
+      "inline-chat",
+      "inline-completions",
+      "issue-reporter",
+      "markdown-ext",
+      "multi-diff-editor",
+      "network",
+      "notebook",
+      "panel-chat",
+      "quick-open",
+      "quick-pick",
+      "remote",
+      "settings-editor",
+      "terminal-conpty",
+      "terminal-input",
+      "terminal-links",
+      "terminal-process",
+      "terminal-rendering",
+      "terminal-shell-integration",
+      "terminal-shell-pwsh",
+      "terminal-tabs",
+      "testing",
+      "titlebar",
+      "user-profiles",
+      "web",
+      "webview",
+      "workbench-auxwindow",
+      "workbench-hover",
+      "workbench-views",
+      "workbench-window"
+     ],
+     "present_ge5_some_years": [
+      "NES",
+      "UBB",
+      "agent-behavior",
+      "agent-host",
+      "agent-sandbox",
+      "agentic-workflows",
+      "agents",
+      "agents-window",
+      "ai-customizations",
+      "browser-integration",
+      "capi",
+      "chat",
+      "chat-agent",
+      "chat-agent-editing",
+      "chat-agents-view",
+      "chat-billing",
+      "chat-customizations",
+      "chat-ext-issue",
+      "chat-input",
+      "chat-mcp",
+      "chat-mcp-management",
+      "chat-terminal",
+      "chat-tools",
+      "claude-agent",
+      "comments",
+      "copilot-cli-agent",
+      "editor-code-actions",
+      "editor-edit-context",
+      "editor-gpu",
+      "extension",
+      "extension-signature",
+      "mcp",
+      "merge-editor",
+      "model-byok",
+      "model-picker",
+      "notebook-output",
+      "terminal-accessibility",
+      "terminal-inline-chat",
+      "terminal-suggest",
+      "workbench-copilot"
+     ],
+     "never_ge5_in_a_year": []
+    }
+   }
+  },
+  "V_all": {
+   "overall": {
+    "n_issues": 109164,
+    "coverage_t72h": 0.20144919570554395,
+    "coverage_final": 0.2820160492470045,
+    "exactly_1": 0.24362427173793558,
+    "ge_2": 0.03839177750906892,
+    "churn": 0.3187162996167089,
+    "hours_to_first_label": {
+     "median": 1.6690277777777778,
+     "p90": 250.53549999999998,
+     "n_with_label": 30108,
+     "n_never_labelled": 79056
+    },
+    "first_label_actor_prow_bot_vs_other": {
+     "prow_bot": 3114,
+     "other": 26973,
+     "unknown": 21
+    },
+    "classes": {
+     "n_classes": 141,
+     "classes_ge30": 129,
+     "classes_ge100": 112,
+     "share_labelled_in_ge30": 0.9954199961021244
+    }
+   },
+   "per_year": {
+    "2023": {
+     "n_issues": 21382,
+     "coverage_t72h": 0.2236460574314844,
+     "coverage_final": 0.3183518847628847,
+     "exactly_1": 0.2776634552427275,
+     "ge_2": 0.040688429520157145,
+     "churn": 0.33744674599676805,
+     "hours_to_first_label": {
+      "median": 9.466388888888888,
+      "p90": 439.04727777777657,
+      "n_with_label": 6499,
+      "n_never_labelled": 14883
+     },
+     "first_label_actor_prow_bot_vs_other": {
+      "prow_bot": 437,
+      "other": 6062,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 105,
+      "classes_ge30": 69,
+      "classes_ge100": 22,
+      "share_labelled_in_ge30": 0.9377111796679888
+     }
+    },
+    "2024": {
+     "n_issues": 19217,
+     "coverage_t72h": 0.2192329708070979,
+     "coverage_final": 0.32159025862517565,
+     "exactly_1": 0.27735858874954467,
+     "ge_2": 0.04423166987563095,
+     "churn": 0.35631067961165047,
+     "hours_to_first_label": {
+      "median": 10.426666666666666,
+      "p90": 910.8591666666666,
+      "n_with_label": 6011,
+      "n_never_labelled": 13206
+     },
+     "first_label_actor_prow_bot_vs_other": {
+      "prow_bot": 408,
+      "other": 5603,
+      "unknown": 0
+     },
+     "classes": {
+      "n_classes": 114,
+      "classes_ge30": 71,
+      "classes_ge100": 19,
+      "share_labelled_in_ge30": 0.9305825242718446
+     }
+    },
+    "2025": {
+     "n_issues": 33977,
+     "coverage_t72h": 0.1834770580098302,
+     "coverage_final": 0.2727138946934691,
+     "exactly_1": 0.23707213703387586,
+     "ge_2": 0.03564175765959325,
+     "churn": 0.35905460824519747,
+     "hours_to_first_label": {
+      "median": 0.15819444444444447,
+      "p90": 184.00927777777784,
+      "n_with_label": 8808,
+      "n_never_labelled": 25169
+     },
+     "first_label_actor_prow_bot_vs_other": {
+      "prow_bot": 983,
+      "other": 7814,
+      "unknown": 11
+     },
+     "classes": {
+      "n_classes": 134,
+      "classes_ge30": 83,
+      "classes_ge100": 26,
+      "share_labelled_in_ge30": 0.9498165335635658
+     }
+    },
+    "2026": {
+     "n_issues": 34588,
+     "coverage_t72h": 0.19550132994102,
+     "coverage_final": 0.24670405921128716,
+     "exactly_1": 0.21027523996761882,
+     "ge_2": 0.03642881924366832,
+     "churn": 0.23274346654166178,
+     "hours_to_first_label": {
+      "median": 0.015555555555555555,
+      "p90": 64.65525000000001,
+      "n_with_label": 8790,
+      "n_never_labelled": 25798
+     },
+     "first_label_actor_prow_bot_vs_other": {
+      "prow_bot": 1286,
+      "other": 7494,
+      "unknown": 10
+     },
+     "classes": {
+      "n_classes": 139,
+      "classes_ge30": 52,
+      "classes_ge100": 25,
+      "share_labelled_in_ge30": 0.9137466307277629
+     }
+    }
+   },
+   "class_table": {
+    "classes": {
+     "accessibility": {
+      "total": 1486,
+      "2023": 544,
+      "2024": 381,
+      "2025": 339,
+      "2026": 222
+     },
+     "git": {
+      "total": 1369,
+      "2023": 504,
+      "2024": 369,
+      "2025": 413,
+      "2026": 83
+     },
+     "error-telemetry": {
+      "total": 1364,
+      "2023": 296,
+      "2024": 293,
+      "2025": 258,
+      "2026": 517
+     },
+     "chat": {
+      "total": 1317,
+      "2023": 1,
+      "2024": 115,
+      "2025": 759,
+      "2026": 442
+     },
+     "agents-window": {
+      "total": 1263,
+      "2023": 0,
+      "2024": 0,
+      "2025": 1,
+      "2026": 1262
+     },
+     "ux": {
+      "total": 1237,
+      "2023": 121,
+      "2024": 115,
+      "2025": 589,
+      "2026": 412
+     },
+     "chat-billing": {
+      "total": 1018,
+      "2023": 0,
+      "2024": 0,
+      "2025": 610,
+      "2026": 408
+     },
+     "agent-host": {
+      "total": 801,
+      "2023": 0,
+      "2024": 0,
+      "2025": 1,
+      "2026": 800
+     },
+     "chat-terminal": {
+      "total": 753,
+      "2023": 0,
+      "2024": 0,
+      "2025": 480,
+      "2026": 273
+     },
+     "terminal": {
+      "total": 717,
+      "2023": 265,
+      "2024": 158,
+      "2025": 132,
+      "2026": 162
+     },
+     "debug": {
+      "total": 644,
+      "2023": 209,
+      "2024": 253,
+      "2025": 142,
+      "2026": 40
+     },
+     "scm": {
+      "total": 642,
+      "2023": 110,
+      "2024": 267,
+      "2025": 226,
+      "2026": 39
+     },
+     "terminal-suggest": {
+      "total": 636,
+      "2023": 0,
+      "2024": 179,
+      "2025": 429,
+      "2026": 28
+     },
+     "extensions": {
+      "total": 625,
+      "2023": 227,
+      "2024": 176,
+      "2025": 165,
+      "2026": 57
+     },
+     "copilot-cli-agent": {
+      "total": 490,
+      "2023": 0,
+      "2024": 0,
+      "2025": 84,
+      "2026": 406
+     },
+     "diff-editor": {
+      "total": 473,
+      "2023": 275,
+      "2024": 134,
+      "2025": 52,
+      "2026": 12
+     },
+     "tasks": {
+      "total": 470,
+      "2023": 201,
+      "2024": 88,
+      "2025": 148,
+      "2026": 33
+     },
+     "api": {
+      "total": 452,
+      "2023": 128,
+      "2024": 172,
+      "2025": 106,
+      "2026": 46
+     },
+     "chat-agents-view": {
+      "total": 421,
+      "2023": 0,
+      "2024": 1,
+      "2025": 257,
+      "2026": 163
+     },
+     "search": {
+      "total": 420,
+      "2023": 171,
+      "2024": 156,
+      "2025": 82,
+      "2026": 11
+     },
+     "inline-chat": {
+      "total": 389,
+      "2023": 70,
+      "2024": 170,
+      "2025": 85,
+      "2026": 64
+     },
+     "browser-integration": {
+      "total": 385,
+      "2023": 0,
+      "2024": 0,
+      "2025": 12,
+      "2026": 373
+     },
+     "install-update": {
+      "total": 380,
+      "2023": 34,
+      "2024": 72,
+      "2025": 55,
+      "2026": 219
+     },
+     "file-explorer": {
+      "total": 370,
+      "2023": 119,
+      "2024": 121,
+      "2025": 96,
+      "2026": 34
+     },
+     "notebook": {
+      "total": 355,
+      "2023": 80,
+      "2024": 149,
+      "2025": 106,
+      "2026": 20
+     },
+     "chat-agent": {
+      "total": 352,
+      "2023": 0,
+      "2024": 0,
+      "2025": 279,
+      "2026": 73
+     },
+     "chat-ext-issue": {
+      "total": 345,
+      "2023": 0,
+      "2024": 0,
+      "2025": 165,
+      "2026": 180
+     },
+     "perf": {
+      "total": 343,
+      "2023": 105,
+      "2024": 68,
+      "2025": 80,
+      "2026": 90
+     },
+     "model-byok": {
+      "total": 343,
+      "2023": 0,
+      "2024": 0,
+      "2025": 75,
+      "2026": 268
+     },
+     "chat-customizations": {
+      "total": 333,
+      "2023": 0,
+      "2024": 1,
+      "2025": 227,
+      "2026": 105
+     },
+     "chat-mcp": {
+      "total": 331,
+      "2023": 0,
+      "2024": 0,
+      "2025": 294,
+      "2026": 37
+     },
+     "user-profiles": {
+      "total": 322,
+      "2023": 165,
+      "2024": 93,
+      "2025": 50,
+      "2026": 14
+     },
+     "markdown-ext": {
+      "total": 318,
+      "2023": 149,
+      "2024": 75,
+      "2025": 68,
+      "2026": 26
+     },
+     "workbench-tabs": {
+      "total": 294,
+      "2023": 102,
+      "2024": 70,
+      "2025": 41,
+      "2026": 81
+     },
+     "settings-editor": {
+      "total": 288,
+      "2023": 100,
+      "2024": 70,
+      "2025": 98,
+      "2026": 20
+     },
+     "inline-completions": {
+      "total": 273,
+      "2023": 93,
+      "2024": 42,
+      "2025": 126,
+      "2026": 12
+     },
+     "editor-core": {
+      "total": 262,
+      "2023": 82,
+      "2024": 63,
+      "2025": 99,
+      "2026": 18
+     },
+     "testing": {
+      "total": 259,
+      "2023": 82,
+      "2024": 111,
+      "2025": 45,
+      "2026": 21
+     },
+     "panel-chat": {
+      "total": 253,
+      "2023": 66,
+      "2024": 142,
+      "2025": 36,
+      "2026": 9
+     },
+     "terminal-shell-integration": {
+      "total": 247,
+      "2023": 68,
+      "2024": 84,
+      "2025": 77,
+      "2026": 18
+     },
+     "dictation": {
+      "total": 243,
+      "2023": 17,
+      "2024": 97,
+      "2025": 40,
+      "2026": 89
+     },
+     "workbench-auxwindow": {
+      "total": 238,
+      "2023": 146,
+      "2024": 60,
+      "2025": 25,
+      "2026": 7
+     },
+     "suggest": {
+      "total": 232,
+      "2023": 109,
+      "2024": 59,
+      "2025": 46,
+      "2026": 18
+     },
+     "layout": {
+      "total": 231,
+      "2023": 65,
+      "2024": 74,
+      "2025": 52,
+      "2026": 40
+     },
+     "terminal-rendering": {
+      "total": 228,
+      "2023": 82,
+      "2024": 45,
+      "2025": 44,
+      "2026": 57
+     },
+     "remote": {
+      "total": 225,
+      "2023": 86,
+      "2024": 67,
+      "2025": 48,
+      "2026": 24
+     },
+     "NES": {
+      "total": 220,
+      "2023": 0,
+      "2024": 1,
+      "2025": 186,
+      "2026": 33
+     },
+     "editor-sticky-scroll": {
+      "total": 218,
+      "2023": 94,
+      "2024": 72,
+      "2025": 44,
+      "2026": 8
+     },
+     "chat-tools": {
+      "total": 216,
+      "2023": 0,
+      "2024": 4,
+      "2025": 139,
+      "2026": 73
+     },
+     "electron": {
+      "total": 214,
+      "2023": 79,
+      "2024": 63,
+      "2025": 48,
+      "2026": 24
+     },
+     "model-picker": {
+      "total": 213,
+      "2023": 0,
+      "2024": 0,
+      "2025": 62,
+      "2026": 151
+     },
+     "editor-hover": {
+      "total": 211,
+      "2023": 61,
+      "2024": 88,
+      "2025": 49,
+      "2026": 13
+     },
+     "themes": {
+      "total": 209,
+      "2023": 87,
+      "2024": 45,
+      "2025": 37,
+      "2026": 40
+     },
+     "quick-pick": {
+      "total": 208,
+      "2023": 51,
+      "2024": 55,
+      "2025": 89,
+      "2026": 13
+     },
+     "grammar": {
+      "total": 194,
+      "2023": 61,
+      "2024": 68,
+      "2025": 42,
+      "2026": 23
+     },
+     "typescript": {
+      "total": 194,
+      "2023": 75,
+      "2024": 62,
+      "2025": 47,
+      "2026": 10
+     },
+     "webview": {
+      "total": 193,
+      "2023": 70,
+      "2024": 55,
+      "2025": 35,
+      "2026": 33
+     },
+     "terminal-process": {
+      "total": 192,
+      "2023": 86,
+      "2024": 36,
+      "2025": 49,
+      "2026": 21
+     },
+     "workbench-views": {
+      "total": 188,
+      "2023": 85,
+      "2024": 51,
+      "2025": 38,
+      "2026": 14
+     },
+     "UBB": {
+      "total": 183,
+      "2023": 0,
+      "2024": 0,
+      "2025": 1,
+      "2026": 182
+     },
+     "editor-find": {
+      "total": 178,
+      "2023": 69,
+      "2024": 64,
+      "2025": 28,
+      "2026": 17
+     },
+     "terminal-links": {
+      "total": 177,
+      "2023": 72,
+      "2024": 59,
+      "2025": 28,
+      "2026": 18
+     },
+     "web": {
+      "total": 174,
+      "2023": 79,
+      "2024": 45,
+      "2025": 36,
+      "2026": 14
+     },
+     "ai-customizations": {
+      "total": 172,
+      "2023": 0,
+      "2024": 0,
+      "2025": 1,
+      "2026": 171
+     },
+     "notebook-output": {
+      "total": 165,
+      "2023": 93,
+      "2024": 41,
+      "2025": 30,
+      "2026": 1
+     },
+     "editor-autoindent": {
+      "total": 164,
+      "2023": 30,
+      "2024": 77,
+      "2025": 47,
+      "2026": 10
+     },
+     "issue-reporter": {
+      "total": 159,
+      "2023": 32,
+      "2024": 70,
+      "2025": 49,
+      "2026": 8
+     },
+     "agent-sandbox": {
+      "total": 159,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 159
+     },
+     "agent-behavior": {
+      "total": 158,
+      "2023": 0,
+      "2024": 0,
+      "2025": 71,
+      "2026": 87
+     },
+     "extension-host": {
+      "total": 157,
+      "2023": 105,
+      "2024": 21,
+      "2025": 13,
+      "2026": 18
+     },
+     "authentication": {
+      "total": 155,
+      "2023": 37,
+      "2024": 22,
+      "2025": 74,
+      "2026": 22
+     },
+     "capi": {
+      "total": 153,
+      "2023": 0,
+      "2024": 0,
+      "2025": 106,
+      "2026": 47
+     },
+     "workbench-editors": {
+      "total": 152,
+      "2023": 51,
+      "2024": 48,
+      "2025": 38,
+      "2026": 15
+     },
+     "agentic-workflows": {
+      "total": 152,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 152
+     },
+     "editor-gpu": {
+      "total": 151,
+      "2023": 0,
+      "2024": 107,
+      "2025": 34,
+      "2026": 10
+     },
+     "terminal-input": {
+      "total": 149,
+      "2023": 50,
+      "2024": 26,
+      "2025": 25,
+      "2026": 48
+     },
+     "terminal-conpty": {
+      "total": 149,
+      "2023": 25,
+      "2024": 61,
+      "2025": 48,
+      "2026": 15
+     },
+     "comments": {
+      "total": 140,
+      "2023": 59,
+      "2024": 52,
+      "2025": 26,
+      "2026": 3
+     },
+     "terminal-tabs": {
+      "total": 140,
+      "2023": 47,
+      "2024": 34,
+      "2025": 37,
+      "2026": 22
+     },
+     "chat-input": {
+      "total": 139,
+      "2023": 0,
+      "2024": 0,
+      "2025": 86,
+      "2026": 53
+     },
+     "snippets": {
+      "total": 137,
+      "2023": 50,
+      "2024": 47,
+      "2025": 23,
+      "2026": 17
+     },
+     "vscode-build": {
+      "total": 136,
+      "2023": 28,
+      "2024": 28,
+      "2025": 36,
+      "2026": 44
+     },
+     "agents": {
+      "total": 135,
+      "2023": 0,
+      "2024": 0,
+      "2025": 1,
+      "2026": 134
+     },
+     "titlebar": {
+      "total": 131,
+      "2023": 41,
+      "2024": 45,
+      "2025": 30,
+      "2026": 15
+     },
+     "keybindings": {
+      "total": 131,
+      "2023": 85,
+      "2024": 19,
+      "2025": 13,
+      "2026": 14
+     },
+     "terminal-accessibility": {
+      "total": 130,
+      "2023": 125,
+      "2024": 3,
+      "2025": 0,
+      "2026": 2
+     },
+     "terminal-shell-pwsh": {
+      "total": 128,
+      "2023": 12,
+      "2024": 46,
+      "2025": 49,
+      "2026": 21
+     },
+     "workbench-copilot": {
+      "total": 128,
+      "2023": 0,
+      "2024": 1,
+      "2025": 120,
+      "2026": 7
+     },
+     "api-proposal": {
+      "total": 127,
+      "2023": 41,
+      "2024": 31,
+      "2025": 35,
+      "2026": 20
+     },
+     "chat-mcp-management": {
+      "total": 127,
+      "2023": 0,
+      "2024": 0,
+      "2025": 110,
+      "2026": 17
+     },
+     "extension-signature": {
+      "total": 126,
+      "2023": 6,
+      "2024": 3,
+      "2025": 97,
+      "2026": 20
+     },
+     "menus": {
+      "total": 125,
+      "2023": 54,
+      "2024": 44,
+      "2025": 16,
+      "2026": 11
+     },
+     "claude-agent": {
+      "total": 125,
+      "2023": 0,
+      "2024": 0,
+      "2025": 1,
+      "2026": 124
+     },
+     "merge-editor": {
+      "total": 124,
+      "2023": 52,
+      "2024": 29,
+      "2025": 42,
+      "2026": 1
+     },
+     "workbench-window": {
+      "total": 123,
+      "2023": 31,
+      "2024": 41,
+      "2025": 32,
+      "2026": 19
+     },
+     "workbench-hover": {
+      "total": 122,
+      "2023": 23,
+      "2024": 55,
+      "2025": 33,
+      "2026": 11
+     },
+     "workbench-os-integration": {
+      "total": 120,
+      "2023": 41,
+      "2024": 36,
+      "2025": 30,
+      "2026": 13
+     },
+     "quick-open": {
+      "total": 119,
+      "2023": 54,
+      "2024": 21,
+      "2025": 35,
+      "2026": 9
+     },
+     "editor-edit-context": {
+      "total": 118,
+      "2023": 0,
+      "2024": 46,
+      "2025": 64,
+      "2026": 8
+     },
+     "telemetry": {
+      "total": 117,
+      "2023": 23,
+      "2024": 7,
+      "2025": 53,
+      "2026": 34
+     },
+     "network": {
+      "total": 115,
+      "2023": 11,
+      "2024": 17,
+      "2025": 50,
+      "2026": 37
+     },
+     "file-io": {
+      "total": 115,
+      "2023": 44,
+      "2024": 36,
+      "2025": 25,
+      "2026": 10
+     },
+     "chat-agent-editing": {
+      "total": 115,
+      "2023": 0,
+      "2024": 0,
+      "2025": 76,
+      "2026": 39
+     },
+     "settings-sync": {
+      "total": 113,
+      "2023": 60,
+      "2024": 32,
+      "2025": 14,
+      "2026": 7
+     },
+     "extension": {
+      "total": 113,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 113
+     },
+     "terminal-inline-chat": {
+      "total": 110,
+      "2023": 0,
+      "2024": 81,
+      "2025": 18,
+      "2026": 11
+     },
+     "multi-diff-editor": {
+      "total": 109,
+      "2023": 17,
+      "2024": 60,
+      "2025": 19,
+      "2026": 13
+     },
+     "javascript": {
+      "total": 108,
+      "2023": 57,
+      "2024": 25,
+      "2025": 22,
+      "2026": 4
+     },
+     "editor-color-picker": {
+      "total": 106,
+      "2023": 53,
+      "2024": 18,
+      "2025": 22,
+      "2026": 13
+     },
+     "config": {
+      "total": 105,
+      "2023": 31,
+      "2024": 34,
+      "2025": 23,
+      "2026": 17
+     },
+     "editor-code-actions": {
+      "total": 104,
+      "2023": 51,
+      "2024": 39,
+      "2025": 10,
+      "2026": 4
+     },
+     "mcp": {
+      "total": 103,
+      "2023": 0,
+      "2024": 0,
+      "2025": 1,
+      "2026": 102
+     },
+     "json": {
+      "total": 84,
+      "2023": 28,
+      "2024": 24,
+      "2025": 21,
+      "2026": 11
+     },
+     "file-watcher": {
+      "total": 73,
+      "2023": 18,
+      "2024": 35,
+      "2025": 11,
+      "2026": 9
+     },
+     "html": {
+      "total": 63,
+      "2023": 23,
+      "2024": 16,
+      "2025": 17,
+      "2026": 7
+     },
+     "editor-folding": {
+      "total": 59,
+      "2023": 18,
+      "2024": 18,
+      "2025": 17,
+      "2026": 6
+     },
+     "editor-rendering": {
+      "total": 57,
+      "2023": 22,
+      "2024": 22,
+      "2025": 7,
+      "2026": 6
+     },
+     "workbench-multiroot": {
+      "total": 55,
+      "2023": 13,
+      "2024": 19,
+      "2025": 15,
+      "2026": 8
+     },
+     "editor-wrapping": {
+      "total": 54,
+      "2023": 15,
+      "2024": 22,
+      "2025": 11,
+      "2026": 6
+     },
+     "output": {
+      "total": 53,
+      "2023": 13,
+      "2024": 13,
+      "2025": 20,
+      "2026": 7
+     },
+     "css-less-scss": {
+      "total": 52,
+      "2023": 25,
+      "2024": 14,
+      "2025": 7,
+      "2026": 6
+     },
+     "languages-basic": {
+      "total": 47,
+      "2023": 22,
+      "2024": 12,
+      "2025": 11,
+      "2026": 2
+     },
+     "error-list": {
+      "total": 46,
+      "2023": 25,
+      "2024": 9,
+      "2025": 9,
+      "2026": 3
+     },
+     "editor-input": {
+      "total": 44,
+      "2023": 10,
+      "2024": 14,
+      "2025": 14,
+      "2026": 6
+     },
+     "emmet": {
+      "total": 42,
+      "2023": 20,
+      "2024": 15,
+      "2025": 4,
+      "2026": 3
+     },
+     "l10n-platform": {
+      "total": 41,
+      "2023": 23,
+      "2024": 5,
+      "2025": 8,
+      "2026": 5
+     },
+     "editor-multicursor": {
+      "total": 37,
+      "2023": 12,
+      "2024": 17,
+      "2025": 7,
+      "2026": 1
+     },
+     "workbench-editor-grid": {
+      "total": 35,
+      "2023": 17,
+      "2024": 13,
+      "2025": 3,
+      "2026": 2
+     },
+     "keyboard-layout": {
+      "total": 32,
+      "2023": 9,
+      "2024": 15,
+      "2025": 5,
+      "2026": 3
+     },
+     "editor-autoclosing": {
+      "total": 27,
+      "2023": 8,
+      "2024": 8,
+      "2025": 2,
+      "2026": 9
+     },
+     "release-notes": {
+      "total": 25,
+      "2023": 4,
+      "2024": 13,
+      "2025": 4,
+      "2026": 4
+     },
+     "markdown": {
+      "total": 25,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 25
+     },
+     "workbench-run-as-admin": {
+      "total": 20,
+      "2023": 5,
+      "2024": 7,
+      "2025": 5,
+      "2026": 3
+     },
+     "php": {
+      "total": 20,
+      "2023": 7,
+      "2024": 8,
+      "2025": 4,
+      "2026": 1
+     },
+     "workbench-diagnostics": {
+      "total": 19,
+      "2023": 15,
+      "2024": 3,
+      "2025": 1,
+      "2026": 0
+     },
+     "editor-bracket-matching": {
+      "total": 18,
+      "2023": 16,
+      "2024": 2,
+      "2025": 0,
+      "2026": 0
+     },
+     "performance": {
+      "total": 18,
+      "2023": 0,
+      "2024": 0,
+      "2025": 0,
+      "2026": 18
+     },
+     "editor-commands": {
+      "total": 15,
+      "2023": 7,
+      "2024": 4,
+      "2025": 2,
+      "2026": 2
+     },
+     "nodejs": {
+      "total": 13,
+      "2023": 7,
+      "2024": 2,
+      "2025": 2,
+      "2026": 2
+     },
+     "workbench-electron": {
+      "total": 8,
+      "2023": 1,
+      "2024": 0,
+      "2025": 1,
+      "2026": 6
+     },
+     "VIM": {
+      "total": 7,
+      "2023": 0,
+      "2024": 2,
+      "2025": 4,
+      "2026": 1
+     }
+    },
+    "stability": {
+     "present_ge5_every_year": [
+      "accessibility",
+      "api",
+      "api-proposal",
+      "authentication",
+      "config",
+      "css-less-scss",
+      "debug",
+      "dictation",
+      "diff-editor",
+      "editor-autoindent",
+      "editor-color-picker",
+      "editor-core",
+      "editor-find",
+      "editor-folding",
+      "editor-hover",
+      "editor-input",
+      "editor-rendering",
+      "editor-sticky-scroll",
+      "editor-wrapping",
+      "electron",
+      "error-telemetry",
+      "extension-host",
+      "extensions",
+      "file-explorer",
+      "file-io",
+      "file-watcher",
+      "git",
+      "grammar",
+      "html",
+      "inline-chat",
+      "inline-completions",
+      "install-update",
+      "issue-reporter",
+      "json",
+      "keybindings",
+      "l10n-platform",
+      "layout",
+      "markdown-ext",
+      "menus",
+      "multi-diff-editor",
+      "network",
+      "notebook",
+      "output",
+      "panel-chat",
+      "perf",
+      "quick-open",
+      "quick-pick",
+      "remote",
+      "scm",
+      "search",
+      "settings-editor",
+      "settings-sync",
+      "snippets",
+      "suggest",
+      "tasks",
+      "telemetry",
+      "terminal",
+      "terminal-conpty",
+      "terminal-input",
+      "terminal-links",
+      "terminal-process",
+      "terminal-rendering",
+      "terminal-shell-integration",
+      "terminal-shell-pwsh",
+      "terminal-tabs",
+      "testing",
+      "themes",
+      "titlebar",
+      "typescript",
+      "user-profiles",
+      "ux",
+      "vscode-build",
+      "web",
+      "webview",
+      "workbench-auxwindow",
+      "workbench-editors",
+      "workbench-hover",
+      "workbench-multiroot",
+      "workbench-os-integration",
+      "workbench-tabs",
+      "workbench-views",
+      "workbench-window"
+     ],
+     "present_ge5_some_years": [
+      "NES",
+      "UBB",
+      "agent-behavior",
+      "agent-host",
+      "agent-sandbox",
+      "agentic-workflows",
+      "agents",
+      "agents-window",
+      "ai-customizations",
+      "browser-integration",
+      "capi",
+      "chat",
+      "chat-agent",
+      "chat-agent-editing",
+      "chat-agents-view",
+      "chat-billing",
+      "chat-customizations",
+      "chat-ext-issue",
+      "chat-input",
+      "chat-mcp",
+      "chat-mcp-management",
+      "chat-terminal",
+      "chat-tools",
+      "claude-agent",
+      "comments",
+      "copilot-cli-agent",
+      "editor-autoclosing",
+      "editor-bracket-matching",
+      "editor-code-actions",
+      "editor-commands",
+      "editor-edit-context",
+      "editor-gpu",
+      "editor-multicursor",
+      "emmet",
+      "error-list",
+      "extension",
+      "extension-signature",
+      "javascript",
+      "keyboard-layout",
+      "languages-basic",
+      "markdown",
+      "mcp",
+      "merge-editor",
+      "model-byok",
+      "model-picker",
+      "nodejs",
+      "notebook-output",
+      "performance",
+      "php",
+      "release-notes",
+      "terminal-accessibility",
+      "terminal-inline-chat",
+      "terminal-suggest",
+      "workbench-copilot",
+      "workbench-diagnostics",
+      "workbench-editor-grid",
+      "workbench-electron",
+      "workbench-run-as-admin"
+     ],
+     "never_ge5_in_a_year": [
+      "VIM"
+     ]
+    }
+   }
+  }
+ },
+ "v_new_labels": [
+  "NES",
+  "UBB",
+  "agent-behavior",
+  "agent-host",
+  "agent-sandbox",
+  "agentic-workflows",
+  "agents",
+  "agents-window",
+  "ai-customizations",
+  "api-proposal",
+  "authentication",
+  "browser-integration",
+  "capi",
+  "chat",
+  "chat-agent",
+  "chat-agent-editing",
+  "chat-agents-view",
+  "chat-billing",
+  "chat-customizations",
+  "chat-ext-issue",
+  "chat-input",
+  "chat-mcp",
+  "chat-mcp-management",
+  "chat-terminal",
+  "chat-tools",
+  "claude-agent",
+  "comments",
+  "copilot-cli-agent",
+  "dictation",
+  "diff-editor",
+  "editor-autoindent",
+  "editor-code-actions",
+  "editor-color-picker",
+  "editor-edit-context",
+  "editor-gpu",
+  "editor-hover",
+  "editor-sticky-scroll",
+  "extension",
+  "extension-host",
+  "extension-signature",
+  "grammar",
+  "inline-chat",
+  "inline-completions",
+  "issue-reporter",
+  "markdown-ext",
+  "mcp",
+  "merge-editor",
+  "model-byok",
+  "model-picker",
+  "multi-diff-editor",
+  "network",
+  "notebook",
+  "notebook-output",
+  "panel-chat",
+  "quick-open",
+  "quick-pick",
+  "remote",
+  "settings-editor",
+  "terminal-accessibility",
+  "terminal-conpty",
+  "terminal-inline-chat",
+  "terminal-input",
+  "terminal-links",
+  "terminal-process",
+  "terminal-rendering",
+  "terminal-shell-integration",
+  "terminal-shell-pwsh",
+  "terminal-suggest",
+  "terminal-tabs",
+  "testing",
+  "titlebar",
+  "user-profiles",
+  "web",
+  "webview",
+  "workbench-auxwindow",
+  "workbench-copilot",
+  "workbench-hover",
+  "workbench-views",
+  "workbench-window"
+ ],
+ "other_label_families": {
+  "(no prefix)": {
+   "n_labels": 670,
+   "sum_issue_labels_final": 177394,
+   "top10": [
+    {
+     "label": "info-needed",
+     "n_issues_final": 24221
+    },
+    {
+     "label": "bug",
+     "n_issues_final": 19552
+    },
+    {
+     "label": "verified",
+     "n_issues_final": 12020
+    },
+    {
+     "label": "insiders-released",
+     "n_issues_final": 11687
+    },
+    {
+     "label": "triage-needed",
+     "n_issues_final": 10871
+    },
+    {
+     "label": "feature-request",
+     "n_issues_final": 9561
+    },
+    {
+     "label": "*duplicate",
+     "n_issues_final": 7877
+    },
+    {
+     "label": "spam",
+     "n_issues_final": 2458
+    },
+    {
+     "label": "*caused-by-extension",
+     "n_issues_final": 2357
+    },
+    {
+     "label": "ai-translated",
+     "n_issues_final": 2032
+    }
+   ]
+  },
+  "trackpad/": {
+   "n_labels": 1,
+   "sum_issue_labels_final": 20,
+   "top10": [
+    {
+     "label": "trackpad/scroll",
+     "n_issues_final": 20
+    }
+   ]
+  },
+  "touch/": {
+   "n_labels": 1,
+   "sum_issue_labels_final": 8,
+   "top10": [
+    {
+     "label": "touch/pointer",
+     "n_issues_final": 8
+    }
+   ]
+  },
+  "/": {
+   "n_labels": 1,
+   "sum_issue_labels_final": 3,
+   "top10": [
+    {
+     "label": "/tests",
+     "n_issues_final": 3
+    }
+   ]
+  },
+  "needs-*": {
+   "n_labels": 1,
+   "sum_issue_labels_final": 0,
+   "top10": [
+    {
+     "label": "needs-classifier-review",
+     "n_issues_final": 0
+    }
+   ]
+  }
+ }
+}

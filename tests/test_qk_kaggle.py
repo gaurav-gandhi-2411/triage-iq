@@ -175,3 +175,28 @@ def test_push_kernel_exit0_error_is_not_success(tmp_path: Path, monkeypatch) -> 
     argv = ["--staging", str(tmp_path / "s"), "--kaggle-exe", "kg", "push-kernel"]
     with pytest.raises(RuntimeError, match="not confirmed"):
         qk.main([*argv, "--kernel", str(src), "--slug", "kk", "--datasets", "me/a"])
+
+
+def test_push_kernel_text_prefix_patched_into_staged_code_only(tmp_path: Path, monkeypatch) -> None:
+    kernel_src = (
+        Path(__file__).resolve().parents[1] / "kaggle" / "kernels" / "embed_bge" / "embed_bge.py"
+    )
+    src = tmp_path / "k"
+    src.mkdir()
+    (src / "embed_bge.py").write_text(kernel_src.read_text(encoding="utf-8"), encoding="utf-8")
+    monkeypatch.setattr(subprocess, "run", Recorder(stdout="Kernel version 2 successfully pushed."))
+    prefix = 'Represent this "sentence": '
+    argv = ["--owner", "me", "--staging", str(tmp_path / "s"), "--kaggle-exe", "kg", "push-kernel"]
+    argv += ["--kernel", str(src), "--slug", "kq", "--datasets", "me/a"]
+    staged = tmp_path / "s" / "kernel-kq" / "embed_bge.py"
+    qk.main([*argv, "--text-prefix", prefix])
+    assert f"\nTEXT_PREFIX = {json.dumps(prefix)}\n" in staged.read_text(encoding="utf-8")
+    assert '\nTEXT_PREFIX = ""\n' in (src / "embed_bge.py").read_text(encoding="utf-8")
+    qk.main(argv)  # no prefix -> the restaged code keeps the empty default
+    assert '\nTEXT_PREFIX = ""\n' in staged.read_text(encoding="utf-8")
+
+
+def test_set_text_prefix_requires_unique_line() -> None:
+    assert qk.set_text_prefix('a\nTEXT_PREFIX = ""\nb', "Q: ") == 'a\nTEXT_PREFIX = "Q: "\nb'
+    with pytest.raises(RuntimeError, match="TEXT_PREFIX"):
+        qk.set_text_prefix("print(1)\n", "Q: ")

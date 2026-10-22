@@ -29,6 +29,9 @@ BATCH_SIZE = 64  # fits T4 (16 GB) / P100 at 512 tokens in fp16 with large margi
 SEED = 42
 INPUT_ROOT = Path("/kaggle/input")
 OUTPUT_ROOT = Path("/kaggle/working")
+# Text prepended to every document (e.g. the BGE query instruction). Kaggle runs ONLY this file,
+# so `qk_kaggle.py push-kernel --text-prefix` rewrites this exact line in the staged copy.
+TEXT_PREFIX = ""
 
 
 def encode(texts: list[str], tokenizer, model, device: str) -> np.ndarray:  # noqa: ANN001
@@ -60,6 +63,7 @@ def main() -> None:
     model = AutoModel.from_pretrained(MODEL_ID, revision=REVISION).eval().to(device)
     if device == "cuda":
         model = model.half()
+    prefix = TEXT_PREFIX
     info: dict = {
         "model_id": MODEL_ID,
         "revision": REVISION,
@@ -68,7 +72,7 @@ def main() -> None:
         "device": device,
         "gpu": torch.cuda.get_device_name(0) if device == "cuda" else None,
         "pooling": "cls+l2",
-        "doc_instruction": None,
+        "doc_instruction": prefix or None,
         "max_seq_length": MAX_SEQ_LENGTH,
         "batch_size": BATCH_SIZE,
         "seed": SEED,
@@ -78,7 +82,9 @@ def main() -> None:
     for path in sorted(INPUT_ROOT.rglob("*.parquet")):
         df = pd.read_parquet(path).reset_index(drop=True)
         t0 = time.time()
-        emb = encode(df["text"].fillna("").astype(str).tolist(), tokenizer, model, device)
+        emb = encode(
+            (prefix + df["text"].fillna("").astype(str)).tolist(), tokenizer, model, device
+        )
         np.save(OUTPUT_ROOT / f"{path.stem}_emb.npy", emb)
         df[["repo", "kind", "number"]].to_parquet(OUTPUT_ROOT / f"{path.stem}_ids.parquet")
         info["files"][path.stem] = {"n": len(df), "seconds": round(time.time() - t0, 1)}

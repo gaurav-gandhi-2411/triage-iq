@@ -216,6 +216,17 @@ def load_dup_targets(base: Path) -> dict[int, dict[str, Any]]:
     return out
 
 
+def load_timelines(base: Path) -> dict[int, dict[str, Any]]:
+    """Rows of <base>/timelines/<NNNNN>.jsonl.gz (complete per-issue re-scrape), by number."""
+    out: dict[int, dict[str, Any]] = {}
+    for f in sorted((base / "timelines").glob("*.jsonl.gz")):
+        with gzip.open(f, "rt", encoding="utf-8") as fh:
+            for line in fh:
+                row = json.loads(line)
+                out[row["number"]] = row
+    return out
+
+
 def best_pairs(pairs: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """One row per (source, canonical): the best-ranked method wins (first seen on a tie)."""
     best: dict[tuple[int, int], dict[str, Any]] = {}
@@ -252,13 +263,21 @@ def build_tables(repo: str, base: Path, limit: int | None = None) -> dict[str, p
     fixes: list[dict[str, Any]] = []
     recs = {r["number"]: r for r in iter_records(base / "issues", limit)}  # last copy wins
     targets = load_dup_targets(base)
+    timelines = load_timelines(base)
     other_side: list[dict[str, Any]] = []  # pairs whose source is not the issue carrying the event
     if not recs:
         raise SystemExit(f"no issue files under {base / 'issues'}")
     for n, rec in recs.items():
         diag: Counter[str] = Counter()
+        # search-embedded timelines drop events: prefer the complete direct one when it exists
+        tl = timelines.get(n)
+        direct = tl is not None and not tl.get("missing")
+        if direct:
+            rec = {**rec, "timelineItems": tl["timelineItems"]}
         row, ev = _derive(rec, lambda x: issue_row(x, repo))
         d = _derive(rec, lambda x, dg=diag: extract_duplicates(x, repo, dg, pr_set))
+        row["timeline_source"] = "direct" if direct else "embedded"
+        row["timeline_direct_missing"] = tl is not None and bool(tl.get("missing"))
         row["canon_foreign_repo"] = diag["canon_foreign_repo"]
         row["canon_repo_unknown"] = diag["canon_repo_unknown"]
         row["canon_self"] = diag["canon_self"]

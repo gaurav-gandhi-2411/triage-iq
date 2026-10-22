@@ -246,33 +246,78 @@ def common_report(prs: list[dict[str, Any]], default: str) -> dict[str, Any]:
     }  # fmt: skip
 
 
+def excluded_files(prs: list[dict[str, Any]], default: str) -> set[str]:
+    """EXCLUDED = pattern-excluded paths of merged PRs plus the frozen >1% train-period list."""
+    merged = [p for p in prs if p["merged"]]
+    cm, _ = common_files(prs, default, THRESHOLD)
+    return {f for p in merged for f in p["files"] if pattern_excluded(f)} | set(cm)
+
+
+def top_informative(prs: list[dict[str, Any]], default: str, k: int = 100) -> list[dict[str, Any]]:
+    """The k most frequently changed INFORMATIVE files over train-period merged default-branch PRs.
+
+    Ties by path; counts are PRs (a PR counts a file once). Train period only (mergedAt <=
+    TRAIN_END); excluded files removed first.
+    """
+    excl = excluded_files(prs, default)
+    pop = [p for p in prs if p["merged"] and p["base"] == default and p["merged_at"] <= TRAIN_END]
+    cnt: Counter[str] = Counter(f for p in pop for f in set(p["files"]) if f not in excl)
+    top = sorted(cnt.items(), key=lambda kv: (-kv[1], kv[0]))[:k]
+    return [{"path": f, "n_prs": c, "share": c / len(pop)} for f, c in top]
+
+
+def top_report(prs: list[dict[str, Any]], default: str) -> dict[str, Any]:
+    top = top_informative(prs, default)
+    files = sorted(t["path"] for t in top)
+    return {
+        "frozen": True, "k": len(top), "train_end": str(TRAIN_END),
+        "definition": "100 most frequently changed informative files over train-period merged master PRs; ties by path",  # noqa: E501
+        "sha256_sorted_newline_joined": hashlib.sha256("\n".join(files).encode()).hexdigest(),
+        "ranked": top, "files": files,
+    }  # fmt: skip
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Prior-PR answerability counts (data only)")
     ap.add_argument("--repo", default="kubernetes/kubernetes")
     ap.add_argument("--data-dir", type=Path, default=Path(r"D:\triageiq-data"))
     ap.add_argument("--default-branch", default="master")
+    ap.add_argument("--derived-name", default="derived", help="derived tables dir (derived_v2)")
+    ap.add_argument(
+        "--write-top100", action="store_true", help="freeze the top-100 informative list"
+    )
+    ap.add_argument("--suffix", default="", help="report name suffix, e.g. _v2 (keeps v1 intact)")
     a = ap.parse_args(argv)
     slug = a.repo.replace("/", "__")
     prs = load_prs(a.data_dir / "raw" / slug / "pr_files")
-    derived, splits = a.data_dir / "derived" / slug, a.data_dir / "splits" / slug
+    derived, splits = a.data_dir / a.derived_name / slug, a.data_dir / "splits" / slug
     split = pd.concat(
         [pd.read_parquet(splits / f"{s}.parquet", columns=["number", "split"]) for s in SPLITS]
     ).set_index("number")["split"]
     issues = pd.read_parquet(derived / "issues.parquet", columns=["number", "created_at"])
     links = pd.read_parquet(derived / "fix_links.parquet")
+    if a.write_top100:
+        Path("reports").mkdir(exist_ok=True)
+        top = top_report(prs, a.default_branch)
+        Path("reports", f"qp2_prior_pr_top100_informative_{slug}_2026-10.json").write_text(
+            json.dumps(top, indent=1, sort_keys=True), encoding="utf-8"
+        )
+        print("top100 sha256", top["sha256_sorted_newline_joined"])
+        return 0
     rep = run(prs, issues, links, split, a.default_branch)
     rep["repo"] = a.repo
     reports = Path("reports")
     reports.mkdir(exist_ok=True)
     common = common_report(prs, a.default_branch)
-    (reports / f"qp2_prior_pr_common_files_{slug}_2026-10.json").write_text(
-        json.dumps(common, indent=1, sort_keys=True), encoding="utf-8"
-    )
+    if not a.suffix:  # the frozen common-file list is never rewritten by a suffixed (v2) run
+        (reports / f"qp2_prior_pr_common_files_{slug}_2026-10.json").write_text(
+            json.dumps(common, indent=1, sort_keys=True), encoding="utf-8"
+        )
     rep["common_files"] |= {
         "sha256": common["sha256_sorted_newline_joined"],
         "top25": common["top25"],
     }
-    (reports / f"qp2_prior_pr_counts_{slug}_2026-10.json").write_text(
+    (reports / f"qp2_prior_pr_counts_{slug}_2026-10{a.suffix}.json").write_text(
         json.dumps(rep, indent=1, sort_keys=True, default=str), encoding="utf-8"
     )
     print(

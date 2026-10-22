@@ -1,0 +1,722 @@
+{
+ "class_counts_primary": {
+  "gold_v2": {
+   "test": {
+    "other": 2,
+    "sig/api-machinery": 267,
+    "sig/apps": 42,
+    "sig/architecture": 49,
+    "sig/auth": 43,
+    "sig/autoscaling": 23,
+    "sig/cli": 46,
+    "sig/cloud-provider": 14,
+    "sig/cluster-lifecycle": 7,
+    "sig/docs": 1,
+    "sig/etcd": 5,
+    "sig/instrumentation": 13,
+    "sig/k8s-infra": 10,
+    "sig/network": 71,
+    "sig/node": 427,
+    "sig/release": 11,
+    "sig/scalability": 28,
+    "sig/scheduling": 199,
+    "sig/security": 6,
+    "sig/storage": 57,
+    "sig/testing": 36,
+    "sig/windows": 27
+   },
+   "train": {
+    "other": 11,
+    "sig/api-machinery": 837,
+    "sig/apps": 269,
+    "sig/architecture": 92,
+    "sig/auth": 214,
+    "sig/autoscaling": 66,
+    "sig/cli": 136,
+    "sig/cloud-provider": 56,
+    "sig/cluster-lifecycle": 58,
+    "sig/docs": 25,
+    "sig/etcd": 17,
+    "sig/instrumentation": 70,
+    "sig/k8s-infra": 15,
+    "sig/network": 390,
+    "sig/node": 1270,
+    "sig/release": 87,
+    "sig/scalability": 51,
+    "sig/scheduling": 365,
+    "sig/security": 58,
+    "sig/storage": 328,
+    "sig/testing": 139,
+    "sig/windows": 85
+   },
+   "validation": {
+    "other": 2,
+    "sig/api-machinery": 144,
+    "sig/apps": 24,
+    "sig/architecture": 18,
+    "sig/auth": 19,
+    "sig/autoscaling": 9,
+    "sig/cli": 23,
+    "sig/cloud-provider": 7,
+    "sig/cluster-lifecycle": 11,
+    "sig/docs": 4,
+    "sig/etcd": 3,
+    "sig/instrumentation": 21,
+    "sig/network": 47,
+    "sig/node": 219,
+    "sig/release": 11,
+    "sig/scalability": 14,
+    "sig/scheduling": 67,
+    "sig/security": 6,
+    "sig/storage": 37,
+    "sig/testing": 22,
+    "sig/windows": 17
+   }
+  },
+  "old_gold": {
+   "test": {
+    "other": 2,
+    "sig/api-machinery": 267,
+    "sig/apps": 42,
+    "sig/architecture": 49,
+    "sig/auth": 43,
+    "sig/autoscaling": 23,
+    "sig/cli": 46,
+    "sig/cloud-provider": 14,
+    "sig/cluster-lifecycle": 7,
+    "sig/docs": 1,
+    "sig/etcd": 5,
+    "sig/instrumentation": 13,
+    "sig/k8s-infra": 10,
+    "sig/network": 71,
+    "sig/node": 427,
+    "sig/release": 11,
+    "sig/scalability": 28,
+    "sig/scheduling": 199,
+    "sig/security": 6,
+    "sig/storage": 57,
+    "sig/testing": 36,
+    "sig/windows": 27
+   },
+   "train": {
+    "other": 11,
+    "sig/api-machinery": 837,
+    "sig/apps": 269,
+    "sig/architecture": 92,
+    "sig/auth": 214,
+    "sig/autoscaling": 66,
+    "sig/cli": 136,
+    "sig/cloud-provider": 56,
+    "sig/cluster-lifecycle": 58,
+    "sig/docs": 25,
+    "sig/etcd": 17,
+    "sig/instrumentation": 70,
+    "sig/k8s-infra": 15,
+    "sig/network": 390,
+    "sig/node": 1270,
+    "sig/release": 87,
+    "sig/scalability": 51,
+    "sig/scheduling": 365,
+    "sig/security": 58,
+    "sig/storage": 328,
+    "sig/testing": 139,
+    "sig/windows": 85
+   },
+   "validation": {
+    "other": 2,
+    "sig/api-machinery": 144,
+    "sig/apps": 24,
+    "sig/architecture": 18,
+    "sig/auth": 19,
+    "sig/autoscaling": 9,
+    "sig/cli": 23,
+    "sig/cloud-provider": 7,
+    "sig/cluster-lifecycle": 11,
+    "sig/docs": 4,
+    "sig/etcd": 3,
+    "sig/instrumentation": 21,
+    "sig/network": 47,
+    "sig/node": 219,
+    "sig/release": 11,
+    "sig/scalability": 14,
+    "sig/scheduling": 67,
+    "sig/security": 6,
+    "sig/storage": 37,
+    "sig/testing": 22,
+    "sig/windows": 17
+   }
+  }
+ },
+ "class_definition_would_change": false,
+ "classes": [
+  "sig/api-machinery",
+  "sig/apps",
+  "sig/architecture",
+  "sig/auth",
+  "sig/autoscaling",
+  "sig/cli",
+  "sig/cloud-provider",
+  "sig/cluster-lifecycle",
+  "sig/docs",
+  "sig/etcd",
+  "sig/instrumentation",
+  "sig/k8s-infra",
+  "sig/network",
+  "sig/node",
+  "sig/release",
+  "sig/scalability",
+  "sig/scheduling",
+  "sig/security",
+  "sig/storage",
+  "sig/testing",
+  "sig/windows",
+  "other"
+ ],
+ "derived_old": "D:\\triageiq-data\\derived\\kubernetes__kubernetes",
+ "derived_v2": "D:\\triageiq-data\\derived_v2\\kubernetes__kubernetes",
+ "gold_comparison": {
+  "test": {
+   "label_set_changed": 0,
+   "n_both": 1384,
+   "n_new_labelled": 1384,
+   "n_old_labelled": 1384,
+   "newly_labelled": 0,
+   "primary_changed": 0,
+   "primary_changed_modelled_class": 0,
+   "share_primary_changed": 0.0,
+   "unlabelled": 0
+  },
+  "train": {
+   "label_set_changed": 0,
+   "n_both": 4639,
+   "n_new_labelled": 4639,
+   "n_old_labelled": 4639,
+   "newly_labelled": 0,
+   "primary_changed": 0,
+   "primary_changed_modelled_class": 0,
+   "share_primary_changed": 0.0,
+   "unlabelled": 0
+  },
+  "validation": {
+   "label_set_changed": 0,
+   "n_both": 725,
+   "n_new_labelled": 725,
+   "n_old_labelled": 725,
+   "newly_labelled": 0,
+   "primary_changed": 0,
+   "primary_changed_modelled_class": 0,
+   "share_primary_changed": 0.0,
+   "unlabelled": 0
+  }
+ },
+ "metrics": {
+  "test": {
+   "common_issues_gold_v2": {
+    "anyvalid_top1": {
+     "ci95": [
+      0.819364161849711,
+      0.8591040462427746
+     ],
+     "n": 1384,
+     "point": 0.8403179190751445
+    },
+    "anyvalid_top3": {
+     "ci95": [
+      0.9566473988439307,
+      0.9754335260115607
+     ],
+     "n": 1384,
+     "point": 0.9660404624277457
+    },
+    "ece": {
+     "ci95": [
+      0.040262083722585953,
+      0.07370034332584965
+     ],
+     "n": 1384,
+     "point": 0.05049989033624694
+    },
+    "macro_f1": {
+     "ci95": [
+      0.5062043937518717,
+      0.6054165513532017
+     ],
+     "n": 1384,
+     "point": 0.5452729843059451
+    },
+    "n": 1384,
+    "nll": {
+     "ci95": [
+      0.7306927569247265,
+      0.8468968482750702
+     ],
+     "n": 1384,
+     "point": 0.7889793399446335
+    },
+    "top1": {
+     "ci95": [
+      0.7485549132947977,
+      0.7933526011560693
+     ],
+     "n": 1384,
+     "point": 0.7709537572254336
+    },
+    "top3": {
+     "ci95": [
+      0.9429190751445087,
+      0.9645953757225434
+     ],
+     "n": 1384,
+     "point": 0.953757225433526
+    }
+   },
+   "common_issues_old_gold": {
+    "anyvalid_top1": {
+     "ci95": [
+      0.819364161849711,
+      0.8591040462427746
+     ],
+     "n": 1384,
+     "point": 0.8403179190751445
+    },
+    "anyvalid_top3": {
+     "ci95": [
+      0.9566473988439307,
+      0.9754335260115607
+     ],
+     "n": 1384,
+     "point": 0.9660404624277457
+    },
+    "ece": {
+     "ci95": [
+      0.040262083722585953,
+      0.07370034332584965
+     ],
+     "n": 1384,
+     "point": 0.05049989033624694
+    },
+    "macro_f1": {
+     "ci95": [
+      0.5062043937518717,
+      0.6054165513532017
+     ],
+     "n": 1384,
+     "point": 0.5452729843059451
+    },
+    "n": 1384,
+    "nll": {
+     "ci95": [
+      0.7306927569247265,
+      0.8468968482750702
+     ],
+     "n": 1384,
+     "point": 0.7889793399446335
+    },
+    "top1": {
+     "ci95": [
+      0.7485549132947977,
+      0.7933526011560693
+     ],
+     "n": 1384,
+     "point": 0.7709537572254336
+    },
+    "top3": {
+     "ci95": [
+      0.9429190751445087,
+      0.9645953757225434
+     ],
+     "n": 1384,
+     "point": 0.953757225433526
+    }
+   },
+   "gold_v2": {
+    "anyvalid_top1": {
+     "ci95": [
+      0.819364161849711,
+      0.8591040462427746
+     ],
+     "n": 1384,
+     "point": 0.8403179190751445
+    },
+    "anyvalid_top3": {
+     "ci95": [
+      0.9566473988439307,
+      0.9754335260115607
+     ],
+     "n": 1384,
+     "point": 0.9660404624277457
+    },
+    "ece": {
+     "ci95": [
+      0.040262083722585953,
+      0.07370034332584965
+     ],
+     "n": 1384,
+     "point": 0.05049989033624694
+    },
+    "macro_f1": {
+     "ci95": [
+      0.5062043937518717,
+      0.6054165513532017
+     ],
+     "n": 1384,
+     "point": 0.5452729843059451
+    },
+    "n": 1384,
+    "nll": {
+     "ci95": [
+      0.7306927569247265,
+      0.8468968482750702
+     ],
+     "n": 1384,
+     "point": 0.7889793399446335
+    },
+    "top1": {
+     "ci95": [
+      0.7485549132947977,
+      0.7933526011560693
+     ],
+     "n": 1384,
+     "point": 0.7709537572254336
+    },
+    "top3": {
+     "ci95": [
+      0.9429190751445087,
+      0.9645953757225434
+     ],
+     "n": 1384,
+     "point": 0.953757225433526
+    }
+   },
+   "n_new_labelled_without_probabilities": 0,
+   "n_saved_probability_rows": 1384,
+   "old_gold": {
+    "anyvalid_top1": {
+     "ci95": [
+      0.819364161849711,
+      0.8591040462427746
+     ],
+     "n": 1384,
+     "point": 0.8403179190751445
+    },
+    "anyvalid_top3": {
+     "ci95": [
+      0.9566473988439307,
+      0.9754335260115607
+     ],
+     "n": 1384,
+     "point": 0.9660404624277457
+    },
+    "ece": {
+     "ci95": [
+      0.040262083722585953,
+      0.07370034332584965
+     ],
+     "n": 1384,
+     "point": 0.05049989033624694
+    },
+    "macro_f1": {
+     "ci95": [
+      0.5062043937518717,
+      0.6054165513532017
+     ],
+     "n": 1384,
+     "point": 0.5452729843059451
+    },
+    "n": 1384,
+    "nll": {
+     "ci95": [
+      0.7306927569247265,
+      0.8468968482750702
+     ],
+     "n": 1384,
+     "point": 0.7889793399446335
+    },
+    "top1": {
+     "ci95": [
+      0.7485549132947977,
+      0.7933526011560693
+     ],
+     "n": 1384,
+     "point": 0.7709537572254336
+    },
+    "top3": {
+     "ci95": [
+      0.9429190751445087,
+      0.9645953757225434
+     ],
+     "n": 1384,
+     "point": 0.953757225433526
+    }
+   }
+  },
+  "validation": {
+   "common_issues_gold_v2": {
+    "anyvalid_top1": {
+     "ci95": [
+      0.7944827586206896,
+      0.8510344827586207
+     ],
+     "n": 725,
+     "point": 0.8234482758620689
+    },
+    "anyvalid_top3": {
+     "ci95": [
+      0.9544827586206897,
+      0.9806896551724138
+     ],
+     "n": 725,
+     "point": 0.9682758620689655
+    },
+    "ece": {
+     "ci95": [
+      0.06988909862820554,
+      0.11809581207881413
+     ],
+     "n": 725,
+     "point": 0.07926291999107239
+    },
+    "macro_f1": {
+     "ci95": [
+      0.5650970202830373,
+      0.681041803450777
+     ],
+     "n": 725,
+     "point": 0.6267076180945612
+    },
+    "n": 725,
+    "nll": {
+     "ci95": [
+      0.7661297372938874,
+      0.9311279665729792
+     ],
+     "n": 725,
+     "point": 0.845815433146327
+    },
+    "top1": {
+     "ci95": [
+      0.743448275862069,
+      0.8027931034482757
+     ],
+     "n": 725,
+     "point": 0.7737931034482759
+    },
+    "top3": {
+     "ci95": [
+      0.9227586206896552,
+      0.9572413793103448
+     ],
+     "n": 725,
+     "point": 0.9406896551724138
+    }
+   },
+   "common_issues_old_gold": {
+    "anyvalid_top1": {
+     "ci95": [
+      0.7944827586206896,
+      0.8510344827586207
+     ],
+     "n": 725,
+     "point": 0.8234482758620689
+    },
+    "anyvalid_top3": {
+     "ci95": [
+      0.9544827586206897,
+      0.9806896551724138
+     ],
+     "n": 725,
+     "point": 0.9682758620689655
+    },
+    "ece": {
+     "ci95": [
+      0.06988909862820554,
+      0.11809581207881413
+     ],
+     "n": 725,
+     "point": 0.07926291999107239
+    },
+    "macro_f1": {
+     "ci95": [
+      0.5650970202830373,
+      0.681041803450777
+     ],
+     "n": 725,
+     "point": 0.6267076180945612
+    },
+    "n": 725,
+    "nll": {
+     "ci95": [
+      0.7661297372938874,
+      0.9311279665729792
+     ],
+     "n": 725,
+     "point": 0.845815433146327
+    },
+    "top1": {
+     "ci95": [
+      0.743448275862069,
+      0.8027931034482757
+     ],
+     "n": 725,
+     "point": 0.7737931034482759
+    },
+    "top3": {
+     "ci95": [
+      0.9227586206896552,
+      0.9572413793103448
+     ],
+     "n": 725,
+     "point": 0.9406896551724138
+    }
+   },
+   "gold_v2": {
+    "anyvalid_top1": {
+     "ci95": [
+      0.7944827586206896,
+      0.8510344827586207
+     ],
+     "n": 725,
+     "point": 0.8234482758620689
+    },
+    "anyvalid_top3": {
+     "ci95": [
+      0.9544827586206897,
+      0.9806896551724138
+     ],
+     "n": 725,
+     "point": 0.9682758620689655
+    },
+    "ece": {
+     "ci95": [
+      0.06988909862820554,
+      0.11809581207881413
+     ],
+     "n": 725,
+     "point": 0.07926291999107239
+    },
+    "macro_f1": {
+     "ci95": [
+      0.5650970202830373,
+      0.681041803450777
+     ],
+     "n": 725,
+     "point": 0.6267076180945612
+    },
+    "n": 725,
+    "nll": {
+     "ci95": [
+      0.7661297372938874,
+      0.9311279665729792
+     ],
+     "n": 725,
+     "point": 0.845815433146327
+    },
+    "top1": {
+     "ci95": [
+      0.743448275862069,
+      0.8027931034482757
+     ],
+     "n": 725,
+     "point": 0.7737931034482759
+    },
+    "top3": {
+     "ci95": [
+      0.9227586206896552,
+      0.9572413793103448
+     ],
+     "n": 725,
+     "point": 0.9406896551724138
+    }
+   },
+   "n_new_labelled_without_probabilities": 0,
+   "n_saved_probability_rows": 725,
+   "old_gold": {
+    "anyvalid_top1": {
+     "ci95": [
+      0.7944827586206896,
+      0.8510344827586207
+     ],
+     "n": 725,
+     "point": 0.8234482758620689
+    },
+    "anyvalid_top3": {
+     "ci95": [
+      0.9544827586206897,
+      0.9806896551724138
+     ],
+     "n": 725,
+     "point": 0.9682758620689655
+    },
+    "ece": {
+     "ci95": [
+      0.06988909862820554,
+      0.11809581207881413
+     ],
+     "n": 725,
+     "point": 0.07926291999107239
+    },
+    "macro_f1": {
+     "ci95": [
+      0.5650970202830373,
+      0.681041803450777
+     ],
+     "n": 725,
+     "point": 0.6267076180945612
+    },
+    "n": 725,
+    "nll": {
+     "ci95": [
+      0.7661297372938874,
+      0.9311279665729792
+     ],
+     "n": 725,
+     "point": 0.845815433146327
+    },
+    "top1": {
+     "ci95": [
+      0.743448275862069,
+      0.8027931034482757
+     ],
+     "n": 725,
+     "point": 0.7737931034482759
+    },
+    "top3": {
+     "ci95": [
+      0.9227586206896552,
+      0.9572413793103448
+     ],
+     "n": 725,
+     "point": 0.9406896551724138
+    }
+   }
+  }
+ },
+ "n_boot": 2000,
+ "note": "re-scoring of the already-tested tfidf_lr_v1 model (saved probabilities, no retraining) against gold recomputed from complete direct timelines; not a new test evaluation of a new model",
+ "old_gold_ref": "9ba8ce294943127643e0bab687711d9b7e14d9a4",
+ "seed": 42,
+ "title": "gold v2 re-score",
+ "v2_train_classes_ge30": [
+  "sig/api-machinery",
+  "sig/apps",
+  "sig/architecture",
+  "sig/auth",
+  "sig/autoscaling",
+  "sig/cli",
+  "sig/cloud-provider",
+  "sig/cluster-lifecycle",
+  "sig/docs",
+  "sig/etcd",
+  "sig/instrumentation",
+  "sig/k8s-infra",
+  "sig/network",
+  "sig/node",
+  "sig/release",
+  "sig/scalability",
+  "sig/scheduling",
+  "sig/security",
+  "sig/storage",
+  "sig/testing",
+  "sig/windows"
+ ]
+}

@@ -1,0 +1,621 @@
+{
+ "common_files": {
+  "n_files": 87,
+  "n_train_prs": 6779,
+  "sha256": "a05445d6129f358e9a135ab1b5df724f828672afd591c0d70469686da51743ee",
+  "threshold": 0.01,
+  "top25": [
+   {
+    "path": "pkg/features/kube_features.go",
+    "share": 0.05797315238235728
+   },
+   {
+    "path": "vendor/modules.txt",
+    "share": 0.04440182917834489
+   },
+   {
+    "path": "pkg/generated/openapi/zz_generated.openapi.go",
+    "share": 0.04248414220386488
+   },
+   {
+    "path": "go.mod",
+    "share": 0.040713969612037174
+   },
+   {
+    "path": "go.sum",
+    "share": 0.037468653193686384
+   },
+   {
+    "path": "api/openapi-spec/swagger.json",
+    "share": 0.03407582239268329
+   },
+   {
+    "path": "staging/src/k8s.io/apiextensions-apiserver/go.sum",
+    "share": 0.025815016964154006
+   },
+   {
+    "path": "staging/src/k8s.io/apiserver/go.mod",
+    "share": 0.025815016964154006
+   },
+   {
+    "path": "staging/src/k8s.io/kube-aggregator/go.sum",
+    "share": 0.025815016964154006
+   },
+   {
+    "path": "staging/src/k8s.io/sample-apiserver/go.sum",
+    "share": 0.025815016964154006
+   },
+   {
+    "path": "staging/src/k8s.io/apiextensions-apiserver/go.mod",
+    "share": 0.025667502581501696
+   },
+   {
+    "path": "staging/src/k8s.io/apiserver/go.sum",
+    "share": 0.025372473816197078
+   },
+   {
+    "path": "staging/src/k8s.io/cloud-provider/go.sum",
+    "share": 0.025372473816197078
+   },
+   {
+    "path": "staging/src/k8s.io/controller-manager/go.sum",
+    "share": 0.02507744505089246
+   },
+   {
+    "path": "staging/src/k8s.io/pod-security-admission/go.sum",
+    "share": 0.02507744505089246
+   },
+   {
+    "path": "staging/src/k8s.io/kube-aggregator/go.mod",
+    "share": 0.02448738752028323
+   },
+   {
+    "path": "staging/src/k8s.io/sample-apiserver/go.mod",
+    "share": 0.023749815607021683
+   },
+   {
+    "path": "staging/src/k8s.io/cloud-provider/go.mod",
+    "share": 0.023602301224369376
+   },
+   {
+    "path": "staging/src/k8s.io/pod-security-admission/go.mod",
+    "share": 0.022864729311107834
+   },
+   {
+    "path": "staging/src/k8s.io/controller-manager/go.mod",
+    "share": 0.022422186163150906
+   },
+   {
+    "path": "staging/src/k8s.io/kubelet/go.sum",
+    "share": 0.021832128632541675
+   },
+   {
+    "path": "staging/src/k8s.io/dynamic-resource-allocation/go.sum",
+    "share": 0.021389585484584746
+   },
+   {
+    "path": "staging/src/k8s.io/kubectl/go.sum",
+    "share": 0.021389585484584746
+   },
+   {
+    "path": "build/dependencies.yaml",
+    "share": 0.020947042336627822
+   },
+   {
+    "path": "pkg/features/versioned_kube_features.go",
+    "share": 0.02020947042336628
+   }
+  ]
+ },
+ "default_branch": "master",
+ "design": "(2026-10-20; no model, no ranking, no relevance score is built here).\n * Task: for an issue q (created t_q) with an audited fix PR F(q) = fix_links method\n   closed_event_closer_pr, same repo, merged (several: the earliest merged), rank EARLIER merged PRs.\n * INDEX(q) = merged PRs whose base branch is the repo default branch (\"master\"; cherry-picks into\n   release-* are excluded and counted), created on or after 2023-01-01 (the scrape window; older PRs\n   are unavailable: a limitation), and mergedAt STRICTLY before t_q. F(q) is never in the index\n   (it merges after t_q; violations are counted and F is removed anyway).\n * POSITIVE for q = a PR p in INDEX(q) with files(p) intersect INFORMATIVE_FILES(F(q)) non-empty;\n   INFORMATIVE_FILES(F) = files(F) minus EXCLUDED files. EXCLUDED = (a) patterns: go.mod / go.sum /\n   go.work / go.work.sum (any directory), vendor/ and staging/**/vendor/, zz_generated.*,\n   *.pb.go, generated.proto, api/openapi-spec/**, CHANGELOG/**, OWNERS, OWNERS_ALIASES; (b) any path\n   changed by MORE than 1.0% of the merged master PRs with mergedAt <= 2025-06-30 (train period);\n   that list is written to its own report with its sha256 and is then FROZEN. A PR with\n   files_truncated is treated as having its first 300 files and is flagged.\n * ANSWERABLE iff INFORMATIVE_FILES(F(q)) is non-empty AND q has >= 1 positive in INDEX(q).\n * Splits = the frozen ISSUE splits (by the issue's created_at). No labels are used.\n * Context only (not selection criteria): thresholds 0.5% / 2%, cherry-picks included, the share of\n   \"trivially popular\" positives (overlap only in the 100 most-changed informative files), and the\n   Wilson half-width / cluster counts at the answerable test n (issues sharing a fix PR share positives).",
+ "generated_with": "scripts/qp2_prior_pr_counts.py",
+ "limitations": [
+  "PRs created before 2023-01-01 are unavailable as candidates",
+  "files_truncated PRs use their first 300 files"
+ ],
+ "per_split": {
+  "test": {
+   "answerable": 355,
+   "answerable_with_a_nontrivial_positive": 330,
+   "distinct_fix_prs_among_answerable": 353,
+   "effective_n_kish": 351.04456824512533,
+   "fix_has_informative_files": 360,
+   "fix_not_after_query": 0,
+   "fix_pr_files_known": 375,
+   "fix_pr_in_window": 375,
+   "fix_pr_older_than_window": 0,
+   "issues_with_fix_link": 375,
+   "median_index_size_at_query": 9431.0,
+   "positives_per_answerable": {
+    "max": 959,
+    "mean": 56.18591549295775,
+    "median": 26.0,
+    "min": 1,
+    "q1": 10.0,
+    "q3": 62.0
+   },
+   "queries_fix_truncated": 3,
+   "queries_positive_truncated": 104,
+   "share_answerable_of_fix_linked": 0.9466666666666667,
+   "trivially_popular_positive_share": 0.4616965807680738,
+   "wilson_95_answerable_share": [
+    0.9190615055295548,
+    0.9652130831111858
+   ],
+   "wilson_half_width_at_n": {
+    "p0.3": 0.047670701428108725,
+    "p0.5": 0.05201299945855898
+   },
+   "wilson_half_width_at_n_eff": {
+    "p0.3": 0.047938516464749954,
+    "p0.5": 0.052305209619905604
+   }
+  },
+  "train": {
+   "answerable": 1066,
+   "answerable_with_a_nontrivial_positive": 920,
+   "distinct_fix_prs_among_answerable": 1045,
+   "effective_n_kish": 1009.1971580817052,
+   "fix_has_informative_files": 1227,
+   "fix_not_after_query": 0,
+   "fix_pr_files_known": 1279,
+   "fix_pr_in_window": 1279,
+   "fix_pr_older_than_window": 0,
+   "issues_with_fix_link": 1279,
+   "median_index_size_at_query": 3271.0,
+   "positives_per_answerable": {
+    "max": 481,
+    "mean": 21.55253283302064,
+    "median": 9.0,
+    "min": 1,
+    "q1": 3.0,
+    "q3": 23.0
+   },
+   "queries_fix_truncated": 2,
+   "queries_positive_truncated": 224,
+   "share_answerable_of_fix_linked": 0.8334636434714621,
+   "trivially_popular_positive_share": 0.4987159956474429,
+   "wilson_95_answerable_share": [
+    0.8120529501990045,
+    0.8528771549675259
+   ],
+   "wilson_half_width_at_n": {
+    "p0.3": 0.02750977994269146,
+    "p0.5": 0.030015630699752754
+   },
+   "wilson_half_width_at_n_eff": {
+    "p0.3": 0.028273378636803802,
+    "p0.5": 0.03084878517983352
+   }
+  },
+  "validation": {
+   "answerable": 230,
+   "answerable_with_a_nontrivial_positive": 206,
+   "distinct_fix_prs_among_answerable": 223,
+   "effective_n_kish": 209.9206349206349,
+   "fix_has_informative_files": 232,
+   "fix_not_after_query": 0,
+   "fix_pr_files_known": 238,
+   "fix_pr_in_window": 238,
+   "fix_pr_older_than_window": 0,
+   "issues_with_fix_link": 238,
+   "median_index_size_at_query": 7553.0,
+   "positives_per_answerable": {
+    "max": 352,
+    "mean": 47.44347826086957,
+    "median": 24.0,
+    "min": 1,
+    "q1": 8.0,
+    "q3": 53.0
+   },
+   "queries_fix_truncated": 1,
+   "queries_positive_truncated": 78,
+   "share_answerable_of_fix_linked": 0.9663865546218487,
+   "trivially_popular_positive_share": 0.5412390029325513,
+   "wilson_95_answerable_share": [
+    0.9350850222079834,
+    0.9828711937614776
+   ],
+   "wilson_half_width_at_n": {
+    "p0.3": 0.059224554249795384,
+    "p0.5": 0.06461928639278712
+   },
+   "wilson_half_width_at_n_eff": {
+    "p0.3": 0.061992357599595635,
+    "p0.5": 0.06763920743069475
+   }
+  }
+ },
+ "pr_population": {
+  "files_truncated": 54,
+  "median_files_per_pr": 2.0,
+  "merged": 12659,
+  "merged_created_before_window": 0,
+  "merged_default_branch": 11044,
+  "merged_other_base": 1615,
+  "merged_per_year_default_branch": {
+   "2023": 2777,
+   "2024": 2733,
+   "2025": 2677,
+   "2026": 2857
+  },
+  "other_base_top": [
+   [
+    "release-1.27",
+    196
+   ],
+   [
+    "release-1.26",
+    193
+   ],
+   [
+    "release-1.28",
+    172
+   ],
+   [
+    "release-1.29",
+    132
+   ],
+   [
+    "release-1.34",
+    131
+   ],
+   [
+    "release-1.25",
+    122
+   ],
+   [
+    "release-1.30",
+    108
+   ],
+   [
+    "release-1.33",
+    107
+   ]
+  ],
+  "rows": 12659
+ },
+ "repo": "kubernetes/kubernetes",
+ "sensitivity": {
+  "cherry_picks_included": {
+   "test": {
+    "answerable": 355,
+    "answerable_with_a_nontrivial_positive": 330,
+    "distinct_fix_prs_among_answerable": 353,
+    "effective_n_kish": 351.04456824512533,
+    "fix_has_informative_files": 360,
+    "fix_not_after_query": 0,
+    "fix_pr_files_known": 375,
+    "fix_pr_in_window": 375,
+    "fix_pr_older_than_window": 0,
+    "issues_with_fix_link": 375,
+    "median_index_size_at_query": 10902.0,
+    "positives_per_answerable": {
+     "max": 1064,
+     "mean": 61.50704225352113,
+     "median": 28.0,
+     "min": 1,
+     "q1": 11.0,
+     "q3": 72.0
+    },
+    "queries_fix_truncated": 3,
+    "queries_positive_truncated": 104,
+    "share_answerable_of_fix_linked": 0.9466666666666667,
+    "trivially_popular_positive_share": 0.4679184795053813,
+    "wilson_95_answerable_share": [
+     0.9190615055295548,
+     0.9652130831111858
+    ],
+    "wilson_half_width_at_n": {
+     "p0.3": 0.047670701428108725,
+     "p0.5": 0.05201299945855898
+    },
+    "wilson_half_width_at_n_eff": {
+     "p0.3": 0.047938516464749954,
+     "p0.5": 0.052305209619905604
+    }
+   },
+   "train": {
+    "answerable": 1067,
+    "answerable_with_a_nontrivial_positive": 921,
+    "distinct_fix_prs_among_answerable": 1046,
+    "effective_n_kish": 1010.1943212067436,
+    "fix_has_informative_files": 1227,
+    "fix_not_after_query": 0,
+    "fix_pr_files_known": 1279,
+    "fix_pr_in_window": 1279,
+    "fix_pr_older_than_window": 0,
+    "issues_with_fix_link": 1279,
+    "median_index_size_at_query": 3977.0,
+    "positives_per_answerable": {
+     "max": 518,
+     "mean": 24.898781630740395,
+     "median": 11.0,
+     "min": 1,
+     "q1": 4.0,
+     "q3": 27.0
+    },
+    "queries_fix_truncated": 2,
+    "queries_positive_truncated": 224,
+    "share_answerable_of_fix_linked": 0.8342455043002346,
+    "trivially_popular_positive_share": 0.5058907667406933,
+    "wilson_95_answerable_share": [
+     0.8128706854170354,
+     0.8536184586830625
+    ],
+    "wilson_half_width_at_n": {
+     "p0.3": 0.027496885739994502,
+     "p0.5": 0.03000156197120872
+    },
+    "wilson_half_width_at_n_eff": {
+     "p0.3": 0.02825942086114983,
+     "p0.5": 0.030833555998055536
+    }
+   },
+   "validation": {
+    "answerable": 230,
+    "answerable_with_a_nontrivial_positive": 206,
+    "distinct_fix_prs_among_answerable": 223,
+    "effective_n_kish": 209.9206349206349,
+    "fix_has_informative_files": 232,
+    "fix_not_after_query": 0,
+    "fix_pr_files_known": 238,
+    "fix_pr_in_window": 238,
+    "fix_pr_older_than_window": 0,
+    "issues_with_fix_link": 238,
+    "median_index_size_at_query": 8773.0,
+    "positives_per_answerable": {
+     "max": 369,
+     "mean": 51.095652173913045,
+     "median": 25.0,
+     "min": 1,
+     "q1": 9.0,
+     "q3": 58.75
+    },
+    "queries_fix_truncated": 1,
+    "queries_positive_truncated": 78,
+    "share_answerable_of_fix_linked": 0.9663865546218487,
+    "trivially_popular_positive_share": 0.5416099387338326,
+    "wilson_95_answerable_share": [
+     0.9350850222079834,
+     0.9828711937614776
+    ],
+    "wilson_half_width_at_n": {
+     "p0.3": 0.059224554249795384,
+     "p0.5": 0.06461928639278712
+    },
+    "wilson_half_width_at_n_eff": {
+     "p0.3": 0.061992357599595635,
+     "p0.5": 0.06763920743069475
+    }
+   }
+  },
+  "threshold_0.5pct": {
+   "test": {
+    "answerable": 340,
+    "answerable_with_a_nontrivial_positive": 324,
+    "distinct_fix_prs_among_answerable": 338,
+    "effective_n_kish": 336.04651162790697,
+    "fix_has_informative_files": 346,
+    "fix_not_after_query": 0,
+    "fix_pr_files_known": 375,
+    "fix_pr_in_window": 375,
+    "fix_pr_older_than_window": 0,
+    "issues_with_fix_link": 375,
+    "median_index_size_at_query": 9431.0,
+    "positives_per_answerable": {
+     "max": 483,
+     "mean": 34.96470588235294,
+     "median": 20.5,
+     "min": 1,
+     "q1": 8.0,
+     "q3": 41.25
+    },
+    "queries_fix_truncated": 3,
+    "queries_positive_truncated": 89,
+    "share_answerable_of_fix_linked": 0.9066666666666666,
+    "trivially_popular_positive_share": 0.23898048452220727,
+    "wilson_95_answerable_share": [
+     0.8729606962489087,
+     0.9321251232598251
+    ],
+    "wilson_half_width_at_n": {
+     "p0.3": 0.04871091193127543,
+     "p0.5": 0.05314796216557076
+    },
+    "wilson_half_width_at_n_eff": {
+     "p0.3": 0.04899660887919591,
+     "p0.5": 0.053459683091681115
+    }
+   },
+   "train": {
+    "answerable": 958,
+    "answerable_with_a_nontrivial_positive": 863,
+    "distinct_fix_prs_among_answerable": 938,
+    "effective_n_kish": 903.3110236220473,
+    "fix_has_informative_files": 1132,
+    "fix_not_after_query": 0,
+    "fix_pr_files_known": 1279,
+    "fix_pr_in_window": 1279,
+    "fix_pr_older_than_window": 0,
+    "issues_with_fix_link": 1279,
+    "median_index_size_at_query": 3271.0,
+    "positives_per_answerable": {
+     "max": 331,
+     "mean": 14.249478079331942,
+     "median": 7.0,
+     "min": 1,
+     "q1": 3.0,
+     "q3": 16.0
+    },
+    "queries_fix_truncated": 2,
+    "queries_positive_truncated": 184,
+    "share_answerable_of_fix_linked": 0.7490226739640344,
+    "trivially_popular_positive_share": 0.34854589407369424,
+    "wilson_95_answerable_share": [
+     0.7245387011450336,
+     0.7720151991962089
+    ],
+    "wilson_half_width_at_n": {
+     "p0.3": 0.02901903485875455,
+     "p0.5": 0.03166236281781068
+    },
+    "wilson_half_width_at_n_eff": {
+     "p0.3": 0.029884573601302727,
+     "p0.5": 0.03260674300939257
+    }
+   },
+   "validation": {
+    "answerable": 212,
+    "answerable_with_a_nontrivial_positive": 193,
+    "distinct_fix_prs_among_answerable": 205,
+    "effective_n_kish": 192.06837606837607,
+    "fix_has_informative_files": 216,
+    "fix_not_after_query": 0,
+    "fix_pr_files_known": 238,
+    "fix_pr_in_window": 238,
+    "fix_pr_older_than_window": 0,
+    "issues_with_fix_link": 238,
+    "median_index_size_at_query": 7553.0,
+    "positives_per_answerable": {
+     "max": 198,
+     "mean": 28.882075471698112,
+     "median": 17.5,
+     "min": 1,
+     "q1": 6.75,
+     "q3": 34.25
+    },
+    "queries_fix_truncated": 1,
+    "queries_positive_truncated": 57,
+    "share_answerable_of_fix_linked": 0.8907563025210085,
+    "trivially_popular_positive_share": 0.4017638412542871,
+    "wilson_95_answerable_share": [
+     0.8447463645474417,
+     0.924352086670215
+    ],
+    "wilson_half_width_at_n": {
+     "p0.3": 0.061687587816075584,
+     "p0.5": 0.06730667633485762
+    },
+    "wilson_half_width_at_n_eff": {
+     "p0.3": 0.0648093680186998,
+     "p0.5": 0.07071281778284333
+    }
+   }
+  },
+  "threshold_2pct": {
+   "test": {
+    "answerable": 368,
+    "answerable_with_a_nontrivial_positive": 334,
+    "distinct_fix_prs_among_answerable": 366,
+    "effective_n_kish": 364.0430107526882,
+    "fix_has_informative_files": 373,
+    "fix_not_after_query": 0,
+    "fix_pr_files_known": 375,
+    "fix_pr_in_window": 375,
+    "fix_pr_older_than_window": 0,
+    "issues_with_fix_link": 375,
+    "median_index_size_at_query": 9431.0,
+    "positives_per_answerable": {
+     "max": 1025,
+     "mean": 66.7445652173913,
+     "median": 30.5,
+     "min": 1,
+     "q1": 11.0,
+     "q3": 76.0
+    },
+    "queries_fix_truncated": 3,
+    "queries_positive_truncated": 113,
+    "share_answerable_of_fix_linked": 0.9813333333333333,
+    "trivially_popular_positive_share": 0.547838123931276,
+    "wilson_95_answerable_share": [
+     0.9619756502730774,
+     0.9909292049487355
+    ],
+    "wilson_half_width_at_n": {
+     "p0.3": 0.04682112120938955,
+     "p0.5": 0.05108603144398332
+    },
+    "wilson_half_width_at_n_eff": {
+     "p0.3": 0.04707489608283623,
+     "p0.5": 0.05136292253137552
+    }
+   },
+   "train": {
+    "answerable": 1108,
+    "answerable_with_a_nontrivial_positive": 942,
+    "distinct_fix_prs_among_answerable": 1087,
+    "effective_n_kish": 1051.0821917808219,
+    "fix_has_informative_files": 1260,
+    "fix_not_after_query": 0,
+    "fix_pr_files_known": 1279,
+    "fix_pr_in_window": 1279,
+    "fix_pr_older_than_window": 0,
+    "issues_with_fix_link": 1279,
+    "median_index_size_at_query": 3271.0,
+    "positives_per_answerable": {
+     "max": 507,
+     "mean": 28.65884476534296,
+     "median": 11.0,
+     "min": 1,
+     "q1": 3.75,
+     "q3": 30.25
+    },
+    "queries_fix_truncated": 2,
+    "queries_positive_truncated": 247,
+    "share_answerable_of_fix_linked": 0.8663017982799062,
+    "trivially_popular_positive_share": 0.6093090634250803,
+    "wilson_95_answerable_share": [
+     0.846548852002211,
+     0.8838608883741536
+    ],
+    "wilson_half_width_at_n": {
+     "p0.3": 0.026983348254664228,
+     "p0.5": 0.029441246638179375
+    },
+    "wilson_half_width_at_n_eff": {
+     "p0.3": 0.027704312651903037,
+     "p0.5": 0.030227883286682963
+    }
+   },
+   "validation": {
+    "answerable": 234,
+    "answerable_with_a_nontrivial_positive": 211,
+    "distinct_fix_prs_among_answerable": 227,
+    "effective_n_kish": 213.890625,
+    "fix_has_informative_files": 236,
+    "fix_not_after_query": 0,
+    "fix_pr_files_known": 238,
+    "fix_pr_in_window": 238,
+    "fix_pr_older_than_window": 0,
+    "issues_with_fix_link": 238,
+    "median_index_size_at_query": 7553.0,
+    "positives_per_answerable": {
+     "max": 523,
+     "mean": 60.76068376068376,
+     "median": 27.0,
+     "min": 1,
+     "q1": 8.0,
+     "q3": 68.0
+    },
+    "queries_fix_truncated": 1,
+    "queries_positive_truncated": 86,
+    "share_answerable_of_fix_linked": 0.9831932773109243,
+    "trivially_popular_positive_share": 0.610704740469827,
+    "wilson_95_answerable_share": [
+     0.9575903339090249,
+     0.9934453853386146
+    ],
+    "wilson_half_width_at_n": {
+     "p0.3": 0.05871617957249725,
+     "p0.5": 0.06406460414514012
+    },
+    "wilson_half_width_at_n_eff": {
+     "p0.3": 0.06141434777513467,
+     "p0.5": 0.06700854700854701
+    }
+   }
+  }
+ }
+}

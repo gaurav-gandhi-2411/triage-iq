@@ -413,3 +413,86 @@ def test_dup_targets_pair_from_other_side_clears_that_issues_flag(tmp_path: Path
     t = qp0d.build_tables(REPO, base)
     assert [(r.source, r.canonical) for r in t["duplicate_pairs"].itertuples()] == [(9, 5)]
     assert not t["issues"].set_index("number").at[9, "dup_label_unresolved"]
+
+
+# --- labels present from creation (templates / forms apply them without any LabeledEvent) -------
+def test_label_without_events_is_present_from_creation() -> None:
+    rec = issue(labels=["template", "later"], nodes=[lab(80, "later")])
+    row, _ = qp0d.issue_row(rec, REPO)
+    assert row["labels_t72h"] == [
+        "template"
+    ]  # never touched -> there since creation; "later" came after 72 h
+    assert row["labels_final"] == ["template", "later"]
+
+
+def test_creation_label_removed_and_readded_is_present_until_the_first_unlabel() -> None:
+    ev = events(issue(nodes=[lab(10, "x", False), lab(100, "x")]))
+    init = qp0d.creation_labels(ev, ["x"])
+    assert init == {"x"}  # its first event is an unlabel, so it existed before that
+    assert qp0d.replay_labels(ev, T0 + timedelta(hours=5), init) == ["x"]
+    assert qp0d.replay_labels(ev, T0 + timedelta(hours=50), init) == []  # removed at 10 h
+    assert qp0d.replay_labels(ev, T0 + timedelta(hours=101), init) == ["x"]  # re-added at 100 h
+
+
+def test_label_with_only_an_unlabel_event_was_there_until_removed() -> None:
+    ev = events(issue(nodes=[lab(10, "gone", False)]))
+    init = qp0d.creation_labels(ev, [])  # not in the final set
+    assert init == {"gone"}
+    assert qp0d.replay_labels(ev, T0 + timedelta(hours=9), init) == ["gone"]
+    assert qp0d.replay_labels(ev, T0 + timedelta(hours=11), init) == []
+    row, _ = qp0d.issue_row(issue(nodes=[lab(10, "gone", False)]), REPO)
+    assert row["labels_t72h"] == [] and row["labels_final"] == []
+
+
+def test_label_first_labeled_then_removed_is_not_a_creation_label() -> None:
+    ev = events(issue(nodes=[lab(1, "a"), lab(2, "a", False)]))
+    assert qp0d.creation_labels(ev, []) == set()
+
+
+def _write_timelines(base: Path, rows: list[dict[str, Any]]) -> None:
+    d = base / "timelines"
+    d.mkdir(parents=True, exist_ok=True)
+    with gzip.open(d / "00000.jsonl.gz", "wt", encoding="utf-8") as f:
+        f.writelines(json.dumps(r) + "\n" for r in rows)
+    (d / "checkpoint.json").write_text("{}")  # must not be read as data
+
+
+def _direct(number: int, nodes: list[dict[str, Any]]) -> dict[str, Any]:
+    tl = {"totalCount": len(nodes), "nodes": nodes}
+    return {"number": number, "timelineItems": tl, "_source": "direct"}
+
+
+def test_direct_timeline_overrides_embedded_and_missing_rows_fall_back(tmp_path: Path) -> None:
+    base = tmp_path / "raw" / "o__r"
+    # #1: embedded dropped the label event; #2: direct row missing:true; #3: no direct row
+    recs = [issue(n, labels=["area/x"], nodes=[]) for n in (1, 2, 3)]
+    recs.append(issue(4, labels=["area/y"], nodes=[lab(1, "area/y")]))
+    _write_raw(base, "issues", recs)
+    _write_raw(base, "prs", [])
+    _write_timelines(
+        base,
+        [
+            _direct(1, [lab(100, "area/x")]),
+            {"number": 2, "missing": True, "_source": "direct"},
+            _direct(4, [lab(2, "area/y")]),
+        ],
+    )
+    t = qp0d.build_tables(REPO, base)
+    iss = t["issues"].set_index("number")
+    want = {1: "direct", 2: "embedded", 3: "embedded", 4: "direct"}
+    assert iss["timeline_source"].to_dict() == want
+    assert iss["timeline_direct_missing"].to_dict() == {1: False, 2: True, 3: False, 4: False}
+    ev = t["label_events"]
+    assert ev[ev["number"] == 1]["ts"].tolist() == [T0 + timedelta(hours=100)]
+    assert ev[ev["number"] == 4]["ts"].tolist() == [T0 + timedelta(hours=2)]  # not embedded 1h
+    # embedded (no events) would call area/x a creation label; direct says it came at 100h
+    assert list(iss.loc[1, "labels_t72h"]) == []
+    stats = qp0d.write_outputs(t, REPO, base, tmp_path / "out")
+    assert stats["timelines"] == {"direct": 2, "embedded": 2, "direct_row_missing": 1}
+    again = qp0d.stats_from_parquet(REPO, base, tmp_path / "out")
+    assert again["timelines"] == stats["timelines"]
+
+
+def test_no_timelines_dir_means_all_embedded(tmp_path: Path) -> None:
+    _, t = _tables(tmp_path, [issue(1), issue(2)])
+    assert set(t["issues"]["timeline_source"]) == {"embedded"}

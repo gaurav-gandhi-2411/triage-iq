@@ -119,6 +119,11 @@ def compute_stats(t: dict[str, pd.DataFrame], repo: str, size_mb: float) -> dict
             "event_canonical_is_self_unusable": int(iss["canon_self"].sum()),
             "dup_target_direction_ambiguous": int(iss["dup_target_ambiguous"].sum()),
         },
+        "timelines": {  # embedded timelines drop events, so say how many issues still use them
+            "direct": int((iss["timeline_source"] == "direct").sum()),
+            "embedded": int((iss["timeline_source"] == "embedded").sum()),
+            "direct_row_missing": flag(iss["timeline_direct_missing"]),
+        },
         "closers": {  # ClosedEvent closer PRs excluded because their repo is not verifiable
             "closer_repo_unknown": int(iss["closer_repo_unknown"].sum()),
             "closer_foreign_repo": int(iss["closer_foreign_repo"].sum()),

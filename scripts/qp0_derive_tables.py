@@ -45,9 +45,24 @@ def text_hash(title: str | None, body: str | None) -> str:
     return hashlib.sha1(f"{_norm(title)}\n{_norm((body or '')[:BODY_CAP])}".encode()).hexdigest()  # noqa: S324
 
 
-def replay_labels(events: list[dict[str, Any]], at: datetime) -> list[str]:
-    """Label set at time ``at`` (inclusive), replayed in timestamp order (stable on ties)."""
-    state: dict[str, None] = {}
+def creation_labels(events: list[dict[str, Any]], final: list[str]) -> set[str]:
+    """Labels present from creation: issue templates / forms apply them without a LabeledEvent.
+
+    A label whose FIRST event is an unlabel existed before it; a final label with no event at all
+    was never touched since creation.
+    """
+    first: dict[str, str] = {}
+    for e in sorted(events, key=lambda e: e["ts"]):
+        first.setdefault(e["label"], e["action"])
+    return {k for k, a in first.items() if a == "unlabeled"} | {x for x in final if x not in first}
+
+
+def replay_labels(
+    events: list[dict[str, Any]], at: datetime, initial: set[str] | frozenset[str] = frozenset()
+) -> list[str]:
+    """Label set at time ``at`` (inclusive), replayed in timestamp order (stable on ties),
+    starting from the ``initial`` (creation-time) labels."""
+    state: dict[str, None] = dict.fromkeys(initial)
     for e in sorted(events, key=lambda e: e["ts"]):
         if e["ts"] > at:
             break
@@ -89,7 +104,7 @@ def issue_row(rec: dict[str, Any], repo: str) -> tuple[dict[str, Any], list[dict
         "n_comments": rec["comments"]["totalCount"],
         "milestone_title": (rec.get("milestone") or {}).get("title"),
         "labels_final": ls,
-        "labels_t72h": replay_labels(ev, created + HORIZON),
+        "labels_t72h": replay_labels(ev, created + HORIZON, creation_labels(ev, ls)),
         "first_label_ts": min(labeled) if labeled else None,
         "text_hash": text_hash(rec.get("title"), body),
         "created_year": created.year,
@@ -201,6 +216,17 @@ def load_dup_targets(base: Path) -> dict[int, dict[str, Any]]:
     return out
 
 
+def load_timelines(base: Path) -> dict[int, dict[str, Any]]:
+    """Rows of <base>/timelines/<NNNNN>.jsonl.gz (complete per-issue re-scrape), by number."""
+    out: dict[int, dict[str, Any]] = {}
+    for f in sorted((base / "timelines").glob("*.jsonl.gz")):
+        with gzip.open(f, "rt", encoding="utf-8") as fh:
+            for line in fh:
+                row = json.loads(line)
+                out[row["number"]] = row
+    return out
+
+
 def best_pairs(pairs: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """One row per (source, canonical): the best-ranked method wins (first seen on a tie)."""
     best: dict[tuple[int, int], dict[str, Any]] = {}
@@ -237,13 +263,21 @@ def build_tables(repo: str, base: Path, limit: int | None = None) -> dict[str, p
     fixes: list[dict[str, Any]] = []
     recs = {r["number"]: r for r in iter_records(base / "issues", limit)}  # last copy wins
     targets = load_dup_targets(base)
+    timelines = load_timelines(base)
     other_side: list[dict[str, Any]] = []  # pairs whose source is not the issue carrying the event
     if not recs:
         raise SystemExit(f"no issue files under {base / 'issues'}")
     for n, rec in recs.items():
         diag: Counter[str] = Counter()
+        # search-embedded timelines drop events: prefer the complete direct one when it exists
+        tl = timelines.get(n)
+        direct = tl is not None and not tl.get("missing")
+        if direct:
+            rec = {**rec, "timelineItems": tl["timelineItems"]}
         row, ev = _derive(rec, lambda x: issue_row(x, repo))
         d = _derive(rec, lambda x, dg=diag: extract_duplicates(x, repo, dg, pr_set))
+        row["timeline_source"] = "direct" if direct else "embedded"
+        row["timeline_direct_missing"] = tl is not None and bool(tl.get("missing"))
         row["canon_foreign_repo"] = diag["canon_foreign_repo"]
         row["canon_repo_unknown"] = diag["canon_repo_unknown"]
         row["canon_self"] = diag["canon_self"]

@@ -2,38 +2,43 @@
 
 Single source of truth. Re-read first after any restart. Times in IST unless marked UTC.
 
-## Now
-- Started 2026-10-23. Stop new long work from 2026-10-27 12:00 IST; return brief by 2026-10-27 18:00 IST.
-- Current task: **Q1 timeline fix** (step 1: build `scripts/qp0_scrape_timelines.py`).
+## Now (updated 2026-10-23 ~10:00 IST)
+- Stop new long work from 2026-10-27 12:00 IST; return brief by 2026-10-27 18:00 IST.
+- Current subagent task: **Q4 prep — Kaggle embedding pipeline** (branch feat/qk-kaggle-embeddings; k8s issues + PRs first).
+- Q1 status: k8s DONE (direct timelines, re-derive, gold check); vscode waiting on the direct-timeline scrape (background).
 
 ## Pause-state check at start (2026-10-23, VERIFIED)
-- git: primary checkout clean apart from pre-existing untracked files (main_pinned_repro.log, scripts/audit_fallback_plans.py,
-  scripts/diag_judge_key_v2.py); handoff PR #248 merged; open PRs #184, #138, #94 (GG's).
-- No orphaned TriageIQ processes. main CI green on 31cf1b8. Production `/health?deps=1` ok (model store + Groq healthy).
-- No open alert issues. GitHub rate limit core 4,870 / GraphQL 4,917. D:\triageiq-data 369 MB; C: 228 GB free, D: 1.4 TB free.
+- git clean apart from pre-existing untracked files; handoff PR #248 merged; open PRs then #184, #138, #94 (GG's).
+- No orphaned TriageIQ processes. main CI green on 31cf1b8. Production `/health?deps=1` ok. No open alert issues.
+- GitHub rate limit core 4,870 / GraphQL 4,917. D:\triageiq-data 369 MB; C: 228 GB free, D: 1.4 TB free.
 
-## Queue (runbook section 5, mapped from the handoff resume plan)
+## Queue (runbook section 5)
 | # | Task | Depends on | Status |
 |---|---|---|---|
-| Q1 | Direct per-issue timeline scraper; run k8s then vscode; quantify loss vs search-embedded timelines; derive reads direct timelines; re-derive both; recompute label-timeline reports; re-check k8s Phase 1 gold (re-run as a new gold version if it changes); then merge or rework the held branches feat/qp0-label-replay-fix and feat/qp0-vscode-audits | - | IN PROGRESS |
-| Q2 | vscode taxonomy: train-counts-only class family; evaluate (a) recent training window, (b) open-set abstention as a counted outcome, (c) stable parent areas, (d) scheduled retraining; freeze ADR-0070; amend ADR-0067 (primary rule) and ADR-0068 (counts) | Q1 vscode | queued |
-| Q3 | vscode splits, ceilings, 150-issue LLM eval set (75 per repo) | Q2 | queued |
-| Q4 | Phase 1 on Kaggle: vscode candidates; embedding candidates both repos (BGE head, kNN vote, fine-tuned encoder ONNX int8, stacking); conformal chosen on validation only | Q3 (vscode); k8s part after Q1 gold check | queued |
-| Q5a | vscode duplicate retrieval (7,339 pairs; Recall@5 >= 80% target) | Q3 | queued |
-| Q5b | k8s prior-PR retrieval (ADR-0068): PR files already scraped; refresh counts after Q1; score baselines then models | Q1 (fix-link events) | queued |
-| Q6 | Phase 4 resolution (survival), Kaggle CPU or light local | Q1 | queued |
-| Q7 | Phase 3b redesign, implementation only, default-off flags, finalize prompt | Q4, Q5, Q6 | queued |
-| Q8 | Phase 5 metrics harness; single re-record only after Q7 acceptance | Q7 | queued |
-| Q9 | Background: post-cutoff k8s issues daily (ADR-0069 confirmation set); dependabot pip job; disk/scratch hygiene | - | ongoing |
+| Q1 | Direct timelines; quantify loss; derive from direct; re-derive; re-check k8s gold | - | k8s DONE (PR #250 scraper, #252 derive + gold re-score); vscode WAITING on scrape |
+| Q2 | vscode taxonomy (train-counts-only family; recent window / open-set / parent areas / retraining design); ADR-0070 | Q1 vscode | queued |
+| Q3 | vscode splits, ceilings, 150-issue LLM eval set | Q2 | queued |
+| Q4 | Phase 1 on Kaggle: vscode candidates; embedding candidates both repos; conformal on validation only | Kaggle pipeline (in progress); vscode after Q3 | IN PROGRESS (pipeline) |
+| Q5a | vscode duplicate retrieval (Recall@5 >= 80%) | Q3 + embeddings | queued |
+| Q5b | k8s prior-PR retrieval (ADR-0068): refresh counts on derived_v2, baselines, models | Q1 k8s (done) | queued (next after Q4 prep) |
+| Q6 | Phase 4 resolution (survival) | Q1 | queued |
+| Q7 | Phase 3b redesign (default-off flags) | Q4, Q5, Q6 | queued |
+| Q8 | Phase 5 metrics harness; single re-record after Q7 acceptance | Q7 | queued |
+| Q9 | Background: post-cutoff issues (ADR-0069); dependabot pip job; disk hygiene | - | ongoing |
 
 ## Done this run
-- (none yet)
+- Runbook committed, RUN_STATUS started (#249).
+- CI unblocked: pillow 12.3.0 -> 13.0.0 (35 CVEs) and certifi -> 2026.10.19 via scoped lock regen (#251). VERIFIED (CI green after).
+- Q1 k8s (VERIFIED by an independent verifier): direct timeline scraper (#250); k8s direct timelines 7,707 issues, 77,491 events, 0 missing; embedded data was missing >= 1 LabeledEvent on 122 k8s issues (1.58%); closer-PR fix links 1,956 -> 1,969; duplicate pairs unchanged (98). k8s Phase 1 gold IDENTICAL under corrected timelines (0 primary/set changes in all splits) -> k8s Phase 1 numbers stand: test top-3 95.4% [94.3, 96.5] (point meets the target, lower bound does not), top-1 77.1%. Derive now prefers direct timelines (#252).
 
 ## Blocked (with unblock condition)
-- (none yet)
+- (none)
 
 ## Background jobs
-- (none running)
+- vscode direct-timeline scrape: runner `D:\triageiq-data\bin\run_timelines.ps1` (log `D:\triageiq-data\logs\scrape_timelines_microsoft__vscode.log`, done marker in `timelines_done.txt`); ~10,900 batches, ~4-5 h from 03:00 IST.
+- Post-cutoff issue collection (ADR-0069 confirmation set): `run_confirm_scrape.ps1`, first pass done 02:51 IST (k8s + vscode since 2026-10-19); rerun daily.
+- PR merge monitors: #250 then #252.
 
 ## Decisions taken alone this run
-- (none yet)
+- Scoped lock regen for pillow 13.0.0 / certifi (runbook 7: CI broken by advisory). No other pin moved; pillow is transitive.
+- Treat labels with no labeled/unlabeled event as present from creation (correct once timelines are complete; on k8s 0 sig/* labels are affected).

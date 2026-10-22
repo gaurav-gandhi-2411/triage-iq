@@ -1,0 +1,611 @@
+{
+ "definition": "100 most frequently changed informative files over train-period merged master PRs; ties by path",
+ "files": [
+  ".go-version",
+  "api/api-rules/violation_exceptions.list",
+  "build/build-image/cross/VERSION",
+  "cluster/gce/gci/configure-helper.sh",
+  "cluster/gce/gci/configure.sh",
+  "cluster/gce/util.sh",
+  "cluster/images/etcd/Makefile",
+  "cmd/kube-apiserver/app/server.go",
+  "cmd/kube-controller-manager/app/controllermanager.go",
+  "cmd/kube-controller-manager/app/core.go",
+  "cmd/kube-controller-manager/app/options/options_test.go",
+  "cmd/kube-proxy/app/server.go",
+  "cmd/kubeadm/app/constants/constants.go",
+  "cmd/kubeadm/app/features/features.go",
+  "cmd/kubelet/app/server.go",
+  "hack/golangci-hints.yaml",
+  "hack/golangci-strict.yaml",
+  "hack/golangci.yaml",
+  "hack/golangci.yaml.in",
+  "hack/lib/golang.sh",
+  "hack/local-up-cluster.sh",
+  "hack/logcheck.conf",
+  "hack/update-codegen.sh",
+  "pkg/api/pod/util.go",
+  "pkg/api/pod/util_test.go",
+  "pkg/controller/job/job_controller_test.go",
+  "pkg/controlplane/apiserver/config.go",
+  "pkg/controlplane/instance.go",
+  "pkg/kubelet/cm/container_manager_linux.go",
+  "pkg/kubelet/cm/dra/manager.go",
+  "pkg/kubelet/kubelet_pods_test.go",
+  "pkg/kubelet/kuberuntime/kuberuntime_container.go",
+  "pkg/kubelet/kuberuntime/kuberuntime_manager.go",
+  "pkg/kubelet/kuberuntime/kuberuntime_manager_test.go",
+  "pkg/kubelet/metrics/metrics.go",
+  "pkg/kubelet/status/status_manager.go",
+  "pkg/printers/internalversion/printers.go",
+  "pkg/printers/internalversion/printers_test.go",
+  "pkg/proxy/iptables/proxier.go",
+  "pkg/proxy/iptables/proxier_test.go",
+  "pkg/proxy/ipvs/proxier.go",
+  "pkg/proxy/ipvs/proxier_test.go",
+  "pkg/proxy/nftables/proxier.go",
+  "pkg/proxy/nftables/proxier_test.go",
+  "pkg/proxy/winkernel/proxier.go",
+  "pkg/registry/core/pod/strategy_test.go",
+  "pkg/scheduler/eventhandlers.go",
+  "pkg/scheduler/framework/interface.go",
+  "pkg/scheduler/framework/plugins/defaultpreemption/default_preemption_test.go",
+  "pkg/scheduler/framework/plugins/dynamicresources/dynamicresources.go",
+  "pkg/scheduler/framework/plugins/dynamicresources/dynamicresources_test.go",
+  "pkg/scheduler/framework/plugins/noderesources/fit.go",
+  "pkg/scheduler/framework/plugins/noderesources/fit_test.go",
+  "pkg/scheduler/framework/runtime/framework.go",
+  "pkg/scheduler/framework/runtime/framework_test.go",
+  "pkg/scheduler/internal/queue/scheduling_queue.go",
+  "pkg/scheduler/internal/queue/scheduling_queue_test.go",
+  "pkg/scheduler/schedule_one.go",
+  "pkg/scheduler/schedule_one_test.go",
+  "pkg/scheduler/scheduler.go",
+  "pkg/scheduler/scheduler_test.go",
+  "pkg/scheduler/testing/wrappers.go",
+  "pkg/volume/plugins.go",
+  "staging/src/k8s.io/api/batch/v1/types.go",
+  "staging/src/k8s.io/apiextensions-apiserver/pkg/apiserver/schema/cel/validation_test.go",
+  "staging/src/k8s.io/apiserver/pkg/server/config.go",
+  "staging/src/k8s.io/apiserver/pkg/server/genericapiserver.go",
+  "staging/src/k8s.io/apiserver/pkg/server/options/encryptionconfig/config_test.go",
+  "staging/src/k8s.io/apiserver/pkg/storage/cacher/cacher.go",
+  "staging/src/k8s.io/apiserver/pkg/storage/cacher/cacher_test.go",
+  "staging/src/k8s.io/apiserver/pkg/storage/cacher/watch_cache.go",
+  "staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go",
+  "staging/src/k8s.io/apiserver/pkg/storage/testing/store_tests.go",
+  "staging/src/k8s.io/apiserver/pkg/storage/testing/watcher_tests.go",
+  "staging/src/k8s.io/client-go/applyconfigurations/utils.go",
+  "staging/src/k8s.io/client-go/informers/generic.go",
+  "staging/src/k8s.io/client-go/tools/cache/reflector.go",
+  "staging/src/k8s.io/cri-api/pkg/apis/runtime/v1/api.proto",
+  "staging/src/k8s.io/kubectl/pkg/describe/describe.go",
+  "staging/src/k8s.io/kubectl/pkg/describe/describe_test.go",
+  "test/compatibility_lifecycle/reference/versioned_feature_list.yaml",
+  "test/conformance/testdata/conformance.yaml",
+  "test/e2e/apps/job.go",
+  "test/e2e/dra/dra.go",
+  "test/e2e/kubectl/kubectl.go",
+  "test/e2e/network/service.go",
+  "test/e2e/node/pod_resize.go",
+  "test/e2e_node/container_lifecycle_test.go",
+  "test/e2e_node/device_plugin_test.go",
+  "test/e2e_node/podresources_test.go",
+  "test/e2e_node/util.go",
+  "test/images/Makefile",
+  "test/integration/etcd/data.go",
+  "test/integration/job/job_test.go",
+  "test/integration/scheduler/plugins/plugins_test.go",
+  "test/integration/scheduler/queue_test.go",
+  "test/integration/scheduler_perf/config/performance-config.yaml",
+  "test/integration/scheduler_perf/scheduler_perf.go",
+  "test/integration/scheduler_perf/util.go",
+  "test/integration/util/util.go"
+ ],
+ "frozen": true,
+ "k": 100,
+ "ranked": [
+  {
+   "n_prs": 66,
+   "path": "staging/src/k8s.io/apiserver/pkg/storage/cacher/cacher.go",
+   "share": 0.009735949255052367
+  },
+  {
+   "n_prs": 64,
+   "path": "pkg/controller/job/job_controller_test.go",
+   "share": 0.009440920489747751
+  },
+  {
+   "n_prs": 62,
+   "path": "test/e2e/dra/dra.go",
+   "share": 0.009145891724443134
+  },
+  {
+   "n_prs": 59,
+   "path": "staging/src/k8s.io/client-go/applyconfigurations/utils.go",
+   "share": 0.008703348576486207
+  },
+  {
+   "n_prs": 57,
+   "path": "pkg/proxy/ipvs/proxier.go",
+   "share": 0.00840831981118159
+  },
+  {
+   "n_prs": 57,
+   "path": "pkg/scheduler/framework/plugins/dynamicresources/dynamicresources.go",
+   "share": 0.00840831981118159
+  },
+  {
+   "n_prs": 57,
+   "path": "pkg/scheduler/schedule_one_test.go",
+   "share": 0.00840831981118159
+  },
+  {
+   "n_prs": 55,
+   "path": "pkg/proxy/iptables/proxier.go",
+   "share": 0.008113291045876972
+  },
+  {
+   "n_prs": 55,
+   "path": "test/integration/job/job_test.go",
+   "share": 0.008113291045876972
+  },
+  {
+   "n_prs": 54,
+   "path": "test/compatibility_lifecycle/reference/versioned_feature_list.yaml",
+   "share": 0.007965776663224665
+  },
+  {
+   "n_prs": 52,
+   "path": "test/integration/etcd/data.go",
+   "share": 0.007670747897920047
+  },
+  {
+   "n_prs": 51,
+   "path": "pkg/controlplane/instance.go",
+   "share": 0.007523233515267739
+  },
+  {
+   "n_prs": 51,
+   "path": "pkg/scheduler/schedule_one.go",
+   "share": 0.007523233515267739
+  },
+  {
+   "n_prs": 50,
+   "path": "pkg/kubelet/kuberuntime/kuberuntime_manager.go",
+   "share": 0.00737571913261543
+  },
+  {
+   "n_prs": 50,
+   "path": "pkg/scheduler/framework/runtime/framework.go",
+   "share": 0.00737571913261543
+  },
+  {
+   "n_prs": 49,
+   "path": "cmd/kube-proxy/app/server.go",
+   "share": 0.007228204749963121
+  },
+  {
+   "n_prs": 49,
+   "path": "cmd/kubelet/app/server.go",
+   "share": 0.007228204749963121
+  },
+  {
+   "n_prs": 49,
+   "path": "pkg/api/pod/util.go",
+   "share": 0.007228204749963121
+  },
+  {
+   "n_prs": 48,
+   "path": "cmd/kubeadm/app/constants/constants.go",
+   "share": 0.007080690367310813
+  },
+  {
+   "n_prs": 48,
+   "path": "hack/golangci.yaml",
+   "share": 0.007080690367310813
+  },
+  {
+   "n_prs": 47,
+   "path": "pkg/api/pod/util_test.go",
+   "share": 0.006933175984658504
+  },
+  {
+   "n_prs": 47,
+   "path": "pkg/proxy/iptables/proxier_test.go",
+   "share": 0.006933175984658504
+  },
+  {
+   "n_prs": 47,
+   "path": "pkg/scheduler/internal/queue/scheduling_queue.go",
+   "share": 0.006933175984658504
+  },
+  {
+   "n_prs": 47,
+   "path": "test/e2e/network/service.go",
+   "share": 0.006933175984658504
+  },
+  {
+   "n_prs": 45,
+   "path": "pkg/scheduler/internal/queue/scheduling_queue_test.go",
+   "share": 0.006638147219353887
+  },
+  {
+   "n_prs": 45,
+   "path": "pkg/scheduler/scheduler_test.go",
+   "share": 0.006638147219353887
+  },
+  {
+   "n_prs": 44,
+   "path": "pkg/kubelet/kubelet_pods_test.go",
+   "share": 0.006490632836701578
+  },
+  {
+   "n_prs": 44,
+   "path": "pkg/proxy/ipvs/proxier_test.go",
+   "share": 0.006490632836701578
+  },
+  {
+   "n_prs": 43,
+   "path": "pkg/scheduler/framework/plugins/dynamicresources/dynamicresources_test.go",
+   "share": 0.0063431184540492696
+  },
+  {
+   "n_prs": 43,
+   "path": "test/integration/scheduler/queue_test.go",
+   "share": 0.0063431184540492696
+  },
+  {
+   "n_prs": 42,
+   "path": "hack/local-up-cluster.sh",
+   "share": 0.006195604071396961
+  },
+  {
+   "n_prs": 42,
+   "path": "test/conformance/testdata/conformance.yaml",
+   "share": 0.006195604071396961
+  },
+  {
+   "n_prs": 42,
+   "path": "test/e2e_node/container_lifecycle_test.go",
+   "share": 0.006195604071396961
+  },
+  {
+   "n_prs": 41,
+   "path": "hack/golangci-hints.yaml",
+   "share": 0.006048089688744653
+  },
+  {
+   "n_prs": 41,
+   "path": "test/integration/scheduler_perf/scheduler_perf.go",
+   "share": 0.006048089688744653
+  },
+  {
+   "n_prs": 40,
+   "path": "pkg/scheduler/scheduler.go",
+   "share": 0.005900575306092344
+  },
+  {
+   "n_prs": 40,
+   "path": "test/integration/scheduler_perf/config/performance-config.yaml",
+   "share": 0.005900575306092344
+  },
+  {
+   "n_prs": 38,
+   "path": "cmd/kube-controller-manager/app/controllermanager.go",
+   "share": 0.0056055465407877265
+  },
+  {
+   "n_prs": 38,
+   "path": "pkg/proxy/nftables/proxier.go",
+   "share": 0.0056055465407877265
+  },
+  {
+   "n_prs": 38,
+   "path": "staging/src/k8s.io/apiserver/pkg/storage/cacher/cacher_test.go",
+   "share": 0.0056055465407877265
+  },
+  {
+   "n_prs": 38,
+   "path": "staging/src/k8s.io/apiserver/pkg/storage/cacher/watch_cache.go",
+   "share": 0.0056055465407877265
+  },
+  {
+   "n_prs": 37,
+   "path": "build/build-image/cross/VERSION",
+   "share": 0.005458032158135419
+  },
+  {
+   "n_prs": 37,
+   "path": "cluster/images/etcd/Makefile",
+   "share": 0.005458032158135419
+  },
+  {
+   "n_prs": 37,
+   "path": "pkg/kubelet/kuberuntime/kuberuntime_container.go",
+   "share": 0.005458032158135419
+  },
+  {
+   "n_prs": 37,
+   "path": "pkg/kubelet/kuberuntime/kuberuntime_manager_test.go",
+   "share": 0.005458032158135419
+  },
+  {
+   "n_prs": 37,
+   "path": "staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go",
+   "share": 0.005458032158135419
+  },
+  {
+   "n_prs": 36,
+   "path": ".go-version",
+   "share": 0.00531051777548311
+  },
+  {
+   "n_prs": 36,
+   "path": "cmd/kube-controller-manager/app/core.go",
+   "share": 0.00531051777548311
+  },
+  {
+   "n_prs": 36,
+   "path": "pkg/printers/internalversion/printers.go",
+   "share": 0.00531051777548311
+  },
+  {
+   "n_prs": 36,
+   "path": "test/integration/util/util.go",
+   "share": 0.00531051777548311
+  },
+  {
+   "n_prs": 35,
+   "path": "hack/lib/golang.sh",
+   "share": 0.005163003392830801
+  },
+  {
+   "n_prs": 35,
+   "path": "pkg/scheduler/framework/interface.go",
+   "share": 0.005163003392830801
+  },
+  {
+   "n_prs": 35,
+   "path": "pkg/scheduler/framework/runtime/framework_test.go",
+   "share": 0.005163003392830801
+  },
+  {
+   "n_prs": 35,
+   "path": "staging/src/k8s.io/apiserver/pkg/storage/testing/store_tests.go",
+   "share": 0.005163003392830801
+  },
+  {
+   "n_prs": 35,
+   "path": "test/images/Makefile",
+   "share": 0.005163003392830801
+  },
+  {
+   "n_prs": 34,
+   "path": "cluster/gce/gci/configure.sh",
+   "share": 0.005015489010178492
+  },
+  {
+   "n_prs": 34,
+   "path": "pkg/kubelet/status/status_manager.go",
+   "share": 0.005015489010178492
+  },
+  {
+   "n_prs": 34,
+   "path": "pkg/proxy/winkernel/proxier.go",
+   "share": 0.005015489010178492
+  },
+  {
+   "n_prs": 34,
+   "path": "pkg/scheduler/framework/plugins/defaultpreemption/default_preemption_test.go",
+   "share": 0.005015489010178492
+  },
+  {
+   "n_prs": 34,
+   "path": "test/e2e/node/pod_resize.go",
+   "share": 0.005015489010178492
+  },
+  {
+   "n_prs": 33,
+   "path": "cmd/kube-apiserver/app/server.go",
+   "share": 0.0048679746275261835
+  },
+  {
+   "n_prs": 33,
+   "path": "staging/src/k8s.io/apiserver/pkg/server/config.go",
+   "share": 0.0048679746275261835
+  },
+  {
+   "n_prs": 33,
+   "path": "test/e2e/kubectl/kubectl.go",
+   "share": 0.0048679746275261835
+  },
+  {
+   "n_prs": 32,
+   "path": "hack/golangci-strict.yaml",
+   "share": 0.004720460244873876
+  },
+  {
+   "n_prs": 32,
+   "path": "pkg/scheduler/eventhandlers.go",
+   "share": 0.004720460244873876
+  },
+  {
+   "n_prs": 32,
+   "path": "pkg/scheduler/testing/wrappers.go",
+   "share": 0.004720460244873876
+  },
+  {
+   "n_prs": 31,
+   "path": "hack/logcheck.conf",
+   "share": 0.004572945862221567
+  },
+  {
+   "n_prs": 31,
+   "path": "hack/update-codegen.sh",
+   "share": 0.004572945862221567
+  },
+  {
+   "n_prs": 31,
+   "path": "pkg/controlplane/apiserver/config.go",
+   "share": 0.004572945862221567
+  },
+  {
+   "n_prs": 31,
+   "path": "pkg/kubelet/cm/dra/manager.go",
+   "share": 0.004572945862221567
+  },
+  {
+   "n_prs": 31,
+   "path": "pkg/scheduler/framework/plugins/noderesources/fit_test.go",
+   "share": 0.004572945862221567
+  },
+  {
+   "n_prs": 31,
+   "path": "staging/src/k8s.io/kubectl/pkg/describe/describe.go",
+   "share": 0.004572945862221567
+  },
+  {
+   "n_prs": 31,
+   "path": "test/e2e/apps/job.go",
+   "share": 0.004572945862221567
+  },
+  {
+   "n_prs": 31,
+   "path": "test/integration/scheduler/plugins/plugins_test.go",
+   "share": 0.004572945862221567
+  },
+  {
+   "n_prs": 31,
+   "path": "test/integration/scheduler_perf/util.go",
+   "share": 0.004572945862221567
+  },
+  {
+   "n_prs": 30,
+   "path": "pkg/kubelet/metrics/metrics.go",
+   "share": 0.004425431479569258
+  },
+  {
+   "n_prs": 30,
+   "path": "pkg/registry/core/pod/strategy_test.go",
+   "share": 0.004425431479569258
+  },
+  {
+   "n_prs": 30,
+   "path": "staging/src/k8s.io/api/batch/v1/types.go",
+   "share": 0.004425431479569258
+  },
+  {
+   "n_prs": 30,
+   "path": "staging/src/k8s.io/apiextensions-apiserver/pkg/apiserver/schema/cel/validation_test.go",
+   "share": 0.004425431479569258
+  },
+  {
+   "n_prs": 30,
+   "path": "staging/src/k8s.io/client-go/informers/generic.go",
+   "share": 0.004425431479569258
+  },
+  {
+   "n_prs": 30,
+   "path": "staging/src/k8s.io/kubectl/pkg/describe/describe_test.go",
+   "share": 0.004425431479569258
+  },
+  {
+   "n_prs": 29,
+   "path": "hack/golangci.yaml.in",
+   "share": 0.004277917096916949
+  },
+  {
+   "n_prs": 29,
+   "path": "pkg/printers/internalversion/printers_test.go",
+   "share": 0.004277917096916949
+  },
+  {
+   "n_prs": 29,
+   "path": "pkg/proxy/nftables/proxier_test.go",
+   "share": 0.004277917096916949
+  },
+  {
+   "n_prs": 29,
+   "path": "pkg/scheduler/framework/plugins/noderesources/fit.go",
+   "share": 0.004277917096916949
+  },
+  {
+   "n_prs": 29,
+   "path": "staging/src/k8s.io/apiserver/pkg/server/options/encryptionconfig/config_test.go",
+   "share": 0.004277917096916949
+  },
+  {
+   "n_prs": 29,
+   "path": "staging/src/k8s.io/cri-api/pkg/apis/runtime/v1/api.proto",
+   "share": 0.004277917096916949
+  },
+  {
+   "n_prs": 28,
+   "path": "api/api-rules/violation_exceptions.list",
+   "share": 0.0041304027142646405
+  },
+  {
+   "n_prs": 28,
+   "path": "cluster/gce/gci/configure-helper.sh",
+   "share": 0.0041304027142646405
+  },
+  {
+   "n_prs": 28,
+   "path": "pkg/kubelet/cm/container_manager_linux.go",
+   "share": 0.0041304027142646405
+  },
+  {
+   "n_prs": 28,
+   "path": "staging/src/k8s.io/apiserver/pkg/storage/testing/watcher_tests.go",
+   "share": 0.0041304027142646405
+  },
+  {
+   "n_prs": 28,
+   "path": "staging/src/k8s.io/client-go/tools/cache/reflector.go",
+   "share": 0.0041304027142646405
+  },
+  {
+   "n_prs": 28,
+   "path": "test/e2e_node/device_plugin_test.go",
+   "share": 0.0041304027142646405
+  },
+  {
+   "n_prs": 28,
+   "path": "test/e2e_node/podresources_test.go",
+   "share": 0.0041304027142646405
+  },
+  {
+   "n_prs": 28,
+   "path": "test/e2e_node/util.go",
+   "share": 0.0041304027142646405
+  },
+  {
+   "n_prs": 27,
+   "path": "cluster/gce/util.sh",
+   "share": 0.003982888331612333
+  },
+  {
+   "n_prs": 27,
+   "path": "cmd/kube-controller-manager/app/options/options_test.go",
+   "share": 0.003982888331612333
+  },
+  {
+   "n_prs": 27,
+   "path": "cmd/kubeadm/app/features/features.go",
+   "share": 0.003982888331612333
+  },
+  {
+   "n_prs": 27,
+   "path": "pkg/volume/plugins.go",
+   "share": 0.003982888331612333
+  },
+  {
+   "n_prs": 27,
+   "path": "staging/src/k8s.io/apiserver/pkg/server/genericapiserver.go",
+   "share": 0.003982888331612333
+  }
+ ],
+ "sha256_sorted_newline_joined": "3cfdc9faf91fdc0c4d34954c69d4f447d89bff257456bca745b365df31fd2e92",
+ "train_end": "2025-06-30 23:59:59+00:00"
+}

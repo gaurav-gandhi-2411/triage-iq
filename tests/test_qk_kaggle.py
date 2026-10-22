@@ -175,3 +175,28 @@ def test_push_kernel_exit0_error_is_not_success(tmp_path: Path, monkeypatch) -> 
     argv = ["--staging", str(tmp_path / "s"), "--kaggle-exe", "kg", "push-kernel"]
     with pytest.raises(RuntimeError, match="not confirmed"):
         qk.main([*argv, "--kernel", str(src), "--slug", "kk", "--datasets", "me/a"])
+
+
+def test_push_kernel_text_prefix_written_exactly(tmp_path: Path, monkeypatch) -> None:
+    src = tmp_path / "k"
+    src.mkdir()
+    (src / "embed_bge.py").write_text("print(1)")
+    monkeypatch.setattr(subprocess, "run", Recorder(stdout="Kernel version 2 successfully pushed."))
+    prefix = "Represent this sentence for searching relevant passages: "
+    argv = ["--owner", "me", "--staging", str(tmp_path / "s"), "--kaggle-exe", "kg", "push-kernel"]
+    argv += ["--kernel", str(src), "--slug", "kq", "--datasets", "me/a"]
+    qk.main([*argv, "--text-prefix", prefix])
+    assert (tmp_path / "s" / "kernel-kq" / "text_prefix.txt").read_text() == prefix
+    qk.main(argv)  # no prefix -> the restaged dir carries no prefix file
+    assert not (tmp_path / "s" / "kernel-kq" / "text_prefix.txt").exists()
+
+
+def test_kernel_load_prefix(tmp_path: Path) -> None:
+    kp = Path(__file__).resolve().parents[1] / "kaggle" / "kernels" / "embed_bge" / "embed_bge.py"
+    src = kp.read_text(encoding="utf-8")
+    fn_src = src[src.index("def load_prefix") : src.index("def encode")]
+    ns: dict = {"Path": Path, "PREFIX_FILE": tmp_path / "none.txt"}
+    exec(fn_src, ns)  # noqa: S102 - the kernel imports torch; exec only the pure helper
+    assert ns["load_prefix"]() == ""
+    (tmp_path / "p.txt").write_text("Q: ", encoding="utf-8")
+    assert ns["load_prefix"](tmp_path / "p.txt") == "Q: "

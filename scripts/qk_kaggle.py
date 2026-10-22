@@ -123,6 +123,8 @@ def cmd_push_kernel(a: argparse.Namespace) -> None:
     shutil.copytree(a.kernel, stage, ignore=shutil.ignore_patterns("kernel-metadata.json"))
     meta = kernel_metadata(a.owner, a.slug, [d for d in a.datasets.split(",") if d])
     (stage / "kernel-metadata.json").write_text(json.dumps(meta, indent=2))
+    if a.text_prefix:  # read by embed_bge.load_prefix(); exact bytes, no newline added
+        (stage / "text_prefix.txt").write_text(a.text_prefix, encoding="utf-8", newline="")
     args = ["kernels", "push", "-p", str(stage), "--accelerator", a.accelerator]
     res = kaggle(Path(a.kaggle_exe), args)
     text = (res.stdout + res.stderr).strip()
@@ -184,6 +186,9 @@ def make_parser() -> argparse.ArgumentParser:
     k.add_argument("--slug", required=True, help="kernel slug to create/update")
     k.add_argument("--datasets", required=True, help="comma-separated owner/dataset refs")
     k.add_argument("--accelerator", default="NvidiaTeslaT4")
+    k.add_argument(
+        "--text-prefix", default="", help="prepend to every text (BGE query instruction)"
+    )
     k.set_defaults(fn=cmd_push_kernel)
     s = sub.add_parser("status")
     s.add_argument("--kernel", required=True)

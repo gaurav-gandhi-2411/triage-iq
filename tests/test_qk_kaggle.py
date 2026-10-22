@@ -101,7 +101,7 @@ def test_push_kernel_private_gpu_and_no_credentials(tmp_path: Path, monkeypatch,
     src.mkdir()
     (src / "embed_bge.py").write_text("print(1)")
     (src / "kernel-metadata.json").write_text("stale")
-    rec = Recorder()
+    rec = Recorder(stdout="Kernel version 1 successfully pushed.")
     monkeypatch.setattr(subprocess, "run", rec)
     qk.main(
         [
@@ -163,3 +163,15 @@ def test_download_creates_out_dir(tmp_path: Path, monkeypatch) -> None:
     qk.main(["--kaggle-exe", "kg", "--owner", "me", "download", "--kernel", "k", "--out", str(out)])
     assert out.is_dir()
     assert rec.calls[0][1:] == ["kernels", "output", "me/k", "-p", str(out)]
+
+
+def test_push_kernel_exit0_error_is_not_success(tmp_path: Path, monkeypatch) -> None:
+    src = tmp_path / "k"
+    src.mkdir()
+    (src / "embed_bge.py").write_text("print(1)")
+    monkeypatch.setattr(
+        subprocess, "run", Recorder(stdout="Kernel push error: Maximum batch GPU session count")
+    )
+    argv = ["--staging", str(tmp_path / "s"), "--kaggle-exe", "kg", "push-kernel"]
+    with pytest.raises(RuntimeError, match="not confirmed"):
+        qk.main([*argv, "--kernel", str(src), "--slug", "kk", "--datasets", "me/a"])

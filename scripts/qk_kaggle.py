@@ -124,7 +124,13 @@ def cmd_push_kernel(a: argparse.Namespace) -> None:
     meta = kernel_metadata(a.owner, a.slug, [d for d in a.datasets.split(",") if d])
     (stage / "kernel-metadata.json").write_text(json.dumps(meta, indent=2))
     args = ["kernels", "push", "-p", str(stage), "--accelerator", a.accelerator]
-    print(kaggle(Path(a.kaggle_exe), args).stdout.strip())
+    res = kaggle(Path(a.kaggle_exe), args)
+    text = (res.stdout + res.stderr).strip()
+    # The CLI exits 0 on "Maximum batch GPU session count reached" etc.; a real push prints
+    # a "Kernel version N successfully pushed" line, so require it.
+    if "successfully pushed" not in text.lower():
+        raise RuntimeError(f"kernel push not confirmed: {text[-400:]}")
+    print(text)
 
 
 def kernel_status(exe: Path, owner: str, slug: str) -> str:

@@ -115,6 +115,14 @@ def kernel_metadata(owner: str, slug: str, datasets: list[str]) -> dict:
     }
 
 
+def set_text_prefix(source: str, prefix: str) -> str:
+    """Return kernel source with its `TEXT_PREFIX = ""` line set to ``prefix`` (must match once)."""
+    old = "\nTEXT_PREFIX = " + '""' + "\n"
+    if source.count(old) != 1:
+        raise RuntimeError("kernel source has no unique TEXT_PREFIX line")
+    return source.replace(old, "\nTEXT_PREFIX = " + json.dumps(prefix) + "\n")
+
+
 def cmd_push_kernel(a: argparse.Namespace) -> None:
     """Copy the kernel dir to staging, write metadata there, push (starts the run)."""
     stage = Path(a.staging) / f"kernel-{a.slug}"
@@ -123,8 +131,9 @@ def cmd_push_kernel(a: argparse.Namespace) -> None:
     shutil.copytree(a.kernel, stage, ignore=shutil.ignore_patterns("kernel-metadata.json"))
     meta = kernel_metadata(a.owner, a.slug, [d for d in a.datasets.split(",") if d])
     (stage / "kernel-metadata.json").write_text(json.dumps(meta, indent=2))
-    if a.text_prefix:  # read by embed_bge.load_prefix(); exact bytes, no newline added
-        (stage / "text_prefix.txt").write_text(a.text_prefix, encoding="utf-8", newline="")
+    if a.text_prefix:  # Kaggle runs only the code file, so patch the constant in the staged copy
+        code = stage / meta["code_file"]
+        code.write_text(set_text_prefix(code.read_text(encoding="utf-8"), a.text_prefix))
     args = ["kernels", "push", "-p", str(stage), "--accelerator", a.accelerator]
     res = kaggle(Path(a.kaggle_exe), args)
     text = (res.stdout + res.stderr).strip()

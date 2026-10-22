@@ -29,14 +29,9 @@ BATCH_SIZE = 64  # fits T4 (16 GB) / P100 at 512 tokens in fp16 with large margi
 SEED = 42
 INPUT_ROOT = Path("/kaggle/input")
 OUTPUT_ROOT = Path("/kaggle/working")
-# Optional text prefix (e.g. the BGE query instruction) written next to this script by
-# `qk_kaggle.py push-kernel --text-prefix`; absent file means documents are encoded as-is.
-PREFIX_FILE = Path(__file__).resolve().parent / "text_prefix.txt"
-
-
-def load_prefix(path: Path = PREFIX_FILE) -> str:
-    """Return the prefix prepended to every text ('' when no prefix file exists)."""
-    return path.read_text(encoding="utf-8") if path.exists() else ""
+# Text prepended to every document (e.g. the BGE query instruction). Kaggle runs ONLY this file,
+# so `qk_kaggle.py push-kernel --text-prefix` rewrites this exact line in the staged copy.
+TEXT_PREFIX = ""
 
 
 def encode(texts: list[str], tokenizer, model, device: str) -> np.ndarray:  # noqa: ANN001
@@ -68,7 +63,7 @@ def main() -> None:
     model = AutoModel.from_pretrained(MODEL_ID, revision=REVISION).eval().to(device)
     if device == "cuda":
         model = model.half()
-    prefix = load_prefix()
+    prefix = TEXT_PREFIX
     info: dict = {
         "model_id": MODEL_ID,
         "revision": REVISION,

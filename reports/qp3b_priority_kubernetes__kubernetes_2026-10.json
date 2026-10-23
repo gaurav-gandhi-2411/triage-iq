@@ -108,6 +108,42 @@
     "pred_file": "test.parquet",
     "pred_sha256": "fcf2e757070a7f82ff751240828ad6c027e7367b9b787b31cbfbd210b9c762b1"
    }
+  },
+  "p3_tfidf_creationmeta_lr": {
+   "split_manifest_sha256": "b8c0dfee4e228c3a13cea52ccd008fad837294629de91c5ee7047288c8559247",
+   "test": {
+    "accuracy": 0.5222672064777328,
+    "accuracy_wilson95": [
+     0.46011005883926726,
+     0.583742316524309
+    ],
+    "classes": [
+     "low",
+     "medium",
+     "high"
+    ],
+    "confusion_matrix_gold_rows_pred_cols": [
+     [
+      20,
+      19,
+      15
+     ],
+     [
+      20,
+      44,
+      28
+     ],
+     [
+      19,
+      17,
+      65
+     ]
+    ],
+    "macro_f1": 0.4958732590798968,
+    "n": 247,
+    "pred_file": "test_p3.parquet",
+    "pred_sha256": "18726d236af354ca1e2619a083c52216cebe49e9ab0725d95e11b2b37e674806"
+   }
   }
  },
  "p3_design": "(2026-10-23; committed with its validation table BEFORE its test\nevaluation; do not change after seeing test results). Context: P0 and P2 of qp3b_priority.py\nalready used the test split once. A verifier found that P2's labels_t72h kind/* and sig/* inputs\nare not creation-time (44/244 test issues had an input label applied within 60 s of or after the\nfirst priority label), while /triage runs on a just-created issue. P3 is the serve-time-feasible\nvariant and is evaluated on test exactly once (model id `p3_tfidf_creationmeta_lr`).\n * Same population, gold (3-level), train-majority baseline P0, bootstrap (2000 draws, seed 42),\n   acceptance (lower bound of paired accuracy difference vs P0 > 0) as in qp3b_priority.py.\n * Features = P1 features + one-hot CREATION-TIME kind/* and sig/* labels + one-hot author_assoc.\n   Creation-time rule, identical for train / validation / test: take labels_t72h restricted to\n   kind/* and sig/*; keep a label iff it has no `labeled` event in label_events for that issue, or\n   its EARLIEST `labeled` event is <= W = 60 s after created_at. W is fixed at 60 s now.\n * LR as P1 (class_weight balanced, max_iter 300, seed 42); C in {0.25, 1, 4} on validation;\n   selection: accuracy, tie macro-F1, tie smaller C (more regularisation).\n * Exploratory only, validation only, not used for selection: W in {0 s, 300 s} sensitivity.\n * On test: report P3 vs P0 and vs P2 (paired), and the subset with no priority/* label at t72h.\n * The /priority <level> command lines in issue bodies were stripped by the verifier on validation\n   with no accuracy change; text is therefore left unedited.",
@@ -278,6 +314,123 @@
     0.5387513359821432
    ],
    "n": 112
+  },
+  "p3": {
+   "C": 4,
+   "W_seconds": 60,
+   "acceptance_ci_lower_gt_0": true,
+   "model_id": "p3_tfidf_creationmeta_lr",
+   "no_priority_label_at_t72h": {
+    "vs_P0_majority": {
+     "a": {
+      "ci95": [
+       0.3926339285714286,
+       0.5714285714285714
+      ],
+      "n": 112,
+      "point": 0.48214285714285715
+     },
+     "b": {
+      "ci95": [
+       0.20535714285714285,
+       0.36607142857142855
+      ],
+      "n": 112,
+      "point": 0.2857142857142857
+     },
+     "difference_paired": {
+      "ci95": [
+       0.07142857142857145,
+       0.32142857142857145
+      ],
+      "n": 112,
+      "point": 0.19642857142857145
+     },
+     "n": 112
+    },
+    "vs_P2": {
+     "a": {
+      "ci95": [
+       0.3926339285714286,
+       0.5714285714285714
+      ],
+      "n": 112,
+      "point": 0.48214285714285715
+     },
+     "b": {
+      "ci95": [
+       0.35714285714285715,
+       0.5357142857142857
+      ],
+      "n": 112,
+      "point": 0.44642857142857145
+     },
+     "difference_paired": {
+      "ci95": [
+       -0.035714285714285754,
+       0.1160714285714286
+      ],
+      "n": 112,
+      "point": 0.0357142857142857
+     },
+     "n": 112
+    }
+   },
+   "note": "P2 results in the sibling keys are unchanged",
+   "vs_P0_majority": {
+    "a": {
+     "ci95": [
+      0.4574898785425101,
+      0.582995951417004
+     ],
+     "n": 247,
+     "point": 0.5222672064777328
+    },
+    "b": {
+     "ci95": [
+      0.3481781376518219,
+      0.46963562753036436
+     ],
+     "n": 247,
+     "point": 0.4089068825910931
+    },
+    "difference_paired": {
+     "ci95": [
+      0.03238866396761131,
+      0.19028340080971656
+     ],
+     "n": 247,
+     "point": 0.11336032388663975
+    },
+    "n": 247
+   },
+   "vs_P2": {
+    "a": {
+     "ci95": [
+      0.4574898785425101,
+      0.582995951417004
+     ],
+     "n": 247,
+     "point": 0.5222672064777328
+    },
+    "b": {
+     "ci95": [
+      0.46558704453441296,
+      0.5870445344129555
+     ],
+     "n": 247,
+     "point": 0.5263157894736842
+    },
+    "difference_paired": {
+     "ci95": [
+      -0.05263157894736842,
+      0.04858299595141691
+     ],
+     "n": 247,
+     "point": -0.004048582995951344
+    },
+    "n": 247
+   }
   },
   "population": {
    "dist_3level": {

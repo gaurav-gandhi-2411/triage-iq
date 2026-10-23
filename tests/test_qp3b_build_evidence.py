@@ -102,3 +102,30 @@ def test_build_evidence_falls_back_to_link_merged_at_then_empty() -> None:
     fl = fl.assign(pr_merged_at=pd.to_datetime(["2022-01-01T00:00:00Z"] * 4, utc=True))
     out = ev.build_evidence(iss, fl, prs).set_index("number")
     assert out.loc[1, "fix_prs"][0]["merged_at"] == "2022-01-01T00:00:00Z"
+
+
+def test_vscode_bot_list_is_repo_specific() -> None:
+    vs = ev.VSCODE_BOT_LOGINS
+    for b in ["vs-code-engineering", "vscodenpa", "github-actions", "copilot-swe-agent",
+              "VSCodeTriageBot-bot", "foo[bot]"]:  # fmt: skip
+        assert ev.is_bot(b, vs)
+    assert not ev.is_bot("robotsnh", vs) and not ev.is_bot("meganrogge", vs)
+    # k8s default list is unchanged: vscode lifecycle accounts are not bots there
+    assert not ev.is_bot("vscodenpa") and not ev.is_bot("vs-code-engineering")
+
+
+def test_last_human_comment_uses_given_bot_list() -> None:
+    cs = [c("meganrogge", "fixed in 1.90"), c("vs-code-engineering", "This feature request is..."),
+          c("vscodenpa", "Thanks for creating this issue!")]  # fmt: skip
+    assert ev.last_human_comment_dated(cs, ev.VSCODE_BOT_LOGINS)[:2] == (
+        "meganrogge",
+        "fixed in 1.90",
+    )
+    assert ev.last_human_comment_dated(cs)[0] == "vscodenpa"  # k8s list would keep the bot
+
+
+def test_clean_pr_body_strips_vscode_template_comment() -> None:
+    body = ("Fixes #234693\n\n<!-- Thank you for submitting a Pull Request. Please:\n"
+            "* Read our Pull Request guidelines:\n  https://github.com/microsoft/vscode/wiki/"
+            "How-to-Contribute#pull-requests\n* Associate an issue with the Pull Request.\n-->\n")  # fmt: skip
+    assert ev.clean_pr_body(body) == "Fixes #234693"

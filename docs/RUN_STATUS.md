@@ -2,9 +2,10 @@
 
 Single source of truth. Re-read first after any restart. Times in IST unless marked UTC.
 
-## Now (updated 2026-10-23 ~19:00 IST)
+## Now (updated 2026-10-23 ~20:30 IST)
 - Stop new long work from 2026-10-27 12:00 IST; return brief by 2026-10-27 18:00 IST.
-- Day 1 done through #300. Every serving change merged default off; prod healthy after each deploy.
+- Day 1 done through #303 and #309: vscode evidence artifact (#302), Dependabot pip fix (#303; it immediately opened #304-#308, left open for GG), Q5a design + lexical baselines on validation (#309: BM25 R@5 29.2%, TF-IDF 27.3%, ceiling 92.8%; #309 first failed CI on an unlisted psutil import, fixed by making the RAM guard optional). Every serving change merged default off; prod healthy after each deploy.
+- Kaggle: an hourly retry of the vscode embedding push runs in the background (still "Maximum weekly GPU quota" at 19:30).
 - Next: Kaggle GPU work as soon as the weekly quota resets (try from 2026-10-24 morning): (a) vscode BGE embeddings (private dataset `triageiq-texts-microsoft-vscode-issues` ready; commands in the #299 PR / below), then Q5a vscode duplicates on the embeddings, a vscode candidate index + evidence artifact; (b) the k8s fine-tuned encoder (`feat/qp1-k8s-finetuned-encoder`, text recipe aligned before any run). Meanwhile CPU work: vscode Q6 resolution (survival framing, as k8s) once embeddings exist, or without the embedding features if they do not; Q8 waits for GG's cutover decisions.
 - Memory is tight at times (other workloads); briefs carry a memory guard. Orchestrator git work happens in `triage-iq-wt-readme`, never in the primary checkout while a subagent runs.
 - Do NOT recursively delete `...\scratchpad\rc` (session scratchpad): it contains directory junctions to D:\triageiq-data; remove only the junctions.

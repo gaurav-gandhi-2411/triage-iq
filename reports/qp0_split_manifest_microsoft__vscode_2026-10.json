@@ -1,0 +1,141 @@
+{
+ "boundaries": {
+  "test_start": "2026-01-01 00:00:00+00:00",
+  "validation_start": "2025-07-01 00:00:00+00:00"
+ },
+ "dup_task_pairs": {
+  "by_split_of_source": {
+   "test": 1721,
+   "validation": 1162
+  },
+  "canonical_not_in_table": 154,
+  "exact_text_dup": 232,
+  "n": 2883
+ },
+ "frozen_date": "2026-10-20",
+ "generated_with": "scripts/qp0_make_splits.py",
+ "input_sha256": {
+  "duplicate_pairs": "8d1b45deeb1075fc1cc0ff76a4568e53d2ccd37b80f0bfb67bbbc07d89e84c01",
+  "issues": "e9468cd8e300e461024ec605f74bc5f89e6c8aa2ef3da8013805cff101d9cb9a"
+ },
+ "n_issues": 109537,
+ "repo": "microsoft/vscode",
+ "rules": "(spec section 4.3, 2026-10-20; do not change after seeing results)\n 1. Pure temporal split on created_at (UTC): train < 2025-07-01T00:00:00Z (i.e. <= 2025-06-30\n    23:59:59), validation 2025-07-01 .. 2025-12-31, test >= 2026-01-01. Issues only (PRs are\n    not split). Every issue gets exactly one split. Nothing is dropped.\n 2. Leakage flags for validation/test issues (train issues: False by definition):\n    leak_texthash = text_hash equals that of some issue in an EARLIER split (train for\n    validation; train or validation for test); leak_dup_pair = the issue is the source or the\n    canonical of a duplicate pair whose other end lies in an earlier split (both ends must be\n    issues in the table). classifier_eligible = not (leak_texthash or leak_dup_pair): the rule\n    \"remove near-duplicate leakage across splits\" for the CLASSIFIER and RESOLUTION tasks only.\n 3. Retrieval keeps cross-split duplicate pairs: dup_task_pairs = pairs whose source (the query)\n    is in validation or test and whose canonical was created strictly before the source. A\n    canonical outside the issues table (PR, or older than the scrape window) cannot be dated, is\n    kept and marked canonical_in_table False. exact_text_dup = equal text_hash. Duplicate\n    groups inside one split (same text_hash) are counted, not flagged.\n 4. Report = counts, hashes, rules; no issue ids. sha256 of each split's sorted newline-joined\n    issue numbers (and of the eligible subsets), of each input file, and the commit of this script.",
+ "script_commit": "0305077d5addc43b65657fce5f60e64486da8228",
+ "taxonomy": {
+  "adr": "0070",
+  "adr_0070_class_list_sha256": "95129c95809c21574ed34d41a46358149322680a7ccb0e42e90f4b62e7b761ea",
+  "class_list_matches_adr": true,
+  "class_list_sha256": "95129c95809c21574ed34d41a46358149322680a7ccb0e42e90f4b62e7b761ea",
+  "classifier_eligible_rule": "no text-hash / duplicate-pair leakage AND >= 1 non-excluded component label in labels_final (an unlabelled issue is outside the evaluated population)",
+  "exclusion_spec_sha256": "41cd2bfe1475162e61874a2dad2beb92e0a11da6d0830c5586c99ca0b8902d9b",
+  "n_parent_classes_train": 85,
+  "script": "scripts/qp2_vscode_taxonomy.py"
+ },
+ "test": {
+  "by_year_month": {
+   "2026-01": 4705,
+   "2026-02": 4427,
+   "2026-03": 6132,
+   "2026-04": 3631,
+   "2026-05": 3386,
+   "2026-06": 2533,
+   "2026-07": 2561,
+   "2026-08": 2716,
+   "2026-09": 2674,
+   "2026-10": 2196
+  },
+  "classifier_eligible": 9598,
+  "created_at_max": "2026-10-22 21:00:02+00:00",
+  "created_at_min": "2026-01-01 00:51:53+00:00",
+  "has_component_label": 9670,
+  "leak_dup_pair": 269,
+  "leak_either": 701,
+  "leak_texthash": 432,
+  "n": 34961,
+  "sha256_numbers": "7a93bb27157f615fe1e8125bba167598d6594ad855607fbb4b94423003faa4b3",
+  "sha256_numbers_eligible": "12f6d5f3f1870f294a35ed06b619487c94ed048ad4e3f987524f3a211318b16f",
+  "state": {
+   "CLOSED": 24710,
+   "OPEN": 10251
+  },
+  "within_split_issues_in_dup_groups": 1879,
+  "within_split_text_dup_groups": 700
+ },
+ "train": {
+  "by_year_month": {
+   "2023-01": 1766,
+   "2023-02": 2013,
+   "2023-03": 2153,
+   "2023-04": 1634,
+   "2023-05": 1917,
+   "2023-06": 1941,
+   "2023-07": 1752,
+   "2023-08": 1779,
+   "2023-09": 1749,
+   "2023-10": 1699,
+   "2023-11": 1725,
+   "2023-12": 1254,
+   "2024-01": 1508,
+   "2024-02": 1795,
+   "2024-03": 1840,
+   "2024-04": 1699,
+   "2024-05": 1512,
+   "2024-06": 1574,
+   "2024-07": 1640,
+   "2024-08": 1780,
+   "2024-09": 1684,
+   "2024-10": 1566,
+   "2024-11": 1338,
+   "2024-12": 1281,
+   "2025-01": 1364,
+   "2025-02": 1841,
+   "2025-03": 1641,
+   "2025-04": 1586,
+   "2025-05": 1376,
+   "2025-06": 1956
+  },
+  "classifier_eligible": 18268,
+  "created_at_max": "2025-06-30 23:47:05+00:00",
+  "created_at_min": "2023-01-01 02:28:09+00:00",
+  "has_component_label": 18268,
+  "leak_dup_pair": 0,
+  "leak_either": 0,
+  "leak_texthash": 0,
+  "n": 50363,
+  "sha256_numbers": "1f4fda359698a23c15df88003c3b15abd6ec4acb42ce4044d7f47c4d874c41e8",
+  "sha256_numbers_eligible": "51c784aa798357b00ab1d3a172f2023055a3211b542161148897e760e7fcb297",
+  "state": {
+   "CLOSED": 46203,
+   "OPEN": 4160
+  },
+  "within_split_issues_in_dup_groups": 1128,
+  "within_split_text_dup_groups": 404
+ },
+ "validation": {
+  "by_year_month": {
+   "2025-07": 4728,
+   "2025-08": 3925,
+   "2025-09": 3731,
+   "2025-10": 3674,
+   "2025-11": 4228,
+   "2025-12": 3927
+  },
+  "classifier_eligible": 6419,
+  "created_at_max": "2025-12-31 23:18:51+00:00",
+  "created_at_min": "2025-07-01 00:25:04+00:00",
+  "has_component_label": 6520,
+  "leak_dup_pair": 262,
+  "leak_either": 367,
+  "leak_texthash": 105,
+  "n": 24213,
+  "sha256_numbers": "4a22f02337e12588a4c50f8cdf487e0b83a4cf69eef45f746959b5aaeaee57ae",
+  "sha256_numbers_eligible": "e2f5da089ce28e095e3e57b4569cb739d0067aeb9aebca7ba0cc2ad5e0a48849",
+  "state": {
+   "CLOSED": 21962,
+   "OPEN": 2251
+  },
+  "within_split_issues_in_dup_groups": 1271,
+  "within_split_text_dup_groups": 549
+ }
+}

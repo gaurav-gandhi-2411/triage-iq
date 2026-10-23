@@ -1,0 +1,1159 @@
+{
+ "baselines": {
+  "majority_class": "terminal",
+  "modelled_classes": [
+   "WSL",
+   "accessibility-signal",
+   "api",
+   "authentication",
+   "breadcrumbs",
+   "chat",
+   "code-cli",
+   "code-lens",
+   "command-center",
+   "comments",
+   "config",
+   "cross-file-editing",
+   "css-less-scss",
+   "custom-editors",
+   "debug",
+   "dictation",
+   "diff-editor",
+   "editor",
+   "emmet",
+   "error-list",
+   "extensions",
+   "file",
+   "font-rendering",
+   "formatting",
+   "getting-started",
+   "git",
+   "github",
+   "gpu",
+   "grammar",
+   "html",
+   "inlay-hints",
+   "inline-chat",
+   "inline-completions",
+   "install-update",
+   "interactive-window",
+   "issue-reporter",
+   "javascript",
+   "json",
+   "keybindings",
+   "l10n-platform",
+   "languages-basic",
+   "languages-diagnostics",
+   "layout",
+   "log",
+   "markdown-ext",
+   "menus",
+   "merge-editor",
+   "multi-diff-editor",
+   "native-file-dialog",
+   "network",
+   "notebook",
+   "open-editors",
+   "outline",
+   "output",
+   "panel-chat",
+   "proxy",
+   "quick-chat",
+   "quick-open",
+   "quick-pick",
+   "remote",
+   "scm",
+   "search",
+   "settings",
+   "simple-file-dialog",
+   "snippets",
+   "suggest",
+   "tasks",
+   "telemetry",
+   "terminal",
+   "testing",
+   "themes",
+   "titlebar",
+   "tree-sitter",
+   "tree-sitter-autoindent-candidate",
+   "tree-views",
+   "tree-widget",
+   "typescript",
+   "unc",
+   "user-profiles",
+   "vscode-build",
+   "vscode.dev",
+   "web",
+   "webview",
+   "workbench",
+   "workspace-trust"
+  ],
+  "n_train_labelled": 18268,
+  "other_share": 0.04729581782351653,
+  "test": {
+   "majority_any_valid": {
+    "k": 478,
+    "n": 9670,
+    "rate": 0.049431230610134436,
+    "wilson95": [
+     0.04528679778392608,
+     0.053933516098409975
+    ]
+   },
+   "majority_top1": {
+    "k": 386,
+    "n": 9670,
+    "rate": 0.03991726990692865,
+    "wilson95": [
+     0.03619456019069495,
+     0.04400538850393741
+    ]
+   },
+   "n": 9670,
+   "prior_sampling_expected_top1": 0.0445706395120428
+  },
+  "train_class_table": {
+   "WSL": {
+    "n": 86,
+    "share": 0.004707685570396322
+   },
+   "accessibility-signal": {
+    "n": 30,
+    "share": 0.0016422158966498796
+   },
+   "api": {
+    "n": 304,
+    "share": 0.01664112108605211
+   },
+   "authentication": {
+    "n": 151,
+    "share": 0.008265820013137727
+   },
+   "breadcrumbs": {
+    "n": 33,
+    "share": 0.0018064374863148674
+   },
+   "chat": {
+    "n": 636,
+    "share": 0.03481497700897745
+   },
+   "code-cli": {
+    "n": 44,
+    "share": 0.00240858331508649
+   },
+   "code-lens": {
+    "n": 35,
+    "share": 0.0019159185460915261
+   },
+   "command-center": {
+    "n": 39,
+    "share": 0.0021348806656448435
+   },
+   "comments": {
+    "n": 121,
+    "share": 0.006623604116487848
+   },
+   "config": {
+    "n": 68,
+    "share": 0.0037223560324063936
+   },
+   "cross-file-editing": {
+    "n": 38,
+    "share": 0.002080140135756514
+   },
+   "css-less-scss": {
+    "n": 41,
+    "share": 0.0022443617254215022
+   },
+   "custom-editors": {
+    "n": 35,
+    "share": 0.0019159185460915261
+   },
+   "debug": {
+    "n": 558,
+    "share": 0.03054521567768776
+   },
+   "dictation": {
+    "n": 123,
+    "share": 0.006733085176264506
+   },
+   "diff-editor": {
+    "n": 424,
+    "share": 0.023209984672651632
+   },
+   "editor": {
+    "n": 1850,
+    "share": 0.10126998029340924
+   },
+   "emmet": {
+    "n": 38,
+    "share": 0.002080140135756514
+   },
+   "error-list": {
+    "n": 39,
+    "share": 0.0021348806656448435
+   },
+   "extensions": {
+    "n": 684,
+    "share": 0.03744252244361725
+   },
+   "file": {
+    "n": 449,
+    "share": 0.024578497919859863
+   },
+   "font-rendering": {
+    "n": 46,
+    "share": 0.0025180643748631487
+   },
+   "formatting": {
+    "n": 44,
+    "share": 0.00240858331508649
+   },
+   "getting-started": {
+    "n": 56,
+    "share": 0.003065469673746442
+   },
+   "git": {
+    "n": 1032,
+    "share": 0.056492226844755855
+   },
+   "github": {
+    "n": 44,
+    "share": 0.00240858331508649
+   },
+   "gpu": {
+    "n": 26,
+    "share": 0.0014232537770965622
+   },
+   "grammar": {
+    "n": 148,
+    "share": 0.00810159842347274
+   },
+   "html": {
+    "n": 45,
+    "share": 0.002463323844974819
+   },
+   "inlay-hints": {
+    "n": 35,
+    "share": 0.0019159185460915261
+   },
+   "inline-chat": {
+    "n": 258,
+    "share": 0.014123056711188964
+   },
+   "inline-completions": {
+    "n": 170,
+    "share": 0.009305890081015985
+   },
+   "install-update": {
+    "n": 118,
+    "share": 0.006459382526822859
+   },
+   "interactive-window": {
+    "n": 52,
+    "share": 0.0028465075541931244
+   },
+   "issue-reporter": {
+    "n": 118,
+    "share": 0.006459382526822859
+   },
+   "javascript": {
+    "n": 77,
+    "share": 0.0042150208014013575
+   },
+   "json": {
+    "n": 53,
+    "share": 0.002901248084081454
+   },
+   "keybindings": {
+    "n": 161,
+    "share": 0.008813225312021021
+   },
+   "l10n-platform": {
+    "n": 32,
+    "share": 0.0017516969564265383
+   },
+   "languages-basic": {
+    "n": 34,
+    "share": 0.0018611780162031968
+   },
+   "languages-diagnostics": {
+    "n": 27,
+    "share": 0.0014779943069848916
+   },
+   "layout": {
+    "n": 130,
+    "share": 0.0071162688854828115
+   },
+   "log": {
+    "n": 38,
+    "share": 0.002080140135756514
+   },
+   "markdown-ext": {
+    "n": 241,
+    "share": 0.013192467703087365
+   },
+   "menus": {
+    "n": 84,
+    "share": 0.004598204510619663
+   },
+   "merge-editor": {
+    "n": 101,
+    "share": 0.005528793518721261
+   },
+   "multi-diff-editor": {
+    "n": 86,
+    "share": 0.004707685570396322
+   },
+   "native-file-dialog": {
+    "n": 29,
+    "share": 0.0015874753667615503
+   },
+   "network": {
+    "n": 29,
+    "share": 0.0015874753667615503
+   },
+   "notebook": {
+    "n": 971,
+    "share": 0.053153054521567766
+   },
+   "open-editors": {
+    "n": 30,
+    "share": 0.0016422158966498796
+   },
+   "other": {
+    "n": 864,
+    "share": 0.04729581782351653
+   },
+   "outline": {
+    "n": 48,
+    "share": 0.0026275454346398074
+   },
+   "output": {
+    "n": 34,
+    "share": 0.0018611780162031968
+   },
+   "panel-chat": {
+    "n": 169,
+    "share": 0.009251149551127654
+   },
+   "proxy": {
+    "n": 73,
+    "share": 0.00399605868184804
+   },
+   "quick-chat": {
+    "n": 39,
+    "share": 0.0021348806656448435
+   },
+   "quick-open": {
+    "n": 77,
+    "share": 0.0042150208014013575
+   },
+   "quick-pick": {
+    "n": 127,
+    "share": 0.006952047295817824
+   },
+   "remote": {
+    "n": 208,
+    "share": 0.011386030216772498
+   },
+   "scm": {
+    "n": 457,
+    "share": 0.0250164221589665
+   },
+   "search": {
+    "n": 340,
+    "share": 0.01861178016203197
+   },
+   "settings": {
+    "n": 305,
+    "share": 0.016695861615940444
+   },
+   "simple-file-dialog": {
+    "n": 27,
+    "share": 0.0014779943069848916
+   },
+   "snippets": {
+    "n": 102,
+    "share": 0.0055835340486095906
+   },
+   "suggest": {
+    "n": 173,
+    "share": 0.009470111670680972
+   },
+   "tasks": {
+    "n": 319,
+    "share": 0.017462229034377053
+   },
+   "telemetry": {
+    "n": 31,
+    "share": 0.001696956426538209
+   },
+   "terminal": {
+    "n": 2253,
+    "share": 0.12333041383840596
+   },
+   "testing": {
+    "n": 205,
+    "share": 0.01122180862710751
+   },
+   "themes": {
+    "n": 135,
+    "share": 0.007389971534924458
+   },
+   "titlebar": {
+    "n": 83,
+    "share": 0.004543463980731333
+   },
+   "tree-sitter": {
+    "n": 69,
+    "share": 0.003777096562294723
+   },
+   "tree-views": {
+    "n": 62,
+    "share": 0.003393912853076418
+   },
+   "tree-widget": {
+    "n": 25,
+    "share": 0.001368513247208233
+   },
+   "typescript": {
+    "n": 116,
+    "share": 0.006349901467046201
+   },
+   "unc": {
+    "n": 28,
+    "share": 0.001532734836873221
+   },
+   "user-profiles": {
+    "n": 263,
+    "share": 0.01439675936063061
+   },
+   "vscode-build": {
+    "n": 67,
+    "share": 0.0036676155025180644
+   },
+   "vscode.dev": {
+    "n": 28,
+    "share": 0.001532734836873221
+   },
+   "web": {
+    "n": 78,
+    "share": 0.004269761331289687
+   },
+   "webview": {
+    "n": 118,
+    "share": 0.006459382526822859
+   },
+   "workbench": {
+    "n": 1172,
+    "share": 0.06415590102912196
+   },
+   "workspace-trust": {
+    "n": 32,
+    "share": 0.0017516969564265383
+   }
+  },
+  "validation": {
+   "majority_any_valid": {
+    "k": 496,
+    "n": 6520,
+    "rate": 0.07607361963190185,
+    "wilson95": [
+     0.06988501654047384,
+     0.08276148548373226
+    ]
+   },
+   "majority_top1": {
+    "k": 444,
+    "n": 6520,
+    "rate": 0.06809815950920245,
+    "wilson95": [
+     0.06223416040656087,
+     0.07447081415934519
+    ]
+   },
+   "n": 6520,
+   "prior_sampling_expected_top1": 0.042008377987724686
+  }
+ },
+ "ceiling_proxies": {
+  "any_valid_label_ceiling": 0.32230869001297013,
+  "any_valid_label_ceiling_interval95": [
+   0.2994477194180789,
+   0.34605282863289855
+  ],
+  "group_used": "tfidf_top1_nn_cos_ge_0.9",
+  "n_pairs": 1542,
+  "note": "PROXIES from label inconsistency on near-identical content, not a bound; small n limits the claim",
+  "top1_ceiling_estimate": 0.2983138780804151,
+  "top1_ceiling_interval95": [
+   0.2760018719812176,
+   0.3216283121204395
+  ]
+ },
+ "coverage_bounded_ceiling": {
+  "labelled": {
+   "test": {
+    "any_label_in_family_any_valid_bound": {
+     "k": 4547,
+     "n": 9670,
+     "rate": 0.47021716649431233,
+     "wilson95": [
+      0.46028284204469555,
+      0.4801751451937973
+     ]
+    },
+    "n": 9670,
+    "primary_in_family_top1_bound": {
+     "k": 4073,
+     "n": 9670,
+     "rate": 0.42119958634953464,
+     "wilson95": [
+      0.41139151180414213,
+      0.4310702460977033
+     ]
+    }
+   },
+   "train": {
+    "any_label_in_family_any_valid_bound": {
+     "k": 17541,
+     "n": 18268,
+     "rate": 0.9602036347711845,
+     "wilson95": [
+      0.957270780729237,
+      0.962942975939932
+     ]
+    },
+    "n": 18268,
+    "primary_in_family_top1_bound": {
+     "k": 17404,
+     "n": 18268,
+     "rate": 0.9527041821764834,
+     "wilson95": [
+      0.9495296254388216,
+      0.9556883795158625
+     ]
+    }
+   },
+   "validation": {
+    "any_label_in_family_any_valid_bound": {
+     "k": 5846,
+     "n": 6520,
+     "rate": 0.8966257668711657,
+     "wilson95": [
+      0.8890007038340776,
+      0.9037837193806125
+     ]
+    },
+    "n": 6520,
+    "primary_in_family_top1_bound": {
+     "k": 5785,
+     "n": 6520,
+     "rate": 0.8872699386503068,
+     "wilson95": [
+      0.879363969295737,
+      0.894719815939024
+     ]
+    }
+   }
+  },
+  "labelled_and_classifier_eligible": {
+   "test": {
+    "any_label_in_family_any_valid_bound": {
+     "k": 4488,
+     "n": 9598,
+     "rate": 0.4675974161283601,
+     "wilson95": [
+      0.45763027077226115,
+      0.4775904893785834
+     ]
+    },
+    "n": 9598,
+    "primary_in_family_top1_bound": {
+     "k": 4016,
+     "n": 9598,
+     "rate": 0.4184205042717233,
+     "wilson95": [
+      0.4085859827056063,
+      0.42832030410504063
+     ]
+    }
+   },
+   "train": {
+    "any_label_in_family_any_valid_bound": {
+     "k": 17541,
+     "n": 18268,
+     "rate": 0.9602036347711845,
+     "wilson95": [
+      0.957270780729237,
+      0.962942975939932
+     ]
+    },
+    "n": 18268,
+    "primary_in_family_top1_bound": {
+     "k": 17404,
+     "n": 18268,
+     "rate": 0.9527041821764834,
+     "wilson95": [
+      0.9495296254388216,
+      0.9556883795158625
+     ]
+    }
+   },
+   "validation": {
+    "any_label_in_family_any_valid_bound": {
+     "k": 5748,
+     "n": 6419,
+     "rate": 0.8954665835799969,
+     "wilson95": [
+      0.8877438456256196,
+      0.9027162522849376
+     ]
+    },
+    "n": 6419,
+    "primary_in_family_top1_bound": {
+     "k": 5691,
+     "n": 6419,
+     "rate": 0.8865866957470011,
+     "wilson95": [
+      0.8785969676324111,
+      0.8941139770061738
+     ]
+    }
+   }
+  },
+  "n_classes": 85,
+  "note": "strict ADR-0070 headline: abstention (primary outside the train-only class list) is a miss, so coverage upper-bounds top-1/top-3; the proxy ceilings above are conditional on being in the family, so product = coverage x proxy is an estimate"
+ },
+ "design": "(2026-10-20; do not change after seeing results). No model is trained or\nscored. Taxonomy per ADR-0067: the label family (default `sig/*`); primary label = the family\nlabel with the earliest `labeled` event among the labels still present at the end (ties:\nalphabetical; literal earliest event, even if later removed and re-added); modelled classes =\nfamily labels carried by >= 30 TRAIN-split issues, the rest `other`. Population: issues with\n>= 1 family label at the end (\"labelled\"). Everything per split (train / validation / test) and\noverall, Wilson 95% intervals on every proportion.\n (a) multi-label rate (>= 2 labels) and the label-set size distribution.\n (b) timing / churn: P(set at 72 h == final set), P(primary present at 72 h), and for issues whose\n     primary was NOT present at 72 h the median hours until it first appears.\n (c) first-vs-final: among issues with >= 1 family label at 72 h, P(earliest-applied label of\n     the 72 h set == final primary) and P(final primary in the 72 h set).\n (d) INCONSISTENCY on near-identical content, the direct proxy for irreducible top-1 error, on\n     pairs where both issues are labelled: (i) duplicate pairs, (ii) exact text_hash groups\n     (adjacent issue numbers within a group, to avoid quadratic cluster blow-up), (iii) top-1\n     nearest neighbours at TF-IDF cosine >= 0.9 among labelled issues (title + first 1000 chars\n     of body; neighbours with an equal text_hash are masked so (ii) and (iii) are disjoint).\n     Per group: n pairs, P(primary labels differ), P(label sets disjoint). A pair belongs to the\n     split of its LATER issue. top1_ceiling_estimate = 1 - P(differ) and any_valid_label_ceiling\n     = 1 - P(disjoint) from the largest-n group, with interval and n: PROXIES, not a bound;\n     small n limits the claim.\n (e) train class table (counts, shares, `other` mass) and the baselines for top-1 accuracy on\n     validation and test from TRAIN priors only: majority class, and the expected accuracy of\n     sampling a class from the train prior. Also any-valid accuracy of the majority class.\nAMENDMENT (2026-10-20, after the original k8s run): a label with no event at all, or whose first\nevent is an unlabel, was applied at creation (issue templates / forms add labels without a\nLabeledEvent), so its applied time is created_at and it ranks first for the primary label (ties\nalphabetical). The first version treated such a label as applied last. Reports computed before the\namendment are marked by their git commit.",
+ "generated_with": "scripts/qp0_ceiling_labels.py",
+ "inconsistency": {
+  "duplicate_pairs": {
+   "all": {
+    "n_pairs": 1165,
+    "primary_differs": {
+     "k": 194,
+     "n": 1165,
+     "rate": 0.16652360515021458,
+     "wilson95": [
+      0.14623342033032913,
+      0.189005845623244
+     ]
+    },
+    "sets_disjoint": {
+     "k": 99,
+     "n": 1165,
+     "rate": 0.08497854077253218,
+     "wilson95": [
+      0.07029817194261112,
+      0.10238698916048444
+     ]
+    }
+   },
+   "test": {
+    "n_pairs": 374,
+    "primary_differs": {
+     "k": 70,
+     "n": 374,
+     "rate": 0.18716577540106952,
+     "wilson95": [
+      0.15088880100694865,
+      0.22980406076369805
+     ]
+    },
+    "sets_disjoint": {
+     "k": 38,
+     "n": 374,
+     "rate": 0.10160427807486631,
+     "wilson95": [
+      0.0749224634711424,
+      0.13638724938207442
+     ]
+    }
+   },
+   "train": {
+    "n_pairs": 507,
+    "primary_differs": {
+     "k": 81,
+     "n": 507,
+     "rate": 0.15976331360946747,
+     "wilson95": [
+      0.13044651878740082,
+      0.19419736299513213
+     ]
+    },
+    "sets_disjoint": {
+     "k": 39,
+     "n": 507,
+     "rate": 0.07692307692307693,
+     "wilson95": [
+      0.05677878846301662,
+      0.10343056018830701
+     ]
+    }
+   },
+   "validation": {
+    "n_pairs": 284,
+    "primary_differs": {
+     "k": 43,
+     "n": 284,
+     "rate": 0.15140845070422534,
+     "wilson95": [
+      0.11439045210846753,
+      0.19773121480833666
+     ]
+    },
+    "sets_disjoint": {
+     "k": 22,
+     "n": 284,
+     "rate": 0.07746478873239436,
+     "wilson95": [
+      0.05171015533330417,
+      0.11449792577797371
+     ]
+    }
+   }
+  },
+  "exact_text_hash_adjacent": {
+   "all": {
+    "n_pairs": 66,
+    "primary_differs": {
+     "k": 7,
+     "n": 66,
+     "rate": 0.10606060606060606,
+     "wilson95": [
+      0.05233280771918242,
+      0.20312525738814619
+     ]
+    },
+    "sets_disjoint": {
+     "k": 2,
+     "n": 66,
+     "rate": 0.030303030303030304,
+     "wilson95": [
+      0.008349735075946503,
+      0.10392718870586834
+     ]
+    }
+   },
+   "test": {
+    "n_pairs": 46,
+    "primary_differs": {
+     "k": 6,
+     "n": 46,
+     "rate": 0.13043478260869565,
+     "wilson95": [
+      0.06117757137492025,
+      0.2566613423036133
+     ]
+    },
+    "sets_disjoint": {
+     "k": 1,
+     "n": 46,
+     "rate": 0.021739130434782608,
+     "wilson95": [
+      0.0038477551112426345,
+      0.11335554494333024
+     ]
+    }
+   },
+   "train": {
+    "n_pairs": 2,
+    "primary_differs": {
+     "k": 0,
+     "n": 2,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.6576280471103807
+     ]
+    },
+    "sets_disjoint": {
+     "k": 0,
+     "n": 2,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.6576280471103807
+     ]
+    }
+   },
+   "validation": {
+    "n_pairs": 18,
+    "primary_differs": {
+     "k": 1,
+     "n": 18,
+     "rate": 0.05555555555555555,
+     "wilson95": [
+      0.009874935830924525,
+      0.2575779980200754
+     ]
+    },
+    "sets_disjoint": {
+     "k": 1,
+     "n": 18,
+     "rate": 0.05555555555555555,
+     "wilson95": [
+      0.009874935830924525,
+      0.2575779980200754
+     ]
+    }
+   }
+  },
+  "tfidf_top1_nn_cos_ge_0.9": {
+   "all": {
+    "n_pairs": 1542,
+    "primary_differs": {
+     "k": 1082,
+     "n": 1542,
+     "rate": 0.7016861219195849,
+     "wilson95": [
+      0.6783716878795605,
+      0.7239981280187824
+     ]
+    },
+    "sets_disjoint": {
+     "k": 1045,
+     "n": 1542,
+     "rate": 0.6776913099870299,
+     "wilson95": [
+      0.6539471713671015,
+      0.7005522805819211
+     ]
+    }
+   },
+   "test": {
+    "n_pairs": 420,
+    "primary_differs": {
+     "k": 259,
+     "n": 420,
+     "rate": 0.6166666666666667,
+     "wilson95": [
+      0.5693092152117161,
+      0.6619092399847537
+     ]
+    },
+    "sets_disjoint": {
+     "k": 239,
+     "n": 420,
+     "rate": 0.569047619047619,
+     "wilson95": [
+      0.521271810396999,
+      0.6155717651274423
+     ]
+    }
+   },
+   "train": {
+    "n_pairs": 853,
+    "primary_differs": {
+     "k": 646,
+     "n": 853,
+     "rate": 0.757327080890973,
+     "wilson95": [
+      0.7274451512552037,
+      0.7849015882121612
+     ]
+    },
+    "sets_disjoint": {
+     "k": 631,
+     "n": 853,
+     "rate": 0.7397420867526378,
+     "wilson95": [
+      0.7092678220702464,
+      0.7680666117387565
+     ]
+    }
+   },
+   "validation": {
+    "n_pairs": 269,
+    "primary_differs": {
+     "k": 177,
+     "n": 269,
+     "rate": 0.6579925650557621,
+     "wilson95": [
+      0.5994343823041053,
+      0.7121016884417046
+     ]
+    },
+    "sets_disjoint": {
+     "k": 175,
+     "n": 269,
+     "rate": 0.6505576208178439,
+     "wilson95": [
+      0.5918221774490882,
+      0.7050533723204484
+     ]
+    }
+   }
+  }
+ },
+ "label_prefix": "sig/",
+ "labels": {
+  "all": {
+   "earliest72_equals_final_primary": {
+    "k": 22580,
+    "n": 24036,
+    "rate": 0.9394241970377767,
+    "wilson95": [
+     0.9363375798299614,
+     0.9423703730543871
+    ]
+   },
+   "final_primary_in_set72": {
+    "k": 23263,
+    "n": 24036,
+    "rate": 0.9678399068064569,
+    "wilson95": [
+     0.9655336573398046,
+     0.9699966333423102
+    ]
+   },
+   "median_hours_until_primary_if_absent_at_72h": 401.38,
+   "multi_label": {
+    "k": 3871,
+    "n": 34458,
+    "rate": 0.11233965987579082,
+    "wilson95": [
+     0.10904850794236064,
+     0.11571723992179299
+    ]
+   },
+   "n_issues": 109537,
+   "n_labelled": 34458,
+   "n_primary_absent_at_72h": 11195,
+   "primary_present_at_72h": {
+    "k": 23263,
+    "n": 34458,
+    "rate": 0.6751117302222996,
+    "wilson95": [
+     0.6701474516387498,
+     0.6800369679890161
+    ]
+   },
+   "set72_equals_final": {
+    "k": 21904,
+    "n": 34458,
+    "rate": 0.635672412792385,
+    "wilson95": [
+     0.6305762622821236,
+     0.6407383154042878
+    ]
+   },
+   "set_size_dist": {
+    "1": 30587,
+    "2": 3236,
+    "3": 559,
+    "4": 76
+   },
+   "share_labelled": {
+    "k": 34458,
+    "n": 109537,
+    "rate": 0.31457863552954707,
+    "wilson95": [
+     0.3118352649895413,
+     0.317335011533147
+    ]
+   }
+  },
+  "test": {
+   "earliest72_equals_final_primary": {
+    "k": 7220,
+    "n": 7787,
+    "rate": 0.9271863362013613,
+    "wilson95": [
+     0.9212021422768999,
+     0.9327492459787667
+    ]
+   },
+   "final_primary_in_set72": {
+    "k": 7525,
+    "n": 7787,
+    "rate": 0.9663541800436625,
+    "wilson95": [
+     0.9621135941621933,
+     0.9701348550939176
+    ]
+   },
+   "median_hours_until_primary_if_absent_at_72h": 253.20138888888889,
+   "multi_label": {
+    "k": 1680,
+    "n": 9670,
+    "rate": 0.1737331954498449,
+    "wilson95": [
+     0.16631145381339527,
+     0.18141406610828717
+    ]
+   },
+   "n_issues": 34961,
+   "n_labelled": 9670,
+   "n_primary_absent_at_72h": 2145,
+   "primary_present_at_72h": {
+    "k": 7525,
+    "n": 9670,
+    "rate": 0.7781799379524302,
+    "wilson95": [
+     0.7697893677131039,
+     0.7863495709273635
+    ]
+   },
+   "set72_equals_final": {
+    "k": 6892,
+    "n": 9670,
+    "rate": 0.7127197518097208,
+    "wilson95": [
+     0.70361774142488,
+     0.7216528150001912
+    ]
+   },
+   "set_size_dist": {
+    "1": 7990,
+    "2": 1160,
+    "3": 452,
+    "4": 68
+   },
+   "share_labelled": {
+    "k": 9670,
+    "n": 34961,
+    "rate": 0.2765939189382455,
+    "wilson95": [
+     0.2719296978676313,
+     0.2813072314253646
+    ]
+   }
+  },
+  "train": {
+   "earliest72_equals_final_primary": {
+    "k": 11363,
+    "n": 11912,
+    "rate": 0.9539120214909335,
+    "wilson95": [
+     0.9499980415889541,
+     0.9575333240512202
+    ]
+   },
+   "final_primary_in_set72": {
+    "k": 11589,
+    "n": 11912,
+    "rate": 0.9728844862323707,
+    "wilson95": [
+     0.9698117415361485,
+     0.9756523203560472
+    ]
+   },
+   "median_hours_until_primary_if_absent_at_72h": 496.12833333333333,
+   "multi_label": {
+    "k": 1673,
+    "n": 18268,
+    "rate": 0.09158090650317495,
+    "wilson95": [
+     0.0874836389948006,
+     0.09584991179517563
+    ]
+   },
+   "n_issues": 50363,
+   "n_labelled": 18268,
+   "n_primary_absent_at_72h": 6679,
+   "primary_present_at_72h": {
+    "k": 11589,
+    "n": 18268,
+    "rate": 0.6343880008758485,
+    "wilson95": [
+     0.6273765191044129,
+     0.6413429732974913
+    ]
+   },
+   "set72_equals_final": {
+    "k": 11184,
+    "n": 18268,
+    "rate": 0.6122180862710751,
+    "wilson95": [
+     0.6051294599172331,
+     0.6192595255914853
+    ]
+   },
+   "set_size_dist": {
+    "1": 16595,
+    "2": 1581,
+    "3": 84,
+    "4": 8
+   },
+   "share_labelled": {
+    "k": 18268,
+    "n": 50363,
+    "rate": 0.3627266048487977,
+    "wilson95": [
+     0.35853815442458326,
+     0.36693599561622436
+    ]
+   }
+  },
+  "validation": {
+   "earliest72_equals_final_primary": {
+    "k": 3997,
+    "n": 4337,
+    "rate": 0.9216047959418954,
+    "wilson95": [
+     0.9132267325150653,
+     0.9292366275854279
+    ]
+   },
+   "final_primary_in_set72": {
+    "k": 4149,
+    "n": 4337,
+    "rate": 0.9566520636384598,
+    "wilson95": [
+     0.9501764516436008,
+     0.9623194109098728
+    ]
+   },
+   "median_hours_until_primary_if_absent_at_72h": 450.88666666666666,
+   "multi_label": {
+    "k": 518,
+    "n": 6520,
+    "rate": 0.0794478527607362,
+    "wilson95": [
+     0.0731283212810851,
+     0.08626267312932484
+    ]
+   },
+   "n_issues": 24213,
+   "n_labelled": 6520,
+   "n_primary_absent_at_72h": 2371,
+   "primary_present_at_72h": {
+    "k": 4149,
+    "n": 6520,
+    "rate": 0.6363496932515338,
+    "wilson95": [
+     0.6245958102208852,
+     0.6479429957488981
+    ]
+   },
+   "set72_equals_final": {
+    "k": 3828,
+    "n": 6520,
+    "rate": 0.587116564417178,
+    "wilson95": [
+     0.5751175665015735,
+     0.5990129641967807
+    ]
+   },
+   "set_size_dist": {
+    "1": 6002,
+    "2": 495,
+    "3": 23
+   },
+   "share_labelled": {
+    "k": 6520,
+    "n": 24213,
+    "rate": 0.26927683475818776,
+    "wilson95": [
+     0.2637263849478703,
+     0.27490048537034656
+    ]
+   }
+  }
+ },
+ "repo": "microsoft/vscode",
+ "taxonomy": "vscode ADR-0070: non-excluded labels -> parent_of; label_prefix unused"
+}

@@ -8,5 +8,11 @@
   "model.joblib": "d457f1afa96ea9f3b72b48e66333be39e729130dbe49f660d6d50ffc5e347c42"
  },
  "packaged_artifact": "priority_model_kubernetes_kubernetes.joblib",
- "packaged_sha256": "b834a0668000fcb5b69f1830231299852b2cde95a5114063ec389869713fbfda"
+ "packaged_sha256": "b834a0668000fcb5b69f1830231299852b2cde95a5114063ec389869713fbfda",
+ "serve_time_caveat_D2": {
+  "source": "independent review of the 53 recorded k8s issues (not measured by the packager)",
+  "served_by_model_high_medium_low": [32, 14, 7],
+  "llm_high_medium_low": [3, 30, 20],
+  "note": "P4 was evaluated only on issues maintainers prioritised (~16% of the test split); its behaviour on the general population is untested. Enabling TRIAGE_PRIORITY_MODEL is GG's decision with that caveat."
+ }
 }

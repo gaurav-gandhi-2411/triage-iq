@@ -119,3 +119,22 @@ def test_final_test_is_guarded_and_runs_once(
     monkeypatch.setattr(fe.tl, "load_split", lambda *a, **k: pytest.fail("test labels read"))
     with pytest.raises(ev.TestGuardError):
         fe.final_test(p, n_boot=20, latency=False)
+
+
+def test_dataset_text_equals_serving_recipe(tmp_path: Path) -> None:
+    from triage_iq.data.preprocess import clean_text
+    from triage_iq.models.component_classifier import _build_text
+
+    d, s = make_data(tmp_path)
+    iss = pd.read_parquet(d / "issues.parquet")
+    iss["title"] = "  Title " + iss["number"].astype(str) + " "
+    iss["body"] = "<!-- tpl -->  real body\n```\ncode\n```\n" + iss["number"].astype(str)
+    iss.to_parquet(d / "issues.parquet")
+    fr = fe.build_frames(d, s)
+    by_num = iss.set_index("number")
+    for key in ("train", "validation", "test_texts"):
+        for n, text in zip(fr[key]["number"].head(5), fr[key]["text"].head(5), strict=True):
+            title, body = by_num.loc[n, "title"], by_num.loc[n, "body"]
+            want = _build_text(pd.Series([title]), pd.Series([clean_text(body)[0]])).iloc[0]
+            assert text == want
+            assert "<!--" not in text and text.startswith("Title ")

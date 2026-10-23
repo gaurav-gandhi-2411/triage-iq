@@ -6,7 +6,8 @@ splits and metrics are exactly those of qp1_tfidf_lr.py / qp1_eval.py (ADR-0067:
 with >= 30 train issues + `other`; primary label = earliest surviving `labeled` event).
  * Model: microsoft/deberta-v3-small at pinned revision a36c739020e01763fe789b4b85e2df55d6180012;
    answerdotai/ModernBERT-base (rev 8949b909...) is used ONLY if deberta fails to load on Kaggle,
-   and the report says which one ran. Input: title + "\\n" + body[:4000], max_seq_len 384.
+   and the report says which one ran. Input text: see "Design revision" below (originally
+   title + "\\n" + body[:4000]); max_seq_len 384.
  * Head/loss: 22 outputs, multi-label BCE; target = every final sig/* label mapped to the class
    list (`other` for labels outside it). Ranking/metrics/conformal use the sigmoid scores
    renormalised to sum 1 per row. AdamW (wd 0.01), batch 16, linear schedule with 10% warmup,
@@ -25,6 +26,20 @@ with >= 30 train issues + `other`; primary label = earliest surviving `labeled` 
    sample), measured locally in a throwaway venv with onnxruntime + tokenizers (inference only),
    at all cores and at 2 threads (the 2-vCPU container shape); budget 300 ms p50 per added model.
  * Success reading: the model beats candidate 1 only if the paired top-3 CI excludes zero.
+
+Design revision (2026-10-23, before any run): the kernel has never run, so no validation or test
+result has been seen; this changes the text recipe only. Train/validation/test text is now
+`title.strip() + ". " + preprocess.clean_text(body)[0].strip()`, i.e. the serving recipe with the
+TRIAGE_CLEAN_REQUEST_BODY cleaning flag on (component_classifier._build_text fed with clean_text
+output), instead of the legacy `title + "\\n" + raw body[:4000]`. Why: production is moving to
+cleaned bodies (PR #289 fixes a measured train/serve skew; PR #288 aligned the Kaggle embedding
+recipe the same way), and a candidate trained on the legacy text would be evaluated on text it
+will not see in serving. The 384-token cut is unchanged and still done by the kernel tokenizer
+(it tokenises whatever text it is given, truncation=True, max_length=384); there is no extra
+character cut. Everything else above (grid, validation selection, test-once, fp32 headline +
+int8 secondary, paired bootstrap vs c1, exploratory RAPS, latency) is unchanged. Comparison note:
+the c1 baseline (TF-IDF+LR, test top-3 95.4%) was trained on the legacy text; the comparison is
+therefore model-with-its-own-recipe vs model-with-its-own-recipe, both servable.
 """
 
 from __future__ import annotations
@@ -68,6 +83,15 @@ def paths(a: argparse.Namespace | None = None) -> dict[str, Path]:
     }  # fmt: skip
 
 
+def serving_text(title: pd.Series, body: pd.Series) -> pd.Series:
+    """Serving recipe with the clean-body flag on: _build_text(title, clean_text(body)[0])."""
+    from triage_iq.data.preprocess import clean_text  # lazy: keep module import light
+    from triage_iq.models.component_classifier import _build_text
+
+    clean = body.fillna("").map(lambda b: clean_text(str(b))[0])
+    return _build_text(title.fillna("").astype(str), clean)
+
+
 def labelled_frame(d: pd.DataFrame, modelled: list[str]) -> pd.DataFrame:
     """number, text, primary class, JSON list of mapped final classes (train/validation only)."""
     y, sets = tl.gold(d, modelled)
@@ -83,13 +107,16 @@ def eligible_test_texts(derived: Path, splits_dir: Path) -> pd.DataFrame:
     sp = sp[sp["classifier_eligible"]]
     issues = pd.read_parquet(derived / "issues.parquet", columns=["number", "title", "body"])
     issues = issues[issues["number"].isin(sp["number"])].sort_values("number")
-    text = issues["title"].fillna("") + "\n" + issues["body"].fillna("").str.slice(0, 4000)
+    text = serving_text(issues["title"], issues["body"])
     return pd.DataFrame({"number": issues["number"].astype("int64").to_numpy(), "text": text.to_numpy()})  # fmt: skip
 
 
 def build_frames(derived: Path, splits_dir: Path) -> dict[str, Any]:
     d = tl.load_split(derived, splits_dir, ("train", "validation"))
     modelled, classes = tl.define_classes(d[d["split"] == "train"])
+    iss = pd.read_parquet(derived / "issues.parquet", columns=["number", "title", "body"])
+    new_text = pd.Series(serving_text(iss["title"], iss["body"]).to_numpy(), index=iss["number"])
+    d["text"] = d["number"].map(new_text)  # replaces tl's legacy recipe (design revision)
     tr, va = (d[(d["split"] == s) & d["classifier_eligible"]].reset_index(drop=True) for s in ("train", "validation"))  # fmt: skip
     return {"train": labelled_frame(tr, modelled), "validation": labelled_frame(va, modelled),
             "test_texts": eligible_test_texts(derived, splits_dir), "classes": classes}  # fmt: skip

@@ -204,3 +204,29 @@ def test_label_whose_first_event_is_an_unlabel_was_there_from_creation() -> None
     assert (
         d.at[1, "earliest72"] == "sig/a"
     )  # sig/b was removed at 5 h, so it is not in the 72 h set
+
+
+def test_to_class_maps_to_parents_and_coverage_bound_is_train_only() -> None:
+    """Parent mapping happens after the primary is chosen; coverage bound uses the train class list."""
+    iss, ev, sp = _split_fixture()
+    parent = lambda x: "sig/p" if x in ("sig/a", "sig/b") else x  # noqa: E731
+    dup = pd.DataFrame({"source": [41], "canonical": [1]})
+    r = cl.run(iss, ev, dup, sp, SIG, parent)
+    assert r["baselines"]["modelled_classes"] == ["sig/p"]  # a and b merged, train-only count
+    cb = r["coverage_bounded_ceiling"]["labelled"]
+    assert cb["test"]["primary_in_family_top1_bound"]["rate"] == 1.0
+    plain = cl.run(iss, ev, dup, sp, SIG)
+    assert "coverage_bounded_ceiling" not in plain  # k8s path unchanged
+
+
+def test_coverage_bound_counts_abstention_and_eligible_subset() -> None:
+    d = pd.DataFrame(
+        {"number": [1, 2, 3], "final": [frozenset({"x"}), frozenset({"y"}), frozenset({"y", "x"})],
+         "primary": ["x", "y", "y"]}
+    )  # fmt: skip
+    sp = pd.Series({1: "train", 2: "test", 3: "test"})
+    el = pd.Series({1: True, 2: True, 3: False})
+    cb = cl.coverage_bound(d, ["x"], sp, el)
+    assert cb["labelled"]["test"]["primary_in_family_top1_bound"]["k"] == 0
+    assert cb["labelled"]["test"]["any_label_in_family_any_valid_bound"]["k"] == 1
+    assert cb["labelled_and_classifier_eligible"]["test"]["n"] == 1

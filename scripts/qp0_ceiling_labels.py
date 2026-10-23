@@ -219,7 +219,9 @@ def run(issues: pd.DataFrame, events: pd.DataFrame, dup: pd.DataFrame, splits: p
         eligible: pd.Series | None = None) -> dict[str, Any]:  # fmt: skip
     """`to_class` (vscode ADR-0070 parent areas): label sets, primary and 72 h sets are mapped to
     classes AFTER the primary is chosen on raw labels, so every ceiling is on the parent classes."""
-    issues = issues[issues["number"].isin(splits.index)]  # splits may start after the data (none for k8s)
+    issues = issues[
+        issues["number"].isin(splits.index)
+    ]  # splits may start after the data (none for k8s)
     d = per_issue(issues.sort_values("number").reset_index(drop=True), events, family)
     if to_class is not None:
         for c in ("final", "t72"):

@@ -1,0 +1,12 @@
+{
+ "n": 247,
+ "max_abs_diff_vs_original_predict_proba": 0.0,
+ "max_abs_diff_vs_saved_test_parquet": 0.0,
+ "argmax_identical_to_original": true,
+ "source_sha256": {
+  "featurizer.joblib": "3a7df35c363a237614bd4bbecd666afab16c1e17b7feabecc17be15c8384b02b",
+  "model.joblib": "d457f1afa96ea9f3b72b48e66333be39e729130dbe49f660d6d50ffc5e347c42"
+ },
+ "packaged_artifact": "priority_model_kubernetes_kubernetes.joblib",
+ "packaged_sha256": "b834a0668000fcb5b69f1830231299852b2cde95a5114063ec389869713fbfda"
+}

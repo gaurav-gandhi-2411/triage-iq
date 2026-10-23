@@ -274,3 +274,11 @@ def test_legacy_recipe_is_byte_identical_to_original(tmp_path: Path) -> None:
         qk.build_texts("o/r", "issues", tmp_path, "nope")
     prs = qk.build_texts("o/r", "prs", tmp_path)  # PR texts ignore the recipe
     assert prs.text[0] == "p10\nx\na/b.go\nc.md"
+
+
+def test_build_texts_prs_without_pr_files_fails_loud(tmp_path: Path) -> None:
+    _make_data(tmp_path)
+    for f in (tmp_path / "raw" / "o__r" / "pr_files").iterdir():
+        f.unlink()
+    with pytest.raises(FileNotFoundError, match="pr_files"):
+        qk.build_texts("o/r", "prs", tmp_path)

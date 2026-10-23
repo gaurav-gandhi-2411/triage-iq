@@ -1,6 +1,15 @@
 # Queue for GG (only items you must do)
 
-Last updated 2026-10-23 (unattended run, D84). Everything else is in `docs/DECISION_LOG_2026-10.md` and `docs/RUN_STATUS.md`.
+Last updated 2026-10-23 (unattended run, D86). Everything else is in `docs/DECISION_LOG_2026-10.md` and `docs/RUN_STATUS.md`.
+
+## Decision for you, HIGHEST PRIORITY (2026-10-23): production feeds raw issue bodies to models built on cleaned text (recommendation first)
+
+`/triage` (src/triage_iq/api/app.py) passed the RAW request body as `body_clean`, but every served artifact was built on `preprocess.clean_text(body)`: the component classifiers, the similar-issue indexes and the resolution predictors; every offline eval set also stores cleaned bodies, so published eval numbers describe the cleaned path, not what users get. Measured with the served artifacts (hashes checked) on 50 + 50 recorded issues: raw vs cleaned input changes the classifier top-3 set on 42% (k8s) / 30% (vscode) of issues and the retriever top-5 set on 76% / 42%; the resolution features `has_code_blocks` / `code_x_body` were always 0 in serving. **Recommendation: enable `TRIAGE_CLEAN_REQUEST_BODY=1`** (merged default off in #289; with it on, the real app reproduced the training-equivalent signals in 40/40 checks vs 10/40 off). Note that it also changes the LLM prompt's body text (code blocks become markers, as in every eval set). After enabling: re-run the deploy smoke test and the eval/cassette checks. Nothing was enabled.
+
+## Decisions for you (2026-10-23): Phase 3b cutovers and flags (all merged default off)
+
+- `TRIAGE_PRIORITY_MODEL=1` (#285, k8s): serves the text-only priority model P4 (0.506 vs majority 0.409, +0.097 [+0.024, +0.174], on issues maintainers prioritised). Needs the artifact delivered into the image (run `scripts/qp3b_package_priority_model.py` under the image's scikit-learn version, add to the model publish step + MANIFEST). Caveat: on 53 recorded k8s issues it serves high/medium/low 32/14/7 vs the LLM's 3/30/20; its behaviour on never-prioritised issues is untested.
+- Candidate k8s similar-issue index over the fresh 2023-2026 data and its resolution-evidence artifact are built offline (#286, #287; `D:\triageiq-data\models\candidates\`). Serving them (index cutover) is your call; the single re-record (Q8) must evaluate what will be served, so it waits for this decision (docs/QP3B_DESIGN_2026-10.md).
 
 ## Decision for you (2026-10-23): the k8s resolution estimate served in production is from a 2014-2016 corpus (recommendation first)
 

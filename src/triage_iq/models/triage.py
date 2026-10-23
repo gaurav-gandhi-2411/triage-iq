@@ -938,6 +938,8 @@ class TriageAssistant:
             metadata["component_llm_proposal"] = decision.llm_proposal
         if priority is not None:
             metadata.update(priority)
+        if self.resolution_evidence is not None:  # flag 2 active: present in every path
+            metadata["evidence_neighbours"] = signals.get("resolution_evidence_neighbours", [])
         logger.info(
             "[%s] Triaged #%s in %.2fs (groq %d+%d tok, cached prompt tok: %s)",
             self.repo,
@@ -1002,20 +1004,31 @@ class TriageAssistant:
         fallback = llm_status == "parse_failure" or llm_status.startswith("degraded_")
         proposal = None if fallback else plan.priority_guess
         pm = signals.get("priority_model")
+        # Prompt v3: whether the prompt told the LLM the decided level (False when the model
+        # errored or the prompt was built by an older path).
+        in_prompt = "priority_label" in signals.get("_prompt_extra", {})
         if pm is None:  # model errored at serve time: the LLM's priority stands
             return {
                 "priority_decided_by": "llm",
                 "priority_llm_proposal": proposal,
                 "priority_model_proba": None,
+                "priority_in_prompt": in_prompt,
+                "priority_safety_net_fired": False,
             }
+        fired = False
         if proposal is not None:
             plan.priority_guess = pm.label
             if proposal != pm.label:
+                # Safety net: prompt v3 told the LLM to explain pm.label, yet it returned another
+                # level. The served level stays the model's; counted in metadata.
+                fired = True
                 plan.priority_rationale = model_rationale(pm.label, pm.proba, proposal)
         return {
             "priority_decided_by": "model",
             "priority_llm_proposal": proposal,
             "priority_model_proba": pm.proba,
+            "priority_in_prompt": in_prompt,
+            "priority_safety_net_fired": fired,
         }
 
     def triage_batch(
@@ -1259,6 +1272,25 @@ class TriageAssistant:
 
         # Config C: include bucket in prompt when TRIAGE_PROMPT_INCLUDE_BUCKET=1
         _include_bucket = os.environ.get("TRIAGE_PROMPT_INCLUDE_BUCKET") == "1"
+
+        # Prompt v3 (docs/QP3B_DESIGN_2026-10.md). prompt_extra stays empty with both flags off,
+        # so the prompt is byte-identical to v2 (C1).
+        prompt_extra: dict = {}
+        priority_pred = None
+        if self.priority_model is not None:
+            try:
+                priority_pred = self.priority_model.predict(title, body)
+            except Exception as e:
+                logger.warning("Priority model failed, LLM priority stands: %s", e)
+            else:
+                prompt_extra["priority_label"] = priority_pred.label
+                prompt_extra["priority_proba"] = priority_pred.proba
+        evidence_numbers: list[int] | None = None
+        if self.resolution_evidence is not None:
+            evidence_block, evidence_numbers = self.resolution_evidence.block_for(similar_raw)
+            if evidence_block:
+                prompt_extra["evidence_block"] = evidence_block
+
         prompt = build_triage_prompt(
             issue_title=title,
             issue_body=body,
@@ -1272,6 +1304,7 @@ class TriageAssistant:
             resolution_confidence_pct=resolution_conf_pct if _include_bucket else None,
             resolution_point_source=point_source,
             interval_calibrated=conformal_applied,
+            **prompt_extra,
         )
         signals = {
             "prompt": prompt,
@@ -1305,11 +1338,11 @@ class TriageAssistant:
             "_number": issue.get("number", "?"),
         }
         if self.priority_model is not None:  # key absent when off: signals stay unchanged
-            try:
-                signals["priority_model"] = self.priority_model.predict(title, body)
-            except Exception as e:
-                logger.warning("Priority model failed, LLM priority stands: %s", e)
-                signals["priority_model"] = None
+            signals["priority_model"] = priority_pred  # None when the model errored at serve time
+        if prompt_extra:  # absent when both flags are off (or nothing to say): signals unchanged
+            signals["_prompt_extra"] = prompt_extra
+        if evidence_numbers is not None:  # present whenever flag 2 is active, even if empty
+            signals["resolution_evidence_neighbours"] = evidence_numbers
         return signals
 
     # ------------------------------------------------------------------
@@ -1423,6 +1456,7 @@ class TriageAssistant:
                         signals["resolution_conf_pct"] if signals["_include_bucket"] else None
                     ),
                     max_body_chars=max_body_chars,
+                    **signals.get("_prompt_extra", {}),
                 )
                 messages[-1] = {"role": "user", "content": shorter_prompt}
                 estimated_prompt_tokens = _estimate_prompt_tokens(messages)

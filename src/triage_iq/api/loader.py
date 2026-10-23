@@ -275,13 +275,20 @@ def _load_resolution_evidence(models_dir: Path, slug: str):
         )
         return None
     try:
-        return ResolutionEvidence.load(p)
+        ev = ResolutionEvidence.load(p)
     except Exception as exc:
         logger.warning(
             "TRIAGE_RESOLUTION_EVIDENCE=1 but %s failed to load (%s): prompting without evidence",
             p, exc, extra={"event": "resolution_evidence_unreadable", "repo_slug": slug},
         )
         return None
+    if not ev.dated:  # v1 artifact: the as-of filter cannot be applied, so do not use it
+        logger.warning(
+            "TRIAGE_RESOLUTION_EVIDENCE=1 but %s has no item dates (v1): prompting without evidence",
+            p, extra={"event": "resolution_evidence_undated", "repo_slug": slug},
+        )
+        return None
+    return ev
 
 
 def _load_detector(models_dir: Path, slug: str):

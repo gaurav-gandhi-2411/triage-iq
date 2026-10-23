@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from triage_iq.api import loader
 from triage_iq.models.resolution_evidence import (
@@ -20,8 +21,13 @@ from triage_iq.models.resolution_evidence import (
 LONG = "word " * 400
 
 
+OLD = "2020-01-01T00:00:00Z"
+AS_OF = pd.Timestamp("2030-01-01", tz="UTC")  # after every OLD-dated item
+
+
 def _rec(prs=(), comment: str = "") -> EvidenceRecord:  # noqa: ANN001
-    return EvidenceRecord(tuple(prs), comment)
+    """Record whose items are all dated OLD (prs given as (number, title, excerpt))."""
+    return EvidenceRecord(tuple((*p, OLD) for p in prs), comment, OLD if comment else "")
 
 
 def test_item_without_evidence_is_empty() -> None:
@@ -52,7 +58,7 @@ def test_hash_references_and_quotes_are_neutralised() -> None:
 
 def test_block_is_hard_capped_and_header_first() -> None:
     ev = ResolutionEvidence({n: _rec([(n, "T" * 300, LONG)], LONG) for n in (1, 2, 3, 4)})
-    block, used = ev.block_for([{"number": n} for n in (1, 2, 3, 4)])
+    block, used = ev.block_for([{"number": n} for n in (1, 2, 3, 4)], AS_OF)
     assert len(block) <= EVIDENCE_BLOCK_MAX_CHARS
     assert block.startswith(EVIDENCE_HEADER)
     assert used == [1, 2, 3]  # only the top-3 neighbours are considered
@@ -61,10 +67,10 @@ def test_block_is_hard_capped_and_header_first() -> None:
 
 def test_block_skips_neighbours_without_evidence_and_is_empty_when_none() -> None:
     ev = ResolutionEvidence({2: _rec(comment="done")})
-    block, used = ev.block_for([{"number": 1}, {"number": 2}, {"number": 3}])
+    block, used = ev.block_for([{"number": 1}, {"number": 2}, {"number": 3}], AS_OF)
     assert used == [2] and "#1" not in block
-    assert ev.block_for([{"number": 1}, {"number": 3}]) == ("", [])
-    assert ev.block_for([]) == ("", [])
+    assert ev.block_for([{"number": 1}, {"number": 3}], AS_OF) == ("", [])
+    assert ev.block_for([], AS_OF) == ("", [])
 
 
 def test_load_keeps_only_rows_with_evidence(tmp_path: Path) -> None:
@@ -73,18 +79,132 @@ def test_load_keeps_only_rows_with_evidence(tmp_path: Path) -> None:
         [
             {
                 "number": 1,
-                "fix_prs": [{"number": 10, "title": "Fix A", "body_excerpt": "x"}],
+                "fix_prs": [
+                    {"number": 10, "title": "Fix A", "body_excerpt": "x", "merged_at": OLD}
+                ],
                 "closing_comment": "",
+                "closing_comment_at": "",
                 "has_evidence": True,
             },
-            {"number": 2, "fix_prs": [], "closing_comment": "done", "has_evidence": True},
-            {"number": 3, "fix_prs": [], "closing_comment": "", "has_evidence": False},
+            {
+                "number": 2,
+                "fix_prs": [],
+                "closing_comment": "done",
+                "closing_comment_at": OLD,
+                "has_evidence": True,
+            },
+            {
+                "number": 3,
+                "fix_prs": [],
+                "closing_comment": "",
+                "closing_comment_at": "",
+                "has_evidence": False,
+            },
         ]
     ).to_parquet(p, index=False)
     ev = ResolutionEvidence.load(p)
     assert sorted(ev.records) == [1, 2]
-    assert ev.records[1].fix_prs == ((10, "Fix A", "x"),)
-    assert ev.records[2].closing_comment == "done"
+    assert ev.dated
+    assert ev.records[1].fix_prs == ((10, "Fix A", "x", OLD),)
+    assert (ev.records[2].closing_comment, ev.records[2].closing_comment_at) == ("done", OLD)
+
+
+def _v1_frame() -> pd.DataFrame:
+    """The v1 artifact shape: no merged_at / closing_comment_at."""
+    return pd.DataFrame(
+        [
+            {
+                "number": 2,
+                "fix_prs": [{"number": 10, "title": "Fix A", "body_excerpt": "x"}],
+                "closing_comment": "done",
+                "has_evidence": True,
+            }
+        ]
+    )
+
+
+def test_undated_artifact_fails_closed_in_block_for(tmp_path: Path) -> None:
+    p = tmp_path / "v1.parquet"
+    _v1_frame().to_parquet(p, index=False)
+    ev = ResolutionEvidence.load(p)
+    assert not ev.dated
+    with pytest.raises(ValueError, match="no item dates"):
+        ev.block_for([{"number": 2}], AS_OF)
+
+
+def test_loader_refuses_undated_artifact_with_one_warning(tmp_path: Path) -> None:
+    _v1_frame().to_parquet(
+        tmp_path / "resolution_evidence_kubernetes_kubernetes.parquet", index=False
+    )
+    records: list[logging.LogRecord] = []
+
+    class _Grab(logging.Handler):
+        def emit(self, record: logging.LogRecord) -> None:
+            records.append(record)
+
+    h = _Grab(logging.WARNING)
+    loader.logger.addHandler(h)
+    try:
+        assert loader._load_resolution_evidence(tmp_path, "kubernetes_kubernetes") is None
+    finally:
+        loader.logger.removeHandler(h)
+    assert [r.event for r in records if hasattr(r, "event")] == ["resolution_evidence_undated"]  # type: ignore[attr-defined]
+
+
+# --- as-of filter: strictly before -----------------------------------------------------------
+
+T = pd.Timestamp("2024-05-01T12:00:00Z")
+SEC = pd.Timedelta(seconds=1)
+
+
+def _dated(merged: pd.Timestamp | None, commented: pd.Timestamp | None) -> EvidenceRecord:
+    fmt = "%Y-%m-%dT%H:%M:%SZ"
+    return EvidenceRecord(
+        ((9, "Fix it", "exc", merged.strftime(fmt) if merged is not None else ""),),
+        "closed by upgrade",
+        commented.strftime(fmt) if commented is not None else "",
+    )
+
+
+def test_fix_pr_dated_one_second_before_is_kept() -> None:
+    rec = _dated(T - SEC, None).before(T)
+    assert [p[0] for p in rec.fix_prs] == [9]
+
+
+def test_fix_pr_dated_exactly_at_as_of_is_dropped() -> None:
+    assert _dated(T, None).before(T).fix_prs == ()
+
+
+def test_fix_pr_dated_one_second_after_is_dropped() -> None:
+    assert _dated(T + SEC, None).before(T).fix_prs == ()
+
+
+def test_comment_boundaries_are_strict_too() -> None:
+    assert _dated(None, T - SEC).before(T).closing_comment == "closed by upgrade"
+    assert _dated(None, T).before(T).closing_comment == ""
+    assert _dated(None, T + SEC).before(T).closing_comment == ""
+
+
+def test_undated_item_in_a_dated_artifact_is_dropped() -> None:
+    rec = EvidenceRecord(((9, "Fix it", "exc", ""),), "c", "")
+    assert not rec.before(T).has_evidence
+
+
+def test_naive_as_of_is_taken_as_utc() -> None:
+    assert _dated(T - SEC, None).before(T.tz_localize(None)).fix_prs != ()
+    assert _dated(T, None).before(T.tz_localize(None)).fix_prs == ()
+
+
+def test_block_keeps_early_item_and_neighbour_with_nothing_left_contributes_nothing() -> None:
+    ev = ResolutionEvidence(
+        {
+            1: EvidenceRecord(((11, "Early fix", "", (T - SEC).strftime("%Y-%m-%dT%H:%M:%SZ")),)),
+            2: EvidenceRecord(((12, "Late fix", "", (T + SEC).strftime("%Y-%m-%dT%H:%M:%SZ")),)),
+        }
+    )
+    block, used = ev.block_for([{"number": 1}, {"number": 2}], T)
+    assert used == [1] and "Early fix" in block and "Late fix" not in block
+    assert ev.block_for([{"number": 2}], T) == ("", [])
 
 
 # --- loader ---------------------------------------------------------------------------------
@@ -115,7 +235,15 @@ def test_loader_unreadable_artifact_returns_none(tmp_path: Path) -> None:
 
 def test_loader_reads_the_slug_named_artifact(tmp_path: Path) -> None:
     pd.DataFrame(
-        [{"number": 2, "fix_prs": [], "closing_comment": "done", "has_evidence": True}]
+        [
+            {
+                "number": 2,
+                "fix_prs": [],
+                "closing_comment": "done",
+                "closing_comment_at": OLD,
+                "has_evidence": True,
+            }
+        ]
     ).to_parquet(tmp_path / "resolution_evidence_kubernetes_kubernetes.parquet", index=False)
     ev = loader._load_resolution_evidence(tmp_path, "kubernetes_kubernetes")
     assert ev is not None and list(ev.records) == [2]

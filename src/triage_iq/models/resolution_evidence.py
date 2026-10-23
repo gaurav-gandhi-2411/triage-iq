@@ -16,9 +16,12 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+import pandas as pd
 
 EVIDENCE_TOP_NEIGHBOURS = 3  # design: top-3 retrieved neighbours
 EVIDENCE_BLOCK_MAX_CHARS = 900  # design: total evidence block <= ~900 chars (hard cap here)
@@ -32,15 +35,38 @@ _HASH_REF = re.compile(r"#(\d+)")
 
 @dataclass(frozen=True)
 class EvidenceRecord:
-    """Evidence for one issue: fix PRs as (number, title, excerpt) and the closing comment."""
+    """Evidence for one issue.
 
-    fix_prs: tuple[tuple[int, str, str], ...] = ()
+    fix_prs: (number, title, excerpt, merged_at ISO UTC or ""); closing_comment with its
+    created_at. An empty date means unknown and is dropped by `before` (fail closed).
+    """
+
+    fix_prs: tuple[tuple[int, str, str, str], ...] = ()
     closing_comment: str = ""
+    closing_comment_at: str = ""
 
     @property
     def has_evidence(self) -> bool:
         """True when there is a fix PR (with a title) or a closing comment to cite."""
         return bool(self.fix_prs) or bool(self.closing_comment)
+
+    def before(self, as_of: datetime) -> EvidenceRecord:
+        """The items dated strictly before `as_of`; undated items are dropped."""
+        t = _utc(as_of)
+        prs = tuple(p for p in self.fix_prs if p[3] and _utc(p[3]) < t)
+        keep_comment = bool(self.closing_comment_at) and _utc(self.closing_comment_at) < t
+        return replace(
+            self,
+            fix_prs=prs,
+            closing_comment=self.closing_comment if keep_comment else "",
+            closing_comment_at=self.closing_comment_at if keep_comment else "",
+        )
+
+
+def _utc(value: Any) -> pd.Timestamp:
+    """tz-aware UTC timestamp (naive input is taken as UTC)."""
+    t = pd.Timestamp(value)
+    return t.tz_localize("UTC") if t.tzinfo is None else t.tz_convert("UTC")
 
 
 def _clean(text: str) -> str:
@@ -59,7 +85,7 @@ def _fix_part(rec: EvidenceRecord, budget: int) -> str:
     """'fix PR 123 "title": excerpt' for the first audited fix PR, within `budget` chars."""
     if not rec.fix_prs or budget <= 0:
         return ""
-    number, title, excerpt = rec.fix_prs[0]
+    number, title, excerpt, _ = rec.fix_prs[0]
     head = f'fix PR {number} "{_cut(_clean(title), min(_TITLE_MAX, budget))}"'
     room = budget - len(head) - 2
     ex = _cut(_clean(excerpt), room) if room >= 20 else ""
@@ -92,43 +118,65 @@ def render_item(number: int, rec: EvidenceRecord, max_chars: int = EVIDENCE_ITEM
 
 
 class ResolutionEvidence:
-    """Number -> EvidenceRecord lookup plus the block renderer."""
+    """Number -> EvidenceRecord lookup plus the block renderer.
 
-    def __init__(self, records: Mapping[int, EvidenceRecord]) -> None:
+    `dated` is False for an artifact without item dates (v1): block_for then refuses to run,
+    because an as-of filter cannot be applied to it and silently ignoring it would leak evidence
+    from after the query.
+    """
+
+    def __init__(self, records: Mapping[int, EvidenceRecord], dated: bool = True) -> None:
         self.records = dict(records)
+        self.dated = dated
 
     @classmethod
     def load(cls, path: Path) -> ResolutionEvidence:
-        """Read the parquet artifact (columns: number, fix_prs, closing_comment, has_evidence).
+        """Read the parquet artifact (number, fix_prs[.merged_at], closing_comment[_at], ...).
 
-        Only rows with evidence are kept. Raises on a missing column or unreadable file.
+        Only rows with evidence are kept. `dated` is True only when the artifact carries item
+        dates (v2). Raises on a missing core column or unreadable file.
         """
-        import pandas as pd
-
-        df = pd.read_parquet(path, columns=["number", "fix_prs", "closing_comment", "has_evidence"])
+        df = pd.read_parquet(path)
+        dated = "closing_comment_at" in df.columns
         recs: dict[int, EvidenceRecord] = {}
         for r in df[df["has_evidence"].astype(bool)].itertuples(index=False):
             prs = tuple(
-                (int(p["number"]), str(p["title"] or ""), str(p["body_excerpt"] or ""))
+                (
+                    int(p["number"]),
+                    str(p["title"] or ""),
+                    str(p["body_excerpt"] or ""),
+                    str(p.get("merged_at") or ""),
+                )
                 for p in (r.fix_prs if r.fix_prs is not None else [])
                 if p["title"]
             )
-            rec = EvidenceRecord(prs, str(r.closing_comment or ""))
+            rec = EvidenceRecord(
+                prs,
+                str(r.closing_comment or ""),
+                str(getattr(r, "closing_comment_at", "") or ""),
+            )
             if rec.has_evidence:
                 recs[int(r.number)] = rec
-        return cls(recs)
+        return cls(recs, dated=dated)
 
-    def block_for(self, neighbours: Sequence[Mapping[str, Any]]) -> tuple[str, list[int]]:
+    def block_for(
+        self, neighbours: Sequence[Mapping[str, Any]], as_of: datetime
+    ) -> tuple[str, list[int]]:
         """(block text, neighbour numbers cited) for the top-3 neighbours; ('', []) if none.
 
-        The block is header + one line per neighbour that has evidence, never longer than
-        EVIDENCE_BLOCK_MAX_CHARS.
+        Only evidence items dated strictly before `as_of` (the query issue's creation time) are
+        used; a neighbour with no remaining item contributes nothing. Raises ValueError on an
+        undated artifact rather than ignoring `as_of`. The block is header + one line per
+        neighbour that has evidence, never longer than EVIDENCE_BLOCK_MAX_CHARS.
         """
+        if not self.dated:
+            raise ValueError("evidence artifact has no item dates: cannot apply the as-of filter")
         lines: list[str] = []
         used: list[int] = []
         for s in neighbours[:EVIDENCE_TOP_NEIGHBOURS]:
             n = int(s["number"])
             rec = self.records.get(n)
+            rec = rec.before(as_of) if rec is not None else None
             line = render_item(n, rec) if rec is not None else ""
             if line:
                 lines.append(line)

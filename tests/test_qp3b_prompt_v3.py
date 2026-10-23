@@ -153,11 +153,23 @@ class _FakePriority:
         return PriorityPrediction(self.label, dict(PROBA))
 
 
-def _evidence(numbers=(7,)):  # noqa: ANN001, ANN202
+def _evidence(numbers=(7,), merged: str = "2019-01-01T00:00:00Z"):  # noqa: ANN001, ANN202
+    """Evidence for `numbers`; the test issue was created 2020-02-01 (tests/test_vscode_naive_point)."""
     from triage_iq.models.resolution_evidence import EvidenceRecord, ResolutionEvidence
 
-    rec = EvidenceRecord(((907, "Fix kubelet", "nil pod"),), "")
+    rec = EvidenceRecord(((907, "Fix kubelet", "nil pod", merged),), "")
     return ResolutionEvidence(dict.fromkeys(numbers, rec))
+
+
+def test_evidence_dated_after_the_query_is_not_prompted_and_prompt_equals_off() -> None:
+    off = _messages(_assistant(K8S))
+    asst = _assistant(K8S)
+    asst.resolution_evidence = _evidence(merged="2020-02-01T00:00:01Z")  # 1 s after creation
+    assert _messages(asst) == off
+    asst.resolution_evidence = _evidence(merged="2020-01-31T23:59:59Z")  # 1 s before
+    assert "#7: fix PR 907" in _messages(asst)[-1]["content"]
+    asst.resolution_evidence = _evidence(merged="2020-02-01T00:00:00Z")  # exactly at: dropped
+    assert _messages(asst) == off
 
 
 def _on(repo: str = K8S, priority=None, evidence=None):  # noqa: ANN001, ANN202

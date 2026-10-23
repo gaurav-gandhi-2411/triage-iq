@@ -1287,7 +1287,16 @@ class TriageAssistant:
                 prompt_extra["priority_proba"] = priority_pred.proba
         evidence_numbers: list[int] | None = None
         if self.resolution_evidence is not None:
-            evidence_block, evidence_numbers = self.resolution_evidence.block_for(similar_raw)
+            # As-of filter: only evidence dated strictly before the query's creation. In production
+            # the request's created_at defaults to now (api/app.py), so this is a no-op there
+            # (every indexed neighbour's evidence already exists); in eval/replay it is the eval
+            # row's created_at, which closes the leak of post-query fixes/comments into the prompt.
+            as_of = issue.get("created_at")
+            if as_of is None or pd.isna(as_of):  # no creation time: treat the query as "now"
+                as_of = pd.Timestamp.now(tz="UTC")
+            evidence_block, evidence_numbers = self.resolution_evidence.block_for(
+                similar_raw, as_of
+            )
             if evidence_block:
                 prompt_extra["evidence_block"] = evidence_block
 

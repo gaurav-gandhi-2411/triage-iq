@@ -1,0 +1,791 @@
+{
+  "generated_by": "scripts/qp5_objective_metrics.py",
+  "label": "BASELINE on the OLD recorded 127 issues (64 committed + 63 vscode expansion), OLD component taxonomy; NOT the Phase 5 result",
+  "notes": [
+    "Old sets carry no meta: priority gold is resolution-inferred (contaminated) so priority is unscorable (all 127 excluded as legacy/unknown source); there are no indexable_targets so similar-issue relevance is unscorable; component gold uses the OLD taxonomy and in_family is derived as gold != other (old gold has no 'other'), so strict == k8s-convention == in-family here. New-taxonomy component scoring needs the Q8 re-record.",
+    "Next-step grounding: all 53 k8s rows are unscorable (no retrieved neighbour has evidence: the old retriever serves the 2014-2016 corpus, the evidence artifact is the candidate for the 2023-2025 index); vscode has no evidence artifact (74 rows).",
+    "Resolution: the plan point is metadata.resolution_point_days (the served point, ADR-0064). The k8s naive reference of 35.1 d is the 2023-2025 closed median and does not match this 2014-2016-era set (served constant there: 3.04 d), so the k8s plan-vs-naive comparison is not like-for-like; vscode's served point IS the train median, hence the identical plan and naive rows. Replayed with models from triage-iq-wt-served (this checkout's component_classifier_microsoft_vscode.pkl differs from MANIFEST.sha256).",
+    "Like-for-like k8s resolution reference: see resolution_alt_naive_reference (k8s naive 3.04 d, the served constant on the old corpus). The primary naive_reference (35.1 d) is retained for continuity."
+  ],
+  "sources": {
+    "models_dir": "C:\\Users\\gaura\\ml-projects\\triage-iq-wt-served\\data\\models",
+    "replayed_sets": [
+      {
+        "cassette": "eval/cassettes/eval_cassette.json",
+        "cassette_sha256": "e9f8861f85fec3bb96f1cd09a9f2099dfed5e4a7f1ff3cef7988832e2e8f0b85",
+        "eval_set": "eval/eval_set.jsonl",
+        "eval_set_sha256": "0c2e57410098ea170f3f65668ff8977d3ce4942936b9a3e2ffb6696a09621bfe",
+        "n": 64
+      },
+      {
+        "cassette": "reports/vscode_expansion_2026-10-12/eval_cassette.json",
+        "cassette_sha256": "b241b323b16ba4f9be9056c799f4025cf879ca4faaf937f1f309b8085727eb14",
+        "eval_set": "eval/expansions/vscode_2026-10-12/eval_set.jsonl",
+        "eval_set_sha256": "8ad1f659eeb86a062c21663f3afb62c754c804847c3b94548434a261262bc382",
+        "n": 63
+      }
+    ],
+    "evidence": {
+      "kubernetes/kubernetes": {
+        "path": "D:\\triageiq-data\\models\\candidates\\resolution_evidence_kubernetes_kubernetes_v1.parquet",
+        "sha256": "99aa720ce11bed8622c84b3877cc40d5de4c424d9aa6be8cc689ece3e0319de5"
+      }
+    }
+  },
+  "naive_days_input": {
+    "kubernetes/kubernetes": 35.1,
+    "microsoft/vscode": 3.8374
+  },
+  "metrics_version": "qp5-objective-metrics-v1",
+  "bootstrap": {
+    "resamples": 2000,
+    "seed": 42
+  },
+  "pooled": {
+    "n_rows": 127,
+    "n_with_plan": 127,
+    "n_degraded_plans": 0,
+    "component": {
+      "n_scored": 127,
+      "n_excluded": 0,
+      "excluded_reasons": {},
+      "in_family_source": "derived_gold_ne_other",
+      "rows_with_derived_in_family": 127,
+      "rows_with_default_weight_1": 127,
+      "strict": {
+        "unweighted": {
+          "n": 127,
+          "n_excluded": 0,
+          "excluded_reasons": {},
+          "point": 0.7244,
+          "ci95": [
+            0.641,
+            0.7947
+          ],
+          "ci_method": "wilson",
+          "k": 92
+        },
+        "weighted": {
+          "point": 0.7244,
+          "ci95": [
+            0.6457,
+            0.8031
+          ],
+          "ci_method": "bootstrap"
+        }
+      },
+      "k8s_convention": {
+        "unweighted": {
+          "n": 127,
+          "n_excluded": 0,
+          "excluded_reasons": {},
+          "point": 0.7244,
+          "ci95": [
+            0.641,
+            0.7947
+          ],
+          "ci_method": "wilson",
+          "k": 92
+        },
+        "weighted": {
+          "point": 0.7244,
+          "ci95": [
+            0.6457,
+            0.8031
+          ],
+          "ci_method": "bootstrap"
+        }
+      },
+      "in_family_strict": {
+        "unweighted": {
+          "n": 127,
+          "n_excluded": 0,
+          "excluded_reasons": {},
+          "point": 0.7244,
+          "ci95": [
+            0.641,
+            0.7947
+          ],
+          "ci_method": "wilson",
+          "k": 92
+        },
+        "weighted": {
+          "point": 0.7244,
+          "ci95": [
+            0.6457,
+            0.8031
+          ],
+          "ci_method": "bootstrap"
+        }
+      }
+    },
+    "priority": {
+      "n": 0,
+      "n_excluded": 127,
+      "excluded_reasons": {
+        "gold_source_unknown_legacy": 127
+      },
+      "point": null,
+      "ci95": null,
+      "ci_method": "wilson",
+      "k": 0
+    },
+    "similar_issue_relevance": {
+      "k": null,
+      "n_scorable": 0,
+      "status": "UNSCORABLE: no row has an indexable target",
+      "retrieved_hit_rate": {
+        "n": 0,
+        "n_excluded": 127,
+        "excluded_reasons": {
+          "no_indexable_target": 127
+        },
+        "point": null,
+        "ci95": null,
+        "ci_method": "wilson",
+        "k": 0
+      },
+      "retrieved_recall_at_k": {
+        "n": 0,
+        "n_excluded": 127,
+        "excluded_reasons": {
+          "no_indexable_target": 127
+        },
+        "point": null,
+        "ci95": null,
+        "ci_method": "bootstrap"
+      },
+      "cited_hit_rate": {
+        "n": 0,
+        "n_excluded": 127,
+        "excluded_reasons": {
+          "no_indexable_target": 127
+        },
+        "point": null,
+        "ci95": null,
+        "ci_method": "wilson",
+        "k": 0
+      }
+    },
+    "next_step_grounding": {
+      "n_rows_scorable": 0,
+      "n_steps": 0,
+      "n_excluded": 127,
+      "excluded_reasons": {
+        "no_evidence_artifact_for_repo": 74,
+        "no_retrieved_neighbour_with_evidence": 53
+      },
+      "step_grounded_share": {
+        "n": 0,
+        "n_excluded": 0,
+        "excluded_reasons": {},
+        "point": null,
+        "ci95": null,
+        "ci_method": "bootstrap_by_row"
+      },
+      "rows_with_grounded_step": {
+        "n": 0,
+        "n_excluded": 0,
+        "excluded_reasons": {},
+        "point": null,
+        "ci95": null,
+        "ci_method": "wilson",
+        "k": 0
+      },
+      "steps_citing_any_retrieved_share": null
+    },
+    "resolution": {
+      "n": 127,
+      "n_excluded": 0,
+      "excluded_reasons": {},
+      "point_source_counts": {
+        "metadata.resolution_point_days": 127
+      },
+      "ci_method": "bootstrap",
+      "plan": {
+        "median_ae_days": 3.8255,
+        "median_ae_ci95": [
+          3.6875,
+          7.1151
+        ],
+        "mean_ae_days": 88.5313,
+        "mean_ae_ci95": [
+          48.815,
+          140.4654
+        ]
+      },
+      "interval_coverage": {
+        "n": 127,
+        "n_excluded": 0,
+        "excluded_reasons": {},
+        "point": 0.8425,
+        "ci95": [
+          0.7692,
+          0.8957
+        ],
+        "ci_method": "wilson",
+        "k": 107
+      },
+      "mean_interval_width_days": 193.9024,
+      "naive_reference": {
+        "naive_days": {
+          "kubernetes/kubernetes": 35.1,
+          "microsoft/vscode": 3.8374
+        },
+        "median_ae_days": 15.5747,
+        "median_ae_ci95": [
+          4.4646,
+          26.1702
+        ],
+        "mean_ae_days": 89.1509,
+        "mean_ae_ci95": [
+          49.8606,
+          140.0206
+        ]
+      },
+      "naive_minus_plan_ae": {
+        "median_days": 0.0,
+        "median_ci95": [
+          -0.0,
+          0.0
+        ],
+        "mean_days": 0.6196,
+        "mean_ci95": [
+          -2.3579,
+          3.8378
+        ]
+      }
+    }
+  },
+  "by_repo": {
+    "kubernetes/kubernetes": {
+      "n_rows": 53,
+      "n_with_plan": 53,
+      "n_degraded_plans": 0,
+      "component": {
+        "n_scored": 53,
+        "n_excluded": 0,
+        "excluded_reasons": {},
+        "in_family_source": "derived_gold_ne_other",
+        "rows_with_derived_in_family": 53,
+        "rows_with_default_weight_1": 53,
+        "strict": {
+          "unweighted": {
+            "n": 53,
+            "n_excluded": 0,
+            "excluded_reasons": {},
+            "point": 0.6415,
+            "ci95": [
+              0.5069,
+              0.757
+            ],
+            "ci_method": "wilson",
+            "k": 34
+          },
+          "weighted": {
+            "point": 0.6415,
+            "ci95": [
+              0.5094,
+              0.7736
+            ],
+            "ci_method": "bootstrap"
+          }
+        },
+        "k8s_convention": {
+          "unweighted": {
+            "n": 53,
+            "n_excluded": 0,
+            "excluded_reasons": {},
+            "point": 0.6415,
+            "ci95": [
+              0.5069,
+              0.757
+            ],
+            "ci_method": "wilson",
+            "k": 34
+          },
+          "weighted": {
+            "point": 0.6415,
+            "ci95": [
+              0.5094,
+              0.7736
+            ],
+            "ci_method": "bootstrap"
+          }
+        },
+        "in_family_strict": {
+          "unweighted": {
+            "n": 53,
+            "n_excluded": 0,
+            "excluded_reasons": {},
+            "point": 0.6415,
+            "ci95": [
+              0.5069,
+              0.757
+            ],
+            "ci_method": "wilson",
+            "k": 34
+          },
+          "weighted": {
+            "point": 0.6415,
+            "ci95": [
+              0.5094,
+              0.7736
+            ],
+            "ci_method": "bootstrap"
+          }
+        }
+      },
+      "priority": {
+        "n": 0,
+        "n_excluded": 53,
+        "excluded_reasons": {
+          "gold_source_unknown_legacy": 53
+        },
+        "point": null,
+        "ci95": null,
+        "ci_method": "wilson",
+        "k": 0
+      },
+      "similar_issue_relevance": {
+        "k": null,
+        "n_scorable": 0,
+        "status": "UNSCORABLE: no row has an indexable target",
+        "retrieved_hit_rate": {
+          "n": 0,
+          "n_excluded": 53,
+          "excluded_reasons": {
+            "no_indexable_target": 53
+          },
+          "point": null,
+          "ci95": null,
+          "ci_method": "wilson",
+          "k": 0
+        },
+        "retrieved_recall_at_k": {
+          "n": 0,
+          "n_excluded": 53,
+          "excluded_reasons": {
+            "no_indexable_target": 53
+          },
+          "point": null,
+          "ci95": null,
+          "ci_method": "bootstrap"
+        },
+        "cited_hit_rate": {
+          "n": 0,
+          "n_excluded": 53,
+          "excluded_reasons": {
+            "no_indexable_target": 53
+          },
+          "point": null,
+          "ci95": null,
+          "ci_method": "wilson",
+          "k": 0
+        }
+      },
+      "next_step_grounding": {
+        "n_rows_scorable": 0,
+        "n_steps": 0,
+        "n_excluded": 53,
+        "excluded_reasons": {
+          "no_retrieved_neighbour_with_evidence": 53
+        },
+        "step_grounded_share": {
+          "n": 0,
+          "n_excluded": 0,
+          "excluded_reasons": {},
+          "point": null,
+          "ci95": null,
+          "ci_method": "bootstrap_by_row"
+        },
+        "rows_with_grounded_step": {
+          "n": 0,
+          "n_excluded": 0,
+          "excluded_reasons": {},
+          "point": null,
+          "ci95": null,
+          "ci_method": "wilson",
+          "k": 0
+        },
+        "steps_citing_any_retrieved_share": null
+      },
+      "resolution": {
+        "n": 53,
+        "n_excluded": 0,
+        "excluded_reasons": {},
+        "point_source_counts": {
+          "metadata.resolution_point_days": 53
+        },
+        "ci_method": "bootstrap",
+        "plan": {
+          "median_ae_days": 10.6333,
+          "median_ae_ci95": [
+            4.6398,
+            27.002
+          ],
+          "mean_ae_days": 142.41,
+          "mean_ae_ci95": [
+            62.4621,
+            249.8794
+          ]
+        },
+        "interval_coverage": {
+          "n": 53,
+          "n_excluded": 0,
+          "excluded_reasons": {},
+          "point": 0.7925,
+          "ci95": [
+            0.6654,
+            0.88
+          ],
+          "ci_method": "wilson",
+          "k": 42
+        },
+        "mean_interval_width_days": 319.5849,
+        "naive_reference": {
+          "naive_days": {
+            "kubernetes/kubernetes": 35.1,
+            "microsoft/vscode": 3.8374
+          },
+          "median_ae_days": 31.2236,
+          "median_ae_ci95": [
+            27.5027,
+            34.8778
+          ],
+          "mean_ae_days": 143.8946,
+          "mean_ae_ci95": [
+            67.3983,
+            249.2774
+          ]
+        },
+        "naive_minus_plan_ae": {
+          "median_days": 10.7969,
+          "median_ci95": [
+            -21.9404,
+            22.7838
+          ],
+          "mean_days": 1.4846,
+          "mean_ci95": [
+            -5.9628,
+            8.6867
+          ]
+        }
+      }
+    },
+    "microsoft/vscode": {
+      "n_rows": 74,
+      "n_with_plan": 74,
+      "n_degraded_plans": 0,
+      "component": {
+        "n_scored": 74,
+        "n_excluded": 0,
+        "excluded_reasons": {},
+        "in_family_source": "derived_gold_ne_other",
+        "rows_with_derived_in_family": 74,
+        "rows_with_default_weight_1": 74,
+        "strict": {
+          "unweighted": {
+            "n": 74,
+            "n_excluded": 0,
+            "excluded_reasons": {},
+            "point": 0.7838,
+            "ci95": [
+              0.6773,
+              0.8623
+            ],
+            "ci_method": "wilson",
+            "k": 58
+          },
+          "weighted": {
+            "point": 0.7838,
+            "ci95": [
+              0.6892,
+              0.8784
+            ],
+            "ci_method": "bootstrap"
+          }
+        },
+        "k8s_convention": {
+          "unweighted": {
+            "n": 74,
+            "n_excluded": 0,
+            "excluded_reasons": {},
+            "point": 0.7838,
+            "ci95": [
+              0.6773,
+              0.8623
+            ],
+            "ci_method": "wilson",
+            "k": 58
+          },
+          "weighted": {
+            "point": 0.7838,
+            "ci95": [
+              0.6892,
+              0.8784
+            ],
+            "ci_method": "bootstrap"
+          }
+        },
+        "in_family_strict": {
+          "unweighted": {
+            "n": 74,
+            "n_excluded": 0,
+            "excluded_reasons": {},
+            "point": 0.7838,
+            "ci95": [
+              0.6773,
+              0.8623
+            ],
+            "ci_method": "wilson",
+            "k": 58
+          },
+          "weighted": {
+            "point": 0.7838,
+            "ci95": [
+              0.6892,
+              0.8784
+            ],
+            "ci_method": "bootstrap"
+          }
+        }
+      },
+      "priority": {
+        "n": 0,
+        "n_excluded": 74,
+        "excluded_reasons": {
+          "gold_source_unknown_legacy": 74
+        },
+        "point": null,
+        "ci95": null,
+        "ci_method": "wilson",
+        "k": 0
+      },
+      "similar_issue_relevance": {
+        "k": null,
+        "n_scorable": 0,
+        "status": "UNSCORABLE: no row has an indexable target",
+        "retrieved_hit_rate": {
+          "n": 0,
+          "n_excluded": 74,
+          "excluded_reasons": {
+            "no_indexable_target": 74
+          },
+          "point": null,
+          "ci95": null,
+          "ci_method": "wilson",
+          "k": 0
+        },
+        "retrieved_recall_at_k": {
+          "n": 0,
+          "n_excluded": 74,
+          "excluded_reasons": {
+            "no_indexable_target": 74
+          },
+          "point": null,
+          "ci95": null,
+          "ci_method": "bootstrap"
+        },
+        "cited_hit_rate": {
+          "n": 0,
+          "n_excluded": 74,
+          "excluded_reasons": {
+            "no_indexable_target": 74
+          },
+          "point": null,
+          "ci95": null,
+          "ci_method": "wilson",
+          "k": 0
+        }
+      },
+      "next_step_grounding": {
+        "n_rows_scorable": 0,
+        "n_steps": 0,
+        "n_excluded": 74,
+        "excluded_reasons": {
+          "no_evidence_artifact_for_repo": 74
+        },
+        "step_grounded_share": {
+          "n": 0,
+          "n_excluded": 0,
+          "excluded_reasons": {},
+          "point": null,
+          "ci95": null,
+          "ci_method": "bootstrap_by_row"
+        },
+        "rows_with_grounded_step": {
+          "n": 0,
+          "n_excluded": 0,
+          "excluded_reasons": {},
+          "point": null,
+          "ci95": null,
+          "ci_method": "wilson",
+          "k": 0
+        },
+        "steps_citing_any_retrieved_share": null
+      },
+      "resolution": {
+        "n": 74,
+        "n_excluded": 0,
+        "excluded_reasons": {},
+        "point_source_counts": {
+          "metadata.resolution_point_days": 74
+        },
+        "ci_method": "bootstrap",
+        "plan": {
+          "median_ae_days": 3.7618,
+          "median_ae_ci95": [
+            3.3499,
+            3.8255
+          ],
+          "mean_ae_days": 49.9425,
+          "mean_ae_ci95": [
+            19.9956,
+            89.0465
+          ]
+        },
+        "interval_coverage": {
+          "n": 74,
+          "n_excluded": 0,
+          "excluded_reasons": {},
+          "point": 0.8784,
+          "ci95": [
+            0.7847,
+            0.9347
+          ],
+          "ci_method": "wilson",
+          "k": 65
+        },
+        "mean_interval_width_days": 103.8865,
+        "naive_reference": {
+          "naive_days": {
+            "kubernetes/kubernetes": 35.1,
+            "microsoft/vscode": 3.8374
+          },
+          "median_ae_days": 3.7618,
+          "median_ae_ci95": [
+            3.3499,
+            3.8255
+          ],
+          "mean_ae_days": 49.9425,
+          "mean_ae_ci95": [
+            19.9956,
+            89.0465
+          ]
+        },
+        "naive_minus_plan_ae": {
+          "median_days": 0.0,
+          "median_ci95": [
+            -0.0,
+            0.0
+          ],
+          "mean_days": 0.0,
+          "mean_ci95": [
+            -0.0,
+            0.0
+          ]
+        }
+      }
+    }
+  },
+  "resolution_alt_naive_reference": {
+    "label": "LIKE-FOR-LIKE for this old 2014-2016-era set: k8s naive = 3.04 d, the constant served on the old corpus (ADR-0064); vscode unchanged. The primary naive_reference (k8s 35.1 d, 2023-2025 median) is kept but is NOT like-for-like here.",
+    "naive_days_input": {
+      "kubernetes/kubernetes": 3.04,
+      "microsoft/vscode": 3.8374
+    },
+    "pooled": {
+      "naive_reference": {
+        "naive_days": {
+          "kubernetes/kubernetes": 3.04,
+          "microsoft/vscode": 3.8374
+        },
+        "median_ae_days": 3.8255,
+        "median_ae_ci95": [
+          3.6875,
+          7.1151
+        ],
+        "mean_ae_days": 88.5305,
+        "mean_ae_ci95": [
+          48.8138,
+          140.4645
+        ]
+      },
+      "naive_minus_plan_ae": {
+        "median_days": -0.0,
+        "median_ci95": [
+          -0.0,
+          0.0
+        ],
+        "mean_days": -0.0009,
+        "mean_ci95": [
+          -0.0012,
+          -0.0005
+        ]
+      }
+    },
+    "by_repo": {
+      "kubernetes/kubernetes": {
+        "naive_reference": {
+          "naive_days": {
+            "kubernetes/kubernetes": 3.04,
+            "microsoft/vscode": 3.8374
+          },
+          "median_ae_days": 10.6298,
+          "median_ae_ci95": [
+            4.6364,
+            26.9985
+          ],
+          "mean_ae_days": 142.4079,
+          "mean_ae_ci95": [
+            62.4605,
+            249.8777
+          ]
+        },
+        "naive_minus_plan_ae": {
+          "median_days": -0.0035,
+          "median_ci95": [
+            -0.0035,
+            -0.0035
+          ],
+          "mean_days": -0.002,
+          "mean_ci95": [
+            -0.0027,
+            -0.0013
+          ]
+        }
+      },
+      "microsoft/vscode": {
+        "naive_reference": {
+          "naive_days": {
+            "kubernetes/kubernetes": 3.04,
+            "microsoft/vscode": 3.8374
+          },
+          "median_ae_days": 3.7618,
+          "median_ae_ci95": [
+            3.3499,
+            3.8255
+          ],
+          "mean_ae_days": 49.9425,
+          "mean_ae_ci95": [
+            19.9956,
+            89.0465
+          ]
+        },
+        "naive_minus_plan_ae": {
+          "median_days": 0.0,
+          "median_ci95": [
+            -0.0,
+            0.0
+          ],
+          "mean_days": 0.0,
+          "mean_ci95": [
+            -0.0,
+            0.0
+          ]
+        }
+      }
+    }
+  }
+}

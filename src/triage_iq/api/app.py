@@ -328,6 +328,9 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         # TRIAGE_CLEAN_REQUEST_BODY=1: every served model was built on preprocess.clean_text output
         # (and resolution's has_code_blocks on its code_blocks column), so feed the same form.
         issue_fields["body_clean"], issue_fields["code_blocks"] = clean_text(body.body)
+        # The P4 priority model (TRIAGE_PRIORITY_MODEL) was trained on RAW text, so it must not
+        # see the cleaned form: carry the raw body alongside (key absent when the flag is off).
+        issue_fields["body_raw"] = body.body
     issue = pd.Series(issue_fields)
 
     try:

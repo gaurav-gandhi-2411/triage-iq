@@ -467,6 +467,10 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     if "component_decided_by" in meta:  # only with TRIAGE_CLASSIFIER_DECIDES_COMPONENT=1
         result["_component_decided_by"] = meta["component_decided_by"]
         result["_component_llm_proposal"] = meta["component_llm_proposal"]
+    if "priority_decided_by" in meta:  # only with TRIAGE_PRIORITY_MODEL=1 and the artifact loaded
+        result["_priority_decided_by"] = meta["priority_decided_by"]
+        result["_priority_llm_proposal"] = meta["priority_llm_proposal"]
+        result["_priority_model_proba"] = meta["priority_model_proba"]
     result["resolution_model_beats_naive"] = _RESOLUTION_MODEL_BEATS_NAIVE.get(body.repo, True)
     # ADR-0064 (expand-only): the point estimate the resolution stage was given and its source,
     # "model" or "train_median" (POINT_ESTIMATE_TRUSTED). resolution_model_beats_naive keeps its

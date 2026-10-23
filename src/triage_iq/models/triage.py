@@ -23,6 +23,11 @@ from triage_iq.model_config import (
 )
 from triage_iq.models.component_decision import decide_component, repair_component_text
 from triage_iq.models.grounding import compute_grounding_status
+from triage_iq.models.priority import (
+    PriorityModel,
+    model_rationale,
+    rationale_mentions_other_level,
+)
 from triage_iq.models.resolution import (
     INTERVAL_RECENTRED,
     POINT_ESTIMATE_TRUSTED,
@@ -723,6 +728,9 @@ class TriageAssistant:
 
     # Class-level default so tests that build an assistant via __new__ (no __init__) stay off.
     classifier_decides_component: bool = False
+    # Phase 3b flag 1: None (class default, and whenever the flag is off or the artifact is
+    # missing) leaves priority entirely to the LLM, byte-identical to before.
+    priority_model: PriorityModel | None = None
 
     def __init__(
         self,
@@ -756,9 +764,13 @@ class TriageAssistant:
         # Phase 3a (spec-quality-push.md sec. 5): serve the classifier's top-1 unless the LLM
         # validly overrides within top-3. Off by default: behaviour is unchanged when off.
         classifier_decides_component: bool = False,
+        # Phase 3b flag 1 (docs/QP3B_DESIGN_2026-10.md): serve the text-only P4 priority. The
+        # loader passes a model only when TRIAGE_PRIORITY_MODEL=1 and the artifact exists (k8s).
+        priority_model: PriorityModel | None = None,
     ) -> None:
         self.repo = repo
         self.classifier_decides_component = classifier_decides_component
+        self.priority_model = priority_model
         self.llm_time_budget_s = llm_time_budget_s
         # CQR store entry for this repo (loader._load_conformal_adjustments). When present the
         # served interval is the conformal one BEFORE synthesis (ADR-0059 addendum 2026-10-09):
@@ -824,6 +836,9 @@ class TriageAssistant:
         decision = None
         if self.classifier_decides_component:
             decision = self._decide_component(plan, signals, issue, retrieved_numbers)
+        priority = None
+        if self.priority_model is not None:
+            priority = self._decide_priority(plan, signals, llm_status)
 
         # Grounding: reconstruction of what the LLM already emitted (component + similar-issue
         # refs), not new attribution elicited from a prompt change — the synthesis prompt is
@@ -917,6 +932,8 @@ class TriageAssistant:
         if decision is not None:
             metadata["component_decided_by"] = decision.decided_by
             metadata["component_llm_proposal"] = decision.llm_proposal
+        if priority is not None:
+            metadata.update(priority)
         logger.info(
             "[%s] Triaged #%s in %.2fs (groq %d+%d tok, cached prompt tok: %s)",
             self.repo,
@@ -968,6 +985,35 @@ class TriageAssistant:
             # the served one. Cleared (not a new field), so no plan/judge schema change.
             plan.declared_attribution = None
         return d
+
+    def _decide_priority(self, plan: TriagePlan, signals: dict, llm_status: str) -> dict:
+        """Serve the model's priority (flag on + artifact loaded); returns the metadata keys.
+
+        The LLM's own level is kept as the proposal. Its rationale is kept unless it names a
+        different level, in which case it is replaced by a templated one citing the model
+        probability (post-hoc, like Phase 3a: no prompt change). A fallback plan already carries
+        the model level (see _make_fallback_plan), so it has no LLM proposal.
+        """
+        pm = signals.get("priority_model")
+        if pm is None:  # model errored at serve time: the LLM's priority stands
+            return {
+                "priority_decided_by": "llm",
+                "priority_llm_proposal": plan.priority_guess,
+                "priority_model_proba": None,
+            }
+        fallback = llm_status == "parse_failure" or llm_status.startswith("degraded_")
+        proposal = None if fallback else plan.priority_guess
+        if proposal is not None:
+            plan.priority_guess = pm.label
+            if proposal != pm.label and rationale_mentions_other_level(
+                plan.priority_rationale, pm.label
+            ):
+                plan.priority_rationale = model_rationale(pm.label, pm.proba, proposal)
+        return {
+            "priority_decided_by": "model",
+            "priority_llm_proposal": proposal,
+            "priority_model_proba": pm.proba,
+        }
 
     def triage_batch(
         self, df: pd.DataFrame, delay: float = 0.5
@@ -1224,7 +1270,7 @@ class TriageAssistant:
             resolution_point_source=point_source,
             interval_calibrated=conformal_applied,
         )
-        return {
+        signals = {
             "prompt": prompt,
             "classifier_top3": classifier_top3,
             "similar_raw": similar_raw,
@@ -1255,6 +1301,13 @@ class TriageAssistant:
             "_include_bucket": _include_bucket,
             "_number": issue.get("number", "?"),
         }
+        if self.priority_model is not None:  # key absent when off: signals stay unchanged
+            try:
+                signals["priority_model"] = self.priority_model.predict(title, body)
+            except Exception as e:
+                logger.warning("Priority model failed, LLM priority stands: %s", e)
+                signals["priority_model"] = None
+        return signals
 
     # ------------------------------------------------------------------
     # LLM call + parsing
@@ -1638,6 +1691,7 @@ class TriageAssistant:
             if include_similar_issues
             else []
         )
+        pm = signals.get("priority_model")
         if reason is None:
             priority_rationale = "LLM parse failure — priority defaulting to medium."
             triage_summary = (
@@ -1659,8 +1713,13 @@ class TriageAssistant:
             expected_resolution_upper_days=float(signals.get("hi_days", 30.0)),
             resolution_bucket=signals.get("resolution_bucket", "days"),
             resolution_confidence_pct=float(signals.get("resolution_conf_pct", 33.0)),
-            priority_guess="medium",
-            priority_rationale=priority_rationale,
+            priority_guess="medium" if pm is None else pm.label,
+            priority_rationale=(
+                priority_rationale
+                if pm is None
+                else f"{reason or 'LLM parse failure'} — "
+                + model_rationale(pm.label, pm.proba, pm.label)
+            ),
             suggested_assignee_class="unknown",
             suggested_next_steps=["Manual triage required — LLM response parsing failed."],
             triage_summary=triage_summary,

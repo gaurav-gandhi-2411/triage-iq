@@ -585,6 +585,11 @@
   }
  },
  "naive_median_h": 842.2901388888889,
+ "post_hoc_notes": [
+  "C1 passes the median-AE serving rule vs naive (+5.30 d [1.60, 9.80]) but is significantly worse than M2 alone on median AE (-3.26 d [-6.07, -0.44]) and mean AE (-4.62 d [-6.23, -3.11]); it is dominated by M2 and is NOT recommended. `served` fields are mechanical rule outputs, not serving decisions; serving changes are GG's decision.",
+  "K1 does not beat naive (median AE gain -0.80 d [-4.66, 5.53]; mean AE -23.38 d worse); on validation neither K1 nor C1 beat naive.",
+  "Evaluated on closed issues only (896 of 1583 eligible test issues); caveats shared with Phase 4: embeddings from scrape-time text, reopen events ignored."
+ ],
  "provenance": {
   "git_sha": "8a1c5030a9f3b8a676bb5688c57c637ea5f0af7d",
   "sha256": {

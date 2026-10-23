@@ -1,0 +1,339 @@
+{
+ "design": "(2026-10-23; do not change after seeing test results).\nContext: the test split was already used once by the Phase 4 models M0-M2 (qp4_resolution.py,\nnaive = train closed median 35.1 d). The new model ids here (K1, C1) are each tested once; the\ntest split is therefore not fresh for the study as a whole, only for these two ids.\nReference set: TRAIN-split issues only (all train rows of qp4's feature table, as in qp4's kNN\nfeature). Embeddings: plain BGE document embeddings for query and reference (the same files and\nsymmetric issue-to-issue use as qp4; the `issues_query_instr` variant is NOT used).\nCensoring at query time: for a query q created at t_q, a candidate neighbour n must be created\nbefore t_q (else nothing about it was knowable) and n != q. n contributes an observed duration\n(n.resolution) iff closed_at_n <= t_q; otherwise it is right-censored at t_q - created_n (this\nincludes issues that are still open at the scrape cutoff). The k nearest candidates by cosine are\ntaken AFTER this eligibility filter (the k most similar issues that already existed).\nK1: Kaplan-Meier median over the k neighbours' (duration, event) pairs (smallest event time with\nS <= 0.5); if the curve never reaches 0.5 the naive train closed median (35.1 d) is used and the\nfallback is counted. k is selected on VALIDATION from {5, 10, 20, 50} by median AE (days) on the\nclosed eligible validation issues (qp4's M2 closed-only population), tie-break mean AE. The\ninterval for K1 is the KM 10%/90% quantiles of the neighbours (naive empirical quantile if\nundefined), CQR-adjusted on validation closed issues exactly like qp4. No similarity-weighted\nvariant (K2): it would add a temperature hyper-parameter, not trivially cheap.\nC1 = geometric mean of K1's estimate and the saved Phase 4 M2 point (pred_*.parquet from qp4; M2\nis not retrained); interval ends are combined the same way; no IBS for C1 (no survival curve).\nEvaluation = qp4's code paths (evaluate_model, paired_verdict): median/mean AE (days) vs naive M0a\non closed eligible test issues, paired bootstrap 2000 draws seed 42, Harrell C on ALL eligible\ntest issues with censoring (risk = -estimate), IBS (IPCW, censoring KM from train) as the\ncensoring-aware full-population view for K1, coverage/width of the 80% interval. Secondary\npaired comparison K1 and C1 against M2. Serving rule (spec section 9): a point is served only if\nthe median-AE gain vs naive has a 95% CI lower bound > 0. Nothing in production changes here.",
+ "models": {
+  "qp3b_C1_geomean_K1_M2": {
+   "split_manifest_sha256": "b8c0dfee4e228c3a13cea52ccd008fad837294629de91c5ee7047288c8559247",
+   "validation": {
+    "ae_days_mean": {
+     "ci95": [
+      58.140156658478396,
+      68.01229089929895
+     ],
+     "n": 749,
+     "point": 63.13137973803386
+    },
+    "ae_days_median": {
+     "ci95": [
+      32.74389499958553,
+      42.48203362078028
+     ],
+     "n": 749,
+     "point": 37.0337757628054
+    },
+    "ae_log_mean": {
+     "ci95": [
+      1.6195945858331489,
+      1.8175164369003909
+     ],
+     "n": 749,
+     "point": 1.7172104958096142
+    },
+    "ae_log_median": {
+     "ci95": [
+      1.2496007172558237,
+      1.4653538608144174
+     ],
+     "n": 749,
+     "point": 1.3712810583012285
+    },
+    "bucket_acc": {
+     "ci95": [
+      0.30173564753004006,
+      0.3671562082777036
+     ],
+     "n": 749,
+     "point": 0.33511348464619495
+    },
+    "bucket_acc_majority": {
+     "ci95": [
+      0.34843124165554074,
+      0.4165554072096128
+     ],
+     "n": 749,
+     "point": 0.38317757009345793
+    },
+    "bucket_acc_minus_majority": {
+     "ci95": [
+      -0.08277703604806408,
+      -0.010680907877169521
+     ],
+     "n": 749,
+     "point": -0.04806408544726298
+    },
+    "c_index": {
+     "ci95": [
+      0.6451203424912384,
+      0.685258516788982
+     ],
+     "n": 885,
+     "point": 0.6644987288835951
+    },
+    "censored_share": 0.15367231638418077,
+    "coverage80": {
+     "ci95": [
+      0.7730307076101469,
+      0.8277703604806409
+     ],
+     "n": 749,
+     "point": 0.8010680907877169
+    },
+    "coverage80_followup_ge180d": {
+     "ci95": [
+      0.7730307076101469,
+      0.8277703604806409
+     ],
+     "n": 749,
+     "point": 0.8010680907877169
+    },
+    "cqr_qhat_log": -0.3896708702131342,
+    "fallback_rate": 0.007909604519774011,
+    "mean_width_days": {
+     "ci95": [
+      197.832452323138,
+      208.8218389589011
+     ],
+     "n": 749,
+     "point": 203.35763516593028
+    },
+    "median_width_days": 223.56756906111525,
+    "n": 885,
+    "n_closed": 749,
+    "pred_file": "pred_validation.parquet",
+    "pred_sha256": "1ef6fe4ce3662a3f81a2bfe3bcea9eb558dbb8ebf32782ca435f938e02853c76",
+    "vs_m2": {
+     "mean_ae_gain_days": {
+      "ci95": [
+       -0.13813836041442132,
+       3.784184419834254
+      ],
+      "n": 749,
+      "point": 1.8393927569532025
+     },
+     "median_ae_gain_days": {
+      "ci95": [
+       -6.028719783759034,
+       2.141643438820452
+      ],
+      "n": 749,
+      "point": -3.1094839695224508
+     },
+     "served": false
+    },
+    "vs_naive": {
+     "mean_ae_gain_days": {
+      "ci95": [
+       3.685552121750893,
+       9.815641658156629
+      ],
+      "n": 749,
+      "point": 6.7102182027390285
+     },
+     "median_ae_gain_days": {
+      "ci95": [
+       -7.7414401601321305,
+       1.6331133916181686
+      ],
+      "n": 749,
+      "point": -2.400344049842431
+     },
+     "served": false
+    }
+   }
+  },
+  "qp3b_K1_knn_km_median": {
+   "split_manifest_sha256": "b8c0dfee4e228c3a13cea52ccd008fad837294629de91c5ee7047288c8559247",
+   "validation": {
+    "ae_days_mean": {
+     "ci95": [
+      70.44593137667353,
+      83.73519327139117
+     ],
+     "n": 749,
+     "point": 77.07613452968155
+    },
+    "ae_days_median": {
+     "ci95": [
+      33.35341435185185,
+      46.471863425925925
+     ],
+     "n": 749,
+     "point": 38.54554398148148
+    },
+    "ae_log_mean": {
+     "ci95": [
+      1.6942039862548057,
+      1.9181584609445546
+     ],
+     "n": 749,
+     "point": 1.8093748619062808
+    },
+    "ae_log_median": {
+     "ci95": [
+      1.351206960625757,
+      1.6245196124550265
+     ],
+     "n": 749,
+     "point": 1.5118054016285187
+    },
+    "bucket_acc": {
+     "ci95": [
+      0.27903871829105475,
+      0.3444592790387183
+     ],
+     "n": 749,
+     "point": 0.31108144192256343
+    },
+    "bucket_acc_majority": {
+     "ci95": [
+      0.34843124165554074,
+      0.4165554072096128
+     ],
+     "n": 749,
+     "point": 0.38317757009345793
+    },
+    "bucket_acc_minus_majority": {
+     "ci95": [
+      -0.11081441922563418,
+      -0.029372496662216252
+     ],
+     "n": 749,
+     "point": -0.0720961281708945
+    },
+    "c_index": {
+     "ci95": [
+      0.6336576945296548,
+      0.6749130351469489
+     ],
+     "n": 885,
+     "point": 0.653802461427061
+    },
+    "censored_share": 0.15367231638418077,
+    "coverage80": {
+     "ci95": [
+      0.7730307076101469,
+      0.8277703604806409
+     ],
+     "n": 749,
+     "point": 0.8010680907877169
+    },
+    "coverage80_followup_ge180d": {
+     "ci95": [
+      0.7730307076101469,
+      0.8277703604806409
+     ],
+     "n": 749,
+     "point": 0.8010680907877169
+    },
+    "cqr_qhat_log": -0.5522933804139551,
+    "fallback_rate": 0.007909604519774011,
+    "ibs_ipcw_split_G": {
+     "ci95": [
+      0.14637096988617695,
+      0.15951079689214515
+     ],
+     "n": 885,
+     "point": 0.15290529012979834
+    },
+    "ibs_ipcw_train_G": {
+     "ci95": [
+      0.14313061883047704,
+      0.15630830946776608
+     ],
+     "n": 885,
+     "point": 0.14966919499048378
+    },
+    "mean_width_days": {
+     "ci95": [
+      221.04623998760226,
+      237.0781847465566
+     ],
+     "n": 749,
+     "point": 229.02187287571113
+    },
+    "median_width_days": 270.72657015784364,
+    "n": 885,
+    "n_closed": 749,
+    "pred_file": "pred_validation.parquet",
+    "pred_sha256": "1ef6fe4ce3662a3f81a2bfe3bcea9eb558dbb8ebf32782ca435f938e02853c76",
+    "vs_m2": {
+     "mean_ae_gain_days": {
+      "ci95": [
+       -18.02270801988605,
+       -6.576911065483502
+      ],
+      "n": 749,
+      "point": -12.105362034694494
+     },
+     "median_ae_gain_days": {
+      "ci95": [
+       -10.611820701087444,
+       1.4318638488777464
+      ],
+      "n": 749,
+      "point": -4.6212521881985325
+     },
+     "served": false
+    },
+    "vs_naive": {
+     "mean_ae_gain_days": {
+      "ci95": [
+       -13.522573104417017,
+       -0.8680841324312062
+      ],
+      "n": 749,
+      "point": -7.234536588908668
+     },
+     "median_ae_gain_days": {
+      "ci95": [
+       -11.801387442129625,
+       1.2415743634259262
+      ],
+      "n": 749,
+      "point": -3.912112268518513
+     },
+     "served": false
+    }
+   }
+  }
+ },
+ "naive_median_h": 842.2901388888889,
+ "provenance": {
+  "git_sha": "2d3b7eb3a7e2c474259e23ecfae3368d7bf0d304",
+  "sha256": {
+   "emb": "3ef8a7deefb8783743703a99dca4b31544a6739dc3f66bd6828d8a65b6694c61",
+   "issues": "1331dd34093e28a4c6931e13ae6c327c80a2b773495a17e89a46e518ff43abac",
+   "qp4_features": "ff11393bd8fc9893272ffdc9ef48d94d54d5d1ba1eb87b5412c5866a7ff29836",
+   "test": "ee1b53738dcc790dfbddcebb1c7c699ad788b0ad7279c42dbc256d2ebe4fd315",
+   "train": "71f1ee45b35752fe4ce4909bc86a8588865f201edd8f8c5535677f141764b1d6",
+   "validation": "84cd0a93ea7ce68106b98eb2b7b3b0f2590af8946899973fd039ba46efe5c72f"
+  }
+ },
+ "selected_k": 20,
+ "split_manifest_sha256": "b8c0dfee4e228c3a13cea52ccd008fad837294629de91c5ee7047288c8559247",
+ "validation_k_table": [
+  {
+   "k": 5,
+   "val_fallback_rate": 0.08135593220338982,
+   "val_mean_ae_days": 89.17745023457202,
+   "val_median_ae_days": 45.43850694444444
+  },
+  {
+   "k": 10,
+   "val_fallback_rate": 0.023728813559322035,
+   "val_mean_ae_days": 77.07449522975078,
+   "val_median_ae_days": 39.16850694444443
+  },
+  {
+   "k": 20,
+   "val_fallback_rate": 0.007909604519774011,
+   "val_mean_ae_days": 77.07613452968155,
+   "val_median_ae_days": 38.54554398148148
+  },
+  {
+   "k": 50,
+   "val_fallback_rate": 0.0,
+   "val_mean_ae_days": 67.20166777926123,
+   "val_median_ae_days": 39.143379629629635
+  }
+ ]
+}

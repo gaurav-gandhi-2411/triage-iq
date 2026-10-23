@@ -1,0 +1,895 @@
+{
+ "adr_0070_sha256": "95129c95809c21574ed34d41a46358149322680a7ccb0e42e90f4b62e7b761ea",
+ "classes": [
+  "WSL",
+  "accessibility-signal",
+  "api",
+  "authentication",
+  "breadcrumbs",
+  "chat",
+  "code-cli",
+  "code-lens",
+  "command-center",
+  "comments",
+  "config",
+  "cross-file-editing",
+  "css-less-scss",
+  "custom-editors",
+  "debug",
+  "dictation",
+  "diff-editor",
+  "editor",
+  "emmet",
+  "error-list",
+  "extensions",
+  "file",
+  "font-rendering",
+  "formatting",
+  "getting-started",
+  "git",
+  "github",
+  "gpu",
+  "grammar",
+  "html",
+  "inlay-hints",
+  "inline-chat",
+  "inline-completions",
+  "install-update",
+  "interactive-window",
+  "issue-reporter",
+  "javascript",
+  "json",
+  "keybindings",
+  "l10n-platform",
+  "languages-basic",
+  "languages-diagnostics",
+  "layout",
+  "log",
+  "markdown-ext",
+  "menus",
+  "merge-editor",
+  "multi-diff-editor",
+  "native-file-dialog",
+  "network",
+  "notebook",
+  "open-editors",
+  "outline",
+  "output",
+  "panel-chat",
+  "proxy",
+  "quick-chat",
+  "quick-open",
+  "quick-pick",
+  "remote",
+  "scm",
+  "search",
+  "settings",
+  "simple-file-dialog",
+  "snippets",
+  "suggest",
+  "tasks",
+  "telemetry",
+  "terminal",
+  "testing",
+  "themes",
+  "titlebar",
+  "tree-sitter",
+  "tree-sitter-autoindent-candidate",
+  "tree-views",
+  "tree-widget",
+  "typescript",
+  "unc",
+  "user-profiles",
+  "vscode-build",
+  "vscode.dev",
+  "web",
+  "webview",
+  "workbench",
+  "workspace-trust",
+  "other"
+ ],
+ "classes_sha256_excluding_other": "95129c95809c21574ed34d41a46358149322680a7ccb0e42e90f4b62e7b761ea",
+ "conformal_selection": {
+  "alpha": 0.1,
+  "n": 5691,
+  "population": "in-family only (V2)",
+  "selected": {
+   "name": "lac"
+  },
+  "table": [
+   {
+    "coverage": {
+     "mean": 0.9720941672522838,
+     "sd": 0.002697610183248183
+    },
+    "set_size_mean": {
+     "mean": 41.541215741391426,
+     "sd": 1.165774612817775
+    },
+    "spec": {
+     "name": "aps_nonrandomised"
+    }
+   },
+   {
+    "coverage": {
+     "mean": 0.8984750527055517,
+     "sd": 0.007306686098033748
+    },
+    "set_size_mean": {
+     "mean": 13.537069571328182,
+     "sd": 0.5925044102103156
+    },
+    "spec": {
+     "name": "aps_randomised"
+    }
+   },
+   {
+    "coverage": {
+     "mean": 0.8987280393534786,
+     "sd": 0.007877469866413122
+    },
+    "set_size_mean": {
+     "mean": 3.7622066057624743,
+     "sd": 0.08174717390275807
+    },
+    "spec": {
+     "k_reg": 1,
+     "lam": 0.1,
+     "name": "raps_l0.1_k1"
+    }
+   },
+   {
+    "coverage": {
+     "mean": 0.8984820801124387,
+     "sd": 0.008010853849378665
+    },
+    "set_size_mean": {
+     "mean": 3.5972452565003517,
+     "sd": 0.17444759743539434
+    },
+    "spec": {
+     "name": "lac"
+    }
+   }
+  ]
+ },
+ "design": "(2026-10-23; do not change after seeing test results). Reuses the k8s\nPhase 1 pieces unchanged (qp1_tfidf_lr fit_lr / proba_full / GRID / vectoriser settings,\nqp1_eval bootstrap / Wilson / ResultsWriter test-once guard, qp1_conformal score functions); no\nk8s file is modified.\n * Taxonomy (ADR-0070): population = issues with >= 1 non-excluded label at final; primary =\n   qp0_ceiling_labels.per_issue with family = qp2_vscode_taxonomy.not_excluded; gold class =\n   parent_of(primary) if in the 85-class list else `other` (last class). The class list is\n   regenerated from the TRAIN split only (parents carried by >= 30 train issues, labels_final) and\n   its sha256 is asserted equal to ADR-0070's. Train on train-split classifier_eligible labelled\n   issues; validation / test the same filter. Text = title + \"\\n\" + body[:4000] (as k8s).\n * Candidates (model ids): V0 majority_prior_v0 = train class frequencies as probabilities.\n   V1 tfidf_lr_v1 = k8s candidate 1 exactly (TF-IDF word 1-2 grams, min_df 2, sublinear, 200k;\n   multinomial LR; 86 classes incl. `other`; grid C {1,4,16,64} x class_weight {None,balanced},\n   best on validation by the key below, then smaller C). V2 tfidf_lr_family_only_v2 = same\n   features / grid, trained on issues whose gold is NOT `other` (85 classes, `other` column = 0);\n   it abstains (top-1 becomes `other`) when its max probability < tau, tau = the value on the\n   validation max-probability grid (200 quantiles) maximising abstention F1 against gold `other`\n   (ties: higher precision). Production baseline production_vscode_ovr = the served\n   data/models classifier (calibrated sigmoid scores, load_classifier), each class mapped through\n   parent_of -> 85 classes else `other`, score of a parent = max over its source classes; a fixed\n   model, scored on validation and test without selection. Embedding / fine-tuned candidates are\n   NOT run (GPU quota).\n * Scoring. HEADLINE (strict): top-k hit iff gold != other and gold in the model's top-k ranked\n   classes; a predicted `other` never earns a hit; V2's strict ranking is its family ranking\n   (abstention is reported next to it, not applied to it). k8s-convention variant (lenient):\n   `other` is an ordinary class, a gold-other issue is a hit when `other` is predicted (top-1) or\n   in the top-3; V2's lenient ranking puts `other` first when it abstains. Also: in-family strict\n   top-1/top-3 (issues with gold != other), strict any-valid top-1/top-3 (true set minus `other`),\n   macro-F1 over classes present in y_true on the lenient top-1, abstention rate / precision /\n   recall (abstain = lenient top-1 is `other`; precision vs gold other; recall of gold other),\n   the empirical coverage bound (share of gold != other), Wilson 95% for proportions, 2000-sample\n   percentile bootstrap (seed 42), paired differences on shared resamples.\n * Selection (validation): among V0 / V1(best row) / V2(best row), the highest strict top-3, tie\n   macro-F1, tie simpler (V0 < V1 < V2). Production is never a selection candidate.\n * Conformal (stage `conformal`, VALIDATION ONLY, exploratory per ADR-0069): alpha 0.1; candidate\n   scores aps_nonrandomised, aps_randomised, raps (lambda 0.1, k_reg 1, as k8s), lac (qp1_conformal\n   definitions); 50 seeded random 50/50 splits of the labelled eligible validation set (calibrate on\n   one half, evaluate coverage w.r.t. the primary label, `other` included, and set size on the\n   other); choose by: mean coverage within 0.90 +/- 0.02, then smallest mean set size, then name;\n   if none qualifies, the coverage closest to 0.90. For V2 the population is in-family issues\n   only (its `other` column is 0, so a gold-other issue cannot be covered). The choice is frozen in\n   ADR-0071 before the test stage, which refuses to run unless that ADR names the chosen score.\n * Test (stage `test`, explicit): test labels are read only there; selected model, production and\n   V0 are each evaluated once per report file (ResultsWriter guard); paired bootstrap of the\n   selected model vs production and vs V0 (strict top-1, strict top-3, in-family top-3, lenient\n   top-3); conformal calibrated on FULL validation applied to test; CPU latency (batch ms/issue\n   and single-issue p50 / p95 over the first 200 test issues). Probabilities and model files go to\n   D:\\triageiq-data\\models\\microsoft__vscode\\phase1\\, never the repo.",
+ "harness_design": "(2026-10-20; do not change after seeing test results). Pure functions on\n(y_true_primary, y_true_sets, proba, classes); labels are strings already mapped to the modelled\nclasses + `other`.\n * top-1 / top-3 accuracy against the PRIMARY label; any-valid top-1 (prediction in the true\n   label set) and any-valid top-3 (any of the top-3 in the set); macro-F1 over the classes present\n   in y_true; NLL (probabilities clipped at 1e-12); ECE with 15 equal-width bins on the top-1\n   confidence. Ties in probability are broken by class order (stable sort).\n * Conformal sets by APS, non-randomised: a label's score is the cumulative probability mass of\n   all classes ranked at or above it; calibration scores use the PRIMARY label on VALIDATION;\n   qhat = the ceil((n + 1)(1 - alpha))-th smallest score (inf when that exceeds n), alpha = 0.05;\n   a class is in the set iff its score <= qhat, and the top-1 class is always included (non-empty\n   sets; conservative). Reported: coverage w.r.t. primary, coverage w.r.t. any-valid (set meets\n   the true set), mean / median set size.\n * Temperature scaling: T fitted on VALIDATION by minimising NLL of softmax(log p / T), T in\n   [0.05, 20]; ECE reported before and after.\n * Bootstrap 95% percentile CIs over issues: 2000 resamples, seed 42, paired differences use the\n   same resampled indices; Wilson 95% for proportions.\n * Guard: test metrics are computed only with final=True, and ResultsWriter refuses a second test\n   evaluation of the same model id in the same report file. Each entry records the model id, the\n   sha256 of the prediction file and the sha256 of the frozen split manifest.",
+ "models": {
+  "majority_prior_v0": {
+   "split_manifest_sha256": "eabe05cff733edf3492d2d11b983664f2eb015ee09d0ab4e4044d5c01c25c0bd",
+   "validation": {
+    "abstention": {
+     "precision": {
+      "k": 0,
+      "n": 0,
+      "rate": null,
+      "wilson95": null
+     },
+     "rate": {
+      "k": 0,
+      "n": 6419,
+      "rate": 0.0,
+      "wilson95": [
+       0.0,
+       0.0005981153264000782
+      ]
+     },
+     "recall": {
+      "k": 0,
+      "n": 728,
+      "rate": 0.0,
+      "wilson95": [
+       0.0,
+       0.005249223329201291
+      ]
+     }
+    },
+    "anyvalid_strict_top1": {
+     "ci95": [
+      0.0671405203302695,
+      0.07991899049696215
+     ],
+     "n": 6419,
+     "point": 0.07337591525159683
+    },
+    "anyvalid_strict_top3": {
+     "ci95": [
+      0.14768655553824583,
+      0.1659136937217635
+     ],
+     "n": 6419,
+     "point": 0.15672223087708365
+    },
+    "coverage_bound_strict": {
+     "k": 5691,
+     "n": 6419,
+     "rate": 0.8865866957470011,
+     "wilson95": [
+      0.8785969676324111,
+      0.8941139770061738
+     ]
+    },
+    "in_family_top1": {
+     "ci95": [
+      0.06747496046389036,
+      0.08047794763661922
+     ],
+     "n": 5691,
+     "point": 0.07415217009312951,
+     "wilson95": [
+      0.06762808071232387,
+      0.08125079240681612
+     ]
+    },
+    "in_family_top3": {
+     "ci95": [
+      0.14883148831488316,
+      0.16710595677385345
+     ],
+     "n": 5691,
+     "point": 0.1579687225443683,
+     "wilson95": [
+      0.14872413240096322,
+      0.1676747644533409
+     ]
+    },
+    "lenient_top1": {
+     "ci95": [
+      0.05982240224334008,
+      0.07166225268733448
+     ],
+     "n": 6419,
+     "point": 0.06574232746533729,
+     "wilson95": [
+      0.05993544431140686,
+      0.07206868295836734
+     ]
+    },
+    "lenient_top3": {
+     "ci95": [
+      0.1311730799189905,
+      0.14862128057329801
+     ],
+     "n": 6419,
+     "point": 0.14005296775198628,
+     "wilson95": [
+      0.13177813135122068,
+      0.1487583838261114
+     ]
+    },
+    "macro_f1": {
+     "ci95": [
+      0.0013867589649950865,
+      0.0016757328108484362
+     ],
+     "n": 6419,
+     "point": 0.0014514561854562028
+    },
+    "n": 6419,
+    "n_in_family": 5691,
+    "pred_file": "majority_prior.parquet",
+    "pred_sha256": "beb8e0721e1eff1eec3f7e8a8c603dc78d645d0dbf6c1ba0c9044f1712ade7af",
+    "split": "validation",
+    "strict_top1": {
+     "ci95": [
+      0.05982240224334008,
+      0.07166225268733448
+     ],
+     "n": 6419,
+     "point": 0.06574232746533729,
+     "wilson95": [
+      0.05993544431140686,
+      0.07206868295836734
+     ]
+    },
+    "strict_top3": {
+     "ci95": [
+      0.1311730799189905,
+      0.14862128057329801
+     ],
+     "n": 6419,
+     "point": 0.14005296775198628,
+     "wilson95": [
+      0.13177813135122068,
+      0.1487583838261114
+     ]
+    }
+   }
+  },
+  "production_vscode_ovr": {
+   "split_manifest_sha256": "eabe05cff733edf3492d2d11b983664f2eb015ee09d0ab4e4044d5c01c25c0bd",
+   "validation": {
+    "abstention": {
+     "precision": {
+      "k": 392,
+      "n": 3412,
+      "rate": 0.11488862837045721,
+      "wilson95": [
+       0.1046188628438097,
+       0.12602461898509013
+      ]
+     },
+     "rate": {
+      "k": 3412,
+      "n": 6419,
+      "rate": 0.5315469699330114,
+      "wilson95": [
+       0.5193242519578813,
+       0.5437319504557048
+      ]
+     },
+     "recall": {
+      "k": 392,
+      "n": 728,
+      "rate": 0.5384615384615384,
+      "wilson95": [
+       0.5021406548235783,
+       0.5743786356895599
+      ]
+     }
+    },
+    "anyvalid_strict_top1": {
+     "ci95": [
+      0.05172145193955445,
+      0.06262657734849665
+     ],
+     "n": 6419,
+     "point": 0.05717401464402555
+    },
+    "anyvalid_strict_top3": {
+     "ci95": [
+      0.08490419068390716,
+      0.09939242872721608
+     ],
+     "n": 6419,
+     "point": 0.0920704159526406
+    },
+    "coverage_bound_strict": {
+     "k": 5691,
+     "n": 6419,
+     "rate": 0.8865866957470011,
+     "wilson95": [
+      0.8785969676324111,
+      0.8941139770061738
+     ]
+    },
+    "in_family_top1": {
+     "ci95": [
+      0.05359339307678791,
+      0.06589351607801792
+     ],
+     "n": 5691,
+     "point": 0.05974345457740292,
+     "wilson95": [
+      0.053877493756811425,
+      0.0662033878606861
+     ]
+    },
+    "in_family_top3": {
+     "ci95": [
+      0.08856088560885608,
+      0.10419961342470567
+     ],
+     "n": 5691,
+     "point": 0.09629239149534352,
+     "wilson95": [
+      0.08889818324781447,
+      0.10423126217872734
+     ]
+    },
+    "lenient_top1": {
+     "ci95": [
+      0.10655865399594952,
+      0.12182972425611463
+     ],
+     "n": 6419,
+     "point": 0.11403645427636704,
+     "wilson95": [
+      0.10649027700441584,
+      0.12204433297257629
+     ]
+    },
+    "lenient_top3": {
+     "ci95": [
+      0.16497896868671133,
+      0.1836734693877551
+     ],
+     "n": 6419,
+     "point": 0.17432621903723322,
+     "wilson95": [
+      0.16524045873171594,
+      0.1838015603023515
+     ]
+    },
+    "macro_f1": {
+     "ci95": [
+      0.03810319849724414,
+      0.057494902033450306
+     ],
+     "n": 6419,
+     "point": 0.04709976994705962
+    },
+    "n": 6419,
+    "n_in_family": 5691,
+    "pred_file": "validation_prod.parquet",
+    "pred_sha256": "25ba522fab222f461858053faf03f8f7bbc9a1f9964f6206199083389dfdd0d5",
+    "split": "validation",
+    "strict_top1": {
+     "ci95": [
+      0.04767097678766163,
+      0.0584203146907618
+     ],
+     "n": 6419,
+     "point": 0.0529677519862907,
+     "wilson95": [
+      0.04775112913526934,
+      0.05871912851517623
+     ]
+    },
+    "strict_top3": {
+     "ci95": [
+      0.07851690294438386,
+      0.09238588565197069
+     ],
+     "n": 6419,
+     "point": 0.08537155320143325,
+     "wilson95": [
+      0.07878110667917984,
+      0.09245799098127003
+     ]
+    }
+   }
+  },
+  "tfidf_lr_family_only_v2": {
+   "split_manifest_sha256": "eabe05cff733edf3492d2d11b983664f2eb015ee09d0ab4e4044d5c01c25c0bd",
+   "validation": {
+    "abstention": {
+     "precision": {
+      "k": 348,
+      "n": 1798,
+      "rate": 0.1935483870967742,
+      "wilson95": [
+       0.17594766917688465,
+       0.21245583976640986
+      ]
+     },
+     "rate": {
+      "k": 1798,
+      "n": 6419,
+      "rate": 0.28010593550397256,
+      "wilson95": [
+       0.2692545061687732,
+       0.29122040885949096
+      ]
+     },
+     "recall": {
+      "k": 348,
+      "n": 728,
+      "rate": 0.47802197802197804,
+      "wilson95": [
+       0.441946413118841,
+       0.5143282780165085
+      ]
+     }
+    },
+    "anyvalid_strict_top1": {
+     "ci95": [
+      0.608817572830659,
+      0.6323414862128057
+     ],
+     "n": 6419,
+     "point": 0.6206574232746533
+    },
+    "anyvalid_strict_top3": {
+     "ci95": [
+      0.7867230098146129,
+      0.8062003427325128
+     ],
+     "n": 6419,
+     "point": 0.7965415173703069
+    },
+    "coverage_bound_strict": {
+     "k": 5691,
+     "n": 6419,
+     "rate": 0.8865866957470011,
+     "wilson95": [
+      0.8785969676324111,
+      0.8941139770061738
+     ]
+    },
+    "in_family_top1": {
+     "ci95": [
+      0.6561237040941837,
+      0.6802011948690915
+     ],
+     "n": 5691,
+     "point": 0.6685995431382885,
+     "wilson95": [
+      0.6562595500249304,
+      0.6807120700461178
+     ]
+    },
+    "in_family_top3": {
+     "ci95": [
+      0.8708487084870848,
+      0.8877174486030575
+     ],
+     "n": 5691,
+     "point": 0.8794587945879458,
+     "wilson95": [
+      0.8707424457409003,
+      0.8876631963054036
+     ]
+    },
+    "lenient_top1": {
+     "ci95": [
+      0.5279638572986447,
+      0.5525782832216857
+     ],
+     "n": 6419,
+     "point": 0.5404268577660072,
+     "wilson95": [
+      0.5282144910230929,
+      0.5525908646624654
+     ]
+    },
+    "lenient_top3": {
+     "ci95": [
+      0.8033961676273563,
+      0.8225580308459262
+     ],
+     "n": 6419,
+     "point": 0.8132107804954043,
+     "wilson95": [
+      0.8034899130307416,
+      0.822556975623651
+     ]
+    },
+    "macro_f1": {
+     "ci95": [
+      0.3765036709818165,
+      0.44600714097553146
+     ],
+     "n": 6419,
+     "point": 0.41582711780174636
+    },
+    "n": 6419,
+    "n_in_family": 5691,
+    "pred_file": "validation_v2.parquet",
+    "pred_sha256": "149de08614b05c9d3bb499c31f95d33f668fdcdb1e9293ff9b234315186f72e1",
+    "split": "validation",
+    "strict_top1": {
+     "ci95": [
+      0.5809277145972893,
+      0.6049228851846082
+     ],
+     "n": 6419,
+     "point": 0.5927714597289298,
+     "wilson95": [
+      0.5806999738273674,
+      0.6047319695666594
+     ]
+    },
+    "strict_top3": {
+     "ci95": [
+      0.7694344913537934,
+      0.7896907618009036
+     ],
+     "n": 6419,
+     "point": 0.7797164667393675,
+     "wilson95": [
+      0.7694121279750235,
+      0.789686200092105
+     ]
+    }
+   }
+  },
+  "tfidf_lr_v1": {
+   "split_manifest_sha256": "eabe05cff733edf3492d2d11b983664f2eb015ee09d0ab4e4044d5c01c25c0bd",
+   "validation": {
+    "abstention": {
+     "precision": {
+      "k": 156,
+      "n": 377,
+      "rate": 0.41379310344827586,
+      "wilson95": [
+       0.3651897046976609,
+       0.4641356631193003
+      ]
+     },
+     "rate": {
+      "k": 377,
+      "n": 6419,
+      "rate": 0.05873188970244586,
+      "wilson95": [
+       0.0532395230516075,
+       0.06475211479292538
+      ]
+     },
+     "recall": {
+      "k": 156,
+      "n": 728,
+      "rate": 0.21428571428571427,
+      "wilson95": [
+       0.18601894841245567,
+       0.24555203634708786
+      ]
+     }
+    },
+    "anyvalid_strict_top1": {
+     "ci95": [
+      0.5910577971646674,
+      0.6148932855584982
+     ],
+     "n": 6419,
+     "point": 0.6030534351145038
+    },
+    "anyvalid_strict_top3": {
+     "ci95": [
+      0.7678766162953731,
+      0.7879770992366413
+     ],
+     "n": 6419,
+     "point": 0.7781585916809471
+    },
+    "coverage_bound_strict": {
+     "k": 5691,
+     "n": 6419,
+     "rate": 0.8865866957470011,
+     "wilson95": [
+      0.8785969676324111,
+      0.8941139770061738
+     ]
+    },
+    "in_family_top1": {
+     "ci95": [
+      0.6362677912493411,
+      0.6606923212089264
+     ],
+     "n": 5691,
+     "point": 0.6490950623791952,
+     "wilson95": [
+      0.6365985759365264,
+      0.6613903971018108
+     ]
+    },
+    "in_family_top3": {
+     "ci95": [
+      0.850465647513618,
+      0.8685643999297136
+     ],
+     "n": 5691,
+     "point": 0.8596028817431032,
+     "wilson95": [
+      0.8503342018089954,
+      0.868386403167972
+     ]
+    },
+    "lenient_top1": {
+     "ci95": [
+      0.5877862595419847,
+      0.6117775354416576
+     ],
+     "n": 6419,
+     "point": 0.5997818974918212,
+     "wilson95": [
+      0.5877398417782602,
+      0.6117045910410079
+     ]
+    },
+    "lenient_top3": {
+     "ci95": [
+      0.8329957937373422,
+      0.8504439943916497
+     ],
+     "n": 6419,
+     "point": 0.841719894064496,
+     "wilson95": [
+      0.8325864976784022,
+      0.8504445146386382
+     ]
+    },
+    "macro_f1": {
+     "ci95": [
+      0.41704208908984985,
+      0.4880100711187575
+     ],
+     "n": 6419,
+     "point": 0.4576170078563436
+    },
+    "n": 6419,
+    "n_in_family": 5691,
+    "pred_file": "validation_v1.parquet",
+    "pred_sha256": "640b843ca957dbbfa31526cc07b35a657f64d287d80473bdc3a05ba6df7119b2",
+    "split": "validation",
+    "strict_top1": {
+     "ci95": [
+      0.5633276211247857,
+      0.5874746845303007
+     ],
+     "n": 6419,
+     "point": 0.5754790465804642,
+     "wilson95": [
+      0.5633457520458,
+      0.5875220507659648
+     ]
+    },
+    "strict_top3": {
+     "ci95": [
+      0.7515189281819598,
+      0.77223866645895
+     ],
+     "n": 6419,
+     "point": 0.7621124785792179,
+     "wilson95": [
+      0.7515412381645902,
+      0.7723701720124879
+     ]
+    }
+   }
+  }
+ },
+ "not_run": "embedding / fine-tuned candidates blocked by Kaggle GPU quota",
+ "populations": {
+  "train_labelled_eligible": 18268,
+  "validation_labelled_eligible": 6419
+ },
+ "repo": "microsoft/vscode",
+ "selected_model": "tfidf_lr_family_only_v2",
+ "split_manifest_sha256": "eabe05cff733edf3492d2d11b983664f2eb015ee09d0ab4e4044d5c01c25c0bd",
+ "validation_grids": {
+  "v1": {
+   "best": {
+    "C": 64,
+    "class_weight": "balanced",
+    "fit_seconds": 305.33050480000384,
+    "macro_f1": 0.4576170078563436,
+    "tau": null,
+    "top3": 0.7621124785792179
+   },
+   "rows": [
+    {
+     "C": 1,
+     "class_weight": null,
+     "fit_seconds": 274.0905937999996,
+     "macro_f1": 0.18675176023583562,
+     "tau": null,
+     "top3": 0.6814145505530457
+    },
+    {
+     "C": 4,
+     "class_weight": null,
+     "fit_seconds": 368.1589590000003,
+     "macro_f1": 0.31534265295541575,
+     "tau": null,
+     "top3": 0.7317339149400218
+    },
+    {
+     "C": 16,
+     "class_weight": null,
+     "fit_seconds": 408.6738011000052,
+     "macro_f1": 0.37872214779860214,
+     "tau": null,
+     "top3": 0.7494936906060135
+    },
+    {
+     "C": 64,
+     "class_weight": null,
+     "fit_seconds": 360.6994627000022,
+     "macro_f1": 0.4129356443195473,
+     "tau": null,
+     "top3": 0.7496494781118554
+    },
+    {
+     "C": 1,
+     "class_weight": "balanced",
+     "fit_seconds": 80.32055440000113,
+     "macro_f1": 0.39915563272381394,
+     "tau": null,
+     "top3": 0.6890481383393052
+    },
+    {
+     "C": 4,
+     "class_weight": "balanced",
+     "fit_seconds": 151.37651000000187,
+     "macro_f1": 0.44065383469450625,
+     "tau": null,
+     "top3": 0.7568157033805889
+    },
+    {
+     "C": 16,
+     "class_weight": "balanced",
+     "fit_seconds": 268.65863970000646,
+     "macro_f1": 0.46220006861054724,
+     "tau": null,
+     "top3": 0.7605546035207976
+    },
+    {
+     "C": 64,
+     "class_weight": "balanced",
+     "fit_seconds": 305.33050480000384,
+     "macro_f1": 0.4576170078563436,
+     "tau": null,
+     "top3": 0.7621124785792179
+    }
+   ]
+  },
+  "v2": {
+   "best": {
+    "C": 64,
+    "class_weight": "balanced",
+    "fit_seconds": 238.97088000000076,
+    "macro_f1": 0.41582711780174636,
+    "tau": 0.3053865014180742,
+    "top3": 0.7797164667393675
+   },
+   "rows": [
+    {
+     "C": 1,
+     "class_weight": null,
+     "fit_seconds": 258.8405602999992,
+     "macro_f1": 0.15507767019966445,
+     "tau": 0.16844564882853508,
+     "top3": 0.6974606636547749
+    },
+    {
+     "C": 4,
+     "class_weight": null,
+     "fit_seconds": 293.3484885999933,
+     "macro_f1": 0.21907500211001454,
+     "tau": 0.31524615171390363,
+     "top3": 0.7526094407228541
+    },
+    {
+     "C": 16,
+     "class_weight": null,
+     "fit_seconds": 379.1814302999992,
+     "macro_f1": 0.30375381852560696,
+     "tau": 0.4184120592297426,
+     "top3": 0.7661629537311108
+    },
+    {
+     "C": 64,
+     "class_weight": null,
+     "fit_seconds": 328.42215769999893,
+     "macro_f1": 0.3250354179908929,
+     "tau": 0.522695109671949,
+     "top3": 0.7686555538245833
+    },
+    {
+     "C": 1,
+     "class_weight": "balanced",
+     "fit_seconds": 97.83573759999854,
+     "macro_f1": 0.4003373173205915,
+     "tau": 0.05392018063283211,
+     "top3": 0.6867113257516747
+    },
+    {
+     "C": 4,
+     "class_weight": "balanced",
+     "fit_seconds": 189.72946550000052,
+     "macro_f1": 0.41041725943774354,
+     "tau": 0.1524708764097908,
+     "top3": 0.7656955912135847
+    },
+    {
+     "C": 16,
+     "class_weight": "balanced",
+     "fit_seconds": 240.19072880000022,
+     "macro_f1": 0.4097957268247048,
+     "tau": 0.2424665982304794,
+     "top3": 0.7770680791400529
+    },
+    {
+     "C": 64,
+     "class_weight": "balanced",
+     "fit_seconds": 238.97088000000076,
+     "macro_f1": 0.41582711780174636,
+     "tau": 0.3053865014180742,
+     "top3": 0.7797164667393675
+    }
+   ]
+  }
+ }
+}

@@ -131,6 +131,21 @@ def test_priority_no_label_rows_is_unscorable_not_zero() -> None:
 # --- assembly and loaders -------------------------------------------------------------------
 
 
+def test_score_all_splits_by_repo_counts_degraded_and_joins_by_id() -> None:
+    rows = [row("a"), row("b", VSC, "editor"), row("c")]
+    records = {
+        "a": rec("a"),
+        "b": {**rec("b", "editor"), "metadata": {"llm_status": "degraded_provider_error"}},
+    }
+    out = om.score_all(om.join_records(rows, records))
+    assert set(out["by_repo"]) == {K8S, VSC}
+    assert out["pooled"]["n_rows"] == 3 and out["pooled"]["n_with_plan"] == 2
+    assert out["pooled"]["n_degraded_plans"] == 1
+    assert out["by_repo"][VSC]["component"]["strict"]["unweighted"]["point"] == 1.0
+    assert out["pooled"]["component"]["excluded_reasons"] == {"no_plan": 1}
+    json.dumps(out)  # report must be JSON-serialisable
+
+
 def test_loaders_roundtrip(tmp_path: Path) -> None:
     p = tmp_path / "plans.jsonl"
     p.write_text(json.dumps(rec("x")) + "\n\n" + json.dumps(rec("y")) + "\n", encoding="utf-8")
@@ -145,6 +160,16 @@ def test_loaders_roundtrip(tmp_path: Path) -> None:
 @pytest.mark.parametrize("bad", [None, "", "  "])
 def test_norm_label_blank(bad: object) -> None:
     assert om.norm_label(bad) == ""
+
+
+def test_moved_metrics_stay_importable_from_the_original_module() -> None:
+    from triage_iq.evaluation import objective_metrics_retrieval as moved
+
+    for name in ("relevance_metrics", "grounding_metrics", "resolution_metrics", "cited_numbers"):
+        assert getattr(om, name) is getattr(moved, name)
+    assert om.NAIVE_DAYS_DEFAULT is moved.NAIVE_DAYS_DEFAULT
+    with pytest.raises(AttributeError):
+        om.no_such_metric  # noqa: B018 - the access itself is the assertion
 
 
 def test_invalid_explicit_weights_default_to_one_and_are_counted() -> None:

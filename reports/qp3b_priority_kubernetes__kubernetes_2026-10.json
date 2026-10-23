@@ -110,6 +110,74 @@
    }
   }
  },
+ "p3_design": "(2026-10-23; committed with its validation table BEFORE its test\nevaluation; do not change after seeing test results). Context: P0 and P2 of qp3b_priority.py\nalready used the test split once. A verifier found that P2's labels_t72h kind/* and sig/* inputs\nare not creation-time (44/244 test issues had an input label applied within 60 s of or after the\nfirst priority label), while /triage runs on a just-created issue. P3 is the serve-time-feasible\nvariant and is evaluated on test exactly once (model id `p3_tfidf_creationmeta_lr`).\n * Same population, gold (3-level), train-majority baseline P0, bootstrap (2000 draws, seed 42),\n   acceptance (lower bound of paired accuracy difference vs P0 > 0) as in qp3b_priority.py.\n * Features = P1 features + one-hot CREATION-TIME kind/* and sig/* labels + one-hot author_assoc.\n   Creation-time rule, identical for train / validation / test: take labels_t72h restricted to\n   kind/* and sig/*; keep a label iff it has no `labeled` event in label_events for that issue, or\n   its EARLIEST `labeled` event is <= W = 60 s after created_at. W is fixed at 60 s now.\n * LR as P1 (class_weight balanced, max_iter 300, seed 42); C in {0.25, 1, 4} on validation;\n   selection: accuracy, tie macro-F1, tie smaller C (more regularisation).\n * Exploratory only, validation only, not used for selection: W in {0 s, 300 s} sensitivity.\n * On test: report P3 vs P0 and vs P2 (paired), and the subset with no priority/* label at t72h.\n * The /priority <level> command lines in issue bodies were stripped by the verifier on validation\n   with no accuracy change; text is therefore left unedited.",
+ "p3_selection": {
+  "C": 4,
+  "majority": "high",
+  "model_id": "p3_tfidf_creationmeta_lr",
+  "val_accuracy": 0.49635036496350365
+ },
+ "p3_validation_table": [
+  {
+   "C": 0.25,
+   "W_seconds": 60,
+   "accuracy": 0.48175182481751827,
+   "macro_f1": 0.4584525299481495,
+   "model": "p3_tfidf_creationmeta_lr"
+  },
+  {
+   "C": 1,
+   "W_seconds": 60,
+   "accuracy": 0.46715328467153283,
+   "macro_f1": 0.4338436842184968,
+   "model": "p3_tfidf_creationmeta_lr"
+  },
+  {
+   "C": 4,
+   "W_seconds": 60,
+   "accuracy": 0.49635036496350365,
+   "macro_f1": 0.45705625245267195,
+   "model": "p3_tfidf_creationmeta_lr"
+  }
+ ],
+ "p3_w_sensitivity_exploratory_validation_only": [
+  {
+   "C": 0.25,
+   "W_seconds": 0,
+   "accuracy": 0.48905109489051096,
+   "macro_f1": 0.4555299578084222
+  },
+  {
+   "C": 1,
+   "W_seconds": 0,
+   "accuracy": 0.49635036496350365,
+   "macro_f1": 0.45840497830180954
+  },
+  {
+   "C": 4,
+   "W_seconds": 0,
+   "accuracy": 0.48905109489051096,
+   "macro_f1": 0.44745561966103975
+  },
+  {
+   "C": 0.25,
+   "W_seconds": 300,
+   "accuracy": 0.49635036496350365,
+   "macro_f1": 0.4703982177666388
+  },
+  {
+   "C": 1,
+   "W_seconds": 300,
+   "accuracy": 0.49635036496350365,
+   "macro_f1": 0.46698607932875663
+  },
+  {
+   "C": 4,
+   "W_seconds": 300,
+   "accuracy": 0.48175182481751827,
+   "macro_f1": 0.44087200097430274
+  }
+ ],
  "population": {
   "train": {
    "dist_3level": {

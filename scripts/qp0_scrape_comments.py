@@ -60,6 +60,29 @@ class PacedClient(sg.Client):
             time.sleep(wait)
 
 
+# Consecutive clean queries at a reduced size before stepping back up one size. A burst of 5xx/499
+# used to pin the batch at 1 for the rest of a run (GraphQL cost is 1 per query at any size).
+REGROW_AFTER = 50
+
+
+class BatchRegrow:
+    """Mixin for the batch scrapers: ``sizes`` shrinks on errors, this grows it back."""
+
+    sizes: list[int]
+    max_batch: int
+    _ok_streak: int
+
+    def _note_success(self) -> None:
+        """Count a clean query; after REGROW_AFTER in a row, step the batch size back up one."""
+        self._ok_streak += 1
+        if self._ok_streak < REGROW_AFTER or self.sizes[0] >= self.max_batch:
+            return
+        self._ok_streak = 0
+        new = min(s for s in BATCH_SIZES if self.sizes[0] < s <= self.max_batch)
+        self.sizes = [s for s in BATCH_SIZES if s <= new]
+        log.info("%d clean queries in a row; regrowing batch to %d", REGROW_AFTER, new)
+
+
 class CommentScraper:
     """Saves the complete comment thread + closed/reopened events for given issue numbers."""
 

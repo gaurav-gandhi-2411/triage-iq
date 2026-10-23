@@ -26,9 +26,6 @@ import qp0_scrape_pr_files as pf  # noqa: E402
 
 log = logging.getLogger("qp0dt")
 BATCH_SIZES = (10, 5, 2, 1)
-# Consecutive clean queries at a reduced size before stepping back up one size. A burst of 5xx/499
-# used to pin the batch at 1 for the rest of a run (GraphQL cost is 1 per query at any size).
-REGROW_AFTER = 50
 MAX_PAGES = 10  # 1,000 duplicate-type events on one issue would be a data problem, not a page size
 _T = "__typename ... on Issue{number repository{nameWithOwner}} ... on PullRequest{number repository{nameWithOwner}}"
 _NODES = (
@@ -108,16 +105,6 @@ class DupTargetScraper(pf.PrFilesScraper):
                 f"completeness: issue #{issue['number']} saved {len(tl['nodes'])} events "
                 f"!= totalCount {tl['totalCount']}"
             )
-
-    def _note_success(self) -> None:
-        """Count a clean query; after REGROW_AFTER in a row, step the batch size back up one."""
-        self._ok_streak += 1
-        if self._ok_streak < REGROW_AFTER or self.sizes[0] >= self.max_batch:
-            return
-        self._ok_streak = 0
-        new = min(s for s in BATCH_SIZES if self.sizes[0] < s <= self.max_batch)
-        self.sizes = [s for s in BATCH_SIZES if s <= new]
-        log.info("%d clean queries in a row; regrowing batch to %d", REGROW_AFTER, new)
 
     def fetch(self, numbers: list[int]) -> list[dict[str, Any]]:
         """Rows for ``numbers``; shrinks the batch size on persistent transient errors and

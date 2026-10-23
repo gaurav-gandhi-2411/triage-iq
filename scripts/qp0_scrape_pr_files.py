@@ -82,7 +82,7 @@ def build_scope(data_dir: Path, derived_dir: Path, repo: str) -> list[int]:
     return sorted(nums | set(map(int, ok["pr"])))
 
 
-class PrFilesScraper:
+class PrFilesScraper(qcm.BatchRegrow):
     """Saves files-changed + metadata for given PR numbers; resumable and atomic."""
 
     def __init__(self, client: sg.Client, repo: str, data_dir: Path, batch: int = 10) -> None:

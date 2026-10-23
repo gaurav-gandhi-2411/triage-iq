@@ -1,0 +1,104 @@
+{
+ "repo": "microsoft/vscode",
+ "n_issues_compared": 109158,
+ "label_prefix": "(all labels)",
+ "event_counts_by_type": {
+  "embedded": {
+   "ClosedEvent": 76492,
+   "ConnectedEvent": 480,
+   "CrossReferencedEvent": 68974,
+   "DemilestonedEvent": 9804,
+   "DisconnectedEvent": 2,
+   "LabeledEvent": 225207,
+   "MarkedAsDuplicateEvent": 2116,
+   "MilestonedEvent": 37923,
+   "ReopenedEvent": 2938,
+   "UnlabeledEvent": 64035,
+   "UnmarkedAsDuplicateEvent": 29
+  },
+  "direct": {
+   "ClosedEvent": 99122,
+   "ConnectedEvent": 593,
+   "CrossReferencedEvent": 69199,
+   "DemilestonedEvent": 18724,
+   "DisconnectedEvent": 6,
+   "LabeledEvent": 261113,
+   "MarkedAsDuplicateEvent": 3196,
+   "MilestonedEvent": 51810,
+   "ReopenedEvent": 4190,
+   "UnlabeledEvent": 77894,
+   "UnmarkedAsDuplicateEvent": 50
+  }
+ },
+ "share_issues_direct_has_more_events": 0.259642,
+ "labeled_event": {
+  "share_issues_missing_ge1": 0.149609,
+  "missing_count_distribution": {
+   "0": 92827,
+   "1": 7016,
+   "2": 4348,
+   "3": 2490,
+   "4": 1114,
+   "5": 657,
+   "6": 351,
+   "7": 180,
+   "8": 82,
+   "9": 46,
+   "10": 25,
+   "11": 14,
+   "12": 3,
+   "13": 2,
+   "14": 2,
+   "53": 1
+  }
+ },
+ "by_created_year": {
+  "2023": {
+   "n": 21381,
+   "share_direct_more": 0.174688,
+   "share_labeled_missing_ge1": 0.115523
+  },
+  "2024": {
+   "n": 19216,
+   "share_direct_more": 0.121982,
+   "share_labeled_missing_ge1": 0.082483
+  },
+  "2025": {
+   "n": 33974,
+   "share_direct_more": 0.34965,
+   "share_labeled_missing_ge1": 0.201242
+  },
+  "2026": {
+   "n": 34587,
+   "share_direct_more": 0.300228,
+   "share_labeled_missing_ge1": 0.157256
+  }
+ },
+ "first_label_event_changed": {
+  "share_of_all": 0.03647,
+  "n": 3981,
+  "share_of_issues_with_any": 0.042133
+ },
+ "labels_at_created_plus_72h_changed": {
+  "share_of_all": 0.018863,
+  "n": 2059,
+  "share_of_issues_with_any": 0.028089
+ },
+ "focus_events": {
+  "closed_by_pr": {
+   "embedded": 9728,
+   "direct": 12544,
+   "issues_differing": 2706
+  },
+  "marked_duplicate": {
+   "embedded": 2116,
+   "direct": 3196,
+   "issues_differing": 761
+  },
+  "cross_referenced": {
+   "embedded": 68974,
+   "direct": 69199,
+   "issues_differing": 286
+  }
+ }
+}

@@ -1,0 +1,321 @@
+{
+ "classes": [
+  "low",
+  "medium",
+  "high"
+ ],
+ "data_sha256": {
+  "issues.parquet": "1331dd34093e28a4c6931e13ae6c327c80a2b773495a17e89a46e518ff43abac",
+  "label_events.parquet": "28762456f563b412013e24ae9d5686623ad9d34b9f95705129ccedb6823e0644",
+  "splits/test.parquet": "ee1b53738dcc790dfbddcebb1c7c699ad788b0ad7279c42dbc256d2ebe4fd315",
+  "splits/train.parquet": "71f1ee45b35752fe4ce4909bc86a8588865f201edd8f8c5535677f141764b1d6",
+  "splits/validation.parquet": "84cd0a93ea7ce68106b98eb2b7b3b0f2590af8946899973fd039ba46efe5c72f"
+ },
+ "design": "(2026-10-23; committed with validation results BEFORE any test evaluation;\ndo not change after seeing test results). OFFLINE STUDY ONLY: no serving, prompt or flag change.\n * Population: kubernetes issues of each split (train / validation / test, all issues of the split,\n   no eligibility filter) whose FINAL labels (labels_final) carry >= 1 of priority/critical-urgent,\n   priority/important-soon, priority/important-longterm, priority/backlog. priority/awaiting-more-\n   evidence alone is excluded (not a level). Several levels present -> gold = the most urgent\n   (critical-urgent > important-soon > important-longterm > backlog). Population counts per split\n   and the share of all split issues are reported. LIMITATION: the model is evaluated only on issues\n   maintainers prioritised (selection effect); it says nothing about issues nobody prioritised.\n * Served schema gold (priority_guess): critical-urgent, important-soon -> high; important-longterm\n   -> medium; backlog -> low. PRIMARY metric = accuracy on this 3-level gold. Secondary (reported,\n   not claimed): macro-F1, the 4-gold-level x 3-predicted-level table (a 3-level model has no\n   4-level accuracy; training a second model would breach \"test once per candidate\"), confusion\n   matrix.\n * Baseline P0 = majority class of the TRAIN population (3-level). ACCEPTANCE: test accuracy of the\n   selected model minus P0 accuracy, paired bootstrap 95% CI (2000 draws, seed 42, same resampled\n   issues), lower bound > 0.\n * Inputs (creation-time only). Phase 1 used text only (title + \"\\n\" + body[:4000]) because sig/*\n   was its target; here the target is priority, so labels_t72h MINUS every priority/* label may\n   enter, restricted to kind/* and sig/* (lifecycle/, triage/, needs-* etc. are never used), plus\n   author_assoc. Priority labels never reach any input; text is not edited.\n * Candidates (model ids; every one fitted on train, scored on VALIDATION; seed 42):\n   P0 majority. P1 `p1_tfidf_lr` = qp1_tfidf_features.Featurizer(title_sep on, paths off) (word 1-2\n   grams of title [50k] and of body [200k], char_wb 3-5 grams of title [100k]; min_df=2, sublinear)\n   + multinomial LogisticRegression, class_weight balanced, max_iter 300; C in {0.25, 1, 4} chosen on\n   validation. P2 `p2_tfidf_meta_lr` = P1 features + one-hot t72h kind/* and sig/* labels + one-hot\n   author_assoc, same LR grid. Selection on VALIDATION accuracy; ties -> macro-F1 -> simpler (P1\n   before P2, then smaller C). Only the selected candidate and P0 are evaluated on test, once each\n   per report file (qp1_eval.ResultsWriter guard); test labels are read only by --final-test.\n * Also on test (secondary): selected model vs majority restricted to issues with NO priority/*\n   label at t72h (the model predicting before a human prioritised), with paired CI.\n * Wilson 95% for proportions, bootstrap/paired CIs from qp1_eval (2000 draws, seed 42).\nModels and probabilities go to D:\\triageiq-data\\models\\<slug>\\priority\\, never the repo.",
+ "git_sha": "f68db204f4e46eb0d3a5f66513f277fe5676a715",
+ "models": {
+  "p0_majority": {
+   "split_manifest_sha256": "b8c0dfee4e228c3a13cea52ccd008fad837294629de91c5ee7047288c8559247",
+   "test": {
+    "accuracy": 0.4089068825910931,
+    "accuracy_wilson95": [
+     0.3494449519694966,
+     0.47115896699769216
+    ],
+    "classes": [
+     "low",
+     "medium",
+     "high"
+    ],
+    "confusion_matrix_gold_rows_pred_cols": [
+     [
+      0,
+      0,
+      54
+     ],
+     [
+      0,
+      0,
+      92
+     ],
+     [
+      0,
+      0,
+      101
+     ]
+    ],
+    "macro_f1": 0.19348659003831417,
+    "majority_class": "high",
+    "n": 247,
+    "pred_file": "test_p0.parquet",
+    "pred_sha256": "8e5b8708317b53e6db8a5119349537dad8d69391343f89f4ba1ae2ede39ea94a"
+   }
+  },
+  "p2_tfidf_meta_lr": {
+   "split_manifest_sha256": "b8c0dfee4e228c3a13cea52ccd008fad837294629de91c5ee7047288c8559247",
+   "test": {
+    "accuracy": 0.5263157894736842,
+    "accuracy_wilson95": [
+     0.46412063502340123,
+     0.5877048994971886
+    ],
+    "classes": [
+     "low",
+     "medium",
+     "high"
+    ],
+    "confusion_matrix_gold_rows_pred_cols": [
+     [
+      26,
+      16,
+      12
+     ],
+     [
+      34,
+      40,
+      18
+     ],
+     [
+      23,
+      14,
+      64
+     ]
+    ],
+    "gold4_by_predicted_3level": {
+     "priority/backlog": {
+      "high": 12,
+      "low": 26,
+      "medium": 16
+     },
+     "priority/critical-urgent": {
+      "high": 17,
+      "low": 2,
+      "medium": 1
+     },
+     "priority/important-longterm": {
+      "high": 18,
+      "low": 34,
+      "medium": 40
+     },
+     "priority/important-soon": {
+      "high": 47,
+      "low": 21,
+      "medium": 13
+     }
+    },
+    "macro_f1": 0.509933153566568,
+    "n": 247,
+    "pred_file": "test.parquet",
+    "pred_sha256": "fcf2e757070a7f82ff751240828ad6c027e7367b9b787b31cbfbd210b9c762b1"
+   }
+  }
+ },
+ "population": {
+  "train": {
+   "dist_3level": {
+    "high": 296,
+    "low": 157,
+    "medium": 204
+   },
+   "dist_4level": {
+    "priority/backlog": 157,
+    "priority/critical-urgent": 87,
+    "priority/important-longterm": 204,
+    "priority/important-soon": 209
+   },
+   "n_population": 657,
+   "n_priority_label_at_t72h": 377,
+   "n_split_issues": 5235,
+   "share_of_split": 0.12550143266475644
+  },
+  "validation": {
+   "dist_3level": {
+    "high": 54,
+    "low": 30,
+    "medium": 53
+   },
+   "dist_4level": {
+    "priority/backlog": 30,
+    "priority/critical-urgent": 8,
+    "priority/important-longterm": 53,
+    "priority/important-soon": 46
+   },
+   "n_population": 137,
+   "n_priority_label_at_t72h": 88,
+   "n_split_issues": 887,
+   "share_of_split": 0.1544532130777903
+  }
+ },
+ "post_hoc_notes": {
+  "added": "2026-10-23, after the P0/P2 test evaluation; the design docstring is unchanged.",
+  "docstring_inaccuracy": "The design wording 'creation-time only' is inaccurate for labels_t72h: those labels may be applied after, or together with, a maintainer's priority label (joint labelling).",
+  "follow_up": "P3 (creation-time labels only, W=60 s) is the serve-time-feasible variant; see p3_design / p3_validation_table once present.",
+  "headline_scope": "The P2 headline (test 0.526 vs majority 0.409) is valid for prediction that is augmented with labels_t72h kind/* and sig/* labels (plus author_assoc). It is NOT a result for a just-created issue.",
+  "joint_labelling_remeasured": {
+   "definition": "population issues where some kind/*|sig/* t72h label's earliest labeled event >= (earliest priority labeled event - 60 s); measured with an uncommitted scratch script. Differs slightly from the verifier's figures (denominators/definition not reconciled); both show the same picture.",
+   "test": "42/247 = 17.0%",
+   "train": "198/657 = 30.1%",
+   "validation": "42/137 = 30.7%"
+  },
+  "joint_labelling_verifier_reported": {
+   "definition": "input label applied within 60 s of or after the first priority label (verifier's count, taken from the coordinator message)",
+   "test": "44/244 = 18.0%",
+   "train": "31.6%",
+   "validation": "32.1%"
+  },
+  "priority_command_lines": "Issue bodies contain '/priority <level>' command lines (verifier: train 88, validation 19, test 8; re-measured with a looser regex: 92 / 19 / 14). Stripping them did not change validation accuracy (verifier's check, not re-run here).",
+  "selection_effect": "Only issues maintainers prioritised are in the population (12.6-15.6% of split issues); results say nothing about issues nobody prioritised.",
+  "weak_majority_in_unlabelled_subset": "In the test subset with no priority label at t72h (n=112) the 'high' share is 32/112 = 28.6% (medium 51, low 29), so the train-majority baseline (always 'high') is weak there (0.286); the +0.161 gain in that subset is against that weak baseline."
+ },
+ "repo": "kubernetes/kubernetes",
+ "script_dirty": false,
+ "selection": {
+  "C": 0.25,
+  "majority": "high",
+  "model_id": "p2_tfidf_meta_lr",
+  "val_accuracy": 0.5474452554744526,
+  "with_meta": true
+ },
+ "split_manifest_sha256": "b8c0dfee4e228c3a13cea52ccd008fad837294629de91c5ee7047288c8559247",
+ "test": {
+  "acceptance_ci_lower_gt_0": true,
+  "model_id": "p2_tfidf_meta_lr",
+  "no_priority_label_at_t72h": {
+   "difference_paired": {
+    "ci95": [
+     0.0357142857142857,
+     0.2857142857142857
+    ],
+    "n": 112,
+    "point": 0.16071428571428575
+   },
+   "majority": {
+    "ci95": [
+     0.20535714285714285,
+     0.36607142857142855
+    ],
+    "n": 112,
+    "point": 0.2857142857142857
+   },
+   "model": {
+    "ci95": [
+     0.35714285714285715,
+     0.5357142857142857
+    ],
+    "n": 112,
+    "point": 0.44642857142857145
+   },
+   "model_wilson95": [
+    0.3576589345942301,
+    0.5387513359821432
+   ],
+   "n": 112
+  },
+  "population": {
+   "dist_3level": {
+    "high": 101,
+    "low": 54,
+    "medium": 92
+   },
+   "dist_4level": {
+    "priority/backlog": 54,
+    "priority/critical-urgent": 20,
+    "priority/important-longterm": 92,
+    "priority/important-soon": 81
+   },
+   "n_population": 247,
+   "n_priority_label_at_t72h": 135,
+   "n_split_issues": 1585,
+   "share_of_split": 0.15583596214511042
+  },
+  "primary": {
+   "difference_paired": {
+    "ci95": [
+     0.040485829959514164,
+     0.19028340080971667
+    ],
+    "n": 247,
+    "point": 0.11740890688259109
+   },
+   "majority": {
+    "ci95": [
+     0.3481781376518219,
+     0.46963562753036436
+    ],
+    "n": 247,
+    "point": 0.4089068825910931
+   },
+   "model": {
+    "ci95": [
+     0.46558704453441296,
+     0.5870445344129555
+    ],
+    "n": 247,
+    "point": 0.5263157894736842
+   },
+   "model_wilson95": [
+    0.46412063502340123,
+    0.5877048994971886
+   ]
+  }
+ },
+ "validation_majority_accuracy": 0.39416058394160586,
+ "validation_table": [
+  {
+   "C": null,
+   "accuracy": 0.39416058394160586,
+   "fit_seconds": 0.0,
+   "macro_f1": 0.18848167539267016,
+   "model": "p0_majority",
+   "with_meta": false
+  },
+  {
+   "C": 0.25,
+   "accuracy": 0.45255474452554745,
+   "fit_seconds": 1.4398938000013004,
+   "macro_f1": 0.42464801363106447,
+   "model": "p1_tfidf_lr",
+   "with_meta": false
+  },
+  {
+   "C": 1,
+   "accuracy": 0.45985401459854014,
+   "fit_seconds": 1.549160500002472,
+   "macro_f1": 0.42242114236999145,
+   "model": "p1_tfidf_lr",
+   "with_meta": false
+  },
+  {
+   "C": 4,
+   "accuracy": 0.49635036496350365,
+   "fit_seconds": 1.6233154000001377,
+   "macro_f1": 0.4519904004041935,
+   "model": "p1_tfidf_lr",
+   "with_meta": false
+  },
+  {
+   "C": 0.25,
+   "accuracy": 0.5474452554744526,
+   "fit_seconds": 1.8964618999998493,
+   "macro_f1": 0.5219653909309082,
+   "model": "p2_tfidf_meta_lr",
+   "with_meta": true
+  },
+  {
+   "C": 1,
+   "accuracy": 0.5109489051094891,
+   "fit_seconds": 1.8903043999998772,
+   "macro_f1": 0.4746507729558577,
+   "model": "p2_tfidf_meta_lr",
+   "with_meta": true
+  },
+  {
+   "C": 4,
+   "accuracy": 0.5036496350364964,
+   "fit_seconds": 2.025468699997873,
+   "macro_f1": 0.4553528409424761,
+   "model": "p2_tfidf_meta_lr",
+   "with_meta": true
+  }
+ ]
+}

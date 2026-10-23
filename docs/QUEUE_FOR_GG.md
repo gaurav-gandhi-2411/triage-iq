@@ -10,11 +10,15 @@ Production serves a k8s training-window median of 3.04 days (ADR-0064; `reports/
 
 Every kernel push from 06:25 to 08:25 IST on 2026-10-23 failed with `Maximum weekly GPU quota of 30.00 hours reached.` (13 attempts; this run used 0 GPU hours for it). The account `gauravgandhi2411` is shared with other projects. The quota resets weekly; Kaggle did not state the reset time, so the run retries after the expected weekly reset rather than guessing. Blocked until then: the k8s fine-tuned encoder candidate (code ready on `feat/qp1-k8s-finetuned-encoder`, design pre-registered, test split untouched) and vscode BGE embeddings (Q4/Q5a vscode). **If you want these sooner:** pause GPU kernels in other projects so the quota is left for this one next week, or tell me another free GPU route. No paid GPU will be used.
 
+## Decision for you (2026-10-23): the vscode component target cannot be met as written (recommendation first)
+
+ADR-0070 (#268, accepted in the unattended run) froze the vscode taxonomy: 85 parent-area classes from a mechanical prefix rule over the 2023-01-01..2025-06-30 training window. They cover only 88.7% [87.9, 89.5] of labelled validation issues; the rest are mostly new Copilot/agent areas. With abstention scored as a miss (runbook Q2(b)), top-3 over all labelled vscode issues is bounded by that coverage, so spec-quality-push.md section 1's "top-3 >= 95% per repo" is not reachable for vscode. **Recommendation:** amend the vscode row to report three numbers side by side: in-family top-3 (target 95%), top-3 over all labelled issues (coverage-bounded, reported, no target), and abstention rate. Phase 1 acceptance already allows "the best achievable with evidence against the ceiling". The run has NOT changed any target. Note also that the k8s 95.4% headline counts a correct `other` as a hit (a lenient convention); a strict re-score is queued as a secondary number.
+
 ## Yours, when convenient (2026-10-20)
 
 - `git worktree remove` for `triage-iq-wt-integ` (the vscode recording is committed; it only held the judge pass) and delete the leftover folder `triage-iq-wt-embfix`.
 - Delete `D:\triageiq-data\raw_schema1_discard` and `D:\triageiq-data\logs_schema1` (superseded schema-1 scrape output) if you like.
-- A 4 MB verifier scratch dir `C:\Users\gaura\AppData\Local\Temp\claude\triage-iq\20261020\verify2` could not be deleted (the delete was denied and not retried).
+- Verifier scratch dirs that could not be deleted (the deletes were denied and not retried), all small: `C:\Users\gaura\AppData\Local\Temp\claude\triage-iq\20261020\verify2` (4 MB), `...\20261023\verify_p3` and `...\20261023\verify_tax` (a few KB of scripts each).
 - Open PRs that are yours: #184 (on hold, with its IAM binding), #138, #94.
 - The vscode gate/baseline proposal was DECLINED on 2026-10-20 and is parked (`docs/VSCODE_EXPANSION_GATE_PROPOSAL_2026-10.md`); gates are re-proposed only after the quality push, on the new numbers.
 

@@ -176,3 +176,24 @@ def test_scope_has_any_duplicate_signal_and_summary(tmp_path: Path) -> None:
     data = tmp_path / "data"
     scraper(data, Fake({1: 2})).run([1])
     assert dt.summarize(data)["o__r"] == {"ckpt_done": 1, "ckpt_missing": 0, "rows": 1, "closed_duplicate_of": 0, "marked_with_duplicate": 1}  # fmt: skip
+
+
+def test_batch_regrows_after_clean_run_capped_at_max(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(time, "sleep", lambda s: None)
+    monkeypatch.setattr(dt.qcm, "REGROW_AFTER", 10**6)  # no regrow during the burst
+    fake = Fake({n: 1 for n in range(1, 200)}, fail_over=1)
+    s = scraper(tmp_path, fake, batch=5)
+    s.run(list(range(1, 6)))
+    assert s.sizes[0] == 1
+    s._ok_streak = 0  # successes during the burst must not pre-load the streak
+    fake.fail_over, seen = None, len(fake.queries)
+    monkeypatch.setattr(dt.qcm, "REGROW_AFTER", 3)
+    s.run(list(range(10, 100)))
+    sizes = [len(re.findall(r"issue\(number:", q)) for q in fake.queries[seen:]]
+    assert s.sizes[0] == 5 and max(sizes) == 5 and sizes[:-1] == sorted(sizes[:-1])
+    monkeypatch.setattr(dt.qcm, "REGROW_AFTER", 10**6)  # isolate the shrink from regrow
+    fake.fail_over = 2  # a failure after regrow shrinks again
+    s.run(list(range(100, 120)))
+    assert s.sizes[0] == 2

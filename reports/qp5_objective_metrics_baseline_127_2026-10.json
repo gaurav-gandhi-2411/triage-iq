@@ -4,7 +4,8 @@
   "notes": [
     "Old sets carry no meta: priority gold is resolution-inferred (contaminated) so priority is unscorable (all 127 excluded as legacy/unknown source); there are no indexable_targets so similar-issue relevance is unscorable; component gold uses the OLD taxonomy and in_family is derived as gold != other (old gold has no 'other'), so strict == k8s-convention == in-family here. New-taxonomy component scoring needs the Q8 re-record.",
     "Next-step grounding: all 53 k8s rows are unscorable (no retrieved neighbour has evidence: the old retriever serves the 2014-2016 corpus, the evidence artifact is the candidate for the 2023-2025 index); vscode has no evidence artifact (74 rows).",
-    "Resolution: the plan point is metadata.resolution_point_days (the served point, ADR-0064). The k8s naive reference of 35.1 d is the 2023-2025 closed median and does not match this 2014-2016-era set (served constant there: 3.04 d), so the k8s plan-vs-naive comparison is not like-for-like; vscode's served point IS the train median, hence the identical plan and naive rows. Replayed with models from triage-iq-wt-served (this checkout's component_classifier_microsoft_vscode.pkl differs from MANIFEST.sha256)."
+    "Resolution: the plan point is metadata.resolution_point_days (the served point, ADR-0064). The k8s naive reference of 35.1 d is the 2023-2025 closed median and does not match this 2014-2016-era set (served constant there: 3.04 d), so the k8s plan-vs-naive comparison is not like-for-like; vscode's served point IS the train median, hence the identical plan and naive rows. Replayed with models from triage-iq-wt-served (this checkout's component_classifier_microsoft_vscode.pkl differs from MANIFEST.sha256).",
+    "Like-for-like k8s resolution reference: see resolution_alt_naive_reference (k8s naive 3.04 d, the served constant on the old corpus). The primary naive_reference (35.1 d) is retained for continuity."
   ],
   "sources": {
     "models_dir": "C:\\Users\\gaura\\ml-projects\\triage-iq-wt-served\\data\\models",
@@ -660,6 +661,105 @@
         "naive_reference": {
           "naive_days": {
             "kubernetes/kubernetes": 35.1,
+            "microsoft/vscode": 3.8374
+          },
+          "median_ae_days": 3.7618,
+          "median_ae_ci95": [
+            3.3499,
+            3.8255
+          ],
+          "mean_ae_days": 49.9425,
+          "mean_ae_ci95": [
+            19.9956,
+            89.0465
+          ]
+        },
+        "naive_minus_plan_ae": {
+          "median_days": 0.0,
+          "median_ci95": [
+            -0.0,
+            0.0
+          ],
+          "mean_days": 0.0,
+          "mean_ci95": [
+            -0.0,
+            0.0
+          ]
+        }
+      }
+    }
+  },
+  "resolution_alt_naive_reference": {
+    "label": "LIKE-FOR-LIKE for this old 2014-2016-era set: k8s naive = 3.04 d, the constant served on the old corpus (ADR-0064); vscode unchanged. The primary naive_reference (k8s 35.1 d, 2023-2025 median) is kept but is NOT like-for-like here.",
+    "naive_days_input": {
+      "kubernetes/kubernetes": 3.04,
+      "microsoft/vscode": 3.8374
+    },
+    "pooled": {
+      "naive_reference": {
+        "naive_days": {
+          "kubernetes/kubernetes": 3.04,
+          "microsoft/vscode": 3.8374
+        },
+        "median_ae_days": 3.8255,
+        "median_ae_ci95": [
+          3.6875,
+          7.1151
+        ],
+        "mean_ae_days": 88.5305,
+        "mean_ae_ci95": [
+          48.8138,
+          140.4645
+        ]
+      },
+      "naive_minus_plan_ae": {
+        "median_days": -0.0,
+        "median_ci95": [
+          -0.0,
+          0.0
+        ],
+        "mean_days": -0.0009,
+        "mean_ci95": [
+          -0.0012,
+          -0.0005
+        ]
+      }
+    },
+    "by_repo": {
+      "kubernetes/kubernetes": {
+        "naive_reference": {
+          "naive_days": {
+            "kubernetes/kubernetes": 3.04,
+            "microsoft/vscode": 3.8374
+          },
+          "median_ae_days": 10.6298,
+          "median_ae_ci95": [
+            4.6364,
+            26.9985
+          ],
+          "mean_ae_days": 142.4079,
+          "mean_ae_ci95": [
+            62.4605,
+            249.8777
+          ]
+        },
+        "naive_minus_plan_ae": {
+          "median_days": -0.0035,
+          "median_ci95": [
+            -0.0035,
+            -0.0035
+          ],
+          "mean_days": -0.002,
+          "mean_ci95": [
+            -0.0027,
+            -0.0013
+          ]
+        }
+      },
+      "microsoft/vscode": {
+        "naive_reference": {
+          "naive_days": {
+            "kubernetes/kubernetes": 3.04,
             "microsoft/vscode": 3.8374
           },
           "median_ae_days": 3.7618,

@@ -92,6 +92,15 @@ def main(argv: list[str]) -> None:
     ap.add_argument("--evidence", action="append", default=[], metavar="REPO=PARQUET")
     ap.add_argument("--no-evidence", action="store_true", help="score without any evidence lookup")
     ap.add_argument("--naive-days", action="append", default=[], metavar="REPO=DAYS")
+    ap.add_argument(
+        "--alt-naive-days",
+        action="append",
+        default=[],
+        metavar="REPO=DAYS",
+        help="second naive reference (e.g. the like-for-like served constant) reported next to "
+        "the primary one",
+    )
+    ap.add_argument("--alt-naive-label", default="", help="label for --alt-naive-days")
     ap.add_argument("--k", type=int, default=None, help="truncate retrieved lists to the top k")
     ap.add_argument("--label", default="", help="free-text label stored in the report")
     ap.add_argument("--note", action="append", default=[], help="note stored in the report")
@@ -163,6 +172,19 @@ def main(argv: list[str]) -> None:
         "naive_days_input": naive,
         **scores,
     }
+    if args.alt_naive_days:
+        alt_naive = {**naive, **_kv(args.alt_naive_days, float)}
+        alt = om.score_all(pairs, evidence, alt_naive, args.k)
+        keep = ("naive_reference", "naive_minus_plan_ae")
+        report["resolution_alt_naive_reference"] = {
+            "label": args.alt_naive_label,
+            "naive_days_input": alt_naive,
+            "pooled": {k: alt["pooled"]["resolution"].get(k) for k in keep},
+            "by_repo": {
+                repo: {k: s["resolution"].get(k) for k in keep}
+                for repo, s in alt["by_repo"].items()
+            },
+        }
     args.out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     pooled = scores["pooled"]
     print(json.dumps({k: pooled[k] for k in ("n_rows", "n_with_plan", "n_degraded_plans")}))

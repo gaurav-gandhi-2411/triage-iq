@@ -63,6 +63,10 @@ def test_file_mode_writes_report_with_provenance(tmp_path: Path) -> None:
             str(pl),
             "--evidence",
             f"kubernetes/kubernetes={ev}",
+            "--alt-naive-days",
+            "kubernetes/kubernetes=11.0",
+            "--alt-naive-label",
+            "alt",
             "--label",
             "t",
             "--out",
@@ -78,6 +82,9 @@ def test_file_mode_writes_report_with_provenance(tmp_path: Path) -> None:
     assert p["resolution"]["plan"]["mean_ae_days"] == 2.0
     assert rep["sources"]["plans"]["sha256"] and rep["naive_days_input"]["kubernetes/kubernetes"]
     assert rep["label"] == "t"
+    alt = rep["resolution_alt_naive_reference"]
+    assert alt["label"] == "alt" and alt["naive_days_input"]["kubernetes/kubernetes"] == 11.0
+    assert alt["by_repo"]["kubernetes/kubernetes"]["naive_reference"]["mean_ae_days"] == 1.0
 
 
 def test_rejects_mixed_or_missing_inputs(tmp_path: Path) -> None:

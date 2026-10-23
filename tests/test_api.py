@@ -1058,3 +1058,9 @@ def test_clean_request_body_on_max_length_body():
 
     issue = _post_and_capture({"TRIAGE_CLEAN_REQUEST_BODY": "1"}, body="x" * 32_000)
     assert len(issue["body_clean"]) == MAX_BODY_CHARS
+
+
+def test_clean_request_body_on_carries_body_raw_for_priority_model():
+    issue = _post_and_capture({"TRIAGE_CLEAN_REQUEST_BODY": "1"})
+    assert issue["body_raw"] == _RAW_BODY
+    assert issue["body_clean"] != _RAW_BODY

@@ -2,10 +2,10 @@
 
 Single source of truth. Re-read first after any restart. Times in IST unless marked UTC.
 
-## Now (updated 2026-10-23 ~13:30 IST)
+## Now (updated 2026-10-23 ~15:45 IST)
 - Stop new long work from 2026-10-27 12:00 IST; return brief by 2026-10-27 18:00 IST.
-- Current subagent task: vscode fix-link precision audit (D79; >= 100 links vs GitHub API; gate for fix links and the vscode fix-linked retrieval ceiling).
-- Next: k8s strict `other` re-score (secondary) -> Q7 serving pieces behind default-off flags (resolution-evidence artifact for grounded next steps, priority model flag, component-from-conformal-set flag, final prompt) -> Q5a vscode duplicates (embeddings need Kaggle GPU; CPU baselines meanwhile) -> Q8 objective-metrics harness. Kaggle GPU work after the weekly quota reset.
+- Since 13:30: vscode fix-link audit (#280, closer 99.2% pass); audited-links-only fix (#281); k8s strict re-score (#282, = lenient); Phase 3b design + checks (#283); priority P4 (#284) and its default-off flag (#285, deployed dormant, prod healthy); candidate k8s index + evidence, C3 passes (#286, #287); Kaggle text recipe aligned with production (#288); a verified production train/serve skew and its default-off fix flag (#289, top of the GG queue).
+- Next: Q7 remaining (flag 3 component-from-conformal-set; prompt v3 with flags 1-3 and check C4 tokens) -> validation-only re-check of the Kaggle-embedding experiments on production-recipe vectors -> Q8 objective-metrics harness (scorers for the 150-issue set, zero tokens) -> vscode work that needs the Kaggle GPU after the weekly reset (align the fine-tuned-encoder branch's text recipe first).
 - Memory is tight at times (other workloads); briefs carry a memory guard. Orchestrator git work happens in `triage-iq-wt-readme`, never in the primary checkout while a subagent runs.
 
 ## Queue (runbook section 5)

@@ -5,6 +5,19 @@
   "top_k": 3,
   "result": {
     "n_rows": 75,
+    "share_ge1_neighbour_with_evidence": 0.9333333333333333,
+    "rows_ge1_neighbour_with_evidence": 70,
+    "share_with_fix_pr_evidence": 0.4533333333333333,
+    "share_with_closing_comment_evidence": 0.9333333333333333,
+    "share_with_both_types": 0.4533333333333333,
+    "mean_evidence_chars_per_row_top3": 515.56,
+    "mean_evidence_chars_per_evidenced_neighbour": 234.34545454545454,
+    "mean_neighbours_with_evidence_per_row": 2.2
+  },
+  "rows_with_fewer_than_top_k_neighbours": 0,
+  "as_of_filter": "evidence items dated strictly before the query's created_at (result); result_without_as_of_filter is the earlier, leaky number, kept for comparison only",
+  "result_without_as_of_filter": {
+    "n_rows": 75,
     "share_ge1_neighbour_with_evidence": 1.0,
     "rows_ge1_neighbour_with_evidence": 75,
     "share_with_fix_pr_evidence": 0.5333333333333333,
@@ -14,7 +27,6 @@
     "mean_evidence_chars_per_evidenced_neighbour": 244.47826086956522,
     "mean_neighbours_with_evidence_per_row": 2.453333333333333
   },
-  "rows_with_fewer_than_top_k_neighbours": 0,
   "neighbour_filter": {
     "examined": 274,
     "dropped_newer": 49,
@@ -40,11 +52,11 @@
   },
   "provenance": {
     "script": "scripts/qp3b_c3_coverage.py",
-    "git_head_at_run": "9095be3b31cecf84ecab340924ff5484d4858e60",
+    "git_head_at_run": "4e1592282ea8583256db372e818453d093358c4b",
     "eval_set_sha256": "c8a9c061c75005f73e3bf02f555f790cd00300acc85df1ff83759ba192a53693",
     "candidate_index_faiss_sha256": "5114e0f08ce1a4b734d72c8572e43e67ad05ea4a5207af909ffa0973c184a6a2",
     "candidate_index_manifest": "D:\\triageiq-data\\models\\candidates\\similar_issue_index_kubernetes_kubernetes_bge_v2\\manifest.json",
-    "evidence_sha256": "99aa720ce11bed8622c84b3877cc40d5de4c424d9aa6be8cc689ece3e0319de5",
+    "evidence_sha256": "eb72b4719ef88c54fb70eec15dfb140e5f293f636b20dbcfaae0ea5cb4607033",
     "caveat": "candidate artifacts, nothing served; evidence for CLOSED issues only for comments; query rows are themselves indexed (excluded by number + time filter)"
   }
 }

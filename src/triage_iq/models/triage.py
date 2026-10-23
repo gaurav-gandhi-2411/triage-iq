@@ -23,11 +23,7 @@ from triage_iq.model_config import (
 )
 from triage_iq.models.component_decision import decide_component, repair_component_text
 from triage_iq.models.grounding import compute_grounding_status
-from triage_iq.models.priority import (
-    PriorityModel,
-    model_rationale,
-    rationale_mentions_other_level,
-)
+from triage_iq.models.priority import PriorityModel, model_rationale
 from triage_iq.models.resolution import (
     INTERVAL_RECENTRED,
     POINT_ESTIMATE_TRUSTED,
@@ -989,25 +985,24 @@ class TriageAssistant:
     def _decide_priority(self, plan: TriagePlan, signals: dict, llm_status: str) -> dict:
         """Serve the model's priority (flag on + artifact loaded); returns the metadata keys.
 
-        The LLM's own level is kept as the proposal. Its rationale is kept unless it names a
-        different level, in which case it is replaced by a templated one citing the model
-        probability (post-hoc, like Phase 3a: no prompt change). A fallback plan already carries
-        the model level (see _make_fallback_plan), so it has no LLM proposal.
+        The LLM's own level is kept as the proposal. Whenever the served level differs from it,
+        the LLM rationale (which argued for its own level, named or not) is replaced by a
+        templated one citing the model probability; when the levels agree the LLM text is kept
+        (post-hoc, like Phase 3a: no prompt change). A fallback plan already carries the model
+        level (see _make_fallback_plan) and has no LLM proposal.
         """
+        fallback = llm_status == "parse_failure" or llm_status.startswith("degraded_")
+        proposal = None if fallback else plan.priority_guess
         pm = signals.get("priority_model")
         if pm is None:  # model errored at serve time: the LLM's priority stands
             return {
                 "priority_decided_by": "llm",
-                "priority_llm_proposal": plan.priority_guess,
+                "priority_llm_proposal": proposal,
                 "priority_model_proba": None,
             }
-        fallback = llm_status == "parse_failure" or llm_status.startswith("degraded_")
-        proposal = None if fallback else plan.priority_guess
         if proposal is not None:
             plan.priority_guess = pm.label
-            if proposal != pm.label and rationale_mentions_other_level(
-                plan.priority_rationale, pm.label
-            ):
+            if proposal != pm.label:
                 plan.priority_rationale = model_rationale(pm.label, pm.proba, proposal)
         return {
             "priority_decided_by": "model",

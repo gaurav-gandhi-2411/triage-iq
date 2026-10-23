@@ -86,7 +86,7 @@ def test_flag_on_serves_model_priority_and_metadata(monkeypatch: pytest.MonkeyPa
     fake = _FakePriority("high")
     plan, meta = _run(monkeypatch, _with_priority("low", "minor cosmetic issue"), fake)
     assert plan.priority_guess == "high"
-    assert plan.priority_rationale == "minor cosmetic issue"  # names no level: kept
+    assert "minor cosmetic issue" not in plan.priority_rationale  # level differs: replaced
     assert meta["priority_decided_by"] == "model"
     assert meta["priority_llm_proposal"] == "low"
     assert meta["priority_model_proba"] == PROBA
@@ -103,6 +103,15 @@ def test_contradicting_rationale_is_replaced_by_model_template(
     assert "the LLM proposed low" in plan.priority_rationale
 
 
+def test_differing_level_replaces_rationale_even_without_a_level_word(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    llm_text = "Documentation question, no crash or data loss."
+    plan, meta = _run(monkeypatch, _with_priority("low", llm_text), _FakePriority())
+    assert plan.priority_rationale.startswith("Text-only priority model: high (p=0.70")
+    assert meta["priority_llm_proposal"] == "low"
+
+
 def test_agreeing_rationale_is_kept(monkeypatch: pytest.MonkeyPatch) -> None:
     plan, meta = _run(monkeypatch, _with_priority("high", "High: data loss."), _FakePriority())
     assert plan.priority_rationale == "High: data loss."
@@ -113,7 +122,17 @@ def test_model_error_falls_back_to_llm_priority(monkeypatch: pytest.MonkeyPatch)
     plan, meta = _run(monkeypatch, _with_priority("low", "minor"), _FakePriority(fail=True))
     assert (plan.priority_guess, plan.priority_rationale) == ("low", "minor")
     assert meta["priority_decided_by"] == "llm"
+    assert meta["priority_llm_proposal"] == "low"
     assert meta["priority_model_proba"] is None
+
+
+def test_model_error_on_llm_fallback_plan_has_no_llm_proposal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fb = _with_priority("medium", "x - priority defaulting to medium.")
+    plan, meta = _run(monkeypatch, fb, _FakePriority(fail=True), status="degraded_truncated")
+    assert plan.priority_guess == "medium"
+    assert (meta["priority_decided_by"], meta["priority_llm_proposal"]) == ("llm", None)
 
 
 @pytest.mark.parametrize("status", ["degraded_provider_error", "parse_failure"])

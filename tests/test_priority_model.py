@@ -20,7 +20,6 @@ from triage_iq.models.priority import (
     PriorityModel,
     build_text,
     model_rationale,
-    rationale_mentions_other_level,
 )
 
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
@@ -95,20 +94,6 @@ def test_load_rejects_foreign_artifact(tmp_path: Path) -> None:
     joblib.dump({"format_version": 99}, bad)
     with pytest.raises(ValueError, match="not a priority-model artifact"):
         PriorityModel.load(bad)
-
-
-@pytest.mark.parametrize(
-    ("text", "served", "expected"),
-    [
-        ("This is a high priority crash.", "high", False),
-        ("Low impact, but high severity for users.", "high", True),
-        ("Lower the risk; highlight docs", "medium", False),  # substrings are not levels
-        ("area/low-level is unrelated", "high", False),
-        ("Medium urgency.", "low", True),
-    ],
-)
-def test_rationale_contradiction_detection(text: str, served: str, expected: bool) -> None:
-    assert rationale_mentions_other_level(text, served) is expected
 
 
 def test_model_rationale_cites_probability() -> None:

@@ -10,7 +10,6 @@ transform exactly. Pure inference, no I/O except `load`.
 from __future__ import annotations
 
 import hashlib
-import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -23,7 +22,6 @@ PRIORITY_CLASSES = ("low", "medium", "high")  # P4's fixed class order
 BODY_CHARS = 4000  # P4 trained on title + "\n" + body[:4000]
 FORMAT_VERSION = 1
 _FIELDS = ("title", "body", "full")
-_LEVEL_RE = re.compile(r"(?<![A-Za-z0-9_./-])(low|medium|high)(?![A-Za-z0-9_/-])", re.IGNORECASE)
 
 
 def build_text(title: str, body: str) -> str:
@@ -80,11 +78,6 @@ class PriorityModel:
             PRIORITY_CLASSES[int(p.argmax())],
             {c: float(v) for c, v in zip(PRIORITY_CLASSES, p, strict=True)},
         )
-
-
-def rationale_mentions_other_level(text: str, served: str) -> bool:
-    """True when `text` names a priority level (low/medium/high) other than `served`."""
-    return any(m.group(1).lower() != served.lower() for m in _LEVEL_RE.finditer(text))
 
 
 def model_rationale(served: str, proba: dict[str, float], llm_proposal: str) -> str:

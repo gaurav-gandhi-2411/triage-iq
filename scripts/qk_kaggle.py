@@ -45,7 +45,10 @@ def kaggle(exe: Path, args: list[str]) -> subprocess.CompletedProcess[str]:
 def _pr_files(raw_dir: Path) -> dict[int, list[str]]:
     """Map PR number -> changed file paths from raw pr_files/*.jsonl.gz."""
     out: dict[int, list[str]] = {}
-    for p in sorted((raw_dir / "pr_files").glob("*.jsonl.gz")):
+    shards = sorted((raw_dir / "pr_files").glob("*.jsonl.gz"))
+    if not shards:  # fail loud: silently dropping file paths would diverge from the k8s PR recipe
+        raise FileNotFoundError(f"no pr_files/*.jsonl.gz under {raw_dir}; scrape PR files first")
+    for p in shards:
         with gzip.open(p, "rt", encoding="utf-8") as fh:
             for line in fh:
                 rec = json.loads(line)

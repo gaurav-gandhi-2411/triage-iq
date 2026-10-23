@@ -10,9 +10,9 @@ import pytest
 
 _S = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(_S))
-_SPEC = importlib.util.spec_from_file_location("qp1v", _S / "qp1_vscode_phase1.py")
+_SPEC = importlib.util.spec_from_file_location("qp1vlib", _S / "qp1_vscode_lib.py")
 vs = importlib.util.module_from_spec(_SPEC)
-sys.modules["qp1v"] = vs
+sys.modules["qp1vlib"] = vs
 _SPEC.loader.exec_module(vs)
 
 CLASSES = ["editor", "git", "terminal", "other"]
@@ -104,3 +104,13 @@ def test_majority_prior_and_selection_key() -> None:
     hi = {"strict_top3": {"point": 0.5}, "macro_f1": {"point": 0.1}}
     lo = {"strict_top3": {"point": 0.5}, "macro_f1": {"point": 0.1}}
     assert vs.sel_key(hi, vs.IDS["v0"]) < vs.sel_key(lo, vs.IDS["v1"])  # tie -> simpler
+
+
+def test_conformal_select_alpha_sets_target_window() -> None:
+    rng = np.random.default_rng(0)
+    p = rng.dirichlet(np.ones(4), size=400)
+    y = np.array([int(rng.choice(4, p=r)) for r in p])
+    for alpha in (0.1, 0.05):
+        res = vs.conformal_select(p, y, reps=3, alpha=alpha)
+        assert res["alpha"] == alpha
+        assert vs.conformal_choose(res["table"], 1 - alpha)["spec"] == res["selected"]

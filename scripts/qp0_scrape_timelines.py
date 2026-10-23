@@ -73,6 +73,7 @@ class TimelineScraper(dt.DupTargetScraper):
             self.ckpt = json.loads(self.ckpt_path.read_text(encoding="utf-8"))
         self.done = set(self.ckpt["done"])
         self.sizes = [s for s in BATCH_SIZES if s <= batch] or [1]
+        self.max_batch, self._ok_streak = self.sizes[0], 0
         self.stats: dict[str, int] = {"batches": 0, "issues": 0, "events": 0, "missing": 0}
 
     def _complete(self, issue: dict[str, Any]) -> None:
@@ -93,7 +94,8 @@ class TimelineScraper(dt.DupTargetScraper):
             )
 
     def fetch(self, numbers: list[int]) -> list[dict[str, Any]]:
-        """Rows for ``numbers``; shrinks the batch on persistent transient errors (incl. 499)."""
+        """Rows for ``numbers``; shrinks the batch on persistent transient errors (incl. 499) and
+        regrows it (dt._note_success) after a run of clean queries."""
         try:
             data = self.client.query(
                 batch_query(numbers),
@@ -101,6 +103,7 @@ class TimelineScraper(dt.DupTargetScraper):
                 tries=3 if len(self.sizes) > 1 else 6,
             )
         except sg.TransientError:
+            self._ok_streak = 0
             if len(numbers) == 1:
                 raise
             self.sizes = [s for s in self.sizes if s < len(numbers)] or [1]
@@ -109,6 +112,7 @@ class TimelineScraper(dt.DupTargetScraper):
             return [
                 r for i in range(0, len(numbers), step) for r in self.fetch(numbers[i : i + step])
             ]
+        self._note_success()
         rows = []
         for n in numbers:
             issue = (data.get("repository") or {}).get(f"p{n}")

@@ -1,0 +1,104 @@
+{
+ "statement": "Secondary re-scoring of SAVED Phase 1 test probabilities of tfidf_lr_v1 (c1) under the strict convention; not a new test evaluation, no refit, no new model id, published headline unchanged.",
+ "git_sha": "6dbb71b129d26d2a37874351600313e5ce1a8e12",
+ "inputs": {
+  "probabilities": "D:\\triageiq-data\\models\\kubernetes__kubernetes\\tfidf_lr\\test.parquet",
+  "probabilities_sha256": "06b0acbd146a5a5f628ea1ff5236ea1132d6ccb745619e106cf36bc45f574645",
+  "published_report": "reports/qp1_tfidf_lr_kubernetes__kubernetes_2026-10.json",
+  "model_id": "tfidf_lr_v1",
+  "bootstrap": {
+   "n_boot": 2000,
+   "seed": 42
+  }
+ },
+ "lenient_matches_published_exactly": true,
+ "results": {
+  "n": 1384,
+  "n_gold_other": 2,
+  "strict_top1": {
+   "point": 0.7709537572254336,
+   "ci95": [
+    0.7485549132947977,
+    0.7933526011560693
+   ],
+   "n": 1384,
+   "wilson95": [
+    0.7480823965860575,
+    0.792325096603367
+   ],
+   "k": 1067
+  },
+  "strict_top3": {
+   "point": 0.953757225433526,
+   "ci95": [
+    0.9429190751445087,
+    0.9645953757225434
+   ],
+   "n": 1384,
+   "wilson95": [
+    0.9413809452241851,
+    0.9636214700370377
+   ],
+   "k": 1320
+  },
+  "lenient_top1": {
+   "point": 0.7709537572254336,
+   "ci95": [
+    0.7485549132947977,
+    0.7933526011560693
+   ],
+   "n": 1384,
+   "wilson95": [
+    0.7480823965860575,
+    0.792325096603367
+   ],
+   "k": 1067
+  },
+  "lenient_top3": {
+   "point": 0.953757225433526,
+   "ci95": [
+    0.9429190751445087,
+    0.9645953757225434
+   ],
+   "n": 1384,
+   "wilson95": [
+    0.9413809452241851,
+    0.9636214700370377
+   ],
+   "k": 1320
+  },
+  "gold_other_share": {
+   "rate": 0.001445086705202312,
+   "k": 2,
+   "n": 1384
+  },
+  "strict_coverage_bound": 0.9985549132947977,
+  "n_in_family": 1382,
+  "in_family_top1": {
+   "point": 0.7720694645441389,
+   "ci95": [
+    0.7496201157742403,
+    0.7937771345875543
+   ],
+   "n": 1382,
+   "wilson95": [
+    0.7492158135136184,
+    0.7934147439757802
+   ],
+   "k": 1067
+  },
+  "in_family_top3": {
+   "point": 0.9551374819102749,
+   "ci95": [
+    0.9442836468885673,
+    0.9659913169319826
+   ],
+   "n": 1382,
+   "wilson95": [
+    0.9429043587233074,
+    0.9648472919703938
+   ],
+   "k": 1320
+  }
+ }
+}

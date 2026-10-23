@@ -194,6 +194,17 @@ def test_run_audit_end_to_end(tmp_path: Path) -> None:
     assert rep["links"][0]["pr_url"] == f"https://github.com/{REPO}/pull/{PR}"
 
 
+def test_load_links_selects_method(tmp_path: Path) -> None:
+    pd.DataFrame(
+        {"issue": [1, 2], "pr": [10, 20], "method": [qp0a.METHOD, "pr_closing_refs"]}
+    ).to_parquet(tmp_path / "fix_links.parquet")
+    pd.DataFrame({"number": [1, 2], "created_year": [2024, 2025]}).to_parquet(
+        tmp_path / "issues.parquet"
+    )
+    assert qp0a.load_links(tmp_path) == [(1, 10, 2024)]
+    assert qp0a.load_links(tmp_path, "pr_closing_refs") == [(2, 20, 2025)]
+
+
 def test_keyword_adversarial_prefix_and_foreign_repo() -> None:
     assert not qp0a.has_keyword("prefix #7", 7, REPO)  # "fix" inside a word
     assert not qp0a.has_keyword("we disclose #7", 7, REPO)  # "close" inside a word

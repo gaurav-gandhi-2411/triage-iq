@@ -25,6 +25,9 @@ among decided = CONFIRMED / (CONFIRMED + WRONG). Both with Wilson 95% intervals.
 Post-audit hardening (keyword word boundary, repo-scoped references, no-timestamp guard) can
 only turn a keyword_timing CONFIRMED into UNVERIFIABLE; the committed k8s report's 118
 confirmations were all cross_ref_timing, so it is unaffected.
+Strata are declared before any API call: issue created year (2023-2026) within one link method.
+`--method` selects the method (default closed_event_closer_pr, the only one the retrieval ceiling
+uses and so the gate for it); other methods are secondary reports judged by the same rules.
 The token comes from `gh auth token` inside the process and is never printed or written.
 """
 
@@ -239,11 +242,11 @@ def judge(api: Api, repo: str, issue: int, pr: int) -> dict[str, Any]:
     return v("UNVERIFIABLE", "ambiguous_timing")
 
 
-def load_links(derived: Path) -> list[tuple[int, int, int]]:
+def load_links(derived: Path, method: str = METHOD) -> list[tuple[int, int, int]]:
     """(issue, pr, created_year) for every closer link in a strata year; sorted, no verdict data."""
     fl = pd.read_parquet(derived / "fix_links.parquet", columns=["issue", "pr", "method"])
     iss = pd.read_parquet(derived / "issues.parquet", columns=["number", "created_year"])
-    m = fl[fl["method"] == METHOD].merge(iss, left_on="issue", right_on="number")
+    m = fl[fl["method"] == method].merge(iss, left_on="issue", right_on="number")
     m = m[m["created_year"].isin(YEARS)].drop_duplicates(["issue", "pr"])
     return sorted(
         zip(m["issue"].astype(int), m["pr"].astype(int), m["created_year"].astype(int), strict=True)
@@ -277,8 +280,10 @@ def summarise(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def run_audit(api: Api, repo: str, derived: Path, per_stratum: int, seed: int) -> dict[str, Any]:
-    links = load_links(derived)
+def run_audit(
+    api: Api, repo: str, derived: Path, per_stratum: int, seed: int, method: str = METHOD
+) -> dict[str, Any]:
+    links = load_links(derived, method)
     rows = []
     for issue, pr, year in stratified_sample(links, per_stratum, seed):
         res = judge(api, repo, issue, pr)
@@ -291,7 +296,7 @@ def run_audit(api: Api, repo: str, derived: Path, per_stratum: int, seed: int) -
     overall = summarise(rows)
     lo = (overall["primary_wilson95"] or [None])[0]
     return {
-        "repo": repo, "seed": seed, "per_stratum": per_stratum, "method": METHOD,
+        "repo": repo, "seed": seed, "per_stratum": per_stratum, "method": method,
         "population": {str(y): sum(1 for x in links if x[2] == y) for y in YEARS},
         "rules": RULES, "generated_with": "scripts/qp0_fixlink_audit.py",
         "overall": overall,
@@ -309,6 +314,7 @@ def run_audit(api: Api, repo: str, derived: Path, per_stratum: int, seed: int) -
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Audit fix-link precision against the REST API")
     ap.add_argument("--repo", required=True, help="owner/name")
+    ap.add_argument("--method", default=METHOD, help="fix_links method (default: closer)")
     ap.add_argument("--per-stratum", type=int, default=15)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--derived-dir", type=Path, default=None)
@@ -319,7 +325,7 @@ def main(argv: list[str] | None = None) -> int:
     derived = a.derived_dir or Path(r"D:\triageiq-data") / "derived" / slug
     out = a.out or Path(f"reports/qp0_fixlink_audit_{slug}_2026-10.json")
     api = Api(requests_transport(gh_token()), a.sleep_min_remaining)
-    rep = run_audit(api, a.repo, derived, a.per_stratum, a.seed)
+    rep = run_audit(api, a.repo, derived, a.per_stratum, a.seed, a.method)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(rep, indent=1), encoding="utf-8")
     acc = rep["acceptance"]

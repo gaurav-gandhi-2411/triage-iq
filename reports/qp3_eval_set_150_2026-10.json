@@ -1,0 +1,1377 @@
+{
+ "design": "(2026-10-23; committed BEFORE any sample is drawn; do not change after\nseeing the sample). Builds the set only: no LLM call, no cassette, no recording.\n * Population per repo: TEST-split issues (D:/triageiq-data/splits/<repo>/test.parquet, created\n   >= 2026-01-01) with classifier_eligible (leak_texthash and leak_dup_pair both False), that carry\n   a component gold (k8s: >= 1 sig/* label at the end, ADR-0067; vscode: >= 1 non-excluded label,\n   ADR-0070), whose cleaned body (preprocess.clean_text) is non-empty and <= BODY_CHARS (2000, the\n   cap of build_vscode_expansion_eval_set.py; longer bodies are EXCLUDED, not truncated, so the\n   LLM never sees a cut issue). Counts removed by each rule are reported. SELECTION EFFECT: the\n   length rule drops long issues; estimates generalise to the short-body population only.\n * Gold. Component: k8s class = sig/* primary label with >= 30 train issues else `other`\n   (ADR-0067); vscode class = parent area of the primary label if it is in the frozen 85-class\n   family (ADR-0070, sha256 asserted), else `other` (strict headline; raw primary and parent are\n   kept in meta). Priority: k8s label gold = qp3b_priority.gold3 on labels_final; otherwise (and for\n   vscode) inferred from resolution days with infer_priority of the expansion builder (<1 d high,\n   <7 d medium, else low); open issues without a label gold get null. Resolution: actual days\n   (closed) or null with censored=true (open).\n * Strata (all binary except k8s target). k8s: has priority-label gold x target {dup_or_peer = source\n   of a duplicate pair or member of a fix group; fix_pr = merged fix PR in fix_links only; none} x\n   closed/open. vscode: primary in-family/out-of-family x has duplicate target x closed/open.\n   Component class is spread INSIDE each stratum (below), not a stratum dimension (too sparse).\n * Allocation (75 per repo, proportional with minimums): every non-empty stratum gets\n   min(N_h, MINIMUM) (k8s 3, vscode 5); the remainder is split in proportion to the spare capacity\n   N_h - base_h by largest remainder (ties: stratum key). Within a stratum, items are drawn one\n   at a time: pick the class with the fewest items drawn so far in this repo (ties: seeded random),\n   then a uniform random member of that class. Strata are processed by ascending population (ties:\n   key) with one numpy default_rng(42) per repo; members are sorted by issue number first.\n   Deterministic. In/out-of-family ratio stays near the population's because the remainder is\n   proportional (reported).\n * Reweighting: per-stratum x class population and sample counts are recorded; the weight of a\n   row is N(h, c) / n(h, c). Population cells never drawn are listed (no weight can cover them).\n * similar_issues = frozen top-5 of the SERVED index (data/models/similar_issue_index_<repo>_bge),\n   CPU float32, issue itself excluded: the same call eval/freeze_query_embeddings.py makes\n   (retrieve_with_embedding), identical to eval/freeze_similar_issues.py output; k8s also gets\n   frozen_query_embeddings.npz (RESOLUTION_EMBEDDINGS_REPOS). LIMITATION: that index holds issues\n   numbered <= 30000 (k8s) / a 2014-2026 sample (vscode) and is not the Phase 2/3b retriever; it\n   must be re-frozen with the final retriever before the single re-record. Meta records, per row,\n   which duplicate / fix targets exist in that index.\n * Token estimate: spec 10 planning figure 6,000 tokens/issue x n vs the 160,000/day recorder cap,\n   plus prompt-text size of this set vs the committed eval_set.jsonl (the 6K figure's origin).\n\nv2 DESIGN (2026-10-23), supersedes v1 BEFORE ANY USE (nothing was recorded or scored on the v1\nset, sha256 in V1_SET_SHA256 below). Every change, with its reason; everything not listed is unchanged.\n 1. Length: long bodies are KEPT; only empty cleaned bodies are excluded. The prompt sends\n    body[:800] (build_triage_prompt max_body_chars) and 120 chars per similar issue, so a long\n    body costs no extra tokens; v1's cap removed 461 k8s / 2,070 vscode issues and biased the\n    population. Rows keep the full cleaned body (<= 10,000, clean_text). Token estimate is\n    recomputed from what the prompt sends (body[:800], similar text[:120]).\n 2. vscode: simple random sampling inside each stratum (numpy default_rng(42) over members sorted\n    by number, strata in the same ascending-population order); no class balancing; minimum 5 kept.\n    Class coverage is an outcome. k8s keeps the class-spread draw. Weights: k8s N(h,c)/n(h,c),\n    vscode N(h)/n(h); the report gives the range and Kish n_eff = (sum w)^2 / sum w^2 per repo.\n 3. Temporal leakage: a neighbour created after the query cannot exist at serve time. Retrieval\n    asks for K_RETRIEVE=50 and keeps the first 5 whose created_at < the query's. created_at comes\n    from data/processed/<repo>_temporal_train.parquet and derived_v2 issues (the index meta has\n    none). A neighbour with no known created_at falls back to its issue number being lower than\n    the query's (GitHub numbers issues and PRs in one creation-ordered sequence) and is counted\n    separately; one with neither is dropped and counted. Drop counts are in the report; the k8s\n    query embeddings are unchanged (same query vector).\n 4. similar_issues stays on the served index (production as-is). Relevance vs duplicate/fix links\n    is unscorable on it (0 targets indexed): the Phase 2 / 3b retriever must be frozen into this\n    set (re-run this script's freeze step with that retriever) before the single re-record. The\n    report records `relevance_scoring` and, per repo, how many sampled issues have a dup/fix\n    target present in derived_v2 and created before the query (indexable by a new retriever).",
+ "design_version": "2.1",
+ "design_version_note": "2.1: meta.fix_prs / fix_peers use audited closed_event_closer_pr links only (D79: pr_closing_refs audited 76.7% < 95%); sampled issues, strata, weights, similar_issues unchanged from v2 (sha256 in supersedes_v2); nothing was recorded on v2.",
+ "files": {
+  "eval_set.jsonl": "c8a9c061c75005f73e3bf02f555f790cd00300acc85df1ff83759ba192a53693",
+  "frozen_query_embeddings.npz": "e9475c7b85a576c222166c7d491a1d18d7b1d5814980b5f6eaff21838aba0012"
+ },
+ "freeze": {
+  "index_sha256": {
+   "kubernetes/kubernetes": "a2ff35a0f7665ec76126ef01db40a4d84471165696c54e0e0a96836de0004dab",
+   "microsoft/vscode": "3b825bd00696b2b83c2731a0e5cde9af0123b109eded2f7e48ea1194855e3a53"
+  },
+  "neighbour_filter": {
+   "kubernetes/kubernetes": {
+    "dropped_newer": 0,
+    "dropped_unknown": 0,
+    "examined": 375,
+    "kept_by_number_fallback": 158,
+    "rows_with_fewer_than_k": 0
+   },
+   "microsoft/vscode": {
+    "dropped_newer": 358,
+    "dropped_unknown": 58,
+    "examined": 773,
+    "kept_by_number_fallback": 139,
+    "rows_with_fewer_than_k": 5
+   }
+  }
+ },
+ "kubernetes/kubernetes": {
+  "balance": true,
+  "classes": [
+   "sig/api-machinery",
+   "sig/apps",
+   "sig/architecture",
+   "sig/auth",
+   "sig/autoscaling",
+   "sig/cli",
+   "sig/cloud-provider",
+   "sig/cluster-lifecycle",
+   "sig/docs",
+   "sig/etcd",
+   "sig/instrumentation",
+   "sig/k8s-infra",
+   "sig/network",
+   "sig/node",
+   "sig/release",
+   "sig/scalability",
+   "sig/scheduling",
+   "sig/security",
+   "sig/storage",
+   "sig/testing",
+   "sig/windows"
+  ],
+  "classes_in_population": 22,
+  "classes_in_sample": 22,
+  "in_family_share_pop": 0.9985538684020245,
+  "in_family_share_sample": 0.9733333333333334,
+  "input_sha256": {
+   "test_split": "ee1b53738dcc790dfbddcebb1c7c699ad788b0ad7279c42dbc256d2ebe4fd315"
+  },
+  "minimum": 3,
+  "n": 75,
+  "removed": {
+   "body_gt_prompt_cap_kept": 1063,
+   "eligible_test": 1583,
+   "empty_body": 1,
+   "no_component_gold": 199,
+   "population": 1383
+  },
+  "strata": {
+   "prio=0|target=dup_or_peer|closed=1": {
+    "population": 13,
+    "sample": 3
+   },
+   "prio=0|target=fix_pr|closed=0": {
+    "population": 7,
+    "sample": 3
+   },
+   "prio=0|target=fix_pr|closed=1": {
+    "population": 262,
+    "sample": 12
+   },
+   "prio=0|target=none|closed=0": {
+    "population": 510,
+    "sample": 21
+   },
+   "prio=0|target=none|closed=1": {
+    "population": 348,
+    "sample": 15
+   },
+   "prio=1|target=dup_or_peer|closed=1": {
+    "population": 3,
+    "sample": 3
+   },
+   "prio=1|target=fix_pr|closed=0": {
+    "population": 1,
+    "sample": 1
+   },
+   "prio=1|target=fix_pr|closed=1": {
+    "population": 77,
+    "sample": 5
+   },
+   "prio=1|target=none|closed=0": {
+    "population": 111,
+    "sample": 7
+   },
+   "prio=1|target=none|closed=1": {
+    "population": 51,
+    "sample": 5
+   }
+  },
+  "stratum_x_class": {
+   "prio=0|target=dup_or_peer|closed=1|sig/api-machinery": [
+    1,
+    0
+   ],
+   "prio=0|target=dup_or_peer|closed=1|sig/autoscaling": [
+    1,
+    1
+   ],
+   "prio=0|target=dup_or_peer|closed=1|sig/cli": [
+    1,
+    1
+   ],
+   "prio=0|target=dup_or_peer|closed=1|sig/node": [
+    5,
+    0
+   ],
+   "prio=0|target=dup_or_peer|closed=1|sig/scheduling": [
+    5,
+    1
+   ],
+   "prio=0|target=fix_pr|closed=0|sig/api-machinery": [
+    3,
+    1
+   ],
+   "prio=0|target=fix_pr|closed=0|sig/etcd": [
+    1,
+    0
+   ],
+   "prio=0|target=fix_pr|closed=0|sig/instrumentation": [
+    1,
+    1
+   ],
+   "prio=0|target=fix_pr|closed=0|sig/network": [
+    1,
+    1
+   ],
+   "prio=0|target=fix_pr|closed=0|sig/storage": [
+    1,
+    0
+   ],
+   "prio=0|target=fix_pr|closed=1|other": [
+    1,
+    1
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/api-machinery": [
+    36,
+    0
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/apps": [
+    9,
+    0
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/architecture": [
+    14,
+    1
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/auth": [
+    10,
+    0
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/autoscaling": [
+    8,
+    1
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/cli": [
+    10,
+    1
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/cloud-provider": [
+    2,
+    2
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/cluster-lifecycle": [
+    2,
+    1
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/etcd": [
+    1,
+    1
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/instrumentation": [
+    2,
+    0
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/k8s-infra": [
+    1,
+    1
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/network": [
+    23,
+    0
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/node": [
+    50,
+    0
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/release": [
+    1,
+    1
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/scalability": [
+    1,
+    0
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/scheduling": [
+    61,
+    0
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/security": [
+    1,
+    1
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/storage": [
+    12,
+    0
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/testing": [
+    9,
+    0
+   ],
+   "prio=0|target=fix_pr|closed=1|sig/windows": [
+    8,
+    1
+   ],
+   "prio=0|target=none|closed=0|sig/api-machinery": [
+    167,
+    2
+   ],
+   "prio=0|target=none|closed=0|sig/apps": [
+    18,
+    2
+   ],
+   "prio=0|target=none|closed=0|sig/architecture": [
+    27,
+    1
+   ],
+   "prio=0|target=none|closed=0|sig/auth": [
+    20,
+    1
+   ],
+   "prio=0|target=none|closed=0|sig/autoscaling": [
+    9,
+    2
+   ],
+   "prio=0|target=none|closed=0|sig/cli": [
+    11,
+    0
+   ],
+   "prio=0|target=none|closed=0|sig/cloud-provider": [
+    6,
+    0
+   ],
+   "prio=0|target=none|closed=0|sig/cluster-lifecycle": [
+    1,
+    0
+   ],
+   "prio=0|target=none|closed=0|sig/docs": [
+    1,
+    1
+   ],
+   "prio=0|target=none|closed=0|sig/etcd": [
+    2,
+    2
+   ],
+   "prio=0|target=none|closed=0|sig/instrumentation": [
+    9,
+    1
+   ],
+   "prio=0|target=none|closed=0|sig/k8s-infra": [
+    3,
+    1
+   ],
+   "prio=0|target=none|closed=0|sig/network": [
+    17,
+    0
+   ],
+   "prio=0|target=none|closed=0|sig/node": [
+    94,
+    0
+   ],
+   "prio=0|target=none|closed=0|sig/release": [
+    2,
+    1
+   ],
+   "prio=0|target=none|closed=0|sig/scalability": [
+    12,
+    2
+   ],
+   "prio=0|target=none|closed=0|sig/scheduling": [
+    78,
+    0
+   ],
+   "prio=0|target=none|closed=0|sig/security": [
+    1,
+    1
+   ],
+   "prio=0|target=none|closed=0|sig/storage": [
+    22,
+    0
+   ],
+   "prio=0|target=none|closed=0|sig/testing": [
+    4,
+    2
+   ],
+   "prio=0|target=none|closed=0|sig/windows": [
+    6,
+    2
+   ],
+   "prio=0|target=none|closed=1|sig/api-machinery": [
+    51,
+    0
+   ],
+   "prio=0|target=none|closed=1|sig/apps": [
+    8,
+    0
+   ],
+   "prio=0|target=none|closed=1|sig/architecture": [
+    7,
+    1
+   ],
+   "prio=0|target=none|closed=1|sig/auth": [
+    10,
+    1
+   ],
+   "prio=0|target=none|closed=1|sig/autoscaling": [
+    5,
+    0
+   ],
+   "prio=0|target=none|closed=1|sig/cli": [
+    20,
+    1
+   ],
+   "prio=0|target=none|closed=1|sig/cloud-provider": [
+    6,
+    1
+   ],
+   "prio=0|target=none|closed=1|sig/cluster-lifecycle": [
+    3,
+    1
+   ],
+   "prio=0|target=none|closed=1|sig/etcd": [
+    1,
+    1
+   ],
+   "prio=0|target=none|closed=1|sig/instrumentation": [
+    1,
+    1
+   ],
+   "prio=0|target=none|closed=1|sig/k8s-infra": [
+    4,
+    1
+   ],
+   "prio=0|target=none|closed=1|sig/network": [
+    25,
+    1
+   ],
+   "prio=0|target=none|closed=1|sig/node": [
+    87,
+    0
+   ],
+   "prio=0|target=none|closed=1|sig/release": [
+    8,
+    2
+   ],
+   "prio=0|target=none|closed=1|sig/scalability": [
+    13,
+    0
+   ],
+   "prio=0|target=none|closed=1|sig/scheduling": [
+    45,
+    1
+   ],
+   "prio=0|target=none|closed=1|sig/security": [
+    4,
+    2
+   ],
+   "prio=0|target=none|closed=1|sig/storage": [
+    20,
+    1
+   ],
+   "prio=0|target=none|closed=1|sig/testing": [
+    18,
+    0
+   ],
+   "prio=0|target=none|closed=1|sig/windows": [
+    12,
+    0
+   ],
+   "prio=1|target=dup_or_peer|closed=1|sig/node": [
+    3,
+    3
+   ],
+   "prio=1|target=fix_pr|closed=0|sig/node": [
+    1,
+    1
+   ],
+   "prio=1|target=fix_pr|closed=1|sig/api-machinery": [
+    2,
+    0
+   ],
+   "prio=1|target=fix_pr|closed=1|sig/apps": [
+    4,
+    2
+   ],
+   "prio=1|target=fix_pr|closed=1|sig/auth": [
+    2,
+    1
+   ],
+   "prio=1|target=fix_pr|closed=1|sig/cli": [
+    4,
+    0
+   ],
+   "prio=1|target=fix_pr|closed=1|sig/network": [
+    2,
+    0
+   ],
+   "prio=1|target=fix_pr|closed=1|sig/node": [
+    58,
+    0
+   ],
+   "prio=1|target=fix_pr|closed=1|sig/scheduling": [
+    3,
+    1
+   ],
+   "prio=1|target=fix_pr|closed=1|sig/testing": [
+    2,
+    1
+   ],
+   "prio=1|target=none|closed=0|sig/api-machinery": [
+    3,
+    1
+   ],
+   "prio=1|target=none|closed=0|sig/apps": [
+    3,
+    0
+   ],
+   "prio=1|target=none|closed=0|sig/auth": [
+    1,
+    1
+   ],
+   "prio=1|target=none|closed=0|sig/network": [
+    1,
+    1
+   ],
+   "prio=1|target=none|closed=0|sig/node": [
+    94,
+    0
+   ],
+   "prio=1|target=none|closed=0|sig/scalability": [
+    1,
+    1
+   ],
+   "prio=1|target=none|closed=0|sig/scheduling": [
+    4,
+    0
+   ],
+   "prio=1|target=none|closed=0|sig/storage": [
+    2,
+    2
+   ],
+   "prio=1|target=none|closed=0|sig/testing": [
+    2,
+    1
+   ],
+   "prio=1|target=none|closed=1|other": [
+    1,
+    1
+   ],
+   "prio=1|target=none|closed=1|sig/api-machinery": [
+    3,
+    0
+   ],
+   "prio=1|target=none|closed=1|sig/architecture": [
+    1,
+    0
+   ],
+   "prio=1|target=none|closed=1|sig/cluster-lifecycle": [
+    1,
+    1
+   ],
+   "prio=1|target=none|closed=1|sig/k8s-infra": [
+    2,
+    1
+   ],
+   "prio=1|target=none|closed=1|sig/network": [
+    2,
+    0
+   ],
+   "prio=1|target=none|closed=1|sig/node": [
+    35,
+    0
+   ],
+   "prio=1|target=none|closed=1|sig/scalability": [
+    1,
+    1
+   ],
+   "prio=1|target=none|closed=1|sig/scheduling": [
+    3,
+    0
+   ],
+   "prio=1|target=none|closed=1|sig/testing": [
+    1,
+    0
+   ],
+   "prio=1|target=none|closed=1|sig/windows": [
+    1,
+    1
+   ]
+  },
+  "undrawn_cells": 41,
+  "undrawn_population": 856,
+  "weights": {
+   "kish_n_eff": 14.096487666226778,
+   "max": 83.5,
+   "min": 1.0,
+   "n": 75
+  }
+ },
+ "microsoft/vscode": {
+  "balance": false,
+  "classes": [
+   "WSL",
+   "accessibility-signal",
+   "api",
+   "authentication",
+   "breadcrumbs",
+   "chat",
+   "code-cli",
+   "code-lens",
+   "command-center",
+   "comments",
+   "config",
+   "cross-file-editing",
+   "css-less-scss",
+   "custom-editors",
+   "debug",
+   "dictation",
+   "diff-editor",
+   "editor",
+   "emmet",
+   "error-list",
+   "extensions",
+   "file",
+   "font-rendering",
+   "formatting",
+   "getting-started",
+   "git",
+   "github",
+   "gpu",
+   "grammar",
+   "html",
+   "inlay-hints",
+   "inline-chat",
+   "inline-completions",
+   "install-update",
+   "interactive-window",
+   "issue-reporter",
+   "javascript",
+   "json",
+   "keybindings",
+   "l10n-platform",
+   "languages-basic",
+   "languages-diagnostics",
+   "layout",
+   "log",
+   "markdown-ext",
+   "menus",
+   "merge-editor",
+   "multi-diff-editor",
+   "native-file-dialog",
+   "network",
+   "notebook",
+   "open-editors",
+   "outline",
+   "output",
+   "panel-chat",
+   "proxy",
+   "quick-chat",
+   "quick-open",
+   "quick-pick",
+   "remote",
+   "scm",
+   "search",
+   "settings",
+   "simple-file-dialog",
+   "snippets",
+   "suggest",
+   "tasks",
+   "telemetry",
+   "terminal",
+   "testing",
+   "themes",
+   "titlebar",
+   "tree-sitter",
+   "tree-sitter-autoindent-candidate",
+   "tree-views",
+   "tree-widget",
+   "typescript",
+   "unc",
+   "user-profiles",
+   "vscode-build",
+   "vscode.dev",
+   "web",
+   "webview",
+   "workbench",
+   "workspace-trust"
+  ],
+  "classes_in_population": 78,
+  "classes_in_sample": 14,
+  "in_family_share_pop": 0.42046413502109703,
+  "in_family_share_sample": 0.4533333333333333,
+  "input_sha256": {
+   "test_split": "6513b511ddff2e7fe78ff4f702cba997198513cd98fa2d84d41b18b6c0c19a36"
+  },
+  "minimum": 5,
+  "n": 75,
+  "removed": {
+   "body_gt_prompt_cap_kept": 4414,
+   "eligible_test": 9598,
+   "empty_body": 118,
+   "no_component_gold": 0,
+   "population": 9480
+  },
+  "strata": {
+   "in=0|dup=0|closed=0": {
+    "population": 1908,
+    "sample": 14
+   },
+   "in=0|dup=0|closed=1": {
+    "population": 3343,
+    "sample": 20
+   },
+   "in=0|dup=1|closed=0": {
+    "population": 1,
+    "sample": 1
+   },
+   "in=0|dup=1|closed=1": {
+    "population": 242,
+    "sample": 6
+   },
+   "in=1|dup=0|closed=0": {
+    "population": 1331,
+    "sample": 11
+   },
+   "in=1|dup=0|closed=1": {
+    "population": 2550,
+    "sample": 16
+   },
+   "in=1|dup=1|closed=0": {
+    "population": 2,
+    "sample": 2
+   },
+   "in=1|dup=1|closed=1": {
+    "population": 103,
+    "sample": 5
+   }
+  },
+  "stratum_x_class": {
+   "in=0|dup=0|closed=0|other": [
+    1908,
+    14
+   ],
+   "in=0|dup=0|closed=1|other": [
+    3343,
+    20
+   ],
+   "in=0|dup=1|closed=0|other": [
+    1,
+    1
+   ],
+   "in=0|dup=1|closed=1|other": [
+    242,
+    6
+   ],
+   "in=1|dup=0|closed=0|WSL": [
+    3,
+    0
+   ],
+   "in=1|dup=0|closed=0|accessibility-signal": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=0|api": [
+    18,
+    0
+   ],
+   "in=1|dup=0|closed=0|authentication": [
+    19,
+    0
+   ],
+   "in=1|dup=0|closed=0|breadcrumbs": [
+    6,
+    0
+   ],
+   "in=1|dup=0|closed=0|chat": [
+    464,
+    4
+   ],
+   "in=1|dup=0|closed=0|code-cli": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=0|command-center": [
+    5,
+    1
+   ],
+   "in=1|dup=0|closed=0|config": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=0|css-less-scss": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=0|custom-editors": [
+    9,
+    0
+   ],
+   "in=1|dup=0|closed=0|debug": [
+    21,
+    0
+   ],
+   "in=1|dup=0|closed=0|dictation": [
+    18,
+    0
+   ],
+   "in=1|dup=0|closed=0|diff-editor": [
+    8,
+    0
+   ],
+   "in=1|dup=0|closed=0|editor": [
+    94,
+    0
+   ],
+   "in=1|dup=0|closed=0|emmet": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=0|extensions": [
+    60,
+    0
+   ],
+   "in=1|dup=0|closed=0|file": [
+    27,
+    0
+   ],
+   "in=1|dup=0|closed=0|font-rendering": [
+    3,
+    0
+   ],
+   "in=1|dup=0|closed=0|git": [
+    46,
+    0
+   ],
+   "in=1|dup=0|closed=0|github": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=0|gpu": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=0|grammar": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=0|html": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=0|inline-chat": [
+    10,
+    1
+   ],
+   "in=1|dup=0|closed=0|inline-completions": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=0|install-update": [
+    72,
+    2
+   ],
+   "in=1|dup=0|closed=0|issue-reporter": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=0|javascript": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=0|keybindings": [
+    3,
+    0
+   ],
+   "in=1|dup=0|closed=0|l10n-platform": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=0|languages-basic": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=0|layout": [
+    8,
+    0
+   ],
+   "in=1|dup=0|closed=0|log": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=0|markdown-ext": [
+    9,
+    0
+   ],
+   "in=1|dup=0|closed=0|menus": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=0|multi-diff-editor": [
+    8,
+    1
+   ],
+   "in=1|dup=0|closed=0|native-file-dialog": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=0|network": [
+    10,
+    0
+   ],
+   "in=1|dup=0|closed=0|notebook": [
+    18,
+    0
+   ],
+   "in=1|dup=0|closed=0|open-editors": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=0|outline": [
+    3,
+    0
+   ],
+   "in=1|dup=0|closed=0|output": [
+    4,
+    0
+   ],
+   "in=1|dup=0|closed=0|panel-chat": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=0|proxy": [
+    3,
+    0
+   ],
+   "in=1|dup=0|closed=0|quick-chat": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=0|quick-open": [
+    4,
+    0
+   ],
+   "in=1|dup=0|closed=0|quick-pick": [
+    5,
+    0
+   ],
+   "in=1|dup=0|closed=0|remote": [
+    7,
+    0
+   ],
+   "in=1|dup=0|closed=0|scm": [
+    17,
+    0
+   ],
+   "in=1|dup=0|closed=0|search": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=0|settings": [
+    10,
+    0
+   ],
+   "in=1|dup=0|closed=0|simple-file-dialog": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=0|snippets": [
+    3,
+    0
+   ],
+   "in=1|dup=0|closed=0|suggest": [
+    4,
+    1
+   ],
+   "in=1|dup=0|closed=0|tasks": [
+    15,
+    0
+   ],
+   "in=1|dup=0|closed=0|telemetry": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=0|terminal": [
+    187,
+    1
+   ],
+   "in=1|dup=0|closed=0|testing": [
+    11,
+    0
+   ],
+   "in=1|dup=0|closed=0|themes": [
+    7,
+    0
+   ],
+   "in=1|dup=0|closed=0|titlebar": [
+    6,
+    0
+   ],
+   "in=1|dup=0|closed=0|tree-views": [
+    4,
+    0
+   ],
+   "in=1|dup=0|closed=0|tree-widget": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=0|typescript": [
+    3,
+    0
+   ],
+   "in=1|dup=0|closed=0|user-profiles": [
+    4,
+    0
+   ],
+   "in=1|dup=0|closed=0|vscode.dev": [
+    4,
+    0
+   ],
+   "in=1|dup=0|closed=0|web": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=0|webview": [
+    7,
+    0
+   ],
+   "in=1|dup=0|closed=0|workbench": [
+    46,
+    0
+   ],
+   "in=1|dup=0|closed=0|workspace-trust": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=1|WSL": [
+    7,
+    0
+   ],
+   "in=1|dup=0|closed=1|api": [
+    20,
+    0
+   ],
+   "in=1|dup=0|closed=1|authentication": [
+    6,
+    0
+   ],
+   "in=1|dup=0|closed=1|breadcrumbs": [
+    4,
+    0
+   ],
+   "in=1|dup=0|closed=1|chat": [
+    1392,
+    9
+   ],
+   "in=1|dup=0|closed=1|code-cli": [
+    3,
+    0
+   ],
+   "in=1|dup=0|closed=1|code-lens": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=1|command-center": [
+    3,
+    0
+   ],
+   "in=1|dup=0|closed=1|comments": [
+    3,
+    0
+   ],
+   "in=1|dup=0|closed=1|config": [
+    6,
+    0
+   ],
+   "in=1|dup=0|closed=1|css-less-scss": [
+    5,
+    0
+   ],
+   "in=1|dup=0|closed=1|custom-editors": [
+    5,
+    0
+   ],
+   "in=1|dup=0|closed=1|debug": [
+    19,
+    0
+   ],
+   "in=1|dup=0|closed=1|dictation": [
+    67,
+    0
+   ],
+   "in=1|dup=0|closed=1|diff-editor": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=1|editor": [
+    72,
+    0
+   ],
+   "in=1|dup=0|closed=1|emmet": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=1|error-list": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=1|extensions": [
+    56,
+    0
+   ],
+   "in=1|dup=0|closed=1|file": [
+    30,
+    0
+   ],
+   "in=1|dup=0|closed=1|font-rendering": [
+    4,
+    0
+   ],
+   "in=1|dup=0|closed=1|formatting": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=1|git": [
+    25,
+    0
+   ],
+   "in=1|dup=0|closed=1|github": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=1|grammar": [
+    19,
+    0
+   ],
+   "in=1|dup=0|closed=1|html": [
+    6,
+    0
+   ],
+   "in=1|dup=0|closed=1|inline-chat": [
+    50,
+    0
+   ],
+   "in=1|dup=0|closed=1|inline-completions": [
+    5,
+    0
+   ],
+   "in=1|dup=0|closed=1|install-update": [
+    112,
+    2
+   ],
+   "in=1|dup=0|closed=1|issue-reporter": [
+    7,
+    0
+   ],
+   "in=1|dup=0|closed=1|javascript": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=1|json": [
+    8,
+    0
+   ],
+   "in=1|dup=0|closed=1|keybindings": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=1|l10n-platform": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=1|layout": [
+    19,
+    0
+   ],
+   "in=1|dup=0|closed=1|markdown-ext": [
+    16,
+    0
+   ],
+   "in=1|dup=0|closed=1|menus": [
+    6,
+    0
+   ],
+   "in=1|dup=0|closed=1|merge-editor": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=1|multi-diff-editor": [
+    5,
+    0
+   ],
+   "in=1|dup=0|closed=1|native-file-dialog": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=1|network": [
+    12,
+    0
+   ],
+   "in=1|dup=0|closed=1|notebook": [
+    14,
+    1
+   ],
+   "in=1|dup=0|closed=1|open-editors": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=1|outline": [
+    6,
+    0
+   ],
+   "in=1|dup=0|closed=1|output": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=1|panel-chat": [
+    2,
+    0
+   ],
+   "in=1|dup=0|closed=1|proxy": [
+    6,
+    0
+   ],
+   "in=1|dup=0|closed=1|quick-chat": [
+    1,
+    0
+   ],
+   "in=1|dup=0|closed=1|quick-open": [
+    3,
+    1
+   ],
+   "in=1|dup=0|closed=1|quick-pick": [
+    7,
+    0
+   ],
+   "in=1|dup=0|closed=1|remote": [
+    16,
+    0
+   ],
+   "in=1|dup=0|closed=1|scm": [
+    19,
+    0
+   ],
+   "in=1|dup=0|closed=1|search": [
+    4,
+    0
+   ],
+   "in=1|dup=0|closed=1|settings": [
+    15,
+    0
+   ],
+   "in=1|dup=0|closed=1|simple-file-dialog": [
+    5,
+    0
+   ],
+   "in=1|dup=0|closed=1|snippets": [
+    12,
+    0
+   ],
+   "in=1|dup=0|closed=1|suggest": [
+    9,
+    0
+   ],
+   "in=1|dup=0|closed=1|tasks": [
+    14,
+    1
+   ],
+   "in=1|dup=0|closed=1|telemetry": [
+    18,
+    0
+   ],
+   "in=1|dup=0|closed=1|terminal": [
+    174,
+    2
+   ],
+   "in=1|dup=0|closed=1|testing": [
+    9,
+    0
+   ],
+   "in=1|dup=0|closed=1|themes": [
+    15,
+    0
+   ],
+   "in=1|dup=0|closed=1|titlebar": [
+    3,
+    0
+   ],
+   "in=1|dup=0|closed=1|tree-views": [
+    4,
+    0
+   ],
+   "in=1|dup=0|closed=1|typescript": [
+    4,
+    0
+   ],
+   "in=1|dup=0|closed=1|user-profiles": [
+    6,
+    0
+   ],
+   "in=1|dup=0|closed=1|vscode-build": [
+    25,
+    0
+   ],
+   "in=1|dup=0|closed=1|vscode.dev": [
+    5,
+    0
+   ],
+   "in=1|dup=0|closed=1|web": [
+    4,
+    0
+   ],
+   "in=1|dup=0|closed=1|webview": [
+    15,
+    0
+   ],
+   "in=1|dup=0|closed=1|workbench": [
+    122,
+    0
+   ],
+   "in=1|dup=0|closed=1|workspace-trust": [
+    3,
+    0
+   ],
+   "in=1|dup=1|closed=0|chat": [
+    1,
+    1
+   ],
+   "in=1|dup=1|closed=0|emmet": [
+    1,
+    1
+   ],
+   "in=1|dup=1|closed=1|chat": [
+    40,
+    2
+   ],
+   "in=1|dup=1|closed=1|code-cli": [
+    1,
+    0
+   ],
+   "in=1|dup=1|closed=1|dictation": [
+    1,
+    0
+   ],
+   "in=1|dup=1|closed=1|editor": [
+    5,
+    1
+   ],
+   "in=1|dup=1|closed=1|error-list": [
+    1,
+    0
+   ],
+   "in=1|dup=1|closed=1|git": [
+    2,
+    0
+   ],
+   "in=1|dup=1|closed=1|grammar": [
+    1,
+    0
+   ],
+   "in=1|dup=1|closed=1|inline-chat": [
+    2,
+    0
+   ],
+   "in=1|dup=1|closed=1|install-update": [
+    19,
+    1
+   ],
+   "in=1|dup=1|closed=1|layout": [
+    2,
+    1
+   ],
+   "in=1|dup=1|closed=1|multi-diff-editor": [
+    1,
+    0
+   ],
+   "in=1|dup=1|closed=1|scm": [
+    1,
+    0
+   ],
+   "in=1|dup=1|closed=1|snippets": [
+    2,
+    0
+   ],
+   "in=1|dup=1|closed=1|terminal": [
+    20,
+    0
+   ],
+   "in=1|dup=1|closed=1|workbench": [
+    5,
+    0
+   ]
+  },
+  "undrawn_cells": 140,
+  "undrawn_population": 1459,
+  "weights": {
+   "kish_n_eff": 64.27769973387949,
+   "max": 167.15,
+   "min": 1.0,
+   "n": 75
+  }
+ },
+ "relevance_scoring": {
+  "action": "freeze the Phase 2 / 3b retriever into this set (re-run freeze with it) before the single re-record",
+  "per_repo": {
+   "kubernetes/kubernetes": {
+    "indexable_in_derived_v2_before_query": 4,
+    "target_in_served_index": 0,
+    "with_dup_or_peer": 6
+   },
+   "microsoft/vscode": {
+    "indexable_in_derived_v2_before_query": 14,
+    "target_in_served_index": 0,
+    "with_dup_or_peer": 19
+   }
+  },
+  "status": "UNSCORABLE on the served index: 0 sampled duplicate/fix targets are indexed"
+ },
+ "script_commit": "de5b0b2364196be71faec4356c05d53f93490d0c",
+ "seed": 42,
+ "supersedes_v1": {
+  "eval_set.jsonl": "cfe8b8bddaae1b9743d4822435a6deda9651d54e6cc388adf335db6d0a3acd2d",
+  "frozen_query_embeddings.npz": "7a2e06063d49d3feed96f946ccfcb2aa046d993d6efdcc9d30922bfe89ba9319"
+ },
+ "supersedes_v2": {
+  "eval_set.jsonl": "2da0fe53c4d0112297da8368fdf41491d0a8a4db3d18dde9dbcf4264239ee8db"
+ },
+ "tokens": {
+  "adjusted_tokens_per_issue": 6051.309322916667,
+  "adjusted_total_tokens": 907696,
+  "committed_set_sent_text_mean_tokens": 278.77734375,
+  "daily_cap": 160000,
+  "days_at_cap": 6,
+  "delta_tokens_per_issue_vs_committed": 51.309322916666645,
+  "n": 150,
+  "planning_tokens_per_issue": 6000,
+  "planning_total_tokens": 900000,
+  "sent_text_tokens_chars_div4": {
+   "max": 395.75,
+   "mean": 330.08666666666664,
+   "p95": 382.775
+  },
+  "synthesis_prompt_tokens_est": 4195.559322916667
+ }
+}

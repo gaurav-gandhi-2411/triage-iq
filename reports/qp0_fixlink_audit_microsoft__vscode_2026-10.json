@@ -1,0 +1,1325 @@
+{
+ "repo": "microsoft/vscode",
+ "seed": 42,
+ "per_stratum": 30,
+ "method": "closed_event_closer_pr",
+ "population": {
+  "2023": 2855,
+  "2024": 2458,
+  "2025": 2860,
+  "2026": 3761
+ },
+ "rules": "(pre-registered 2026-10-20, GG decision D79 item 2; do not change after results)\n  a. GET /repos/{repo}/pulls/{pr}: 404 => WRONG(pr_not_in_repo); merged != true =>\n     WRONG(pr_not_merged).\n  b. Closed events come from /issues/{n}/events (plus /timeline when fetched). CONFIRMED if\n     (1) a closed event's commit_id equals the PR's merge_commit_sha [commit_match], OR (2) the\n     timeline has a cross-referenced event whose source.issue is that PR AND a closed event is\n     within 120 s of the PR's merged_at [cross_ref_timing], OR (3) the PR title/body has a\n     closing keyword + the issue number AND a closed event is within 120 s of merged_at\n     [keyword_timing]. The first kind in that order is recorded as the evidence.\n  c. WRONG(closed_before_pr_merged) if the LAST closed event precedes merged_at by > 1 h and\n     the issue was not reopened after it; WRONG(no_relation) if the PR is merged in the repo,\n     there is no cross-reference, no commit match and no keyword, and the last closed event\n     differs from merged_at by > 1 h.\n  d. Everything else => UNVERIFIABLE with a reason (api_error, issue_gone, issue_transferred,\n     no_closed_event, reopened_after_close, ambiguous_timing, structural_evidence_but_timing).",
+ "generated_with": "scripts/qp0_fixlink_audit.py",
+ "overall": {
+  "n_sampled": 120,
+  "verdicts": {
+   "CONFIRMED": 119,
+   "UNVERIFIABLE": 1
+  },
+  "reasons": {
+   "CONFIRMED:cross_ref_timing": 112,
+   "CONFIRMED:commit_match": 7,
+   "UNVERIFIABLE:ambiguous_timing": 1
+  },
+  "primary_precision": 0.9916666666666667,
+  "primary_wilson95": [
+   0.9543,
+   0.9985
+  ],
+  "decided_precision": 1.0,
+  "decided_wilson95": [
+   0.9687,
+   1.0
+  ]
+ },
+ "per_stratum_summary": {
+  "2023": {
+   "n_sampled": 30,
+   "verdicts": {
+    "CONFIRMED": 30
+   },
+   "reasons": {
+    "CONFIRMED:cross_ref_timing": 30
+   },
+   "primary_precision": 1.0,
+   "primary_wilson95": [
+    0.8865,
+    1.0
+   ],
+   "decided_precision": 1.0,
+   "decided_wilson95": [
+    0.8865,
+    1.0
+   ]
+  },
+  "2024": {
+   "n_sampled": 30,
+   "verdicts": {
+    "CONFIRMED": 30
+   },
+   "reasons": {
+    "CONFIRMED:cross_ref_timing": 25,
+    "CONFIRMED:commit_match": 5
+   },
+   "primary_precision": 1.0,
+   "primary_wilson95": [
+    0.8865,
+    1.0
+   ],
+   "decided_precision": 1.0,
+   "decided_wilson95": [
+    0.8865,
+    1.0
+   ]
+  },
+  "2025": {
+   "n_sampled": 30,
+   "verdicts": {
+    "CONFIRMED": 30
+   },
+   "reasons": {
+    "CONFIRMED:cross_ref_timing": 28,
+    "CONFIRMED:commit_match": 2
+   },
+   "primary_precision": 1.0,
+   "primary_wilson95": [
+    0.8865,
+    1.0
+   ],
+   "decided_precision": 1.0,
+   "decided_wilson95": [
+    0.8865,
+    1.0
+   ]
+  },
+  "2026": {
+   "n_sampled": 30,
+   "verdicts": {
+    "CONFIRMED": 29,
+    "UNVERIFIABLE": 1
+   },
+   "reasons": {
+    "CONFIRMED:cross_ref_timing": 29,
+    "UNVERIFIABLE:ambiguous_timing": 1
+   },
+   "primary_precision": 0.9666666666666667,
+   "primary_wilson95": [
+    0.8333,
+    0.9941
+   ],
+   "decided_precision": 1.0,
+   "decided_wilson95": [
+    0.883,
+    1.0
+   ]
+  }
+ },
+ "acceptance": {
+  "threshold": 0.95,
+  "primary_precision": 0.9916666666666667,
+  "wilson_lower_bound": 0.9543,
+  "result": "pass"
+ },
+ "links": [
+  {
+   "issue": 171757,
+   "pr": 172032,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/171757",
+   "pr_url": "https://github.com/microsoft/vscode/pull/172032"
+  },
+  {
+   "issue": 171880,
+   "pr": 178291,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/171880",
+   "pr_url": "https://github.com/microsoft/vscode/pull/178291"
+  },
+  {
+   "issue": 172061,
+   "pr": 172193,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/172061",
+   "pr_url": "https://github.com/microsoft/vscode/pull/172193"
+  },
+  {
+   "issue": 172120,
+   "pr": 200401,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/172120",
+   "pr_url": "https://github.com/microsoft/vscode/pull/200401"
+  },
+  {
+   "issue": 174041,
+   "pr": 282977,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/174041",
+   "pr_url": "https://github.com/microsoft/vscode/pull/282977"
+  },
+  {
+   "issue": 174401,
+   "pr": 174694,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/174401",
+   "pr_url": "https://github.com/microsoft/vscode/pull/174694"
+  },
+  {
+   "issue": 174888,
+   "pr": 175077,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/174888",
+   "pr_url": "https://github.com/microsoft/vscode/pull/175077"
+  },
+  {
+   "issue": 175111,
+   "pr": 175138,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/175111",
+   "pr_url": "https://github.com/microsoft/vscode/pull/175138"
+  },
+  {
+   "issue": 176481,
+   "pr": 241342,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/176481",
+   "pr_url": "https://github.com/microsoft/vscode/pull/241342"
+  },
+  {
+   "issue": 179481,
+   "pr": 200957,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/179481",
+   "pr_url": "https://github.com/microsoft/vscode/pull/200957"
+  },
+  {
+   "issue": 180506,
+   "pr": 180515,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/180506",
+   "pr_url": "https://github.com/microsoft/vscode/pull/180515"
+  },
+  {
+   "issue": 180578,
+   "pr": 180617,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/180578",
+   "pr_url": "https://github.com/microsoft/vscode/pull/180617"
+  },
+  {
+   "issue": 180721,
+   "pr": 181265,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/180721",
+   "pr_url": "https://github.com/microsoft/vscode/pull/181265"
+  },
+  {
+   "issue": 181063,
+   "pr": 181066,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/181063",
+   "pr_url": "https://github.com/microsoft/vscode/pull/181066"
+  },
+  {
+   "issue": 181720,
+   "pr": 184906,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/181720",
+   "pr_url": "https://github.com/microsoft/vscode/pull/184906"
+  },
+  {
+   "issue": 183679,
+   "pr": 183680,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/183679",
+   "pr_url": "https://github.com/microsoft/vscode/pull/183680"
+  },
+  {
+   "issue": 183809,
+   "pr": 184196,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/183809",
+   "pr_url": "https://github.com/microsoft/vscode/pull/184196"
+  },
+  {
+   "issue": 189358,
+   "pr": 191108,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/189358",
+   "pr_url": "https://github.com/microsoft/vscode/pull/191108"
+  },
+  {
+   "issue": 189482,
+   "pr": 190873,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/189482",
+   "pr_url": "https://github.com/microsoft/vscode/pull/190873"
+  },
+  {
+   "issue": 190859,
+   "pr": 191099,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/190859",
+   "pr_url": "https://github.com/microsoft/vscode/pull/191099"
+  },
+  {
+   "issue": 192930,
+   "pr": 192932,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/192930",
+   "pr_url": "https://github.com/microsoft/vscode/pull/192932"
+  },
+  {
+   "issue": 194579,
+   "pr": 195017,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/194579",
+   "pr_url": "https://github.com/microsoft/vscode/pull/195017"
+  },
+  {
+   "issue": 194581,
+   "pr": 194636,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/194581",
+   "pr_url": "https://github.com/microsoft/vscode/pull/194636"
+  },
+  {
+   "issue": 195384,
+   "pr": 206004,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/195384",
+   "pr_url": "https://github.com/microsoft/vscode/pull/206004"
+  },
+  {
+   "issue": 196472,
+   "pr": 196485,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/196472",
+   "pr_url": "https://github.com/microsoft/vscode/pull/196485"
+  },
+  {
+   "issue": 196495,
+   "pr": 198239,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/196495",
+   "pr_url": "https://github.com/microsoft/vscode/pull/198239"
+  },
+  {
+   "issue": 196951,
+   "pr": 199011,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/196951",
+   "pr_url": "https://github.com/microsoft/vscode/pull/199011"
+  },
+  {
+   "issue": 198798,
+   "pr": 198911,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/198798",
+   "pr_url": "https://github.com/microsoft/vscode/pull/198911"
+  },
+  {
+   "issue": 199340,
+   "pr": 199519,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/199340",
+   "pr_url": "https://github.com/microsoft/vscode/pull/199519"
+  },
+  {
+   "issue": 200369,
+   "pr": 224694,
+   "year": 2023,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/200369",
+   "pr_url": "https://github.com/microsoft/vscode/pull/224694"
+  },
+  {
+   "issue": 202018,
+   "pr": 203827,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/202018",
+   "pr_url": "https://github.com/microsoft/vscode/pull/203827"
+  },
+  {
+   "issue": 203871,
+   "pr": 203920,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/203871",
+   "pr_url": "https://github.com/microsoft/vscode/pull/203920"
+  },
+  {
+   "issue": 204011,
+   "pr": 205045,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/204011",
+   "pr_url": "https://github.com/microsoft/vscode/pull/205045"
+  },
+  {
+   "issue": 205394,
+   "pr": 207349,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/205394",
+   "pr_url": "https://github.com/microsoft/vscode/pull/207349"
+  },
+  {
+   "issue": 205722,
+   "pr": 205849,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/205722",
+   "pr_url": "https://github.com/microsoft/vscode/pull/205849"
+  },
+  {
+   "issue": 206471,
+   "pr": 336662,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/206471",
+   "pr_url": "https://github.com/microsoft/vscode/pull/336662"
+  },
+  {
+   "issue": 206762,
+   "pr": 206870,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/206762",
+   "pr_url": "https://github.com/microsoft/vscode/pull/206870"
+  },
+  {
+   "issue": 207101,
+   "pr": 209544,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/207101",
+   "pr_url": "https://github.com/microsoft/vscode/pull/209544"
+  },
+  {
+   "issue": 208089,
+   "pr": 208745,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/208089",
+   "pr_url": "https://github.com/microsoft/vscode/pull/208745"
+  },
+  {
+   "issue": 209341,
+   "pr": 211673,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/209341",
+   "pr_url": "https://github.com/microsoft/vscode/pull/211673"
+  },
+  {
+   "issue": 209621,
+   "pr": 209672,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/209621",
+   "pr_url": "https://github.com/microsoft/vscode/pull/209672"
+  },
+  {
+   "issue": 211194,
+   "pr": 211477,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/211194",
+   "pr_url": "https://github.com/microsoft/vscode/pull/211477"
+  },
+  {
+   "issue": 212278,
+   "pr": 214174,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/212278",
+   "pr_url": "https://github.com/microsoft/vscode/pull/214174"
+  },
+  {
+   "issue": 213103,
+   "pr": 213097,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/213103",
+   "pr_url": "https://github.com/microsoft/vscode/pull/213097"
+  },
+  {
+   "issue": 214778,
+   "pr": 214908,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/214778",
+   "pr_url": "https://github.com/microsoft/vscode/pull/214908"
+  },
+  {
+   "issue": 216610,
+   "pr": 219903,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/216610",
+   "pr_url": "https://github.com/microsoft/vscode/pull/219903"
+  },
+  {
+   "issue": 218099,
+   "pr": 218318,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "commit_match",
+   "evidence": "commit_match",
+   "issue_url": "https://github.com/microsoft/vscode/issues/218099",
+   "pr_url": "https://github.com/microsoft/vscode/pull/218318"
+  },
+  {
+   "issue": 218219,
+   "pr": 218876,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "commit_match",
+   "evidence": "commit_match",
+   "issue_url": "https://github.com/microsoft/vscode/issues/218219",
+   "pr_url": "https://github.com/microsoft/vscode/pull/218876"
+  },
+  {
+   "issue": 223358,
+   "pr": 227006,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/223358",
+   "pr_url": "https://github.com/microsoft/vscode/pull/227006"
+  },
+  {
+   "issue": 223389,
+   "pr": 223837,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/223389",
+   "pr_url": "https://github.com/microsoft/vscode/pull/223837"
+  },
+  {
+   "issue": 223508,
+   "pr": 223518,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "commit_match",
+   "evidence": "commit_match",
+   "issue_url": "https://github.com/microsoft/vscode/issues/223508",
+   "pr_url": "https://github.com/microsoft/vscode/pull/223518"
+  },
+  {
+   "issue": 224690,
+   "pr": 224692,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/224690",
+   "pr_url": "https://github.com/microsoft/vscode/pull/224692"
+  },
+  {
+   "issue": 224803,
+   "pr": 224869,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/224803",
+   "pr_url": "https://github.com/microsoft/vscode/pull/224869"
+  },
+  {
+   "issue": 225665,
+   "pr": 227244,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/225665",
+   "pr_url": "https://github.com/microsoft/vscode/pull/227244"
+  },
+  {
+   "issue": 225733,
+   "pr": 230519,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/225733",
+   "pr_url": "https://github.com/microsoft/vscode/pull/230519"
+  },
+  {
+   "issue": 227778,
+   "pr": 227958,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "commit_match",
+   "evidence": "commit_match",
+   "issue_url": "https://github.com/microsoft/vscode/issues/227778",
+   "pr_url": "https://github.com/microsoft/vscode/pull/227958"
+  },
+  {
+   "issue": 229503,
+   "pr": 229777,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "commit_match",
+   "evidence": "commit_match",
+   "issue_url": "https://github.com/microsoft/vscode/issues/229503",
+   "pr_url": "https://github.com/microsoft/vscode/pull/229777"
+  },
+  {
+   "issue": 233787,
+   "pr": 233789,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/233787",
+   "pr_url": "https://github.com/microsoft/vscode/pull/233789"
+  },
+  {
+   "issue": 234473,
+   "pr": 237677,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/234473",
+   "pr_url": "https://github.com/microsoft/vscode/pull/237677"
+  },
+  {
+   "issue": 235485,
+   "pr": 235488,
+   "year": 2024,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/235485",
+   "pr_url": "https://github.com/microsoft/vscode/pull/235488"
+  },
+  {
+   "issue": 240661,
+   "pr": 240663,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/240661",
+   "pr_url": "https://github.com/microsoft/vscode/pull/240663"
+  },
+  {
+   "issue": 241090,
+   "pr": 241092,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/241090",
+   "pr_url": "https://github.com/microsoft/vscode/pull/241092"
+  },
+  {
+   "issue": 241991,
+   "pr": 242207,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/241991",
+   "pr_url": "https://github.com/microsoft/vscode/pull/242207"
+  },
+  {
+   "issue": 244889,
+   "pr": 244891,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "commit_match",
+   "evidence": "commit_match",
+   "issue_url": "https://github.com/microsoft/vscode/issues/244889",
+   "pr_url": "https://github.com/microsoft/vscode/pull/244891"
+  },
+  {
+   "issue": 244922,
+   "pr": 245156,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/244922",
+   "pr_url": "https://github.com/microsoft/vscode/pull/245156"
+  },
+  {
+   "issue": 245662,
+   "pr": 246351,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/245662",
+   "pr_url": "https://github.com/microsoft/vscode/pull/246351"
+  },
+  {
+   "issue": 248041,
+   "pr": 250635,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/248041",
+   "pr_url": "https://github.com/microsoft/vscode/pull/250635"
+  },
+  {
+   "issue": 248784,
+   "pr": 249363,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "commit_match",
+   "evidence": "commit_match",
+   "issue_url": "https://github.com/microsoft/vscode/issues/248784",
+   "pr_url": "https://github.com/microsoft/vscode/pull/249363"
+  },
+  {
+   "issue": 249629,
+   "pr": 249785,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/249629",
+   "pr_url": "https://github.com/microsoft/vscode/pull/249785"
+  },
+  {
+   "issue": 250440,
+   "pr": 250569,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/250440",
+   "pr_url": "https://github.com/microsoft/vscode/pull/250569"
+  },
+  {
+   "issue": 251727,
+   "pr": 251752,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/251727",
+   "pr_url": "https://github.com/microsoft/vscode/pull/251752"
+  },
+  {
+   "issue": 251874,
+   "pr": 278663,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/251874",
+   "pr_url": "https://github.com/microsoft/vscode/pull/278663"
+  },
+  {
+   "issue": 252307,
+   "pr": 252642,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/252307",
+   "pr_url": "https://github.com/microsoft/vscode/pull/252642"
+  },
+  {
+   "issue": 258612,
+   "pr": 259177,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/258612",
+   "pr_url": "https://github.com/microsoft/vscode/pull/259177"
+  },
+  {
+   "issue": 259014,
+   "pr": 259033,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/259014",
+   "pr_url": "https://github.com/microsoft/vscode/pull/259033"
+  },
+  {
+   "issue": 259417,
+   "pr": 259422,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/259417",
+   "pr_url": "https://github.com/microsoft/vscode/pull/259422"
+  },
+  {
+   "issue": 259879,
+   "pr": 277923,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/259879",
+   "pr_url": "https://github.com/microsoft/vscode/pull/277923"
+  },
+  {
+   "issue": 259884,
+   "pr": 277921,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/259884",
+   "pr_url": "https://github.com/microsoft/vscode/pull/277921"
+  },
+  {
+   "issue": 265395,
+   "pr": 266072,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/265395",
+   "pr_url": "https://github.com/microsoft/vscode/pull/266072"
+  },
+  {
+   "issue": 266256,
+   "pr": 270078,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/266256",
+   "pr_url": "https://github.com/microsoft/vscode/pull/270078"
+  },
+  {
+   "issue": 272656,
+   "pr": 272692,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/272656",
+   "pr_url": "https://github.com/microsoft/vscode/pull/272692"
+  },
+  {
+   "issue": 274333,
+   "pr": 274442,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/274333",
+   "pr_url": "https://github.com/microsoft/vscode/pull/274442"
+  },
+  {
+   "issue": 277537,
+   "pr": 278874,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/277537",
+   "pr_url": "https://github.com/microsoft/vscode/pull/278874"
+  },
+  {
+   "issue": 279973,
+   "pr": 280079,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/279973",
+   "pr_url": "https://github.com/microsoft/vscode/pull/280079"
+  },
+  {
+   "issue": 280080,
+   "pr": 285416,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/280080",
+   "pr_url": "https://github.com/microsoft/vscode/pull/285416"
+  },
+  {
+   "issue": 280425,
+   "pr": 280687,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/280425",
+   "pr_url": "https://github.com/microsoft/vscode/pull/280687"
+  },
+  {
+   "issue": 280795,
+   "pr": 280849,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/280795",
+   "pr_url": "https://github.com/microsoft/vscode/pull/280849"
+  },
+  {
+   "issue": 282498,
+   "pr": 282633,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/282498",
+   "pr_url": "https://github.com/microsoft/vscode/pull/282633"
+  },
+  {
+   "issue": 283988,
+   "pr": 283989,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/283988",
+   "pr_url": "https://github.com/microsoft/vscode/pull/283989"
+  },
+  {
+   "issue": 284444,
+   "pr": 284451,
+   "year": 2025,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/284444",
+   "pr_url": "https://github.com/microsoft/vscode/pull/284451"
+  },
+  {
+   "issue": 287988,
+   "pr": 288120,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/287988",
+   "pr_url": "https://github.com/microsoft/vscode/pull/288120"
+  },
+  {
+   "issue": 289745,
+   "pr": 291474,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/289745",
+   "pr_url": "https://github.com/microsoft/vscode/pull/291474"
+  },
+  {
+   "issue": 290434,
+   "pr": 290635,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/290434",
+   "pr_url": "https://github.com/microsoft/vscode/pull/290635"
+  },
+  {
+   "issue": 295557,
+   "pr": 295806,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/295557",
+   "pr_url": "https://github.com/microsoft/vscode/pull/295806"
+  },
+  {
+   "issue": 300556,
+   "pr": 300559,
+   "year": 2026,
+   "verdict": "UNVERIFIABLE",
+   "reason": "ambiguous_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/300556",
+   "pr_url": "https://github.com/microsoft/vscode/pull/300559"
+  },
+  {
+   "issue": 300895,
+   "pr": 300897,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/300895",
+   "pr_url": "https://github.com/microsoft/vscode/pull/300897"
+  },
+  {
+   "issue": 302281,
+   "pr": 302979,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/302281",
+   "pr_url": "https://github.com/microsoft/vscode/pull/302979"
+  },
+  {
+   "issue": 305866,
+   "pr": 306826,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/305866",
+   "pr_url": "https://github.com/microsoft/vscode/pull/306826"
+  },
+  {
+   "issue": 306116,
+   "pr": 307886,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/306116",
+   "pr_url": "https://github.com/microsoft/vscode/pull/307886"
+  },
+  {
+   "issue": 309590,
+   "pr": 309677,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/309590",
+   "pr_url": "https://github.com/microsoft/vscode/pull/309677"
+  },
+  {
+   "issue": 309607,
+   "pr": 309611,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/309607",
+   "pr_url": "https://github.com/microsoft/vscode/pull/309611"
+  },
+  {
+   "issue": 311016,
+   "pr": 310999,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/311016",
+   "pr_url": "https://github.com/microsoft/vscode/pull/310999"
+  },
+  {
+   "issue": 315055,
+   "pr": 315086,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/315055",
+   "pr_url": "https://github.com/microsoft/vscode/pull/315086"
+  },
+  {
+   "issue": 315340,
+   "pr": 315342,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/315340",
+   "pr_url": "https://github.com/microsoft/vscode/pull/315342"
+  },
+  {
+   "issue": 318463,
+   "pr": 318475,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/318463",
+   "pr_url": "https://github.com/microsoft/vscode/pull/318475"
+  },
+  {
+   "issue": 320623,
+   "pr": 327583,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/320623",
+   "pr_url": "https://github.com/microsoft/vscode/pull/327583"
+  },
+  {
+   "issue": 324770,
+   "pr": 327553,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/324770",
+   "pr_url": "https://github.com/microsoft/vscode/pull/327553"
+  },
+  {
+   "issue": 328360,
+   "pr": 331079,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/328360",
+   "pr_url": "https://github.com/microsoft/vscode/pull/331079"
+  },
+  {
+   "issue": 328856,
+   "pr": 339371,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/328856",
+   "pr_url": "https://github.com/microsoft/vscode/pull/339371"
+  },
+  {
+   "issue": 330126,
+   "pr": 330129,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/330126",
+   "pr_url": "https://github.com/microsoft/vscode/pull/330129"
+  },
+  {
+   "issue": 331636,
+   "pr": 340081,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/331636",
+   "pr_url": "https://github.com/microsoft/vscode/pull/340081"
+  },
+  {
+   "issue": 334647,
+   "pr": 334924,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/334647",
+   "pr_url": "https://github.com/microsoft/vscode/pull/334924"
+  },
+  {
+   "issue": 335085,
+   "pr": 335498,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/335085",
+   "pr_url": "https://github.com/microsoft/vscode/pull/335498"
+  },
+  {
+   "issue": 336592,
+   "pr": 336600,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/336592",
+   "pr_url": "https://github.com/microsoft/vscode/pull/336600"
+  },
+  {
+   "issue": 337542,
+   "pr": 337505,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/337542",
+   "pr_url": "https://github.com/microsoft/vscode/pull/337505"
+  },
+  {
+   "issue": 338719,
+   "pr": 339427,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/338719",
+   "pr_url": "https://github.com/microsoft/vscode/pull/339427"
+  },
+  {
+   "issue": 340510,
+   "pr": 340973,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/340510",
+   "pr_url": "https://github.com/microsoft/vscode/pull/340973"
+  },
+  {
+   "issue": 341100,
+   "pr": 341642,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/341100",
+   "pr_url": "https://github.com/microsoft/vscode/pull/341642"
+  },
+  {
+   "issue": 343050,
+   "pr": 343483,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/343050",
+   "pr_url": "https://github.com/microsoft/vscode/pull/343483"
+  },
+  {
+   "issue": 343229,
+   "pr": 343264,
+   "year": 2026,
+   "verdict": "CONFIRMED",
+   "reason": "cross_ref_timing",
+   "evidence": "cross_ref_timing",
+   "issue_url": "https://github.com/microsoft/vscode/issues/343229",
+   "pr_url": "https://github.com/microsoft/vscode/pull/343264"
+  }
+ ]
+}

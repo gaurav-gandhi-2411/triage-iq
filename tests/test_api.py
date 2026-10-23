@@ -1002,3 +1002,65 @@ def test_current_llm_baseline_is_none_when_file_missing(tmp_path):
     from triage_iq.api.app import _current_llm_baseline
 
     assert _current_llm_baseline(tmp_path / "absent.json") is None
+
+
+# ---------------------------------------------------------------------------
+# TRIAGE_CLEAN_REQUEST_BODY (train/serve skew fix, default OFF)
+# ---------------------------------------------------------------------------
+
+_RAW_BODY = (
+    "<!-- template comment -->\nCrash on paste\n\n\n```py\nboom()\n```\nsee `foo`  and  more\n"
+)
+
+
+def _post_and_capture(env: dict, body: str = _RAW_BODY):
+    store = _make_store()
+    with (
+        patch.dict("os.environ", {"GROQ_API_KEY": "test-key-for-tests", **env}),
+        patch("triage_iq.api.app.ModelStore.load_all", return_value=store),
+        TestClient(app) as c,
+    ):
+        r = c.post(
+            "/triage",
+            json={"repo": "microsoft/vscode", "title": "T", "body": body, "issue_number": 7},
+        )
+    assert r.status_code == 200
+    return store.get.return_value.assistant.triage_with_metadata.call_args.args[0]
+
+
+def test_clean_request_body_default_off_passes_raw_series(monkeypatch):
+    monkeypatch.delenv("TRIAGE_CLEAN_REQUEST_BODY", raising=False)
+    issue = _post_and_capture({})
+    assert issue["body_clean"] == _RAW_BODY
+    assert issue["title"] == "T"
+    # Identical field set to main: no code_blocks key, so resolution's has_code_blocks stays 0.
+    assert list(issue.index) == ["number", "title", "body_clean", "created_at"]
+
+
+def test_clean_request_body_flag_other_value_stays_off():
+    issue = _post_and_capture({"TRIAGE_CLEAN_REQUEST_BODY": "0"})
+    assert issue["body_clean"] == _RAW_BODY
+
+
+def test_clean_request_body_on_matches_clean_text():
+    from triage_iq.data.preprocess import clean_text
+
+    issue = _post_and_capture({"TRIAGE_CLEAN_REQUEST_BODY": "1"})
+    cleaned, code = clean_text(_RAW_BODY)
+    assert issue["body_clean"] == cleaned
+    assert "[CODE_BLOCK]" in cleaned and "[INLINE_CODE]" in cleaned and "<!--" not in cleaned
+    assert issue["code_blocks"] == code and "boom()" in code
+    assert issue["title"] == "T"
+
+
+def test_clean_request_body_on_max_length_body():
+    from triage_iq.data.preprocess import MAX_BODY_CHARS
+
+    issue = _post_and_capture({"TRIAGE_CLEAN_REQUEST_BODY": "1"}, body="x" * 32_000)
+    assert len(issue["body_clean"]) == MAX_BODY_CHARS
+
+
+def test_clean_request_body_on_carries_body_raw_for_priority_model():
+    issue = _post_and_capture({"TRIAGE_CLEAN_REQUEST_BODY": "1"})
+    assert issue["body_raw"] == _RAW_BODY
+    assert issue["body_clean"] != _RAW_BODY

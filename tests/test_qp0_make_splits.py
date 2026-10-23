@@ -145,3 +145,17 @@ def test_main_writes_outputs_and_report_is_byte_identical(tmp_path: Path) -> Non
     assert (out / "test.parquet").exists() and (out / "dup_task_pairs.parquet").exists()
     assert set(pd.read_parquet(out / "test.parquet").columns) == set(qp0s.COLS)
     assert '"number"' not in first.decode()  # the report carries no issue ids
+
+
+def test_component_predicate_narrows_classifier_eligible() -> None:
+    """With a component predicate, unlabelled issues are not eligible; leak flags are unchanged."""
+    iss = issues([(1, TRAIN_T, "a"), (2, VAL_T, "b"), (3, VAL_T, "a")])
+    iss["labels_final"] = [["bug"], ["editor-find", "bug"], ["bug"]]
+    df, _ = qp0s.make_splits(iss, pairs([]), lambda x: x != "bug")
+    by = df.set_index("number")
+    assert list(by["has_component_label"]) == [False, True, False]
+    assert list(by["classifier_eligible"]) == [False, True, False]
+    assert bool(by.at[3, "leak_texthash"])  # leak flag still computed independently
+    plain, _ = qp0s.make_splits(iss, pairs([]))
+    assert "has_component_label" not in plain.columns
+    assert list(plain["classifier_eligible"]) == [True, True, False]

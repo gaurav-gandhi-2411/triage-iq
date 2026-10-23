@@ -27,6 +27,7 @@ import hashlib
 import json
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -53,8 +54,15 @@ def assign_split(created_at: pd.Series) -> pd.Series:
     )
 
 
-def make_splits(issues: pd.DataFrame, pairs: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """(issues with split + leak flags, dup_task_pairs). Pure function of its inputs."""
+def make_splits(
+    issues: pd.DataFrame, pairs: pd.DataFrame, component: Callable[[str], bool] | None = None
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """(issues with split + leak flags, dup_task_pairs). Pure function of its inputs.
+
+    `component` (optional; repos without one label family, e.g. vscode ADR-0070): predicate for
+    "this label names a product component". classifier_eligible then also requires >= 1 such label
+    in labels_final and the helper column `has_component_label` is added. None (k8s) changes nothing.
+    """
     df = issues.sort_values("number").reset_index(drop=True).copy()
     df["split"] = assign_split(df["created_at"])
     rank = df["split"].map(RANK)
@@ -72,6 +80,9 @@ def make_splits(issues: pd.DataFrame, pairs: pd.DataFrame) -> tuple[pd.DataFrame
                 leak_nums.add(int(c))
     df["leak_dup_pair"] = df["number"].isin(leak_nums)
     df["classifier_eligible"] = ~(df["leak_texthash"] | df["leak_dup_pair"])
+    if component is not None:
+        df["has_component_label"] = [any(component(x) for x in ls) for ls in df["labels_final"]]
+        df["classifier_eligible"] &= df["has_component_label"]
     rows = []
     for s, c in sorted(set(zip(pairs["source"], pairs["canonical"], strict=True))):
         if s not in by_num.index or RANK[by_num.at[s, "split"]] == 0:
@@ -129,8 +140,10 @@ def summarise(df: pd.DataFrame, dup: pd.DataFrame) -> dict[str, Any]:
             "state": d["state"].value_counts().sort_index().to_dict(),
             "leak_texthash": int(d["leak_texthash"].sum()),
             "leak_dup_pair": int(d["leak_dup_pair"].sum()),
-            "leak_either": int((~d["classifier_eligible"]).sum()),
+            "leak_either": int((d["leak_texthash"] | d["leak_dup_pair"]).sum()),
             "classifier_eligible": int(d["classifier_eligible"].sum()),
+            **({"has_component_label": int(d["has_component_label"].sum())}
+               if "has_component_label" in d else {}),
             "within_split_text_dup_groups": int((grp > 1).sum()),
             "within_split_issues_in_dup_groups": int(grp[grp > 1].sum()),
             "created_at_min": str(d["created_at"].min()), "created_at_max": str(d["created_at"].max()),
@@ -146,20 +159,50 @@ def summarise(df: pd.DataFrame, dup: pd.DataFrame) -> dict[str, Any]:
     return out
 
 
+ADR_0070_CLASS_LIST_SHA256 = "95129c95809c21574ed34d41a46358149322680a7ccb0e42e90f4b62e7b761ea"
+
+
+def taxonomy_block(df: pd.DataFrame, tx: Any) -> dict[str, Any]:
+    """ADR-0070 provenance: exclusion-spec hash and the TRAIN-only parent class list + its hash."""
+    train = df[df["split"] == "train"]
+    classes = tx.family(tx.window_counts(train, tx.parent_of))
+    sha = hashlib.sha256("\n".join(classes).encode()).hexdigest()
+    return {
+        "adr": "0070", "script": "scripts/qp2_vscode_taxonomy.py",
+        "classifier_eligible_rule": "no text-hash / duplicate-pair leakage AND >= 1 non-excluded "
+        "component label in labels_final (an unlabelled issue is outside the evaluated population)",
+        "exclusion_spec_sha256": tx.SPEC_SHA256, "n_parent_classes_train": len(classes),
+        "class_list_sha256": sha, "adr_0070_class_list_sha256": ADR_0070_CLASS_LIST_SHA256,
+        "class_list_matches_adr": sha == ADR_0070_CLASS_LIST_SHA256,
+    }  # fmt: skip
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Temporal splits with leakage flags")
     ap.add_argument("--repo", required=True, help="owner/name")
     ap.add_argument("--derived-dir", type=Path, default=None)
     ap.add_argument("--out-dir", type=Path, default=None)
     ap.add_argument("--report", type=Path, default=None)
+    ap.add_argument("--taxonomy", choices=("none", "vscode"), default="none",
+                    help="vscode: classifier_eligible also needs a non-excluded component label (ADR-0070)")  # fmt: skip
     a = ap.parse_args(argv)
     slug = a.repo.replace("/", "__")
     derived = a.derived_dir or Path(r"D:\triageiq-data") / "derived" / slug
     out_dir = a.out_dir or Path(r"D:\triageiq-data") / "splits" / slug
     report = a.report or Path(f"reports/qp0_split_manifest_{slug}_2026-10.json")
     files = {n: derived / f"{n}.parquet" for n in ("issues", "duplicate_pairs")}
+    component = None
+    if a.taxonomy == "vscode":
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import qp2_vscode_taxonomy as tx  # noqa: PLC0415  (only needed for this taxonomy)
+
+        component = tx.not_excluded
+    cols = ["number", "created_at", "closed_at", "state", "text_hash"]
+    cols += ["labels_final"] if component else []
     df, dup = make_splits(
-        pd.read_parquet(files["issues"]), pd.read_parquet(files["duplicate_pairs"])
+        pd.read_parquet(files["issues"], columns=cols),
+        pd.read_parquet(files["duplicate_pairs"]),
+        component,
     )
     out_dir.mkdir(parents=True, exist_ok=True)
     for s in SPLITS:
@@ -172,6 +215,8 @@ def main(argv: list[str] | None = None) -> int:
         "input_sha256": {n: sha256_file(p) for n, p in files.items()},
         "n_issues": len(df), **summarise(df, dup),
     }  # fmt: skip
+    if a.taxonomy == "vscode":
+        man["taxonomy"] = taxonomy_block(df, tx)
     text = json.dumps(man, indent=1, sort_keys=True)
     report.parent.mkdir(parents=True, exist_ok=True)
     report.write_text(text, encoding="utf-8")

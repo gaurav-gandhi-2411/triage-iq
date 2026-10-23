@@ -168,6 +168,18 @@ def test_same_pr_group_of_two_issues() -> None:
     assert g["pr"].tolist() == [60] and g["issues"].tolist() == [[1, 2]]
 
 
+def test_unaudited_closing_refs_link_makes_no_fix_group_or_fix_pr() -> None:
+    # D79: pr_closing_refs failed the fix-link audit (76.7%), so a merged link of that method
+    # alone must not create a fix group nor appear in the audited fix links.
+    prs = {70: {"merged": True, "merged_at": T0}}
+    a = _links(issue(1), prs, {1: [70]})
+    b = _links(issue(2), prs, {2: [70]})
+    both = pd.concat([a, b])
+    assert both["method"].tolist() == ["pr_closing_refs"] * 2 and both["pr_merged"].all()
+    assert qp0d.fix_groups(both).empty
+    assert qp0d.audited_fix_links(both).empty
+
+
 def test_text_hash_normalises_case_and_whitespace() -> None:
     assert qp0d.text_hash("Foo  BAR", "a\n b") == qp0d.text_hash("foo bar", "A B")
     assert qp0d.text_hash("foo", "x") != qp0d.text_hash("foo", "y")
@@ -209,8 +221,10 @@ def test_end_to_end_idempotent_rerun(tmp_path: Path) -> None:
     assert stats["censored_open_issues"] == 1
     assert stats["duplicates"]["by_method"] == {"k8s_close_comment": 1}
     assert stats["multilabel"]["labels_final"] == {"n_ge1": 1, "n_ge2": 1}
-    assert stats["fix_links"]["issues_with_merged_fix"] == 2  # issue 1 (closer) and 3 (refs)
-    assert pd.read_parquet(out / "fix_groups.parquet")["issues"].map(list).tolist() == [[1, 3]]
+    # issue 3 is linked by pr_closing_refs only (unaudited, D79): not counted, no fix group
+    assert stats["fix_links"]["issues_with_merged_fix"] == 1
+    assert stats["fix_links"]["by_method_merged"]["pr_closing_refs"] == 3
+    assert pd.read_parquet(out / "fix_groups.parquet").empty
     assert (out / "label_frequency.csv").exists() and (out / "priority_signals.csv").exists()
     assert not list(tmp_path.glob("raw/**/*.tmp"))
     assert qp0d.stats_from_parquet(REPO, base, out)["repo"] == REPO  # --stats-only path

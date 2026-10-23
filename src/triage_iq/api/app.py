@@ -26,6 +26,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from ..config import get_settings
+from ..data.preprocess import clean_text
 from ..models.abstention import compute_abstention_status
 from ..models.resolution import NAIVE_INTERVAL_COVERAGE, repo_slug
 from ..models.triage import PROVIDER_DEGRADED_STATUS, ConformalIntervalResult, TriagePlan
@@ -204,6 +205,10 @@ async def lifespan(app: FastAPI):
     cfg = get_settings()
     limiter.enabled = cfg.rate_limit_enabled
 
+    # Read once at startup (like the loader's TRIAGE_* model flags), never per request. Default OFF:
+    # enabling changes live behaviour (train/serve skew fix), which is GG's decision.
+    app.state.clean_request_body = os.environ.get("TRIAGE_CLEAN_REQUEST_BODY") == "1"
+
     app.state.cache = None
     if cfg.llm_cache_enabled:
         app.state.cache = LLMCache(path=cfg.llm_cache_path)
@@ -313,12 +318,20 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     except KeyError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    issue = pd.Series({
+    issue_fields = {
         "number": body.issue_number,
         "title": body.title,
         "body_clean": body.body,
         "created_at": body.created_at or datetime.now(timezone.utc),
-    })
+    }
+    if getattr(request.app.state, "clean_request_body", False):
+        # TRIAGE_CLEAN_REQUEST_BODY=1: every served model was built on preprocess.clean_text output
+        # (and resolution's has_code_blocks on its code_blocks column), so feed the same form.
+        issue_fields["body_clean"], issue_fields["code_blocks"] = clean_text(body.body)
+        # The P4 priority model (TRIAGE_PRIORITY_MODEL) was trained on RAW text, so it must not
+        # see the cleaned form: carry the raw body alongside (key absent when the flag is off).
+        issue_fields["body_raw"] = body.body
+    issue = pd.Series(issue_fields)
 
     try:
         plan, meta = bundle.assistant.triage_with_metadata(issue)
@@ -467,6 +480,10 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
     if "component_decided_by" in meta:  # only with TRIAGE_CLASSIFIER_DECIDES_COMPONENT=1
         result["_component_decided_by"] = meta["component_decided_by"]
         result["_component_llm_proposal"] = meta["component_llm_proposal"]
+    if "priority_decided_by" in meta:  # only with TRIAGE_PRIORITY_MODEL=1 and the artifact loaded
+        result["_priority_decided_by"] = meta["priority_decided_by"]
+        result["_priority_llm_proposal"] = meta["priority_llm_proposal"]
+        result["_priority_model_proba"] = meta["priority_model_proba"]
     result["resolution_model_beats_naive"] = _RESOLUTION_MODEL_BEATS_NAIVE.get(body.repo, True)
     # ADR-0064 (expand-only): the point estimate the resolution stage was given and its source,
     # "model" or "train_median" (POINT_ESTIMATE_TRUSTED). resolution_model_beats_naive keeps its

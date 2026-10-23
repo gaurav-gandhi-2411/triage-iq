@@ -182,6 +182,12 @@ class ModelStore:
                     pred = _load_predictor(models_dir, slug)
                 with _timed(f"{slug}.train_parquet"):
                     train_df = _load_train(processed_dir, slug)
+                priority_model = (
+                    _load_priority_model(models_dir, slug)
+                    if os.environ.get("TRIAGE_PRIORITY_MODEL") == "1"
+                    and slug in _PRIORITY_MODEL_SLUGS
+                    else None
+                )
                 asst = TriageAssistant(
                     repo=repo,
                     classifier=clf,
@@ -196,6 +202,7 @@ class ModelStore:
                     classifier_decides_component=(
                         os.environ.get("TRIAGE_CLASSIFIER_DECIDES_COMPONENT") == "1"
                     ),
+                    priority_model=priority_model,
                 )
                 bundles[repo] = RepoBundle(clf, det, pred, train_df, asst)
                 logger.info("Loaded %s — OK", repo)
@@ -211,6 +218,35 @@ class ModelStore:
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
+
+# Phase 3b flag 1: only k8s has a priority model (vscode has no priority labels).
+_PRIORITY_MODEL_SLUGS = frozenset({"kubernetes_kubernetes"})
+
+
+def _load_priority_model(models_dir: Path, slug: str):
+    """Load the packaged P4 priority model; None (one warning) if missing or unreadable.
+
+    Called once per repo at startup, so the warning is emitted once. None means the flag
+    behaves exactly as if it were off. The artifact is image-baked, not in MANIFEST.sha256.
+    """
+    from triage_iq.models.priority import PriorityModel
+
+    p = models_dir / f"priority_model_{slug}.joblib"
+    if not p.exists():
+        logger.warning(
+            "TRIAGE_PRIORITY_MODEL=1 but artifact %s is missing: serving the LLM priority",
+            p, extra={"event": "priority_model_missing", "repo_slug": slug},
+        )
+        return None
+    try:
+        return PriorityModel.load(p)
+    except Exception as exc:
+        logger.warning(
+            "TRIAGE_PRIORITY_MODEL=1 but %s failed to load (%s): serving the LLM priority",
+            p, exc, extra={"event": "priority_model_unreadable", "repo_slug": slug},
+        )
+        return None
+
 
 def _load_detector(models_dir: Path, slug: str):
     from triage_iq.models.similar_issues import SimilarIssueRetriever

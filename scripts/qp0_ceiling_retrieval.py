@@ -186,7 +186,10 @@ def audit_gate(audit_path: Path) -> str | None:
 
 
 def run(derived: Path, splits_dir: Path, audit_path: Path) -> dict[str, Any]:
-    issues = pd.read_parquet(derived / "issues.parquet")
+    # column-pruned: the 100k-issue vscode table with all columns does not fit the RAM budget
+    issues = pd.read_parquet(
+        derived / "issues.parquet", columns=["number", "created_at", "title", "body"]
+    )
     idx = Index(issues)
     split = pd.concat(
         [pd.read_parquet(splits_dir / f"{s}.parquet", columns=["number", "split"]) for s in SPLITS]

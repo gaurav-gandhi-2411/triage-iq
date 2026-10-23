@@ -258,6 +258,18 @@ def freeze(rows: list[dict[str, Any]]) -> dict[str, Any]:
     return info
 
 
+def dump_line(row: dict[str, Any]) -> str:
+    """One JSON line that str.splitlines() cannot split: U+2028/2029/0085 stay escaped.
+
+    Some eval scripts read the set with read_text().splitlines(), which breaks on those raw
+    characters (U+2028 occurs in issue bodies); file iteration does not.
+    """
+    out = json.dumps(row, ensure_ascii=False)
+    for code in (0x2028, 0x2029, 0x85):
+        out = out.replace(chr(code), chr(92) + "u" + format(code, "04x"))
+    return out
+
+
 def text_chars(r: dict[str, Any]) -> int:
     return len(r["title"]) + len(r["body"]) + sum(len(s["text"]) for s in r["similar_issues"])
 
@@ -297,7 +309,7 @@ def main(argv: list[str] | None = None) -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     rep["freeze"] = freeze(rows)
     path = OUT_DIR / "eval_set.jsonl"
-    path.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), "utf-8",
+    path.write_text("".join(dump_line(r) + "\n" for r in rows), "utf-8",
                     newline="\n")  # fmt: skip
     rep["files"] = {p.name: sha256_file(p) for p in sorted(OUT_DIR.iterdir())}
     rep["tokens"] = token_report(rows)

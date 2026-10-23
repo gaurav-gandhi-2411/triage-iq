@@ -122,3 +122,9 @@ def test_replay_loader_consumes_the_schema(tmp_path: Path) -> None:
     assert [i["id"] for i in run_eval._load_eval_set(path)] == ["k8s-100", "vscode-101"]
     fr = build_frozen_retrievers(path)
     assert fr["kubernetes/kubernetes"].retrieve("", k=5, exclude_number=100)[0]["number"] == 1
+
+
+def test_dump_line_survives_splitlines_and_round_trips() -> None:
+    row = {"body": "a" + chr(0x2028) + "b" + chr(0x2029) + "c" + chr(0x85) + "d"}
+    line = q.dump_line(row)
+    assert len(line.splitlines()) == 1 and json.loads(line) == row

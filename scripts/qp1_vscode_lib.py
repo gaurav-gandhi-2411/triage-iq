@@ -6,17 +6,22 @@ conformal selection loop. Pure functions; the design is pre-registered in qp1_vs
 from __future__ import annotations
 
 import hashlib
+import json
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
+import joblib
 import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))  # triage_iq
 import qp0_ceiling_labels as cl  # noqa: E402
 import qp1_conformal as qc  # noqa: E402
 import qp1_eval as ev  # noqa: E402
+import qp1_tfidf_lr as t1  # noqa: E402
 import qp2_vscode_taxonomy as tax  # noqa: E402
 
 OTHER = "other"
@@ -28,7 +33,7 @@ IDS = {
     "prod": "production_vscode_ovr",
 }
 COMPLEXITY = {IDS["v0"]: 0, IDS["v1"]: 1, IDS["v2"]: 2}
-CONF_ALPHA, CONF_TARGET, CONF_TOL = 0.1, 0.90, 0.02
+CONF_ALPHA, CONF_TARGET, CONF_TOL = 0.05, 0.95, 0.02  # spec alpha; 0.1 was a brief error
 CONF_SPECS = [
     {"name": "aps_nonrandomised"},
     {"name": "aps_randomised"},
@@ -260,3 +265,62 @@ def conformal_choose(table: list[dict[str, Any]], target: float = CONF_TARGET) -
     if ok:
         return min(ok, key=lambda r: (r["set_size_mean"]["mean"], r["spec"]["name"]))
     return min(table, key=lambda r: (abs(r["coverage"]["mean"] - target), r["spec"]["name"]))
+
+
+def production_proba(d: pd.DataFrame, classes: list[str], models_dir: Path) -> np.ndarray:
+    """Served vscode classifier -> n x len(classes): per mapped class, max calibrated score."""
+    from triage_iq.models.component_classifier import _build_text, load_classifier
+
+    clf = load_classifier(models_dir, "microsoft_vscode")
+    raw = clf.predict_proba_calibrated(_build_text(d["title"], d["body"]))
+    out = np.zeros((len(d), len(classes)))
+    for j, c in enumerate(clf.classes_()):
+        k = classes.index(to_class(str(c), classes))
+        out[:, k] = np.maximum(out[:, k], raw[:, j])
+    return out
+
+
+def save_pred(path: Path, numbers: pd.Series, p: np.ndarray, classes: list[str]) -> Path:
+    return t1.save_proba(path, numbers, p, classes)
+
+
+def fit_grid(
+    tag: str,
+    x,
+    y: list[str],
+    xva,
+    yva,
+    sva,
+    classes,
+    out: Path,
+    tau_fn,  # noqa: ANN001
+) -> dict[str, Any]:
+    """Resumable grid for V1 / V2 on validation; keeps only the best model's pickle."""
+    other = classes.index(OTHER)
+    cache = out / f"grid_{tag}.json"
+    rows = json.loads(cache.read_text())["rows"] if cache.exists() else []
+    done = {(r["C"], r["class_weight"]) for r in rows}
+    for c, cw in t1.GRID:
+        if (c, cw) in done:
+            continue
+        t0 = time.perf_counter()
+        model = t1.fit_lr(x, y, c, cw)
+        secs = time.perf_counter() - t0
+        pv = t1.proba_full(model, xva, classes)
+        tau = tau_fn(pv) if tau_fn else None
+        rk = v2_views(pv, tau, classes)[0] if tau_fn else rank_proba(pv, other)
+        sc = score("validation", False, yva, sva, rk, classes, n_boot=200)
+        row = {
+            "C": c, "class_weight": cw, "fit_seconds": secs, "tau": tau,
+            "top3": sc["strict_top3"]["point"], "macro_f1": sc["macro_f1"]["point"],
+        }  # fmt: skip
+        prev = min(rows, key=t1.sel_key) if rows else None
+        rows.append(row)
+        if prev is None or t1.sel_key(row) < t1.sel_key(prev):
+            joblib.dump(
+                {"model": model, "tau": tau, "C": c, "class_weight": cw}, out / f"best_{tag}.joblib"
+            )
+        cache.write_text(json.dumps({"rows": rows}, indent=1))
+        print(f"{tag} C={c} cw={cw}: strict_top3={row['top3']:.4f} f1={row['macro_f1']:.4f} {secs:.0f}s", file=sys.stderr, flush=True)  # fmt: skip
+    best = min(rows, key=t1.sel_key)
+    return {"rows": rows, "best": best}

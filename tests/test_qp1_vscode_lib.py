@@ -94,8 +94,8 @@ def test_abstention_tau_and_conformal_choice() -> None:
         {"spec": {"name": "a"}, "coverage": {"mean": 0.89}, "set_size_mean": {"mean": 2.0}},
         {"spec": {"name": "c"}, "coverage": {"mean": 0.99}, "set_size_mean": {"mean": 1.0}},
     ]
-    assert vs.conformal_choose(table)["spec"]["name"] == "a"  # c is outside 0.90 +/- 0.02
-    assert vs.conformal_choose(table[2:])["spec"]["name"] == "c"  # none qualifies: closest
+    assert vs.conformal_choose(table, 0.90)["spec"]["name"] == "a"  # c is outside 0.90 +/- 0.02
+    assert vs.conformal_choose(table[2:], 0.90)["spec"]["name"] == "c"  # none qualifies: closest
 
 
 def test_majority_prior_and_selection_key() -> None:

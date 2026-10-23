@@ -34,11 +34,12 @@ k8s file is modified.
    percentile bootstrap (seed 42), paired differences on shared resamples.
  * Selection (validation): among V0 / V1(best row) / V2(best row), the highest strict top-3, tie
    macro-F1, tie simpler (V0 < V1 < V2). Production is never a selection candidate.
- * Conformal (stage `conformal`, VALIDATION ONLY, exploratory per ADR-0069): alpha 0.1; candidate
+ * Conformal (stage `conformal`, VALIDATION ONLY, exploratory per ADR-0069): alpha 0.05 (the
+   spec pre-registration; a first run used 0.1 in error, see ADR-0071 amendment); candidate
    scores aps_nonrandomised, aps_randomised, raps (lambda 0.1, k_reg 1, as k8s), lac (qp1_conformal
    definitions); 50 seeded random 50/50 splits of the labelled eligible validation set (calibrate on
    one half, evaluate coverage w.r.t. the primary label, `other` included, and set size on the
-   other); choose by: mean coverage within 0.90 +/- 0.02, then smallest mean set size, then name;
+   other); choose by: mean coverage within 0.95 +/- 0.02, then smallest mean set size, then name;
    if none qualifies, the coverage closest to 0.90. For V2 the population is in-family issues
    only (its `other` column is 0, so a gold-other issue cannot be covered). The choice is frozen in
    ADR-0071 before the test stage, which refuses to run unless that ADR names the chosen score.
@@ -81,17 +82,19 @@ from qp1_vscode_lib import (  # noqa: E402
     classes_sha256,
     conformal_select,
     define_classes,
+    fit_grid,
     gold,
     hit_arrays,
     labelled_eligible,
     load_split,
     majority_proba,
     paired,
+    production_proba,
     prop,
     rank_proba,
+    save_pred,
     score,
     sel_key,
-    to_class,
     v2_views,
 )
 
@@ -99,65 +102,6 @@ DESIGN = __doc__.split("PRE-REGISTERED DESIGN", 1)[1].strip()
 REPO = "microsoft/vscode"
 SLUG = "microsoft__vscode"
 ADR_PATH = Path("docs/architecture/adr/0071-vscode-conformal-method.md")
-
-
-def production_proba(d: pd.DataFrame, classes: list[str], models_dir: Path) -> np.ndarray:
-    """Served vscode classifier -> n x len(classes): per mapped class, max calibrated score."""
-    from triage_iq.models.component_classifier import _build_text, load_classifier
-
-    clf = load_classifier(models_dir, "microsoft_vscode")
-    raw = clf.predict_proba_calibrated(_build_text(d["title"], d["body"]))
-    out = np.zeros((len(d), len(classes)))
-    for j, c in enumerate(clf.classes_()):
-        k = classes.index(to_class(str(c), classes))
-        out[:, k] = np.maximum(out[:, k], raw[:, j])
-    return out
-
-
-def save_pred(path: Path, numbers: pd.Series, p: np.ndarray, classes: list[str]) -> Path:
-    return t1.save_proba(path, numbers, p, classes)
-
-
-def fit_grid(
-    tag: str,
-    x,
-    y: list[str],
-    xva,
-    yva,
-    sva,
-    classes,
-    out: Path,
-    tau_fn,  # noqa: ANN001
-) -> dict[str, Any]:
-    """Resumable grid for V1 / V2 on validation; keeps only the best model's pickle."""
-    other = classes.index(OTHER)
-    cache = out / f"grid_{tag}.json"
-    rows = json.loads(cache.read_text())["rows"] if cache.exists() else []
-    done = {(r["C"], r["class_weight"]) for r in rows}
-    for c, cw in t1.GRID:
-        if (c, cw) in done:
-            continue
-        t0 = time.perf_counter()
-        model = t1.fit_lr(x, y, c, cw)
-        secs = time.perf_counter() - t0
-        pv = t1.proba_full(model, xva, classes)
-        tau = tau_fn(pv) if tau_fn else None
-        rk = v2_views(pv, tau, classes)[0] if tau_fn else rank_proba(pv, other)
-        sc = score("validation", False, yva, sva, rk, classes, n_boot=200)
-        row = {
-            "C": c, "class_weight": cw, "fit_seconds": secs, "tau": tau,
-            "top3": sc["strict_top3"]["point"], "macro_f1": sc["macro_f1"]["point"],
-        }  # fmt: skip
-        prev = min(rows, key=t1.sel_key) if rows else None
-        rows.append(row)
-        if prev is None or t1.sel_key(row) < t1.sel_key(prev):
-            joblib.dump(
-                {"model": model, "tau": tau, "C": c, "class_weight": cw}, out / f"best_{tag}.joblib"
-            )
-        cache.write_text(json.dumps({"rows": rows}, indent=1))
-        print(f"{tag} C={c} cw={cw}: strict_top3={row['top3']:.4f} f1={row['macro_f1']:.4f} {secs:.0f}s", file=sys.stderr, flush=True)  # fmt: skip
-    best = min(rows, key=t1.sel_key)
-    return {"rows": rows, "best": best}
 
 
 # ------------------------------------------------------------------------------------- stages
@@ -243,6 +187,16 @@ def stage_validation(a: argparse.Namespace, derived, splits_dir, models_dir) -> 
     }
 
 
+def supersede_alpha_0_1(writer: ev.ResultsWriter) -> None:
+    """Move the alpha-0.1 conformal results (brief error, ADR-0071 amendment) under one key."""
+    old = writer.data.get("superseded_alpha_0_1", {})
+    for k in ("conformal_selection", "conformal_test"):
+        if k in writer.data and writer.data[k].get("alpha") == 0.1:
+            old[k] = writer.data.pop(k)
+    if old:
+        writer.data["superseded_alpha_0_1"] = old
+
+
 def stage_conformal(a: argparse.Namespace, derived, splits_dir, models_dir) -> dict[str, Any]:  # noqa: ANN001
     """Validation-only conformal selection for the selected model; writes into the report."""
     report, manifest = report_paths(a)
@@ -254,6 +208,7 @@ def stage_conformal(a: argparse.Namespace, derived, splits_dir, models_dir) -> d
     assert (d["number"].to_numpy() == va["number"].to_numpy()).all()
     p, y = d[classes].to_numpy(), ev.to_idx(gold(va, classes)[0], classes)
     keep = np.ones(len(y), bool) if tag == "v1" else y != classes.index(OTHER)
+    supersede_alpha_0_1(writer)
     res = conformal_select(p[keep], y[keep])
     res["population"] = "all labelled eligible" if keep.all() else "in-family only (V2)"
     res["n"] = int(keep.sum())
@@ -272,13 +227,6 @@ def stage_test(a: argparse.Namespace, derived, splits_dir, models_dir) -> dict[s
     for m in ids:  # fail before touching any test label
         if "test" in writer.data["models"].get(m, {}):
             raise ev.TestGuardError(f"test already evaluated for {m} in {report.name}")
-    conf = writer.data.get("conformal_selection")
-    if (
-        not conf
-        or not ADR_PATH.exists()
-        or conf["selected"]["name"].lower() not in ADR_PATH.read_text(encoding="utf-8").lower()
-    ):
-        raise RuntimeError("conformal choice must be frozen in ADR-0071 (naming the score) before test")  # fmt: skip
     classes = writer.data["classes"]
     other = classes.index(OTHER)
     classes_now, tr, vec, _ = prepare_train(derived, splits_dir)
@@ -342,23 +290,6 @@ def stage_test(a: argparse.Namespace, derived, splits_dir, models_dir) -> dict[s
         writer.add(
             m, "test", score("test", True, yte, ste, views[m], classes, n_boot), pf, final=True
         )
-    # conformal on test (exploratory; calibrated on FULL validation population of the selected model)
-    spec = conf["selected"]
-    pv = (
-        pd.read_parquet(out / f"validation_{tag}.parquet")[classes].to_numpy()
-        if sel_id != IDS["v0"]
-        else None
-    )
-    cres: dict[str, Any] = {"exploratory": "ADR-0069: unconfirmed until the post-test confirmation set", "spec": spec, "alpha": CONF_ALPHA}  # fmt: skip
-    if pv is not None:
-        yv = ev.to_idx(yva, classes)
-        kv = np.ones(len(yv), bool) if tag != "v2" else yv != other
-        q = qc.calibrate(pv[kv], yv[kv], spec, qc.uniforms(int(kv.sum()), 0), CONF_ALPHA)
-        mask = qc.predict_mask(preds[sel_id], q, spec, qc.uniforms(len(y), 1))
-        cres |= {"qhat": q, "all_labelled": qc.mask_report(mask, y, sm)}
-        fam = y != other
-        cres["in_family_only"] = qc.mask_report(mask[fam], y[fam], sm[fam])
-    writer.data["conformal_test"] = cres
     writer.data["paired_vs"] = {
         f"{sel_id}_minus_{m}": paired(hits[sel_id], hits[m], n_boot) for m in ids if m != sel_id
     }
@@ -387,9 +318,48 @@ def stage_test(a: argparse.Namespace, derived, splits_dir, models_dir) -> dict[s
     }
 
 
+def stage_conformal_test(a: argparse.Namespace, derived, splits_dir, models_dir) -> dict[str, Any]:  # noqa: ANN001
+    """Apply the ADR-0071 conformal method (alpha 0.05) to TEST once; exploratory (ADR-0069)."""
+    report, manifest = report_paths(a)
+    writer = ev.ResultsWriter(report, manifest)
+    if writer.data.get("conformal_test", {}).get("alpha") == CONF_ALPHA:  # test-once guard
+        raise ev.TestGuardError(f"alpha-{CONF_ALPHA} conformal test already evaluated")
+    conf = writer.data.get("conformal_selection")
+    adr = ADR_PATH.read_text(encoding="utf-8").lower() if ADR_PATH.exists() else ""
+    if not conf or conf["alpha"] != CONF_ALPHA or conf["selected"]["name"].lower() not in adr:
+        raise RuntimeError("alpha-0.05 conformal choice must be frozen in ADR-0071 before test")
+    sel_id, classes = writer.data["selected_model"], writer.data["classes"]
+    tag, other, spec = {IDS["v1"]: "v1", IDS["v2"]: "v2"}[sel_id], classes.index(OTHER), conf["selected"]  # fmt: skip
+    out = models_dir / "phase1"
+    va = labelled_eligible(load_split(derived, splits_dir, "validation"))
+    pv = pd.read_parquet(out / f"validation_{tag}.parquet")[classes].to_numpy()
+    yv = ev.to_idx(gold(va, classes)[0], classes)
+    te = labelled_eligible(load_split(derived, splits_dir, "test"))  # test labels read here
+    saved = pd.read_parquet(out / f"test_{sel_id}.parquet")
+    assert (saved["number"].to_numpy() == te["number"].to_numpy()).all()
+    pt, (yte, ste) = saved[classes].to_numpy(), gold(te, classes)
+    y, sm = ev.to_idx(yte, classes), ev.set_mask(ste, classes)
+    kv = np.ones(len(yv), bool) if tag == "v1" else yv != other
+    q = qc.calibrate(pv[kv], yv[kv], spec, qc.uniforms(int(kv.sum()), 0), CONF_ALPHA)
+    mask = qc.predict_mask(pt, q, spec, qc.uniforms(len(y), 1))
+    fam = y != other
+    res = {
+        "exploratory": "ADR-0069: unconfirmed until the post-test confirmation set",
+        "alpha": CONF_ALPHA, "spec": spec, "qhat": q, "model": sel_id,
+        "all_labelled": qc.mask_report(mask, y, sm),
+        "in_family_only": qc.mask_report(mask[fam], y[fam], sm[fam]),
+    }  # fmt: skip
+    supersede_alpha_0_1(writer)
+    writer.data["conformal_test"] = res
+    writer.save()
+    return res
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="vscode Phase 1: CPU component candidates")
-    ap.add_argument("--stage", choices=["validation", "conformal", "test"], required=True)
+    ap.add_argument(
+        "--stage", choices=["validation", "conformal", "test", "conformal-test"], required=True
+    )
     ap.add_argument("--derived-dir", type=Path)
     ap.add_argument("--splits-dir", type=Path)
     ap.add_argument("--models-dir", type=Path)
@@ -403,6 +373,8 @@ def main(argv: list[str] | None = None) -> int:
     with threadpool_limits(limits=4):
         if a.stage == "validation":
             r = stage_validation(a, derived, splits_dir, models_dir)
+        elif a.stage == "conformal-test":
+            r = stage_conformal_test(a, derived, splits_dir, models_dir)
         elif a.stage == "conformal":
             r = stage_conformal(a, derived, splits_dir, models_dir)
         else:

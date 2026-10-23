@@ -34,6 +34,22 @@ OUTPUT_ROOT = Path("/kaggle/working")
 TEXT_PREFIX = ""
 
 
+def production_text(title: str, body_clean: str, tokenizer) -> str:  # noqa: ANN001
+    """Replicates similar_issues._build_text's tokenizer path (Kaggle can't import triage_iq).
+
+    Body is cut by TOKEN count so title + body fit MAX_SEQ_LENGTH (-2 for [CLS]/[SEP]), exactly
+    as serving does with max_tokens=model.max_seq_length. Keep in sync; a unit test compares the
+    two with a fake tokenizer.
+    """
+    prefix = f"{title.strip()}. "
+    n_prefix = len(tokenizer.encode(prefix, add_special_tokens=False))
+    budget = max(MAX_SEQ_LENGTH - n_prefix - 2, 0)
+    ids = tokenizer.encode(
+        body_clean.strip(), add_special_tokens=False, truncation=True, max_length=budget
+    )
+    return prefix + tokenizer.decode(ids, skip_special_tokens=True)
+
+
 def encode(texts: list[str], tokenizer, model, device: str) -> np.ndarray:  # noqa: ANN001
     """Return float16 (n, 768) L2-normalised CLS embeddings in input order."""
     order = sorted(range(len(texts)), key=lambda i: len(texts[i]))  # length-sort cuts padding
@@ -82,9 +98,14 @@ def main() -> None:
     for path in sorted(INPUT_ROOT.rglob("*.parquet")):
         df = pd.read_parquet(path).reset_index(drop=True)
         t0 = time.time()
-        emb = encode(
-            (prefix + df["text"].fillna("").astype(str)).tolist(), tokenizer, model, device
-        )
+        if {"title", "body_clean"} <= set(df.columns):  # text_recipe=production issue dataset
+            texts = [
+                production_text(t, b, tokenizer)
+                for t, b in zip(df["title"].fillna(""), df["body_clean"].fillna(""), strict=True)
+            ]
+        else:  # legacy issues / PR datasets: `text` is already final
+            texts = df["text"].fillna("").astype(str).tolist()
+        emb = encode([prefix + t for t in texts], tokenizer, model, device)
         np.save(OUTPUT_ROOT / f"{path.stem}_emb.npy", emb)
         df[["repo", "kind", "number"]].to_parquet(OUTPUT_ROOT / f"{path.stem}_ids.parquet")
         info["files"][path.stem] = {"n": len(df), "seconds": round(time.time() - t0, 1)}

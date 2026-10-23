@@ -214,6 +214,34 @@
    "macro_f1": 0.44087200097430274
   }
  ],
+ "p4_design": "(2026-10-24; committed with its validation table BEFORE its test\nevaluation; do not change after seeing test results). Context: the production TriageRequest carries\nonly repo, title, body, issue_number, created_at: no labels, no author association. P2 (t72h labels)\nand P3 (creation-time labels) therefore cannot be served as built. The test split was already used\nby P0, P2 and P3; P4 is evaluated on test exactly once (model id `p4_tfidf_text_lr`) because it is\nthe only candidate whose inputs exist at serve time.\n * Features = exactly P1's: qp1_tfidf_features.Featurizer(title_sep on, paths off) over\n   title + \"\\n\" + body[:4000]; NO metadata. Model = multinomial LogisticRegression, class_weight\n   balanced, max_iter 300, seed 42; C in {0.25, 1, 4} chosen on VALIDATION (accuracy, tie macro-F1,\n   tie smaller C). P1's validation table (0.4526 / 0.4599 / 0.4964 -> C=4) is re-run and must match.\n * Same population, 3-level gold, train-majority baseline P0, paired bootstrap (2000 draws, seed 42)\n   and acceptance (lower bound of the paired accuracy difference P4 - P0 > 0) as qp3b_priority.py.\n * On test also: P4 vs P3 paired (does creation-time metadata matter?) and the subset with no\n   priority/* label at t72h. The fitted featuriser and model are saved with joblib under\n   <models-dir>/priority/p4/ for later packaging.",
+ "p4_matches_p1_validation_table": true,
+ "p4_selection": {
+  "C": 4,
+  "majority": "high",
+  "model_id": "p4_tfidf_text_lr",
+  "val_accuracy": 0.49635036496350365
+ },
+ "p4_validation_table": [
+  {
+   "C": 0.25,
+   "accuracy": 0.45255474452554745,
+   "macro_f1": 0.42464801363106447,
+   "model": "p4_tfidf_text_lr"
+  },
+  {
+   "C": 1,
+   "accuracy": 0.45985401459854014,
+   "macro_f1": 0.42242114236999145,
+   "model": "p4_tfidf_text_lr"
+  },
+  {
+   "C": 4,
+   "accuracy": 0.49635036496350365,
+   "macro_f1": 0.4519904004041935,
+   "model": "p4_tfidf_text_lr"
+  }
+ ],
  "population": {
   "train": {
    "dist_3level": {

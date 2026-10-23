@@ -1298,7 +1298,10 @@ class TriageAssistant:
         }
         if self.priority_model is not None:  # key absent when off: signals stay unchanged
             try:
-                signals["priority_model"] = self.priority_model.predict(title, body)
+                # P4 was trained on raw text: body_raw (set only when TRIAGE_CLEAN_REQUEST_BODY
+                # cleans body_clean) wins; otherwise body_clean already is the raw body.
+                priority_body = str(issue.get("body_raw", body))
+                signals["priority_model"] = self.priority_model.predict(title, priority_body)
             except Exception as e:
                 logger.warning("Priority model failed, LLM priority stands: %s", e)
                 signals["priority_model"] = None

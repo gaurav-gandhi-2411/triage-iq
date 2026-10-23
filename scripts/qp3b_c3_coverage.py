@@ -57,8 +57,14 @@ def coverage(rows: list[list[dict[str, Any] | None]]) -> dict[str, Any]:
         "share_with_closing_comment_evidence": com / n,
         "share_with_both_types": both / n,
         "mean_evidence_chars_per_row_top3": float(np.mean(per_row_chars)),
-        "mean_evidence_chars_per_evidenced_neighbour": float(np.mean([evidence_chars(x) for x in nb])) if nb else 0.0,  # fmt: skip
-        "mean_neighbours_with_evidence_per_row": float(np.mean([sum(x is not None and x["has_evidence"] for x in r) for r in rows])),  # fmt: skip
+        "mean_evidence_chars_per_evidenced_neighbour": float(
+            np.mean([evidence_chars(x) for x in nb])
+        )
+        if nb
+        else 0.0,  # fmt: skip
+        "mean_neighbours_with_evidence_per_row": float(
+            np.mean([sum(x is not None and x["has_evidence"] for x in r) for r in rows])
+        ),  # fmt: skip
     }
 
 

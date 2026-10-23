@@ -25,7 +25,9 @@ from qp0_derive_stats import audited_fix_links
 
 ROOT = Path(__file__).resolve().parent.parent
 DERIVED = Path(r"D:\triageiq-data\derived_v2\kubernetes__kubernetes")
-OUT = Path(r"D:\triageiq-data\models\candidates\resolution_evidence_kubernetes_kubernetes_v1.parquet")
+OUT = Path(
+    r"D:\triageiq-data\models\candidates\resolution_evidence_kubernetes_kubernetes_v1.parquet"
+)
 
 MAX_CHARS = 300  # design: each evidence item truncated; budget is checked later by C4
 # Exact bot logins (lower-case). The design names k8s-ci-robot / kubernetes-prow / vscode-triage-bot;

@@ -281,7 +281,7 @@
   }
  },
  "fix_linked": {
-  "fix_groups_parquet_rows_reference": 707,
+  "fix_groups_parquet_rows_reference": 621,
   "group_size_dist": {
    "2": 460,
    "3": 95,

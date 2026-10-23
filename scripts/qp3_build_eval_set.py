@@ -48,6 +48,7 @@ import hashlib
 import json
 import math
 import os
+import subprocess
 import sys
 from collections import Counter
 from pathlib import Path
@@ -62,7 +63,7 @@ sys.path.insert(0, str(ROOT / "src"))
 import qp0_ceiling_labels as cl  # noqa: E402
 import qp2_vscode_taxonomy as tx  # noqa: E402
 from build_vscode_expansion_eval_set import infer_priority  # noqa: E402
-from qp0_make_splits import VAL_START, script_commit, sha256_file  # noqa: E402
+from qp0_make_splits import VAL_START, sha256_file  # noqa: E402
 from qp3b_priority import gold3, gold4  # noqa: E402
 
 from triage_iq.data.preprocess import clean_text  # noqa: E402
@@ -291,10 +292,20 @@ def token_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
             "ratio_new_over_committed_mean": float(chars.mean() / ref_chars.mean())}  # fmt: skip
 
 
+def git_head_of_script() -> str | None:
+    """Last commit that touched THIS script (qp0_make_splits.script_commit names its own file)."""
+    cmd = ["git", "log", "-1", "--format=%H", "--", Path(__file__).name]
+    try:
+        r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, check=True)  # noqa: S603
+    except (subprocess.CalledProcessError, OSError):
+        return None
+    return r.stdout.strip() or None
+
+
 def main(argv: list[str] | None = None) -> int:
     argparse.ArgumentParser(description=__doc__).parse_args(argv)
     rows: list[dict[str, Any]] = []
-    rep: dict[str, Any] = {"design": DESIGN, "seed": SEED, "script_commit": script_commit()}
+    rep: dict[str, Any] = {"design": DESIGN, "seed": SEED, "script_commit": git_head_of_script()}
     for repo, cfg in REPOS.items():
         pop, info = load_population(repo)
         sample = draw(pop, N_PER_REPO, cfg["minimum"])

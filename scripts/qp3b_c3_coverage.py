@@ -86,7 +86,14 @@ def sanity(det: Any, kaggle_dir: Path) -> dict[str, Any]:
         v = det.index.reconstruct(p)
         k = np.asarray(kag[row_of[num]], dtype=np.float32)
         cos.append(float(v @ k / (np.linalg.norm(v) * np.linalg.norm(k))))
+    allc = np.einsum(  # all rows: the expected 0.997-0.999 assumes the same text recipe (see note)
+        "ij,ij->i", det.index.reconstruct_n(0, det.index.ntotal),
+        np.asarray(kag)[[row_of[int(n)] for n in det.issue_numbers]],
+    )  # fmt: skip
+    pct = {f"p{q}": float(np.percentile(allc, q)) for q in (0, 5, 50, 95, 100)}
     return {
+        "kaggle_cosine_all_rows": pct,
+        "kaggle_cosine_note": "Kaggle texts are not clean_text()-cleaned; the served recipe is",
         "n": N_SANITY, "seed": SEED, "self_query_rank1": self_ok, "self_query_misses": bad,
         "kaggle_cosine_min": min(cos), "kaggle_cosine_mean": float(np.mean(cos)),
         "kaggle_cosine_max": max(cos),

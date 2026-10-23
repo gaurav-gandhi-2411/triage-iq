@@ -484,6 +484,11 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         result["_priority_decided_by"] = meta["priority_decided_by"]
         result["_priority_llm_proposal"] = meta["priority_llm_proposal"]
         result["_priority_model_proba"] = meta["priority_model_proba"]
+        # Prompt v3: did the prompt state the decided level, and did the LLM still disagree.
+        result["_priority_in_prompt"] = meta.get("priority_in_prompt", False)
+        result["_priority_safety_net_fired"] = meta.get("priority_safety_net_fired", False)
+    if "evidence_neighbours" in meta:  # only with TRIAGE_RESOLUTION_EVIDENCE=1 and the artifact
+        result["_evidence_neighbours"] = meta["evidence_neighbours"]
     result["resolution_model_beats_naive"] = _RESOLUTION_MODEL_BEATS_NAIVE.get(body.repo, True)
     # ADR-0064 (expand-only): the point estimate the resolution stage was given and its source,
     # "model" or "train_median" (POINT_ESTIMATE_TRUSTED). resolution_model_beats_naive keeps its

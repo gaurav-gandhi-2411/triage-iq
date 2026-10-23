@@ -58,3 +58,29 @@ evaluated on in-family issues only (n = 5,691 of 6,419 labelled eligible validat
 - Conformal over all labelled issues including `other`: not possible for the selected model (its `other` probability is 0);
   would require the V1 model, which lost on the headline.
 - Choosing on test: rejected, ADR-0069.
+
+## Amendment (2026-10-23): alpha corrected to 0.05; the method above (LAC at alpha 0.1) is superseded
+
+- **What was wrong.** The task brief that produced this ADR set alpha = 0.1 in error (the orchestrator confused alpha with
+  the RAPS penalty lambda = 0.1). The spec's pre-registered conformal metric (spec-quality-push.md section 1) and ADR-0069
+  (k8s) use alpha = 0.05, target coverage 0.95. Decision 1 and the table above are kept as written for the record but no
+  longer govern.
+- **Procedure unchanged, re-run at alpha 0.05 on VALIDATION ONLY:** same candidates (APS non-randomised, APS randomised,
+  RAPS lambda 0.1 / k_reg 1, LAC), same 50 seeded 50/50 splits of the in-family validation set (n = 5,691, seed 42), window
+  now 0.95 +/- 0.02, then smallest mean set size. The model (V2) and its tau are untouched.
+
+  | Score | Coverage (sd) | Mean set size (sd) | Within 0.95 +/- 0.02 |
+  |---|---|---|---|
+  | APS non-randomised | 0.9862 (0.0024) | 55.61 (0.99) | no |
+  | APS randomised | 0.9500 (0.0050) | 25.44 (1.13) | yes |
+  | **RAPS (0.1, 1)** | 0.9489 (0.0053) | **6.52** (0.31) | yes |
+  | LAC | 0.9488 (0.0059) | 9.34 (0.68) | yes |
+
+- **Decision (current): `raps_l0.1_k1` = RAPS, lambda 0.1, k_reg 1, randomised with the fixed uniform seed (as k8s), alpha 0.05,** calibrated
+  on the full in-family validation set and applied to test once. Unlike alpha 0.1, the gap to the runner-up is large
+  (6.52 vs 9.34, many sds), so this is not a near-tie. Exploratory per ADR-0069; all other clauses (in-family-only
+  population, confirmation set, consequences) stand.
+- **Disclosure.** The alpha-0.1 (LAC) test conformal numbers had already been computed before this correction. They are not
+  used for selection (the alpha-0.05 choice was made on validation only, before the alpha-0.05 test evaluation) and are kept
+  in the report under `superseded_alpha_0_1` as superseded. The classifier, its tau and every non-conformal test number are
+  unaffected.

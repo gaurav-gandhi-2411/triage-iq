@@ -110,21 +110,23 @@
  ],
  "classes_sha256_excluding_other": "95129c95809c21574ed34d41a46358149322680a7ccb0e42e90f4b62e7b761ea",
  "conformal_selection": {
-  "alpha": 0.1,
+  "alpha": 0.05,
   "n": 5691,
   "population": "in-family only (V2)",
   "selected": {
-   "name": "lac"
+   "k_reg": 1,
+   "lam": 0.1,
+   "name": "raps_l0.1_k1"
   },
   "table": [
    {
     "coverage": {
-     "mean": 0.9720941672522838,
-     "sd": 0.002697610183248183
+     "mean": 0.9862333099086438,
+     "sd": 0.002389117971889646
     },
     "set_size_mean": {
-     "mean": 41.541215741391426,
-     "sd": 1.165774612817775
+     "mean": 55.608039353478574,
+     "sd": 0.9923000695702063
     },
     "spec": {
      "name": "aps_nonrandomised"
@@ -132,12 +134,12 @@
    },
    {
     "coverage": {
-     "mean": 0.8984750527055517,
-     "sd": 0.007306686098033748
+     "mean": 0.9499578355586787,
+     "sd": 0.004991433000495155
     },
     "set_size_mean": {
-     "mean": 13.537069571328182,
-     "sd": 0.5925044102103156
+     "mean": 25.440400562192554,
+     "sd": 1.1257468634332786
     },
     "spec": {
      "name": "aps_randomised"
@@ -145,12 +147,12 @@
    },
    {
     "coverage": {
-     "mean": 0.8987280393534786,
-     "sd": 0.007877469866413122
+     "mean": 0.9488685874912157,
+     "sd": 0.005286183511522288
     },
     "set_size_mean": {
-     "mean": 3.7622066057624743,
-     "sd": 0.08174717390275807
+     "mean": 6.516612789880534,
+     "sd": 0.3098962371247133
     },
     "spec": {
      "k_reg": 1,
@@ -160,72 +162,18 @@
    },
    {
     "coverage": {
-     "mean": 0.8984820801124387,
-     "sd": 0.008010853849378665
+     "mean": 0.9487772312016867,
+     "sd": 0.005850892777859735
     },
     "set_size_mean": {
-     "mean": 3.5972452565003517,
-     "sd": 0.17444759743539434
+     "mean": 9.340990864371046,
+     "sd": 0.6793129007203854
     },
     "spec": {
      "name": "lac"
     }
    }
   ]
- },
- "conformal_test": {
-  "all_labelled": {
-   "coverage_any_valid": {
-    "k": 4099,
-    "n": 9598,
-    "rate": 0.4270681391956658,
-    "wilson95": [
-     0.4172031166776836,
-     0.4369915203177862
-    ]
-   },
-   "coverage_primary": {
-    "k": 3654,
-    "n": 9598,
-    "rate": 0.3807043133986247,
-    "wilson95": [
-     0.3710396331670984,
-     0.3904644516326342
-    ]
-   },
-   "empty_set_rate": 0.0,
-   "set_size_mean": 4.259845801208585,
-   "set_size_median": 4.0
-  },
-  "alpha": 0.1,
-  "exploratory": "ADR-0069: unconfirmed until the post-test confirmation set",
-  "in_family_only": {
-   "coverage_any_valid": {
-    "k": 3681,
-    "n": 4016,
-    "rate": 0.9165836653386454,
-    "wilson95": [
-     0.907628313063072,
-     0.92474279330092
-    ]
-   },
-   "coverage_primary": {
-    "k": 3654,
-    "n": 4016,
-    "rate": 0.9098605577689243,
-    "wilson95": [
-     0.9006070880779632,
-     0.9183306531504473
-    ]
-   },
-   "empty_set_rate": 0.0,
-   "set_size_mean": 3.904133466135458,
-   "set_size_median": 3.0
-  },
-  "qhat": 0.9719653888289624,
-  "spec": {
-   "name": "lac"
-  }
  },
  "design": "(2026-10-23; do not change after seeing test results). Reuses the k8s\nPhase 1 pieces unchanged (qp1_tfidf_lr fit_lr / proba_full / GRID / vectoriser settings,\nqp1_eval bootstrap / Wilson / ResultsWriter test-once guard, qp1_conformal score functions); no\nk8s file is modified.\n * Taxonomy (ADR-0070): population = issues with >= 1 non-excluded label at final; primary =\n   qp0_ceiling_labels.per_issue with family = qp2_vscode_taxonomy.not_excluded; gold class =\n   parent_of(primary) if in the 85-class list else `other` (last class). The class list is\n   regenerated from the TRAIN split only (parents carried by >= 30 train issues, labels_final) and\n   its sha256 is asserted equal to ADR-0070's. Train on train-split classifier_eligible labelled\n   issues; validation / test the same filter. Text = title + \"\\n\" + body[:4000] (as k8s).\n * Candidates (model ids): V0 majority_prior_v0 = train class frequencies as probabilities.\n   V1 tfidf_lr_v1 = k8s candidate 1 exactly (TF-IDF word 1-2 grams, min_df 2, sublinear, 200k;\n   multinomial LR; 86 classes incl. `other`; grid C {1,4,16,64} x class_weight {None,balanced},\n   best on validation by the key below, then smaller C). V2 tfidf_lr_family_only_v2 = same\n   features / grid, trained on issues whose gold is NOT `other` (85 classes, `other` column = 0);\n   it abstains (top-1 becomes `other`) when its max probability < tau, tau = the value on the\n   validation max-probability grid (200 quantiles) maximising abstention F1 against gold `other`\n   (ties: higher precision). Production baseline production_vscode_ovr = the served\n   data/models classifier (calibrated sigmoid scores, load_classifier), each class mapped through\n   parent_of -> 85 classes else `other`, score of a parent = max over its source classes; a fixed\n   model, scored on validation and test without selection. Embedding / fine-tuned candidates are\n   NOT run (GPU quota).\n * Scoring. HEADLINE (strict): top-k hit iff gold != other and gold in the model's top-k ranked\n   classes; a predicted `other` never earns a hit; V2's strict ranking is its family ranking\n   (abstention is reported next to it, not applied to it). k8s-convention variant (lenient):\n   `other` is an ordinary class, a gold-other issue is a hit when `other` is predicted (top-1) or\n   in the top-3; V2's lenient ranking puts `other` first when it abstains. Also: in-family strict\n   top-1/top-3 (issues with gold != other), strict any-valid top-1/top-3 (true set minus `other`),\n   macro-F1 over classes present in y_true on the lenient top-1, abstention rate / precision /\n   recall (abstain = lenient top-1 is `other`; precision vs gold other; recall of gold other),\n   the empirical coverage bound (share of gold != other), Wilson 95% for proportions, 2000-sample\n   percentile bootstrap (seed 42), paired differences on shared resamples.\n * Selection (validation): among V0 / V1(best row) / V2(best row), the highest strict top-3, tie\n   macro-F1, tie simpler (V0 < V1 < V2). Production is never a selection candidate.\n * Conformal (stage `conformal`, VALIDATION ONLY, exploratory per ADR-0069): alpha 0.1; candidate\n   scores aps_nonrandomised, aps_randomised, raps (lambda 0.1, k_reg 1, as k8s), lac (qp1_conformal\n   definitions); 50 seeded random 50/50 splits of the labelled eligible validation set (calibrate on\n   one half, evaluate coverage w.r.t. the primary label, `other` included, and set size on the\n   other); choose by: mean coverage within 0.90 +/- 0.02, then smallest mean set size, then name;\n   if none qualifies, the coverage closest to 0.90. For V2 the population is in-family issues\n   only (its `other` column is 0, so a gold-other issue cannot be covered). The choice is frozen in\n   ADR-0071 before the test stage, which refuses to run unless that ADR names the chosen score.\n * Test (stage `test`, explicit): test labels are read only there; selected model, production and\n   V0 are each evaluated once per report file (ResultsWriter guard); paired bootstrap of the\n   selected model vs production and vs V0 (strict top-1, strict top-3, in-family top-3, lenient\n   top-3); conformal calibrated on FULL validation applied to test; CPU latency (batch ms/issue\n   and single-issue p50 / p95 over the first 200 test issues). Probabilities and model files go to\n   D:\\triageiq-data\\models\\microsoft__vscode\\phase1\\, never the repo.",
  "harness_design": "(2026-10-20; do not change after seeing test results). Pure functions on\n(y_true_primary, y_true_sets, proba, classes); labels are strings already mapped to the modelled\nclasses + `other`.\n * top-1 / top-3 accuracy against the PRIMARY label; any-valid top-1 (prediction in the true\n   label set) and any-valid top-3 (any of the top-3 in the set); macro-F1 over the classes present\n   in y_true; NLL (probabilities clipped at 1e-12); ECE with 15 equal-width bins on the top-1\n   confidence. Ties in probability are broken by class order (stable sort).\n * Conformal sets by APS, non-randomised: a label's score is the cumulative probability mass of\n   all classes ranked at or above it; calibration scores use the PRIMARY label on VALIDATION;\n   qhat = the ceil((n + 1)(1 - alpha))-th smallest score (inf when that exceeds n), alpha = 0.05;\n   a class is in the set iff its score <= qhat, and the top-1 class is always included (non-empty\n   sets; conservative). Reported: coverage w.r.t. primary, coverage w.r.t. any-valid (set meets\n   the true set), mean / median set size.\n * Temperature scaling: T fitted on VALIDATION by minimising NLL of softmax(log p / T), T in\n   [0.05, 20]; ECE reported before and after.\n * Bootstrap 95% percentile CIs over issues: 2000 resamples, seed 42, paired differences use the\n   same resampled indices; Wilson 95% for proportions.\n * Guard: test metrics are computed only with final=True, and ResultsWriter refuses a second test\n   evaluation of the same model id in the same report file. Each entry records the model id, the\n   sha256 of the prediction file and the sha256 of the frozen split manifest.",
@@ -1317,6 +1265,126 @@
  "repo": "microsoft/vscode",
  "selected_model": "tfidf_lr_family_only_v2",
  "split_manifest_sha256": "eabe05cff733edf3492d2d11b983664f2eb015ee09d0ab4e4044d5c01c25c0bd",
+ "superseded_alpha_0_1": {
+  "conformal_selection": {
+   "alpha": 0.1,
+   "n": 5691,
+   "population": "in-family only (V2)",
+   "selected": {
+    "name": "lac"
+   },
+   "table": [
+    {
+     "coverage": {
+      "mean": 0.9720941672522838,
+      "sd": 0.002697610183248183
+     },
+     "set_size_mean": {
+      "mean": 41.541215741391426,
+      "sd": 1.165774612817775
+     },
+     "spec": {
+      "name": "aps_nonrandomised"
+     }
+    },
+    {
+     "coverage": {
+      "mean": 0.8984750527055517,
+      "sd": 0.007306686098033748
+     },
+     "set_size_mean": {
+      "mean": 13.537069571328182,
+      "sd": 0.5925044102103156
+     },
+     "spec": {
+      "name": "aps_randomised"
+     }
+    },
+    {
+     "coverage": {
+      "mean": 0.8987280393534786,
+      "sd": 0.007877469866413122
+     },
+     "set_size_mean": {
+      "mean": 3.7622066057624743,
+      "sd": 0.08174717390275807
+     },
+     "spec": {
+      "k_reg": 1,
+      "lam": 0.1,
+      "name": "raps_l0.1_k1"
+     }
+    },
+    {
+     "coverage": {
+      "mean": 0.8984820801124387,
+      "sd": 0.008010853849378665
+     },
+     "set_size_mean": {
+      "mean": 3.5972452565003517,
+      "sd": 0.17444759743539434
+     },
+     "spec": {
+      "name": "lac"
+     }
+    }
+   ]
+  },
+  "conformal_test": {
+   "all_labelled": {
+    "coverage_any_valid": {
+     "k": 4099,
+     "n": 9598,
+     "rate": 0.4270681391956658,
+     "wilson95": [
+      0.4172031166776836,
+      0.4369915203177862
+     ]
+    },
+    "coverage_primary": {
+     "k": 3654,
+     "n": 9598,
+     "rate": 0.3807043133986247,
+     "wilson95": [
+      0.3710396331670984,
+      0.3904644516326342
+     ]
+    },
+    "empty_set_rate": 0.0,
+    "set_size_mean": 4.259845801208585,
+    "set_size_median": 4.0
+   },
+   "alpha": 0.1,
+   "exploratory": "ADR-0069: unconfirmed until the post-test confirmation set",
+   "in_family_only": {
+    "coverage_any_valid": {
+     "k": 3681,
+     "n": 4016,
+     "rate": 0.9165836653386454,
+     "wilson95": [
+      0.907628313063072,
+      0.92474279330092
+     ]
+    },
+    "coverage_primary": {
+     "k": 3654,
+     "n": 4016,
+     "rate": 0.9098605577689243,
+     "wilson95": [
+      0.9006070880779632,
+      0.9183306531504473
+     ]
+    },
+    "empty_set_rate": 0.0,
+    "set_size_mean": 3.904133466135458,
+    "set_size_median": 3.0
+   },
+   "qhat": 0.9719653888289624,
+   "spec": {
+    "name": "lac"
+   }
+  }
+ },
  "validation_grids": {
   "v1": {
    "best": {

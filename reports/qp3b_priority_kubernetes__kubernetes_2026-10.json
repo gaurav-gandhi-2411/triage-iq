@@ -146,6 +146,27 @@
    "share_of_split": 0.1544532130777903
   }
  },
+ "post_hoc_notes": {
+  "added": "2026-10-23, after the P0/P2 test evaluation; the design docstring is unchanged.",
+  "docstring_inaccuracy": "The design wording 'creation-time only' is inaccurate for labels_t72h: those labels may be applied after, or together with, a maintainer's priority label (joint labelling).",
+  "follow_up": "P3 (creation-time labels only, W=60 s) is the serve-time-feasible variant; see p3_design / p3_validation_table once present.",
+  "headline_scope": "The P2 headline (test 0.526 vs majority 0.409) is valid for prediction that is augmented with labels_t72h kind/* and sig/* labels (plus author_assoc). It is NOT a result for a just-created issue.",
+  "joint_labelling_remeasured": {
+   "definition": "population issues where some kind/*|sig/* t72h label's earliest labeled event >= (earliest priority labeled event - 60 s); measured with an uncommitted scratch script. Differs slightly from the verifier's figures (denominators/definition not reconciled); both show the same picture.",
+   "test": "42/247 = 17.0%",
+   "train": "198/657 = 30.1%",
+   "validation": "42/137 = 30.7%"
+  },
+  "joint_labelling_verifier_reported": {
+   "definition": "input label applied within 60 s of or after the first priority label (verifier's count, taken from the coordinator message)",
+   "test": "44/244 = 18.0%",
+   "train": "31.6%",
+   "validation": "32.1%"
+  },
+  "priority_command_lines": "Issue bodies contain '/priority <level>' command lines (verifier: train 88, validation 19, test 8; re-measured with a looser regex: 92 / 19 / 14). Stripping them did not change validation accuracy (verifier's check, not re-run here).",
+  "selection_effect": "Only issues maintainers prioritised are in the population (12.6-15.6% of split issues); results say nothing about issues nobody prioritised.",
+  "weak_majority_in_unlabelled_subset": "In the test subset with no priority label at t72h (n=112) the 'high' share is 32/112 = 28.6% (medium 51, low 29), so the train-majority baseline (always 'high') is weak there (0.286); the +0.161 gain in that subset is against that weak baseline."
+ },
  "repo": "kubernetes/kubernetes",
  "script_dirty": false,
  "selection": {

@@ -83,6 +83,7 @@ def test_component_legacy_rows_derive_family_and_default_weight() -> None:
     out = om.component_metrics(pairs((row("a", K8S, "test"), rec("a", "test"))))
     assert out["in_family_source"] == "derived_gold_ne_other"
     assert out["rows_with_default_weight_1"] == 1
+    assert "rows_with_invalid_weight_defaulted" not in out
     assert out["strict"]["unweighted"]["point"] == 1.0
 
 
@@ -169,3 +170,22 @@ def test_moved_metrics_stay_importable_from_the_original_module() -> None:
     assert om.NAIVE_DAYS_DEFAULT is moved.NAIVE_DAYS_DEFAULT
     with pytest.raises(AttributeError):
         om.no_such_metric  # noqa: B018 - the access itself is the assertion
+
+
+def test_invalid_explicit_weights_default_to_one_and_are_counted() -> None:
+    def r(i: str, **meta: Any) -> dict[str, Any]:
+        return row(i, meta=meta)
+
+    ps = pairs(
+        (r("a", weight=float("inf")), rec("a")),
+        (r("b", weight=float("nan")), rec("b")),
+        (r("c", weight=-2.0), rec("c")),
+        (r("d", weight="3"), rec("d", "other")),
+        (r("e", weight=4.0), rec("e")),
+        (r("f"), rec("f")),  # absent: the existing default counter, not the invalid one
+    )
+    out = om.component_metrics(ps)
+    assert out["rows_with_invalid_weight_defaulted"] == 4
+    assert out["rows_with_default_weight_1"] == 1
+    # hits a,b,c,e,f weigh 1,1,1,4,1; d (miss) weighs 1 -> 8/9, never inf/NaN
+    assert out["strict"]["weighted"]["point"] == round(8 / 9, 4)

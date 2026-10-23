@@ -115,13 +115,21 @@ def grounding_metrics(
     }
 
 
+def _valid_interval(lo: object, hi: object) -> bool:
+    """Both bounds are finite real numbers (NaN, +/-inf, bools and non-numbers are not)."""
+    return all(
+        isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+        for x in (lo, hi)
+    )
+
+
 def _point_days(p: Pair) -> tuple[float | None, str]:
     point = p.metadata.get("resolution_point_days")
     if isinstance(point, (int, float)) and not isinstance(point, bool) and math.isfinite(point):
         return float(point), "metadata.resolution_point_days"
     lo = p.plan.get("expected_resolution_lower_days")
     hi = p.plan.get("expected_resolution_upper_days")
-    if isinstance(lo, (int, float)) and isinstance(hi, (int, float)):
+    if _valid_interval(lo, hi):
         return (float(lo) + float(hi)) / 2.0, "interval_midpoint"
     return None, "none"
 
@@ -147,6 +155,7 @@ def resolution_metrics(
     ae: list[float] = []
     nae: list[float | None] = []
     cover: list[bool] = []
+    iv_excl: Counter[str] = Counter()
     width: list[float] = []
     for p in pairs:
         if p.record is None:
@@ -155,6 +164,9 @@ def resolution_metrics(
         actual = p.row.get("actual_resolution_days")
         if actual is None or p.meta.get("censored") is True:
             excl["censored"] += 1
+            continue
+        if not _valid_interval(actual, 0.0):
+            excl["invalid_actual"] += 1
             continue
         point, source = _point_days(p)
         if point is None:
@@ -166,7 +178,9 @@ def resolution_metrics(
         nae.append(None if c is None else abs(c - float(actual)))
         lo = p.plan.get("expected_resolution_lower_days")
         hi = p.plan.get("expected_resolution_upper_days")
-        if isinstance(lo, (int, float)) and isinstance(hi, (int, float)):
+        if not _valid_interval(lo, hi):
+            iv_excl["invalid_interval"] += 1
+        else:
             cover.append(float(lo) <= float(actual) <= float(hi))
             width.append(float(hi) - float(lo))
     a = np.asarray(ae, dtype=float)
@@ -177,7 +191,7 @@ def resolution_metrics(
         "point_source_counts": dict(sources),
         "ci_method": "bootstrap",
         "plan": _ae_stats(a, "ae"),
-        "interval_coverage": _proportion(cover, {}),
+        "interval_coverage": _proportion(cover, iv_excl),
         "mean_interval_width_days": _r(float(np.mean(width))) if width else None,
     }
     if nae and all(x is not None for x in nae):

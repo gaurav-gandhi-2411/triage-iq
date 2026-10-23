@@ -66,6 +66,16 @@ weighted, ratio-of-sums and median statistics. Each metric is reported pooled an
    closed rows with lower <= actual <= upper (Wilson) and mean width in days. A repo without a naive
    constant gets no reference row.
 
+Implementation notes (input validation; not part of the pre-registered definitions, and
+without effect on well-formed rows). A `meta.weight` that is present but not a finite number > 0
+is replaced by 1.0 and counted in `rows_with_invalid_weight_defaulted` (key only if
+non-zero; an absent weight is counted
+in `rows_with_default_weight_1`). A plan interval bound that is not a finite number makes the
+interval invalid: the row leaves coverage and width (`invalid_interval`, reported in
+`interval_coverage.excluded_reasons`) and, when the point would have been the interval midpoint,
+leaves the absolute-error statistics (`no_point_estimate`). A non-finite `actual_resolution_days`
+is excluded as `invalid_actual`. No NaN or infinity reaches a median, mean or CI.
+
 Nothing here writes or proposes a baseline or a gate: new baselines are proposed to GG, never
 written (spec-quality-push.md section 10).
 """
@@ -193,16 +203,20 @@ def _mean_boot(values: Sequence[float], excluded: Mapping[str, int], **extra: An
 # ---------------------------------------------------------------------------
 
 
-def _weight(meta: Mapping[str, Any]) -> float:
+def _weight(meta: Mapping[str, Any]) -> tuple[float, bool]:
+    """(weight, invalid): an explicit weight that is not a finite number > 0 becomes 1.0."""
     w = meta.get("weight")
-    return float(w) if isinstance(w, (int, float)) and not isinstance(w, bool) and w > 0 else 1.0
+    if w is None:
+        return 1.0, False
+    ok = isinstance(w, (int, float)) and not isinstance(w, bool) and math.isfinite(w) and w > 0
+    return (float(w), False) if ok else (1.0, True)
 
 
 def component_metrics(pairs: Sequence[Pair]) -> dict[str, Any]:
     """Component exact match: strict (ADR-0070), k8s convention, in-family strict; see module doc."""
     excl: Counter[str] = Counter()
     rows: list[tuple[bool, bool, bool, float]] = []  # strict, lenient, in_family, weight
-    derived_family = default_weight = 0
+    derived_family = default_weight = invalid_weight = 0
     for p in pairs:
         if p.record is None:
             excl["no_plan"] += 1
@@ -217,7 +231,9 @@ def component_metrics(pairs: Sequence[Pair]) -> dict[str, Any]:
             in_family, derived_family = gold != "other", derived_family + 1
         default_weight += "weight" not in p.meta
         match = pred == gold
-        rows.append((match and gold != "other", match, in_family, _weight(p.meta)))
+        weight, bad = _weight(p.meta)
+        invalid_weight += bad
+        rows.append((match and gold != "other", match, in_family, weight))
 
     def variant(sel: Sequence[tuple[bool, bool, bool, float]], col: int) -> dict[str, Any]:
         hit = np.array([r[col] for r in sel], dtype=float)
@@ -237,6 +253,7 @@ def component_metrics(pairs: Sequence[Pair]) -> dict[str, Any]:
         "in_family_source": "derived_gold_ne_other" if derived_family else "meta.in_family",
         "rows_with_derived_in_family": derived_family,
         "rows_with_default_weight_1": default_weight,
+        **({"rows_with_invalid_weight_defaulted": invalid_weight} if invalid_weight else {}),
         "strict": variant(rows, 0),
         "k8s_convention": variant(rows, 1),
         "in_family_strict": variant([r for r in rows if r[2]], 0),

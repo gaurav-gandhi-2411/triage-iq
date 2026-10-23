@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from triage_iq.evaluation import objective_metrics_retrieval as om
@@ -151,3 +152,52 @@ def test_resolution_no_naive_constant_or_no_closed_rows() -> None:
     assert om.resolution_metrics(ps, {})["naive_reference"] is None
     out = om.resolution_metrics(pairs((row("b", actual=None), rec("b"))))
     assert out["n"] == 0 and out["plan"]["median_ae_days"] is None
+
+
+def test_resolution_non_finite_interval_is_no_interval_and_never_reaches_stats() -> None:
+    nan, inf = float("nan"), float("inf")
+
+    def r(i: str) -> dict[str, Any]:
+        return row(i, actual=10.0)
+
+    ps = pairs(
+        # NaN upper bound, explicit point: AE kept, excluded from coverage/width
+        (
+            r("a"),
+            rec(
+                "a",
+                expected_resolution_lower_days=1,
+                expected_resolution_upper_days=nan,
+                metadata={"resolution_point_days": 12.0},
+            ),
+        ),
+        # inf bound and no point: the midpoint would be inf -> row leaves AE entirely
+        (r("b"), rec("b", expected_resolution_lower_days=1, expected_resolution_upper_days=inf)),
+        # -inf lower bound, explicit point
+        (
+            r("c"),
+            rec(
+                "c",
+                expected_resolution_lower_days=-inf,
+                expected_resolution_upper_days=5,
+                metadata={"resolution_point_days": 11.0},
+            ),
+        ),
+        (
+            r("d"),
+            rec(
+                "d",
+                expected_resolution_lower_days=5,
+                expected_resolution_upper_days=20,
+                metadata={"resolution_point_days": 10.0},
+            ),
+        ),
+    )
+    out = om.resolution_metrics(ps, {K8S: 35.1})
+    assert out["n"] == 3 and out["excluded_reasons"] == {"no_point_estimate": 1}
+    assert out["plan"]["mean_ae_days"] == 1.0 and out["plan"]["median_ae_days"] == 1.0
+    cov = out["interval_coverage"]
+    assert (cov["n"], cov["k"]) == (1, 1)
+    assert cov["excluded_reasons"] == {"invalid_interval": 2}
+    assert out["mean_interval_width_days"] == 15.0
+    json.dumps(out, allow_nan=False)  # no NaN/inf anywhere in the report

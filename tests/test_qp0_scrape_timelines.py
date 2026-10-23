@@ -206,3 +206,54 @@ def test_compare_cli_reads_raw_files(tmp_path: Path) -> None:
     rep = json.loads((out / "qp0_timeline_completeness_o__r_2026-10.json").read_text())
     assert rep["n_issues_compared"] == 1
     assert rep["labeled_event"]["share_issues_missing_ge1"] == 1.0
+
+
+def _qsizes(fake: Fake, since: int = 0) -> list[int]:
+    return [len(re.findall(r"issue\(number:", q)) for q in fake.queries[since:]]
+
+
+def test_batch_regrows_after_clean_run_and_failure_reshrinks(tmp_path: Path, monkeypatch) -> None:  # noqa: ANN001
+    monkeypatch.setattr("time.sleep", lambda s: None)
+    monkeypatch.setattr(tl.dt, "REGROW_AFTER", 10**6)  # no regrow during the burst
+    fake = Fake({n: 1 for n in range(1, 400)}, fail_over=1)
+    s = scraper(tmp_path, fake)
+    s.run(list(range(1, 11)))
+    assert s.sizes[0] == 1  # burst of 5xx pinned it to 1
+    s._ok_streak = 0  # successes during the burst must not pre-load the streak
+    fake.fail_over, seen = None, len(fake.queries)
+    monkeypatch.setattr(tl.dt, "REGROW_AFTER", 3)
+    s.run(list(range(11, 60)))
+    sizes = _qsizes(fake, seen)
+    assert sizes[:3] == [1, 1, 1] and 2 in sizes and 5 in sizes and max(sizes) == 10
+    assert s.sizes[0] == 10
+    assert sizes[:-1] == sorted(sizes[:-1])  # monotone, one step at a time
+    # a failure after regrow shrinks again (existing behaviour intact)
+    monkeypatch.setattr(tl.dt, "REGROW_AFTER", 10**6)  # isolate the shrink from regrow
+    fake.fail_over = 2
+    s.run(list(range(100, 130)))
+    assert s.sizes[0] == 2
+
+
+def test_regrow_never_exceeds_configured_max(tmp_path: Path, monkeypatch) -> None:  # noqa: ANN001
+    monkeypatch.setattr("time.sleep", lambda s: None)
+    monkeypatch.setattr(tl.dt, "REGROW_AFTER", 10**6)  # no regrow during the burst
+    fake = Fake({n: 1 for n in range(1, 300)}, fail_over=1)
+    s = scraper(tmp_path, fake, batch=5)
+    s.run(list(range(1, 6)))
+    assert s.sizes[0] == 1
+    s._ok_streak = 0  # successes during the burst must not pre-load the streak
+    fake.fail_over, seen = None, len(fake.queries)
+    monkeypatch.setattr(tl.dt, "REGROW_AFTER", 3)
+    s.run(list(range(10, 200)))
+    assert s.sizes[0] == 5 and max(_qsizes(fake, seen)) == 5
+    assert s.max_batch == 5
+
+
+def test_no_regrow_before_streak_complete(tmp_path: Path, monkeypatch) -> None:  # noqa: ANN001
+    monkeypatch.setattr("time.sleep", lambda s: None)
+    fake = Fake({n: 1 for n in range(1, 60)}, fail_over=1)
+    s = scraper(tmp_path, fake)
+    s.run(list(range(1, 11)))
+    s._ok_streak, fake.fail_over = 0, None
+    s.run(list(range(11, 11 + tl.dt.REGROW_AFTER - 1)))  # one clean query short
+    assert s.sizes[0] == 1

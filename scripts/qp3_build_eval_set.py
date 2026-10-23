@@ -100,6 +100,15 @@ N_PER_REPO, K_RETRIEVE = 75, 50
 PROMPT_BODY_CHARS, PROMPT_SIM_CHARS = 800, 120  # build_triage_prompt: body[:800], text[:120]
 CASSETTE_PROMPT_CHARS = 16_577  # median synthesis prompt of the 64 groq entries, eval_cassette.json
 V1_SET_SHA256 = "cfe8b8bddaae1b9743d4822435a6deda9651d54e6cc388adf335db6d0a3acd2d"
+V2_SET_SHA256 = (
+    "2da0fe53c4d0112297da8368fdf41491d0a8a4db3d18dde9dbcf4264239ee8db"  # superseded by 2.1
+)
+DESIGN_VERSION = "2.1"
+DESIGN_VERSION_NOTE = (
+    "2.1: meta.fix_prs / fix_peers use audited closed_event_closer_pr links only (D79: "
+    "pr_closing_refs audited 76.7% < 95%); sampled issues, strata, weights, similar_issues "
+    "unchanged from v2 (sha256 in supersedes_v2); nothing was recorded on v2."
+)
 V1_NPZ_SHA256 = "7a2e06063d49d3feed96f946ccfcb2aa046d993d6efdcc9d30922bfe89ba9319"
 MIN_ISSUES = 30  # ADR-0067 / ADR-0070 class floor (train issues)
 TOKENS_PER_ISSUE, DAILY_CAP = 6000, 160_000  # spec 10; eval/tpd_budget_gate.RECORDER_CAP_TOKENS
@@ -273,7 +282,9 @@ def token_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     argparse.ArgumentParser(description=__doc__).parse_args(argv)
     rows: list[dict[str, Any]] = []
-    rep: dict[str, Any] = {"design": DESIGN, "design_version": 2, "seed": SEED,
+    rep: dict[str, Any] = {"design": DESIGN, "design_version": DESIGN_VERSION,
+                           "design_version_note": DESIGN_VERSION_NOTE,
+                           "supersedes_v2": {"eval_set.jsonl": V2_SET_SHA256}, "seed": SEED,
                            "script_commit": git_head_of_script(),
                            "supersedes_v1": {"eval_set.jsonl": V1_SET_SHA256,
                                              "frozen_query_embeddings.npz": V1_NPZ_SHA256}}  # fmt: skip

@@ -28,7 +28,7 @@ from qp0_derive_events import (
     parse_ts,
     target_pairs,
 )
-from qp0_derive_stats import stats_from_parquet, write_stats
+from qp0_derive_stats import audited_fix_links, stats_from_parquet, write_stats
 
 T = TypeVar("T")
 BODY_CAP = 20000
@@ -186,8 +186,8 @@ def extract_fix_links(
 
 
 def fix_groups(links: pd.DataFrame) -> pd.DataFrame:
-    """PRs that merged-fix >= 2 distinct issues."""
-    g = links[links["pr_merged"]].groupby("pr")["issue"].agg(lambda s: sorted(set(s)))
+    """PRs that merged-fix >= 2 distinct issues (audited link methods only, D79)."""
+    g = audited_fix_links(links).groupby("pr")["issue"].agg(lambda s: sorted(set(s)))
     g = g[g.map(len) >= 2]
     return pd.DataFrame({"pr": g.index.astype("int64"), "issues": list(g)})
 

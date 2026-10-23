@@ -117,7 +117,14 @@ def test_weight_stats_kish() -> None:
 
 def test_target_maps_and_created_lookup(tmp_path: Path) -> None:
     dp = pd.DataFrame({"source": [5, 5, 6], "canonical": [1, 2, 3]})
-    fl = pd.DataFrame({"issue": [5, 6], "pr": [90, 91], "pr_merged": [True, False]})
+    fl = pd.DataFrame(
+        {
+            "issue": [5, 6, 5],
+            "pr": [90, 91, 92],
+            "pr_merged": [True, False, True],
+            "method": ["closed_event_closer_pr"] * 2 + ["pr_closing_refs"],  # 92: unaudited
+        }
+    )
     fg = pd.DataFrame({"pr": [90], "issues": [[5, 7, 8]]})
     dup, peers, fixpr = q.target_maps(dp, fl, fg)
     assert dup == {5: [1, 2], 6: [3]} and peers[7] == [5, 8] and fixpr.to_dict() == {5: [90]}

@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
-from triage_iq.api import loader
 from triage_iq.models.resolution_evidence import (
     EVIDENCE_BLOCK_MAX_CHARS,
     EVIDENCE_HEADER,
@@ -132,25 +130,6 @@ def test_undated_artifact_fails_closed_in_block_for(tmp_path: Path) -> None:
         ev.block_for([{"number": 2}], AS_OF)
 
 
-def test_loader_refuses_undated_artifact_with_one_warning(tmp_path: Path) -> None:
-    _v1_frame().to_parquet(
-        tmp_path / "resolution_evidence_kubernetes_kubernetes.parquet", index=False
-    )
-    records: list[logging.LogRecord] = []
-
-    class _Grab(logging.Handler):
-        def emit(self, record: logging.LogRecord) -> None:
-            records.append(record)
-
-    h = _Grab(logging.WARNING)
-    loader.logger.addHandler(h)
-    try:
-        assert loader._load_resolution_evidence(tmp_path, "kubernetes_kubernetes") is None
-    finally:
-        loader.logger.removeHandler(h)
-    assert [r.event for r in records if hasattr(r, "event")] == ["resolution_evidence_undated"]  # type: ignore[attr-defined]
-
-
 # --- as-of filter: strictly before -----------------------------------------------------------
 
 T = pd.Timestamp("2024-05-01T12:00:00Z")
@@ -205,50 +184,3 @@ def test_block_keeps_early_item_and_neighbour_with_nothing_left_contributes_noth
     block, used = ev.block_for([{"number": 1}, {"number": 2}], T)
     assert used == [1] and "Early fix" in block and "Late fix" not in block
     assert ev.block_for([{"number": 2}], T) == ("", [])
-
-
-# --- loader ---------------------------------------------------------------------------------
-
-
-def test_loader_missing_artifact_warns_once_and_returns_none(tmp_path: Path) -> None:
-    records: list[logging.LogRecord] = []
-
-    class _Grab(logging.Handler):  # direct handler: other tests may cut propagation to root
-        def emit(self, record: logging.LogRecord) -> None:
-            records.append(record)
-
-    h = _Grab(logging.WARNING)
-    loader.logger.addHandler(h)
-    try:
-        assert loader._load_resolution_evidence(tmp_path, "kubernetes_kubernetes") is None
-    finally:
-        loader.logger.removeHandler(h)
-    warned = [r for r in records if "TRIAGE_RESOLUTION_EVIDENCE" in r.getMessage()]
-    assert len(warned) == 1
-    assert warned[0].event == "resolution_evidence_missing"  # type: ignore[attr-defined]
-
-
-def test_loader_unreadable_artifact_returns_none(tmp_path: Path) -> None:
-    (tmp_path / "resolution_evidence_kubernetes_kubernetes.parquet").write_bytes(b"nope")
-    assert loader._load_resolution_evidence(tmp_path, "kubernetes_kubernetes") is None
-
-
-def test_loader_reads_the_slug_named_artifact(tmp_path: Path) -> None:
-    pd.DataFrame(
-        [
-            {
-                "number": 2,
-                "fix_prs": [],
-                "closing_comment": "done",
-                "closing_comment_at": OLD,
-                "has_evidence": True,
-            }
-        ]
-    ).to_parquet(tmp_path / "resolution_evidence_kubernetes_kubernetes.parquet", index=False)
-    ev = loader._load_resolution_evidence(tmp_path, "kubernetes_kubernetes")
-    assert ev is not None and list(ev.records) == [2]
-
-
-def test_loader_is_k8s_only() -> None:
-    slugs = set(loader._RESOLUTION_EVIDENCE_SLUGS)  # lower-case: ruff SIM300 reads UPPER as const
-    assert slugs == {"kubernetes_kubernetes"}

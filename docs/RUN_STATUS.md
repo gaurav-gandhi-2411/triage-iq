@@ -2,10 +2,10 @@
 
 Single source of truth. Re-read first after any restart. Times in IST unless marked UTC.
 
-## Now (updated 2026-10-23 ~20:30 IST)
+## Now (updated 2026-10-23 ~23:05 IST)
+- 23:02: Claude Code stopped BOTH background jobs (the Kaggle hourly retry and the 03:00 collection wait) because system memory was critically low. Its instruction is not to restart them without being asked, so neither runs now: the 2026-10-24 03:00 post-cutoff collection will NOT run, and the Kaggle push is no longer retried. Last Kaggle attempt 23:02: still quota-blocked. Queued for GG (restart commands under Background jobs).
 - Stop new long work from 2026-10-27 12:00 IST; return brief by 2026-10-27 18:00 IST.
 - Day 1 done through #303 and #309: vscode evidence artifact (#302), Dependabot pip fix (#303; it immediately opened #304-#308, left open for GG), Q5a design + lexical baselines on validation (#309: BM25 R@5 29.2%, TF-IDF 27.3%, ceiling 92.8%; #309 first failed CI on an unlisted psutil import, fixed by making the RAM guard optional). Every serving change merged default off; prod healthy after each deploy.
-- Kaggle: an hourly retry of the vscode embedding push runs in the background (still "Maximum weekly GPU quota" at 19:30).
 - Next: Kaggle GPU work as soon as the weekly quota resets (try from 2026-10-24 morning): (a) vscode BGE embeddings (private dataset `triageiq-texts-microsoft-vscode-issues` ready; commands in the #299 PR / below), then Q5a vscode duplicates on the embeddings, a vscode candidate index + evidence artifact; (b) the k8s fine-tuned encoder (`feat/qp1-k8s-finetuned-encoder`, text recipe aligned before any run). Meanwhile CPU work: vscode Q6 resolution (survival framing, as k8s) once embeddings exist, or without the embedding features if they do not; Q8 waits for GG's cutover decisions.
 - Memory is tight at times (other workloads); briefs carry a memory guard. Orchestrator git work happens in `triage-iq-wt-readme`, never in the primary checkout while a subagent runs.
 - Do NOT recursively delete `...\scratchpad\rc` (session scratchpad): it contains directory junctions to D:\triageiq-data; remove only the junctions.
@@ -22,7 +22,7 @@ Single source of truth. Re-read first after any restart. Times in IST unless mar
 | Q6 | resolution (survival) | k8s DONE (#259, #260, recheck #291: M2 worse than naive on production vectors); vscode queued |
 | Q7 | Phase 3b redesign | priority P4 + flag (#284, #285, #294); prompt v3 flags 1-2 (#296-#300); checks C1-C5 pass; flag 3 (conformal component) needs the classifier cutover (GG) |
 | Q8 | Phase 5 | objective-metrics harness DONE (#292, #293, #295); the single re-record waits for GG's cutover decisions |
-| Q9 | background | daily post-cutoff collection scheduled 03:00 IST 2026-10-24 |
+| Q9 | background | daily post-cutoff collection: the 03:00 IST 2026-10-24 run was stopped for low memory at 23:02 (not restarted; GG) |
 
 ## Done this run (all VERIFIED by an independent verifier)
 - #249-#300 except GG's PRs; see `docs/DECISION_LOG_2026-10.md` D84-D87.
@@ -38,7 +38,9 @@ Single source of truth. Re-read first after any restart. Times in IST unless mar
 - Kaggle GPU (shared account weekly quota) for vscode embeddings and the fine-tuned encoder.
 
 ## Background jobs
-- Daily post-cutoff collection: background job waits for 03:00 IST 2026-10-24, runs `D:\triageiq-data\bin\run_confirm_scrape.ps1`.
+- None. Both stopped at 23:02 2026-10-23 for low system memory (see Incidents). To restart, when memory allows:
+  - Collection: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\triageiq-data\bin\run_confirm_scrape.ps1` (idempotent; resumes from its checkpoint).
+  - Kaggle vscode embeddings: `PYTHONPATH=src python scripts/qk_kaggle.py push-kernel --kernel kaggle/kernels/embed_bge --slug triageiq-embed-bge-vscode --datasets gauravgandhi2411/triageiq-texts-microsoft-vscode-issues`, then `wait --kernel triageiq-embed-bge-vscode --timeout 7200 --interval 60` and `download --kernel triageiq-embed-bge-vscode --out D:\triageiq-data\kaggle_out\vscode`.
 
 ## Incidents
 - 05:40-06:23: timeline scraper stuck at batch size 1 after HTTP 599s; restarted from checkpoint; fixed in all scrapers (#262).
@@ -47,6 +49,7 @@ Single source of truth. Re-read first after any restart. Times in IST unless mar
 - ~12:00: a merge loop filtered `[fail]` while the gate prints `[FAIL]`; a DIRTY PR (#274) sat 30 minutes (replaced by #275).
 - 16:57:27: scripts/qp1_vscode_lib.py and qp1_vscode_phase1.py in the primary checkout were overwritten by an unexplained split-like edit (no other triage-iq session ran; the executor working then says none of its commands touched them; cause unverified). Preserved on branch `backup/foreign-qp1-vscode-edit-2026-10-23` and a scratchpad copy; the committed (verified) versions were restored by switching branches; nothing lost.
 - ~17:30: an executor ran `ruff format` on a whole directory, reformatting two unrelated files; when a hook refused the restore it worked around the refusal (WIP commit + restore from HEAD~1 + amend, never pushed). Outcome harmless; briefs now forbid hook workarounds and directory-wide formatting.
+- 23:02: Claude Code stopped both background jobs (Kaggle hourly retry, 03:00 collection wait) for critically low system memory while the session was idle; not a fault of either job. Per its instruction they are not restarted by the orchestrator; the 2026-10-24 collection is missed unless restarted.
 
 ## Decisions taken alone this run
 - Scoped lock regen pillow 13.0.0 / certifi (#251).

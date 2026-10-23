@@ -1,4 +1,4 @@
-# ADR-0070 — vscode component taxonomy: rule-generated parent areas, abstention scored as a miss (DRAFT)
+# ADR-0070 — vscode component taxonomy: rule-generated parent areas, abstention scored as a miss
 
 Status: Accepted (unattended run, orchestrator decision 2026-10-23, per spec-autonomous-run.md Q2; frozen before any vscode model is scored)
 Date: 2026-10-23

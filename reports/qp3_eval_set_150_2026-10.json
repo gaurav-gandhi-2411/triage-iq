@@ -1347,7 +1347,7 @@
   },
   "status": "UNSCORABLE on the served index: 0 sampled duplicate/fix targets are indexed"
  },
- "script_commit": "b00fbb36a4a6898e13eb9bda04f9482641800725",
+ "script_commit": "1d169a2adf7bf2e2278f921c6a70b948912fd881",
  "seed": 42,
  "supersedes_v1": {
   "eval_set.jsonl": "cfe8b8bddaae1b9743d4822435a6deda9651d54e6cc388adf335db6d0a3acd2d",

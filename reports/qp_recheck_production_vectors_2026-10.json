@@ -1889,7 +1889,12 @@
   "qp4_fullgrid": "selection would change: M2 beats naive on validation median AE {'committed': True, 'production': False}; M2 < M1 median AE {'committed': True, 'production': True}",
   "qp3b": "selection would change: k 20 -> 50; K1 beats naive on validation median AE {'committed': False, 'production': False}; served flag {'committed': False, 'production': False}"
  },
- "base_commit": "041570c17a3341457ac8155fe700ed63d6609eb1",
+ "base_commit": "f0514aedae2e61521005c8c3ddaef94e87636a63",
+ "post_hoc_notes": [
+  "qp1: C6 vs candidate 1 on validation is 0.9366 vs 0.9407 (production vectors) after +0.008 with Kaggle vectors; candidate 1's validation top-3 CI is [0.9228, 0.9572] (n=725), so the earlier edge and the new gap are both inside noise. Read as 'C6 loses its edge', not 'C6 is worse'. (Source: independent verifier, 2026-10.)",
+  "qp4: M2's Kaggle-vector validation edge over naive was only ~0.8 d. The Kaggle control here reproduced the committed M2 only approximately (median AE 34.60 vs committed 33.92; M1 43.97 vs 42.85; naive 34.63), and the verifier's two runs gave M2 37.21 (production) and 33.83 (Kaggle). Run-to-run wobble of ~0.1-1 d comes from feature columns pca10/pca11 that differ across runs. On production vectors M2 is robustly ~2.5 d worse than naive on validation; the earlier Kaggle-vector edge was within noise.",
+  "qp3b: conclusion unchanged (K1 does not beat naive on validation); k selection 20 -> 50."
+ ],
  "skipped": {
   "qp257_prior_pr_hybrid": "uses Kaggle PR embeddings; no production recipe exists for PRs"
  }

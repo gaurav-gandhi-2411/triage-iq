@@ -306,6 +306,21 @@ def run_qp3b(scratch: Path) -> dict[str, Any]:
     }
 
 
+POST_HOC_NOTES = [
+    "qp1: C6 vs candidate 1 on validation is 0.9366 vs 0.9407 (production vectors) after +0.008 "
+    "with Kaggle vectors; candidate 1's validation top-3 CI is [0.9228, 0.9572] (n=725), so the "
+    "earlier edge and the new gap are both inside noise. Read as 'C6 loses its edge', not "
+    "'C6 is worse'. (Source: independent verifier, 2026-10.)",
+    "qp4: M2's Kaggle-vector validation edge over naive was only ~0.8 d. The Kaggle control here "
+    "reproduced the committed M2 only approximately (median AE 34.60 vs committed 33.92; M1 "
+    "43.97 vs 42.85; naive 34.63), and the verifier's two runs gave M2 37.21 (production) and "
+    "33.83 (Kaggle). Run-to-run wobble of ~0.1-1 d comes from feature columns pca10/pca11 that "
+    "differ across runs. On production vectors M2 is robustly ~2.5 d worse than naive on "
+    "validation; the earlier Kaggle-vector edge was within noise.",
+    "qp3b: conclusion unchanged (K1 does not beat naive on validation); k selection 20 -> 50.",
+]
+
+
 def assemble(scratch: Path) -> dict[str, Any]:
     """Merge the per-experiment JSON dumps written by the stage runs into the committed report."""
     out: dict[str, Any] = {
@@ -327,6 +342,7 @@ def assemble(scratch: Path) -> dict[str, Any]:
         text=True,
         check=False,
     ).stdout.strip()
+    out["post_hoc_notes"] = POST_HOC_NOTES
     out["skipped"] = {"qp257_prior_pr_hybrid": "uses Kaggle PR embeddings; no production recipe exists for PRs"}  # fmt: skip
     return out
 

@@ -153,7 +153,11 @@ def test_committed_set_matches_report_and_quotas() -> None:
             assert got.get(h, 0) == v["sample"]
             assert v["sample"] >= min(v["population"], rep[repo]["minimum"])  # minimums respected
     assert rep["files"]["eval_set.jsonl"] == q.sha256_file(SET_DIR / "eval_set.jsonl")
-    assert rep["tokens"]["total_tokens"] == 900_000
+    assert rep["design_version"] == 2 and rep["supersedes_v1"]["eval_set.jsonl"] == q.V1_SET_SHA256
+    assert rep["tokens"]["planning_total_tokens"] == 900_000
+    assert rep["relevance_scoring"]["status"].startswith("UNSCORABLE")
+    for repo in REPOS:
+        assert rep[repo]["weights"]["kish_n_eff"] <= rep[repo]["weights"]["n"]
 
 
 def test_committed_set_rows_are_clean_and_replay_loadable() -> None:
@@ -161,8 +165,11 @@ def test_committed_set_rows_are_clean_and_replay_loadable() -> None:
     from frozen_retriever import build_frozen_retrievers
 
     rows = _rows()
-    assert all(0 < len(r["body"]) <= q.BODY_CHARS and r["title"] for r in rows)
-    assert all(len(r["similar_issues"]) == q.K for r in rows)
+    assert all(len(r["body"]) > 0 and r["title"] for r in rows)
+    assert max(len(r["body"]) for r in rows) > q.PROMPT_BODY_CHARS  # long bodies are kept (v2)
+    assert all(len(r["similar_issues"]) <= q.K for r in rows)
+    # issue numbers follow creation order, so no hit may be numbered above its query
+    assert all(h["number"] < r["number"] for r in rows for h in r["similar_issues"])
     assert all(set(r) >= COMMITTED_KEYS for r in rows)
     assert all(r["created_at"] >= "2026-01-01" for r in rows)  # test period only
     loaded = run_eval._load_eval_set(SET_DIR / "eval_set.jsonl")
@@ -192,3 +199,38 @@ def test_committed_set_only_eligible_test_issues() -> None:
 def test_committed_set_is_splitlines_safe() -> None:
     text = (SET_DIR / "eval_set.jsonl").read_text("utf-8")
     assert len(text.splitlines()) == 150
+
+
+def test_filter_neighbours_drops_newer_and_counts() -> None:
+    t = pd.Timestamp
+    created = {
+        1: t("2020-01-01", tz="UTC"),
+        2: t("2026-06-01", tz="UTC"),
+        3: t("2021-01-01", tz="UTC"),
+    }
+    hits = [
+        {"number": n} for n in (2, 1, 9, 50, 3)
+    ]  # 9 unknown and above the query; 50 unknown below
+    kept, st = q.filter_neighbours(hits, 40, t("2026-01-05", tz="UTC"), created, k=3)
+    assert [h["number"] for h in kept] == [1, 9, 3]
+    assert st["dropped_newer"] == 1 and st["dropped_unknown"] == 1
+    assert st["kept_by_number_fallback"] == 1
+    kept, st = q.filter_neighbours([{"number": 7}], 40, t("2026-01-05", tz="UTC"), {}, k=5)
+    assert len(kept) == 1 and st["kept_by_number_fallback"] == 1
+
+
+def test_vscode_style_srs_is_deterministic_and_order_invariant() -> None:
+    pop = make_pop()
+    a = q.draw(pop, 40, 3, seed=42, balance=False)
+    b = q.draw(pop.sample(frac=1, random_state=3), 40, 3, seed=42, balance=False)
+    assert a["number"].tolist() == b["number"].tolist() and len(a) == 40
+    quota = q.allocate(pop.groupby("stratum").size().to_dict(), 40, 3)
+    assert a.groupby("stratum").size().to_dict() == quota
+    assert a["number"].tolist() != q.draw(pop, 40, 3, seed=7, balance=False)["number"].tolist()
+
+
+def test_weight_stats_kish() -> None:
+    s = q.weight_stats([1.0, 1.0, 1.0, 1.0])
+    assert s["kish_n_eff"] == pytest.approx(4.0)
+    s = q.weight_stats([1.0, 3.0])
+    assert s["kish_n_eff"] == pytest.approx(16 / 10) and s["max"] == 3.0

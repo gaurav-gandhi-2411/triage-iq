@@ -39,6 +39,30 @@ seeing the sample). Builds the set only: no LLM call, no cassette, no recording.
    which duplicate / fix targets exist in that index.
  * Token estimate: spec 10 planning figure 6,000 tokens/issue x n vs the 160,000/day recorder cap,
    plus prompt-text size of this set vs the committed eval_set.jsonl (the 6K figure's origin).
+
+v2 DESIGN (2026-10-23), supersedes v1 BEFORE ANY USE (nothing was recorded or scored on the v1
+set, sha256 in V1_SET_SHA256 below). Every change, with its reason; everything not listed is unchanged.
+ 1. Length: long bodies are KEPT; only empty cleaned bodies are excluded. The prompt sends
+    body[:800] (build_triage_prompt max_body_chars) and 120 chars per similar issue, so a long
+    body costs no extra tokens; v1's cap removed 461 k8s / 2,070 vscode issues and biased the
+    population. Rows keep the full cleaned body (<= 10,000, clean_text). Token estimate is
+    recomputed from what the prompt sends (body[:800], similar text[:120]).
+ 2. vscode: simple random sampling inside each stratum (numpy default_rng(42) over members sorted
+    by number, strata in the same ascending-population order); no class balancing; minimum 5 kept.
+    Class coverage is an outcome. k8s keeps the class-spread draw. Weights: k8s N(h,c)/n(h,c),
+    vscode N(h)/n(h); the report gives the range and Kish n_eff = (sum w)^2 / sum w^2 per repo.
+ 3. Temporal leakage: a neighbour created after the query cannot exist at serve time. Retrieval
+    asks for K_RETRIEVE=50 and keeps the first 5 whose created_at < the query's. created_at comes
+    from data/processed/<repo>_temporal_train.parquet and derived_v2 issues (the index meta has
+    none). A neighbour with no known created_at falls back to its issue number being lower than
+    the query's (GitHub numbers issues and PRs in one creation-ordered sequence) and is counted
+    separately; one with neither is dropped and counted. Drop counts are in the report; the k8s
+    query embeddings are unchanged (same query vector).
+ 4. similar_issues stays on the served index (production as-is). Relevance vs duplicate/fix links
+    is unscorable on it (0 targets indexed): the Phase 2 / 3b retriever must be frozen into this
+    set (re-run this script's freeze step with that retriever) before the single re-record. The
+    report records `relevance_scoring` and, per repo, how many sampled issues have a dup/fix
+    target present in derived_v2 and created before the query (indexable by a new retriever).
 """
 
 from __future__ import annotations
@@ -72,14 +96,20 @@ DESIGN = __doc__.split("PRE-REGISTERED DESIGN", 1)[1].strip()
 DATA = Path(r"D:\triageiq-data")
 OUT_DIR = ROOT / "eval" / "sets" / "quality_push_2026-10"
 REPORT = ROOT / "reports" / "qp3_eval_set_150_2026-10.json"
-SEED, N_PER_REPO, BODY_CHARS, K = 42, 75, 2000, 5
+SEED, N_PER_REPO, K, K_RETRIEVE = 42, 75, 5, 50
+PROMPT_BODY_CHARS, PROMPT_SIM_CHARS = 800, 120  # build_triage_prompt: body[:800], text[:120]
+CASSETTE_PROMPT_CHARS = 16_577  # median synthesis prompt of the 64 groq entries, eval_cassette.json
+V1_SET_SHA256 = "cfe8b8bddaae1b9743d4822435a6deda9651d54e6cc388adf335db6d0a3acd2d"
+V1_NPZ_SHA256 = "7a2e06063d49d3feed96f946ccfcb2aa046d993d6efdcc9d30922bfe89ba9319"
 MIN_ISSUES = 30  # ADR-0067 / ADR-0070 class floor (train issues)
 TOKENS_PER_ISSUE, DAILY_CAP = 6000, 160_000  # spec 10; eval/tpd_budget_gate.RECORDER_CAP_TOKENS
 VSCODE_CLASSES_SHA = "95129c95809c21574ed34d41a46358149322680a7ccb0e42e90f4b62e7b761ea"  # ADR-0070
 REPOS = {
-    "kubernetes/kubernetes": {"slug": "kubernetes__kubernetes", "id": "k8s", "minimum": 3},
-    "microsoft/vscode": {"slug": "microsoft__vscode", "id": "vscode", "minimum": 5},
-}
+    "kubernetes/kubernetes": {"slug": "kubernetes__kubernetes", "id": "k8s", "minimum": 3,
+                              "balance": True},
+    "microsoft/vscode": {"slug": "microsoft__vscode", "id": "vscode", "minimum": 5,
+                         "balance": False},
+}  # fmt: skip
 
 
 def allocate(pop: dict[str, int], total: int, minimum: int) -> dict[str, int]:
@@ -100,8 +130,13 @@ def allocate(pop: dict[str, int], total: int, minimum: int) -> dict[str, int]:
     return out
 
 
-def draw(pop: pd.DataFrame, total: int, minimum: int, seed: int = SEED) -> pd.DataFrame:
-    """Draw the sample from `pop` (columns number, stratum, cls); returns the chosen rows."""
+def draw(
+    pop: pd.DataFrame, total: int, minimum: int, seed: int = SEED, balance: bool = True
+) -> pd.DataFrame:
+    """Draw the sample from `pop` (columns number, stratum, cls); returns the chosen rows.
+
+    balance=True spreads draws over classes; False is simple random sampling in each stratum.
+    """
     sizes = pop.groupby("stratum").size().to_dict()
     quota = allocate(sizes, total, minimum)
     rng = np.random.default_rng(seed)
@@ -109,6 +144,9 @@ def draw(pop: pd.DataFrame, total: int, minimum: int, seed: int = SEED) -> pd.Da
     chosen: list[int] = []
     for h in sorted(sizes, key=lambda k: (sizes[k], k)):
         cell = pop[pop["stratum"] == h].sort_values("number")
+        if not balance:
+            chosen += rng.choice(cell["number"].to_numpy(), size=quota[h], replace=False).tolist()
+            continue
         by_cls = {c: g["number"].tolist() for c, g in cell.groupby("cls", sort=True)}
         for _ in range(quota[h]):
             avail = [c for c, v in by_cls.items() if v]
@@ -133,6 +171,17 @@ def strata_tables(pop: pd.DataFrame, sample: pd.DataFrame) -> dict[str, Any]:
 def weight(fine: dict[str, list[int]], stratum: str, cls: str) -> float:
     n_pop, n_s = fine[f"{stratum}|{cls}"]
     return n_pop / n_s
+
+
+def stratum_weight(strata: dict[str, dict[str, int]], stratum: str) -> float:
+    return strata[stratum]["population"] / strata[stratum]["sample"]
+
+
+def weight_stats(ws: list[float]) -> dict[str, float]:
+    """Range of the weights and the Kish effective sample size (sum w)^2 / sum w^2."""
+    w = np.asarray(ws, dtype=float)
+    return {"min": float(w.min()), "max": float(w.max()), "n": len(w),
+            "kish_n_eff": float(w.sum() ** 2 / (w**2).sum())}  # fmt: skip
 
 
 def _read(slug: str, name: str, **kw: Any) -> pd.DataFrame:
@@ -172,8 +221,8 @@ def load_population(repo: str) -> tuple[pd.DataFrame, dict[str, Any]]:
     d["body"] = d["body"].fillna("").map(lambda b: clean_text(b)[0])
     d["title"] = d["title"].fillna("").str.strip()
     removed["empty_body"] = int((d["body"].str.len() == 0).sum())
-    removed["body_gt_cap"] = int((d["body"].str.len() > BODY_CHARS).sum())
-    d = d[(d["body"].str.len() > 0) & (d["body"].str.len() <= BODY_CHARS) & (d["title"] != "")]
+    removed["body_gt_prompt_cap_kept"] = int((d["body"].str.len() > PROMPT_BODY_CHARS).sum())
+    d = d[(d["body"].str.len() > 0) & (d["title"] != "")]
     dp, fl, fg = (_read(slug, t) for t in ("duplicate_pairs", "fix_links", "fix_groups"))
     dup = dp.groupby("source")["canonical"].apply(lambda s: sorted(set(map(int, s)))).to_dict()
     fixpr = fl[fl["pr_merged"]].groupby("issue")["pr"].apply(lambda s: sorted(set(map(int, s))))
@@ -225,6 +274,41 @@ def to_row(r: pd.Series, repo: str, w: float) -> dict[str, Any]:
     }  # fmt: skip
 
 
+def filter_neighbours(
+    hits: list[dict[str, Any]], q_num: int, q_created: pd.Timestamp,
+    created: dict[int, pd.Timestamp], k: int = K,
+) -> tuple[list[dict[str, Any]], dict[str, int]]:  # fmt: skip
+    """First k hits that existed when the query was created (see v2 design, point 3)."""
+    st = {"examined": 0, "dropped_newer": 0, "kept_by_number_fallback": 0, "dropped_unknown": 0}
+    kept: list[dict[str, Any]] = []
+    for h in hits:
+        if len(kept) >= k:
+            break
+        st["examined"] += 1
+        t = created.get(h["number"])
+        if t is not None:
+            ok = t < q_created
+            st["dropped_newer"] += not ok
+        else:
+            ok = h["number"] < q_num  # unknown time: provably earlier only by the shared numbering
+            st["kept_by_number_fallback"] += ok
+            st["dropped_unknown"] += not ok
+        if ok:
+            kept.append(h)
+    return kept, st
+
+
+def created_lookup(repo: str) -> dict[int, pd.Timestamp]:
+    """number -> created_at from the served train parquet and derived_v2 (index meta has none)."""
+    out: dict[int, pd.Timestamp] = {}
+    proc = ROOT / "data" / "processed" / f"{repo.replace('/', '_')}_temporal_train.parquet"
+    v2 = _read(REPOS[repo]["slug"], "issues", columns=["number", "created_at"])
+    for d in (pd.read_parquet(proc, columns=["number", "created_at"]), v2):
+        out.update(zip(d["number"].astype(int), pd.to_datetime(d["created_at"], utc=True),
+                       strict=True))  # fmt: skip
+    return out
+
+
 def freeze(rows: list[dict[str, Any]]) -> dict[str, Any]:
     """Attach served-index top-K similar_issues (CPU float32); write the k8s query embeddings."""
     os.environ["CUDA_VISIBLE_DEVICES"] = ""  # before torch is imported: hardware-independent prompt
@@ -232,24 +316,38 @@ def freeze(rows: list[dict[str, Any]]) -> dict[str, Any]:
     from triage_iq.models.triage import RESOLUTION_EMBEDDINGS_REPOS  # noqa: PLC0415
 
     dets: dict[str, Any] = {}
+    created: dict[str, dict[int, pd.Timestamp]] = {}
+    v2: dict[str, dict[int, pd.Timestamp]] = {}
     emb: dict[str, list[tuple[int, np.ndarray]]] = {}
-    info: dict[str, Any] = {"index_sha256": {}}
+    info: dict[str, Any] = {"index_sha256": {}, "neighbour_filter": {}}
     for r in rows:
         repo, n = r["repo"], r["number"]
         if repo not in dets:
             idx = ROOT / "data" / "models" / f"similar_issue_index_{repo.replace('/', '_')}_bge"
             dets[repo] = SimilarIssueRetriever.load(str(idx))
             info["index_sha256"][repo] = sha256_file(idx / "index.faiss")
-        hits, e = dets[repo].retrieve_with_embedding(f"{r['title']}. {r['body']}", k=K,
+            created[repo] = created_lookup(repo)
+            d2 = _read(REPOS[repo]["slug"], "issues", columns=["number", "created_at"])
+            v2[repo] = dict(zip(d2["number"].astype(int), d2["created_at"], strict=True))
+            info["neighbour_filter"][repo] = {"examined": 0, "dropped_newer": 0,
+                "kept_by_number_fallback": 0, "dropped_unknown": 0, "rows_with_fewer_than_k": 0}  # fmt: skip
+        hits, e = dets[repo].retrieve_with_embedding(f"{r['title']}. {r['body']}", k=K_RETRIEVE,
                                                      exclude_number=n)  # fmt: skip
-        r["similar_issues"] = hits
+        q_created = pd.Timestamp(r["created_at"])
+        r["similar_issues"], st = filter_neighbours(hits, n, q_created, created[repo])
+        acc = info["neighbour_filter"][repo]
+        for key, v in st.items():
+            acc[key] += v
+        acc["rows_with_fewer_than_k"] += len(r["similar_issues"]) < K
         if repo in RESOLUTION_EMBEDDINGS_REPOS:
             emb.setdefault(repo, []).append((n, e.astype(np.float32)))
         have = set(map(int, dets[repo].issue_numbers))
         m = r["meta"]
         m["dup_targets_in_index"] = [t for t in m["dup_targets"] if t in have]
         m["fix_peers_in_index"] = [t for t in m["fix_peers"] if t in have]
-        m["hits_newer_than_query"] = sum(h["number"] > n for h in hits)
+        # targets a new retriever could index: present in derived_v2 and older than the query
+        m["indexable_targets"] = [t for t in m["dup_targets"] + m["fix_peers"]
+                                  if t in v2[repo] and v2[repo][t] < q_created]  # fmt: skip
     if emb:
         repos = [r for r, v in emb.items() for _ in v]
         nums = [n for v in emb.values() for n, _ in v]
@@ -272,24 +370,29 @@ def dump_line(row: dict[str, Any]) -> str:
 
 
 def text_chars(r: dict[str, Any]) -> int:
-    return len(r["title"]) + len(r["body"]) + sum(len(s["text"]) for s in r["similar_issues"])
+    """Variable prompt text actually sent: title + body[:800] + 120 chars per similar issue."""
+    sims = sum(min(len(s["text"]), PROMPT_SIM_CHARS) for s in r["similar_issues"][:K])
+    return len(r["title"]) + min(len(r["body"]), PROMPT_BODY_CHARS) + sims
 
 
 def token_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
-    """Planning-figure budget and prompt-text size relative to the committed eval set."""
+    """Planning-figure budget, adjusted by the prompt text this set sends vs the committed set."""
     chars = np.array([text_chars(r) for r in rows])
-    ref = [
-        json.loads(x) for x in (ROOT / "eval" / "eval_set.jsonl").read_text("utf-8").splitlines()
-    ]
-    ref_chars = np.array([text_chars(r) for r in ref])
-    total = TOKENS_PER_ISSUE * len(rows)
-    return {"n": len(rows), "planning_tokens_per_issue": TOKENS_PER_ISSUE, "total_tokens": total,
-            "daily_cap": DAILY_CAP, "days_at_cap": math.ceil(total / DAILY_CAP),
-            "variable_text_tokens_chars_div4": {"mean": float(chars.mean() / 4),
-                                                "p95": float(np.percentile(chars, 95) / 4),
-                                                "max": float(chars.max() / 4)},
-            "committed_set_mean_tokens_chars_div4": float(ref_chars.mean() / 4),
-            "ratio_new_over_committed_mean": float(chars.mean() / ref_chars.mean())}  # fmt: skip
+    text = (ROOT / "eval" / "eval_set.jsonl").read_text("utf-8")
+    ref_chars = np.array([text_chars(json.loads(x)) for x in text.split("\n") if x])
+    delta = float((chars.mean() - ref_chars.mean()) / 4)  # chars/4 ~ tokens
+    per_issue = TOKENS_PER_ISSUE + delta
+    total = int(round(per_issue * len(rows)))
+    return {"n": len(rows), "planning_tokens_per_issue": TOKENS_PER_ISSUE,
+            "planning_total_tokens": TOKENS_PER_ISSUE * len(rows),
+            "sent_text_tokens_chars_div4": {"mean": float(chars.mean() / 4),
+                                            "p95": float(np.percentile(chars, 95) / 4),
+                                            "max": float(chars.max() / 4)},
+            "committed_set_sent_text_mean_tokens": float(ref_chars.mean() / 4),
+            "delta_tokens_per_issue_vs_committed": delta,
+            "synthesis_prompt_tokens_est": CASSETTE_PROMPT_CHARS / 4 + delta,
+            "adjusted_tokens_per_issue": per_issue, "adjusted_total_tokens": total,
+            "daily_cap": DAILY_CAP, "days_at_cap": math.ceil(total / DAILY_CAP)}  # fmt: skip
 
 
 def git_head_of_script() -> str | None:
@@ -305,34 +408,58 @@ def git_head_of_script() -> str | None:
 def main(argv: list[str] | None = None) -> int:
     argparse.ArgumentParser(description=__doc__).parse_args(argv)
     rows: list[dict[str, Any]] = []
-    rep: dict[str, Any] = {"design": DESIGN, "seed": SEED, "script_commit": git_head_of_script()}
+    rep: dict[str, Any] = {"design": DESIGN, "design_version": 2, "seed": SEED,
+                           "script_commit": git_head_of_script(),
+                           "supersedes_v1": {"eval_set.jsonl": V1_SET_SHA256,
+                                             "frozen_query_embeddings.npz": V1_NPZ_SHA256}}  # fmt: skip
     for repo, cfg in REPOS.items():
         pop, info = load_population(repo)
-        sample = draw(pop, N_PER_REPO, cfg["minimum"])
+        sample = draw(pop, N_PER_REPO, cfg["minimum"], balance=cfg["balance"])
         tabs = strata_tables(pop, sample)
-        in_pop, in_s = pop["in_family"].mean(), sample["in_family"].mean()
-        rep[repo] = {**info, **tabs, "minimum": cfg["minimum"], "in_family_share_pop": in_pop,
-                     "in_family_share_sample": in_s, "n": len(sample),
+        mine = [
+            to_row(r, repo, (weight(tabs["stratum_x_class"], r["stratum"], r["cls"])
+                             if cfg["balance"] else stratum_weight(tabs["strata"], r["stratum"])))
+            for _, r in sample.iterrows()
+        ]  # fmt: skip
+        rows += mine
+        rep[repo] = {**info, **tabs, "minimum": cfg["minimum"], "balance": cfg["balance"],
+                     "in_family_share_pop": pop["in_family"].mean(),
+                     "in_family_share_sample": sample["in_family"].mean(), "n": len(sample),
+                     "classes_in_sample": int(sample["cls"].nunique()),
+                     "classes_in_population": int(pop["cls"].nunique()),
+                     "weights": weight_stats([r["meta"]["weight"] for r in mine]),
                      "input_sha256": {"test_split": sha256_file(
                          DATA / "splits" / cfg["slug"] / "test.parquet")}}  # fmt: skip
-        rows += [to_row(r, repo, weight(tabs["stratum_x_class"], r["stratum"], r["cls"]))
-                 for _, r in sample.iterrows()]  # fmt: skip
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     rep["freeze"] = freeze(rows)
     path = OUT_DIR / "eval_set.jsonl"
-    path.write_text("".join(dump_line(r) + "\n" for r in rows), "utf-8",
-                    newline="\n")  # fmt: skip
+    path.write_text("".join(dump_line(r) + "\n" for r in rows), "utf-8", newline="\n")
     rep["files"] = {p.name: sha256_file(p) for p in sorted(OUT_DIR.iterdir())}
     rep["tokens"] = token_report(rows)
-    rep["relevance_cases"] = {  # rows whose duplicate / fix targets exist in the served index
-        repo: {"with_dup_or_peer": sum(bool(r["meta"]["dup_targets"] or r["meta"]["fix_peers"])
-                                       for r in rows if r["repo"] == repo),
-               "target_in_served_index": sum(bool(r["meta"]["dup_targets_in_index"]
-                                                  or r["meta"]["fix_peers_in_index"])
-                                             for r in rows if r["repo"] == repo)}
-        for repo in REPOS}  # fmt: skip
+    rep["relevance_scoring"] = {
+        "status": "UNSCORABLE on the served index: 0 sampled duplicate/fix targets are indexed",
+        "action": "freeze the Phase 2 / 3b retriever into this set (re-run freeze with it) "
+                  "before the single re-record",
+        "per_repo": {
+            repo: {
+                "with_dup_or_peer": sum(bool(r["meta"]["dup_targets"] or r["meta"]["fix_peers"])
+                                        for r in rows if r["repo"] == repo),
+                "target_in_served_index": sum(bool(r["meta"]["dup_targets_in_index"]
+                                                   or r["meta"]["fix_peers_in_index"])
+                                              for r in rows if r["repo"] == repo),
+                "indexable_in_derived_v2_before_query": sum(
+                    bool(r["meta"]["indexable_targets"]) for r in rows if r["repo"] == repo),
+            }
+            for repo in REPOS
+        },
+    }  # fmt: skip
     REPORT.write_text(json.dumps(rep, indent=1, sort_keys=True, default=str), "utf-8")
-    print(json.dumps({k: rep[k] for k in ("tokens", "relevance_cases", "files")}, indent=1))
+    keys = ("tokens", "relevance_scoring", "files")
+    print(
+        json.dumps(
+            {k: rep[k] for k in keys} | {"freeze": rep["freeze"]["neighbour_filter"]}, indent=1
+        )
+    )
     return 0
 
 

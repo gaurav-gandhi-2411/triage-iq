@@ -83,7 +83,7 @@ class BatchRegrow:
         log.info("%d clean queries in a row; regrowing batch to %d", REGROW_AFTER, new)
 
 
-class CommentScraper:
+class CommentScraper(BatchRegrow):
     """Saves the complete comment thread + closed/reopened events for given issue numbers."""
 
     def __init__(self, client: sg.Client, repo: str, data_dir: Path, batch: int = 10) -> None:
@@ -97,6 +97,7 @@ class CommentScraper:
             self.ckpt = json.loads(self.ckpt_path.read_text(encoding="utf-8"))
         self.done = set(self.ckpt["done"])
         self.sizes = [s for s in BATCH_SIZES if s <= batch] or [1]
+        self.max_batch, self._ok_streak = self.sizes[0], 0
         self.stats = {"batches": 0, "issues": 0, "comments": 0}
 
     def _complete(self, issue: dict[str, Any]) -> None:
@@ -115,7 +116,8 @@ class CommentScraper:
             )
 
     def fetch(self, numbers: list[int]) -> list[dict[str, Any]]:
-        """Complete rows for ``numbers``; shrinks the batch size on persistent transient errors."""
+        """Complete rows for ``numbers``; shrinks the batch size on persistent transient errors
+        and regrows it after a run of clean queries."""
         try:
             data = self.client.query(
                 batch_query(numbers),
@@ -123,6 +125,7 @@ class CommentScraper:
                 tries=3 if len(self.sizes) > 1 else 6,
             )
         except sg.TransientError:
+            self._ok_streak = 0
             if len(numbers) == 1:
                 raise
             self.sizes = [s for s in self.sizes if s < len(numbers)] or [1]
@@ -131,6 +134,7 @@ class CommentScraper:
             return [
                 r for i in range(0, len(numbers), half) for r in self.fetch(numbers[i : i + half])
             ]
+        self._note_success()
         rows = []
         for n in numbers:
             issue = (data.get("repository") or {}).get(f"i{n}")

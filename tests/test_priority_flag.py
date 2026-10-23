@@ -207,3 +207,24 @@ def test_api_exposes_priority_keys_only_when_present() -> None:
     )
     assert (on["_priority_decided_by"], on["_priority_llm_proposal"]) == ("model", "low")
     assert on["_priority_model_proba"] == PROBA
+
+
+def test_priority_model_receives_body_raw_when_present(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Cleaning flag on: body_clean feeds everything else, but P4 (trained on raw) gets body_raw."""
+    model = _FakePriority()
+    asst = _assistant(K8S)
+    asst.priority_model = model
+    monkeypatch.setattr(
+        asst, "_call_llm_verbose", lambda signals: (_with_priority("low", "x"), "", {}, "ok", False)
+    )
+    issue = _issue()
+    issue["body_raw"] = "RAW <!-- c --> body"
+    asst.triage_with_metadata(issue)
+    assert model.seen == [(issue["title"], "RAW <!-- c --> body")]
+
+
+def test_priority_model_uses_body_clean_without_body_raw(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Cleaning flag off: no body_raw key; body_clean is the raw body and is what P4 sees."""
+    model = _FakePriority()
+    _run(monkeypatch, _with_priority("low", "x"), model=model)
+    assert model.seen == [(_issue()["title"], "kubelet never schedules")]

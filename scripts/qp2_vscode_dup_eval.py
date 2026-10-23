@@ -175,9 +175,19 @@ def pair_level(queries: list[Query], per_pair_ranks: list[list[int]]) -> dict[st
     }  # fmt: skip
 
 
-def _guard_ram() -> None:
-    import psutil  # lazy: only the heavy path needs it
+_GUARD_WARNED = False
 
+
+def _guard_ram() -> None:
+    """Abort when free RAM is low; skipped (logged once) when psutil is not installed."""
+    global _GUARD_WARNED  # noqa: PLW0603 - warn-once flag
+    try:
+        import psutil  # lazy and optional: not in requirements.lock, so CI lacks it
+    except ImportError:
+        if not _GUARD_WARNED:
+            print("psutil unavailable: free-RAM guard inactive", file=sys.stderr)
+            _GUARD_WARNED = True
+        return
     free = psutil.virtual_memory().available / 2**30
     if free < MIN_FREE_GB:
         raise MemoryError(f"free RAM {free:.2f} GB < {MIN_FREE_GB} GB; stopping own process")

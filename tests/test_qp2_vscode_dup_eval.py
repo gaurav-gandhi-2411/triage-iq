@@ -83,3 +83,13 @@ def test_score_queries_end_to_end_never_ranks_the_future() -> None:
 def test_test_split_requires_final_flag() -> None:
     with pytest.raises(ev.TestGuardError):
         ev.main(["--split", "test"])
+
+
+def test_scoring_works_without_psutil(monkeypatch: pytest.MonkeyPatch, capsys) -> None:
+    monkeypatch.setitem(sys.modules, "psutil", None)  # makes `import psutil` raise ImportError
+    monkeypatch.setattr(ev, "_GUARD_WARNED", False)
+    x = sp.csr_matrix(np.eye(6))
+    queries = ev.build_queries(_pairs([(13, 10)]), NUMBERS, CREATED)
+    ranks, _ = ev.score_queries(queries, x, x)
+    assert ranks.tolist() == [2]
+    assert "guard inactive" in capsys.readouterr().err

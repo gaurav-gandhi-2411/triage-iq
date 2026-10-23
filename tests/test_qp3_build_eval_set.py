@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -58,3 +59,74 @@ def test_replay_loader_consumes_the_schema(tmp_path: Path) -> None:
     assert [i["id"] for i in run_eval._load_eval_set(path)] == ["k8s-100", "vscode-101"]
     fr = build_frozen_retrievers(path)
     assert fr["kubernetes/kubernetes"].retrieve("", k=5, exclude_number=100)[0]["number"] == 1
+
+
+# ---- the committed artifact -------------------------------------------------------------------
+SET_DIR = ROOT / "eval" / "sets" / "quality_push_2026-10"
+REPORT = ROOT / "reports" / "qp3_eval_set_150_2026-10.json"
+REPOS = ("kubernetes/kubernetes", "microsoft/vscode")
+
+
+def _rows() -> list[dict]:
+    # split on newline only (as the harness's file iteration does): bodies may hold U+2028
+    text = (SET_DIR / "eval_set.jsonl").read_text("utf-8")
+    return [json.loads(x) for x in text.split("\n") if x]
+
+
+def test_committed_set_matches_report_and_quotas() -> None:
+    rows, rep = _rows(), json.loads(REPORT.read_text("utf-8"))
+    assert len(rows) == 150 and len({r["id"] for r in rows}) == 150
+    for repo in REPOS:
+        mine = [r for r in rows if r["repo"] == repo]
+        assert len(mine) == rep[repo]["n"] == q.N_PER_REPO
+        got = pd.Series([r["meta"]["stratum"] for r in mine]).value_counts().to_dict()
+        for h, v in rep[repo]["strata"].items():
+            assert got.get(h, 0) == v["sample"]
+            assert v["sample"] >= min(v["population"], rep[repo]["minimum"])  # minimums respected
+    assert rep["files"]["eval_set.jsonl"] == q.sha256_file(SET_DIR / "eval_set.jsonl")
+    assert rep["design_version"] == 2 and rep["supersedes_v1"]["eval_set.jsonl"] == q.V1_SET_SHA256
+    assert rep["tokens"]["planning_total_tokens"] == 900_000
+    assert rep["relevance_scoring"]["status"].startswith("UNSCORABLE")
+    for repo in REPOS:
+        assert rep[repo]["weights"]["kish_n_eff"] <= rep[repo]["weights"]["n"]
+
+
+def test_committed_set_rows_are_clean_and_replay_loadable() -> None:
+    import run_eval
+    from frozen_retriever import build_frozen_retrievers
+
+    rows = _rows()
+    assert all(len(r["body"]) > 0 and r["title"] for r in rows)
+    assert max(len(r["body"]) for r in rows) > q.PROMPT_BODY_CHARS  # long bodies are kept (v2)
+    assert all(len(r["similar_issues"]) <= q.K for r in rows)
+    # issue numbers follow creation order, so no hit may be numbered above its query
+    assert all(h["number"] < r["number"] for r in rows for h in r["similar_issues"])
+    assert all(set(r) >= COMMITTED_KEYS for r in rows)
+    assert all(r["created_at"] >= "2026-01-01" for r in rows)  # test period only
+    loaded = run_eval._load_eval_set(SET_DIR / "eval_set.jsonl")
+    assert [r["id"] for r in loaded] == [r["id"] for r in rows]
+    frozen = build_frozen_retrievers(SET_DIR / "eval_set.jsonl")  # also loads the npz
+    assert set(frozen) == set(REPOS)
+    k8s = [r for r in rows if r["repo"] == REPOS[0]]
+    for r in k8s:
+        hits, emb = frozen[REPOS[0]].retrieve_with_embedding("", k=5, exclude_number=r["number"])
+        assert [h["number"] for h in hits] == [s["number"] for s in r["similar_issues"]]
+        assert emb is not None and emb.shape == (768,)
+
+
+@pytest.mark.skipif(not (q.DATA / "splits").exists(), reason="D: split manifests not available")
+def test_committed_set_only_eligible_test_issues() -> None:
+    for repo, cfg in q.REPOS.items():
+        sp = {
+            s: pd.read_parquet(q.DATA / "splits" / cfg["slug"] / f"{s}.parquet")
+            for s in ("train", "validation", "test")
+        }
+        elig = set(sp["test"].loc[sp["test"]["classifier_eligible"], "number"])
+        nums = {r["number"] for r in _rows() if r["repo"] == repo}
+        assert nums <= elig
+        assert not nums & (set(sp["train"]["number"]) | set(sp["validation"]["number"]))
+
+
+def test_committed_set_is_splitlines_safe() -> None:
+    text = (SET_DIR / "eval_set.jsonl").read_text("utf-8")
+    assert len(text.splitlines()) == 150

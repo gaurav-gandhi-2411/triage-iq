@@ -96,6 +96,9 @@ def build_triage_prompt(
     max_body_chars: int = 800,
     resolution_point_source: str = "model",
     interval_calibrated: bool = False,
+    priority_label: str | None = None,
+    priority_proba: dict[str, float] | None = None,
+    evidence_block: str = "",
 ) -> str:
     """Build the user-turn prompt for the triage assistant.
 
@@ -120,6 +123,14 @@ def build_triage_prompt(
         interval_calibrated: True when the interval is the served CQR-adjusted one (ADR-0059
             addendum 2026-10-09); the line then says so. False keeps the historical wording
             byte-identical.
+        priority_label: Phase 3b flag 1 (prompt v3). When set, the priority model has already
+            decided the level: the prompt states it (with `priority_proba`) and tells the LLM to
+            explain it in priority_rationale instead of choosing. None keeps the prompt
+            byte-identical to v2.
+        priority_proba: Per-level probabilities shown next to the decided level.
+        evidence_block: Phase 3b flag 2 (prompt v3). Pre-rendered "RESOLUTION EVIDENCE" block
+            (models/resolution_evidence.py) for the top-3 neighbours; "" (default) adds nothing
+            and keeps the prompt byte-identical to v2.
         max_body_chars: Cap on the body preview length. Default 800 matches historical
             behavior. Lowered by the token-budget guard (triage.py, Part B) when the
             default-length prompt wouldn't fit Groq's 8,000 TPM ceiling -- shrinking the
@@ -170,6 +181,31 @@ def build_triage_prompt(
         conf = f"(confidence: {resolution_confidence_pct:.0f}%)" if resolution_confidence_pct and resolution_confidence_pct >= 40 else "(low confidence)"
         bucket_line = f"\nBucket estimate: {resolution_bucket} ({desc}) {conf}"
 
+    # Prompt v3 pieces (flags 1+2). All three are "" with both flags off, so the f-string below
+    # renders byte-identically to v2 (pinned by tests/test_qp3b_prompt_v3.py and the replay).
+    evidence_section = f"\n{evidence_block}\n" if evidence_block else ""
+    priority_section = ""
+    task_extra = ""
+    if priority_label is not None:
+        probs = ", ".join(f"{c} {p:.2f}" for c, p in (priority_proba or {}).items())
+        priority_section = (
+            "\n--- PRIORITY (decided by the priority model) ---\n"
+            f"Decided priority: {priority_label}"
+            + (f" (probabilities: {probs})" if probs else "")
+            + "\n"
+        )
+        task_extra += (
+            f'The priority is already decided: set priority_guess to "{priority_label}" and '
+            "write priority_rationale (1-2 sentences) explaining why this level fits this "
+            "specific issue. Do not choose or argue for a different level.\n"
+        )
+    if evidence_block:
+        task_extra += (
+            "When a suggested_next_steps item relies on how a similar issue was resolved (the "
+            "RESOLUTION EVIDENCE above), cite that issue in the step text as #N, using only "
+            "numbers listed in SYSTEM 2.\n"
+        )
+
     return f"""\
 Repository: {repo}
 
@@ -189,17 +225,17 @@ Top-3 predictions:
 
 --- SYSTEM 2: SIMILAR ISSUES (BGE retrieval) ---
 {similar_lines}
-
+{evidence_section}
 --- {system3_header} ---
 Point estimate: {resolution_point_days:.1f} days
 {interval_label}: [{resolution_lower_days:.1f}d, {resolution_upper_days:.1f}d]{bucket_line}
 {system3_note}
-
+{priority_section}
 --- TASK ---
 Produce a triage plan as valid JSON matching the schema in the system prompt.
 Use the classifier signals, similar issues, and resolution estimate to inform your plan.
 Be specific and actionable. Do not hallucinate issue numbers not listed above.
-"""
+{task_extra}"""
 
 
 def attribution_prompt_enabled() -> bool:

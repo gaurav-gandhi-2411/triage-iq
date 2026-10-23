@@ -93,7 +93,7 @@ def sanity(det: Any, kaggle_dir: Path) -> dict[str, Any]:
     pct = {f"p{q}": float(np.percentile(allc, q)) for q in (0, 5, 50, 95, 100)}
     return {
         "kaggle_cosine_all_rows": pct,
-        "kaggle_cosine_note": "Kaggle texts are not clean_text()-cleaned; the served recipe is",
+        "kaggle_cosine_note": "likely cause (inferred, not checked in the Kaggle script): Kaggle texts are not clean_text()-cleaned while the served recipe is; mean cosine is 0.995 on issues clean_text leaves unchanged vs 0.963 on changed ones",
         "n": N_SANITY, "seed": SEED, "self_query_rank1": self_ok, "self_query_misses": bad,
         "kaggle_cosine_min": min(cos), "kaggle_cosine_mean": float(np.mean(cos)),
         "kaggle_cosine_max": max(cos),

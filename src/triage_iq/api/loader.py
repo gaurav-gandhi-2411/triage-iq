@@ -188,6 +188,12 @@ class ModelStore:
                     and slug in _PRIORITY_MODEL_SLUGS
                     else None
                 )
+                resolution_evidence = (
+                    _load_resolution_evidence(models_dir, slug)
+                    if os.environ.get("TRIAGE_RESOLUTION_EVIDENCE") == "1"
+                    and slug in _RESOLUTION_EVIDENCE_SLUGS
+                    else None
+                )
                 asst = TriageAssistant(
                     repo=repo,
                     classifier=clf,
@@ -203,6 +209,7 @@ class ModelStore:
                         os.environ.get("TRIAGE_CLASSIFIER_DECIDES_COMPONENT") == "1"
                     ),
                     priority_model=priority_model,
+                    resolution_evidence=resolution_evidence,
                 )
                 bundles[repo] = RepoBundle(clf, det, pred, train_df, asst)
                 logger.info("Loaded %s — OK", repo)
@@ -244,6 +251,35 @@ def _load_priority_model(models_dir: Path, slug: str):
         logger.warning(
             "TRIAGE_PRIORITY_MODEL=1 but %s failed to load (%s): serving the LLM priority",
             p, exc, extra={"event": "priority_model_unreadable", "repo_slug": slug},
+        )
+        return None
+
+
+# Phase 3b flag 2: evidence exists for k8s only until a refreshed vscode index exists.
+_RESOLUTION_EVIDENCE_SLUGS = frozenset({"kubernetes_kubernetes"})
+
+
+def _load_resolution_evidence(models_dir: Path, slug: str):
+    """Load resolution_evidence_<slug>.parquet; None (one warning) if missing or unreadable.
+
+    Called once per repo at startup, so the warning is emitted once. None means the flag
+    behaves exactly as if it were off. The artifact is image-baked, not in MANIFEST.sha256.
+    """
+    from triage_iq.models.resolution_evidence import ResolutionEvidence
+
+    p = models_dir / f"resolution_evidence_{slug}.parquet"
+    if not p.exists():
+        logger.warning(
+            "TRIAGE_RESOLUTION_EVIDENCE=1 but artifact %s is missing: prompting without evidence",
+            p, extra={"event": "resolution_evidence_missing", "repo_slug": slug},
+        )
+        return None
+    try:
+        return ResolutionEvidence.load(p)
+    except Exception as exc:
+        logger.warning(
+            "TRIAGE_RESOLUTION_EVIDENCE=1 but %s failed to load (%s): prompting without evidence",
+            p, exc, extra={"event": "resolution_evidence_unreadable", "repo_slug": slug},
         )
         return None
 

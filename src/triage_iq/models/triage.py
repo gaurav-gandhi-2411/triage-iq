@@ -32,6 +32,7 @@ from triage_iq.models.resolution import (
     naive_scaled_interval,
     repo_slug,
 )
+from triage_iq.models.resolution_evidence import ResolutionEvidence
 
 logger = logging.getLogger(__name__)
 
@@ -727,6 +728,9 @@ class TriageAssistant:
     # Phase 3b flag 1: None (class default, and whenever the flag is off or the artifact is
     # missing) leaves priority entirely to the LLM, byte-identical to before.
     priority_model: PriorityModel | None = None
+    # Phase 3b flag 2: None (class default, flag off, artifact missing, or non-k8s) leaves the
+    # prompt without an evidence block.
+    resolution_evidence: ResolutionEvidence | None = None
 
     def __init__(
         self,
@@ -763,10 +767,14 @@ class TriageAssistant:
         # Phase 3b flag 1 (docs/QP3B_DESIGN_2026-10.md): serve the text-only P4 priority. The
         # loader passes a model only when TRIAGE_PRIORITY_MODEL=1 and the artifact exists (k8s).
         priority_model: PriorityModel | None = None,
+        # Phase 3b flag 2: fix-PR / closing-comment evidence for the top-3 neighbours in the
+        # prompt. The loader passes it only when TRIAGE_RESOLUTION_EVIDENCE=1 and the artifact loads.
+        resolution_evidence: ResolutionEvidence | None = None,
     ) -> None:
         self.repo = repo
         self.classifier_decides_component = classifier_decides_component
         self.priority_model = priority_model
+        self.resolution_evidence = resolution_evidence
         self.llm_time_budget_s = llm_time_budget_s
         # CQR store entry for this repo (loader._load_conformal_adjustments). When present the
         # served interval is the conformal one BEFORE synthesis (ADR-0059 addendum 2026-10-09):

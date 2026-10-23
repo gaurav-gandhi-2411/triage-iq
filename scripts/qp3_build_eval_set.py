@@ -294,7 +294,7 @@ def token_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 def git_head_of_script() -> str | None:
     """Last commit that touched THIS script (qp0_make_splits.script_commit names its own file)."""
-    cmd = ["git", "log", "-1", "--format=%H", "--", Path(__file__).name]
+    cmd = ["git", "log", "-1", "--format=%H", "--", "scripts/qp3_build_eval_set.py"]
     try:
         r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, check=True)  # noqa: S603
     except (subprocess.CalledProcessError, OSError):

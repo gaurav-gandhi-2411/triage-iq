@@ -84,7 +84,9 @@ def test_committed_set_matches_report_and_quotas() -> None:
             assert got.get(h, 0) == v["sample"]
             assert v["sample"] >= min(v["population"], rep[repo]["minimum"])  # minimums respected
     assert rep["files"]["eval_set.jsonl"] == q.sha256_file(SET_DIR / "eval_set.jsonl")
-    assert rep["design_version"] == 2 and rep["supersedes_v1"]["eval_set.jsonl"] == q.V1_SET_SHA256
+    assert (
+        rep["design_version"] == "2.1" and rep["supersedes_v1"]["eval_set.jsonl"] == q.V1_SET_SHA256
+    )
     assert rep["tokens"]["planning_total_tokens"] == 900_000
     assert rep["relevance_scoring"]["status"].startswith("UNSCORABLE")
     for repo in REPOS:

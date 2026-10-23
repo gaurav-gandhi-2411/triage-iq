@@ -13,6 +13,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from qp0_derive_stats import audited_fix_links
 
 SEED, K = 42, 5  # K: similar issues kept per row
 
@@ -140,7 +141,7 @@ def target_maps(
 ) -> tuple[dict[int, list[int]], dict[int, list[int]], pd.Series]:
     """(duplicate canonicals by source, co-closed fix-group peers, merged fix PRs by issue)."""
     dup = dp.groupby("source")["canonical"].apply(lambda s: sorted(set(map(int, s)))).to_dict()
-    fixpr = fl[fl["pr_merged"]].groupby("issue")["pr"].apply(lambda s: sorted(set(map(int, s))))
+    fixpr = audited_fix_links(fl).groupby("issue")["pr"].apply(lambda s: sorted(set(map(int, s))))
     peers: dict[int, list[int]] = {}
     for grp in fg["issues"]:
         for n in grp:

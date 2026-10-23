@@ -26,6 +26,17 @@ TYPE_LABELS_HEURISTIC = frozenset(
         "confirmed", "triage-needed", "unreleased", "upstream", "under-discussion",
     ]
 )  # fmt: skip
+AUDITED_FIX_METHOD = "closed_event_closer_pr"  # D79: only method with >= 95% audited precision
+
+
+def audited_fix_links(links: pd.DataFrame) -> pd.DataFrame:
+    """Merged fix links whose method passed the fix-link audit (D79 ground-truth bar).
+
+    Single shared definition: pr_closing_refs links (76.7% audited precision on vscode) must not
+    reach fix_groups, eval-set fix_prs/fix_peers or headline fix counts."""
+    return links[(links["method"] == AUDITED_FIX_METHOD) & links["pr_merged"].astype(bool)]
+
+
 STATS_TABLES = ("issues", "duplicate_pairs", "fix_links", "fix_groups", "prs")
 
 
@@ -93,7 +104,8 @@ def compute_stats(t: dict[str, pd.DataFrame], repo: str, size_mb: float) -> dict
             "open": int((i["state"] == "OPEN").sum()),
             "prs": int((pr_years == y).sum()),
         }
-    mf = fix[fix["pr_merged"].astype(bool)]  # only merged PRs count as fixes
+    mf_all = fix[fix["pr_merged"].astype(bool)]  # merged links of every method (informational)
+    mf = audited_fix_links(fix)  # headline merged-fix counts use audited links only (D79)
     flag = lambda s: int(s.fillna(False).astype(bool).sum())  # noqa: E731 - empty-table safe
     return {
         "repo": repo,
@@ -131,7 +143,7 @@ def compute_stats(t: dict[str, pd.DataFrame], repo: str, size_mb: float) -> dict
         "anomalies": {"closed_without_closed_at": flag(iss["anomaly_closed_no_closed_at"])},
         "fix_links": {
             "by_method_all": fix["method"].value_counts().to_dict(),
-            "by_method_merged": mf["method"].value_counts().to_dict(),
+            "by_method_merged": mf_all["method"].value_counts().to_dict(),
             "issues_with_merged_fix": int(mf["issue"].nunique()),
             "prs_fixing_ge2_issues": len(t["fix_groups"]),
         },

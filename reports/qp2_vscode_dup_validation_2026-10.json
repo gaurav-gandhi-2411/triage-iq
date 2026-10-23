@@ -1,0 +1,335 @@
+{
+ "candidates": {
+  "B1_tfidf": {
+   "mrr": 0.23068423042994343,
+   "mrr_bootstrap95": [
+    0.20891816468602467,
+    0.25350984222530065
+   ],
+   "n_indexed": 1073,
+   "n_queries": 1156,
+   "pair_level": {
+    "n_pairs": 1162,
+    "n_pairs_indexed": 1079,
+    "recall@1": {
+     "k": 214,
+     "n": 1162,
+     "rate": 0.18416523235800344,
+     "wilson95": [
+      0.16293104957893806,
+      0.20748084857257754
+     ]
+    },
+    "recall@10": {
+     "k": 363,
+     "n": 1162,
+     "rate": 0.3123924268502582,
+     "wilson95": [
+      0.28639882855258497,
+      0.3396224079515851
+     ]
+    },
+    "recall@5": {
+     "k": 316,
+     "n": 1162,
+     "rate": 0.2719449225473322,
+     "wilson95": [
+      0.24714310696397543,
+      0.29824968052962586
+     ]
+    },
+    "recall@50": {
+     "k": 473,
+     "n": 1162,
+     "rate": 0.4070567986230637,
+     "wilson95": [
+      0.3791600163183187,
+      0.43556610084888486
+     ]
+    }
+   },
+   "recall@1": {
+    "k": 214,
+    "n": 1156,
+    "rate": 0.185121107266436,
+    "wilson95": [
+     0.16378696025114203,
+     0.20854112316990442
+    ]
+   },
+   "recall@10": {
+    "k": 363,
+    "n": 1156,
+    "rate": 0.3140138408304498,
+    "wilson95": [
+     0.28791183999662473,
+     0.34134787960646584
+    ]
+   },
+   "recall@10_bootstrap95": [
+    0.2880622837370242,
+    0.3408304498269896
+   ],
+   "recall@10_indexed_only": {
+    "k": 363,
+    "n": 1073,
+    "rate": 0.3383038210624418,
+    "wilson95": [
+     0.3106153813093295,
+     0.3671459533196449
+    ]
+   },
+   "recall@1_bootstrap95": [
+    0.16262975778546712,
+    0.20847750865051903
+   ],
+   "recall@1_indexed_only": {
+    "k": 214,
+    "n": 1073,
+    "rate": 0.19944082013047532,
+    "wilson95": [
+     0.17662274736957612,
+     0.2244033645488342
+    ]
+   },
+   "recall@5": {
+    "k": 316,
+    "n": 1156,
+    "rate": 0.27335640138408307,
+    "wilson95": [
+     0.24844641462517045,
+     0.2997677553097587
+    ]
+   },
+   "recall@50": {
+    "k": 473,
+    "n": 1156,
+    "rate": 0.4091695501730104,
+    "wilson95": [
+     0.3811718349638778,
+     0.4377689583306548
+    ]
+   },
+   "recall@50_bootstrap95": [
+    0.3814878892733564,
+    0.4377378892733563
+   ],
+   "recall@50_indexed_only": {
+    "k": 473,
+    "n": 1073,
+    "rate": 0.4408201304753029,
+    "wilson95": [
+     0.41137627264743115,
+     0.47068623311014746
+    ]
+   },
+   "recall@5_bootstrap95": [
+    0.24997837370242215,
+    0.29930795847750863
+   ],
+   "recall@5_indexed_only": {
+    "k": 316,
+    "n": 1073,
+    "rate": 0.29450139794967384,
+    "wilson95": [
+     0.26799938676322116,
+     0.3224696292926223
+    ]
+   },
+   "seconds": 7.0
+  },
+  "B2_bm25": {
+   "mrr": 0.24959356047381767,
+   "mrr_bootstrap95": [
+    0.22834261155985833,
+    0.27279049561814317
+   ],
+   "n_indexed": 1073,
+   "n_queries": 1156,
+   "pair_level": {
+    "n_pairs": 1162,
+    "n_pairs_indexed": 1079,
+    "recall@1": {
+     "k": 239,
+     "n": 1162,
+     "rate": 0.20567986230636834,
+     "wilson95": [
+      0.18342718272392644,
+      0.22987218830555128
+     ]
+    },
+    "recall@10": {
+     "k": 383,
+     "n": 1162,
+     "rate": 0.32960413080895007,
+     "wilson95": [
+      0.3031762661240479,
+      0.35715494868249187
+     ]
+    },
+    "recall@5": {
+     "k": 338,
+     "n": 1162,
+     "rate": 0.2908777969018933,
+     "wilson95": [
+      0.26548711068104225,
+      0.3176466529451657
+     ]
+    },
+    "recall@50": {
+     "k": 473,
+     "n": 1162,
+     "rate": 0.4070567986230637,
+     "wilson95": [
+      0.3791600163183187,
+      0.43556610084888486
+     ]
+    }
+   },
+   "recall@1": {
+    "k": 239,
+    "n": 1156,
+    "rate": 0.20674740484429066,
+    "wilson95": [
+     0.1843916857554987,
+     0.23104573259542094
+    ]
+   },
+   "recall@10": {
+    "k": 383,
+    "n": 1156,
+    "rate": 0.3313148788927336,
+    "wilson95": [
+     0.3047791408296653,
+     0.35896804671732396
+    ]
+   },
+   "recall@10_bootstrap95": [
+    0.3062283737024221,
+    0.356401384083045
+   ],
+   "recall@10_indexed_only": {
+    "k": 383,
+    "n": 1073,
+    "rate": 0.3569431500465983,
+    "wilson95": [
+     0.3288332507595712,
+     0.3860737513473312
+    ]
+   },
+   "recall@1_bootstrap95": [
+    0.185121107266436,
+    0.2309688581314879
+   ],
+   "recall@1_indexed_only": {
+    "k": 239,
+    "n": 1073,
+    "rate": 0.22273998136067102,
+    "wilson95": [
+     0.19885736129314213,
+     0.24860083497267826
+    ]
+   },
+   "recall@5": {
+    "k": 338,
+    "n": 1156,
+    "rate": 0.29238754325259514,
+    "wilson95": [
+     0.26688831679019065,
+     0.3192620678830268
+    ]
+   },
+   "recall@50": {
+    "k": 473,
+    "n": 1156,
+    "rate": 0.4091695501730104,
+    "wilson95": [
+     0.3811718349638778,
+     0.4377689583306548
+    ]
+   },
+   "recall@50_bootstrap95": [
+    0.38146626297577857,
+    0.43858131487889274
+   ],
+   "recall@50_indexed_only": {
+    "k": 473,
+    "n": 1073,
+    "rate": 0.4408201304753029,
+    "wilson95": [
+     0.41137627264743115,
+     0.47068623311014746
+    ]
+   },
+   "recall@5_bootstrap95": [
+    0.2681444636678201,
+    0.31747404844290655
+   ],
+   "recall@5_indexed_only": {
+    "k": 338,
+    "n": 1073,
+    "rate": 0.315004659832246,
+    "wilson95": [
+     0.2879119221444615,
+     0.3434173281371027
+    ]
+   },
+   "seconds": 10.0
+  }
+ },
+ "ceiling_share_queries_with_indexed_canonical": {
+  "k": 1073,
+  "n": 1156,
+  "rate": 0.9282006920415224,
+  "wilson95": [
+   0.9118576462213321,
+   0.9417071853901569
+  ]
+ },
+ "design": "(2026-10-23; committed before any number is computed).\n * Target (ADR-0066 decision 1, verbatim): \"vscode duplicate Recall@5 >= 80% stays the target\"\n   (spec section 7, unchanged).\n * Task (as scripts/qp0_ceiling_retrieval.py): query = the LATER issue of a duplicate pair\n   (``source``), target = its duplicate canonical, from dup_task_pairs.parquet\n   (D:/triageiq-data/splits/microsoft__vscode, derived_v2 issues). A query with several pairs has\n   several canonicals; it is a hit at k when ANY indexed canonical ranks <= k.\n * Index per query: every vscode issue in derived_v2 issues.parquet (all splits) with created_at\n   STRICTLY before the query's created_at (time-respecting), so the query itself is excluded.\n * Text: production recipe, title.strip() + \". \" + clean_text(body)[0].strip()\n   (scripts/qk_kaggle.build_texts). Sparse vocabulary / IDF / avgdl are fitted on train-split\n   issues only (the ceiling script fitted TF-IDF on all issues; this is a deliberate change).\n * Ranking: candidates ordered by descending score; ties go to the MORE RECENT candidate (the\n   qp2 prior-PR convention). Rank of a canonical = 1 + #{earlier issues scoring strictly higher}\n   + #{tied issues created after the canonical}. Query rank = min over its indexed canonicals.\n * Primary metric: Recall@5 over ALL validation/test queries, a query whose canonicals are all\n   unindexed (not in the table, or not created before the query) counts as a MISS. Reported\n   also: indexed-only Recall@5 (denominator = queries with >= 1 indexed canonical), Recall@1/10/50,\n   MRR (reciprocal query rank, 0 for unindexed), and the ceiling (share of queries with an indexed\n   canonical = the maximum attainable recall). Pair-level variants (each pair its own sample)\n   are reported alongside. CIs: Wilson 95% for rates; percentile bootstrap (2000 resamples, seed\n   42, resampling queries) for MRR and all paired differences.\n * Candidates: B1 TF-IDF (sublinear tf, English stop words, min_df 2, cosine); B2 BM25 (k1 1.2,\n   b 0.75, query term counts, idf = ln(1 + (N - df + 0.5) / (df + 0.5)), the qp2 definition);\n   D1 BGE dense on the production recipe (Kaggle embeddings; NOT run in this task); H1 RRF(B2, D1)\n   k = 60 (needs D1); H2 a learned / fine-tuned retriever if time allows (later).\n * Selection: on VALIDATION Recall@5 (all-queries denominator); ties -> MRR -> the simpler\n   candidate (B1 < B2 < D1 < H1 < H2). The strongest baseline is the better of B1/B2 by the same\n   rule. The test split is evaluated ONCE, only after every candidate exists and the selection is\n   frozen; this script refuses test without --final-test.\n * Success: test Recall@5 of the selected candidate >= 0.80 as a POINT estimate, reported with its\n   Wilson 95% CI and the paired bootstrap difference vs the strongest baseline (2000, seed 42);\n   if the ceiling is below 0.80 the target is infeasible by construction and is reported as such.\n * This task (Q5a part 1): B1 and B2 on VALIDATION only; no test number is computed.",
+ "n_index_issues": 109537,
+ "n_pairs": 1162,
+ "n_queries": 1156,
+ "n_sources_missing_from_table": 0,
+ "n_train_issues_fitted": 50363,
+ "paired_b2_minus_b1": {
+  "mrr": {
+   "bootstrap95": [
+    0.008664567920740236,
+    0.028736458450932534
+   ],
+   "diff": 0.018909330043874174
+  },
+  "recall@1": {
+   "bootstrap95": [
+    0.00865051903114187,
+    0.03460207612456748
+   ],
+   "diff": 0.02162629757785467
+  },
+  "recall@10": {
+   "bootstrap95": [
+    0.0017301038062283738,
+    0.0328719723183391
+   ],
+   "diff": 0.01730103806228374
+  },
+  "recall@5": {
+   "bootstrap95": [
+    0.005190311418685121,
+    0.03373702422145329
+   ],
+   "diff": 0.01903114186851211
+  },
+  "recall@50": {
+   "bootstrap95": [
+    -0.01730103806228374,
+    0.01730103806228374
+   ],
+   "diff": 0.0
+  }
+ },
+ "repo": "microsoft/vscode",
+ "split": "validation",
+ "total_seconds": 80.9
+}

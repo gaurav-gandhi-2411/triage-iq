@@ -1,0 +1,122 @@
+{
+ "classes": [
+  "low",
+  "medium",
+  "high"
+ ],
+ "data_sha256": {
+  "issues.parquet": "1331dd34093e28a4c6931e13ae6c327c80a2b773495a17e89a46e518ff43abac",
+  "label_events.parquet": "28762456f563b412013e24ae9d5686623ad9d34b9f95705129ccedb6823e0644",
+  "splits/test.parquet": "ee1b53738dcc790dfbddcebb1c7c699ad788b0ad7279c42dbc256d2ebe4fd315",
+  "splits/train.parquet": "71f1ee45b35752fe4ce4909bc86a8588865f201edd8f8c5535677f141764b1d6",
+  "splits/validation.parquet": "84cd0a93ea7ce68106b98eb2b7b3b0f2590af8946899973fd039ba46efe5c72f"
+ },
+ "design": "(2026-10-23; committed with validation results BEFORE any test evaluation;\ndo not change after seeing test results). OFFLINE STUDY ONLY: no serving, prompt or flag change.\n * Population: kubernetes issues of each split (train / validation / test, all issues of the split,\n   no eligibility filter) whose FINAL labels (labels_final) carry >= 1 of priority/critical-urgent,\n   priority/important-soon, priority/important-longterm, priority/backlog. priority/awaiting-more-\n   evidence alone is excluded (not a level). Several levels present -> gold = the most urgent\n   (critical-urgent > important-soon > important-longterm > backlog). Population counts per split\n   and the share of all split issues are reported. LIMITATION: the model is evaluated only on issues\n   maintainers prioritised (selection effect); it says nothing about issues nobody prioritised.\n * Served schema gold (priority_guess): critical-urgent, important-soon -> high; important-longterm\n   -> medium; backlog -> low. PRIMARY metric = accuracy on this 3-level gold. Secondary (reported,\n   not claimed): macro-F1, the 4-gold-level x 3-predicted-level table (a 3-level model has no\n   4-level accuracy; training a second model would breach \"test once per candidate\"), confusion\n   matrix.\n * Baseline P0 = majority class of the TRAIN population (3-level). ACCEPTANCE: test accuracy of the\n   selected model minus P0 accuracy, paired bootstrap 95% CI (2000 draws, seed 42, same resampled\n   issues), lower bound > 0.\n * Inputs (creation-time only). Phase 1 used text only (title + \"\\n\" + body[:4000]) because sig/*\n   was its target; here the target is priority, so labels_t72h MINUS every priority/* label may\n   enter, restricted to kind/* and sig/* (lifecycle/, triage/, needs-* etc. are never used), plus\n   author_assoc. Priority labels never reach any input; text is not edited.\n * Candidates (model ids; every one fitted on train, scored on VALIDATION; seed 42):\n   P0 majority. P1 `p1_tfidf_lr` = qp1_tfidf_features.Featurizer(title_sep on, paths off) (word 1-2\n   grams of title [50k] and of body [200k], char_wb 3-5 grams of title [100k]; min_df=2, sublinear)\n   + multinomial LogisticRegression, class_weight balanced, max_iter 300; C in {0.25, 1, 4} chosen on\n   validation. P2 `p2_tfidf_meta_lr` = P1 features + one-hot t72h kind/* and sig/* labels + one-hot\n   author_assoc, same LR grid. Selection on VALIDATION accuracy; ties -> macro-F1 -> simpler (P1\n   before P2, then smaller C). Only the selected candidate and P0 are evaluated on test, once each\n   per report file (qp1_eval.ResultsWriter guard); test labels are read only by --final-test.\n * Also on test (secondary): selected model vs majority restricted to issues with NO priority/*\n   label at t72h (the model predicting before a human prioritised), with paired CI.\n * Wilson 95% for proportions, bootstrap/paired CIs from qp1_eval (2000 draws, seed 42).\nModels and probabilities go to D:\\triageiq-data\\models\\<slug>\\priority\\, never the repo.",
+ "git_sha": "f68db204f4e46eb0d3a5f66513f277fe5676a715",
+ "models": {},
+ "population": {
+  "train": {
+   "dist_3level": {
+    "high": 296,
+    "low": 157,
+    "medium": 204
+   },
+   "dist_4level": {
+    "priority/backlog": 157,
+    "priority/critical-urgent": 87,
+    "priority/important-longterm": 204,
+    "priority/important-soon": 209
+   },
+   "n_population": 657,
+   "n_priority_label_at_t72h": 377,
+   "n_split_issues": 5235,
+   "share_of_split": 0.12550143266475644
+  },
+  "validation": {
+   "dist_3level": {
+    "high": 54,
+    "low": 30,
+    "medium": 53
+   },
+   "dist_4level": {
+    "priority/backlog": 30,
+    "priority/critical-urgent": 8,
+    "priority/important-longterm": 53,
+    "priority/important-soon": 46
+   },
+   "n_population": 137,
+   "n_priority_label_at_t72h": 88,
+   "n_split_issues": 887,
+   "share_of_split": 0.1544532130777903
+  }
+ },
+ "repo": "kubernetes/kubernetes",
+ "script_dirty": false,
+ "selection": {
+  "C": 0.25,
+  "majority": "high",
+  "model_id": "p2_tfidf_meta_lr",
+  "val_accuracy": 0.5474452554744526,
+  "with_meta": true
+ },
+ "split_manifest_sha256": "b8c0dfee4e228c3a13cea52ccd008fad837294629de91c5ee7047288c8559247",
+ "validation_majority_accuracy": 0.39416058394160586,
+ "validation_table": [
+  {
+   "C": null,
+   "accuracy": 0.39416058394160586,
+   "fit_seconds": 0.0,
+   "macro_f1": 0.18848167539267016,
+   "model": "p0_majority",
+   "with_meta": false
+  },
+  {
+   "C": 0.25,
+   "accuracy": 0.45255474452554745,
+   "fit_seconds": 1.4398938000013004,
+   "macro_f1": 0.42464801363106447,
+   "model": "p1_tfidf_lr",
+   "with_meta": false
+  },
+  {
+   "C": 1,
+   "accuracy": 0.45985401459854014,
+   "fit_seconds": 1.549160500002472,
+   "macro_f1": 0.42242114236999145,
+   "model": "p1_tfidf_lr",
+   "with_meta": false
+  },
+  {
+   "C": 4,
+   "accuracy": 0.49635036496350365,
+   "fit_seconds": 1.6233154000001377,
+   "macro_f1": 0.4519904004041935,
+   "model": "p1_tfidf_lr",
+   "with_meta": false
+  },
+  {
+   "C": 0.25,
+   "accuracy": 0.5474452554744526,
+   "fit_seconds": 1.8964618999998493,
+   "macro_f1": 0.5219653909309082,
+   "model": "p2_tfidf_meta_lr",
+   "with_meta": true
+  },
+  {
+   "C": 1,
+   "accuracy": 0.5109489051094891,
+   "fit_seconds": 1.8903043999998772,
+   "macro_f1": 0.4746507729558577,
+   "model": "p2_tfidf_meta_lr",
+   "with_meta": true
+  },
+  {
+   "C": 4,
+   "accuracy": 0.5036496350364964,
+   "fit_seconds": 2.025468699997873,
+   "macro_f1": 0.4553528409424761,
+   "model": "p2_tfidf_meta_lr",
+   "with_meta": true
+  }
+ ]
+}

@@ -263,6 +263,9 @@ def main(argv: list[str] | None = None) -> int:
         ),
         "plan_total_tokens": PLAN_TOTAL_TOKENS,
         "fits_plan": n * (PLANNING_TOKENS_PER_ISSUE + d_h) <= PLAN_TOTAL_TOKENS,
+        "orchestrator_decision": "2026-10-23: a projected total slightly above the ~908K planning "
+        "figure (same 6 ledger days at 160K/day) is accepted; the pre-registered ratio "
+        "threshold is the gate and it passes.",
     }
     out["evidence"] = {
         "k8s_rows_with_block": sum(p["evidence_chars"] > 0 for p in k8s_ok),

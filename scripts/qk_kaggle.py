@@ -23,6 +23,7 @@ DEFAULT_KAGGLE = DATA_ROOT / "venvs" / "kaggle" / "Scripts" / "kaggle.exe"
 STAGING = DATA_ROOT / "kaggle_staging"
 OWNER = "gauravgandhi2411"  # public Kaggle username, not a credential
 ISSUE_BODY_CHARS, PR_BODY_CHARS, PR_MAX_FILES = 4000, 2000, 100
+TEXT_RECIPES = ("production", "legacy")
 TERMINAL = {"complete": True, "error": False, "cancel": False}
 
 
@@ -52,13 +53,40 @@ def _pr_files(raw_dir: Path) -> dict[int, list[str]]:
     return out
 
 
-def build_texts(repo: str, kind: str, data_root: Path = DATA_ROOT) -> pd.DataFrame:
-    """Return DataFrame(repo, kind, number, text) for issues or merged PRs."""
+def build_texts(
+    repo: str, kind: str, data_root: Path = DATA_ROOT, text_recipe: str = "production"
+) -> pd.DataFrame:
+    """Return DataFrame(repo, kind, number, text) for issues or merged PRs.
+
+    text_recipe applies to issues only. "production" mirrors serving (similar_issues._build_text
+    fed with preprocess.clean_text(body)[0]): text = "title. clean_body" (stripped), plus the
+    `title` / `body_clean` columns so the kernel can do production's token-based body cut with
+    the model tokenizer (it cannot be done here: no tokenizer). "legacy" is the original
+    "title\nraw_body[:4000]" (what the existing k8s Kaggle embeddings used). PR texts (merged
+    PRs: title + body[:2000] + file paths) have no production counterpart and ignore the recipe.
+    """
+    if text_recipe not in TEXT_RECIPES:
+        raise ValueError(f"text_recipe must be one of {TEXT_RECIPES}, got {text_recipe!r}")
     slug = slug_of(repo)
     v2 = data_root / "derived_v2" / slug / f"{kind}.parquet"
     src = v2 if v2.exists() else data_root / "derived" / slug / f"{kind}.parquet"
     df = pd.read_parquet(src)
     title, body = df["title"].fillna(""), df["body"].fillna("")
+    if kind == "issues" and text_recipe == "production":
+        from triage_iq.data.preprocess import clean_text  # lazy: legacy path stays dependency-free
+
+        titles = title.str.strip()
+        clean = body.map(lambda b: clean_text(b)[0]).str.strip()
+        return pd.DataFrame(
+            {
+                "repo": repo,
+                "kind": kind,
+                "number": df["number"].astype("int64"),
+                "text": titles + ". " + clean,
+                "title": titles,
+                "body_clean": clean,
+            }
+        )
     if kind == "issues":
         text = title + "\n" + body.str.slice(0, ISSUE_BODY_CHARS)
     else:
@@ -78,7 +106,7 @@ def cmd_build_dataset(a: argparse.Namespace) -> None:
     ds_slug = f"triageiq-texts-{slug.replace('__', '-').replace('_', '-')}-{a.kind}"
     out = Path(a.staging) / ds_slug
     out.mkdir(parents=True, exist_ok=True)
-    df = build_texts(a.repo, a.kind, Path(a.data_root))
+    df = build_texts(a.repo, a.kind, Path(a.data_root), a.text_recipe)
     df.to_parquet(out / f"{slug}__{a.kind}.parquet", index=False)
     meta = {
         "title": ds_slug,
@@ -189,6 +217,12 @@ def make_parser() -> argparse.ArgumentParser:
     b.add_argument("--repo", required=True)
     b.add_argument("--kind", required=True, choices=["issues", "prs"])
     b.add_argument("--data-root", default=str(DATA_ROOT))
+    b.add_argument(
+        "--text-recipe",
+        choices=TEXT_RECIPES,
+        default="production",
+        help="issue text recipe: production (serving-identical) or legacy (original k8s run)",
+    )
     b.set_defaults(fn=cmd_build_dataset)
     k = sub.add_parser("push-kernel")
     k.add_argument("--kernel", required=True, help="kernel source dir (contains embed_bge.py)")

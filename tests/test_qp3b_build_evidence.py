@@ -78,3 +78,27 @@ def test_build_evidence_link_to_missing_pr_is_no_evidence() -> None:
     iss, fl, prs = _tables()
     out = ev.build_evidence(iss, fl, prs[prs["number"] != 10]).set_index("number")
     assert not out.loc[1, "has_fix_evidence"]
+
+
+def test_iso_utc_normalises_and_fails_to_empty() -> None:
+    assert ev.iso_utc("2024-01-02T03:04:05Z") == "2024-01-02T03:04:05Z"
+    assert ev.iso_utc(pd.Timestamp("2024-01-02 05:04:05+02:00")) == "2024-01-02T03:04:05Z"
+    assert ev.iso_utc(None) == "" and ev.iso_utc(pd.NaT) == "" and ev.iso_utc("not a date") == ""
+
+
+def test_build_evidence_records_item_dates() -> None:
+    iss, fl, prs = _tables()
+    prs = prs.assign(merged_at=pd.to_datetime(["2023-05-06T07:08:09Z"] * 3, utc=True))
+    out = ev.build_evidence(iss, fl, prs).set_index("number")
+    assert out.loc[1, "fix_prs"][0]["merged_at"] == "2023-05-06T07:08:09Z"
+    assert out.loc[1, "closing_comment_at"] == "2024-01-01T00:00:00Z"
+    assert out.loc[4, "closing_comment_at"] == ""
+
+
+def test_build_evidence_falls_back_to_link_merged_at_then_empty() -> None:
+    iss, fl, prs = _tables()
+    out = ev.build_evidence(iss, fl, prs).set_index("number")  # no merged_at anywhere
+    assert out.loc[1, "fix_prs"][0]["merged_at"] == ""
+    fl = fl.assign(pr_merged_at=pd.to_datetime(["2022-01-01T00:00:00Z"] * 4, utc=True))
+    out = ev.build_evidence(iss, fl, prs).set_index("number")
+    assert out.loc[1, "fix_prs"][0]["merged_at"] == "2022-01-01T00:00:00Z"

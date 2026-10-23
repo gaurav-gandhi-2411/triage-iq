@@ -1,8 +1,8 @@
 """Build the resolution-evidence artifact for flag 2 (TRIAGE_RESOLUTION_EVIDENCE), k8s.
 
 Offline CANDIDATE artifact (docs/QP3B_DESIGN_2026-10.md, flag 2): one record per derived_v2 issue
-with (a) its audited fix PRs (closer + merged, `audited_fix_links`): number, title and the first
-~300 chars of the cleaned PR body, and (b) the last non-bot, non-command comment among the (up to
+with (a) its audited fix PRs (closer + merged, `audited_fix_links`): number, title, merged_at and the
+first ~300 chars of the cleaned PR body, and (b) the last non-bot, non-command comment among the (up to
 5) comments stored in `issues.closing_comments`, only for CLOSED issues (an open issue has no
 closing comment; its stored comments are just the tail of a live thread). Empty when none.
 Nothing here is served and nothing is written under data/models.
@@ -26,7 +26,7 @@ from qp0_derive_stats import audited_fix_links
 ROOT = Path(__file__).resolve().parent.parent
 DERIVED = Path(r"D:\triageiq-data\derived_v2\kubernetes__kubernetes")
 OUT = Path(
-    r"D:\triageiq-data\models\candidates\resolution_evidence_kubernetes_kubernetes_v1.parquet"
+    r"D:\triageiq-data\models\candidates\resolution_evidence_kubernetes_kubernetes_v2.parquet"
 )
 
 MAX_CHARS = 300  # design: each evidence item truncated; budget is checked later by C4
@@ -83,19 +83,44 @@ def _is_command_only(body: str) -> bool:
     return bool(lines) and all(ln.startswith("/") for ln in lines)
 
 
-def last_human_comment(comments: Iterable[Mapping[str, Any]] | None) -> tuple[str, str]:
-    """(author, truncated body) of the last non-bot comment with real text; ("", "") if none.
+def last_human_comment_dated(
+    comments: Iterable[Mapping[str, Any]] | None,
+) -> tuple[str, str, str]:
+    """(author, truncated body, created_at ISO UTC) of the last non-bot comment with real text.
 
-    Comments that are only prow commands (e.g. "/sig node", "/lgtm") carry no resolution
-    information and are skipped. `comments` are in chronological order.
+    ("", "", "") if none. Comments that are only prow commands (e.g. "/sig node", "/lgtm") carry
+    no resolution information and are skipped. `comments` are in chronological order.
     """
-    best = ("", "")
+    best = ("", "", "")
     for c in comments if comments is not None else []:
         body = (c.get("body") or "").strip()
         if is_bot(c.get("author")) or not body or _is_command_only(body):
             continue
-        best = (c.get("author") or "", truncate(body))
+        best = (c.get("author") or "", truncate(body), iso_utc(c.get("created_at")))
     return best
+
+
+def last_human_comment(comments: Iterable[Mapping[str, Any]] | None) -> tuple[str, str]:
+    """(author, truncated body) of the last non-bot comment with real text; ("", "") if none."""
+    author, body, _ = last_human_comment_dated(comments)
+    return author, body
+
+
+def iso_utc(value: Any) -> str:
+    """ISO-8601 UTC string ('...Z') for a timestamp-like value; "" when missing/unparseable.
+
+    The as-of filter treats an empty date as 'unknown' and drops the item (fail closed).
+    """
+    if value is None or (not isinstance(value, str) and pd.isna(value)):
+        return ""
+    try:
+        t = pd.Timestamp(value)
+    except (ValueError, TypeError):
+        return ""
+    if pd.isna(t):
+        return ""
+    t = t.tz_localize("UTC") if t.tzinfo is None else t.tz_convert("UTC")
+    return t.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def build_evidence(
@@ -104,6 +129,13 @@ def build_evidence(
     """One row per issue: audited fix PRs (list of structs) + last non-bot closing comment."""
     pr_by_num = prs.drop_duplicates("number").set_index("number")
     audited = audited_fix_links(fix_links).drop_duplicates(["issue", "pr"])
+    # Date of each fix PR: prs.merged_at, else the link's pr_merged_at. Evidence items carry their
+    # date so serving/eval can drop anything not strictly before the query's creation (as-of).
+    link_merged = (
+        dict(zip(audited["pr"], audited["pr_merged_at"], strict=True))
+        if "pr_merged_at" in audited.columns
+        else {}
+    )
     fix_by_issue: dict[int, list[dict[str, Any]]] = {}
     for issue, pr in sorted(zip(audited["issue"], audited["pr"], strict=True)):
         if pr in pr_by_num.index:
@@ -112,15 +144,17 @@ def build_evidence(
                 "number": int(pr),
                 "title": truncate(r["title"] or ""),
                 "body_excerpt": clean_pr_body(r["body"]),
+                "merged_at": iso_utc(r["merged_at"] if "merged_at" in pr_by_num.columns else None)
+                or iso_utc(link_merged.get(pr)),
             }
         else:  # link target absent from prs.parquet: no title to cite, so no evidence
             continue
         fix_by_issue.setdefault(int(issue), []).append(rec)
     rows = []
     for r in issues.itertuples(index=False):
-        author, comment = ("", "")
+        author, comment, comment_at = ("", "", "")
         if r.state == "CLOSED":
-            author, comment = last_human_comment(r.closing_comments)
+            author, comment, comment_at = last_human_comment_dated(r.closing_comments)
         fixes = fix_by_issue.get(int(r.number), [])
         rows.append(
             {
@@ -129,6 +163,7 @@ def build_evidence(
                 "fix_prs": fixes,
                 "closing_comment_author": author,
                 "closing_comment": comment,
+                "closing_comment_at": comment_at,
                 "has_fix_evidence": bool(fixes),
                 "has_comment_evidence": bool(comment),
                 "has_evidence": bool(fixes) or bool(comment),
@@ -151,7 +186,9 @@ def main(argv: list[str] | None = None) -> int:
     cols = ["number", "state", "closing_comments"]
     iss = pd.read_parquet(a.derived / "issues.parquet", columns=cols)
     fl = pd.read_parquet(a.derived / "fix_links.parquet")
-    prs = pd.read_parquet(a.derived / "prs.parquet", columns=["number", "title", "body"])
+    prs = pd.read_parquet(
+        a.derived / "prs.parquet", columns=["number", "title", "body", "merged_at"]
+    )
     ev = build_evidence(iss, fl, prs)
     a.out.parent.mkdir(parents=True, exist_ok=True)
     ev.to_parquet(a.out, index=False)
@@ -161,6 +198,11 @@ def main(argv: list[str] | None = None) -> int:
         "with_fix_evidence": int(ev["has_fix_evidence"].sum()),
         "with_comment_evidence": int(ev["has_comment_evidence"].sum()),
         "with_any_evidence": int(ev["has_evidence"].sum()),
+        # items the as-of filter must drop (unknown date): expected 0 for merged fix PRs
+        "fix_prs_without_date": int(sum(not p["merged_at"] for fs in ev["fix_prs"] for p in fs)),
+        "comments_without_date": int(
+            ((ev["closing_comment"] != "") & (ev["closing_comment_at"] == "")).sum()
+        ),  # fmt: skip
         "max_chars": MAX_CHARS,
         "bot_logins": sorted(BOT_LOGINS),
         "bot_suffixes": list(BOT_SUFFIXES),

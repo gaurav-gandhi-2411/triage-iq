@@ -13,6 +13,12 @@ updates:
     ignore:
       # torch is pinned to CPU-only build and managed manually via PyTorch index
       - dependency-name: torch
+    # requirements-dev.txt includes `-r requirements.lock`; Dependabot copies only the requirement
+    # files it recognises into its temp dir, so that include fails and the whole pip job errors
+    # ("No such file or directory: 'dependabot_tmp_dir/requirements.lock'"). Dev pins follow the
+    # lock file anyway, so Dependabot does not need to manage this file.
+    exclude-paths:
+      - requirements-dev.txt
 
   - package-ecosystem: github-actions
     directory: /

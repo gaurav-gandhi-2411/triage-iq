@@ -496,7 +496,7 @@ def stage_test(a: argparse.Namespace, derived, splits_dir, models_dir) -> dict[s
     if (
         not conf
         or not ADR_PATH.exists()
-        or conf["selected"]["name"] not in ADR_PATH.read_text(encoding="utf-8")
+        or conf["selected"]["name"].lower() not in ADR_PATH.read_text(encoding="utf-8").lower()
     ):
         raise RuntimeError("conformal choice must be frozen in ADR-0071 (naming the score) before test")  # fmt: skip
     classes = writer.data["classes"]

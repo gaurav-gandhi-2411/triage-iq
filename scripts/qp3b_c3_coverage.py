@@ -28,7 +28,7 @@ ROOT = Path(__file__).resolve().parent.parent
 EVAL_SET = ROOT / "eval" / "sets" / "quality_push_2026-10" / "eval_set.jsonl"
 INDEX = Path(r"D:\triageiq-data\models\candidates\similar_issue_index_kubernetes_kubernetes_bge_v2")
 EVIDENCE = Path(
-    r"D:\triageiq-data\models\candidates\resolution_evidence_kubernetes_kubernetes_v1.parquet"
+    r"D:\triageiq-data\models\candidates\resolution_evidence_kubernetes_kubernetes_v2.parquet"
 )
 ISSUES = Path(r"D:\triageiq-data\derived_v2\kubernetes__kubernetes\issues.parquet")
 KAGGLE = Path(r"D:\triageiq-data\embeddings\kubernetes__kubernetes")
@@ -39,6 +39,20 @@ def evidence_chars(rec: dict[str, Any]) -> int:
     """Characters an evidence block would carry for one neighbour (titles+excerpts+comment)."""
     n = sum(len(p["title"]) + len(p["body_excerpt"]) for p in rec["fix_prs"])
     return n + len(rec["closing_comment"])
+
+
+def as_of_dict(rec: Any, as_of: pd.Timestamp) -> dict[str, Any] | None:
+    """coverage()'s record shape for `rec` restricted to items dated strictly before `as_of`."""
+    if rec is None:
+        return None
+    r = rec.before(as_of)
+    return {
+        "fix_prs": [{"title": p[1], "body_excerpt": p[2]} for p in r.fix_prs],
+        "closing_comment": r.closing_comment,
+        "has_fix_evidence": bool(r.fix_prs),
+        "has_comment_evidence": bool(r.closing_comment),
+        "has_evidence": r.has_evidence,
+    }
 
 
 def coverage(rows: list[list[dict[str, Any] | None]]) -> dict[str, Any]:
@@ -120,10 +134,15 @@ def main(argv: list[str] | None = None) -> int:
     created = dict(zip(iss["number"].astype(int), pd.to_datetime(iss["created_at"], utc=True), strict=True))  # fmt: skip
     ev = pd.read_parquet(EVIDENCE).set_index("number")
     ev_rec = {int(n): r for n, r in zip(ev.index, ev.to_dict("records"), strict=True)}
+    from triage_iq.models.resolution_evidence import ResolutionEvidence
+
+    served = ResolutionEvidence.load(EVIDENCE)  # the same loader/filter the prompt path uses
+    assert served.dated, "C3 needs the dated (v2) artifact"
 
     rows_in = [json.loads(ln) for ln in EVAL_SET.read_text(encoding="utf-8").splitlines() if ln.strip()]  # fmt: skip
     rows_in = [r for r in rows_in if r["repo"] == "kubernetes/kubernetes"]
     per_row: list[list[dict[str, Any] | None]] = []
+    per_row_unfiltered: list[list[dict[str, Any] | None]] = []
     stats = {"examined": 0, "dropped_newer": 0, "kept_by_number_fallback": 0, "dropped_unknown": 0}
     short = 0
     for r in rows_in:
@@ -132,13 +151,19 @@ def main(argv: list[str] | None = None) -> int:
         for k_, v in st.items():
             stats[k_] += v
         short += len(kept) < TOP
-        per_row.append([ev_rec.get(h["number"]) for h in kept])
+        per_row_unfiltered.append([ev_rec.get(h["number"]) for h in kept])
+        as_of = pd.Timestamp(r["created_at"])
+        per_row.append([as_of_dict(served.records.get(h["number"]), as_of) for h in kept])
     res = coverage(per_row)
+    res_unfiltered = coverage(per_row_unfiltered)
     head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()  # fmt: skip
     report = {
         "check": "C3 evidence coverage (docs/QP3B_DESIGN_2026-10.md)",
         "threshold": THRESHOLD, "passed": res["share_ge1_neighbour_with_evidence"] >= THRESHOLD,
         "top_k": TOP, "result": res, "rows_with_fewer_than_top_k_neighbours": short,
+        "as_of_filter": "evidence items dated strictly before the query's created_at (result); "
+        "result_without_as_of_filter is the earlier, leaky number, kept for comparison only",
+        "result_without_as_of_filter": res_unfiltered,
         "neighbour_filter": stats,
         "sanity": sanity(det, KAGGLE),
         "provenance": {

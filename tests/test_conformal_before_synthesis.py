@@ -130,3 +130,10 @@ def test_check_fails_a_pre_change_entry_and_passes_a_calibrated_one() -> None:
 def test_check_flags_prose_outside_the_served_interval() -> None:
     v = pic.violations(_entry(True, "typically 1 hour or less", lo=2.8, hi=21.6))
     assert any("no overlap" in x for x in v)
+
+@pytest.fixture(autouse=True)
+def _pre_g3_model_interval_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    """These tests pin the model-interval / D7 path that every repo without a served constant still
+    uses (and the pre-G3 k8s goldens). G3 gives k8s a fixed constant instead, covered by
+    tests/test_k8s_constant_serving.py, so the table is emptied here to keep what they pin."""
+    monkeypatch.setattr("triage_iq.models.triage.SERVED_CONSTANT_RESOLUTION", {})

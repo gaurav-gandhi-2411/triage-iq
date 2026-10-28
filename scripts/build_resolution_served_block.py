@@ -10,6 +10,7 @@ Sources:
   reports/served_k8s_metrics.json         k8s served-path metrics (30e6fd8, 2,992 test rows)
   reports/vscode_naive_serving_eval.json  vscode 616-row reconstructed window
   reports/d7_resolution_before_after.json offline before/after of the D7 change (both repos)
+  reports/k8s_constant_35d_calibration.json k8s served constant (G3, D88) + interval + validation
   data/models/MANIFEST.sha256             artifact hashes the numbers were produced against
 
 Usage: python scripts/build_resolution_served_block.py [--write]
@@ -53,13 +54,15 @@ def build() -> dict:
     vs_pred = "data/models/resolution_predictor_microsoft_vscode.pkl"
     cqr = "data/models/cqr_conformal_adjustments_v2.json"
     c2 = v["interval"]["split_40_60"]["candidates"]["C2_naive_scaled_model_width_stored_Q"]
+    g3 = _load("k8s_constant_35d_calibration.json")
     tail = _load("k8s_gain_tail.json")["tails"]["top_20pct_by_true_resolution"]
     return {
         "point_estimate": {
             "served": "train_median",
-            "decision": "owner decision D7, 2026-10-08 (ADR-0064)",
+            "decision": "owner decision D7, 2026-10-08 (ADR-0064); k8s constant changed by G3 (D88)",
             "definition": "median(resolution_hours of the training set) / 24, the same naive "
-            "baseline the published comparison uses",
+            "baseline the published comparison uses (vscode: the training-window median; k8s: "
+            "the 2023-2025 closed-issue median, 35.0954 d, pinned in models/resolution.py)",
             "why": "The learned point estimate has a worse median absolute error than the "
             "training-window median in both repos; it is not served. The learned parts that stay "
             "are the k8s bucket classifier and the conformal intervals.",
@@ -78,8 +81,22 @@ def build() -> dict:
             K8S: {
                 "window": "ADR-0041 re-split temporal test, served path through _collect_signals",
                 "n_test": km["n"],
-                "served_point_days": km["naive_train_median_days"],
+                "served_point_days": g3["served"]["point_days"],
+                # G3 (D88): the constant served now, scored on the qp4 validation closed issues.
                 "served": {
+                    "window": "qp4 validation (2023-2025), closed eligible issues",
+                    "n_closed": g3["validation"]["n_closed"],
+                    "mae_days": round(g3["validation"]["mean_ae_days"], 4),
+                    "mae_ci95_days": [round(x, 4) for x in g3["validation"]["mean_ae_ci95"]],
+                    "median_ae_days": round(g3["validation"]["median_ae_days"], 4),
+                    "median_ae_ci95_days": [
+                        round(x, 4) for x in g3["validation"]["median_ae_ci95"]
+                    ],
+                },
+                # The constant served from D7 (2026-10-08) until G3, on the ADR-0041 test window.
+                "previous_served": {
+                    "point_days": km["naive_train_median_days"],
+                    "window": "ADR-0041 re-split temporal test, n_test rows",
                     "mae_days": km["naive_mae_days"][0],
                     "median_ae_days": km["naive_median_ae_days"],
                 },
@@ -107,15 +124,31 @@ def build() -> dict:
                     "delta_pp": km["bucket_delta_vs_naive_pp_boot"][0],
                     "delta_ci95_pp": km["bucket_delta_vs_naive_pp_boot"][1:],
                 },
+                # G3 (D88): served interval = fixed constant-point CQR interval. The coverage_* keys
+                # without a "validation" marker below still describe the PREVIOUS model-quantile
+                # interval (model Q10/Q90 + CQR v2) on the ADR-0041 window, kept as history.
                 "interval": {
-                    "served": "model Q10/Q90 + CQR v2",
+                    "served": "constant 2023-2025 closed-issue quantiles + CQR (G3, fixed interval)",
+                    "previous_served": "model Q10/Q90 + CQR v2",
                     "nominal_coverage": km["nominal_coverage"],
+                    "lower_days": g3["served"]["lo_days"],
+                    "upper_days": g3["served"]["hi_days"],
+                    "coverage_validation_closed": round(g3["validation"]["closed_coverage"], 4),
+                    "coverage_validation_closed_ci95": [
+                        round(x, 4) for x in g3["validation"]["closed_coverage_ci95"]
+                    ],
+                    "n_validation_closed": g3["validation"]["n_closed"],
+                    "coverage_validation_censored_aware_bounds": [
+                        round(x, 4) for x in g3["validation"]["censored_aware_coverage_bounds_all"]
+                    ],
+                    "mean_width_days": round(g3["validation"]["mean_width_days"], 1),
+                    "method": g3["method"],
                     "coverage_raw_full_test": km["coverage_raw_interval_wilson"][0],
                     "coverage_cqr_v2_heldout": k["cqr_v2"]["holdout"]["hold_v2_q_wilson"][0],
                     "coverage_cqr_v2_heldout_ci95": k["cqr_v2"]["holdout"]["hold_v2_q_wilson"][1:],
                     "n_heldout": k["cqr_v2"]["holdout"]["n_hold"],
                     "split": "chronological 30/70 split by created_at of the ADR-0041 re-split temporal test "
-                    "(897 calibration / 2,095 held-out)",
+                    "(897 calibration / 2,095 held-out); applies to the previous interval",
                 },
                 "unchanged_by_d7": {
                     "interval_lo_hi_bit_identical": d7[K8S]["lo_hi_bit_identical"],
@@ -133,7 +166,9 @@ def build() -> dict:
                 "learned_model_not_served": {
                     "mae_days": v["point"]["mae_before_model_d"],
                     "median_ae_days": round(d7[VSCODE]["model_before_median_ae_days"], 4),
-                    "mae_gain_vs_naive_days": v["point"]["paired_gain_before_vs_naive_d_boot1000"][0],
+                    "mae_gain_vs_naive_days": v["point"]["paired_gain_before_vs_naive_d_boot1000"][
+                        0
+                    ],
                     "mae_gain_ci95_days": v["point"]["paired_gain_before_vs_naive_d_boot1000"][1:],
                 },
                 "bucket": {
@@ -183,6 +218,7 @@ def main() -> None:
         "scripts/build_resolution_served_block.py from reports/served_k8s_metrics.json + "
         "reports/vscode_naive_serving_eval.json + reports/d7_resolution_before_after.json + "
         "reports/k8s_gain_tail.json (scripts/analysis_k8s_gain_tail.py) + "
+        "reports/k8s_constant_35d_calibration.json (scripts/k8s_constant_calibration.py) + "
         "data/models/MANIFEST.sha256 + docs/architecture/adr/0064"
     )
     SUMMARY.write_text(

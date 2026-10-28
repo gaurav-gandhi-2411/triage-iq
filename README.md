@@ -35,7 +35,7 @@ curl -s -X POST https://triageiq-api-1014562031321.us-central1.run.app/triage \
 
 | Stage | Repo | Metric | Result |
 |---|---|---|---|
-| Component classifier (47 classes) | vscode / kubernetes | Top-3 accuracy, fresh test rows (n=423 / 671) | **85.82%** [82.17, 88.82] / **85.99%** [83.16, 88.41] |
+| Component classifier (47 classes) | vscode / kubernetes | Top-3 accuracy, fresh test rows of the 2014–16 corpora (n=423 / 671); 2026 issues: see below | **85.82%** [82.17, 88.82] / **85.99%** [83.16, 88.41] |
 | Component classifier | vscode / kubernetes | Top-1 accuracy | 69.98% [65.44, 74.15] / 54.84% [51.06, 58.57] |
 | Similar-issue retriever | kubernetes | Recall@5, related task, clean subset (n=66) | **39.39%** [27.3, 51.5] |
 | Similar-issue retriever | vscode | Recall@5, duplicate task | **53.50%** [46.5, 60.5] |
@@ -46,6 +46,10 @@ curl -s -X POST https://triageiq-api-1014562031321.us-central1.run.app/triage \
 | LLM synthesis | both | Component accuracy: predicted equals gold (exact string match) | **68.8% (44/64)**, Wilson 95% [56.6, 78.8] |
 
 Majority-class baseline on the same fresh test rows (always predict the most frequent training class, or the three most frequent for top-3): top-3 28.84% [24.73, 33.33] (vscode) / 43.07% [39.37, 46.85] (kubernetes), top-1 13.71% / 17.73% ([`reports/classifier_majority_baseline.json`](reports/classifier_majority_baseline.json)); the classifier rows above are well clear of it. The resolution rows are compared with the naive median in the full table.
+
+**The vscode classifier on 2026 issues does not hold the number above.** On vscode issues created from 2026-01-01 (temporal test split, n=9,598 eligible labelled issues), scored against the 2026 parent-area taxonomy (ADR-0070; strict rule: a gold label outside the class set is a miss, predicting `other` never a hit), the **served** classifier reaches top-3 **4.4%** [4.0, 4.8] (53.4% under the lenient k8s convention, which is not comparable). Label drift caps any model trained on the old window: only 41.8% [40.9, 42.8] of those issues have a primary label inside the class set (the coverage bound). A retrained candidate, family-only TF-IDF+LR (**not served**), reaches strict top-3 **36.4%** [35.5, 37.4] against that 41.8% bound, in-family top-3 87.0% (n=4,016) and 58.8% under the lenient k8s convention ([`reports/qp1_vscode_phase1_2026-10.json`](reports/qp1_vscode_phase1_2026-10.json)). The retrained k8s `sig/*` candidate (**not served**) reaches top-3 **95.4%** [94.3, 96.5] (n=1,384; strict = lenient, [`reports/qp1_k8s_strict_rescore_2026-10.json`](reports/qp1_k8s_strict_rescore_2026-10.json)).
+
+**Clean request bodies.** The served models were trained on cleaned issue text. Until 2026-10-29 `/triage` passed them the raw request body (a train/serve skew); since then it cleans the body first (`TRIAGE_CLEAN_REQUEST_BODY`, [D91](docs/DECISION_LOG_2026-10.md)). The classifier and retriever figures above are offline evaluations, not live-API measurements.
 
 ## How it is evaluated
 
@@ -132,7 +136,7 @@ Measured against the production URL: five sequential real `/triage` calls to one
 The short list; the full text with evidence is [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md).
 
 - **Resolution time is coarse guidance.** The served point is the training-window median (k8s 3.04 d, vscode 3.84 d). The learned model is not served: on k8s it is marginally better on mean error (102.09d vs 104.23d, +2.06%) but worse on median error (7.28d vs 3.52d); on vscode it is worse (5.45d vs 3.53d mean error). The vscode median is a 2015–16 value while current issues resolve in hours.
-- **Time-window mismatch.** The corpora are 2014–2016 while live issues are about ten years later; nothing here measures transfer, and the vscode resolution test is a single 7-day window.
+- **Time-window mismatch.** The corpora are 2014–2016 while live issues are about ten years later; apart from the vscode and k8s classifier paragraph above nothing here measures transfer, and the vscode resolution test is a single 7-day window.
 - **Small, single-judge LLM evaluation.** 64 issues (vscode n=11), one local judge, cassette replay: deterministic, but it does not detect live-provider drift.
 - **Grounding is a consistency check, not a correctness check** (see above).
 - **Cold start and free-tier limits.** A ~41 s cold start when the instance is idle, and roughly one LLM-backed triage per minute; the service runs entirely on free tiers by design (no `min-instances=1`, no paid LLM tier).

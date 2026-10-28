@@ -147,9 +147,10 @@ same future major-version dependency refresh.
 ### PYSEC-2026-3447 — setuptools `FileList` MANIFEST.in exclude-pattern Unicode-normalization bypass
 
 - **Suppressed since:** 2026-07-16
-- **Affected package:** `setuptools` (version varies by CI runner image — not a pinned
-  dependency in `requirements.lock`; TriageIQ never lists setuptools as a runtime or
-  build requirement, it's incidental to the Python environment)
+- **Affected package:** `setuptools` (not a pinned dependency in `requirements.lock`;
+  TriageIQ never lists setuptools as a runtime or build requirement. pip-audit resolves it
+  transitively through `torch`, whose declared `setuptools` range sets the version audited:
+  `torch 2.11.0+cpu` capped it at `<82`; `torch 2.15.0+cpu` requires `>=77.0.3`)
 - **Fix version:** `setuptools>=83.0.0`
 
 **Why suppressed:**
@@ -163,8 +164,8 @@ a distributable sdist. CI and production both run on Linux (`ubuntu-latest` /
 absent. Both preconditions for exploitation are unmet.
 
 **Why not fixed immediately:** Not a pinned dependency — there is no `requirements.lock`
-line to bump. The version pip-audit reports varies by whichever setuptools ships with
-the runner's Python installation.
+line to bump. The version pip-audit reports is whatever `torch`'s declared `setuptools`
+range allows (see above), not the runner's Python installation.
 
 **Revisit trigger:** If this repo ever starts building/publishing an sdist (it does not
 today), pin `setuptools>=83.0.0` explicitly as a build dependency at that time.

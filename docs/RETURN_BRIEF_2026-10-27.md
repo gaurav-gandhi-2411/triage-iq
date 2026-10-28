@@ -148,11 +148,12 @@ BELIEVED = inference, with the reason given.
   functions removed). Preserved on `backup/foreign-qp1-vscode-edit-2026-10-23` (`a958a21`).
 - **Cause:** a stale shared scratch file. At 12:50 IST an executor splitting the vscode Phase 1 PR
   wrote `scratchpad/split.py`, which splits `qp1_vscode_phase1.py` into `qp1_vscode_lib.py`. At
-  16:57:11 IST a different executor (objective-metrics split, PR #293) tried to overwrite
+  16:57:21 IST a different executor (objective-metrics split, PR #293) tried to overwrite
   `scratchpad/split.py` with its own script through a heredoc; a hook refused it ("Rule 55a guard:
-  ... could not be safely tokenized"). At 16:57:25 it ran `python scratchpad/split.py` anyway,
-  which executed the **old** vscode split script against the now-changed files; the overwrite
-  landed 2 s later. At 16:57:29 it rewrote `split.py` with the Write tool and re-ran its own split.
+  ... could not be safely tokenized"). At about 16:57:26 it ran `python scratchpad/split.py`
+  anyway, which executed the **old** vscode split script against the now-changed files; the
+  overwrite was found stamped 16:57:27 (BELIEVED to be this run: same second, matching content).
+  At 16:57:36 it rewrote `split.py` with the Write tool and at 16:57:41 re-ran its own split.
   It never noticed the first run's effect, so its report said none of its commands touched those
   files.
 - **No second session:** no other Claude Code session's transcript references these scripts

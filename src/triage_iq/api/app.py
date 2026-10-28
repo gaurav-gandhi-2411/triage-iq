@@ -455,6 +455,7 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         groq_tokens_total=tokens,
         **{k: v for k, v in meta.items() if k != "total_latency_ms"},
     )
+    _log_retrieval(request, request_id, body, meta)
 
     result = plan.model_dump()
     result["_request_id"] = request_id
@@ -596,3 +597,25 @@ def _current_llm_baseline(path: Path) -> dict | None:
 
 def _log_request(**fields) -> None:
     _access_logger.info("access", extra={"log_type": "access", **fields})
+
+
+def _log_retrieval(request: Request, request_id: str, body: TriageRequest, meta: dict) -> None:
+    """One structured record per /triage request with the retriever top-5 (rank order, scores
+    to 4 dp) and classifier top-3, so a candidate revision's retrieval can be compared exactly
+    with an offline reference (filter: jsonPayload.log_type="retrieval"). Numbers and labels
+    only, never issue text. Never raises: observability must not break /triage."""
+    try:
+        _access_logger.info(
+            "retrieval",
+            extra={
+                "log_type": "retrieval",
+                "request_id": request_id,
+                "repo": body.repo,
+                "issue_number": body.issue_number,
+                "classifier_top3": [c.get("label") for c in (meta.get("classifier_top3") or [])],
+                "retrieval_top5": getattr(meta, "retrieval_top5", None) or [],
+                "body_cleaned": bool(getattr(request.app.state, "clean_request_body", False)),
+            },
+        )
+    except Exception:
+        logger.warning("retrieval log failed", exc_info=True)

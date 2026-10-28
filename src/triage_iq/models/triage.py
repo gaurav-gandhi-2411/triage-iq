@@ -709,6 +709,12 @@ def _estimate_prompt_tokens(messages: list[dict]) -> int:
 # ---------------------------------------------------------------------------
 
 
+class TriageMetadata(dict):
+    """Per-request metadata dict; `retrieval_top5` rides along as an attribute (not a key)."""
+
+    retrieval_top5: list[dict] | None = None
+
+
 class TriageAssistant:
     """Orchestrates Systems 1–3 and calls an LLM to produce a TriagePlan.
 
@@ -949,6 +955,14 @@ class TriageAssistant:
             metadata["groq_tokens_completion"],
             metadata["groq_tokens_cached"],
         )
+        # Retriever top-5 (rank order, numbers + scores only, no issue text) for the API's
+        # per-request retrieval log (G1 / D90). Carried as an attribute, not a key, so every
+        # consumer that serialises or hashes the whole metadata dict is unchanged.
+        metadata = TriageMetadata(metadata)
+        metadata.retrieval_top5 = [
+            {"number": s["number"], "score": round(float(s["score"]), 4)}
+            for s in signals["similar_raw"]
+        ]
         return plan, metadata
 
     def _decide_component(

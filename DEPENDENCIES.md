@@ -76,7 +76,9 @@ transformers findings if the dependency refresh becomes reachable sooner; re-che
 
 - **Suppressed since:** 2026-07-10
 - **CVSS:** 5.3 MEDIUM
-- **Affected package:** `torch==2.11.0`
+- **Affected package:** `torch` (recorded against `torch==2.11.0`; the lock pins `torch==2.15.0+cpu`
+  since #314; pip-audit cannot audit `+cpu` builds because they are not on PyPI, so whether 2.15.0 is
+  affected is unverified; the no-reachable-surface reasoning below does not depend on the version)
 - **Fix version:** none published (`pip-audit` reports no fix version for this advisory)
 
 **Why suppressed:**

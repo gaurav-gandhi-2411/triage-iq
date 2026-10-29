@@ -50,6 +50,7 @@ def _assert_correct_project() -> None:
 # Any addition here must be mirrored in verify_model_manifest.py.
 ARTIFACTS: list[str] = [
     "data/models/component_classifier_microsoft_vscode.pkl",
+    "data/models/component_classifier_microsoft_vscode_family_v2_2026-10-22.joblib",
     "data/models/component_classifier_kubernetes_kubernetes.pkl",
     "data/models/resolution_predictor_microsoft_vscode.pkl",
     "data/models/resolution_predictor_kubernetes_kubernetes.pkl",

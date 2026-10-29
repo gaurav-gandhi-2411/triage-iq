@@ -74,6 +74,8 @@ RUN pip install --no-cache-dir --no-deps -e .
 # Production model artifacts (populated by CI/CD workflow from GCS)
 # Excludes DistilBERT (12 GB each — not used in production)
 COPY data/models/component_classifier_*.pkl   data/models/
+# vscode family_v2 bundle (D92.1); loaded only when TRIAGE_VSCODE_CLASSIFIER=family_v2.
+COPY data/models/component_classifier_microsoft_vscode_family_v2_2026-10-22.joblib   data/models/
 COPY data/models/similar_issue_index_microsoft_vscode_bge   data/models/similar_issue_index_microsoft_vscode_bge
 COPY data/models/similar_issue_index_kubernetes_kubernetes_bge   data/models/similar_issue_index_kubernetes_kubernetes_bge
 COPY data/models/resolution_predictor_*.pkl   data/models/

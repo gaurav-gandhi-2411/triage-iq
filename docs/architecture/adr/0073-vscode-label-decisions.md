@@ -3,8 +3,8 @@
 Generated 2026-10-29 for GG decision D93 from `D:\triageiq-data\derived_v2\microsoft__vscode` (`issues.parquet` labels_final and labels_t72h, `label_events.parquet`). The rule and its tests are in `0073-vscode-retrain-meta-label-exclusions.md`.
 Counts are issues over the whole scraped history (not the retrain window): `final` = issues carrying the label at their final state, `events` = issues with at least one label event for it. No model score, prediction or accuracy was looked at to make these decisions; the scraped data holds no GitHub label descriptions, so the decisions rest on the label name and counts.
 
-Distinct labels: 703. Decisions: BORDERLINE-EXCLUDE 9, BORDERLINE-KEEP 14, EXCLUDE 215, KEEP 465.
-NEW exclusions for retraining (EXCLUDE or BORDERLINE-EXCLUDE and not already excluded by ADR-0070): 29.
+Distinct labels: 703. Decisions: BORDERLINE-EXCLUDE 7, BORDERLINE-KEEP 15, EXCLUDE 216, KEEP 465.
+NEW exclusions for retraining (EXCLUDE or BORDERLINE-EXCLUDE and not already excluded by ADR-0070): 28.
 The `NEW` column of the first table is the contract: `RETRAIN_META_EXCLUDE` in `scripts/vscode_retrain_lib.py` equals the labels with NEW = yes (lower-cased); `tests/test_vscode_retrain.py` parses this file to check it, and also that every label in the two lists below is, or is not, excluded by ADR-0070 as stated.
 
 ## New exclusions and borderline calls
@@ -28,21 +28,21 @@ The `NEW` column of the first table is the contract: `RETRAIN_META_EXCLUDE` in `
 | copilot-triage-needed | 0 | 754 | EXCLUDE | yes | triage queue marker, sibling of frozen triage-needed (test 1/5) |
 | needs-classifier-review | 0 | 2 | EXCLUDE | yes | triage queue marker, sibling of frozen triage-needed (test 1/5) |
 | needs-verification | 0 | 1 | EXCLUDE | yes | verification status, sibling of frozen verification-needed (test 2) |
+| papercut 🩸 | 0 | 1 | EXCLUDE | yes | GG 2026-10-29: a severity tag, fits the meta-label rule (also the emoji spelling of ADR-0070-excluded `papercut :drop_of_blood:`) |
 | release-cherry-pick | 0 | 1 | EXCLUDE | yes | release process: cherry-pick into a release branch (test 2/3) |
 | windows-verification | 0 | 1 | EXCLUDE | yes | verification status, sibling of frozen verification-needed (test 2) |
 | ❗ UNTESTED | 0 | 3 | EXCLUDE | yes | verification status, sibling of frozen verification-needed (test 2) |
 | modernization | 264 | 268 | BORDERLINE-EXCLUDE | yes | internal modernization campaign/work stream; names no single code area (test 4/5); component labels such as ESM or editor-core carry the area |
 | agent-host-mitigated | 19 | 20 | BORDERLINE-EXCLUDE | yes | 'mitigated' status; frozen list already excludes `mitigated`; area is carried by the separate agent-host label |
-| performance | 18 | 75 | BORDERLINE-EXCLUDE | yes | not a status label, but a spelling variant of ADR-0070-excluded `perf`; treated like it for consistency (outside the literal rule) |
 | test-disabled | 6 | 6 | BORDERLINE-EXCLUDE | yes | status of a test (disabled), not a place in the product (test 2); sibling of frozen flaky-test |
 | a11y-partner | 1 | 3 | BORDERLINE-EXCLUDE | yes | origin marker (reported through an accessibility partner programme), a workflow marker (test 3); area is carried by accessibility labels |
 | service-outage | 1 | 2 | BORDERLINE-EXCLUDE | yes | incident state, not a code area (test 1/2) |
 | ack | 0 | 1 | BORDERLINE-EXCLUDE | yes | acknowledgement state (test 1); 1 event, 0 final issues |
 | on-unit-test | 0 | 14 | BORDERLINE-EXCLUDE | yes | test-pass marker, sibling of frozen on-testplan (test 3) |
-| papercut 🩸 | 0 | 1 | BORDERLINE-EXCLUDE | yes | not a status label, but an emoji spelling variant of ADR-0070-excluded `papercut :drop_of_blood:` (outside the literal rule) |
 | UBB | 183 | 187 | BORDERLINE-KEEP | no | billing programme name; issues are about the billing UI/flow (a code area), though it is also a programme (test 4) |
 | chat-request-failed | 48 | 50 | BORDERLINE-KEEP | no | names a chat failure mode inside the chat subsystem, not a workflow state |
 | chat-infinite-response-loop | 20 | 21 | BORDERLINE-KEEP | no | names a chat failure mode inside the chat subsystem, not a workflow state |
+| performance | 18 | 75 | BORDERLINE-KEEP | no | GG 2026-10-29: a routing category with an owning team, and a gold component in earlier evaluations; kept although the ADR-0070-excluded `perf` is a spelling variant (the two spellings are handled differently on purpose) |
 | chat-perf-regression | 16 | 16 | BORDERLINE-KEEP | no | names a chat subsystem; 'perf-regression' is the symptom, the area is chat (test 2 partial) |
 | model-upgrade | 11 | 12 | BORDERLINE-KEEP | no | model-picker/model-upgrade work names the model subsystem though it is also an initiative (test 4) |
 | chat-rate-limiting | 8 | 9 | BORDERLINE-KEEP | no | names a chat failure mode inside the chat subsystem, not a workflow state |

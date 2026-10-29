@@ -63,3 +63,23 @@ The first three are the likeliest meta labels; the rest look like components.
 - **Map issues with only meta labels to `other`**: rejected; the issue's component is unknown, not "none of the families", and ADR-0070's population
   is "has a non-excluded label". `other` stays reserved for issues whose labels are real components outside the family.
 - **Exclude all observed meta-like labels now** (`recent-regression`, `stable-anomaly`, ...): not decided here; D92.2 names three labels only.
+
+## Addendum 2026-10-29 (GG decision D93): the meta-label rule
+
+Written before any label was reviewed in detail and before any score of the retrained model was looked at.
+
+**Rule (verbatim from GG):** "labels describing an issue's status or workflow rather than the code area it concerns".
+
+**Operational tests.** A label is a meta label (EXCLUDE) if its name or GitHub description says any of:
+
+1. a triage state or triage outcome (needs info, confirmed, under discussion, triaged by a process);
+2. a release or verification status (verified, fixed in a release, insiders/stable-only, regression marker);
+3. a process or bot workflow (stale, duplicate, assigned to a queue, applied by automation, AI-authored or AI-triaged marker);
+4. a time-boxed theme or campaign (a year's plan, an iteration, a one-off initiative);
+5. a candidate or work-queue marker (an issue is a candidate for something, not a place in the product).
+
+A label is a component label (KEEP) if it names a feature, a UI area, a language or language service, an extension, a platform or OS, a subsystem
+or a product programme whose issues are about one code area. A label that matches both a test above and names a code area is BORDERLINE; the
+decision then follows what the label is used for: if removing it from the issue would lose information about *where* the code is, keep it
+(BORDERLINE-KEEP); if it mainly says *when or in what state* the issue is, exclude it (BORDERLINE-EXCLUDE). Every borderline call is listed with its reason
+for review by GG.

@@ -121,6 +121,9 @@ jobs:
           # TRIAGE_CLEAN_REQUEST_BODY=1 (G1, D91): /triage cleans the request body before the
           # classifier and retriever, as their training/index text was cleaned. It was enabled on
           # the service template on 2026-10-29; stating it here keeps a recreated service correct.
+          # D92.1/D92.4/D92.5 (promoted 2026-10-29, revisions 00104/00106/00108): the retrained
+          # vscode classifier, the 2023-26 k8s index and dated resolution evidence. Each loader
+          # fails closed (family_v2, k8s v2) or warns once (evidence) if its artifact is absent.
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image ${{ env.IMAGE }}:${{ github.sha }} \
             --region ${{ env.GCP_REGION }} \
@@ -136,7 +139,7 @@ jobs:
             --startup-probe="httpGet.path=/health,httpGet.port=8080,timeoutSeconds=10,periodSeconds=10,failureThreshold=30" \
             --service-account ${{ env.RUNTIME_SA }} \
             --update-secrets GROQ_API_KEY=groq-api-key:latest,METRICS_TOKEN=metrics-token:latest \
-            --update-env-vars ENVIRONMENT=prod,TRIAGE_CLEAN_REQUEST_BODY=1 \
+            --update-env-vars ENVIRONMENT=prod,TRIAGE_CLEAN_REQUEST_BODY=1,TRIAGE_VSCODE_CLASSIFIER=family_v2,TRIAGE_K8S_INDEX=v2,TRIAGE_RESOLUTION_EVIDENCE=1 \
             --no-traffic \
             --tag=candidate \
             --quiet

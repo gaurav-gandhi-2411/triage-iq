@@ -155,7 +155,8 @@ def load_population(repo: str) -> tuple[pd.DataFrame, dict[str, Any]]:
     d["parent"] = d["primary"].map(parent)
     d["in_family"] = d["parent"].isin(classes)
     d["cls"] = d["parent"].where(d["in_family"], "other")
-    d["body"] = d["body"].fillna("").map(lambda b: clean_text(b)[0])
+    d["body_raw"] = d["body"].fillna("")  # uncleaned issue body, as /triage receives it
+    d["body"] = d["body_raw"].map(lambda b: clean_text(b)[0])
     d["title"] = d["title"].fillna("").str.strip()
     removed["empty_body"] = int((d["body"].str.len() == 0).sum())
     removed["body_gt_prompt_cap_kept"] = int((d["body"].str.len() > PROMPT_BODY_CHARS).sum())
@@ -194,7 +195,8 @@ def to_row(r: pd.Series, repo: str, w: float) -> dict[str, Any]:
     age = (r["scraped_at_max"] - r["created_at"]).total_seconds() / 86400
     return {
         "id": f"{REPOS[repo]['id']}-{int(r['number'])}", "repo": repo, "number": int(r["number"]),
-        "title": r["title"], "body": r["body"], "gold_component": r["cls"], "gold_priority": prio,
+        "title": r["title"], "body": r["body"], "body_raw": r["body_raw"],
+        "gold_component": r["cls"], "gold_priority": prio,
         "actual_resolution_days": days, "created_at": r["created_at"].isoformat(),
         "meta": {
             "stratum": r["stratum"], "weight": w, "primary_label": r["primary"],
@@ -212,8 +214,23 @@ def created_lookup(repo: str) -> dict[int, pd.Timestamp]:
     return lib.created_lookup(train, v2)
 
 
-def freeze(rows: list[dict[str, Any]]) -> dict[str, Any]:
-    """Attach served-index top-K similar_issues (CPU float32); write the k8s query embeddings."""
+def served_index_dir(repo: str) -> Path:
+    """The served similar-issue index of a repo (the freeze default)."""
+    return ROOT / "data" / "models" / f"similar_issue_index_{repo.replace('/', '_')}_bge"
+
+
+def freeze(
+    rows: list[dict[str, Any]],
+    index_dirs: dict[str, Path] | None = None,
+    only_repos: set[str] | None = None,
+    embeddings_out: Path | None = OUT_DIR / "frozen_query_embeddings.npz",
+) -> dict[str, Any]:
+    """Attach top-K similar_issues (CPU float32); write the k8s query embeddings.
+
+    index_dirs maps a repo to the index directory to retrieve from (default: the served index of
+    every repo). only_repos limits the freeze to those repos and leaves other rows untouched.
+    embeddings_out=None skips writing the npz.
+    """
     os.environ["CUDA_VISIBLE_DEVICES"] = ""  # before torch is imported: hardware-independent prompt
     from triage_iq.models.similar_issues import SimilarIssueRetriever  # noqa: PLC0415
     from triage_iq.models.triage import RESOLUTION_EMBEDDINGS_REPOS  # noqa: PLC0415
@@ -225,8 +242,10 @@ def freeze(rows: list[dict[str, Any]]) -> dict[str, Any]:
     info: dict[str, Any] = {"index_sha256": {}, "neighbour_filter": {}}
     for r in rows:
         repo, n = r["repo"], r["number"]
+        if only_repos is not None and repo not in only_repos:
+            continue
         if repo not in dets:
-            idx = ROOT / "data" / "models" / f"similar_issue_index_{repo.replace('/', '_')}_bge"
+            idx = Path((index_dirs or {}).get(repo) or served_index_dir(repo))
             dets[repo] = SimilarIssueRetriever.load(str(idx))
             info["index_sha256"][repo] = sha256_file(idx / "index.faiss")
             created[repo] = created_lookup(repo)
@@ -251,11 +270,11 @@ def freeze(rows: list[dict[str, Any]]) -> dict[str, Any]:
         # targets a new retriever could index: present in derived_v2 and older than the query
         m["indexable_targets"] = [t for t in m["dup_targets"] + m["fix_peers"]
                                   if t in v2[repo] and v2[repo][t] < q_created]  # fmt: skip
-    if emb:
+    if emb and embeddings_out is not None:
         repos = [r for r, v in emb.items() for _ in v]
         nums = [n for v in emb.values() for n, _ in v]
         mat = np.stack([e for v in emb.values() for _, e in v])
-        np.savez(OUT_DIR / "frozen_query_embeddings.npz", repos=np.array(repos),
+        np.savez(embeddings_out, repos=np.array(repos),
                  numbers=np.array(nums, dtype=np.int64), embeddings=mat)  # fmt: skip
     return info
 

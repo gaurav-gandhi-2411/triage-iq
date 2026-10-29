@@ -23,7 +23,7 @@ COMMITTED_KEYS = set(
 
 def _row(**kw: object) -> pd.Series:
     base = {
-        "number": 5, "title": "t", "body": "b", "cls": "sig/node", "stratum": "s", "primary": "p",
+        "number": 5, "title": "t", "body": "b", "body_raw": "B", "cls": "sig/node", "stratum": "s", "primary": "p",
         "parent": "p", "in_family": True, "state": "CLOSED", "labels_final": ["kind/bug"],
         "dup_targets": [], "fix_peers": [], "fix_prs": [], "prio_label": None, "days": 2.0,
         "created_at": pd.Timestamp("2026-02-01T00:00:00Z"),
@@ -36,6 +36,7 @@ def test_to_row_schema_and_priority_sources() -> None:
     r = q.to_row(_row(), "kubernetes/kubernetes", 2.0)
     assert COMMITTED_KEYS - {"similar_issues"} <= set(r)  # same keys as the committed set
     assert r["id"] == "k8s-5" and r["gold_priority"] == "medium"
+    assert r["body"] == "b" and r["body_raw"] == "B"
     assert r["meta"]["gold_priority_source"] == "resolution_inferred"
     lab = q.to_row(_row(prio_label="high"), "kubernetes/kubernetes", 1.0)
     assert lab["gold_priority"] == "high" and lab["meta"]["gold_priority_source"] == "label"
@@ -88,7 +89,10 @@ def test_committed_set_matches_report_and_quotas() -> None:
         rep["design_version"] == "2.1" and rep["supersedes_v1"]["eval_set.jsonl"] == q.V1_SET_SHA256
     )
     assert rep["tokens"]["planning_total_tokens"] == 900_000
-    assert rep["relevance_scoring"]["status"].startswith("UNSCORABLE")
+    # re-frozen for the final configuration (D92.6): k8s on candidate index v2, vscode unchanged
+    assert "UNSCORABLE for ['microsoft/vscode']" in rep["relevance_scoring"]["status"]
+    assert rep["refreeze"]["rows_top_k_changed"] == {REPOS[0]: q.N_PER_REPO}
+    assert rep["freeze"]["index_sha256"][REPOS[0]].startswith("5114e0f0")  # candidate v2
     for repo in REPOS:
         assert rep[repo]["weights"]["kish_n_eff"] <= rep[repo]["weights"]["n"]
 
@@ -132,3 +136,24 @@ def test_committed_set_only_eligible_test_issues() -> None:
 def test_committed_set_is_splitlines_safe() -> None:
     text = (SET_DIR / "eval_set.jsonl").read_text("utf-8")
     assert len(text.splitlines()) == 150
+
+
+def test_committed_set_carries_body_raw_that_cleans_to_body() -> None:
+    from triage_iq.data.preprocess import clean_text
+
+    rows = _rows()
+    assert all(isinstance(r["body_raw"], str) for r in rows)
+    assert all(clean_text(r["body_raw"])[0] == r["body"] for r in rows)
+    rep = json.loads(REPORT.read_text("utf-8"))["refreeze"]["body_raw"]
+    assert sum(v["text_changed"] for v in rep.values()) == sum(
+        r["body_raw"] != r["body"] for r in rows
+    )
+
+
+def test_committed_recording_config_is_the_final_configuration() -> None:
+    from recording_config import CONFIG_FILENAME, RecordingConfig, parse_config
+
+    raw = json.loads((SET_DIR / CONFIG_FILENAME).read_text("utf-8"))
+    assert parse_config(raw) == RecordingConfig(
+        vscode_classifier="family_v2", k8s_index="v2", resolution_evidence=True
+    )

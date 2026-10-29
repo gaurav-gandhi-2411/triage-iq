@@ -74,8 +74,14 @@ RUN pip install --no-cache-dir --no-deps -e .
 # Production model artifacts (populated by CI/CD workflow from GCS)
 # Excludes DistilBERT (12 GB each — not used in production)
 COPY data/models/component_classifier_*.pkl   data/models/
+# vscode family_v2 bundle (D92.1); loaded only when TRIAGE_VSCODE_CLASSIFIER=family_v2.
+COPY data/models/component_classifier_microsoft_vscode_family_v2_2026-10-22.joblib   data/models/
 COPY data/models/similar_issue_index_microsoft_vscode_bge   data/models/similar_issue_index_microsoft_vscode_bge
 COPY data/models/similar_issue_index_kubernetes_kubernetes_bge   data/models/similar_issue_index_kubernetes_kubernetes_bge
+# Candidate k8s index over the 2026 corpus (D92.4) and its resolution evidence (D92.5); each is
+# used only when its flag is set on the revision.
+COPY data/models/similar_issue_index_kubernetes_kubernetes_bge_v2   data/models/similar_issue_index_kubernetes_kubernetes_bge_v2
+COPY data/models/resolution_evidence_kubernetes_kubernetes.parquet   data/models/
 COPY data/models/resolution_predictor_*.pkl   data/models/
 COPY data/models/cqr_conformal_adjustments.json   data/models/
 # Runtime drift check (loader._check_manifest_drift) is a silent no-op without this file; it was

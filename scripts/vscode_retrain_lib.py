@@ -34,6 +34,9 @@ MARGIN = 0.01  # pre-declared: challenger strict top-3 must beat champion by >= 
 NONINF = 0.02  # in-family top-3 may not be worse than champion by more than 2 points (CI lower)
 MIN_HOLDOUT, MIN_TRAIN, MIN_CLASSES = 500, 5000, 20  # sanity floors; below them the CI is noise
 N_BOOT = 2000
+# ADR-0073 (GG D92.2): meta labels (how an issue was produced/triaged, or a theme), not components.
+# Frozen: another exclusion needs a new ADR. Compared lower-case, as taxonomy.is_excluded does.
+RETRAIN_META_EXCLUDE = frozenset({"ai-generated", "ai-triaged", "2026-themes"})
 
 
 @dataclass(frozen=True)
@@ -71,12 +74,17 @@ def assign_split(created: pd.Series, w: Windows) -> pd.Series:
     )
 
 
+def retrain_family(label: str) -> bool:
+    """True for a label that may become a class: ADR-0070 `not_excluded` and not ADR-0073 meta."""
+    return tax.not_excluded(label) and label.lower() not in RETRAIN_META_EXCLUDE
+
+
 def file_sha256(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
 def assemble(derived: Path, w: Windows) -> pd.DataFrame:
-    """Labelled (>= 1 non-excluded label) settled issues in the window, with split and text.
+    """Labelled (>= 1 `retrain_family` label) settled issues in the window, with split and text.
 
     Calibration / holdout rows whose text_hash occurs in an earlier split are dropped (leakage).
     """
@@ -90,7 +98,7 @@ def assemble(derived: Path, w: Windows) -> pd.DataFrame:
     iss = iss.sort_values("number").reset_index(drop=True)
     events = pd.read_parquet(derived / "label_events.parquet")
     events = events[events["number"].isin(iss["number"])]
-    d = cl.per_issue(iss, events, tax.not_excluded)
+    d = cl.per_issue(iss, events, retrain_family)
     d = d.merge(iss[["number", "title", "body"]], on="number")
     d = d[d["final"].map(bool)].reset_index(drop=True)
     d["split"] = assign_split(d["created_at"], w)

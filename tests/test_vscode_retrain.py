@@ -287,3 +287,45 @@ def test_gate_refuses_when_metrics_champion_sha_not_manifest_sha(tmp_path: Path)
     (tmp_path / "metrics.json").write_text(json.dumps(m))
     res = cli.stage_gate(Namespace(out=tmp_path))
     assert res["decision"] == "accept" and res["champion_manifest_sha256"] == "a" * 64
+
+
+# ------------------------------------------------ ADR-0073 meta-label exclusion (D92.2)
+
+META = ("ai-generated", "ai-triaged", "2026-themes")
+
+
+def test_meta_exclusion_is_exactly_the_three_frozen_labels() -> None:
+    assert frozenset(META) == rl.RETRAIN_META_EXCLUDE
+    assert all(not rl.retrain_family(x) for x in (*META, "AI-Generated", "2026-THEMES"))
+    for ok in ("git", "terminal-input", "recent-regression", "ai-generated-x"):
+        assert rl.retrain_family(ok)  # other labels unaffected, incl. near-names
+    assert not rl.retrain_family("bug")  # the ADR-0070 list still applies
+
+
+def test_meta_labels_never_become_classes_and_meta_only_issues_are_dropped(
+    tmp_path: Path,
+) -> None:
+    w = rl.make_windows(pd.Timestamp("2026-10-22"))
+    t0 = w.train_start + pd.Timedelta(days=1)
+    rows = []  # (labels): 35 git+meta, 35 meta-only (would reach >= 30 as a class), 35 terminal
+    for i in range(35):
+        rows.append((["git", META[i % 3]], f"g{i}"))
+        rows.append(([META[i % 3], META[(i + 1) % 3]], f"m{i}"))
+        rows.append((["terminal-input"], f"t{i}"))
+    rows.append((["AI-Generated"], "case"))
+    n = len(rows)
+    pd.DataFrame({
+        "number": range(1, n + 1), "created_at": [t0 + pd.Timedelta(minutes=i) for i in range(n)],
+        "title": "t", "body": "b", "labels_final": [r[0] for r in rows],
+        "labels_t72h": [r[0] for r in rows], "text_hash": [r[1] for r in rows],
+    }).to_parquet(tmp_path / "issues.parquet")  # fmt: skip
+    pd.DataFrame({
+        "number": [1], "ts": [t0], "action": ["labeled"], "label": ["git"], "actor": ["u"],
+    }).to_parquet(tmp_path / "label_events.parquet")  # fmt: skip
+    d = rl.assemble(tmp_path, w)
+    assert len(d) == 70  # the 36 meta-only issues (35 + the upper-case one) have no family
+    assert all(not (set(s) & set(META)) for s in d["final"])
+    assert {frozenset(s) for s in d["final"]} == {frozenset({"git"}), frozenset({"terminal-input"})}
+    classes = rl.regenerate_classes(d)
+    assert set(META).isdisjoint(classes)
+    assert "git" in classes and classes[-1] == "other"

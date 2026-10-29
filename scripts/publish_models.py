@@ -60,6 +60,9 @@ ARTIFACTS: list[str] = [
     "data/models/similar_issue_index_microsoft_vscode_bge/meta.pkl",
     "data/models/similar_issue_index_kubernetes_kubernetes_bge/index.faiss",
     "data/models/similar_issue_index_kubernetes_kubernetes_bge/meta.pkl",
+    "data/models/similar_issue_index_kubernetes_kubernetes_bge_v2/index.faiss",
+    "data/models/similar_issue_index_kubernetes_kubernetes_bge_v2/meta.pkl",
+    "data/models/resolution_evidence_kubernetes_kubernetes.parquet",
     "data/processed/microsoft_vscode_temporal_train.parquet",
     "data/processed/kubernetes_kubernetes_temporal_train.parquet",
 ]

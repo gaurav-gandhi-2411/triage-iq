@@ -37,8 +37,8 @@ with fp16 master weights was broken (R11). Gradient checkpointing; AdamW, weight
 False in-batch negatives are masked: duplicate pairs form connected components (a canonical has
 several duplicates; a source can have several canonicals), and any candidate in the same component
 as the anchor, other than its own positive, is removed from the softmax. Without this, in-batch
-collisions would be common: 2,063 sources share 1,156 canonicals, so
-in-batch collisions would be common.
+collisions would be common: 2,063 sources share 1,156 canonicals, so a random batch often holds
+two pairs of one group.
 
 ## Data (train only, nothing else)
 

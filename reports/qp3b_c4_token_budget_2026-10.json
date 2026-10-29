@@ -1,0 +1,2580 @@
+{
+ "n_rows": 150,
+ "n_counted": 150,
+ "degraded": 0,
+ "pooled_150": {
+  "estimator": {
+   "v2": {
+    "n": 150,
+    "mean": 5996.7,
+    "median": 6003.0,
+    "p95": 6183.3
+   },
+   "v3": {
+    "n": 150,
+    "mean": 6180.8,
+    "median": 6161.5,
+    "p95": 6574.8
+   },
+   "ratio_v3_over_v2_mean": 1.0307
+  },
+  "cl100k_raw": {
+   "v2": {
+    "n": 150,
+    "mean": 4025.7,
+    "median": 4030.0,
+    "p95": 4151.2
+   },
+   "v3": {
+    "n": 150,
+    "mean": 4149.3,
+    "median": 4136.5,
+    "p95": 4413.9
+   },
+   "ratio_v3_over_v2_mean": 1.0307
+  },
+  "o200k_harmony": {
+   "v2": {
+    "n": 150,
+    "mean": 4045.5,
+    "median": 4050.5,
+    "p95": 4169.8
+   },
+   "v3": {
+    "n": 150,
+    "mean": 4169.7,
+    "median": 4153.5,
+    "p95": 4442.8
+   },
+   "ratio_v3_over_v2_mean": 1.0307
+  }
+ },
+ "k8s_75": {
+  "estimator": {
+   "v2": {
+    "n": 75,
+    "mean": 6034.1,
+    "median": 6015.0,
+    "p95": 6192.0
+   },
+   "v3": {
+    "n": 75,
+    "mean": 6402.2,
+    "median": 6428.0,
+    "p95": 6641.4
+   },
+   "ratio_v3_over_v2_mean": 1.061
+  },
+  "cl100k_raw": {
+   "v2": {
+    "n": 75,
+    "mean": 4050.9,
+    "median": 4038.0,
+    "p95": 4156.9
+   },
+   "v3": {
+    "n": 75,
+    "mean": 4297.9,
+    "median": 4315.0,
+    "p95": 4458.6
+   },
+   "ratio_v3_over_v2_mean": 1.061
+  },
+  "o200k_harmony": {
+   "v2": {
+    "n": 75,
+    "mean": 4073.9,
+    "median": 4061.0,
+    "p95": 4181.9
+   },
+   "v3": {
+    "n": 75,
+    "mean": 4322.3,
+    "median": 4333.0,
+    "p95": 4484.7
+   },
+   "ratio_v3_over_v2_mean": 1.061
+  }
+ },
+ "vscode_75": {
+  "estimator": {
+   "v2": {
+    "n": 75,
+    "mean": 5959.3,
+    "median": 5972.0,
+    "p95": 6181.8
+   },
+   "v3": {
+    "n": 75,
+    "mean": 5959.3,
+    "median": 5972.0,
+    "p95": 6181.8
+   },
+   "ratio_v3_over_v2_mean": 1.0
+  },
+  "cl100k_raw": {
+   "v2": {
+    "n": 75,
+    "mean": 4000.6,
+    "median": 4009.0,
+    "p95": 4150.2
+   },
+   "v3": {
+    "n": 75,
+    "mean": 4000.6,
+    "median": 4009.0,
+    "p95": 4150.2
+   },
+   "ratio_v3_over_v2_mean": 1.0
+  },
+  "o200k_harmony": {
+   "v2": {
+    "n": 75,
+    "mean": 4017.1,
+    "median": 4026.0,
+    "p95": 4165.6
+   },
+   "v3": {
+    "n": 75,
+    "mean": 4017.1,
+    "median": 4026.0,
+    "p95": 4165.6
+   },
+   "ratio_v3_over_v2_mean": 1.0
+  }
+ },
+ "c4": {
+  "threshold_ratio": 1.15,
+  "ratio_pooled_150_estimator": 1.0307,
+  "ratio_k8s_only_estimator": 1.061,
+  "passed_pooled": true,
+  "passed_k8s_only": true,
+  "added_tokens_per_issue_pooled_o200k_harmony": 124.2,
+  "added_tokens_per_issue_pooled_estimator": 184.1,
+  "planning_tokens_per_issue": 6000,
+  "projected_rerecord_total_tokens_v3": 918630,
+  "projected_rerecord_total_tokens_v3_estimator_delta": 927615,
+  "plan_total_tokens": 908000,
+  "fits_plan": false,
+  "orchestrator_decision": "2026-10-23: a projected total slightly above the ~908K planning figure (same 6 ledger days at 160K/day) is accepted; the pre-registered ratio threshold is the gate and it passes."
+ },
+ "evidence": {
+  "k8s_rows_with_block": 70,
+  "k8s_rows": 75,
+  "mean_block_chars_when_present": 534.3,
+  "max_block_chars": 883
+ },
+ "provenance": {
+  "script": "scripts/qp3b_c4_tokens.py",
+  "git_head_at_run": "4e1592282ea8583256db372e818453d093358c4b",
+  "tokenizer_primary": "triage_iq.models.triage._estimate_prompt_tokens (tiktoken cl100k x 1.4896)",
+  "priority_model": "P4 from D:\\triageiq-data\\models\\kubernetes__kubernetes\\priority\\p4 (in memory)",
+  "eval_set_sha256": "c8a9c061c75005f73e3bf02f555f790cd00300acc85df1ff83759ba192a53693",
+  "candidate_index_faiss_sha256": "5114e0f08ce1a4b734d72c8572e43e67ad05ea4a5207af909ffa0973c184a6a2",
+  "evidence_sha256": "eb72b4719ef88c54fb70eec15dfb140e5f293f636b20dbcfaae0ea5cb4607033",
+  "models_dir": "C:\\Users\\gaura\\ml-projects\\triage-iq-wt-served\\data\\models",
+  "caveat": "candidate artifacts (nothing served); retrieval = candidate index filtered to neighbours created before the query; vscode rows use the set's frozen neighbours (v3 == v2 there); token counts are estimates of Groq's prompt_tokens, not Groq-reported"
+ },
+ "rows": [
+  {
+   "id": "k8s-136035",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5906,
+    "cl100k_raw": 3965,
+    "o200k_harmony": 3979
+   },
+   "v3": {
+    "estimator": 6149,
+    "cl100k_raw": 4128,
+    "o200k_harmony": 4144
+   },
+   "evidence_chars": 171,
+   "evidence_neighbours": 1
+  },
+  {
+   "id": "k8s-136107",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5967,
+    "cl100k_raw": 4006,
+    "o200k_harmony": 4032
+   },
+   "v3": {
+    "estimator": 6294,
+    "cl100k_raw": 4225,
+    "o200k_harmony": 4252
+   },
+   "evidence_chars": 393,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-136306",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5881,
+    "cl100k_raw": 3948,
+    "o200k_harmony": 3979
+   },
+   "v3": {
+    "estimator": 6003,
+    "cl100k_raw": 4030,
+    "o200k_harmony": 4061
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "k8s-136417",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5914,
+    "cl100k_raw": 3970,
+    "o200k_harmony": 3989
+   },
+   "v3": {
+    "estimator": 6247,
+    "cl100k_raw": 4194,
+    "o200k_harmony": 4216
+   },
+   "evidence_chars": 392,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-136460",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6009,
+    "cl100k_raw": 4034,
+    "o200k_harmony": 4053
+   },
+   "v3": {
+    "estimator": 6438,
+    "cl100k_raw": 4322,
+    "o200k_harmony": 4344
+   },
+   "evidence_chars": 693,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-136631",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5890,
+    "cl100k_raw": 3954,
+    "o200k_harmony": 3974
+   },
+   "v3": {
+    "estimator": 6383,
+    "cl100k_raw": 4285,
+    "o200k_harmony": 4304
+   },
+   "evidence_chars": 848,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-136850",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6000,
+    "cl100k_raw": 4028,
+    "o200k_harmony": 4055
+   },
+   "v3": {
+    "estimator": 6243,
+    "cl100k_raw": 4191,
+    "o200k_harmony": 4219
+   },
+   "evidence_chars": 156,
+   "evidence_neighbours": 1
+  },
+  {
+   "id": "k8s-136870",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5921,
+    "cl100k_raw": 3975,
+    "o200k_harmony": 4005
+   },
+   "v3": {
+    "estimator": 6043,
+    "cl100k_raw": 4057,
+    "o200k_harmony": 4087
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "k8s-136918",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6025,
+    "cl100k_raw": 4045,
+    "o200k_harmony": 4066
+   },
+   "v3": {
+    "estimator": 6471,
+    "cl100k_raw": 4344,
+    "o200k_harmony": 4365
+   },
+   "evidence_chars": 676,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-136950",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6003,
+    "cl100k_raw": 4030,
+    "o200k_harmony": 4058
+   },
+   "v3": {
+    "estimator": 6289,
+    "cl100k_raw": 4222,
+    "o200k_harmony": 4249
+   },
+   "evidence_chars": 340,
+   "evidence_neighbours": 1
+  },
+  {
+   "id": "k8s-137117",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6101,
+    "cl100k_raw": 4096,
+    "o200k_harmony": 4107
+   },
+   "v3": {
+    "estimator": 6481,
+    "cl100k_raw": 4351,
+    "o200k_harmony": 4361
+   },
+   "evidence_chars": 527,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-137158",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6000,
+    "cl100k_raw": 4028,
+    "o200k_harmony": 4045
+   },
+   "v3": {
+    "estimator": 6422,
+    "cl100k_raw": 4311,
+    "o200k_harmony": 4328
+   },
+   "evidence_chars": 612,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-137184",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6118,
+    "cl100k_raw": 4107,
+    "o200k_harmony": 4137
+   },
+   "v3": {
+    "estimator": 6605,
+    "cl100k_raw": 4434,
+    "o200k_harmony": 4465
+   },
+   "evidence_chars": 786,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-137520",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6014,
+    "cl100k_raw": 4037,
+    "o200k_harmony": 4058
+   },
+   "v3": {
+    "estimator": 6526,
+    "cl100k_raw": 4381,
+    "o200k_harmony": 4402
+   },
+   "evidence_chars": 841,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-137556",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6107,
+    "cl100k_raw": 4100,
+    "o200k_harmony": 4125
+   },
+   "v3": {
+    "estimator": 6513,
+    "cl100k_raw": 4372,
+    "o200k_harmony": 4399
+   },
+   "evidence_chars": 586,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-137723",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5930,
+    "cl100k_raw": 3981,
+    "o200k_harmony": 4004
+   },
+   "v3": {
+    "estimator": 6305,
+    "cl100k_raw": 4233,
+    "o200k_harmony": 4261
+   },
+   "evidence_chars": 448,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-137729",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6167,
+    "cl100k_raw": 4140,
+    "o200k_harmony": 4152
+   },
+   "v3": {
+    "estimator": 6504,
+    "cl100k_raw": 4366,
+    "o200k_harmony": 4381
+   },
+   "evidence_chars": 341,
+   "evidence_neighbours": 1
+  },
+  {
+   "id": "k8s-137826",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6098,
+    "cl100k_raw": 4094,
+    "o200k_harmony": 4115
+   },
+   "v3": {
+    "estimator": 6457,
+    "cl100k_raw": 4335,
+    "o200k_harmony": 4361
+   },
+   "evidence_chars": 460,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-137834",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6019,
+    "cl100k_raw": 4041,
+    "o200k_harmony": 4061
+   },
+   "v3": {
+    "estimator": 6451,
+    "cl100k_raw": 4331,
+    "o200k_harmony": 4350
+   },
+   "evidence_chars": 695,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-137900",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6003,
+    "cl100k_raw": 4030,
+    "o200k_harmony": 4060
+   },
+   "v3": {
+    "estimator": 6311,
+    "cl100k_raw": 4237,
+    "o200k_harmony": 4268
+   },
+   "evidence_chars": 289,
+   "evidence_neighbours": 1
+  },
+  {
+   "id": "k8s-138011",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6177,
+    "cl100k_raw": 4147,
+    "o200k_harmony": 4172
+   },
+   "v3": {
+    "estimator": 6498,
+    "cl100k_raw": 4362,
+    "o200k_harmony": 4390
+   },
+   "evidence_chars": 372,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-138040",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5951,
+    "cl100k_raw": 3995,
+    "o200k_harmony": 4020
+   },
+   "v3": {
+    "estimator": 6454,
+    "cl100k_raw": 4333,
+    "o200k_harmony": 4363
+   },
+   "evidence_chars": 881,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-138325",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5899,
+    "cl100k_raw": 3960,
+    "o200k_harmony": 3985
+   },
+   "v3": {
+    "estimator": 6271,
+    "cl100k_raw": 4210,
+    "o200k_harmony": 4236
+   },
+   "evidence_chars": 558,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-138374",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6024,
+    "cl100k_raw": 4044,
+    "o200k_harmony": 4064
+   },
+   "v3": {
+    "estimator": 6483,
+    "cl100k_raw": 4352,
+    "o200k_harmony": 4375
+   },
+   "evidence_chars": 826,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-138398",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6270,
+    "cl100k_raw": 4209,
+    "o200k_harmony": 4211
+   },
+   "v3": {
+    "estimator": 6712,
+    "cl100k_raw": 4506,
+    "o200k_harmony": 4511
+   },
+   "evidence_chars": 574,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-138402",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6082,
+    "cl100k_raw": 4083,
+    "o200k_harmony": 4105
+   },
+   "v3": {
+    "estimator": 6472,
+    "cl100k_raw": 4345,
+    "o200k_harmony": 4369
+   },
+   "evidence_chars": 542,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-138424",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5927,
+    "cl100k_raw": 3979,
+    "o200k_harmony": 4002
+   },
+   "v3": {
+    "estimator": 6049,
+    "cl100k_raw": 4061,
+    "o200k_harmony": 4084
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "k8s-138494",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6014,
+    "cl100k_raw": 4037,
+    "o200k_harmony": 4074
+   },
+   "v3": {
+    "estimator": 6320,
+    "cl100k_raw": 4243,
+    "o200k_harmony": 4284
+   },
+   "evidence_chars": 341,
+   "evidence_neighbours": 1
+  },
+  {
+   "id": "k8s-138575",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6019,
+    "cl100k_raw": 4041,
+    "o200k_harmony": 4064
+   },
+   "v3": {
+    "estimator": 6513,
+    "cl100k_raw": 4372,
+    "o200k_harmony": 4403
+   },
+   "evidence_chars": 719,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-138595",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6089,
+    "cl100k_raw": 4088,
+    "o200k_harmony": 4104
+   },
+   "v3": {
+    "estimator": 6550,
+    "cl100k_raw": 4397,
+    "o200k_harmony": 4412
+   },
+   "evidence_chars": 732,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-138679",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6003,
+    "cl100k_raw": 4030,
+    "o200k_harmony": 4059
+   },
+   "v3": {
+    "estimator": 6462,
+    "cl100k_raw": 4338,
+    "o200k_harmony": 4367
+   },
+   "evidence_chars": 819,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-138812",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5878,
+    "cl100k_raw": 3946,
+    "o200k_harmony": 3971
+   },
+   "v3": {
+    "estimator": 6271,
+    "cl100k_raw": 4210,
+    "o200k_harmony": 4234
+   },
+   "evidence_chars": 485,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-138815",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5985,
+    "cl100k_raw": 4018,
+    "o200k_harmony": 4040
+   },
+   "v3": {
+    "estimator": 6107,
+    "cl100k_raw": 4100,
+    "o200k_harmony": 4122
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "k8s-138962",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6112,
+    "cl100k_raw": 4103,
+    "o200k_harmony": 4128
+   },
+   "v3": {
+    "estimator": 6416,
+    "cl100k_raw": 4307,
+    "o200k_harmony": 4332
+   },
+   "evidence_chars": 317,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-139191",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6089,
+    "cl100k_raw": 4088,
+    "o200k_harmony": 4109
+   },
+   "v3": {
+    "estimator": 6474,
+    "cl100k_raw": 4346,
+    "o200k_harmony": 4368
+   },
+   "evidence_chars": 459,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-139284",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5996,
+    "cl100k_raw": 4025,
+    "o200k_harmony": 4046
+   },
+   "v3": {
+    "estimator": 6375,
+    "cl100k_raw": 4280,
+    "o200k_harmony": 4302
+   },
+   "evidence_chars": 499,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-139428",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5984,
+    "cl100k_raw": 4017,
+    "o200k_harmony": 4040
+   },
+   "v3": {
+    "estimator": 6486,
+    "cl100k_raw": 4354,
+    "o200k_harmony": 4384
+   },
+   "evidence_chars": 882,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-139434",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5955,
+    "cl100k_raw": 3998,
+    "o200k_harmony": 4022
+   },
+   "v3": {
+    "estimator": 6267,
+    "cl100k_raw": 4207,
+    "o200k_harmony": 4232
+   },
+   "evidence_chars": 384,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-139442",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6122,
+    "cl100k_raw": 4110,
+    "o200k_harmony": 4129
+   },
+   "v3": {
+    "estimator": 6539,
+    "cl100k_raw": 4390,
+    "o200k_harmony": 4410
+   },
+   "evidence_chars": 569,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-139488",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6002,
+    "cl100k_raw": 4029,
+    "o200k_harmony": 4061
+   },
+   "v3": {
+    "estimator": 6124,
+    "cl100k_raw": 4111,
+    "o200k_harmony": 4143
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "k8s-139535",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5999,
+    "cl100k_raw": 4027,
+    "o200k_harmony": 4043
+   },
+   "v3": {
+    "estimator": 6270,
+    "cl100k_raw": 4209,
+    "o200k_harmony": 4225
+   },
+   "evidence_chars": 228,
+   "evidence_neighbours": 1
+  },
+  {
+   "id": "k8s-140025",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5981,
+    "cl100k_raw": 4015,
+    "o200k_harmony": 4030
+   },
+   "v3": {
+    "estimator": 6371,
+    "cl100k_raw": 4277,
+    "o200k_harmony": 4292
+   },
+   "evidence_chars": 612,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-140069",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6040,
+    "cl100k_raw": 4055,
+    "o200k_harmony": 4077
+   },
+   "v3": {
+    "estimator": 6538,
+    "cl100k_raw": 4389,
+    "o200k_harmony": 4410
+   },
+   "evidence_chars": 872,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-140174",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5996,
+    "cl100k_raw": 4025,
+    "o200k_harmony": 4044
+   },
+   "v3": {
+    "estimator": 6291,
+    "cl100k_raw": 4223,
+    "o200k_harmony": 4242
+   },
+   "evidence_chars": 340,
+   "evidence_neighbours": 1
+  },
+  {
+   "id": "k8s-140392",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6121,
+    "cl100k_raw": 4109,
+    "o200k_harmony": 4139
+   },
+   "v3": {
+    "estimator": 6523,
+    "cl100k_raw": 4379,
+    "o200k_harmony": 4407
+   },
+   "evidence_chars": 612,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-140465",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6014,
+    "cl100k_raw": 4037,
+    "o200k_harmony": 4058
+   },
+   "v3": {
+    "estimator": 6329,
+    "cl100k_raw": 4249,
+    "o200k_harmony": 4271
+   },
+   "evidence_chars": 341,
+   "evidence_neighbours": 1
+  },
+  {
+   "id": "k8s-140777",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6125,
+    "cl100k_raw": 4112,
+    "o200k_harmony": 4134
+   },
+   "v3": {
+    "estimator": 6457,
+    "cl100k_raw": 4335,
+    "o200k_harmony": 4355
+   },
+   "evidence_chars": 392,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-140869",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5966,
+    "cl100k_raw": 4005,
+    "o200k_harmony": 4038
+   },
+   "v3": {
+    "estimator": 6316,
+    "cl100k_raw": 4240,
+    "o200k_harmony": 4274
+   },
+   "evidence_chars": 468,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-140900",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6066,
+    "cl100k_raw": 4072,
+    "o200k_harmony": 4100
+   },
+   "v3": {
+    "estimator": 6451,
+    "cl100k_raw": 4331,
+    "o200k_harmony": 4361
+   },
+   "evidence_chars": 523,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-140940",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5888,
+    "cl100k_raw": 3953,
+    "o200k_harmony": 3977
+   },
+   "v3": {
+    "estimator": 6335,
+    "cl100k_raw": 4253,
+    "o200k_harmony": 4283
+   },
+   "evidence_chars": 740,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-140956",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6015,
+    "cl100k_raw": 4038,
+    "o200k_harmony": 4055
+   },
+   "v3": {
+    "estimator": 6441,
+    "cl100k_raw": 4324,
+    "o200k_harmony": 4343
+   },
+   "evidence_chars": 725,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-141074",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6116,
+    "cl100k_raw": 4106,
+    "o200k_harmony": 4127
+   },
+   "v3": {
+    "estimator": 6380,
+    "cl100k_raw": 4283,
+    "o200k_harmony": 4306
+   },
+   "evidence_chars": 216,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-141080",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6258,
+    "cl100k_raw": 4201,
+    "o200k_harmony": 4230
+   },
+   "v3": {
+    "estimator": 6621,
+    "cl100k_raw": 4445,
+    "o200k_harmony": 4479
+   },
+   "evidence_chars": 449,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-141085",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6084,
+    "cl100k_raw": 4084,
+    "o200k_harmony": 4117
+   },
+   "v3": {
+    "estimator": 6428,
+    "cl100k_raw": 4315,
+    "o200k_harmony": 4348
+   },
+   "evidence_chars": 388,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-141121",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5906,
+    "cl100k_raw": 3965,
+    "o200k_harmony": 3987
+   },
+   "v3": {
+    "estimator": 6268,
+    "cl100k_raw": 4208,
+    "o200k_harmony": 4231
+   },
+   "evidence_chars": 469,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-141230",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6227,
+    "cl100k_raw": 4180,
+    "o200k_harmony": 4205
+   },
+   "v3": {
+    "estimator": 6678,
+    "cl100k_raw": 4483,
+    "o200k_harmony": 4513
+   },
+   "evidence_chars": 717,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-141402",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6128,
+    "cl100k_raw": 4114,
+    "o200k_harmony": 4139
+   },
+   "v3": {
+    "estimator": 6410,
+    "cl100k_raw": 4303,
+    "o200k_harmony": 4330
+   },
+   "evidence_chars": 267,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-141417",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6171,
+    "cl100k_raw": 4143,
+    "o200k_harmony": 4165
+   },
+   "v3": {
+    "estimator": 6560,
+    "cl100k_raw": 4404,
+    "o200k_harmony": 4429
+   },
+   "evidence_chars": 497,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-141469",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5891,
+    "cl100k_raw": 3955,
+    "o200k_harmony": 3975
+   },
+   "v3": {
+    "estimator": 6311,
+    "cl100k_raw": 4237,
+    "o200k_harmony": 4257
+   },
+   "evidence_chars": 611,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-141614",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6134,
+    "cl100k_raw": 4118,
+    "o200k_harmony": 4143
+   },
+   "v3": {
+    "estimator": 6675,
+    "cl100k_raw": 4481,
+    "o200k_harmony": 4498
+   },
+   "evidence_chars": 881,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-141620",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6028,
+    "cl100k_raw": 4047,
+    "o200k_harmony": 4067
+   },
+   "v3": {
+    "estimator": 6337,
+    "cl100k_raw": 4254,
+    "o200k_harmony": 4273
+   },
+   "evidence_chars": 341,
+   "evidence_neighbours": 1
+  },
+  {
+   "id": "k8s-141631",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5929,
+    "cl100k_raw": 3980,
+    "o200k_harmony": 4006
+   },
+   "v3": {
+    "estimator": 6234,
+    "cl100k_raw": 4185,
+    "o200k_harmony": 4211
+   },
+   "evidence_chars": 313,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-141731",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6268,
+    "cl100k_raw": 4208,
+    "o200k_harmony": 4249
+   },
+   "v3": {
+    "estimator": 6693,
+    "cl100k_raw": 4493,
+    "o200k_harmony": 4537
+   },
+   "evidence_chars": 597,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-141819",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5975,
+    "cl100k_raw": 4011,
+    "o200k_harmony": 4036
+   },
+   "v3": {
+    "estimator": 6273,
+    "cl100k_raw": 4211,
+    "o200k_harmony": 4235
+   },
+   "evidence_chars": 265,
+   "evidence_neighbours": 1
+  },
+  {
+   "id": "k8s-141841",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5963,
+    "cl100k_raw": 4003,
+    "o200k_harmony": 4024
+   },
+   "v3": {
+    "estimator": 6367,
+    "cl100k_raw": 4274,
+    "o200k_harmony": 4295
+   },
+   "evidence_chars": 647,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-141853",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5994,
+    "cl100k_raw": 4024,
+    "o200k_harmony": 4041
+   },
+   "v3": {
+    "estimator": 6325,
+    "cl100k_raw": 4246,
+    "o200k_harmony": 4263
+   },
+   "evidence_chars": 414,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-141974",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6155,
+    "cl100k_raw": 4132,
+    "o200k_harmony": 4159
+   },
+   "v3": {
+    "estimator": 6587,
+    "cl100k_raw": 4422,
+    "o200k_harmony": 4454
+   },
+   "evidence_chars": 612,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-141988",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6084,
+    "cl100k_raw": 4084,
+    "o200k_harmony": 4102
+   },
+   "v3": {
+    "estimator": 6429,
+    "cl100k_raw": 4316,
+    "o200k_harmony": 4333
+   },
+   "evidence_chars": 407,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-142024",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 5972,
+    "cl100k_raw": 4009,
+    "o200k_harmony": 4031
+   },
+   "v3": {
+    "estimator": 6358,
+    "cl100k_raw": 4268,
+    "o200k_harmony": 4289
+   },
+   "evidence_chars": 591,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-142274",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6070,
+    "cl100k_raw": 4075,
+    "o200k_harmony": 4102
+   },
+   "v3": {
+    "estimator": 6511,
+    "cl100k_raw": 4371,
+    "o200k_harmony": 4402
+   },
+   "evidence_chars": 676,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-142370",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6036,
+    "cl100k_raw": 4052,
+    "o200k_harmony": 4081
+   },
+   "v3": {
+    "estimator": 6367,
+    "cl100k_raw": 4274,
+    "o200k_harmony": 4304
+   },
+   "evidence_chars": 461,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-142818",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6060,
+    "cl100k_raw": 4068,
+    "o200k_harmony": 4083
+   },
+   "v3": {
+    "estimator": 6447,
+    "cl100k_raw": 4328,
+    "o200k_harmony": 4345
+   },
+   "evidence_chars": 612,
+   "evidence_neighbours": 2
+  },
+  {
+   "id": "k8s-143039",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6159,
+    "cl100k_raw": 4135,
+    "o200k_harmony": 4153
+   },
+   "v3": {
+    "estimator": 6526,
+    "cl100k_raw": 4381,
+    "o200k_harmony": 4401
+   },
+   "evidence_chars": 489,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-143080",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6060,
+    "cl100k_raw": 4068,
+    "o200k_harmony": 4101
+   },
+   "v3": {
+    "estimator": 6454,
+    "cl100k_raw": 4333,
+    "o200k_harmony": 4368
+   },
+   "evidence_chars": 532,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "k8s-143136",
+   "repo": "kubernetes/kubernetes",
+   "v2": {
+    "estimator": 6030,
+    "cl100k_raw": 4048,
+    "o200k_harmony": 4067
+   },
+   "v3": {
+    "estimator": 6627,
+    "cl100k_raw": 4449,
+    "o200k_harmony": 4472
+   },
+   "evidence_chars": 883,
+   "evidence_neighbours": 3
+  },
+  {
+   "id": "vscode-286409",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6131,
+    "cl100k_raw": 4116,
+    "o200k_harmony": 4136
+   },
+   "v3": {
+    "estimator": 6131,
+    "cl100k_raw": 4116,
+    "o200k_harmony": 4136
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-287867",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5820,
+    "cl100k_raw": 3907,
+    "o200k_harmony": 3923
+   },
+   "v3": {
+    "estimator": 5820,
+    "cl100k_raw": 3907,
+    "o200k_harmony": 3923
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-288912",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5789,
+    "cl100k_raw": 3886,
+    "o200k_harmony": 3903
+   },
+   "v3": {
+    "estimator": 5789,
+    "cl100k_raw": 3886,
+    "o200k_harmony": 3903
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-289169",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5780,
+    "cl100k_raw": 3880,
+    "o200k_harmony": 3895
+   },
+   "v3": {
+    "estimator": 5780,
+    "cl100k_raw": 3880,
+    "o200k_harmony": 3895
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-289890",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5714,
+    "cl100k_raw": 3836,
+    "o200k_harmony": 3853
+   },
+   "v3": {
+    "estimator": 5714,
+    "cl100k_raw": 3836,
+    "o200k_harmony": 3853
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-290754",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5787,
+    "cl100k_raw": 3885,
+    "o200k_harmony": 3894
+   },
+   "v3": {
+    "estimator": 5787,
+    "cl100k_raw": 3885,
+    "o200k_harmony": 3894
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-290781",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5762,
+    "cl100k_raw": 3868,
+    "o200k_harmony": 3885
+   },
+   "v3": {
+    "estimator": 5762,
+    "cl100k_raw": 3868,
+    "o200k_harmony": 3885
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-291084",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5775,
+    "cl100k_raw": 3877,
+    "o200k_harmony": 3894
+   },
+   "v3": {
+    "estimator": 5775,
+    "cl100k_raw": 3877,
+    "o200k_harmony": 3894
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-291503",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5860,
+    "cl100k_raw": 3934,
+    "o200k_harmony": 3952
+   },
+   "v3": {
+    "estimator": 5860,
+    "cl100k_raw": 3934,
+    "o200k_harmony": 3952
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-292452",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5747,
+    "cl100k_raw": 3858,
+    "o200k_harmony": 3871
+   },
+   "v3": {
+    "estimator": 5747,
+    "cl100k_raw": 3858,
+    "o200k_harmony": 3871
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-295207",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6180,
+    "cl100k_raw": 4149,
+    "o200k_harmony": 4167
+   },
+   "v3": {
+    "estimator": 6180,
+    "cl100k_raw": 4149,
+    "o200k_harmony": 4167
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-296234",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6005,
+    "cl100k_raw": 4031,
+    "o200k_harmony": 4048
+   },
+   "v3": {
+    "estimator": 6005,
+    "cl100k_raw": 4031,
+    "o200k_harmony": 4048
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-297457",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6024,
+    "cl100k_raw": 4044,
+    "o200k_harmony": 4060
+   },
+   "v3": {
+    "estimator": 6024,
+    "cl100k_raw": 4044,
+    "o200k_harmony": 4060
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-298284",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6151,
+    "cl100k_raw": 4129,
+    "o200k_harmony": 4149
+   },
+   "v3": {
+    "estimator": 6151,
+    "cl100k_raw": 4129,
+    "o200k_harmony": 4149
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-298890",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6046,
+    "cl100k_raw": 4059,
+    "o200k_harmony": 4077
+   },
+   "v3": {
+    "estimator": 6046,
+    "cl100k_raw": 4059,
+    "o200k_harmony": 4077
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-299116",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5903,
+    "cl100k_raw": 3963,
+    "o200k_harmony": 3981
+   },
+   "v3": {
+    "estimator": 5903,
+    "cl100k_raw": 3963,
+    "o200k_harmony": 3981
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-299787",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6022,
+    "cl100k_raw": 4043,
+    "o200k_harmony": 4062
+   },
+   "v3": {
+    "estimator": 6022,
+    "cl100k_raw": 4043,
+    "o200k_harmony": 4062
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-300188",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6164,
+    "cl100k_raw": 4138,
+    "o200k_harmony": 4158
+   },
+   "v3": {
+    "estimator": 6164,
+    "cl100k_raw": 4138,
+    "o200k_harmony": 4158
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-301149",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6064,
+    "cl100k_raw": 4071,
+    "o200k_harmony": 4088
+   },
+   "v3": {
+    "estimator": 6064,
+    "cl100k_raw": 4071,
+    "o200k_harmony": 4088
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-302236",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5835,
+    "cl100k_raw": 3917,
+    "o200k_harmony": 3935
+   },
+   "v3": {
+    "estimator": 5835,
+    "cl100k_raw": 3917,
+    "o200k_harmony": 3935
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-303848",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5973,
+    "cl100k_raw": 4010,
+    "o200k_harmony": 4023
+   },
+   "v3": {
+    "estimator": 5973,
+    "cl100k_raw": 4010,
+    "o200k_harmony": 4023
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-304116",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6100,
+    "cl100k_raw": 4095,
+    "o200k_harmony": 4109
+   },
+   "v3": {
+    "estimator": 6100,
+    "cl100k_raw": 4095,
+    "o200k_harmony": 4109
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-304132",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5996,
+    "cl100k_raw": 4025,
+    "o200k_harmony": 4040
+   },
+   "v3": {
+    "estimator": 5996,
+    "cl100k_raw": 4025,
+    "o200k_harmony": 4040
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-304440",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5723,
+    "cl100k_raw": 3842,
+    "o200k_harmony": 3857
+   },
+   "v3": {
+    "estimator": 5723,
+    "cl100k_raw": 3842,
+    "o200k_harmony": 3857
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-304903",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6143,
+    "cl100k_raw": 4124,
+    "o200k_harmony": 4143
+   },
+   "v3": {
+    "estimator": 6143,
+    "cl100k_raw": 4124,
+    "o200k_harmony": 4143
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-306798",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6243,
+    "cl100k_raw": 4191,
+    "o200k_harmony": 4210
+   },
+   "v3": {
+    "estimator": 6243,
+    "cl100k_raw": 4191,
+    "o200k_harmony": 4210
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-308018",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5875,
+    "cl100k_raw": 3944,
+    "o200k_harmony": 3960
+   },
+   "v3": {
+    "estimator": 5875,
+    "cl100k_raw": 3944,
+    "o200k_harmony": 3960
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-308645",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5665,
+    "cl100k_raw": 3803,
+    "o200k_harmony": 3820
+   },
+   "v3": {
+    "estimator": 5665,
+    "cl100k_raw": 3803,
+    "o200k_harmony": 3820
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-310931",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5751,
+    "cl100k_raw": 3861,
+    "o200k_harmony": 3879
+   },
+   "v3": {
+    "estimator": 5751,
+    "cl100k_raw": 3861,
+    "o200k_harmony": 3879
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-311001",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5917,
+    "cl100k_raw": 3972,
+    "o200k_harmony": 3987
+   },
+   "v3": {
+    "estimator": 5917,
+    "cl100k_raw": 3972,
+    "o200k_harmony": 3987
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-311046",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5778,
+    "cl100k_raw": 3879,
+    "o200k_harmony": 3895
+   },
+   "v3": {
+    "estimator": 5778,
+    "cl100k_raw": 3879,
+    "o200k_harmony": 3895
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-311818",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6159,
+    "cl100k_raw": 4135,
+    "o200k_harmony": 4139
+   },
+   "v3": {
+    "estimator": 6159,
+    "cl100k_raw": 4135,
+    "o200k_harmony": 4139
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-312994",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6022,
+    "cl100k_raw": 4043,
+    "o200k_harmony": 4063
+   },
+   "v3": {
+    "estimator": 6022,
+    "cl100k_raw": 4043,
+    "o200k_harmony": 4063
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-315674",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6274,
+    "cl100k_raw": 4212,
+    "o200k_harmony": 4228
+   },
+   "v3": {
+    "estimator": 6274,
+    "cl100k_raw": 4212,
+    "o200k_harmony": 4228
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-316541",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5806,
+    "cl100k_raw": 3898,
+    "o200k_harmony": 3917
+   },
+   "v3": {
+    "estimator": 5806,
+    "cl100k_raw": 3898,
+    "o200k_harmony": 3917
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-317089",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5903,
+    "cl100k_raw": 3963,
+    "o200k_harmony": 3978
+   },
+   "v3": {
+    "estimator": 5903,
+    "cl100k_raw": 3963,
+    "o200k_harmony": 3978
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-317448",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5748,
+    "cl100k_raw": 3859,
+    "o200k_harmony": 3876
+   },
+   "v3": {
+    "estimator": 5748,
+    "cl100k_raw": 3859,
+    "o200k_harmony": 3876
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-317453",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5771,
+    "cl100k_raw": 3874,
+    "o200k_harmony": 3887
+   },
+   "v3": {
+    "estimator": 5771,
+    "cl100k_raw": 3874,
+    "o200k_harmony": 3887
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-317863",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5975,
+    "cl100k_raw": 4011,
+    "o200k_harmony": 4029
+   },
+   "v3": {
+    "estimator": 5975,
+    "cl100k_raw": 4011,
+    "o200k_harmony": 4029
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-318058",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5955,
+    "cl100k_raw": 3998,
+    "o200k_harmony": 4015
+   },
+   "v3": {
+    "estimator": 5955,
+    "cl100k_raw": 3998,
+    "o200k_harmony": 4015
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-318380",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6122,
+    "cl100k_raw": 4110,
+    "o200k_harmony": 4127
+   },
+   "v3": {
+    "estimator": 6122,
+    "cl100k_raw": 4110,
+    "o200k_harmony": 4127
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-319516",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6009,
+    "cl100k_raw": 4034,
+    "o200k_harmony": 4050
+   },
+   "v3": {
+    "estimator": 6009,
+    "cl100k_raw": 4034,
+    "o200k_harmony": 4050
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-319992",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5966,
+    "cl100k_raw": 4005,
+    "o200k_harmony": 4024
+   },
+   "v3": {
+    "estimator": 5966,
+    "cl100k_raw": 4005,
+    "o200k_harmony": 4024
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-320299",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6134,
+    "cl100k_raw": 4118,
+    "o200k_harmony": 4138
+   },
+   "v3": {
+    "estimator": 6134,
+    "cl100k_raw": 4118,
+    "o200k_harmony": 4138
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-321489",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5875,
+    "cl100k_raw": 3944,
+    "o200k_harmony": 3965
+   },
+   "v3": {
+    "estimator": 5875,
+    "cl100k_raw": 3944,
+    "o200k_harmony": 3965
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-321628",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6011,
+    "cl100k_raw": 4035,
+    "o200k_harmony": 4051
+   },
+   "v3": {
+    "estimator": 6011,
+    "cl100k_raw": 4035,
+    "o200k_harmony": 4051
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-322018",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5845,
+    "cl100k_raw": 3924,
+    "o200k_harmony": 3940
+   },
+   "v3": {
+    "estimator": 5845,
+    "cl100k_raw": 3924,
+    "o200k_harmony": 3940
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-322520",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6037,
+    "cl100k_raw": 4053,
+    "o200k_harmony": 4066
+   },
+   "v3": {
+    "estimator": 6037,
+    "cl100k_raw": 4053,
+    "o200k_harmony": 4066
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-324136",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6006,
+    "cl100k_raw": 4032,
+    "o200k_harmony": 4043
+   },
+   "v3": {
+    "estimator": 6006,
+    "cl100k_raw": 4032,
+    "o200k_harmony": 4043
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-324321",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6018,
+    "cl100k_raw": 4040,
+    "o200k_harmony": 4058
+   },
+   "v3": {
+    "estimator": 6018,
+    "cl100k_raw": 4040,
+    "o200k_harmony": 4058
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-326120",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6186,
+    "cl100k_raw": 4153,
+    "o200k_harmony": 4165
+   },
+   "v3": {
+    "estimator": 6186,
+    "cl100k_raw": 4153,
+    "o200k_harmony": 4165
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-326356",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6143,
+    "cl100k_raw": 4124,
+    "o200k_harmony": 4143
+   },
+   "v3": {
+    "estimator": 6143,
+    "cl100k_raw": 4124,
+    "o200k_harmony": 4143
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-326654",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6008,
+    "cl100k_raw": 4033,
+    "o200k_harmony": 4049
+   },
+   "v3": {
+    "estimator": 6008,
+    "cl100k_raw": 4033,
+    "o200k_harmony": 4049
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-327249",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5817,
+    "cl100k_raw": 3905,
+    "o200k_harmony": 3918
+   },
+   "v3": {
+    "estimator": 5817,
+    "cl100k_raw": 3905,
+    "o200k_harmony": 3918
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-327434",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5972,
+    "cl100k_raw": 4009,
+    "o200k_harmony": 4027
+   },
+   "v3": {
+    "estimator": 5972,
+    "cl100k_raw": 4009,
+    "o200k_harmony": 4027
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-329369",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5859,
+    "cl100k_raw": 3933,
+    "o200k_harmony": 3951
+   },
+   "v3": {
+    "estimator": 5859,
+    "cl100k_raw": 3933,
+    "o200k_harmony": 3951
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-330262",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6197,
+    "cl100k_raw": 4160,
+    "o200k_harmony": 4178
+   },
+   "v3": {
+    "estimator": 6197,
+    "cl100k_raw": 4160,
+    "o200k_harmony": 4178
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-330276",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5963,
+    "cl100k_raw": 4003,
+    "o200k_harmony": 4018
+   },
+   "v3": {
+    "estimator": 5963,
+    "cl100k_raw": 4003,
+    "o200k_harmony": 4018
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-330460",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6036,
+    "cl100k_raw": 4052,
+    "o200k_harmony": 4065
+   },
+   "v3": {
+    "estimator": 6036,
+    "cl100k_raw": 4052,
+    "o200k_harmony": 4065
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-330918",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5967,
+    "cl100k_raw": 4006,
+    "o200k_harmony": 4026
+   },
+   "v3": {
+    "estimator": 5967,
+    "cl100k_raw": 4006,
+    "o200k_harmony": 4026
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-331142",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6018,
+    "cl100k_raw": 4040,
+    "o200k_harmony": 4054
+   },
+   "v3": {
+    "estimator": 6018,
+    "cl100k_raw": 4040,
+    "o200k_harmony": 4054
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-331717",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5963,
+    "cl100k_raw": 4003,
+    "o200k_harmony": 4021
+   },
+   "v3": {
+    "estimator": 5963,
+    "cl100k_raw": 4003,
+    "o200k_harmony": 4021
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-332060",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5888,
+    "cl100k_raw": 3953,
+    "o200k_harmony": 3968
+   },
+   "v3": {
+    "estimator": 5888,
+    "cl100k_raw": 3953,
+    "o200k_harmony": 3968
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-332220",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6000,
+    "cl100k_raw": 4028,
+    "o200k_harmony": 4046
+   },
+   "v3": {
+    "estimator": 6000,
+    "cl100k_raw": 4028,
+    "o200k_harmony": 4046
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-332359",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5853,
+    "cl100k_raw": 3929,
+    "o200k_harmony": 3944
+   },
+   "v3": {
+    "estimator": 5853,
+    "cl100k_raw": 3929,
+    "o200k_harmony": 3944
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-333202",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5872,
+    "cl100k_raw": 3942,
+    "o200k_harmony": 3958
+   },
+   "v3": {
+    "estimator": 5872,
+    "cl100k_raw": 3942,
+    "o200k_harmony": 3958
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-335643",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5830,
+    "cl100k_raw": 3914,
+    "o200k_harmony": 3933
+   },
+   "v3": {
+    "estimator": 5830,
+    "cl100k_raw": 3914,
+    "o200k_harmony": 3933
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-335964",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5806,
+    "cl100k_raw": 3898,
+    "o200k_harmony": 3912
+   },
+   "v3": {
+    "estimator": 5806,
+    "cl100k_raw": 3898,
+    "o200k_harmony": 3912
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-336219",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5982,
+    "cl100k_raw": 4016,
+    "o200k_harmony": 4034
+   },
+   "v3": {
+    "estimator": 5982,
+    "cl100k_raw": 4016,
+    "o200k_harmony": 4034
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-336777",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6016,
+    "cl100k_raw": 4039,
+    "o200k_harmony": 4056
+   },
+   "v3": {
+    "estimator": 6016,
+    "cl100k_raw": 4039,
+    "o200k_harmony": 4056
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-336844",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5955,
+    "cl100k_raw": 3998,
+    "o200k_harmony": 4015
+   },
+   "v3": {
+    "estimator": 5955,
+    "cl100k_raw": 3998,
+    "o200k_harmony": 4015
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-339381",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 5926,
+    "cl100k_raw": 3978,
+    "o200k_harmony": 3995
+   },
+   "v3": {
+    "estimator": 5926,
+    "cl100k_raw": 3978,
+    "o200k_harmony": 3995
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-341111",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6048,
+    "cl100k_raw": 4060,
+    "o200k_harmony": 4078
+   },
+   "v3": {
+    "estimator": 6048,
+    "cl100k_raw": 4060,
+    "o200k_harmony": 4078
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-341504",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6151,
+    "cl100k_raw": 4129,
+    "o200k_harmony": 4144
+   },
+   "v3": {
+    "estimator": 6151,
+    "cl100k_raw": 4129,
+    "o200k_harmony": 4144
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  },
+  {
+   "id": "vscode-342573",
+   "repo": "microsoft/vscode",
+   "v2": {
+    "estimator": 6133,
+    "cl100k_raw": 4117,
+    "o200k_harmony": 4134
+   },
+   "v3": {
+    "estimator": 6133,
+    "cl100k_raw": 4117,
+    "o200k_harmony": 4134
+   },
+   "evidence_chars": 0,
+   "evidence_neighbours": 0
+  }
+ ]
+}

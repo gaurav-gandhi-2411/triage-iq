@@ -455,6 +455,7 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         groq_tokens_total=tokens,
         **{k: v for k, v in meta.items() if k != "total_latency_ms"},
     )
+    _log_retrieval(request, request_id, body, meta)
 
     result = plan.model_dump()
     result["_request_id"] = request_id
@@ -484,6 +485,11 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
         result["_priority_decided_by"] = meta["priority_decided_by"]
         result["_priority_llm_proposal"] = meta["priority_llm_proposal"]
         result["_priority_model_proba"] = meta["priority_model_proba"]
+        # Prompt v3: did the prompt state the decided level, and did the LLM still disagree.
+        result["_priority_in_prompt"] = meta.get("priority_in_prompt", False)
+        result["_priority_safety_net_fired"] = meta.get("priority_safety_net_fired", False)
+    if "evidence_neighbours" in meta:  # only with TRIAGE_RESOLUTION_EVIDENCE=1 and the artifact
+        result["_evidence_neighbours"] = meta["evidence_neighbours"]
     result["resolution_model_beats_naive"] = _RESOLUTION_MODEL_BEATS_NAIVE.get(body.repo, True)
     # ADR-0064 (expand-only): the point estimate the resolution stage was given and its source,
     # "model" or "train_median" (POINT_ESTIMATE_TRUSTED). resolution_model_beats_naive keeps its
@@ -591,3 +597,25 @@ def _current_llm_baseline(path: Path) -> dict | None:
 
 def _log_request(**fields) -> None:
     _access_logger.info("access", extra={"log_type": "access", **fields})
+
+
+def _log_retrieval(request: Request, request_id: str, body: TriageRequest, meta: dict) -> None:
+    """One structured record per /triage request with the retriever top-5 (rank order, scores
+    to 4 dp) and classifier top-3, so a candidate revision's retrieval can be compared exactly
+    with an offline reference (filter: jsonPayload.log_type="retrieval"). Numbers and labels
+    only, never issue text. Never raises: observability must not break /triage."""
+    try:
+        _access_logger.info(
+            "retrieval",
+            extra={
+                "log_type": "retrieval",
+                "request_id": request_id,
+                "repo": body.repo,
+                "issue_number": body.issue_number,
+                "classifier_top3": [c.get("label") for c in (meta.get("classifier_top3") or [])],
+                "retrieval_top5": getattr(meta, "retrieval_top5", None) or [],
+                "body_cleaned": bool(getattr(request.app.state, "clean_request_body", False)),
+            },
+        )
+    except Exception:
+        logger.warning("retrieval log failed", exc_info=True)

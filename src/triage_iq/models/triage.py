@@ -32,6 +32,7 @@ from triage_iq.models.resolution import (
     naive_scaled_interval,
     repo_slug,
 )
+from triage_iq.models.resolution_evidence import ResolutionEvidence
 
 logger = logging.getLogger(__name__)
 
@@ -708,6 +709,12 @@ def _estimate_prompt_tokens(messages: list[dict]) -> int:
 # ---------------------------------------------------------------------------
 
 
+class TriageMetadata(dict):
+    """Per-request metadata dict; `retrieval_top5` rides along as an attribute (not a key)."""
+
+    retrieval_top5: list[dict] | None = None
+
+
 class TriageAssistant:
     """Orchestrates Systems 1–3 and calls an LLM to produce a TriagePlan.
 
@@ -727,6 +734,9 @@ class TriageAssistant:
     # Phase 3b flag 1: None (class default, and whenever the flag is off or the artifact is
     # missing) leaves priority entirely to the LLM, byte-identical to before.
     priority_model: PriorityModel | None = None
+    # Phase 3b flag 2: None (class default, flag off, artifact missing, or non-k8s) leaves the
+    # prompt without an evidence block.
+    resolution_evidence: ResolutionEvidence | None = None
 
     def __init__(
         self,
@@ -763,10 +773,14 @@ class TriageAssistant:
         # Phase 3b flag 1 (docs/QP3B_DESIGN_2026-10.md): serve the text-only P4 priority. The
         # loader passes a model only when TRIAGE_PRIORITY_MODEL=1 and the artifact exists (k8s).
         priority_model: PriorityModel | None = None,
+        # Phase 3b flag 2: fix-PR / closing-comment evidence for the top-3 neighbours in the
+        # prompt. The loader passes it only when TRIAGE_RESOLUTION_EVIDENCE=1 and the artifact loads.
+        resolution_evidence: ResolutionEvidence | None = None,
     ) -> None:
         self.repo = repo
         self.classifier_decides_component = classifier_decides_component
         self.priority_model = priority_model
+        self.resolution_evidence = resolution_evidence
         self.llm_time_budget_s = llm_time_budget_s
         # CQR store entry for this repo (loader._load_conformal_adjustments). When present the
         # served interval is the conformal one BEFORE synthesis (ADR-0059 addendum 2026-10-09):
@@ -930,6 +944,8 @@ class TriageAssistant:
             metadata["component_llm_proposal"] = decision.llm_proposal
         if priority is not None:
             metadata.update(priority)
+        if self.resolution_evidence is not None:  # flag 2 active: present in every path
+            metadata["evidence_neighbours"] = signals.get("resolution_evidence_neighbours", [])
         logger.info(
             "[%s] Triaged #%s in %.2fs (groq %d+%d tok, cached prompt tok: %s)",
             self.repo,
@@ -939,6 +955,14 @@ class TriageAssistant:
             metadata["groq_tokens_completion"],
             metadata["groq_tokens_cached"],
         )
+        # Retriever top-5 (rank order, numbers + scores only, no issue text) for the API's
+        # per-request retrieval log (G1 / D90). Carried as an attribute, not a key, so every
+        # consumer that serialises or hashes the whole metadata dict is unchanged.
+        metadata = TriageMetadata(metadata)
+        metadata.retrieval_top5 = [
+            {"number": s["number"], "score": round(float(s["score"]), 4)}
+            for s in signals["similar_raw"]
+        ]
         return plan, metadata
 
     def _decide_component(
@@ -994,20 +1018,31 @@ class TriageAssistant:
         fallback = llm_status == "parse_failure" or llm_status.startswith("degraded_")
         proposal = None if fallback else plan.priority_guess
         pm = signals.get("priority_model")
+        # Prompt v3: whether the prompt told the LLM the decided level (False when the model
+        # errored or the prompt was built by an older path).
+        in_prompt = "priority_label" in signals.get("_prompt_extra", {})
         if pm is None:  # model errored at serve time: the LLM's priority stands
             return {
                 "priority_decided_by": "llm",
                 "priority_llm_proposal": proposal,
                 "priority_model_proba": None,
+                "priority_in_prompt": in_prompt,
+                "priority_safety_net_fired": False,
             }
+        fired = False
         if proposal is not None:
             plan.priority_guess = pm.label
             if proposal != pm.label:
+                # Safety net: prompt v3 told the LLM to explain pm.label, yet it returned another
+                # level. The served level stays the model's; counted in metadata.
+                fired = True
                 plan.priority_rationale = model_rationale(pm.label, pm.proba, proposal)
         return {
             "priority_decided_by": "model",
             "priority_llm_proposal": proposal,
             "priority_model_proba": pm.proba,
+            "priority_in_prompt": in_prompt,
+            "priority_safety_net_fired": fired,
         }
 
     def triage_batch(
@@ -1251,6 +1286,37 @@ class TriageAssistant:
 
         # Config C: include bucket in prompt when TRIAGE_PROMPT_INCLUDE_BUCKET=1
         _include_bucket = os.environ.get("TRIAGE_PROMPT_INCLUDE_BUCKET") == "1"
+
+        # Prompt v3 (docs/QP3B_DESIGN_2026-10.md). prompt_extra stays empty with both flags off,
+        # so the prompt is byte-identical to v2 (C1).
+        prompt_extra: dict = {}
+        priority_pred = None
+        if self.priority_model is not None:
+            try:
+                # P4 was trained on raw text: body_raw (set only when TRIAGE_CLEAN_REQUEST_BODY
+                # cleans body_clean) wins; otherwise body_clean already is the raw body.
+                priority_body = str(issue.get("body_raw", body))
+                priority_pred = self.priority_model.predict(title, priority_body)
+            except Exception as e:
+                logger.warning("Priority model failed, LLM priority stands: %s", e)
+            else:
+                prompt_extra["priority_label"] = priority_pred.label
+                prompt_extra["priority_proba"] = priority_pred.proba
+        evidence_numbers: list[int] | None = None
+        if self.resolution_evidence is not None:
+            # As-of filter: only evidence dated strictly before the query's creation. In production
+            # the request's created_at defaults to now (api/app.py), so this is a no-op there
+            # (every indexed neighbour's evidence already exists); in eval/replay it is the eval
+            # row's created_at, which closes the leak of post-query fixes/comments into the prompt.
+            as_of = issue.get("created_at")
+            if as_of is None or pd.isna(as_of):  # no creation time: treat the query as "now"
+                as_of = pd.Timestamp.now(tz="UTC")
+            evidence_block, evidence_numbers = self.resolution_evidence.block_for(
+                similar_raw, as_of
+            )
+            if evidence_block:
+                prompt_extra["evidence_block"] = evidence_block
+
         prompt = build_triage_prompt(
             issue_title=title,
             issue_body=body,
@@ -1264,6 +1330,7 @@ class TriageAssistant:
             resolution_confidence_pct=resolution_conf_pct if _include_bucket else None,
             resolution_point_source=point_source,
             interval_calibrated=conformal_applied,
+            **prompt_extra,
         )
         signals = {
             "prompt": prompt,
@@ -1297,14 +1364,11 @@ class TriageAssistant:
             "_number": issue.get("number", "?"),
         }
         if self.priority_model is not None:  # key absent when off: signals stay unchanged
-            try:
-                # P4 was trained on raw text: body_raw (set only when TRIAGE_CLEAN_REQUEST_BODY
-                # cleans body_clean) wins; otherwise body_clean already is the raw body.
-                priority_body = str(issue.get("body_raw", body))
-                signals["priority_model"] = self.priority_model.predict(title, priority_body)
-            except Exception as e:
-                logger.warning("Priority model failed, LLM priority stands: %s", e)
-                signals["priority_model"] = None
+            signals["priority_model"] = priority_pred  # None when the model errored at serve time
+        if prompt_extra:  # absent when both flags are off (or nothing to say): signals unchanged
+            signals["_prompt_extra"] = prompt_extra
+        if evidence_numbers is not None:  # present whenever flag 2 is active, even if empty
+            signals["resolution_evidence_neighbours"] = evidence_numbers
         return signals
 
     # ------------------------------------------------------------------
@@ -1418,6 +1482,7 @@ class TriageAssistant:
                         signals["resolution_conf_pct"] if signals["_include_bucket"] else None
                     ),
                     max_body_chars=max_body_chars,
+                    **signals.get("_prompt_extra", {}),
                 )
                 messages[-1] = {"role": "user", "content": shorter_prompt}
                 estimated_prompt_tokens = _estimate_prompt_tokens(messages)

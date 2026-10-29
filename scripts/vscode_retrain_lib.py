@@ -165,6 +165,40 @@ def bundle_proba(bundle: dict[str, Any], texts: pd.Series, classes: list[str]) -
     return out
 
 
+class ChampionShaError(RuntimeError):
+    """The champion file is not the one MANIFEST.sha256 pins; the evaluation refuses to run."""
+
+
+def champion_file(champion: Path) -> Path:
+    """The file whose bytes define the champion: the served .pkl in a models dir, else the bundle."""
+    return champion / "component_classifier_microsoft_vscode.pkl" if champion.is_dir() else champion
+
+
+def verify_champion(champion: Path, manifest: Path) -> tuple[str, str]:
+    """Return (actual, expected) sha256; raise ChampionShaError unless they match (fail closed).
+
+    The manifest key is data/models/<champion file name>, so a stale checkout copy, a wrong file
+    or a bundle the manifest does not list all stop the run instead of moving the bar silently.
+    """
+    f = champion_file(champion)
+    key = f"data/models/{f.name}"
+    try:
+        lines = Path(manifest).read_text(encoding="utf-8").splitlines()
+        actual = file_sha256(f)
+    except OSError as e:
+        raise ChampionShaError(f"cannot read manifest or champion: {e}") from e
+    parts = [ln.split(None, 1) for ln in lines]
+    found = [p[0] for p in parts if len(p) == 2 and p[1].strip() == key]
+    if len(found) != 1:
+        raise ChampionShaError(
+            f"expected exactly one {key} entry in {manifest}, found {len(found)}"
+        )
+    expected = found[0].lower()
+    if actual != expected:
+        raise ChampionShaError(f"champion sha256 {actual} != manifest {expected} for {key}")
+    return actual, expected
+
+
 def champion_proba(champion: Path, d: pd.DataFrame, classes: list[str]) -> tuple[np.ndarray, str]:
     """Champion scores on `d`: a models dir (served OVR classifier) or a retrain bundle .joblib."""
     if champion.is_dir():

@@ -86,6 +86,7 @@ def stage_train(a: argparse.Namespace) -> dict[str, Any]:
 
 
 def stage_evaluate(a: argparse.Namespace) -> dict[str, Any]:
+    rl.verify_champion(a.champion, a.manifest)  # before any scoring; mismatch -> exit 2, no metrics
     d, _ = _load(a.out)
     info = json.loads((a.out / "train_info.json").read_text(encoding="utf-8"))
     classes = info["classes"]
@@ -101,6 +102,7 @@ def stage_evaluate(a: argparse.Namespace) -> dict[str, Any]:
     p_naive, _ = vl.majority_proba(vl.gold(tr, classes)[0], classes, len(ho))
     m = rl.evaluate_holdout(ho, classes, p_ch, bundle["tau"], p_champ, p_naive)
     m["champion"]["sha256"] = champ_sha
+    m["champion"]["manifest_sha256"] = rl.verify_champion(a.champion, a.manifest)[1]
     (a.out / "metrics.json").write_text(json.dumps(m, indent=1), encoding="utf-8")
     return m
 
@@ -112,6 +114,11 @@ def stage_gate(a: argparse.Namespace) -> dict[str, Any]:
         info = json.loads((a.out / "train_info.json").read_text(encoding="utf-8"))
         meta = json.loads((a.out / "window_meta.json").read_text(encoding="utf-8"))
         res = rl.gate_decision(m, info["n_train"], len(info["classes"]))
+        cs, ms = m["champion"].get("sha256"), m["champion"].get("manifest_sha256")
+        if not cs or cs != ms:  # belt and braces: metrics.json may be stale or hand-edited
+            res["decision"] = "refuse"
+            res["reasons"].append(f"champion_sha_mismatch: metrics {cs!r} vs manifest {ms!r}")
+        res["champion_sha256"], res["champion_manifest_sha256"] = cs, ms
         res |= {"metrics": m, "classes_sha256": info["classes_sha256"], "window": meta,
                 "candidate_sha256": info["challenger_sha256"], "seed": rl.SEED}  # fmt: skip
     except (OSError, ValueError, KeyError) as e:

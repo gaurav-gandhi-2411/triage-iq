@@ -209,3 +209,81 @@ def test_assemble_stage_roundtrips_label_sets_through_parquet(tmp_path: Path) ->
     d, _ = cli._load(a.out)
     assert meta["counts"] == {"train": 1, "holdout": 1}
     assert d.loc[d["number"] == 3, "final"].iloc[0] == frozenset({"terminal-input"})
+
+
+# ------------------------------------------------------- champion pinned to MANIFEST.sha256
+
+
+def _champion(tmp: Path, content: bytes = b"champion") -> tuple[Path, Path]:
+    """A models dir holding the served pkl, and a manifest pinning exactly its sha256."""
+    models = tmp / "models"
+    models.mkdir()
+    (models / "component_classifier_microsoft_vscode.pkl").write_bytes(content)
+    man = tmp / "MANIFEST.sha256"
+    man.write_text(
+        f"{rl.file_sha256(models / 'component_classifier_microsoft_vscode.pkl')}  "
+        "data/models/component_classifier_microsoft_vscode.pkl\n"
+        f"{'1' * 64}  data/models/other.pkl\n"
+    )
+    return models, man
+
+
+def test_champion_matching_manifest_passes(tmp_path: Path) -> None:
+    models, man = _champion(tmp_path)
+    actual, expected = rl.verify_champion(models, man)
+    assert (
+        actual == expected == rl.file_sha256(models / "component_classifier_microsoft_vscode.pkl")
+    )
+
+
+def test_champion_sha_mismatch_errors_and_stages_nothing(tmp_path: Path) -> None:
+    models, man = _champion(tmp_path)
+    (models / "component_classifier_microsoft_vscode.pkl").write_bytes(b"stale copy")
+    with pytest.raises(rl.ChampionShaError, match="!= manifest"):
+        rl.verify_champion(models, man)
+    out = tmp_path / "out"
+    out.mkdir()
+    a = Namespace(champion=models, manifest=man, out=out, derived_dir=tmp_path)
+    with pytest.raises(rl.ChampionShaError):
+        cli.stage_evaluate(a)  # refuses before reading any stage output or scoring
+    rc = cli.main(["evaluate", "--derived-dir", str(tmp_path), "--champion", str(models),
+                   "--manifest", str(man), "--out", str(out)])  # fmt: skip
+    assert rc == cli.ERROR
+    assert not (out / "metrics.json").exists() and not (out / "staging").exists()
+
+
+@pytest.mark.parametrize("manifest_text", [None, "", f"{'2' * 64}  data/models/other.pkl\n"])
+def test_champion_missing_manifest_or_entry_fails_closed(
+    tmp_path: Path, manifest_text: str | None
+) -> None:
+    models, man = _champion(tmp_path)
+    if manifest_text is None:
+        man.unlink()
+    else:
+        man.write_text(manifest_text)
+    with pytest.raises(rl.ChampionShaError):
+        rl.verify_champion(models, man)
+
+
+def test_champion_duplicate_manifest_entry_fails_closed(tmp_path: Path) -> None:
+    models, man = _champion(tmp_path)
+    man.write_text(man.read_text() * 2)
+    with pytest.raises(rl.ChampionShaError, match="exactly one"):
+        rl.verify_champion(models, man)
+
+
+def test_gate_refuses_when_metrics_champion_sha_not_manifest_sha(tmp_path: Path) -> None:
+    m = good()
+    m["champion"] = {"sha256": "a" * 64, "manifest_sha256": "b" * 64}
+    (tmp_path / "metrics.json").write_text(json.dumps(m))
+    (tmp_path / "train_info.json").write_text(json.dumps(
+        {"n_train": 20000, "classes": list(range(80)), "classes_sha256": "x",
+         "challenger_sha256": "y"}))  # fmt: skip
+    (tmp_path / "window_meta.json").write_text("{}")
+    res = cli.stage_gate(Namespace(out=tmp_path))
+    assert res["decision"] == "refuse"
+    assert any("champion_sha_mismatch" in r for r in res["reasons"])
+    m["champion"]["manifest_sha256"] = "a" * 64
+    (tmp_path / "metrics.json").write_text(json.dumps(m))
+    res = cli.stage_gate(Namespace(out=tmp_path))
+    assert res["decision"] == "accept" and res["champion_manifest_sha256"] == "a" * 64

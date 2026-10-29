@@ -5,6 +5,7 @@ Trained per-repo since label vocabularies differ across projects.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import time
 from pathlib import Path
@@ -273,3 +274,94 @@ def load_classifier(
                 return MultiLabelTFIDFComponentClassifier.load(str(p))
             return TFIDFComponentClassifier.load(str(p))
     raise FileNotFoundError(f"No classifier for {slug} in {models_dir}")
+
+
+# --- vscode family_v2 bundle (D92.1, ADR-0072/0073) ---------------------------------------------
+
+FAMILY_V2_FILENAME = "component_classifier_microsoft_vscode_family_v2_2026-10-22.joblib"
+FAMILY_V2_MODEL_KIND = "tfidf_lr_family_only_v2"
+FAMILY_V2_BODY_CHARS = 4000  # the retrain window's text recipe (scripts/vscode_retrain_lib.assemble)
+
+
+class FamilyV2ArtifactError(RuntimeError):
+    """The family_v2 bundle is missing, unlisted in MANIFEST.sha256, hash-mismatched or malformed.
+
+    Raised (never swallowed) at startup when TRIAGE_VSCODE_CLASSIFIER=family_v2: serving a
+    different classifier than the one the operator asked for must fail the revision, not degrade.
+    """
+
+
+class FamilyV2Classifier:
+    """The monthly-retrained vscode classifier (bundle kind tfidf_lr_family_only_v2).
+
+    Same interface the top-3 code in TriageAssistant reads (predict_proba_calibrated / classes_).
+    Probabilities are the plain LR softmax over the bundle classes, in bundle order. The bundle's
+    abstention threshold (tau) and RAPS conformal set are NOT used: the response schema has no
+    field for them, and the offline evaluation scored the plain top-3. `other` (absent from the
+    model) and `tree-sitter-autoindent-candidate` (no positive training rows) are listed classes
+    with probability exactly 0, so they never reach the top-3.
+
+    Text recipe (train/serve parity): the model was trained and evaluated on
+    ``title + "\\n" + raw_body[:4000]`` (RAW body, not preprocess.clean_text output).
+    `serving_text` builds exactly that; TriageAssistant passes it the raw body (`body_raw`, set by
+    /triage when TRIAGE_CLEAN_REQUEST_BODY=1, else the unmodified body). The separator is
+    irrelevant to TF-IDF; the cleaning and the 4000-character cut are not (measured: serving the
+    cleaned text changes the top-3 on 27% of the 1694 retrain holdout issues).
+    """
+
+    uses_raw_body_text = True  # marker read by TriageAssistant._collect_signals
+
+    def __init__(self, bundle: dict) -> None:
+        self.vectorizer = bundle["vectorizer"]
+        self.model = bundle["model"]
+        self.classes: list[str] = [str(c) for c in bundle["classes"]]
+        self.tau = bundle.get("tau")  # unused at serving, kept for provenance
+        self.conformal = bundle.get("conformal")  # unused at serving, kept for provenance
+        self._cols = np.array([self.classes.index(str(c)) for c in self.model.classes_])
+
+    @staticmethod
+    def serving_text(title: str, raw_body: str) -> str:
+        return title + "\n" + raw_body[:FAMILY_V2_BODY_CHARS]
+
+    def predict_proba_calibrated(self, X: pd.Series) -> np.ndarray:
+        """Probabilities aligned to classes_(); a class the model never saw gets 0."""
+        out = np.zeros((len(X), len(self.classes)))
+        out[:, self._cols] = self.model.predict_proba(self.vectorizer.transform(X))
+        return out
+
+    def classes_(self) -> np.ndarray:
+        return np.array(self.classes)
+
+
+def load_family_v2_classifier(models_dir: str | Path) -> FamilyV2Classifier:
+    """Load the family_v2 bundle, failing closed (FamilyV2ArtifactError) on any doubt.
+
+    The expected sha256 comes from models_dir/MANIFEST.sha256 (exactly one line for the bundle
+    file name); a missing manifest, a missing line, a missing file or a hash mismatch all raise.
+    The hash is checked BEFORE the file is unpickled.
+    """
+    models_dir = Path(models_dir)
+    manifest, path = models_dir / "MANIFEST.sha256", models_dir / FAMILY_V2_FILENAME
+    try:
+        lines = manifest.read_text(encoding="utf-8").splitlines()
+    except OSError as e:
+        raise FamilyV2ArtifactError(f"family_v2 requested but {manifest} is unreadable") from e
+    parts = [ln.split(None, 1) for ln in lines]
+    expected = [
+        p[0].lower() for p in parts if len(p) == 2 and p[1].strip().endswith("/" + FAMILY_V2_FILENAME)
+    ]
+    if len(expected) != 1:
+        raise FamilyV2ArtifactError(
+            f"family_v2 requested but {manifest} has {len(expected)} entries for "
+            f"{FAMILY_V2_FILENAME} (need exactly 1)"
+        )
+    try:
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError as e:
+        raise FamilyV2ArtifactError(f"family_v2 requested but cannot read {path}") from e
+    if actual != expected[0]:
+        raise FamilyV2ArtifactError(f"{path.name} sha256 {actual} != MANIFEST {expected[0]}")
+    bundle = joblib.load(path)
+    if bundle.get("model_kind") != FAMILY_V2_MODEL_KIND:
+        raise FamilyV2ArtifactError(f"{path.name} model_kind {bundle.get('model_kind')!r}")
+    return FamilyV2Classifier(bundle)

@@ -173,9 +173,16 @@ class ModelStore:
         for repo, slug in _REPO_SLUGS.items():
             try:
                 logger.info("Loading models for %s …", repo)
-                from triage_iq.models.component_classifier import load_classifier
+                from triage_iq.models.component_classifier import (
+                    FamilyV2ArtifactError,
+                    load_classifier,
+                    load_family_v2_classifier,
+                )
                 with _timed(f"{slug}.classifier"):
-                    clf = load_classifier(models_dir, slug)
+                    if slug == "microsoft_vscode" and _family_v2_requested():
+                        clf = load_family_v2_classifier(models_dir)
+                    else:
+                        clf = load_classifier(models_dir, slug)
                 with _timed(f"{slug}.detector(bge+faiss)"):
                     det = _load_detector(models_dir, slug)
                 with _timed(f"{slug}.predictor"):
@@ -213,6 +220,8 @@ class ModelStore:
                 )
                 bundles[repo] = RepoBundle(clf, det, pred, train_df, asst)
                 logger.info("Loaded %s — OK", repo)
+            except FamilyV2ArtifactError:
+                raise  # fail closed: the operator asked for family_v2, never skip or fall back
             except Exception as exc:
                 logger.error("Failed to load %s: %s — skipping", repo, exc)
 
@@ -228,6 +237,19 @@ class ModelStore:
 
 # Phase 3b flag 1: only k8s has a priority model (vscode has no priority labels).
 _PRIORITY_MODEL_SLUGS = frozenset({"kubernetes_kubernetes"})
+
+
+def _family_v2_requested() -> bool:
+    """TRIAGE_VSCODE_CLASSIFIER: unset/empty = the served pickle; "family_v2" = the retrained
+    bundle (vscode only). Any other value is a typo and raises rather than silently serving the
+    default."""
+    from triage_iq.models.component_classifier import FamilyV2ArtifactError
+
+    v = os.environ.get("TRIAGE_VSCODE_CLASSIFIER", "")
+    if v in ("", "family_v2"):
+        return v == "family_v2"
+    # FamilyV2ArtifactError so load_all's per-repo "skip on error" does not swallow it
+    raise FamilyV2ArtifactError(f"TRIAGE_VSCODE_CLASSIFIER={v!r}: expected unset or 'family_v2'")
 
 
 def _load_priority_model(models_dir: Path, slug: str):

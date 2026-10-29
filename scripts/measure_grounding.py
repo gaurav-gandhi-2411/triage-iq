@@ -21,14 +21,11 @@ ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "eval"))
 
-import pandas as pd
-
+import run_eval
 from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
-from triage_iq.api.loader import _load_conformal_adjustments
-from triage_iq.models.component_classifier import load_classifier
+from recording_config import issue_to_row, load_recording_config
 from triage_iq.models.grounding import compute_grounding_status
-from triage_iq.models.resolution import ResolutionTimePredictor
 from triage_iq.models.triage import TriageAssistant
 
 MODELS_DIR = ROOT / "data" / "models"
@@ -54,37 +51,6 @@ def _load_eval_set(path: Path) -> list[dict]:
             if line:
                 issues.append(json.loads(line))
     return issues
-
-
-def _load_models(
-    repo: str,
-    slug: str,
-    cassette: CassettePlayer,
-    frozen_retrievers: dict,
-) -> TriageAssistant:
-    """Load per-repo classifier/predictor/train_df and construct a TriageAssistant.
-
-    Mirrors eval/run_eval.py:_load_models exactly, using FrozenRetriever instead of
-    live FAISS so this is a deterministic, cassette-only replay.
-    """
-    # load_classifier() dispatches on the pkl's model_kind marker (ADR-0036).
-    classifier = load_classifier(MODELS_DIR, slug)
-    predictor = ResolutionTimePredictor.load(
-        str(MODELS_DIR / f"resolution_predictor_{slug}.pkl")
-    )
-    train_df = pd.read_parquet(PROCESSED_DIR / f"{slug}_temporal_train.parquet")
-    return TriageAssistant(
-        repo=repo,
-        classifier=classifier,
-        detector=frozen_retrievers[repo],
-        predictor=predictor,
-        train_df=train_df,
-        groq_api_key=CI_API_KEY,
-        cache=cassette,
-        # The recorded prompts carry the served conformal interval (ADR-0059 addendum
-        # 2026-10-09); without it the replayed request differs and every key misses.
-        conformal_adjustment=_load_conformal_adjustments(MODELS_DIR).get(repo),
-    )
 
 
 def _normalize(label: str) -> str:
@@ -119,25 +85,23 @@ def compute_grounding_reports(
     issues = _load_eval_set(eval_set_path)
     frozen_retrievers = build_frozen_retrievers(eval_set_path)
 
+    # One builder for every replay path (run_eval._load_models -> recording_config.build_assistant):
+    # the set's own RECORDING_CONFIG.json (next to its cassette) selects the classifier, k8s index
+    # and resolution evidence, so this replays the prompts that were recorded.
+    config = load_recording_config(ROOT, Path(cassette_path).parent)
     assistants: dict[str, TriageAssistant] = {}
     for repo, slug in REPO_MAP.items():
-        assistants[repo] = _load_models(repo, slug, cassette, frozen_retrievers)
+        assistants[repo] = run_eval._load_models(
+            repo, slug, cassette, frozen_retrievers, config
+        )["assistant"]
 
     cases: list[dict] = []
     for issue in issues:
         repo = issue["repo"]
         assistant = assistants[repo]
 
-        row = pd.Series({
-            "title": issue["title"],
-            "body_clean": issue["body"],
-            "number": issue["number"],
-            "created_at": (
-                pd.Timestamp(issue["created_at"])
-                if issue.get("created_at")
-                else pd.Timestamp("now", tz="UTC")
-            ),
-        })
+        # issue_to_row carries body_raw when the set has it, as /triage does.
+        row = issue_to_row(issue)
 
         signals = assistant._collect_signals(row)
         plan, _raw, usage, llm_status, _cache_hit = assistant._call_llm_verbose(signals)

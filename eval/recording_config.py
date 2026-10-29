@@ -59,19 +59,27 @@ def parse_config(raw: object, source: str = CONFIG_FILENAME) -> RecordingConfig:
 
 
 def config_search_dirs(root: Path, cassette_dir: Path | None = None) -> list[Path]:
-    """Directories searched for RECORDING_CONFIG.json: the recording set dir (TRIAGEIQ_RECORDING_SET_DIR)
-    and the cassette dir (default: <set dir>/cassettes, else eval/cassettes)."""
+    """Directories searched for RECORDING_CONFIG.json: the recording set dir (TRIAGEIQ_RECORDING_SET_DIR),
+    the cassette dir (default: <set dir>/cassettes, else eval/cassettes) and, when the cassette dir
+    sits inside a set (its parent holds eval_set.jsonl), that set dir. The last one lets a replay
+    with no env var (run_eval, qp5, checkpoint validation) find a set's own config."""
     set_dir = os.environ.get("TRIAGEIQ_RECORDING_SET_DIR")
     base = Path(set_dir) if set_dir else None
     cass = cassette_dir or (base / "cassettes" if base else root / "eval" / "cassettes")
-    return [d for d in (base, cass) if d is not None]
+    dirs: list[Path | None] = [base, cass]
+    # eval/ holds the 64-set's eval_set.jsonl but never a config: skip it so that set resolves
+    # exactly as before.
+    if cass.parent != root / "eval" and (cass.parent / "eval_set.jsonl").is_file():
+        dirs.append(cass.parent)
+    return [d for d in dirs if d is not None]
 
 
 def load_recording_config(root: Path, cassette_dir: Path | None = None) -> RecordingConfig:
     """The config for this run; defaults when no file exists, an error when two files exist
     (ambiguous) or the one found is invalid."""
     found = [d / CONFIG_FILENAME for d in config_search_dirs(root, cassette_dir)]
-    found = [p for p in dict.fromkeys(found) if p.is_file()]
+    # resolve(): one directory reached by two spellings must not read as two files.
+    found = [p for p in {p.resolve(): p for p in found}.values() if p.is_file()]
     if len(found) > 1:
         raise RecordingConfigError(
             f"ambiguous: {CONFIG_FILENAME} exists in both {found[0]} and {found[1]}"

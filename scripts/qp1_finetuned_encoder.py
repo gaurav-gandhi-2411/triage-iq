@@ -48,6 +48,12 @@ no dtype, so the model came up in the checkpoint/library-default dtype (fp16 par
 fp32. The kernel now calls `.float()` after loading, so the weights are fp32 master weights and
 only the forward pass is fp16 autocast, as the design above already states ("fp16 autocast").
 Hyperparameters, data, splits, grid, selection rule and metrics are unchanged.
+
+FREEZE (2026-10-29, TEST NOT YET READ). Kernel v2 completed; validation grid (top-3): 2e-5/3ep
+0.735, 2e-5/5ep 0.819, 5e-5/3ep 0.743, 5e-5/5ep 0.821. Selected by the pre-registered rule
+(validation top-3, tie macro-F1): lr 5e-5, 5 epochs; validation top-1 0.690, top-3 0.821
+[0.793, 0.847], macro-F1 0.338 (n=725), vs candidate 1 validation top-3 0.941. Method and
+selection are frozen; the single --final-test follows and nothing changes after it.
 """
 
 from __future__ import annotations

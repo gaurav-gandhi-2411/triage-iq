@@ -5,9 +5,12 @@ name: vscode-retrain
 #
 # Inputs live in the GitHub release tagged `vscode-retrain-data` (free storage; filled by GG from the
 # machine that runs the incremental scraper, e.g. `gh release upload vscode-retrain-data issues.parquet
-# label_events.parquet champion.joblib --clobber`). Assets: issues.parquet, label_events.parquet, and
-# the champion as champion.joblib (a previous retrain bundle) or served_models.tgz (the served models
-# dir). A missing asset fails the download step, so nothing is staged (fail closed).
+# label_events.parquet champion.joblib champion.manifest_key --clobber`). Assets: issues.parquet,
+# label_events.parquet, and the champion as champion.joblib (a previous retrain bundle) plus
+# champion.manifest_key (one line: the data/models/... path MANIFEST.sha256 lists for that bundle, e.g.
+# data/models/component_classifier_microsoft_vscode_family_v2_2026-10-22.joblib), or served_models.tgz
+# (the served models dir). The run still fails closed unless the champion's sha256 equals the MANIFEST
+# line at that key. A missing asset fails the download step, so nothing is staged.
 #
 # One-time repo settings this needs (not changed by this file): Settings > Actions > General >
 # "Allow GitHub Actions to create and approve pull requests". PRs opened with GITHUB_TOKEN do not
@@ -60,11 +63,16 @@ jobs:
           mkdir -p "$RUNNER_TEMP/in"
           gh release download vscode-retrain-data --dir "$RUNNER_TEMP/in" \
             --pattern issues.parquet --pattern label_events.parquet \
-            --pattern champion.joblib --pattern served_models.tgz
+            --pattern champion.joblib --pattern champion.manifest_key \
+            --pattern served_models.tgz
           test -s "$RUNNER_TEMP/in/issues.parquet"
           test -s "$RUNNER_TEMP/in/label_events.parquet"
           if [ -s "$RUNNER_TEMP/in/champion.joblib" ]; then
             echo "CHAMPION=$RUNNER_TEMP/in/champion.joblib" >> "$GITHUB_ENV"
+            # the bundle is named champion.joblib here, not as MANIFEST lists it: pass its key
+            test -s "$RUNNER_TEMP/in/champion.manifest_key"
+            key="$(tr -d ' \r\n' < "$RUNNER_TEMP/in/champion.manifest_key")"
+            echo "CHAMPION_KEY=$key" >> "$GITHUB_ENV"
           else
             mkdir -p "$RUNNER_TEMP/in/served"
             tar -xzf "$RUNNER_TEMP/in/served_models.tgz" -C "$RUNNER_TEMP/in/served"
@@ -79,9 +87,11 @@ jobs:
           as_of="${AS_OF_INPUT:-$(date -u +%F)}"
           case "$as_of" in [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;; *) echo "bad as_of"; exit 2 ;; esac
           echo "as_of=$as_of" >> "$GITHUB_OUTPUT"
+          key_args=()
+          if [ -n "$CHAMPION_KEY" ]; then key_args=(--champion-manifest-key "$CHAMPION_KEY"); fi
           set +e
           python scripts/vscode_retrain.py all \
-            --derived-dir "$RUNNER_TEMP/in" --champion "$CHAMPION" \
+            --derived-dir "$RUNNER_TEMP/in" --champion "$CHAMPION" "${key_args[@]}" \
             --as-of "$as_of" --out "$RUNNER_TEMP/out"
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"

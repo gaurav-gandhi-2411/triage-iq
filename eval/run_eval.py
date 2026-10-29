@@ -118,9 +118,12 @@ def compute_scores(
     issues = _load_eval_set(eval_set_path)
     frozen_retrievers = build_frozen_retrievers(eval_set_path)
 
+    # The set's own RECORDING_CONFIG.json (next to its cassette), not the ROOT-level default:
+    # a set recorded under family_v2/k8s v2/evidence must replay under them.
+    config = load_recording_config(ROOT, Path(cassette_path).parent)
     models: dict[str, dict] = {}
     for repo, slug in REPO_MAP.items():
-        models[repo] = _load_models(repo, slug, cassette, frozen_retrievers)
+        models[repo] = _load_models(repo, slug, cassette, frozen_retrievers, config)
 
     judge = TriageJudge(
         groq_api_key=CI_API_KEY,

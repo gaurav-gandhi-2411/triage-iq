@@ -663,8 +663,14 @@ def test_cassette_provenance_matches_current_artifacts() -> None:
     if not entries:
         pytest.skip(reason="eval_cassette.json has no entries")
 
+    # The cassette's own set config (default for the 64-set): a config-selected artifact is part of
+    # the fingerprint the recorder stamped, so the check must hash the same files.
+    from recording_config import load_recording_config
+
+    config = load_recording_config(ROOT, cassette_path.parent)
     current_by_repo = {
-        repo: artifact_fingerprint.compute_artifact_hashes(ROOT, repo=repo) for repo in REPOS
+        repo: artifact_fingerprint.compute_artifact_hashes(ROOT, repo=repo, config=config)
+        for repo in REPOS
     }
     current_judge_prompt_hash = compute_judge_prompt_hash()
 

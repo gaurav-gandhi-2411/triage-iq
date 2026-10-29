@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -113,3 +114,59 @@ def test_select_ft_tiebreak_order() -> None:
     assert ft.select_ft(cands) == "c"  # tie on hits and MRR -> dense first
     cands["a"]["res"]["mrr"] = 0.31
     assert ft.select_ft(cands) == "a"  # higher MRR beats simplicity
+
+
+def _frozen() -> dict:
+    return json.loads(ft.FROZEN_FT.read_text(encoding="utf-8"))
+
+
+def _boom(*_a: object, **_k: object) -> None:
+    raise AssertionError("test data was touched before the guard passed")
+
+
+def _args(**kw: object) -> SimpleNamespace:
+    base = {"final_test": True, "frozen_sha256": "", "out": "nowhere", "result": "nowhere.json"}
+    return SimpleNamespace(**(base | kw))
+
+
+def test_committed_frozen_file_is_the_validation_selection() -> None:
+    fr = _frozen()
+    assert fr["selected"] == "F4_rrf10" and fr["config"]["k"] == 10
+    assert fr["config"]["bm25"] == fr["reference_config"]["bm25"]  # frozen #345 BM25 variant
+    ft.check_frozen(fr, fr["config_sha256"])  # self-consistent
+
+
+def test_check_frozen_refuses_wrong_hash_and_tampered_body() -> None:
+    fr = _frozen()
+    with pytest.raises(ft.FrozenMismatchError):
+        ft.check_frozen(fr, "0" * 64)
+    tampered = {**fr, "config": {**fr["config"], "k": 30}}
+    with pytest.raises(ft.FrozenMismatchError):  # body edited, hash left as committed
+        ft.check_frozen(tampered, fr["config_sha256"])
+
+
+def test_final_test_requires_flags_and_hash_before_touching_data(monkeypatch) -> None:
+    monkeypatch.setattr(ft.dd, "Task", _boom)
+    for kw in ({"final_test": False, "frozen_sha256": "x"}, {"frozen_sha256": ""}):
+        with pytest.raises(ft.qe.TestGuardError):
+            ft.cmd_final_test(_args(**kw))
+    with pytest.raises(ft.FrozenMismatchError):
+        ft.cmd_final_test(_args(frozen_sha256="f" * 64))
+
+
+def test_final_test_refuses_rerun_when_result_exists(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(ft.dd, "Task", _boom)
+    done = tmp_path / "res.json"
+    done.write_text("{}")
+    with pytest.raises(ft.qe.TestGuardError):
+        ft.cmd_final_test(_args(frozen_sha256=_frozen()["config_sha256"], result=str(done)))
+
+
+def test_check_artifacts_refuses_changed_embedding(tmp_path: Path) -> None:
+    fr = _frozen()
+    (tmp_path / "F4_model").mkdir()
+    (tmp_path / "F4_emb.npy").write_bytes(b"not the frozen embedding")
+    (tmp_path / "F4_model" / "model.safetensors").write_bytes(b"x")
+    (tmp_path / "ids.parquet").write_bytes(b"x")
+    with pytest.raises(ft.FrozenMismatchError, match="embedding"):
+        ft.check_artifacts(fr, tmp_path)

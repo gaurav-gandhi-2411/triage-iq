@@ -146,6 +146,10 @@ def main(argv: list[str] | None = None) -> int:
     rep["files"] = {p.name: q.sha256_file(p) for p in sorted(q.OUT_DIR.iterdir())}
     per_repo = relevance_counts(rows, list(q.REPOS))
     rep["relevance_scoring"]["per_repo"] = per_repo
+    rep["relevance_scoring"]["action"] = (
+        "done for the repos in refreeze.index_dirs; the other repos keep their served index "
+        "(D92 does not change it)"
+    )
     unscorable = sorted(r for r, c in per_repo.items() if c["target_in_served_index"] == 0)
     rep["relevance_scoring"]["status"] = (
         "re-frozen 2026-10-29 for the final configuration; UNSCORABLE for "

@@ -39,9 +39,9 @@ curl -s -X POST https://triageiq-api-1014562031321.us-central1.run.app/triage \
 | Component classifier | vscode / kubernetes | Top-1 accuracy | 69.98% [65.44, 74.15] / 54.84% [51.06, 58.57] |
 | Similar-issue retriever | kubernetes | Recall@5, related task, clean subset (n=66) | **39.39%** [27.3, 51.5] |
 | Similar-issue retriever | vscode | Recall@5, duplicate task | **53.50%** [46.5, 60.5] |
-| Resolution predictor | kubernetes | Served point estimate: training-window median (ADR-0064); bucket accuracy vs always-majority | 3.04 d; 32.95% [31.29, 34.66] vs 26.0% |
+| Resolution predictor | kubernetes | Served point estimate: closed-issue median of 2023–2025 (ADR-0074); bucket accuracy vs always-majority | 35.10 d; 32.95% [31.29, 34.66] vs 26.0% |
 | Resolution predictor | vscode | Served point estimate: training-window median (ADR-0064) | 3.84 d |
-| Resolution predictor | kubernetes / vscode | Conformal 80% interval coverage (held-out) | 79.71% [77.94, 81.38] / 82.7% [78.5, 86.2] |
+| Resolution predictor | kubernetes / vscode | 80% interval coverage: k8s fixed interval, censoring-aware bounds on 2023–2025 validation (ADR-0074) / vscode conformal, held-out | 77.3–84.5% / 82.7% [78.5, 86.2] |
 | LLM synthesis (judge /15) | both | Judge mean, regression detector, n=64 | 12.09/15 (80.6%), bootstrap 95% CI [11.64, 12.52] |
 | LLM synthesis | both | Component accuracy: predicted equals gold (exact string match) | **68.8% (44/64)**, Wilson 95% [56.6, 78.8] |
 
@@ -77,8 +77,8 @@ POST /triage {repo, title, body}
                    ▼
 ┌───────────────────────────────────────┐
 │ System 3: Resolution Time Estimator   │  ~53ms p50 (prod, n=5)
-│ Served: training-window median +      │
-│ 80% conformal interval (CQR v2);      │
+│ Served: median of past resolutions +  │
+│ 80% interval (k8s fixed, vscode CQR); │
 │ k8s bucket: LightGBM, +6.95pp vs maj. │
 └──────────────────┬────────────────────┘
                    │ p10/p50/p90 days estimate
@@ -131,7 +131,7 @@ Measured against the production URL: five sequential real `/triage` calls to one
 
 The short list; the full text with evidence is [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md).
 
-- **Resolution time is coarse guidance.** The served point is the training-window median (k8s 3.04 d, vscode 3.84 d). The learned model is not served: on k8s it is marginally better on mean error (102.09d vs 104.23d, +2.06%) but worse on median error (7.28d vs 3.52d); on vscode it is worse (5.45d vs 3.53d mean error). The vscode median is a 2015–16 value while current issues resolve in hours.
+- **Resolution time is coarse guidance.** The served point is a median of past resolution times: k8s 35.10 d (closed issues of 2023–2025, ADR-0074), vscode 3.84 d (training window). The learned model is not served: on the k8s 2014–2016 test it is marginally better on mean error than the previous 3.04 d point (102.09d vs 104.23d, +2.06%) but worse on median error (7.28d vs 3.52d); on vscode it is worse (5.45d vs 3.53d mean error). The vscode median is a 2015–16 value while current issues resolve in hours.
 - **Time-window mismatch.** The corpora are 2014–2016 while live issues are about ten years later; nothing here measures transfer, and the vscode resolution test is a single 7-day window.
 - **Small, single-judge LLM evaluation.** 64 issues (vscode n=11), one local judge, cassette replay: deterministic, but it does not detect live-provider drift.
 - **Grounding is a consistency check, not a correctness check** (see above).

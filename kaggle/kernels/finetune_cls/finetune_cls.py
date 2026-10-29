@@ -108,9 +108,16 @@ def predict_logits(model, tok, ids: list[list[int]], device: str, bs: int = 64) 
 def train_one(mid_rev, tok, tr_ids, tr_y, va_ids, lr, epochs, n_cls, device):  # noqa: ANN001, ANN201
     """Train one grid config on TRAIN only; return (model, validation probabilities, seconds)."""
     seed_all()
-    model = AutoModelForSequenceClassification.from_pretrained(
-        mid_rev[0], revision=mid_rev[1], num_labels=n_cls, problem_type="multi_label_classification"
-    ).to(device)
+    model = (
+        AutoModelForSequenceClassification.from_pretrained(
+            mid_rev[0],
+            revision=mid_rev[1],
+            num_labels=n_cls,
+            problem_type="multi_label_classification",
+        )
+        .float()
+        .to(device)
+    )  # fp32 master weights: GradScaler.unscale_ rejects fp16 params/grads
     opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
     steps = epochs * ((len(tr_ids) + BATCH - 1) // BATCH)
     warm = int(WARMUP * steps)

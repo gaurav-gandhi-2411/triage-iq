@@ -138,3 +138,28 @@ def test_dataset_text_equals_serving_recipe(tmp_path: Path) -> None:
             want = _build_text(pd.Series([title]), pd.Series([clean_text(body)[0]])).iloc[0]
             assert text == want
             assert "<!--" not in text and text.startswith("Title ")
+
+
+def test_kernel_trains_with_fp32_master_weights() -> None:
+    """The kernel must upcast right after from_pretrained (GradScaler rejects fp16 params).
+
+    Source-level check: the kernel cannot be imported on CPU (it pip-installs and needs a GPU).
+    """
+    import ast
+
+    path = (
+        Path(fe.__file__).parent.parent / "kaggle" / "kernels" / "finetune_cls" / "finetune_cls.py"
+    )
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    fn = next(n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == "train_one")
+    assign = next(
+        n
+        for n in fn.body
+        if isinstance(n, ast.Assign) and getattr(n.targets[0], "id", "") == "model"
+    )
+    chain: list[str] = []
+    node = assign.value
+    while isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+        chain.append(node.func.attr)
+        node = node.func.value
+    assert chain[::-1][:3] == ["from_pretrained", "float", "to"]

@@ -40,6 +40,14 @@ character cut. Everything else above (grid, validation selection, test-once, fp3
 int8 secondary, paired bootstrap vs c1, exploratory RAPS, latency) is unchanged. Comparison note:
 the c1 baseline (TF-IDF+LR, test top-3 95.4%) was trained on the legacy text; the comparison is
 therefore model-with-its-own-recipe vs model-with-its-own-recipe, both servable.
+
+Harness bug fix (2026-10-29, PRE-RESULT: no validation or test result has been seen). The first
+kernel run (triageiq-finetune-cls-k8s) died after ~57 s in the first training step with
+`ValueError: Attempting to unscale FP16 gradients` (scaler.unscale_): from_pretrained was given
+no dtype, so the model came up in the checkpoint/library-default dtype (fp16 params) instead of
+fp32. The kernel now calls `.float()` after loading, so the weights are fp32 master weights and
+only the forward pass is fp16 autocast, as the design above already states ("fp16 autocast").
+Hyperparameters, data, splits, grid, selection rule and metrics are unchanged.
 """
 
 from __future__ import annotations

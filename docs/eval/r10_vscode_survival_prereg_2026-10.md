@@ -93,7 +93,9 @@ interpolation. POINT = predicted median survival time (S = 0.5), capped at 730 d
   constant comparison is the M0a train-closed 10/90 quantiles with the same CQR. The served vscode
   interval (re-centred model width plus stored Q) is not re-created here.
 - Bootstrap: 95% percentile, 2000 resamples, seed 42 (qp1_eval.bootstrap), paired differences on
-  the same indices. Exception: Harrell/Uno C use 500 resamples (O(n^2) pair matrices; stated).
+  the same indices. Exception: Harrell/Uno C use 500 resamples (O(n^2) pair matrices; stated), 100 on the secondary population.
+  Amendment 2026-10-29, still before any validation number: the script treats a candidate fit that
+  raises as a reported failure (not a silent skip), and the C bootstrap count above was added.
 
 ## Selection (validation only)
 

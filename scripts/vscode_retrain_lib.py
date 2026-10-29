@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -34,6 +35,9 @@ MARGIN = 0.01  # pre-declared: challenger strict top-3 must beat champion by >= 
 NONINF = 0.02  # in-family top-3 may not be worse than champion by more than 2 points (CI lower)
 MIN_HOLDOUT, MIN_TRAIN, MIN_CLASSES = 500, 5000, 20  # sanity floors; below them the CI is noise
 N_BOOT = 2000
+# ADR-0073 (GG D92.2): meta labels (how an issue was produced/triaged, or a theme), not components.
+# Frozen: another exclusion needs a new ADR. Compared lower-case, as taxonomy.is_excluded does.
+RETRAIN_META_EXCLUDE = frozenset({"ai-generated", "ai-triaged", "2026-themes"})
 
 
 @dataclass(frozen=True)
@@ -71,12 +75,17 @@ def assign_split(created: pd.Series, w: Windows) -> pd.Series:
     )
 
 
+def retrain_family(label: str) -> bool:
+    """True for a label that may become a class: ADR-0070 `not_excluded` and not ADR-0073 meta."""
+    return tax.not_excluded(label) and label.lower() not in RETRAIN_META_EXCLUDE
+
+
 def file_sha256(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
 def assemble(derived: Path, w: Windows) -> pd.DataFrame:
-    """Labelled (>= 1 non-excluded label) settled issues in the window, with split and text.
+    """Labelled (>= 1 `retrain_family` label) settled issues in the window, with split and text.
 
     Calibration / holdout rows whose text_hash occurs in an earlier split are dropped (leakage).
     """
@@ -90,7 +99,7 @@ def assemble(derived: Path, w: Windows) -> pd.DataFrame:
     iss = iss.sort_values("number").reset_index(drop=True)
     events = pd.read_parquet(derived / "label_events.parquet")
     events = events[events["number"].isin(iss["number"])]
-    d = cl.per_issue(iss, events, tax.not_excluded)
+    d = cl.per_issue(iss, events, retrain_family)
     d = d.merge(iss[["number", "title", "body"]], on="number")
     d = d[d["final"].map(bool)].reset_index(drop=True)
     d["split"] = assign_split(d["created_at"], w)
@@ -163,6 +172,53 @@ def bundle_proba(bundle: dict[str, Any], texts: pd.Series, classes: list[str]) -
         k = classes.index(vl.to_class(str(c), classes))
         out[:, k] = np.maximum(out[:, k], p[:, j])
     return out
+
+
+class ChampionShaError(RuntimeError):
+    """The champion file is not the one MANIFEST.sha256 pins; the evaluation refuses to run."""
+
+
+def champion_file(champion: Path) -> Path:
+    """The file whose bytes define the champion: the served .pkl in a models dir, else the bundle."""
+    return champion / "component_classifier_microsoft_vscode.pkl" if champion.is_dir() else champion
+
+
+# A manifest key a champion may be pinned to: the vscode classifier (served pickle or a retrain
+# bundle) under data/models/. Narrow on purpose: a typo or another model's line must not pass.
+CHAMPION_KEY_RE = re.compile(
+    r"data/models/component_classifier_microsoft_vscode[A-Za-z0-9_.-]*\.(pkl|joblib)"
+)
+
+
+def verify_champion(
+    champion: Path, manifest: Path, manifest_key: str | None = None
+) -> tuple[str, str]:
+    """Return (actual, expected) sha256; raise ChampionShaError unless they match (fail closed).
+
+    The manifest key is `manifest_key` when given (a downloaded bundle can carry a file name, such
+    as champion.joblib, that is not its manifest name), else data/models/<champion file name>. So
+    a stale checkout copy, a wrong file or a bundle the manifest does not list all stop the run
+    instead of moving the bar silently; an explicit key only changes WHICH line is compared.
+    """
+    f = champion_file(champion)
+    key = manifest_key if manifest_key is not None else f"data/models/{f.name}"
+    if manifest_key is not None and not CHAMPION_KEY_RE.fullmatch(manifest_key):
+        raise ChampionShaError(f"champion manifest key {manifest_key!r} is not a vscode classifier")
+    try:
+        lines = Path(manifest).read_text(encoding="utf-8").splitlines()
+        actual = file_sha256(f)
+    except OSError as e:
+        raise ChampionShaError(f"cannot read manifest or champion: {e}") from e
+    parts = [ln.split(None, 1) for ln in lines]
+    found = [p[0] for p in parts if len(p) == 2 and p[1].strip() == key]
+    if len(found) != 1:
+        raise ChampionShaError(
+            f"expected exactly one {key} entry in {manifest}, found {len(found)}"
+        )
+    expected = found[0].lower()
+    if actual != expected:
+        raise ChampionShaError(f"champion sha256 {actual} != manifest {expected} for {key}")
+    return actual, expected
 
 
 def champion_proba(champion: Path, d: pd.DataFrame, classes: list[str]) -> tuple[np.ndarray, str]:

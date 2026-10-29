@@ -209,3 +209,192 @@ def test_assemble_stage_roundtrips_label_sets_through_parquet(tmp_path: Path) ->
     d, _ = cli._load(a.out)
     assert meta["counts"] == {"train": 1, "holdout": 1}
     assert d.loc[d["number"] == 3, "final"].iloc[0] == frozenset({"terminal-input"})
+
+
+# ------------------------------------------------------- champion pinned to MANIFEST.sha256
+
+
+def _champion(tmp: Path, content: bytes = b"champion") -> tuple[Path, Path]:
+    """A models dir holding the served pkl, and a manifest pinning exactly its sha256."""
+    models = tmp / "models"
+    models.mkdir()
+    (models / "component_classifier_microsoft_vscode.pkl").write_bytes(content)
+    man = tmp / "MANIFEST.sha256"
+    man.write_text(
+        f"{rl.file_sha256(models / 'component_classifier_microsoft_vscode.pkl')}  "
+        "data/models/component_classifier_microsoft_vscode.pkl\n"
+        f"{'1' * 64}  data/models/other.pkl\n"
+    )
+    return models, man
+
+
+def test_champion_matching_manifest_passes(tmp_path: Path) -> None:
+    models, man = _champion(tmp_path)
+    actual, expected = rl.verify_champion(models, man)
+    assert (
+        actual == expected == rl.file_sha256(models / "component_classifier_microsoft_vscode.pkl")
+    )
+
+
+def test_champion_sha_mismatch_errors_and_stages_nothing(tmp_path: Path) -> None:
+    models, man = _champion(tmp_path)
+    (models / "component_classifier_microsoft_vscode.pkl").write_bytes(b"stale copy")
+    with pytest.raises(rl.ChampionShaError, match="!= manifest"):
+        rl.verify_champion(models, man)
+    out = tmp_path / "out"
+    out.mkdir()
+    a = Namespace(
+        champion=models, manifest=man, out=out, derived_dir=tmp_path, champion_manifest_key=None
+    )
+    with pytest.raises(rl.ChampionShaError):
+        cli.stage_evaluate(a)  # refuses before reading any stage output or scoring
+    rc = cli.main(["evaluate", "--derived-dir", str(tmp_path), "--champion", str(models),
+                   "--manifest", str(man), "--out", str(out)])  # fmt: skip
+    assert rc == cli.ERROR
+    assert not (out / "metrics.json").exists() and not (out / "staging").exists()
+
+
+@pytest.mark.parametrize("manifest_text", [None, "", f"{'2' * 64}  data/models/other.pkl\n"])
+def test_champion_missing_manifest_or_entry_fails_closed(
+    tmp_path: Path, manifest_text: str | None
+) -> None:
+    models, man = _champion(tmp_path)
+    if manifest_text is None:
+        man.unlink()
+    else:
+        man.write_text(manifest_text)
+    with pytest.raises(rl.ChampionShaError):
+        rl.verify_champion(models, man)
+
+
+def test_champion_duplicate_manifest_entry_fails_closed(tmp_path: Path) -> None:
+    models, man = _champion(tmp_path)
+    man.write_text(man.read_text() * 2)
+    with pytest.raises(rl.ChampionShaError, match="exactly one"):
+        rl.verify_champion(models, man)
+
+
+def test_gate_refuses_when_metrics_champion_sha_not_manifest_sha(tmp_path: Path) -> None:
+    m = good()
+    m["champion"] = {"sha256": "a" * 64, "manifest_sha256": "b" * 64}
+    (tmp_path / "metrics.json").write_text(json.dumps(m))
+    (tmp_path / "train_info.json").write_text(json.dumps(
+        {"n_train": 20000, "classes": list(range(80)), "classes_sha256": "x",
+         "challenger_sha256": "y"}))  # fmt: skip
+    (tmp_path / "window_meta.json").write_text("{}")
+    res = cli.stage_gate(Namespace(out=tmp_path))
+    assert res["decision"] == "refuse"
+    assert any("champion_sha_mismatch" in r for r in res["reasons"])
+    m["champion"]["manifest_sha256"] = "a" * 64
+    (tmp_path / "metrics.json").write_text(json.dumps(m))
+    res = cli.stage_gate(Namespace(out=tmp_path))
+    assert res["decision"] == "accept" and res["champion_manifest_sha256"] == "a" * 64
+
+
+# ------------------------------------------------ ADR-0073 meta-label exclusion (D92.2)
+
+META = ("ai-generated", "ai-triaged", "2026-themes")
+
+
+def test_meta_exclusion_is_exactly_the_three_frozen_labels() -> None:
+    assert frozenset(META) == rl.RETRAIN_META_EXCLUDE
+    assert all(not rl.retrain_family(x) for x in (*META, "AI-Generated", "2026-THEMES"))
+    for ok in ("git", "terminal-input", "recent-regression", "ai-generated-x"):
+        assert rl.retrain_family(ok)  # other labels unaffected, incl. near-names
+    assert not rl.retrain_family("bug")  # the ADR-0070 list still applies
+
+
+def test_meta_labels_never_become_classes_and_meta_only_issues_are_dropped(
+    tmp_path: Path,
+) -> None:
+    w = rl.make_windows(pd.Timestamp("2026-10-22"))
+    t0 = w.train_start + pd.Timedelta(days=1)
+    rows = []  # (labels): 35 git+meta, 35 meta-only (would reach >= 30 as a class), 35 terminal
+    for i in range(35):
+        rows.append((["git", META[i % 3]], f"g{i}"))
+        rows.append(([META[i % 3], META[(i + 1) % 3]], f"m{i}"))
+        rows.append((["terminal-input"], f"t{i}"))
+    rows.append((["AI-Generated"], "case"))
+    n = len(rows)
+    pd.DataFrame({
+        "number": range(1, n + 1), "created_at": [t0 + pd.Timedelta(minutes=i) for i in range(n)],
+        "title": "t", "body": "b", "labels_final": [r[0] for r in rows],
+        "labels_t72h": [r[0] for r in rows], "text_hash": [r[1] for r in rows],
+    }).to_parquet(tmp_path / "issues.parquet")  # fmt: skip
+    pd.DataFrame({
+        "number": [1], "ts": [t0], "action": ["labeled"], "label": ["git"], "actor": ["u"],
+    }).to_parquet(tmp_path / "label_events.parquet")  # fmt: skip
+    d = rl.assemble(tmp_path, w)
+    assert len(d) == 70  # the 36 meta-only issues (35 + the upper-case one) have no family
+    assert all(not (set(s) & set(META)) for s in d["final"])
+    assert {frozenset(s) for s in d["final"]} == {frozenset({"git"}), frozenset({"terminal-input"})}
+    classes = rl.regenerate_classes(d)
+    assert set(META).isdisjoint(classes)
+    assert "git" in classes and classes[-1] == "other"
+
+
+# ------------------------------------- #326: bundle downloaded under a name that is not its manifest name
+
+BUNDLE_KEY = "data/models/component_classifier_microsoft_vscode_family_v2_2026-10-22.joblib"
+
+
+def _bundle(tmp: Path, content: bytes = b"bundle") -> tuple[Path, Path]:
+    """champion.joblib (download name) and a manifest pinning its sha256 under BUNDLE_KEY."""
+    f = tmp / "champion.joblib"
+    f.write_bytes(content)
+    man = tmp / "MANIFEST.sha256"
+    man.write_text(f"{rl.file_sha256(f)}  {BUNDLE_KEY}\n{'1' * 64}  data/models/other.pkl\n")
+    return f, man
+
+
+def test_downloaded_name_without_key_still_fails_closed(tmp_path: Path) -> None:
+    f, man = _bundle(tmp_path)
+    with pytest.raises(rl.ChampionShaError, match="champion.joblib"):
+        rl.verify_champion(f, man)
+
+
+def test_explicit_manifest_key_verifies_by_sha_not_by_file_name(tmp_path: Path) -> None:
+    f, man = _bundle(tmp_path)
+    actual, expected = rl.verify_champion(f, man, BUNDLE_KEY)
+    assert actual == expected == rl.file_sha256(f)
+
+
+def test_explicit_manifest_key_still_requires_matching_sha(tmp_path: Path) -> None:
+    f, man = _bundle(tmp_path)
+    f.write_bytes(b"tampered bundle")
+    with pytest.raises(rl.ChampionShaError, match="!= manifest"):
+        rl.verify_champion(f, man, BUNDLE_KEY)
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "data/models/other.pkl",  # listed in the manifest but not the vscode classifier
+        "data/models/component_classifier_microsoft_vscode_missing.joblib",  # not in the manifest
+        "../data/models/component_classifier_microsoft_vscode_x.joblib",
+        "data/models/component_classifier_microsoft_vscode_x.joblib extra",
+        "",
+    ],
+)
+def test_explicit_manifest_key_must_be_a_listed_vscode_classifier(tmp_path: Path, key: str) -> None:
+    f, man = _bundle(tmp_path)
+    with pytest.raises(rl.ChampionShaError):
+        rl.verify_champion(f, man, key)
+
+
+def test_cli_passes_manifest_key_through_to_evaluation(tmp_path: Path) -> None:
+    f, man = _bundle(tmp_path)
+    out = tmp_path / "out"
+    out.mkdir()
+    base = ["evaluate", "--derived-dir", str(tmp_path), "--champion", str(f),
+            "--manifest", str(man), "--out", str(out)]  # fmt: skip
+    # Without the key the sha check refuses before any scoring (exit 2, nothing written).
+    assert cli.main(base) == cli.ERROR
+    # With the key the sha check passes and the run proceeds to the (absent) stage inputs, which
+    # is still an error here, but NOT the champion error: it is reached only after verification.
+    a = Namespace(champion=f, manifest=man, out=out, derived_dir=tmp_path,
+                  champion_manifest_key=BUNDLE_KEY)  # fmt: skip
+    with pytest.raises(
+        RuntimeError, match="assemble output missing"
+    ):  # past verify_champion, into reading stage outputs
+        cli.stage_evaluate(a)

@@ -1,0 +1,565 @@
+{
+ "classes": [
+  "sig/api-machinery",
+  "sig/apps",
+  "sig/architecture",
+  "sig/auth",
+  "sig/autoscaling",
+  "sig/cli",
+  "sig/cloud-provider",
+  "sig/cluster-lifecycle",
+  "sig/docs",
+  "sig/etcd",
+  "sig/instrumentation",
+  "sig/k8s-infra",
+  "sig/network",
+  "sig/node",
+  "sig/release",
+  "sig/scalability",
+  "sig/scheduling",
+  "sig/security",
+  "sig/storage",
+  "sig/testing",
+  "sig/windows",
+  "other"
+ ],
+ "design": "(2026-10-23; written and committed with the validation results BEFORE any\ntest evaluation; do not change after seeing test results). Task, gold, classes, population,\nsplits and metrics are exactly those of qp1_tfidf_lr.py / qp1_eval.py (ADR-0067: 21 sig/* classes\nwith >= 30 train issues + `other`; primary label = earliest surviving `labeled` event).\n * Model: microsoft/deberta-v3-small at pinned revision a36c739020e01763fe789b4b85e2df55d6180012;\n   answerdotai/ModernBERT-base (rev 8949b909...) is used ONLY if deberta fails to load on Kaggle,\n   and the report says which one ran. Input text: see \"Design revision\" below (originally\n   title + \"\\n\" + body[:4000]); max_seq_len 384.\n * Head/loss: 22 outputs, multi-label BCE; target = every final sig/* label mapped to the class\n   list (`other` for labels outside it). Ranking/metrics/conformal use the sigmoid scores\n   renormalised to sum 1 per row. AdamW (wd 0.01), batch 16, linear schedule with 10% warmup,\n   grad-clip 1.0, seed 42, fp16 autocast. Grid: lr {2e-5, 5e-5} x epochs {3, 5}; each config is\n   trained on TRAIN only and scored on VALIDATION inside the kernel; selection = validation top-3,\n   tie macro-F1. Only the selected config's validation and test probabilities are written.\n * Test labels never leave this machine: the Kaggle dataset has labels for train/validation and\n   texts only (all classifier_eligible issues, no label information) for test. Test metrics are\n   computed locally ONCE (--final-test) with the qp1_eval test-once guard: top-1, top-3,\n   any-valid, macro-F1, ECE, NLL with bootstrap CIs; paired bootstrap vs candidate 1 (saved test\n   probabilities); the frozen ADR-0069 RAPS(0.1, 1) conformal method, EXPLORATORY.\n * Serving artifact: dynamic-int8 ONNX of the selected model. Its validation parity vs fp32 is\n   measured in the kernel; its test probabilities are evaluated as a SEPARATE model id\n   (`finetuned_encoder_v1_int8`, secondary, not used for selection or the headline claim).\n * Latency: single-row CPU p50/p95 of the int8 ONNX (tokenise + run), 200 test texts (seed 42\n   sample), measured locally in a throwaway venv with onnxruntime + tokenizers (inference only),\n   at all cores and at 2 threads (the 2-vCPU container shape); budget 300 ms p50 per added model.\n * Success reading: the model beats candidate 1 only if the paired top-3 CI excludes zero.\n\nDesign revision (2026-10-23, before any run): the kernel has never run, so no validation or test\nresult has been seen; this changes the text recipe only. Train/validation/test text is now\n`title.strip() + \". \" + preprocess.clean_text(body)[0].strip()`, i.e. the serving recipe with the\nTRIAGE_CLEAN_REQUEST_BODY cleaning flag on (component_classifier._build_text fed with clean_text\noutput), instead of the legacy `title + \"\\n\" + raw body[:4000]`. Why: production is moving to\ncleaned bodies (PR #289 fixes a measured train/serve skew; PR #288 aligned the Kaggle embedding\nrecipe the same way), and a candidate trained on the legacy text would be evaluated on text it\nwill not see in serving. The 384-token cut is unchanged and still done by the kernel tokenizer\n(it tokenises whatever text it is given, truncation=True, max_length=384); there is no extra\ncharacter cut. Everything else above (grid, validation selection, test-once, fp32 headline +\nint8 secondary, paired bootstrap vs c1, exploratory RAPS, latency) is unchanged. Comparison note:\nthe c1 baseline (TF-IDF+LR, test top-3 95.4%) was trained on the legacy text; the comparison is\ntherefore model-with-its-own-recipe vs model-with-its-own-recipe, both servable.\n\nHarness bug fix (2026-10-29, PRE-RESULT: no validation or test result has been seen). The first\nkernel run (triageiq-finetune-cls-k8s) died after ~57 s in the first training step with\n`ValueError: Attempting to unscale FP16 gradients` (scaler.unscale_): from_pretrained was given\nno dtype, so the model came up in the checkpoint/library-default dtype (fp16 params) instead of\nfp32. The kernel now calls `.float()` after loading, so the weights are fp32 master weights and\nonly the forward pass is fp16 autocast, as the design above already states (\"fp16 autocast\").\nHyperparameters, data, splits, grid, selection rule and metrics are unchanged.",
+ "harness_design": "(2026-10-20; do not change after seeing test results). Pure functions on\n(y_true_primary, y_true_sets, proba, classes); labels are strings already mapped to the modelled\nclasses + `other`.\n * top-1 / top-3 accuracy against the PRIMARY label; any-valid top-1 (prediction in the true\n   label set) and any-valid top-3 (any of the top-3 in the set); macro-F1 over the classes present\n   in y_true; NLL (probabilities clipped at 1e-12); ECE with 15 equal-width bins on the top-1\n   confidence. Ties in probability are broken by class order (stable sort).\n * Conformal sets by APS, non-randomised: a label's score is the cumulative probability mass of\n   all classes ranked at or above it; calibration scores use the PRIMARY label on VALIDATION;\n   qhat = the ceil((n + 1)(1 - alpha))-th smallest score (inf when that exceeds n), alpha = 0.05;\n   a class is in the set iff its score <= qhat, and the top-1 class is always included (non-empty\n   sets; conservative). Reported: coverage w.r.t. primary, coverage w.r.t. any-valid (set meets\n   the true set), mean / median set size.\n * Temperature scaling: T fitted on VALIDATION by minimising NLL of softmax(log p / T), T in\n   [0.05, 20]; ECE reported before and after.\n * Bootstrap 95% percentile CIs over issues: 2000 resamples, seed 42, paired differences use the\n   same resampled indices; Wilson 95% for proportions.\n * Guard: test metrics are computed only with final=True, and ResultsWriter refuses a second test\n   evaluation of the same model id in the same report file. Each entry records the model id, the\n   sha256 of the prediction file and the sha256 of the frozen split manifest.",
+ "kernel": {
+  "device": "cuda",
+  "gpu": "Tesla T4",
+  "load_failures": null,
+  "model": "microsoft/deberta-v3-small",
+  "onnx_error": null,
+  "onnx_parity_validation": {
+   "fp32_onnx_metrics": {
+    "macro_f1": 0.3379685804992492,
+    "top1": 0.6896551724137931,
+    "top3": 0.8220689655172414
+   },
+   "fp32_onnx_vs_torch_max_abs_diff": 0.0022650497939384895,
+   "int8_metrics": {
+    "macro_f1": 0.3390270287089042,
+    "top1": 0.68,
+    "top3": 0.8206896551724138
+   },
+   "int8_vs_fp32_top1_agreement": 0.9420689655172414,
+   "int8_vs_fp32_top3_set_agreement": 0.6813793103448276
+  },
+  "onnx_sizes_bytes": {
+   "model_fp32.onnx": 568119824,
+   "model_int8.onnx": 172297324
+  },
+  "revision": "a36c739020e01763fe789b4b85e2df55d6180012",
+  "torch": "2.11.0+cu128",
+  "total_seconds": 2336.677456855774,
+  "train_and_predict_seconds": 1609.98756980896
+ },
+ "latency_int8_onnx": {
+  "artifact_bytes": {
+   "model_fp32.onnx": 568119824,
+   "model_int8.onnx": 172297324
+  },
+  "budget_ms_p50": 300.0,
+  "cpu_count": 16,
+  "end_to_end": {
+   "threads_2": {
+    "n": 200,
+    "p50_ms": 236.89414999898872,
+    "p95_ms": 275.6836549982836
+   },
+   "threads_all": {
+    "n": 200,
+    "p50_ms": 128.97099999827333,
+    "p95_ms": 137.29008499794872
+   }
+  },
+  "n_texts": 200,
+  "session_only": {
+   "threads_2": {
+    "n": 200,
+    "p50_ms": 234.73759999978938,
+    "p95_ms": 273.72524500169675
+   },
+   "threads_all": {
+    "n": 200,
+    "p50_ms": 126.42354999843519,
+    "p95_ms": 134.41876500146464
+   }
+  },
+  "within_budget_p50": {
+   "threads_2": true,
+   "threads_all": true
+  }
+ },
+ "models": {
+  "finetuned_encoder_v1": {
+   "split_manifest_sha256": "b8c0dfee4e228c3a13cea52ccd008fad837294629de91c5ee7047288c8559247",
+   "test": {
+    "anyvalid_top1": {
+     "ci95": [
+      0.7666004335260115,
+      0.8085260115606936
+     ],
+     "n": 1384,
+     "point": 0.7875722543352601
+    },
+    "anyvalid_top3": {
+     "ci95": [
+      0.8807803468208093,
+      0.9125722543352601
+     ],
+     "n": 1384,
+     "point": 0.8966763005780347
+    },
+    "conformal_exploratory": {
+     "coverage_any_valid": {
+      "k": 1350,
+      "n": 1384,
+      "rate": 0.9754335260115607,
+      "wilson95": [
+       0.965867517961927,
+       0.9823674967544499
+      ]
+     },
+     "coverage_primary": {
+      "k": 1339,
+      "n": 1384,
+      "rate": 0.9674855491329479,
+      "wilson95": [
+       0.9567708398879515,
+       0.9756122216948686
+      ]
+     },
+     "empty_set_rate": 0.0,
+     "label": "EXPLORATORY: ADR-0069 frozen method",
+     "qhat": 1.7449208910605152,
+     "set_size_mean": 8.533236994219653,
+     "set_size_median": 8.0,
+     "spec": {
+      "k_reg": 1,
+      "lam": 0.1,
+      "name": "raps_l0.1_k1"
+     }
+    },
+    "ece": {
+     "ci95": [
+      0.028546165545927676,
+      0.061324426578125514
+     ],
+     "n": 1384,
+     "point": 0.03467937861881639
+    },
+    "headline": true,
+    "macro_f1": {
+     "ci95": [
+      0.3122532107818446,
+      0.3688473761579106
+     ],
+     "n": 1384,
+     "point": 0.3320053937370964
+    },
+    "n": 1384,
+    "n_test_eligible_labelled": 1384,
+    "nll": {
+     "ci95": [
+      0.9793393478523903,
+      1.121915542489312
+     ],
+     "n": 1384,
+     "point": 1.050624977812018
+    },
+    "paired_vs_candidate1": {
+     "anyvalid_top1": {
+      "ci95": [
+       -0.07369942196531798,
+       -0.030346820809248554
+      ],
+      "ci_excludes_zero": true,
+      "n": 1384,
+      "point": -0.0527456647398844
+     },
+     "anyvalid_top3": {
+      "ci95": [
+       -0.08526011560693647,
+       -0.0527456647398844
+      ],
+      "ci_excludes_zero": true,
+      "n": 1384,
+      "point": -0.06936416184971095
+     },
+     "macro_f1": {
+      "ci95": [
+       -0.25779045507247594,
+       -0.1725611530374597
+      ],
+      "ci_excludes_zero": true,
+      "n": 1384,
+      "point": -0.21326759056884864
+     },
+     "top1": {
+      "ci95": [
+       -0.06430635838150289,
+       -0.018063583815028927
+      ],
+      "ci_excludes_zero": true,
+      "n": 1384,
+      "point": -0.041907514450867156
+     },
+     "top3": {
+      "ci95": [
+       -0.09826589595375723,
+       -0.06286127167630062
+      ],
+      "ci_excludes_zero": true,
+      "n": 1384,
+      "point": -0.0802023121387283
+     }
+    },
+    "pred_file": "test_probs.parquet",
+    "pred_sha256": "acd17bf7978a9f87a7d275fdf8182cc27042813c4308292b87eeb2f19789dde5",
+    "split": "test",
+    "top1": {
+     "ci95": [
+      0.7059248554913294,
+      0.7521676300578035
+     ],
+     "n": 1384,
+     "point": 0.7290462427745664
+    },
+    "top1_wilson95": [
+     0.7050200470633619,
+     0.7518044205127647
+    ],
+    "top3": {
+     "ci95": [
+      0.8562138728323699,
+      0.8901734104046243
+     ],
+     "n": 1384,
+     "point": 0.8735549132947977
+    }
+   },
+   "validation": {
+    "anyvalid_top1": {
+     "ci95": [
+      0.72,
+      0.7820689655172414
+     ],
+     "n": 725,
+     "point": 0.7517241379310344
+    },
+    "anyvalid_top3": {
+     "ci95": [
+      0.8386206896551724,
+      0.8896551724137931
+     ],
+     "n": 725,
+     "point": 0.8648275862068966
+    },
+    "ece": {
+     "ci95": [
+      0.0443906249783354,
+      0.09075296930189897
+     ],
+     "n": 725,
+     "point": 0.05206379940078699
+    },
+    "macro_f1": {
+     "ci95": [
+      0.30252040050500134,
+      0.3763143593416655
+     ],
+     "n": 725,
+     "point": 0.3379685804992492
+    },
+    "n": 725,
+    "nll": {
+     "ci95": [
+      1.1137596875011455,
+      1.3293766563324305
+     ],
+     "n": 725,
+     "point": 1.2196118236236186
+    },
+    "pred_file": "validation_probs.parquet",
+    "pred_sha256": "684b621c060e907aa6b87b732d2cade7ff544e4c2e4c63f66afd9e63556e5082",
+    "split": "validation",
+    "top1": {
+     "ci95": [
+      0.6565517241379311,
+      0.7227586206896551
+     ],
+     "n": 725,
+     "point": 0.6896551724137931
+    },
+    "top1_wilson95": [
+     0.6550531543779681,
+     0.7222579101935385
+    ],
+    "top3": {
+     "ci95": [
+      0.7931034482758621,
+      0.8468965517241379
+     ],
+     "n": 725,
+     "point": 0.8206896551724138
+    }
+   }
+  },
+  "finetuned_encoder_v1_int8": {
+   "split_manifest_sha256": "b8c0dfee4e228c3a13cea52ccd008fad837294629de91c5ee7047288c8559247",
+   "test": {
+    "anyvalid_top1": {
+     "ci95": [
+      0.7586705202312138,
+      0.8027637283236994
+     ],
+     "n": 1384,
+     "point": 0.7803468208092486
+    },
+    "anyvalid_top3": {
+     "ci95": [
+      0.8793352601156069,
+      0.9104226878612716
+     ],
+     "n": 1384,
+     "point": 0.8945086705202312
+    },
+    "conformal_exploratory": {
+     "coverage_any_valid": {
+      "k": 1351,
+      "n": 1384,
+      "rate": 0.9761560693641619,
+      "wilson95": [
+       0.9667039012480629,
+       0.9829722001168191
+      ]
+     },
+     "coverage_primary": {
+      "k": 1335,
+      "n": 1384,
+      "rate": 0.9645953757225434,
+      "wilson95": [
+       0.9535019353251981,
+       0.9731167796636018
+      ]
+     },
+     "empty_set_rate": 0.0,
+     "label": "EXPLORATORY: ADR-0069 frozen method",
+     "qhat": 1.7319654417885535,
+     "set_size_mean": 8.376445086705202,
+     "set_size_median": 8.0,
+     "spec": {
+      "k_reg": 1,
+      "lam": 0.1,
+      "name": "raps_l0.1_k1"
+     }
+    },
+    "ece": {
+     "ci95": [
+      0.027725426801248457,
+      0.05941687807609185
+     ],
+     "n": 1384,
+     "point": 0.031050256275471484
+    },
+    "headline": false,
+    "macro_f1": {
+     "ci95": [
+      0.31152675509785843,
+      0.3695720721721376
+     ],
+     "n": 1384,
+     "point": 0.33219557378975656
+    },
+    "n": 1384,
+    "n_test_eligible_labelled": 1384,
+    "nll": {
+     "ci95": [
+      1.0048431727587543,
+      1.1540291311919222
+     ],
+     "n": 1384,
+     "point": 1.0799695464855894
+    },
+    "paired_vs_candidate1": {
+     "anyvalid_top1": {
+      "ci95": [
+       -0.08164739884393057,
+       -0.03827673410404633
+      ],
+      "ci_excludes_zero": true,
+      "n": 1384,
+      "point": -0.05997109826589597
+     },
+     "anyvalid_top3": {
+      "ci95": [
+       -0.08742774566473988,
+       -0.05563583815028905
+      ],
+      "ci_excludes_zero": true,
+      "n": 1384,
+      "point": -0.07153179190751446
+     },
+     "macro_f1": {
+      "ci95": [
+       -0.25885968015126826,
+       -0.1693730650041463
+      ],
+      "ci_excludes_zero": true,
+      "n": 1384,
+      "point": -0.2130774105161885
+     },
+     "top1": {
+      "ci95": [
+       -0.073717485549133,
+       -0.028179190751445038
+      ],
+      "ci_excludes_zero": true,
+      "n": 1384,
+      "point": -0.05130057803468213
+     },
+     "top3": {
+      "ci95": [
+       -0.10043352601156075,
+       -0.06575144508670516
+      ],
+      "ci_excludes_zero": true,
+      "n": 1384,
+      "point": -0.08309248554913296
+     }
+    },
+    "pred_file": "test_probs_int8.parquet",
+    "pred_sha256": "b2302a44ae1ef033f902b2685aff7a0f23fb7db79dd712ee747cc3368137cbcd",
+    "split": "test",
+    "top1": {
+     "ci95": [
+      0.6958092485549133,
+      0.7442196531791907
+     ],
+     "n": 1384,
+     "point": 0.7196531791907514
+    },
+    "top1_wilson95": [
+     0.695405617760197,
+     0.7426847233853631
+    ],
+    "top3": {
+     "ci95": [
+      0.8526011560693642,
+      0.8872832369942196
+     ],
+     "n": 1384,
+     "point": 0.8706647398843931
+    }
+   },
+   "validation": {
+    "anyvalid_top1": {
+     "ci95": [
+      0.7144827586206897,
+      0.7793103448275862
+     ],
+     "n": 725,
+     "point": 0.7475862068965518
+    },
+    "anyvalid_top3": {
+     "ci95": [
+      0.8386206896551724,
+      0.8896551724137931
+     ],
+     "n": 725,
+     "point": 0.8648275862068966
+    },
+    "ece": {
+     "ci95": [
+      0.05339501231410466,
+      0.10320464492692749
+     ],
+     "n": 725,
+     "point": 0.06897162960516756
+    },
+    "macro_f1": {
+     "ci95": [
+      0.3034032161475182,
+      0.3760620873803627
+     ],
+     "n": 725,
+     "point": 0.3390270287089042
+    },
+    "n": 725,
+    "nll": {
+     "ci95": [
+      1.1319775790073539,
+      1.3519336811978349
+     ],
+     "n": 725,
+     "point": 1.2415366170961752
+    },
+    "pred_file": "validation_probs_int8.parquet",
+    "pred_sha256": "10af192afa16b9c1f45d07521c8f0128af369cd13119f61aed783e1bf5ec0f76",
+    "split": "validation",
+    "top1": {
+     "ci95": [
+      0.646896551724138,
+      0.713103448275862
+     ],
+     "n": 725,
+     "point": 0.68
+    },
+    "top1_wilson95": [
+     0.6451715711508338,
+     0.712930930133396
+    ],
+    "top3": {
+     "ci95": [
+      0.7931034482758621,
+      0.8482758620689655
+     ],
+     "n": 725,
+     "point": 0.8206896551724138
+    }
+   }
+  }
+ },
+ "repo": "kubernetes/kubernetes",
+ "selected_config": {
+  "epochs": 5,
+  "lr": 5e-05
+ },
+ "split_manifest_sha256": "b8c0dfee4e228c3a13cea52ccd008fad837294629de91c5ee7047288c8559247",
+ "validation_grid": [
+  {
+   "epochs": 3,
+   "lr": 2e-05,
+   "macro_f1": 0.1533014525977703,
+   "top1": 0.6027586206896551,
+   "top3": 0.7351724137931035,
+   "train_seconds": 297.5533483028412
+  },
+  {
+   "epochs": 5,
+   "lr": 2e-05,
+   "macro_f1": 0.31111641665213086,
+   "top1": 0.6882758620689655,
+   "top3": 0.8193103448275862,
+   "train_seconds": 492.3420557975769
+  },
+  {
+   "epochs": 3,
+   "lr": 5e-05,
+   "macro_f1": 0.16575215611613484,
+   "top1": 0.5986206896551725,
+   "top3": 0.743448275862069,
+   "train_seconds": 296.6171820163727
+  },
+  {
+   "epochs": 5,
+   "lr": 5e-05,
+   "macro_f1": 0.3379685804992492,
+   "top1": 0.6896551724137931,
+   "top3": 0.8206896551724138,
+   "train_seconds": 491.6615045070648
+  }
+ ]
+}

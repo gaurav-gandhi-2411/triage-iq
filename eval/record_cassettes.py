@@ -50,7 +50,6 @@ ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).parent))
 
-import pandas as pd
 from dotenv import load_dotenv
 
 load_dotenv(ROOT / ".env")
@@ -63,11 +62,10 @@ import tpd_budget_gate
 from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
 from triage_iq.model_config import TRIAGE_MODEL
-from triage_iq.models.component_classifier import load_classifier
 from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore, compute_judge_prompt_hash
-from triage_iq.models.resolution import ResolutionTimePredictor
 from triage_iq.api.loader import _load_conformal_adjustments
-from triage_iq.models.triage import TriageAssistant, TruncatedCompletionError
+from recording_config import build_assistant, issue_to_row, load_recording_config
+from triage_iq.models.triage import TruncatedCompletionError
 
 # TriageJudge (and therefore Ollama) is imported lazily, only inside _build_judge() -- a
 # --mode synthesis run must never import it, let alone construct one (2026-09-06, ADR-0060).
@@ -405,7 +403,7 @@ def _resolve_and_verify_artifacts() -> dict[str, str]:
         )
         sys.exit(1)
 
-    current_hashes = artifact_fingerprint.compute_artifact_hashes(ROOT)
+    current_hashes = artifact_fingerprint.compute_artifact_hashes(ROOT, config=load_recording_config(ROOT, _CASSETTE_DIR))
     logger.info("Model artifacts resolved for this run:")
     for rel, h in sorted(current_hashes.items()):
         abs_path = (ROOT / rel).resolve()
@@ -610,6 +608,7 @@ def _load_models(groq_key: str, cassette: CassettePlayer) -> dict[str, dict]:
         sys.exit(1)
 
     models: dict[str, dict] = {}
+    config = load_recording_config(ROOT, _CASSETTE_DIR)
     for repo, slug in REPO_MAP.items():
         if repo not in frozen_retrievers:
             # A separate recording set (TRIAGEIQ_RECORDING_SET_DIR) may hold one repo only; the committed
@@ -619,27 +618,21 @@ def _load_models(groq_key: str, cassette: CassettePlayer) -> dict[str, dict]:
         models_dir = ROOT / "data" / "models"
         processed_dir = ROOT / "data" / "processed"
         try:
-            # load_classifier() dispatches on the pkl's model_kind marker (ADR-0036).
-            classifier = load_classifier(models_dir, slug)
-            predictor = ResolutionTimePredictor.load(
-                str(models_dir / f"resolution_predictor_{slug}.pkl")
-            )
-            train_df = pd.read_parquet(processed_dir / f"{slug}_temporal_train.parquet")
             # ADR-0059: only THIS repo's own artifacts, so a cassette entry's provenance
             # names exactly what fed its prompt (not the other repo's classifier too).
-            repo_artifact_hashes = artifact_fingerprint.compute_artifact_hashes(ROOT, repo=repo)
-            assistant = TriageAssistant(
-                repo=repo,
-                classifier=classifier,
+            repo_artifact_hashes = artifact_fingerprint.compute_artifact_hashes(ROOT, repo=repo, config=config)
+            models[repo] = build_assistant(
+                repo,
+                slug,
+                models_dir=models_dir,
+                processed_dir=processed_dir,
                 detector=frozen_retrievers[repo],  # frozen, not live FAISS
-                predictor=predictor,
-                train_df=train_df,
+                config=config,
                 groq_api_key=groq_key,
                 cache=cassette,
                 artifact_hashes=repo_artifact_hashes,
                 conformal_adjustment=_load_conformal_adjustments(models_dir).get(repo),
             )
-            models[repo] = {"classifier": classifier, "predictor": predictor, "train_df": train_df, "assistant": assistant}
             logger.info("Models loaded for %s", repo)
         except Exception as exc:
             logger.error("Failed to load models for %s: %s", repo, exc)
@@ -702,12 +695,7 @@ def _synthesize_one(
     sys.exit(1) directly, exactly as the original combined loop did. Shared by --mode full
     and --mode synthesis so the two can never diverge (this project's "one function,
     everyone uses it" precedent)."""
-    row = pd.Series({
-        "title": issue["title"],
-        "body_clean": issue["body"],
-        "number": issue["number"],
-        "created_at": pd.Timestamp(issue["created_at"]) if issue.get("created_at") else pd.Timestamp("now", tz="UTC"),
-    })
+    row = issue_to_row(issue)
 
     plan = None
     triage_error = None

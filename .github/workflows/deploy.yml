@@ -265,7 +265,7 @@ jobs:
 
       - name: Queue the full post-deploy smoke test (quota pass only)
         if: success() && steps.smoke.outputs.quota_pass == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           REVISION: ${{ steps.deploy.outputs.revision }}
         with:

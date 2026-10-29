@@ -89,7 +89,10 @@ def test_committed_set_matches_report_and_quotas() -> None:
         rep["design_version"] == "2.1" and rep["supersedes_v1"]["eval_set.jsonl"] == q.V1_SET_SHA256
     )
     assert rep["tokens"]["planning_total_tokens"] == 900_000
-    assert rep["relevance_scoring"]["status"].startswith("UNSCORABLE")
+    # re-frozen for the final configuration (D92.6): k8s on candidate index v2, vscode unchanged
+    assert "UNSCORABLE for ['microsoft/vscode']" in rep["relevance_scoring"]["status"]
+    assert rep["refreeze"]["rows_top_k_changed"] == {REPOS[0]: q.N_PER_REPO}
+    assert rep["freeze"]["index_sha256"][REPOS[0]].startswith("5114e0f0")  # candidate v2
     for repo in REPOS:
         assert rep[repo]["weights"]["kish_n_eff"] <= rep[repo]["weights"]["n"]
 
@@ -133,3 +136,24 @@ def test_committed_set_only_eligible_test_issues() -> None:
 def test_committed_set_is_splitlines_safe() -> None:
     text = (SET_DIR / "eval_set.jsonl").read_text("utf-8")
     assert len(text.splitlines()) == 150
+
+
+def test_committed_set_carries_body_raw_that_cleans_to_body() -> None:
+    from triage_iq.data.preprocess import clean_text
+
+    rows = _rows()
+    assert all(isinstance(r["body_raw"], str) for r in rows)
+    assert all(clean_text(r["body_raw"])[0] == r["body"] for r in rows)
+    rep = json.loads(REPORT.read_text("utf-8"))["refreeze"]["body_raw"]
+    assert sum(v["text_changed"] for v in rep.values()) == sum(
+        r["body_raw"] != r["body"] for r in rows
+    )
+
+
+def test_committed_recording_config_is_the_final_configuration() -> None:
+    from recording_config import CONFIG_FILENAME, RecordingConfig, parse_config
+
+    raw = json.loads((SET_DIR / CONFIG_FILENAME).read_text("utf-8"))
+    assert parse_config(raw) == RecordingConfig(
+        vscode_classifier="family_v2", k8s_index="v2", resolution_evidence=True
+    )

@@ -3,20 +3,21 @@
  "design_version": "2.1",
  "design_version_note": "2.1: meta.fix_prs / fix_peers use audited closed_event_closer_pr links only (D79: pr_closing_refs audited 76.7% < 95%); sampled issues, strata, weights, similar_issues unchanged from v2 (sha256 in supersedes_v2); nothing was recorded on v2.",
  "files": {
-  "eval_set.jsonl": "c8a9c061c75005f73e3bf02f555f790cd00300acc85df1ff83759ba192a53693",
+  "RECORDING_CONFIG.json": "20b0adbf2f452ac8507abf8ccc7af3f51a7f3dd86cc45075654dcbee7f63e135",
+  "eval_set.jsonl": "151df79cb1239511e7c04581876fe49bf148e47f2f4c08a6a7c7086edf6daba2",
   "frozen_query_embeddings.npz": "e9475c7b85a576c222166c7d491a1d18d7b1d5814980b5f6eaff21838aba0012"
  },
  "freeze": {
   "index_sha256": {
-   "kubernetes/kubernetes": "a2ff35a0f7665ec76126ef01db40a4d84471165696c54e0e0a96836de0004dab",
+   "kubernetes/kubernetes": "5114e0f08ce1a4b734d72c8572e43e67ad05ea4a5207af909ffa0973c184a6a2",
    "microsoft/vscode": "3b825bd00696b2b83c2731a0e5cde9af0123b109eded2f7e48ea1194855e3a53"
   },
   "neighbour_filter": {
    "kubernetes/kubernetes": {
-    "dropped_newer": 0,
+    "dropped_newer": 90,
     "dropped_unknown": 0,
-    "examined": 375,
-    "kept_by_number_fallback": 158,
+    "examined": 465,
+    "kept_by_number_fallback": 0,
     "rows_with_fewer_than_k": 0
    },
    "microsoft/vscode": {
@@ -1332,12 +1333,41 @@
    "n": 75
   }
  },
+ "refreeze": {
+  "body_raw": {
+   "kubernetes/kubernetes": {
+    "identical": 6,
+    "rows": 75,
+    "text_changed": 69
+   },
+   "microsoft/vscode": {
+    "identical": 19,
+    "rows": 75,
+    "text_changed": 56
+   }
+  },
+  "index_dirs": {
+   "kubernetes/kubernetes": "D:\\triageiq-data\\models\\candidates\\similar_issue_index_kubernetes_kubernetes_bge_v2"
+  },
+  "index_files_sha256": {
+   "kubernetes/kubernetes": {
+    "index.faiss": "5114e0f08ce1a4b734d72c8572e43e67ad05ea4a5207af909ffa0973c184a6a2",
+    "meta.pkl": "4e6dc4ec49a9fe36b820eb7b9845df2c4e59b8be012b31a194d31d9adb92540e"
+   }
+  },
+  "other_repo_rows_byte_identical_apart_from_body_raw": true,
+  "query_embeddings_max_abs_diff_so_npz_untouched": 3.3527612686157227e-07,
+  "rows_top_k_changed": {
+   "kubernetes/kubernetes": 75
+  },
+  "script": "scripts/qp3b_refreeze_set.py"
+ },
  "relevance_scoring": {
-  "action": "freeze the Phase 2 / 3b retriever into this set (re-run freeze with it) before the single re-record",
+  "action": "done for the repos in refreeze.index_dirs; the other repos keep their served index (D92 does not change it)",
   "per_repo": {
    "kubernetes/kubernetes": {
     "indexable_in_derived_v2_before_query": 4,
-    "target_in_served_index": 0,
+    "target_in_served_index": 6,
     "with_dup_or_peer": 6
    },
    "microsoft/vscode": {
@@ -1346,7 +1376,7 @@
     "with_dup_or_peer": 19
    }
   },
-  "status": "UNSCORABLE on the served index: 0 sampled duplicate/fix targets are indexed"
+  "status": "re-frozen 2026-10-29 for the final configuration; UNSCORABLE for ['microsoft/vscode']: 0 sampled duplicate/fix targets are in their frozen index"
  },
  "script_commit": "de5b0b2364196be71faec4356c05d53f93490d0c",
  "seed": 42,

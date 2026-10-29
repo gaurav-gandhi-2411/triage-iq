@@ -178,6 +178,9 @@ class ModelStore:
                     load_classifier,
                     load_family_v2_classifier,
                 )
+                # Any: the two loaders return different classes sharing the duck-typed
+                # predict_proba_calibrated/classes_ interface that RepoBundle.classifier holds.
+                clf: Any
                 with _timed(f"{slug}.classifier"):
                     if slug == "microsoft_vscode" and _family_v2_requested():
                         clf = load_family_v2_classifier(models_dir)

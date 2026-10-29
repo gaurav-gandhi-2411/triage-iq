@@ -22,16 +22,13 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).parent))
 
 import numpy as np
-import pandas as pd
 
 from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
-from triage_iq.models.component_classifier import load_classifier
 from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore, TriageJudge
-from triage_iq.models.resolution import ResolutionTimePredictor
 from triage_iq.models.resolution_consistency import verify_resolution_consistency
 from triage_iq.api.loader import _load_conformal_adjustments
-from triage_iq.models.triage import TriageAssistant
+from recording_config import RecordingConfig, build_assistant, issue_to_row, load_recording_config
 
 MODELS_DIR = ROOT / "data" / "models"
 PROCESSED_DIR = ROOT / "data" / "processed"
@@ -79,35 +76,27 @@ def _load_models(
     slug: str,
     cassette: CassettePlayer,
     frozen_retrievers: dict,
+    config: RecordingConfig | None = None,
 ) -> dict[str, Any]:
     """Load all per-repo models and return a dict containing the TriageAssistant.
 
     Uses FrozenRetriever instead of live FAISS so synthesis prompts are
     deterministic on any hardware. Production /triage is unchanged.
     """
-    # load_classifier() dispatches on the pkl's model_kind marker (ADR-0036: multi-label
-    # OvR vs legacy single-label) -- same loader the live API uses, not hardcoded to one class.
-    classifier = load_classifier(MODELS_DIR, slug)
-    predictor = ResolutionTimePredictor.load(str(MODELS_DIR / f"resolution_predictor_{slug}.pkl"))
-    train_df = pd.read_parquet(PROCESSED_DIR / f"{slug}_temporal_train.parquet")
-    assistant = TriageAssistant(
-        repo=repo,
-        classifier=classifier,
+    # Shared builder (recording_config.py): same loader helpers as the API, config-aware.
+    return build_assistant(
+        repo,
+        slug,
+        models_dir=MODELS_DIR,
+        processed_dir=PROCESSED_DIR,
         detector=frozen_retrievers[repo],  # frozen, not live FAISS
-        predictor=predictor,
-        train_df=train_df,
+        config=config or load_recording_config(ROOT),
         groq_api_key=CI_API_KEY,
         cache=cassette,
         max_tokens=TRIAGE_MAX_TOKENS,
         # The served interval is conformal before synthesis, so the recorded prompt carries it.
         conformal_adjustment=_load_conformal_adjustments(MODELS_DIR).get(repo),
     )
-    return {
-        "classifier": classifier,
-        "predictor": predictor,
-        "train_df": train_df,
-        "assistant": assistant,
-    }
 
 
 def compute_scores(
@@ -166,18 +155,7 @@ def compute_scores(
         repo = issue["repo"]
         assistant = models[repo]["assistant"]
 
-        row = pd.Series(
-            {
-                "title": issue["title"],
-                "body_clean": issue["body"],
-                "number": issue["number"],
-                "created_at": (
-                    pd.Timestamp(issue["created_at"])
-                    if issue.get("created_at")
-                    else pd.Timestamp("now", tz="UTC")
-                ),
-            }
-        )
+        row = issue_to_row(issue)
 
         plan, _meta = assistant.triage_with_metadata(row)
         repo_grounded[repo].append(plan.grounding_status.all_grounded)

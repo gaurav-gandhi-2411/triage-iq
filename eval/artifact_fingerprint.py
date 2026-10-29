@@ -25,6 +25,7 @@ across recording campaigns).
 import hashlib
 import json
 from pathlib import Path
+from typing import Any
 
 REPO_SLUGS = {
     "microsoft/vscode": "microsoft_vscode",
@@ -61,24 +62,44 @@ def _sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def artifact_paths_for_repo(repo: str) -> list[str]:
+def _config_paths(slug: str, config: Any) -> list[str]:
+    """Extra artifacts a RecordingConfig (eval/recording_config.py, duck-typed here) selects for
+    `slug`; empty for the default/served config, so the default fingerprint never changes. Names
+    come from the API loader so the fingerprint hashes what /triage would open."""
+    from triage_iq.api.loader import _K8S_INDEX_V2_DIRNAME, _RESOLUTION_EVIDENCE_SLUGS
+    from triage_iq.models.component_classifier import FAMILY_V2_FILENAME
+
+    extra: list[str] = []
+    if config.vscode_classifier == "family_v2" and slug == "microsoft_vscode":
+        extra.append(f"data/models/{FAMILY_V2_FILENAME}")
+    if config.k8s_index == "v2" and slug == "kubernetes_kubernetes":
+        extra += [f"data/models/{_K8S_INDEX_V2_DIRNAME}/{n}" for n in ("index.faiss", "meta.pkl")]
+    if config.resolution_evidence and slug in _RESOLUTION_EVIDENCE_SLUGS:
+        extra.append(f"data/models/resolution_evidence_{slug}.parquet")
+    return extra
+
+
+def artifact_paths_for_repo(repo: str, config: Any = None) -> list[str]:
     """Relative (repo-root-anchored, POSIX-separated) paths of every artifact that feeds
-    `repo`'s triage prompt, plus the shared conformal store."""
+    `repo`'s triage prompt, plus the shared conformal store (and, when a RecordingConfig selects
+    them, the retrained classifier / v2 index / evidence parquet)."""
     slug = REPO_SLUGS[repo]
-    return [t.format(slug=slug) for t in _PER_REPO_TEMPLATES] + list(_SHARED_PATHS)
+    paths = [t.format(slug=slug) for t in _PER_REPO_TEMPLATES] + list(_SHARED_PATHS)
+    return paths + (_config_paths(slug, config) if config is not None else [])
 
 
-def compute_artifact_hashes(root: Path, repo: str | None = None) -> dict[str, str]:
+def compute_artifact_hashes(root: Path, repo: str | None = None, config: Any = None) -> dict[str, str]:
     """SHA-256 of every prompt-feeding artifact, keyed by relative path.
 
     `repo=None` hashes every repo's artifacts (used for the startup print / expected-hash
     file); `repo=<name>` hashes only that repo's own artifacts (used to tag a single cassette
-    entry with just the artifacts that actually influenced it).
+    entry with just the artifacts that actually influenced it). `config=None` (or a default
+    RecordingConfig) is exactly the pre-config fingerprint.
     """
     repos = [repo] if repo is not None else list(REPO_SLUGS)
     rel_paths: set[str] = set()
     for r in repos:
-        rel_paths.update(artifact_paths_for_repo(r))
+        rel_paths.update(artifact_paths_for_repo(r, config))
 
     hashes: dict[str, str] = {}
     for rel in sorted(rel_paths):

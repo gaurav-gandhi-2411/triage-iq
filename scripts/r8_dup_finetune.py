@@ -3,13 +3,14 @@
 Design and success criterion: docs/Q5A_FINETUNE_PREREG_2026-10.md (committed before any run).
 Subcommands: ``build-dataset`` (train pairs + BM25 hard negatives -> PRIVATE Kaggle dataset),
 ``push`` (PRIVATE GPU kernel, ONE attempt, a quota error is reported not retried), ``validate``
-(VALIDATION metrics from the downloaded outputs; there is deliberately no test stage here, the
-single test evaluation needs its own frozen file, as in #345).
+(VALIDATION metrics from the downloaded outputs), ``final-test`` (the ONE test evaluation of
+the frozen selection; needs ``--final-test`` and the committed ``--frozen-sha256``, as in #345).
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import shutil
 import sys
@@ -30,11 +31,18 @@ NEG_LO, NEG_HI = 10, 50  # hard negative drawn from BM25 ranks 10-50 (prereg)
 CONFIGS = {"F1": (1e-5, False), "F2": (3e-5, False), "F3": (1e-5, True), "F4": (3e-5, True)}
 MIN_GAIN = 0.02  # prereg: point gain >= +2.0 points
 FROZEN = Path("reports/q5a_vscode_dup_dense_frozen_2026-10.json")
+FROZEN_FT = Path("reports/r8_vscode_dup_finetune_frozen_2026-10.json")
+OUT_TEST = Path("reports/r8_vscode_dup_finetune_test_2026-10.json")
+REF_TEST = Path("reports/q5a_vscode_dup_dense_test_2026-10.json")
 OUT_DIR = Path(r"D:\triageiq-data\models\microsoft__vscode\dup_finetune")
 
 
 class LeakageError(ValueError):
     """A validation / test (or unknown) issue appears in the training pairs or negatives."""
+
+
+class FrozenMismatchError(ValueError):
+    """The frozen file, its hash argument or a pinned artifact does not match: no test read."""
 
 
 def train_pairs(dup: pd.DataFrame, split_of: pd.Series, created: pd.Series) -> pd.DataFrame:
@@ -232,6 +240,68 @@ def cmd_validate(a: argparse.Namespace) -> None:
     print("selected", win, "gain", pd5, "success", rep["success"])
 
 
+def sha_lf(path: Path) -> str:
+    """SHA-256 of a text file with CRLF folded to LF (autocrlf-safe, as in the #345 freeze)."""
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
+def check_frozen(frozen: dict[str, Any], frozen_sha: str) -> None:
+    """Refuse unless the file is self-consistent AND equals the hash the caller committed to."""
+    body = {k: v for k, v in frozen.items() if k != "config_sha256"}
+    if dd.sha_json(body) != frozen.get("config_sha256") or frozen["config_sha256"] != frozen_sha:
+        raise FrozenMismatchError("frozen config hash mismatch: refusing the test evaluation")
+
+
+def check_artifacts(frozen: dict[str, Any], out: Path) -> None:
+    """Pinned embedding / model / harness identity must equal the frozen record."""
+    ident = frozen["model_identity"]
+    ref_emb = dd.EMB_DIR / "microsoft__vscode__issues_emb.npy"
+    checks = {  # lazy: stop at the first mismatch, so a missing later file cannot mask it
+        "embedding": (lambda: dd.file_sha(out / "F4_emb.npy"), frozen["embedding_sha256"]),
+        "model": (lambda: dd.file_sha(out / "F4_model" / "model.safetensors"),
+                  ident["model_safetensors_sha256"]),
+        "ids": (lambda: dd.file_sha(out / "ids.parquet"), ident["ids_parquet_sha256"]),
+        "reference_embedding": (lambda: dd.file_sha(ref_emb), frozen["reference_embedding_sha256"]),
+        "harness": (lambda: sha_lf(Path(dd.__file__)), frozen["harness_sha256_lf"]),
+    }  # fmt: skip
+    for name, (get, want) in checks.items():
+        if get() != want:
+            raise FrozenMismatchError(f"pinned artifact mismatch ({name}): refusing the test")
+
+
+def cmd_final_test(a: argparse.Namespace) -> None:
+    """The single test evaluation: frozen F4 + RRF k=10 vs the #345 winner on the same queries."""
+    if not (a.final_test and a.frozen_sha256):
+        raise qe.TestGuardError("final-test needs --final-test and the committed --frozen-sha256")
+    frozen = json.loads(FROZEN_FT.read_text(encoding="utf-8"))
+    check_frozen(frozen, a.frozen_sha256)
+    out, res_path = Path(a.out), Path(a.result)
+    if res_path.exists():
+        raise qe.TestGuardError(f"{res_path} exists: the test is evaluated once, never re-run")
+    check_artifacts(frozen, out)
+    t = dd.Task("test")
+    ids = pd.read_parquet(out / "ids.parquet")
+    if not (ids["number"].to_numpy()[t.order] == t.numbers).all():
+        raise ValueError("kernel id order differs from the Task table")
+    sc_bm = t.sparse_scorer(frozen["reference_config"]["bm25"])
+    ref_ranks, ref_pp = dd.rank_with(t.queries, sc_bm, dd.Scorer(t.emb, t.emb))[10]
+    ref = dd.summarize(t.queries, ref_ranks, ref_pp)
+    published = json.loads(REF_TEST.read_text(encoding="utf-8"))["candidates"]["winner"]
+    if ref["recall@5"]["k"] != published["recall@5"]["k"]:  # before F4 ever touches test
+        raise ValueError("#345 winner test R@5 not reproduced: aborting, F4 not scored")
+    t._emb = np.load(out / "F4_emb.npy")[t.order].astype(np.float32)
+    ranks, pp = dd.rank_with(t.queries, sc_bm, dd.Scorer(t.emb, t.emb))[10]
+    res = dd.summarize(t.queries, ranks, pp)
+    rep = {"design": frozen["design"], "split": "test", "frozen": frozen,
+           "n_queries": len(t.queries), "reference_H_k10": ref,
+           "reference_reproduced_published_345": True, "selected": frozen["selected"],
+           "selected_result": res, "paired_selected_minus_H_k10": dd.paired(ranks, ref_ranks),
+           "ceiling_share_queries_with_indexed_canonical":
+               qe._rate(sum(bool(q.targets) for q in t.queries), len(t.queries))}  # fmt: skip
+    res_path.write_text(json.dumps(rep, indent=1, sort_keys=True), encoding="utf-8")
+    print("selected test R@5", res["recall@5"], "paired", rep["paired_selected_minus_H_k10"])
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -241,6 +311,12 @@ def main(argv: list[str] | None = None) -> int:
     v.add_argument("--out", default=str(OUT_DIR))
     v.add_argument("--result", required=True, help="where to write the validation JSON (scratch)")
     v.set_defaults(fn=cmd_validate)
+    f = sub.add_parser("final-test")
+    f.add_argument("--final-test", action="store_true")
+    f.add_argument("--frozen-sha256", default="")
+    f.add_argument("--out", default=str(OUT_DIR))
+    f.add_argument("--result", default=str(OUT_TEST))
+    f.set_defaults(fn=cmd_final_test)
     a = ap.parse_args(argv)
     a.fn(a)
     return 0

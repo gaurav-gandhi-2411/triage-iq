@@ -23,7 +23,7 @@ COMMITTED_KEYS = set(
 
 def _row(**kw: object) -> pd.Series:
     base = {
-        "number": 5, "title": "t", "body": "b", "cls": "sig/node", "stratum": "s", "primary": "p",
+        "number": 5, "title": "t", "body": "b", "body_raw": "B", "cls": "sig/node", "stratum": "s", "primary": "p",
         "parent": "p", "in_family": True, "state": "CLOSED", "labels_final": ["kind/bug"],
         "dup_targets": [], "fix_peers": [], "fix_prs": [], "prio_label": None, "days": 2.0,
         "created_at": pd.Timestamp("2026-02-01T00:00:00Z"),
@@ -36,6 +36,7 @@ def test_to_row_schema_and_priority_sources() -> None:
     r = q.to_row(_row(), "kubernetes/kubernetes", 2.0)
     assert COMMITTED_KEYS - {"similar_issues"} <= set(r)  # same keys as the committed set
     assert r["id"] == "k8s-5" and r["gold_priority"] == "medium"
+    assert r["body"] == "b" and r["body_raw"] == "B"
     assert r["meta"]["gold_priority_source"] == "resolution_inferred"
     lab = q.to_row(_row(prio_label="high"), "kubernetes/kubernetes", 1.0)
     assert lab["gold_priority"] == "high" and lab["meta"]["gold_priority_source"] == "label"

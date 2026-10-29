@@ -64,6 +64,7 @@ sys.path.insert(0, str(RECORD_SCRIPT.parent))
 import record_cassettes as rc  # noqa: E402
 import artifact_fingerprint  # noqa: E402
 import checkpoint_validation as cv  # noqa: E402
+from recording_config import load_recording_config  # noqa: E402
 import tpd_budget_gate  # noqa: E402
 # _parse_tpd_wait lives in record_cassettes.py, not duplicated here -- it sees the raw Groq
 # error text first and needs the identical regex to report an accurate resume estimate in
@@ -117,7 +118,10 @@ def _current_model_and_hash() -> tuple[str, str, str]:
     """Reuse record_cassettes.py's own hashing logic (module-level import above) rather
     than re-deriving it, so this wrapper can never drift out of sync with what a real
     invocation would compute."""
-    artifact_hashes = artifact_fingerprint.compute_artifact_hashes(WORKTREE_ROOT)
+    # Same call as record_cassettes.py (the checkpoint key): the set's config selects extra artifacts.
+    artifact_hashes = artifact_fingerprint.compute_artifact_hashes(
+        WORKTREE_ROOT, config=load_recording_config(WORKTREE_ROOT, _CASSETTE_DIR)
+    )
     return rc.TRIAGE_MODEL, rc._compute_prompt_hash(), artifact_fingerprint.combined_hash(artifact_hashes)
 
 

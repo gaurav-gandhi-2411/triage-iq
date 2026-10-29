@@ -1192,7 +1192,12 @@ class TriageAssistant:
         # System 1: TF-IDF top-3 (calibrated probabilities when calibrator is present)
         t1 = time.perf_counter()
         try:
-            proba = self.classifier.predict_proba_calibrated(pd.Series([text]))
+            clf_text = text
+            if getattr(self.classifier, "uses_raw_body_text", False) is True:
+                # family_v2 was trained on title + raw body[:4000]; body_raw is set only when
+                # TRIAGE_CLEAN_REQUEST_BODY cleans body_clean, else body_clean is the raw body.
+                clf_text = self.classifier.serving_text(title, str(issue.get("body_raw", body)))
+            proba = self.classifier.predict_proba_calibrated(pd.Series([clf_text]))
             classes = self.classifier.classes_()
             top_idx = np.argsort(proba[0])[::-1][:3]
             classifier_top3 = [

@@ -71,15 +71,18 @@ jobs:
           mkdir -p data/models data/processed
           gsutil -m cp \
             "gs://triageiq-prod-260812-models/models/component_classifier_microsoft_vscode.pkl" \
+            "gs://triageiq-prod-260812-models/models/component_classifier_microsoft_vscode_family_v2_2026-10-22.joblib" \
             "gs://triageiq-prod-260812-models/models/component_classifier_kubernetes_kubernetes.pkl" \
             "gs://triageiq-prod-260812-models/models/resolution_predictor_microsoft_vscode.pkl" \
             "gs://triageiq-prod-260812-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
             "gs://triageiq-prod-260812-models/models/cqr_conformal_adjustments.json" \
             "gs://triageiq-prod-260812-models/models/cqr_conformal_adjustments_v2.json" \
+            "gs://triageiq-prod-260812-models/models/resolution_evidence_kubernetes_kubernetes.parquet" \
             data/models/
           gsutil -m cp -r \
             "gs://triageiq-prod-260812-models/models/similar_issue_index_microsoft_vscode_bge" \
             "gs://triageiq-prod-260812-models/models/similar_issue_index_kubernetes_kubernetes_bge" \
+            "gs://triageiq-prod-260812-models/models/similar_issue_index_kubernetes_kubernetes_bge_v2" \
             data/models/
           gsutil -m cp \
             "gs://triageiq-prod-260812-models/processed/microsoft_vscode_temporal_train.parquet" \
@@ -141,15 +144,18 @@ jobs:
           mkdir -p data/models data/processed
           gsutil -m cp \
             "gs://triageiq-prod-260812-models/models/component_classifier_microsoft_vscode.pkl" \
+            "gs://triageiq-prod-260812-models/models/component_classifier_microsoft_vscode_family_v2_2026-10-22.joblib" \
             "gs://triageiq-prod-260812-models/models/component_classifier_kubernetes_kubernetes.pkl" \
             "gs://triageiq-prod-260812-models/models/resolution_predictor_microsoft_vscode.pkl" \
             "gs://triageiq-prod-260812-models/models/resolution_predictor_kubernetes_kubernetes.pkl" \
             "gs://triageiq-prod-260812-models/models/cqr_conformal_adjustments.json" \
             "gs://triageiq-prod-260812-models/models/cqr_conformal_adjustments_v2.json" \
+            "gs://triageiq-prod-260812-models/models/resolution_evidence_kubernetes_kubernetes.parquet" \
             data/models/
           gsutil -m cp -r \
             "gs://triageiq-prod-260812-models/models/similar_issue_index_microsoft_vscode_bge" \
             "gs://triageiq-prod-260812-models/models/similar_issue_index_kubernetes_kubernetes_bge" \
+            "gs://triageiq-prod-260812-models/models/similar_issue_index_kubernetes_kubernetes_bge_v2" \
             data/models/
           gsutil -m cp \
             "gs://triageiq-prod-260812-models/processed/microsoft_vscode_temporal_train.parquet" \

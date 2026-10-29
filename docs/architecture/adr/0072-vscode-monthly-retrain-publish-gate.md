@@ -73,6 +73,9 @@ Constraints: $0 (no paid service, no billable GCP), CPU only, deterministic (see
 - The regenerated list can admit labels the frozen exclusion list never saw (the dry run produced 121 classes including `ai-generated`,
   `ai-triaged`, `2026-themes`). The rule is not hand-edited; such labels are surfaced in `train_info.json` and need an exclusion-list ADR.
 - Honest limits: the 30-day settle lag, the 48-month roll, the 1-point margin and the 60-day holdout are design choices, not tuned on data.
+- Input-data refreshes (the `vscode-retrain-data` GitHub release: `issues.parquet`, `label_events.parquet`, the champion bundle) must be produced with
+  `scripts/vscode_retrain_release_assets.py`, which projects the scrape to exactly the columns `scripts/vscode_retrain.py all` reads and carries no
+  account field (author, user, assignee, actor, email); never upload the scrape files directly. Tests: `tests/test_vscode_retrain_release_assets.py`.
 
 ## Alternatives
 

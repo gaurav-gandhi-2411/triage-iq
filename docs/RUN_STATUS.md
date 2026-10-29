@@ -3,6 +3,49 @@
 Single source of truth. Re-read first after any restart. Times in IST unless marked UTC. Newest dated brief first; everything under
 "First run" is history.
 
+## Update 2026-10-29 ~20:30 IST (after GG's decisions D94)
+
+**D94 (GG, 2026-10-29):**
+1. Run the switch-ons in order.
+2. Retire the 64-issue set as the CI eval set: the 150 set becomes the CI set, the 64-set cassettes are kept as history, and only the 150 set
+   is re-recorded (~919K tokens). Move #320's gate onto the 150 set and write an ADR.
+3. Report the before/after; do not write a baseline.
+4. Exclude `papercut 🩸`; KEEP `performance`, recorded in ADR-0073.
+
+**Production (VERIFIED ~20:20).** All three switch-ons are live on `triageiq-api-00108-mod` at 100%. #338 merged as 36a8986, and its CI, Eval
+gate and Deploy were all success. Each switch-on went no-traffic candidate → smoke → comparison → promote → live check:
+
+| step | revision | smoke and comparison result |
+|---|---|---|
+| D92.1 family_v2 | `00104-zax`, tag d921 | Candidate top-1 `extensions` 0.9958009257 equals the offline family_v2 prediction on the deploy-smoke issue |
+| D92.4 k8s v2 | `00106-sew`, tag d924 | 3 frozen-set k8s rows: candidate neighbours are the frozen v2 neighbours (5/5, 4/5, 1/5), and every extra is newer than the query (serving has no created-before filter); old prod index 0/5 |
+| D92.5 evidence | `00108-mod`, tag d925 | No missing/undated warning; k8s triage returns `_evidence_neighbours` [119813, 122021]; the LLM answered on the candidate |
+
+- Env on the live revision: ENVIRONMENT=prod, TRIAGE_CLEAN_REQUEST_BODY=1, TRIAGE_VSCODE_CLASSIFIER=family_v2, TRIAGE_K8S_INDEX=v2,
+  TRIAGE_RESOLUTION_EVIDENCE=1.
+- Rollback: `gcloud run services update-traffic triageiq-api --to-revisions <rev>=100`, using `00106-sew` (no evidence), `00104-zax`
+  (family_v2 only) or `00102-vep` (all off).
+- The Groq daily quota was intermittently `rate_limited_tpd` during the checks. The LLM path answered on the d925 candidate.
+- Draft #357 (GG, workflow) writes the three flags into deploy.yml. Until then they persist on the service through `--update-env-vars`.
+
+**R8 vscode duplicate fine-tune (done).**
+- #351 prereg, #352 kernel, #353 driver, #354 frozen selection and test guard, #356 results.
+- Kaggle run: private, 1.37 T4 hours, no quota error.
+
+| split | #345 winner R@5 | F4 + RRF k=10 R@5 | paired gain |
+|---|---|---|---|
+| validation | 40.3% | 45.3% | +5.0 [+3.55, +6.57] |
+| test (one run, from main f5a94a2) | 33.0% (reproduced exactly) | 40.4% [38.0, 42.7] | +7.3 [+5.9, +8.9] |
+
+- The pre-registered criteria are met. ADR-0066's 80% target is NOT met.
+- Nothing is served from it. Results: `docs/Q5A_FINETUNE_RESULTS_2026-10.md`.
+
+**In progress.**
+- ADR-0073 label decisions: executor running.
+- Plan for moving the gate to the 150 set: read-only agent running.
+- Next: the `vscode-retrain-data` release, then tell GG #326 is ready. Then regenerate EXPECTED_ARTIFACT_HASHES and run the 150-set re-record
+  under the ledger.
+
 ## Brief 2026-10-29 (24 h, A1), written ~17:00 IST
 
 **Outcome.** D92 serving steps 1-2 are ready and verified up to the point that needs GG: the retrained vscode classifier is built under the written

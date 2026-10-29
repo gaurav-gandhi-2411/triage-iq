@@ -255,18 +255,18 @@ def check_frozen(frozen: dict[str, Any], frozen_sha: str) -> None:
 def check_artifacts(frozen: dict[str, Any], out: Path) -> None:
     """Pinned embedding / model / harness identity must equal the frozen record."""
     ident = frozen["model_identity"]
-    checks = {
-        "embedding": (dd.file_sha(out / "F4_emb.npy"), frozen["embedding_sha256"]),
-        "model": (dd.file_sha(out / "F4_model" / "model.safetensors"),
+    ref_emb = dd.EMB_DIR / "microsoft__vscode__issues_emb.npy"
+    checks = {  # lazy: stop at the first mismatch, so a missing later file cannot mask it
+        "embedding": (lambda: dd.file_sha(out / "F4_emb.npy"), frozen["embedding_sha256"]),
+        "model": (lambda: dd.file_sha(out / "F4_model" / "model.safetensors"),
                   ident["model_safetensors_sha256"]),
-        "ids": (dd.file_sha(out / "ids.parquet"), ident["ids_parquet_sha256"]),
-        "reference_embedding": (dd.file_sha(dd.EMB_DIR / "microsoft__vscode__issues_emb.npy"),
-                                frozen["reference_embedding_sha256"]),
-        "harness": (sha_lf(Path(dd.__file__)), frozen["harness_sha256_lf"]),
+        "ids": (lambda: dd.file_sha(out / "ids.parquet"), ident["ids_parquet_sha256"]),
+        "reference_embedding": (lambda: dd.file_sha(ref_emb), frozen["reference_embedding_sha256"]),
+        "harness": (lambda: sha_lf(Path(dd.__file__)), frozen["harness_sha256_lf"]),
     }  # fmt: skip
-    bad = [k for k, (got, want) in checks.items() if got != want]
-    if bad:
-        raise FrozenMismatchError(f"pinned artifact mismatch ({', '.join(bad)}): refusing test")
+    for name, (get, want) in checks.items():
+        if get() != want:
+            raise FrozenMismatchError(f"pinned artifact mismatch ({name}): refusing the test")
 
 
 def cmd_final_test(a: argparse.Namespace) -> None:

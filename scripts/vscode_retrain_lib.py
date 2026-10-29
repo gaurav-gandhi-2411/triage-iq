@@ -35,9 +35,19 @@ MARGIN = 0.01  # pre-declared: challenger strict top-3 must beat champion by >= 
 NONINF = 0.02  # in-family top-3 may not be worse than champion by more than 2 points (CI lower)
 MIN_HOLDOUT, MIN_TRAIN, MIN_CLASSES = 500, 5000, 20  # sanity floors; below them the CI is noise
 N_BOOT = 2000
-# ADR-0073 (GG D92.2): meta labels (how an issue was produced/triaged, or a theme), not components.
-# Frozen: another exclusion needs a new ADR. Compared lower-case, as taxonomy.is_excluded does.
-RETRAIN_META_EXCLUDE = frozenset({"ai-generated", "ai-triaged", "2026-themes"})
+# ADR-0073 (GG D92.2 + D93): labels describing an issue's status or workflow rather than the code
+# area it concerns, NEW relative to the ADR-0070 list. Must equal the NEW = yes rows of
+# docs/architecture/adr/0073-vscode-label-decisions.md (a test checks it). Frozen: another
+# exclusion needs a new ADR. Compared lower-case, as taxonomy.is_excluded does.
+RETRAIN_META_EXCLUDE = frozenset({
+    "2026-themes", "a11y-partner", "ack", "agent-bakeoff", "agent-host-mitigated", "ai-generated",
+    "ai-triaged", "approved", "copilot-triage-needed", "iteration-plan-draft", "modernization",
+    "needs-classifier-review", "needs-verification", "new release", "on-unit-test",
+    "papercut 🩸", "performance", "pr-test-failure-triage", "recent-regression",
+    "release-cherry-pick", "service-outage", "stable-anomaly", "test-disabled", "triage-miss",
+    "tree-sitter-autoindent-candidate", "untested", "ux-feedback-wanted", "windows-verification",
+    "❗ untested",
+})  # fmt: skip
 
 
 @dataclass(frozen=True)

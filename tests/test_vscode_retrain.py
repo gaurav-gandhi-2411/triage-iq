@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import importlib.util
 import json
+import re
 import sys
 from argparse import Namespace
 from pathlib import Path
@@ -296,10 +297,53 @@ def test_gate_refuses_when_metrics_champion_sha_not_manifest_sha(tmp_path: Path)
 META = ("ai-generated", "ai-triaged", "2026-themes")
 
 
-def test_meta_exclusion_is_exactly_the_three_frozen_labels() -> None:
-    assert frozenset(META) == rl.RETRAIN_META_EXCLUDE
+LABEL_TABLE = (
+    Path(__file__).resolve().parents[1] / "docs/architecture/adr/0073-vscode-label-decisions.md"
+)
+
+
+DECISIONS = ("EXCLUDE", "BORDERLINE-EXCLUDE", "BORDERLINE-KEEP", "KEEP")
+
+
+def _table() -> tuple[list[tuple[str, str, str]], list[str], list[str]]:
+    """Parse the ADR-0073 decision file: (label, decision, NEW) rows, frozen list, KEEP list."""
+    rows: list[tuple[str, str, str]] = []
+    lists: dict[str, list[str]] = {}
+    section = ""
+    for line in LABEL_TABLE.read_text(encoding="utf-8").splitlines():
+        if line.startswith("## "):
+            section = line
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split(" | ")]
+        if len(cells) == 6 and cells[3] in DECISIONS:
+            rows.append((cells[0], cells[3], cells[4]))
+        elif (
+            section.startswith(("## Already", "## KEEP")) and line and not line.startswith("Reason")
+        ):
+            key = "frozen" if section.startswith("## Already") else "keep"
+            lists[key] = [re.sub(r" \(\d+\)$", "", x) for x in line.split("; ")]
+    return rows, lists["frozen"], lists["keep"]
+
+
+def test_meta_exclusion_equals_the_adr_table() -> None:
+    rows, frozen, keep = _table()
+    new = {lab.lower() for lab, dec, flag in rows if flag == "yes"}
+    assert new == rl.RETRAIN_META_EXCLUDE
+    for lab, dec, flag in rows:
+        assert (flag == "yes") == dec.endswith("EXCLUDE"), lab
+        assert rl.tax.not_excluded(lab), lab  # NEW means not already excluded by ADR-0070
+    assert frozen and all(rl.tax.is_excluded(x) for x in frozen)
+    assert keep and all(rl.tax.not_excluded(x) for x in keep)
+    everything = [r[0] for r in rows] + frozen + keep
+    assert len(everything) == len(set(everything)) > 600  # one entry per distinct label
+    assert not {x.lower() for x in keep} & rl.RETRAIN_META_EXCLUDE
+    assert {"recent-regression", "stable-anomaly", "tree-sitter-autoindent-candidate"} <= new
+
+
+def test_meta_exclusion_matching() -> None:
+    assert frozenset(META) <= rl.RETRAIN_META_EXCLUDE
     assert all(not rl.retrain_family(x) for x in (*META, "AI-Generated", "2026-THEMES"))
-    for ok in ("git", "terminal-input", "recent-regression", "ai-generated-x"):
+    for ok in ("git", "terminal-input", "ai-generated-x", "UBB"):
         assert rl.retrain_family(ok)  # other labels unaffected, incl. near-names
     assert not rl.retrain_family("bug")  # the ADR-0070 list still applies
 

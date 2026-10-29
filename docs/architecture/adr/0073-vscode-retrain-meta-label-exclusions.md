@@ -63,3 +63,45 @@ The first three are the likeliest meta labels; the rest look like components.
 - **Map issues with only meta labels to `other`**: rejected; the issue's component is unknown, not "none of the families", and ADR-0070's population
   is "has a non-excluded label". `other` stays reserved for issues whose labels are real components outside the family.
 - **Exclude all observed meta-like labels now** (`recent-regression`, `stable-anomaly`, ...): not decided here; D92.2 names three labels only.
+
+## Addendum 2026-10-29 (GG decision D93): the meta-label rule
+
+Written before any label was reviewed in detail and before any score of the retrained model was looked at.
+
+**Rule (verbatim from GG):** "labels describing an issue's status or workflow rather than the code area it concerns".
+
+**Operational tests.** A label is a meta label (EXCLUDE) if its name or GitHub description says any of:
+
+1. a triage state or triage outcome (needs info, confirmed, under discussion, triaged by a process);
+2. a release or verification status (verified, fixed in a release, insiders/stable-only, regression marker);
+3. a process or bot workflow (stale, duplicate, assigned to a queue, applied by automation, AI-authored or AI-triaged marker);
+4. a time-boxed theme or campaign (a year's plan, an iteration, a one-off initiative);
+5. a candidate or work-queue marker (an issue is a candidate for something, not a place in the product).
+
+A label is a component label (KEEP) if it names a feature, a UI area, a language or language service, an extension, a platform or OS, a subsystem
+or a product programme whose issues are about one code area. A label that matches both a test above and names a code area is BORDERLINE; the
+decision then follows what the label is used for: if removing it from the issue would lose information about *where* the code is, keep it
+(BORDERLINE-KEEP); if it mainly says *when or in what state* the issue is, exclude it (BORDERLINE-EXCLUDE). Every borderline call is listed with its reason
+for review by GG.
+
+### Application of the rule (D93)
+
+The rule was applied to all 703 distinct labels found in the scraped vscode data (`issues.parquet` `labels_final` and `labels_t72h`, and `label_events.parquet`),
+not only the 121 classes of the dry run. The scraped data holds no GitHub label descriptions, so each decision rests on the label name and its counts;
+no per-class or per-label model score, prediction or accuracy was looked at. The full table, with counts, the decision, whether the label is NEW relative to the
+frozen ADR-0070 list and a reason, is `0073-vscode-label-decisions.md`. Summary: 215 EXCLUDE (195 already excluded by ADR-0070, 20 NEW), 9 BORDERLINE-EXCLUDE (all
+NEW), 14 BORDERLINE-KEEP, 465 KEEP.
+
+`RETRAIN_META_EXCLUDE` is now the 29 NEW exclusions (EXCLUDE plus BORDERLINE-EXCLUDE that ADR-0070 does not already exclude); it supersedes the three-label set of the
+Decision section above and the "Observed ... not excluded" paragraph, which GG's D93 ruled on. A test parses the table file and checks the constant equals its NEW rows.
+Labels with zero training examples that the rule does not exclude stay in the class list and evaluation as honest misses.
+
+BORDERLINE calls, for GG's review:
+
+- BORDERLINE-EXCLUDE: `modernization` (264 issues; an internal work stream with no single code area), `agent-host-mitigated` ("mitigated" status; ADR-0070 already excludes
+  `mitigated`), `test-disabled` (status of a test), `service-outage` (incident state), `a11y-partner` (origin marker), `ack` (acknowledgement state), `on-unit-test`
+  (sibling of the excluded `on-testplan`), and two outside the literal rule, taken for consistency with ADR-0070: `performance` (spelling variant of the excluded
+  `perf`) and `papercut 🩸` (emoji variant of the excluded `papercut :drop_of_blood:`).
+- BORDERLINE-KEEP: `UBB` (billing programme, issues are about the billing flow), `chat-request-failed`, `chat-infinite-response-loop`, `chat-rate-limiting`,
+  `chat-lm-unavailable` (failure modes inside the chat subsystem), `chat-perf-regression`, `model-upgrade`, `smoke-test`, and `AI`, `canjd`, `hotspot`,
+  `mock-feature`, `edge`, `chat-showcase` (meaning not determinable from the name; at most 5 issues each; exclusion needs a positive reason).

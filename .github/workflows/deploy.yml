@@ -115,6 +115,9 @@ jobs:
           # 60s boundaries and any start >60s jumped to 120s. Probing every 10s makes the
           # instance ready ~5-10s after the app is up. timeoutSeconds must not exceed
           # periodSeconds (Cloud Run docs); 30 x 10s = a 300s ceiling, more than the old 3 x 60s.
+          # TRIAGE_CLEAN_REQUEST_BODY=1 (G1, D91): /triage cleans the request body before the
+          # classifier and retriever, as their training/index text was cleaned. It was enabled on
+          # the service template on 2026-10-29; stating it here keeps a recreated service correct.
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image ${{ env.IMAGE }}:${{ github.sha }} \
             --region ${{ env.GCP_REGION }} \
@@ -130,7 +133,7 @@ jobs:
             --startup-probe="httpGet.path=/health,httpGet.port=8080,timeoutSeconds=10,periodSeconds=10,failureThreshold=30" \
             --service-account ${{ env.RUNTIME_SA }} \
             --update-secrets GROQ_API_KEY=groq-api-key:latest,METRICS_TOKEN=metrics-token:latest \
-            --update-env-vars ENVIRONMENT=prod \
+            --update-env-vars ENVIRONMENT=prod,TRIAGE_CLEAN_REQUEST_BODY=1 \
             --no-traffic \
             --tag=candidate \
             --quiet

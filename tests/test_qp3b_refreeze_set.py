@@ -140,3 +140,15 @@ def test_relevance_counts() -> None:
         "target_in_served_index": 1,
         "indexable_in_derived_v2_before_query": 1,
     }
+
+
+def test_embeddings_match_tolerates_float_noise_only() -> None:
+    base = {"repos": np.array([K8S, K8S]), "numbers": np.array([1, 2]),
+            "embeddings": np.eye(2, 768, dtype=np.float32)}  # fmt: skip
+    noisy = {**base, "embeddings": base["embeddings"] + np.float32(3e-7)}
+    ok, diff = rf.embeddings_match(base, noisy)
+    assert ok and 0 < diff < rf.EMB_ATOL
+    moved = {**base, "embeddings": base["embeddings"] + np.float32(1e-3)}
+    assert rf.embeddings_match(base, moved)[0] is False
+    reordered = {**base, "numbers": np.array([2, 1])}
+    assert rf.embeddings_match(base, reordered) == (False, float("inf"))

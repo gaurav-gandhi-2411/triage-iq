@@ -8,8 +8,9 @@ Offline, no LLM call, no cassette. Reads the committed eval/sets/quality_push_20
     other repos are left untouched (byte-identical);
  2. adds `body_raw` (the uncleaned issue body from derived_v2 issues.parquet, matched by number) to
     every row, and checks clean_text(body_raw) equals the stored cleaned body;
- 3. keeps frozen_query_embeddings.npz byte-identical when the re-frozen query vectors are equal
-    (they depend on the query text and encoder only, not on the index);
+ 3. keeps frozen_query_embeddings.npz byte-identical when the re-frozen query vectors agree to
+    1e-5 (they depend on the query text and encoder only, not on the index; CPU float32 reruns
+    differ by ~3e-7), and stops if they do not;
  4. patches reports/qp3_eval_set_150_2026-10.json (freeze, files, relevance_scoring, refreeze).
 
 Usage: python scripts/qp3b_refreeze_set.py --index-dir kubernetes/kubernetes=<index dir> [--scratch DIR]
@@ -43,6 +44,22 @@ def verify_manifest(index_dir: Path) -> dict[str, str]:
         if got[name] != want:
             raise ValueError(f"{index_dir / name}: sha256 {got[name]} != manifest {want}")
     return got
+
+
+EMB_ATOL = (
+    1e-5  # CPU float32 encodes differ by ~3e-7 between runs (thread-order sums); cosine > 1 - 1e-6
+)
+
+
+def embeddings_match(old: Any, new: Any) -> tuple[bool, float]:
+    """(same rows in the same order and every component within EMB_ATOL, max abs difference)."""
+    if not (
+        np.array_equal(old["repos"], new["repos"])
+        and np.array_equal(old["numbers"], new["numbers"])
+    ):
+        return False, float("inf")
+    diff = float(np.abs(old["embeddings"] - new["embeddings"]).max())
+    return diff <= EMB_ATOL, diff
 
 
 def raw_bodies(repo: str, numbers: list[int]) -> dict[int, str]:
@@ -110,9 +127,9 @@ def main(argv: list[str] | None = None) -> int:
                     embeddings_out=a.scratch / "emb.npz")  # fmt: skip
     assert all(dump_line(r) == old_other[r["id"]] for r in rows if r["id"] in old_other)
     old_e, new_e = np.load(npz), np.load(a.scratch / "emb.npz")
-    emb_equal = all(np.array_equal(old_e[k], new_e[k]) for k in ("repos", "numbers", "embeddings"))
+    emb_equal, emb_diff = embeddings_match(old_e, new_e)
     if not emb_equal:
-        raise SystemExit("query embeddings changed: investigate before writing anything")
+        raise SystemExit(f"query embeddings changed (max abs diff {emb_diff}): investigate")
 
     raw = {repo: raw_bodies(repo, [r["number"] for r in rows if r["repo"] == repo]) for repo in q.REPOS}  # fmt: skip
     body_stats = add_body_raw(rows, raw)
@@ -137,7 +154,7 @@ def main(argv: list[str] | None = None) -> int:
     rep["refreeze"] = {
         "script": "scripts/qp3b_refreeze_set.py", "index_dirs": {k: str(v) for k, v in index_dirs.items()},
         "index_files_sha256": shas, "rows_top_k_changed": changed,
-        "query_embeddings_equal_so_npz_untouched": emb_equal, "body_raw": body_stats,
+        "query_embeddings_max_abs_diff_so_npz_untouched": emb_diff, "body_raw": body_stats,
         "other_repo_rows_byte_identical_apart_from_body_raw": True,
     }  # fmt: skip
     q.REPORT.write_text(json.dumps(rep, indent=1, sort_keys=True, default=str), "utf-8")

@@ -243,7 +243,9 @@ def test_champion_sha_mismatch_errors_and_stages_nothing(tmp_path: Path) -> None
         rl.verify_champion(models, man)
     out = tmp_path / "out"
     out.mkdir()
-    a = Namespace(champion=models, manifest=man, out=out, derived_dir=tmp_path)
+    a = Namespace(
+        champion=models, manifest=man, out=out, derived_dir=tmp_path, champion_manifest_key=None
+    )
     with pytest.raises(rl.ChampionShaError):
         cli.stage_evaluate(a)  # refuses before reading any stage output or scoring
     rc = cli.main(["evaluate", "--derived-dir", str(tmp_path), "--champion", str(models),
@@ -329,3 +331,70 @@ def test_meta_labels_never_become_classes_and_meta_only_issues_are_dropped(
     classes = rl.regenerate_classes(d)
     assert set(META).isdisjoint(classes)
     assert "git" in classes and classes[-1] == "other"
+
+
+# ------------------------------------- #326: bundle downloaded under a name that is not its manifest name
+
+BUNDLE_KEY = "data/models/component_classifier_microsoft_vscode_family_v2_2026-10-22.joblib"
+
+
+def _bundle(tmp: Path, content: bytes = b"bundle") -> tuple[Path, Path]:
+    """champion.joblib (download name) and a manifest pinning its sha256 under BUNDLE_KEY."""
+    f = tmp / "champion.joblib"
+    f.write_bytes(content)
+    man = tmp / "MANIFEST.sha256"
+    man.write_text(f"{rl.file_sha256(f)}  {BUNDLE_KEY}\n{'1' * 64}  data/models/other.pkl\n")
+    return f, man
+
+
+def test_downloaded_name_without_key_still_fails_closed(tmp_path: Path) -> None:
+    f, man = _bundle(tmp_path)
+    with pytest.raises(rl.ChampionShaError, match="champion.joblib"):
+        rl.verify_champion(f, man)
+
+
+def test_explicit_manifest_key_verifies_by_sha_not_by_file_name(tmp_path: Path) -> None:
+    f, man = _bundle(tmp_path)
+    actual, expected = rl.verify_champion(f, man, BUNDLE_KEY)
+    assert actual == expected == rl.file_sha256(f)
+
+
+def test_explicit_manifest_key_still_requires_matching_sha(tmp_path: Path) -> None:
+    f, man = _bundle(tmp_path)
+    f.write_bytes(b"tampered bundle")
+    with pytest.raises(rl.ChampionShaError, match="!= manifest"):
+        rl.verify_champion(f, man, BUNDLE_KEY)
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "data/models/other.pkl",  # listed in the manifest but not the vscode classifier
+        "data/models/component_classifier_microsoft_vscode_missing.joblib",  # not in the manifest
+        "../data/models/component_classifier_microsoft_vscode_x.joblib",
+        "data/models/component_classifier_microsoft_vscode_x.joblib extra",
+        "",
+    ],
+)
+def test_explicit_manifest_key_must_be_a_listed_vscode_classifier(tmp_path: Path, key: str) -> None:
+    f, man = _bundle(tmp_path)
+    with pytest.raises(rl.ChampionShaError):
+        rl.verify_champion(f, man, key)
+
+
+def test_cli_passes_manifest_key_through_to_evaluation(tmp_path: Path) -> None:
+    f, man = _bundle(tmp_path)
+    out = tmp_path / "out"
+    out.mkdir()
+    base = ["evaluate", "--derived-dir", str(tmp_path), "--champion", str(f),
+            "--manifest", str(man), "--out", str(out)]  # fmt: skip
+    # Without the key the sha check refuses before any scoring (exit 2, nothing written).
+    assert cli.main(base) == cli.ERROR
+    # With the key the sha check passes and the run proceeds to the (absent) stage inputs, which
+    # is still an error here, but NOT the champion error: it is reached only after verification.
+    a = Namespace(champion=f, manifest=man, out=out, derived_dir=tmp_path,
+                  champion_manifest_key=BUNDLE_KEY)  # fmt: skip
+    with pytest.raises(
+        RuntimeError, match="assemble output missing"
+    ):  # past verify_champion, into reading stage outputs
+        cli.stage_evaluate(a)

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -182,14 +183,27 @@ def champion_file(champion: Path) -> Path:
     return champion / "component_classifier_microsoft_vscode.pkl" if champion.is_dir() else champion
 
 
-def verify_champion(champion: Path, manifest: Path) -> tuple[str, str]:
+# A manifest key a champion may be pinned to: the vscode classifier (served pickle or a retrain
+# bundle) under data/models/. Narrow on purpose: a typo or another model's line must not pass.
+CHAMPION_KEY_RE = re.compile(
+    r"data/models/component_classifier_microsoft_vscode[A-Za-z0-9_.-]*\.(pkl|joblib)"
+)
+
+
+def verify_champion(
+    champion: Path, manifest: Path, manifest_key: str | None = None
+) -> tuple[str, str]:
     """Return (actual, expected) sha256; raise ChampionShaError unless they match (fail closed).
 
-    The manifest key is data/models/<champion file name>, so a stale checkout copy, a wrong file
-    or a bundle the manifest does not list all stop the run instead of moving the bar silently.
+    The manifest key is `manifest_key` when given (a downloaded bundle can carry a file name, such
+    as champion.joblib, that is not its manifest name), else data/models/<champion file name>. So
+    a stale checkout copy, a wrong file or a bundle the manifest does not list all stop the run
+    instead of moving the bar silently; an explicit key only changes WHICH line is compared.
     """
     f = champion_file(champion)
-    key = f"data/models/{f.name}"
+    key = manifest_key if manifest_key is not None else f"data/models/{f.name}"
+    if manifest_key is not None and not CHAMPION_KEY_RE.fullmatch(manifest_key):
+        raise ChampionShaError(f"champion manifest key {manifest_key!r} is not a vscode classifier")
     try:
         lines = Path(manifest).read_text(encoding="utf-8").splitlines()
         actual = file_sha256(f)

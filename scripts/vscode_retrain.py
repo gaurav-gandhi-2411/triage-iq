@@ -86,7 +86,9 @@ def stage_train(a: argparse.Namespace) -> dict[str, Any]:
 
 
 def stage_evaluate(a: argparse.Namespace) -> dict[str, Any]:
-    rl.verify_champion(a.champion, a.manifest)  # before any scoring; mismatch -> exit 2, no metrics
+    rl.verify_champion(
+        a.champion, a.manifest, a.champion_manifest_key
+    )  # before any scoring; mismatch -> exit 2, no metrics
     d, _ = _load(a.out)
     info = json.loads((a.out / "train_info.json").read_text(encoding="utf-8"))
     classes = info["classes"]
@@ -102,7 +104,9 @@ def stage_evaluate(a: argparse.Namespace) -> dict[str, Any]:
     p_naive, _ = vl.majority_proba(vl.gold(tr, classes)[0], classes, len(ho))
     m = rl.evaluate_holdout(ho, classes, p_ch, bundle["tau"], p_champ, p_naive)
     m["champion"]["sha256"] = champ_sha
-    m["champion"]["manifest_sha256"] = rl.verify_champion(a.champion, a.manifest)[1]
+    m["champion"]["manifest_sha256"] = rl.verify_champion(
+        a.champion, a.manifest, a.champion_manifest_key
+    )[1]
     (a.out / "metrics.json").write_text(json.dumps(m, indent=1), encoding="utf-8")
     return m
 
@@ -160,6 +164,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("stage", choices=["assemble", "train", "evaluate", "gate", "stage", "all"])
     ap.add_argument("--derived-dir", type=Path)
     ap.add_argument("--champion", type=Path, help="served models dir, or a retrain bundle .joblib")
+    ap.add_argument(
+        "--champion-manifest-key",
+        help="MANIFEST.sha256 path the champion is pinned to (default data/models/<file name>);"
+        " for a bundle whose file name is not its manifest name",
+    )
     ap.add_argument("--as-of", help="run date YYYY-MM-DD (data cutoff = as-of minus 30 days)")
     ap.add_argument("--window-months", type=int, default=rl.WINDOW_MONTHS)
     ap.add_argument("--manifest", type=Path, default=Path("data/models/MANIFEST.sha256"))

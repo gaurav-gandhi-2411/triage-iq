@@ -93,7 +93,7 @@ frozen ADR-0070 list and a reason, is `0073-vscode-label-decisions.md`. Summary:
 NEW), 14 BORDERLINE-KEEP, 465 KEEP.
 
 `RETRAIN_META_EXCLUDE` is now the 29 NEW exclusions (EXCLUDE plus BORDERLINE-EXCLUDE that ADR-0070 does not already exclude); it supersedes the three-label set of the
-Decision section above and the "Observed ... not excluded" paragraph, which GG's D93 ruled on. A test parses the table file and checks the constant equals its NEW rows.
+Decision section above and the "Observed ... not excluded" paragraph, which GG's D93 ruled on. A test parses the table file and checks the constant equals its NEW rows. The table is regenerable from the repo: `python scripts/adr0073_label_table.py` (`--check` exits non-zero if the committed file differs); the hand-made decisions are data in `scripts/adr0073_label_decisions.json`.
 Labels with zero training examples that the rule does not exclude stay in the class list and evaluation as honest misses.
 
 BORDERLINE calls, for GG's review:

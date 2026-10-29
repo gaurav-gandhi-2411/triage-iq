@@ -2,7 +2,8 @@ from __future__ import annotations
 
 """Quality regression gate: compares current pipeline scores against the frozen baseline.
 
-Requires reports/eval_baseline.json to exist (written by run_eval.py --update-baseline).
+Requires reports/eval_baseline.json to exist (written by run_eval.py --update-baseline); a missing
+baseline fails the gate.
 All LLM calls are served from the cassette — no live API calls in CI.
 
 Run with:
@@ -32,14 +33,17 @@ DIMENSION_KEYS: list[str] = [
 def baseline() -> dict:
     """Load and return the frozen baseline JSON.
 
-    Skips the session if the file does not exist — this allows CI to run
-    the invariant suite before a baseline has been generated.
+    FAILS the session if the file does not exist (it used to skip). A skipped gate reads as green:
+    a deleted or never-written baseline (e.g. archived at a set switch without its replacement)
+    would silently turn the whole quality gate off.
     """
     import json
 
     if not BASELINE_PATH.exists():
-        pytest.skip(
-            reason=f"Baseline file not found: {BASELINE_PATH} — run eval/run_eval.py --update-baseline first"
+        pytest.fail(
+            f"Baseline file not found: {BASELINE_PATH} -- run eval/run_eval.py --update-baseline "
+            "first (a missing baseline must not pass as a skipped gate)",
+            pytrace=False,
         )
 
     return json.loads(BASELINE_PATH.read_text(encoding="utf-8"))

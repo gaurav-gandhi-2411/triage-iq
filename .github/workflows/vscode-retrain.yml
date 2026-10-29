@@ -1,0 +1,152 @@
+name: vscode-retrain
+
+# Monthly vscode retrain -> evaluate -> gate -> stage (ADR-0072). Never deploys, never uploads to GCS,
+# never merges. On accept it opens a PR with the manifest candidate for a human to review.
+#
+# Inputs live in the GitHub release tagged `vscode-retrain-data` (free storage; filled by GG from the
+# machine that runs the incremental scraper, e.g. `gh release upload vscode-retrain-data issues.parquet
+# label_events.parquet champion.joblib champion.manifest_key --clobber`). Assets: issues.parquet,
+# label_events.parquet, and the champion as champion.joblib (a previous retrain bundle) plus
+# champion.manifest_key (one line: the data/models/... path MANIFEST.sha256 lists for that bundle, e.g.
+# data/models/component_classifier_microsoft_vscode_family_v2_2026-10-22.joblib), or served_models.tgz
+# (the served models dir). The run still fails closed unless the champion's sha256 equals the MANIFEST
+# line at that key. A missing asset fails the download step, so nothing is staged.
+#
+# One-time repo settings this needs (not changed by this file): Settings > Actions > General >
+# "Allow GitHub Actions to create and approve pull requests". PRs opened with GITHUB_TOKEN do not
+# trigger other workflows, so a human must push an empty commit or close/reopen to get CI on it.
+
+on:
+  schedule:
+    - cron: "17 3 2 * *" # 03:17 UTC on the 2nd of each month (off the hour to dodge the cron rush)
+  workflow_dispatch:
+    inputs:
+      as_of:
+        description: "Run date YYYY-MM-DD (default: today UTC); data cutoff is as_of minus 30 days"
+        required: false
+
+concurrency:
+  group: vscode-retrain
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write # push the retrain/vscode-<date> branch with the manifest candidate
+      pull-requests: write # open the PR
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PYTHONPATH: src
+      CUDA_VISIBLE_DEVICES: "-1"
+      GROQ_API_KEY: dummy # imported by config at module load; no call is made
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements-dev.txt
+
+      - name: Download inputs from the data release
+        run: |
+          mkdir -p "$RUNNER_TEMP/in"
+          gh release download vscode-retrain-data --dir "$RUNNER_TEMP/in" \
+            --pattern issues.parquet --pattern label_events.parquet \
+            --pattern champion.joblib --pattern champion.manifest_key \
+            --pattern served_models.tgz
+          test -s "$RUNNER_TEMP/in/issues.parquet"
+          test -s "$RUNNER_TEMP/in/label_events.parquet"
+          if [ -s "$RUNNER_TEMP/in/champion.joblib" ]; then
+            echo "CHAMPION=$RUNNER_TEMP/in/champion.joblib" >> "$GITHUB_ENV"
+            # the bundle is named champion.joblib here, not as MANIFEST lists it: pass its key
+            test -s "$RUNNER_TEMP/in/champion.manifest_key"
+            key="$(tr -d ' \r\n' < "$RUNNER_TEMP/in/champion.manifest_key")"
+            echo "CHAMPION_KEY=$key" >> "$GITHUB_ENV"
+          else
+            mkdir -p "$RUNNER_TEMP/in/served"
+            tar -xzf "$RUNNER_TEMP/in/served_models.tgz" -C "$RUNNER_TEMP/in/served"
+            echo "CHAMPION=$RUNNER_TEMP/in/served" >> "$GITHUB_ENV"
+          fi
+
+      - name: Retrain, evaluate, gate, stage
+        id: run
+        env:
+          AS_OF_INPUT: ${{ github.event.inputs.as_of }} # via env, never interpolated into the script
+        run: |
+          as_of="${AS_OF_INPUT:-$(date -u +%F)}"
+          case "$as_of" in [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;; *) echo "bad as_of"; exit 2 ;; esac
+          echo "as_of=$as_of" >> "$GITHUB_OUTPUT"
+          key_args=()
+          if [ -n "$CHAMPION_KEY" ]; then key_args=(--champion-manifest-key "$CHAMPION_KEY"); fi
+          set +e
+          python scripts/vscode_retrain.py all \
+            --derived-dir "$RUNNER_TEMP/in" --champion "$CHAMPION" "${key_args[@]}" \
+            --as-of "$as_of" --out "$RUNNER_TEMP/out"
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          # 0 = accepted and staged, 10 = gate refused (normal: champion kept), anything else = error
+          if [ "$code" -ne 0 ] && [ "$code" -ne 10 ]; then exit "$code"; fi
+
+      - name: Upload gate decision and metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-retrain-gate-${{ steps.run.outputs.as_of }}
+          path: |
+            ${{ runner.temp }}/out/gate_decision.json
+            ${{ runner.temp }}/out/metrics.json
+            ${{ runner.temp }}/out/train_info.json
+            ${{ runner.temp }}/out/window_meta.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Upload staged candidate (accepted only)
+        if: steps.run.outputs.exit_code == '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-retrain-staging-${{ steps.run.outputs.as_of }}
+          path: ${{ runner.temp }}/out/staging
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Open PR with the manifest candidate (accepted only)
+        if: steps.run.outputs.exit_code == '0'
+        run: |
+          as_of="${{ steps.run.outputs.as_of }}"
+          branch="retrain/vscode-$as_of"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          cp "$RUNNER_TEMP/out/staging/MANIFEST.sha256.candidate" data/models/MANIFEST.sha256
+          mkdir -p "reports/vscode_retrain/$as_of"
+          cp "$RUNNER_TEMP/out/gate_decision.json" "$RUNNER_TEMP/out/staging/candidate_metadata.json" \
+            "reports/vscode_retrain/$as_of/"
+          git add data/models/MANIFEST.sha256 "reports/vscode_retrain/$as_of"
+          git commit -m "chore(models): vscode retrain candidate $as_of (gate accepted)"
+          git push origin "$branch"
+          cat > "$RUNNER_TEMP/pr_body.md" <<EOF
+          ## What & why
+          Monthly vscode retrain ($as_of) passed the ADR-0072 gate against the current champion on the same holdout.
+          Gate decision and metrics: reports/vscode_retrain/$as_of/. Candidate bundle: workflow artifact
+          vscode-retrain-staging-$as_of (kept 30 days), run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID.
+
+          ## DO NOT MERGE until the bundle is uploaded
+          This changes MANIFEST.sha256 only. Merge order: download the artifact, run scripts/publish_models.py (manual, GG),
+          then merge. Nothing here deploys or changes serving; the new bundle format also needs a loader (ADR-0072 decision 7).
+
+          ## Risk & rollback
+          Champion line kept in the manifest; rollback = revert this PR.
+          EOF
+          gh pr create --base main --head "$branch" --title "chore(models): vscode retrain candidate $as_of" \
+            --body-file "$RUNNER_TEMP/pr_body.md"

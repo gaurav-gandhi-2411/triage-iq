@@ -28,7 +28,12 @@ from slowapi.middleware import SlowAPIMiddleware
 from ..config import get_settings
 from ..data.preprocess import clean_text
 from ..models.abstention import compute_abstention_status
-from ..models.resolution import NAIVE_INTERVAL_COVERAGE, repo_slug
+from ..models.resolution import (
+    CONSTANT_INTERVAL_COVERAGE,
+    INTERVAL_BASIS_CONSTANT_CQR,
+    NAIVE_INTERVAL_COVERAGE,
+    repo_slug,
+)
 from ..models.triage import PROVIDER_DEGRADED_STATUS, ConformalIntervalResult, TriagePlan
 from .loader import ModelStore
 from .schemas import DependencyStatus, HealthResponse, ServiceInfoResponse, TriageRequest
@@ -372,6 +377,8 @@ def triage(body: TriageRequest, request: Request) -> JSONResponse:
             cov = adj
             if meta.get("resolution_interval_basis") == "naive_scaled":
                 cov = {**adj, **NAIVE_INTERVAL_COVERAGE.get(repo_slug(body.repo), {})}
+            elif meta.get("resolution_interval_basis") == INTERVAL_BASIS_CONSTANT_CQR:
+                cov = {**adj, **CONSTANT_INTERVAL_COVERAGE.get(repo_slug(body.repo), {})}
             plan.resolution_interval_conformal = ConformalIntervalResult(
                 lower_days=max(0.0, plan.expected_resolution_lower_days - q_days),
                 upper_days=plan.expected_resolution_upper_days + q_days,

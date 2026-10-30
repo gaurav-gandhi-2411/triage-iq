@@ -1,0 +1,48 @@
+{
+  "method": "qp4 M0a CQR recipe: q10/q90 on first 60% of train closed (chronological), Q on last 40% in log1p space, alpha 0.2; test never read",
+  "source": {
+    "file": "qp4/features.parquet",
+    "sha256_prefix": "ff11393bd8fc9893"
+  },
+  "n_train_closed": 4806,
+  "n_a": 2883,
+  "n_b": 1923,
+  "q_log": -0.35430557690905595,
+  "lo_h": 6.611388888888887,
+  "hi_h": 8942.172190772857,
+  "q10_h": 4.340611111111111,
+  "q90_h": 12744.72516666667,
+  "served": {
+    "point_days": 35.0954,
+    "lo_days": 0.2755,
+    "hi_days": 372.5905
+  },
+  "validation": {
+    "n_closed": 749,
+    "n_open": 136,
+    "target_coverage": 0.8,
+    "closed_coverage": 0.9132176234979973,
+    "closed_coverage_ci95": [
+      0.8918558077436582,
+      0.931909212283044
+    ],
+    "mean_ae_days": 69.84159794077289,
+    "mean_ae_ci95": [
+      64.67682772477501,
+      74.81974406461703
+    ],
+    "median_ae_days": 34.63343171296297,
+    "median_ae_ci95": [
+      34.297471064814815,
+      34.890850694444445
+    ],
+    "mean_width_days": 372.315033411832,
+    "below_lo": 60,
+    "above_hi": 5,
+    "censored_aware_coverage_bounds_all": [
+      0.7728813559322034,
+      0.8451977401129943
+    ],
+    "open_with_elapsed_above_hi": 72
+  }
+}

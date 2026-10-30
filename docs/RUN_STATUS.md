@@ -3,6 +3,77 @@
 Single source of truth. Re-read first after any restart. Times in IST unless marked UTC. Newest dated brief first; everything under
 "First run" is history.
 
+## Brief 2026-10-30 (24 h, A1), written ~17:30 IST
+
+**Outcome.** D92.1/D92.4/D92.5 are serving. The single 150-issue recording (D95.1, plan A, #320's code) started at ~16:05 IST, after a
+zero-token preflight and a clean future-leakage check. R8 is finished: the fine-tuned retriever beats the #345 winner on test, but it is
+not served.
+
+**Production (VERIFIED ~17:00).** `triageiq-api-00110-des` serves 100%. It was deployed by CI from #368's merge 0e8445e, and Deploy
+succeeded.
+- Env: ENVIRONMENT=prod, TRIAGE_CLEAN_REQUEST_BODY=1, TRIAGE_VSCODE_CLASSIFIER=family_v2, TRIAGE_K8S_INDEX=v2,
+  TRIAGE_RESOLUTION_EVIDENCE=1. The deploy kept all four flags via `--update-env-vars`.
+- `/health?deps=1` ok, 2 repos.
+- Rollback: `00108-mod` (same flags, code before #368), `00106-sew` (no evidence), `00104-zax` (family_v2 only), `00102-vep` (all off).
+
+**Done since the 2026-10-29 brief.**
+- D92.1, D92.4 and D92.5 went live one at a time (candidate → smoke → comparison → promote → live check); details in the update below.
+- R8 (#351-#356): F4 + RRF k=10, test R@5 40.4% [38.0, 42.7] vs 33.0% for the #345 winner, paired +7.3 [+5.9, +8.9]. ADR-0066's 80% is not met.
+- ADR-0073 labels (#359): `papercut 🩸` excluded, `performance` kept; this takes effect at the next monthly retrain.
+- Release `vscode-retrain-data`:
+  - Columns are projected, with no person fields; checksums were re-checked after download.
+  - #326 was commented ready for GG.
+  - The projection script is #362, a draft (gate 4).
+- 150-set gate prep: #360/#361/#363/#364 (config-aware replay and provenance, `judge_mean_ci` path arguments, 15 expected artifact hashes, zero-token
+  preflight). ADR-0075 is #365, and its open questions were decided by GG (D95, #366). On the 64-set, scores and grounding are byte-identical.
+- D95.6: the primary checkout's two stale classifier pickles (vscode and k8s) were moved to `C:\Users\gaura\backup-triage-iq-models-20261030\`
+  (not deleted). They were replaced from GCS together with the five artifacts that were missing locally. All 16 MANIFEST entries match (VERIFIED,
+  sha256).
+- D95.2 leakage check (#367, VERIFIED on #320's code), every neighbour strictly before its issue:
+
+  | repo | neighbour type | count |
+  |---|---|---|
+  | k8s | similar | 375/375 |
+  | k8s | evidence neighbours | 165/165 |
+  | k8s | evidence items | 210/210 |
+  | vscode | similar | 357/357 |
+
+  There are 0 later, 0 equal, 0 unknown and 0 self-matches. The as-of filter dropped 27 evidence items.
+- D95.5 (#368): the judge sees "unknown - issue still open" and "not prioritised", never "None". The 64-set judge entries still replay.
+- #320: main merged in (b5dec06). `test` is green. The eval-gate jobs are red as expected (the k8s prompt changed); they clear after the
+  recording.
+
+**Recording (D95.1).**
+- Setup:
+  - Worktree `triage-iq-wt-readme` on `feat/k8s-resolution-constant-35d` @ b5dec06.
+  - `TRIAGEIQ_RECORDING_SET_DIR` = its `eval/sets/quality_push_2026-10`.
+  - Launcher `scripts/run_recording_unattended.py --mode synthesis`, child PID 26584, below-normal priority.
+- Preflight: 918,124 estimated prompt tokens, 0 degraded, the k8s point is 35.1 d on all 75 k8s issues, and validate-checkpoint passed.
+- At 17:00: 1/150 issues done, 6,039 tokens.
+- Benchmark cap (D95.3): before, no `~/.groq_budget/config.json` existed, so benchmark had the code default of 100,000. Now it is 20,000. Restore by
+  removing that file when the recording finishes.
+- The recording-active flag lasts 6 h and is not refreshed (an existing launcher gap); the benchmark cap is what limits competition.
+- Expected duration: about 6 days at ~155K/day (BELIEVED). Status file: `<set>/cassettes/RECORDING_STATUS.txt`.
+- Do not change prompt-affecting code on #320 or main (triage.py, resolution.py, prompts/, api/loader.py) until it finishes.
+
+**GG queue.** #357 (deploy.yml flags), #326 (retrain workflow; its data release exists), #362 (release projection script; gate 4 flagged its
+file names). Standing items: the publish_models.py overwrite hazard, the sklearn 1.6.1→1.7.2 pickle warning, and #184/#138/#94.
+
+**Next (no GG needed).** Monitor the recording. Then: judge pass (local Ollama), objective metrics, and the before/after report for GG, with no
+baseline write. Then #320 merges once its gate passes, and #321 is refreshed. While the recording runs: pre-register the vscode duplicate
+cross-encoder reranker (spec-quality-push §7 method 4), then run it on Kaggle when the quota allows.
+
+**Disk.**
+- C: 248 GB free.
+- Recording worktree: .venv 1.6 GB, data 0.4 GB.
+- Model backup: 7.5 MB.
+- R8 outputs on D: about 2.3 GB.
+- Scratch on C: e_release 0.5 GB and e_gate150 0.45 GB, both deletable. The e_gate150 delete was refused by the permission system earlier and
+  was not retried.
+- Nothing was deleted.
+
+**Wake-ups.** Cron 750c53cb, hourly at :17, session-only, expires ~2026-11-04. Re-create it before then.
+
 ## Update 2026-10-29 ~20:30 IST (after GG's decisions D94)
 
 **D94 (GG, 2026-10-29):**

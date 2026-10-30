@@ -236,9 +236,11 @@ def main() -> None:
         env["TRIAGE_PROMPT_INCLUDE_ATTRIBUTION"] = "1"
         # Recording-active flag (shared Groq ledger, 2026-10-12): while this launcher runs, other
         # projects' gpt-oss-120b checks wait. The flag has a TTL and a pid, so a crash cannot
-        # block them; the child record_cassettes.py must not set/clear its own copy.
-        tpd_budget_gate.start_recording()
+        # block them; the child record_cassettes.py must not set/clear its own copy. The flag is
+        # renewed every 15 min (2 h TTL) for the launcher's whole life, budget sleeps included.
+        heartbeat = tpd_budget_gate.start_recording_heartbeat()
         atexit.register(tpd_budget_gate.stop_recording)
+        atexit.register(heartbeat.set)
         env["GROQ_BUDGET_RECORDING_PARENT"] = "1"
         # Phase 3b: cap BLAS thread pools so the classifier/TF-IDF matrix ops this process
         # does don't spin up threads competing with whatever else is on this CPU. Must be

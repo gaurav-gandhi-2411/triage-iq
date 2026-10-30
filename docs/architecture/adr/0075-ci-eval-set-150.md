@@ -1,6 +1,6 @@
 # ADR-0075 — The 150-issue set becomes the CI eval set; the 64-issue set is retired from the LLM gates
 
-Status: Accepted for the set switch by GG on 2026-10-29 (D94.2). Three questions below are OPEN for GG; this ADR does not decide them.
+Status: Accepted for the set switch by GG on 2026-10-29 (D94.2); its three open questions were decided by GG on 2026-10-30 (D95).
 Date: 2026-10-29
 Decider: Gaurav Gandhi (D94.2); drafted by the unattended run
 
@@ -59,7 +59,18 @@ Wiring done so far: replay, provenance and grounding paths read the set's config
 checked against `MANIFEST.sha256` (PR #363); preflight (PR #364); judge CIs for any set (PR #361). The switch itself (repointing `EVAL_SET_PATH` /
 `CASSETTE_PATH`, the grounding baseline hash in `eval/test_invariants.py`, the quality-gate tolerance) follows the recording and is not part of this ADR.
 
-## Open for GG (not decided here)
+## GG decisions 2026-10-30 (D95) on the three open questions
+
+1. **Recording plan: A.** One recording of all 150 issues on #320's code (the final configuration). The 35.1-day change was decided on
+   ground-truth resolution error; a judge before/after is a proxy and does not justify about 460K extra tokens. Before any token is spent, every
+   neighbour in a prompt (similar issues and resolution evidence) is checked to be created strictly before its issue (D95.2).
+2. **vscode fabrication and grounding at n=75: report-only.** No hard gate.
+3. **Missing gold in the judge rubric:** a row with no resolution is shown as "unknown - issue still open", a row with no priority as "not
+   prioritised", never "None". This applies before the judge pass.
+
+The original options are kept below for the record.
+
+## Open for GG (as written 2026-10-29, now decided above)
 
 1. **Recording plan.** A: one recording of all 150 (about 919K tokens, estimate 918,124) on #320's code (k8s point 35.1 d, recalibrated intervals).
    B: stage 1 records all 150 on main = current prod (k8s point 3.0 d, `train_median`), then only the 75 k8s rows are re-recorded on #320

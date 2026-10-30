@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
@@ -148,3 +150,87 @@ def test_latency_stats() -> None:
     s = x.latency_stats([10.0, 20.0, 30.0, 40.0, 100.0])
     assert s["median_ms"] == 30.0 and s["n"] == 5 and s["mean_ms"] == 40.0
     assert 40.0 < s["p95_ms"] <= 100.0
+
+
+def _frozen() -> dict:
+    return json.loads(x.FROZEN_X.read_text(encoding="utf-8"))
+
+
+def _args(**kw: object) -> SimpleNamespace:
+    base = {"final_test": True, "frozen_sha256": "", "out": "nowhere", "result": "nowhere.json"}
+    return SimpleNamespace(**(base | kw))
+
+
+def test_committed_freeze_is_the_validation_selection() -> None:
+    fr = _frozen()
+    assert (fr["selected"], fr["mode"], fr["rrf_k"], fr["n_rerank"], fr["seed"]) == (
+        "X4_rrf10", "rrf10", 10, 50, 42)  # fmt: skip
+    assert fr["r8_freeze"]["config_sha256"].startswith("3ad311b4")
+    assert fr["validation"]["recall@5_hits"] == 559 and fr["validation"]["success"] is True
+    x.r8.check_frozen(fr, fr["config_sha256"])  # self-consistent
+
+
+def test_pinned_code_matches_the_checkout() -> None:
+    fr = _frozen()
+    for name, want in fr["code_sha256_lf"].items():
+        assert x.r8.sha_lf(ROOT / name) == want, name  # LF-folded: autocrlf-safe
+    assert x.r8.sha_lf(ROOT / fr["r8_freeze"]["file"]) == fr["r8_freeze"]["file_sha256_lf"]
+
+
+def test_guard_refuses_wrong_hash_and_tampered_body() -> None:
+    fr = _frozen()
+    with pytest.raises(x.r8.FrozenMismatchError):
+        x.final_test_guard(_args(frozen_sha256="0" * 64))
+    tampered = {**fr, "rrf_k": 60}
+    with pytest.raises(x.r8.FrozenMismatchError):
+        x.r8.check_frozen(tampered, fr["config_sha256"])
+
+
+def test_guard_needs_flag_and_hash_before_anything_else(monkeypatch) -> None:
+    monkeypatch.setattr(x, "check_inputs", lambda *_a: pytest.fail("inputs read before the flags"))
+    for kw in ({"final_test": False, "frozen_sha256": "x"}, {"frozen_sha256": ""}):
+        with pytest.raises(qe.TestGuardError):
+            x.final_test_guard(_args(**kw))
+
+
+def test_guard_refuses_rerun_when_result_exists(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(x, "check_inputs", lambda *_a: pytest.fail("checked after the rerun test"))
+    done = tmp_path / "res.json"
+    done.write_text("{}")
+    with pytest.raises(qe.TestGuardError, match="once"):
+        x.final_test_guard(_args(frozen_sha256=_frozen()["config_sha256"], result=str(done)))
+
+
+def test_guard_passes_only_when_every_check_passes(tmp_path: Path, monkeypatch) -> None:
+    seen: list[Path] = []
+    monkeypatch.setattr(x, "check_inputs", lambda fr, out: seen.append(out))
+    fr = x.final_test_guard(
+        _args(frozen_sha256=_frozen()["config_sha256"], result=str(tmp_path / "new.json"), out="o")
+    )
+    assert fr["selected"] == "X4_rrf10" and seen == [Path("o")]
+
+
+def test_check_inputs_refuses_changed_weights(tmp_path: Path) -> None:
+    (tmp_path / "X4_model").mkdir()
+    for n in x.X4_FILES:
+        (tmp_path / "X4_model" / n).write_bytes(b"not the frozen weights")
+    with pytest.raises(x.r8.FrozenMismatchError, match="X4/"):
+        x.check_inputs(_frozen(), tmp_path)
+
+
+def test_check_inputs_refuses_changed_code(tmp_path: Path, monkeypatch) -> None:
+    fr = _frozen()
+    fr["x4_files_sha256"] = {}  # isolate the code check from the (absent) weights
+    monkeypatch.setattr(x.dd, "file_sha", lambda _p: fr["r8_freeze"]["embedding_sha256"])
+    monkeypatch.setattr(
+        x.r8, "sha_lf",
+        lambda p: fr["r8_freeze"]["file_sha256_lf"] if Path(p) == x.r8.FROZEN_FT else "changed",
+    )  # fmt: skip
+    with pytest.raises(x.r8.FrozenMismatchError, match="code/"):
+        x.check_inputs(fr, tmp_path)
+
+
+def test_test_kernel_is_scoring_only() -> None:
+    src = (ROOT / x.TEST_KERNEL_DIR / "xenc_rerank_test.py").read_text(encoding="utf-8")
+    assert "loss" not in src and "optim" not in src and ".backward(" not in src  # scoring only
+    assert "freeze" in src and "refusing to score" in src

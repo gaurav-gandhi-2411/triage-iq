@@ -1,0 +1,57 @@
+{
+ "base_model": "BAAI/bge-reranker-base",
+ "base_revision": "2cfc18c9415c912f9d8155881c133215df768a70",
+ "code_sha256_lf": {
+  "kaggle/kernels/xenc_rerank/xenc_rerank.py": "2156009deba6441fc40f8e44877ca2a5b8e794df26f9165b72db16c5f2e01169",
+  "kaggle/kernels/xenc_rerank_test/xenc_rerank_test.py": "abf4c9cf7db349656c01b97222ee2403b07efd7663a21e3b829bd8078a9262cd",
+  "scripts/qk_kaggle.py": "eb144876f787367bc17c778d5c636f4f0bedbb2a9a51fcf95cb432190dd00ab5",
+  "scripts/qp2_vscode_dup_dense.py": "a437bb0cfe67e2519937849fc15eee9483762a06d1a53eecbc1f230408a7b08d",
+  "scripts/qp2_vscode_dup_eval.py": "76aa2c1973d0cec5dda047f03f94a1f2d97669664f6c3df51dc71330b11fec9f",
+  "scripts/r8_dup_finetune.py": "0bd83a5011ecf121753e806d21a46e529727d87309fd25b394bfd8a0d9c66d15"
+ },
+ "config_sha256": "2d8e91360c77960e7fb92134fef24a0043aeae86db59b4c3330962a560e2f84b",
+ "design": "docs/Q5B_XENC_RERANK_PREREG_2026-10.md",
+ "epochs": 2,
+ "lr": 3e-05,
+ "mode": "rrf10",
+ "n_rerank": 50,
+ "r8_freeze": {
+  "config_sha256": "3ad311b449c0b0d08f15746a8a15c382fec9e45b9b0c36667d69cb3d1c426c6d",
+  "embedding_sha256": "10339bfeafe64c0f118e37b2c74bb260174c31def6fb83f68c10508867b4bc9d",
+  "file": "reports/r8_vscode_dup_finetune_frozen_2026-10.json",
+  "file_sha256_lf": "6032d82a6ba944d8b434e3e4a2a39b46f7f06092fdffc3cc573bf43f5cea4093",
+  "selected": "F4_rrf10"
+ },
+ "reference_test": {
+  "n_queries": 1705,
+  "recall@5_hits": 688,
+  "source": "reports/r8_vscode_dup_finetune_test_2026-10.json (frozen R8 winner F4_rrf10)"
+ },
+ "rrf_k": 10,
+ "seed": 42,
+ "selected": "X4_rrf10",
+ "test_criterion": "paired test R@5 (X4_rrf10 minus frozen R8 winner), 95% bootstrap CI excludes zero",
+ "unit": "X4",
+ "validation": {
+  "n_candidates": 18,
+  "n_queries": 1156,
+  "paired_recall@5": {
+   "bootstrap95": [
+    0.01384083044982699,
+    0.04757785467128028
+   ],
+   "diff": 0.03027681660899654
+  },
+  "recall@5_hits": 559,
+  "reference_recall@5_hits": 524,
+  "success": true
+ },
+ "validation_base_commit": "bca249a60da64c89bd2c3673f4113ecbae32da2a",
+ "validation_driver_sha256_lf_at_base": "3a490f4145bf37a0e67f8ab6d51d512a0b636075a90937b498eada4cf5241d3f",
+ "x4_files_sha256": {
+  "config.json": "8fd9cbc237d7cb58b17636ab9723dd6a5e7e48365d4718ade12d30eb5d2bee35",
+  "model.safetensors": "94625c93a72fe4602ae68245164507ce23049e53cfd2791ce6c1b7246abe8804",
+  "tokenizer.json": "31584ba60435a99c96f27ca37390563dfd7ca779a07176b3e0ba579a67263653",
+  "tokenizer_config.json": "33b75086cc783ee5d78cab4dae0762d9cab1c40a8e0feb6e65d60c8d69a6afc1"
+ }
+}

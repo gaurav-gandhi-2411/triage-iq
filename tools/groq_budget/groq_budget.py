@@ -330,14 +330,23 @@ class Ledger:
         self, project: str, models: list[str], ttl_s: int = 6 * 3600, pid: int | None = None
     ) -> None:
         now = _now().timestamp()
+        pid = pid if pid is not None else os.getpid()
         with _locked(self.root):
+            since = now
+            # A renewal by the same holder (heartbeat) extends the expiry, not the start time.
+            try:
+                prev = json.loads(self.recording_path.read_text(encoding="utf-8"))
+                if prev["project"] == project and int(prev["pid"]) == pid:
+                    since = float(prev["since_ts"])
+            except (OSError, ValueError, KeyError, TypeError):
+                pass
             _atomic_write(
                 self.recording_path,
                 {
                     "project": project,
                     "models": models,
-                    "pid": pid if pid is not None else os.getpid(),
-                    "since_ts": now,
+                    "pid": pid,
+                    "since_ts": since,
                     "expires_ts": now + ttl_s,
                 },
             )

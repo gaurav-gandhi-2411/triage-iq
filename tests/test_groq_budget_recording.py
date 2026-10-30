@@ -53,6 +53,23 @@ def test_expired_or_dead_recording_flag_does_not_block(led: gb.Ledger) -> None:
     assert led.check("benchmark", M120, 1_000).allowed
 
 
+def test_renewal_by_the_holder_keeps_since_but_a_new_holder_resets_it(led: gb.Ledger) -> None:
+    import json
+
+    stale_since = 1_000.0
+    led.start_recording(gb.RECORDER, [M120], ttl_s=60)
+    raw = json.loads(led.recording_path.read_text(encoding="utf-8"))
+    raw["since_ts"] = stale_since  # pretend the flag was set long ago
+    led.recording_path.write_text(json.dumps(raw), encoding="utf-8")
+    led.start_recording(gb.RECORDER, [M120], ttl_s=3_600)
+    renewed = json.loads(led.recording_path.read_text(encoding="utf-8"))
+    assert renewed["since_ts"] == stale_since
+    assert renewed["expires_ts"] > raw["expires_ts"]
+    led.start_recording(gb.RECORDER, [M120], pid=2**22 + 777)  # a different holder
+    fresh = json.loads(led.recording_path.read_text(encoding="utf-8"))
+    assert fresh["since_ts"] > stale_since
+
+
 def test_wait_returns_when_the_flag_clears(led: gb.Ledger) -> None:
     led.start_recording(gb.RECORDER, [M120], ttl_s=60)
     d = led.wait_until_allowed("benchmark", M120, 1_000, timeout_s=0.2, poll_s=0.05)

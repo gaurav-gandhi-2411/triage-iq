@@ -135,3 +135,16 @@ def test_load_scores_requires_exact_rows(tmp_path: Path) -> None:
     ok.assign(score=[0.1, np.nan, 0.3, 0.4, 0.5]).to_parquet(tmp_path / "nan.parquet")
     with pytest.raises(ValueError):
         x.load_scores(tmp_path / "nan.parquet", cand, ret)
+
+
+def test_spearman_monotone_and_ties() -> None:
+    a = np.array([0.1, 0.5, 0.2, 0.9])
+    assert x.spearman(a, a * 3 + 1) == pytest.approx(1.0)  # monotone transform
+    assert x.spearman(a, -a) == pytest.approx(-1.0)
+    assert x.spearman(np.array([1.0, 1.0, 2.0, 3.0]), np.array([1.0, 1.0, 2.0, 3.0])) == 1.0
+
+
+def test_latency_stats() -> None:
+    s = x.latency_stats([10.0, 20.0, 30.0, 40.0, 100.0])
+    assert s["median_ms"] == 30.0 and s["n"] == 5 and s["mean_ms"] == 40.0
+    assert 40.0 < s["p95_ms"] <= 100.0

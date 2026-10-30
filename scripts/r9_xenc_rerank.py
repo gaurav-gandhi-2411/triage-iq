@@ -295,6 +295,76 @@ def cmd_validate(a: argparse.Namespace) -> None:
     print("selected", win, "gain", pd5, "success", rep["success"])
 
 
+PARITY_N, LAT_QUERIES, LAT_BATCH, LAT_THREADS = 300, 40, 16, 4
+MIN_SPEARMAN = 0.999  # prereg parity bound: kernel (fp16 autocast) vs local CPU fp32 scores
+
+
+def spearman(a: np.ndarray, b: np.ndarray) -> float:
+    """Spearman rank correlation (average ranks for ties)."""
+    ra, rb = (pd.Series(v).rank().to_numpy() for v in (a, b))
+    return float(np.corrcoef(ra, rb)[0, 1])
+
+
+def latency_stats(ms: list[float]) -> dict[str, float]:
+    """Median / p95 / mean of per-query latencies in milliseconds."""
+    v = np.asarray(ms, dtype=float)
+    return {"median_ms": float(np.median(v)), "p95_ms": float(np.percentile(v, 95)),
+            "mean_ms": float(v.mean()), "n": int(len(v))}  # fmt: skip
+
+
+def cmd_cpu_checks(a: argparse.Namespace) -> None:
+    """Kernel-vs-CPU parity and per-query rerank latency (fp32, CPU) of one trained unit."""
+    import time
+
+    import torch  # lazy: the other subcommands and the tests need no torch
+    from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+    torch.set_num_threads(LAT_THREADS)
+    out, unit = Path(a.out), a.unit
+    cand = pd.read_parquet(qk.STAGING / DS_SLUG / "val_candidates.parquet")
+    kern = pd.read_parquet(out / f"{unit}_val_scores.parquet")
+    if not (kern[["query", "cand"]].to_numpy() == cand[["query", "cand"]].to_numpy()).all():
+        raise ValueError("kernel scores differ from the candidate lists")
+    t = dd.Task("validation")
+    text = {int(n): s[:3000] for n, s in zip(t.numbers, t.base, strict=True)}  # kernel side_text
+    tok = AutoTokenizer.from_pretrained(out / f"{unit}_model")
+    model = AutoModelForSequenceClassification.from_pretrained(out / f"{unit}_model").float().eval()
+
+    def score(rows: pd.DataFrame) -> np.ndarray:
+        res: list[np.ndarray] = []
+        for s in range(0, len(rows), LAT_BATCH):
+            blk = rows.iloc[s : s + LAT_BATCH]
+            enc = tok([text[int(q)] for q in blk["query"]], [text[int(c)] for c in blk["cand"]],
+                      padding=True, truncation="longest_first", max_length=512,
+                      return_tensors="pt")  # fmt: skip
+            with torch.inference_mode():
+                res.append(model(**enc).logits.squeeze(-1).numpy())
+        return np.concatenate(res)
+
+    rng = np.random.default_rng(qe.SEED)
+    idx = np.sort(rng.choice(len(cand), PARITY_N, replace=False))
+    local = score(cand.iloc[idx])
+    rho = spearman(kern["score"].to_numpy()[idx], local)
+    diff = float(np.abs(kern["score"].to_numpy()[idx] - local).max())
+    queries = rng.choice(cand["query"].unique(), LAT_QUERIES, replace=False)
+    score(cand[cand["query"] == queries[0]].head(LAT_BATCH))  # warm-up, not timed
+    lat: dict[str, Any] = {}
+    for n in (30, 50):
+        ms = []
+        for q in queries:
+            rows = cand[cand["query"] == q].head(n)
+            t0 = time.perf_counter()
+            score(rows)
+            ms.append(1000 * (time.perf_counter() - t0))
+        lat[f"N{n}"] = latency_stats(ms)
+    rep = {"unit": unit, "parity": {"n": PARITY_N, "spearman": rho, "max_abs_diff": diff,
+                                    "ok": rho >= MIN_SPEARMAN},
+           "latency_cpu_fp32": lat, "threads": LAT_THREADS, "batch": LAT_BATCH,
+           "includes_tokenization": True}  # fmt: skip
+    Path(a.result).write_text(json.dumps(rep, indent=1, sort_keys=True), encoding="utf-8")
+    print(rep)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -304,6 +374,11 @@ def main(argv: list[str] | None = None) -> int:
     v.add_argument("--out", default=str(OUT_DIR))
     v.add_argument("--result", required=True, help="where to write the validation JSON (scratch)")
     v.set_defaults(fn=cmd_validate)
+    c = sub.add_parser("cpu-checks")
+    c.add_argument("--unit", required=True, choices=list(CONFIGS))
+    c.add_argument("--out", default=str(OUT_DIR))
+    c.add_argument("--result", required=True, help="where to write the JSON (scratch)")
+    c.set_defaults(fn=cmd_cpu_checks)
     a = ap.parse_args(argv)
     a.fn(a)
     return 0

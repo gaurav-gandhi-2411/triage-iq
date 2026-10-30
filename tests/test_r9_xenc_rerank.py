@@ -84,3 +84,54 @@ def test_meta_is_private() -> None:
 def test_candidate_recall_gate_constants() -> None:
     assert (x.N_LIST, x.RRF_K, x.REF_HITS_R5) == (50, 10, 524)
     assert pytest.approx(0.4533, abs=1e-4) == 524 / 1156
+
+
+def test_rerank_ranks_pure_and_tie_to_retriever() -> None:
+    s = np.array([0.1, 0.9, 0.9, -1.0])  # candidates in retriever order
+    assert x.rerank_ranks(s, "pure").tolist() == [3, 1, 2, 4]  # tie 1,2 -> better retriever rank
+    assert x.rerank_ranks(np.zeros(4), "pure").tolist() == [1, 2, 3, 4]  # no signal: unchanged
+
+
+def test_rerank_ranks_fusion_blends_both_ranks() -> None:
+    s = np.array([0.0, 0.0, 5.0])  # cross-encoder loves the retriever-rank-3 candidate
+    assert x.rerank_ranks(s, "pure").tolist() == [2, 3, 1]
+    assert x.rerank_ranks(s, "rrf10").tolist() == [1, 3, 2]  # fusion: moves it only to 2nd
+    s2 = np.array([1.0, 0.9, 0.8, 0.7, 5.0])
+    assert x.rerank_ranks(s2, "rrf60")[4] > x.rerank_ranks(s2, "pure")[4]  # large k damps it
+
+
+def test_final_ranks_keep_retriever_rank_outside_the_list() -> None:
+    ret = [x.Retrieved(np.arange(3), [3, 80]), x.Retrieved(np.arange(3), [])]
+    sc = [np.array([0.0, 0.0, 9.0]), np.array([1.0, 2.0, 3.0])]
+    best, pp = x.final_ranks(ret, sc, "pure")
+    assert pp[0] == [1, 80] and best.tolist() == [1, qe.INF]  # 80 > list: unchanged
+    best30, _ = x.final_ranks(ret, sc, "pure", n_rerank=2)  # only the top 2 reordered
+    assert best30[0] == 3  # target at list rank 3 is outside the reranked prefix
+
+
+def test_select_x_ties_prefer_simpler() -> None:
+    def c(r5: int) -> dict:
+        return {"res": {"recall@5": {"k": r5}, "mrr": 0.3}}
+
+    cands = {"X3_pure": c(10), "X1_rrf10": c(10), "X1_pure": c(10), "X2_pure": c(9)}
+    assert x.select_x(cands) == "X1_pure"
+    assert x.select_x({"X1_rrf10": c(10), "X1_rrf60": c(10)}) == "X1_rrf60"
+
+
+def test_verdict_needs_gain_and_positive_ci() -> None:
+    assert x.verdict(0.02, 0.001) and not x.verdict(0.0199, 0.01) and not x.verdict(0.05, 0.0)
+
+
+def test_load_scores_requires_exact_rows(tmp_path: Path) -> None:
+    ret = [x.Retrieved(np.arange(2), []), x.Retrieved(np.arange(3), [])]
+    cand = pd.DataFrame({"query": [9, 9, 8, 8, 8], "cand": [1, 2, 1, 2, 3]})
+    ok = cand.assign(score=[0.1, 0.2, 0.3, 0.4, 0.5])
+    ok.to_parquet(tmp_path / "ok.parquet")
+    got = x.load_scores(tmp_path / "ok.parquet", cand, ret)
+    assert [g.tolist() for g in got] == [pytest.approx([0.1, 0.2]), pytest.approx([0.3, 0.4, 0.5])]
+    ok.iloc[::-1].reset_index(drop=True).to_parquet(tmp_path / "rev.parquet")
+    with pytest.raises(ValueError):
+        x.load_scores(tmp_path / "rev.parquet", cand, ret)
+    ok.assign(score=[0.1, np.nan, 0.3, 0.4, 0.5]).to_parquet(tmp_path / "nan.parquet")
+    with pytest.raises(ValueError):
+        x.load_scores(tmp_path / "nan.parquet", cand, ret)

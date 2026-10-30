@@ -3,7 +3,8 @@
 Design and success criterion: docs/Q5B_XENC_RERANK_PREREG_2026-10.md (committed before any run).
 Subcommands: ``build-dataset`` (train groups with hard negatives mined from the frozen R8
 retriever + validation candidate lists -> PRIVATE Kaggle dataset) and ``push`` (PRIVATE GPU
-kernel, ONE attempt, a quota error is reported not retried). No test query is touched here.
+kernel, ONE attempt, a quota error is reported not retried) and ``validate`` (VALIDATION metrics
+of the downloaded scores vs the frozen R8 winner). No test query is touched here.
 """
 
 from __future__ import annotations
@@ -183,11 +184,126 @@ def cmd_push(_: argparse.Namespace) -> None:
         raise RuntimeError(f"kernel push not confirmed: {text[-400:]}")
 
 
+CONFIGS = {"X1": ("M", 2e-5), "X2": ("M", 6e-5), "X3": ("B", 1e-5), "X4": ("B", 3e-5)}
+MODES = ("pure", "rrf10", "rrf60")
+MIN_GAIN = 0.02  # prereg: point gain >= +2.0 points
+
+
+def rerank_ranks(scores: np.ndarray, mode: str) -> np.ndarray:
+    """New 1-based rank of each candidate. ``scores`` are cross-encoder logits in retriever order
+    (index 0 = retriever rank 1). pure: by score; rrfK: RRF of the score rank and the retriever
+    rank. Every tie goes to the better retriever rank (prereg)."""
+    n = len(scores)
+    ret = np.arange(1, n + 1)
+    x = np.empty(n, dtype=np.int64)
+    x[np.lexsort((ret, -scores))] = ret  # cross-encoder rank
+    fused = -x.astype(float) if mode == "pure" else (
+        1.0 / (int(mode[3:]) + x) + 1.0 / (int(mode[3:]) + ret))  # fmt: skip
+    new = np.empty(n, dtype=np.int64)
+    new[np.lexsort((ret, -fused))] = ret
+    return new
+
+
+def final_ranks(
+    ret: list[Retrieved], scores: list[np.ndarray], mode: str, n_rerank: int | None = None
+) -> tuple[np.ndarray, list[list[int]]]:
+    """Per-query best target rank and per-target ranks in the FULL list. The top ``n_rerank``
+    (default all candidates) are reordered; a target beyond them keeps its retriever rank."""
+    best = np.empty(len(ret), dtype=np.int64)
+    per_pair: list[list[int]] = []
+    for i, (r, s) in enumerate(zip(ret, scores, strict=True)):
+        k = len(s) if n_rerank is None else min(n_rerank, len(s))
+        new = rerank_ranks(np.asarray(s[:k], dtype=float), mode)
+        rs = [int(new[t - 1]) if t <= k else t for t in r.target_ranks]
+        per_pair.append(rs)
+        best[i] = min(rs, default=qe.INF)
+    return best, per_pair
+
+
+def select_x(cands: dict[str, dict]) -> str:
+    """Highest validation R@5; ties -> MRR -> pure before fusion, larger k, M before B, lower lr."""
+    order = {"pure": 0, "rrf60": 1, "rrf10": 2}
+
+    def key(i: str) -> tuple:
+        unit, mode = i.split("_")
+        model, lr = CONFIGS[unit]
+        return (-cands[i]["res"]["recall@5"]["k"], -cands[i]["res"]["mrr"],
+                order[mode], model == "B", lr)  # fmt: skip
+
+    return sorted(cands, key=key)[0]
+
+
+def verdict(diff: float, ci_lo: float) -> bool:
+    """Prereg success: point gain >= +2.0 points AND paired CI lower bound > 0."""
+    return diff >= MIN_GAIN and ci_lo > 0
+
+
+def load_scores(path: Path, cand: pd.DataFrame, ret: list[Retrieved]) -> list[np.ndarray]:
+    """Kernel scores split per query; refuses unless rows are exactly the candidate frame's."""
+    df = pd.read_parquet(path)
+    if len(df) != len(cand) or not (df[["query", "cand"]].to_numpy()
+                                    == cand[["query", "cand"]].to_numpy()).all():  # fmt: skip
+        raise ValueError(f"{path.name}: rows differ from the candidate lists")
+    if not np.isfinite(df["score"].to_numpy()).all():
+        raise ValueError(f"{path.name}: non-finite scores")
+    cuts = np.cumsum([len(r.pos) for r in ret])[:-1]
+    return np.split(df["score"].to_numpy(dtype=np.float64), cuts)
+
+
+def cmd_validate(a: argparse.Namespace) -> None:
+    """VALIDATION metrics of every finished unit vs the frozen R8 winner (same 1,156 queries)."""
+    out, res_path = Path(a.out), Path(a.result)
+    frozen = json.loads(r8.FROZEN_FT.read_text(encoding="utf-8"))
+    check_r8_artifacts(frozen)
+    t = dd.Task("validation")
+    t._emb = np.load(R8_DIR / "F4_emb.npy")[t.order].astype(np.float32)
+    sc_bm, dense = t.sparse_scorer(frozen["config"]["bm25"]), dd.Scorer(t.emb, t.emb)
+    ref_ranks, ref_pp = dd.rank_with(t.queries, sc_bm, dense)[RRF_K]
+    ref = dd.summarize(t.queries, ref_ranks, ref_pp)
+    if ref["recall@5"]["k"] != REF_HITS_R5 or abs(
+        ref["recall@5"]["rate"] - frozen["validation_recall@5"]
+    ) > 1e-9:  # fmt: skip
+        raise ValueError("frozen R8 winner not reproduced on validation")
+    ret = retrieve(t.queries, sc_bm, dense, N_LIST)
+    cand = candidate_frame(t, t.queries, ret)
+    plain = np.array([min((*r.target_ranks, qe.INF)) for r in ret])
+    if not (plain == ref_ranks).all():
+        raise ValueError("candidate lists disagree with the R8 ranking path")
+    units = [u for u in (*CONFIGS, "Z-M", "Z-B") if (out / f"{u}_val_scores.parquet").exists()]
+    cands: dict[str, dict] = {}
+    for unit in units:
+        sc = load_scores(out / f"{unit}_val_scores.parquet", cand, ret)
+        for mode in MODES:
+            r, pp = final_ranks(ret, sc, mode)
+            cid = f"{unit}_{mode}"
+            cands[cid] = {"res": dd.summarize(t.queries, r, pp), "ranks": r, "scores": sc}
+            print(f"{cid}: R@5={cands[cid]['res']['recall@5']['rate']:.4f}", flush=True)
+    grid = {i: c for i, c in cands.items() if not i.startswith("Z-")}
+    win = select_x(grid)
+    pd5 = dd.paired(cands[win]["ranks"], ref_ranks)["recall@5"]
+    unit, mode = win.split("_")
+    r30, pp30 = final_ranks(ret, cands[win]["scores"], mode, 30)
+    rep = {"design": "docs/Q5B_XENC_RERANK_PREREG_2026-10.md", "split": "validation",
+           "n_queries": len(t.queries), "units_done": units, "selected": win,
+           "reference_R8_winner": ref,
+           "candidates": {i: c["res"] for i, c in cands.items()},
+           "paired_selected_minus_R8_winner": dd.paired(cands[win]["ranks"], ref_ranks),
+           "selected_top30_rerank_only": dd.summarize(t.queries, r30, pp30),
+           "ceiling_hits_R50": int((plain <= N_LIST).sum()),
+           "success": verdict(pd5["diff"], pd5["bootstrap95"][0])}  # fmt: skip
+    res_path.write_text(json.dumps(rep, indent=1, sort_keys=True), encoding="utf-8")
+    print("selected", win, "gain", pd5, "success", rep["success"])
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("build-dataset").set_defaults(fn=cmd_build_dataset)
     sub.add_parser("push").set_defaults(fn=cmd_push)
+    v = sub.add_parser("validate")
+    v.add_argument("--out", default=str(OUT_DIR))
+    v.add_argument("--result", required=True, help="where to write the validation JSON (scratch)")
+    v.set_defaults(fn=cmd_validate)
     a = ap.parse_args(argv)
     a.fn(a)
     return 0

@@ -103,6 +103,7 @@ def stage_evaluate(a: argparse.Namespace) -> dict[str, Any]:
     tr = d[d["split"] == "train"].reset_index(drop=True)
     p_naive, _ = vl.majority_proba(vl.gold(tr, classes)[0], classes, len(ho))
     m = rl.evaluate_holdout(ho, classes, p_ch, bundle["tau"], p_champ, p_naive)
+    m["conformal_holdout"] = rl.conformal_holdout_report(ho, classes, p_ch, bundle["conformal"])
     m["champion"]["sha256"] = champ_sha
     m["champion"]["manifest_sha256"] = rl.verify_champion(
         a.champion, a.manifest, a.champion_manifest_key

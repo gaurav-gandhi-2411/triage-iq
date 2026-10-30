@@ -89,19 +89,27 @@ for review by GG.
 The rule was applied to all 703 distinct labels found in the scraped vscode data (`issues.parquet` `labels_final` and `labels_t72h`, and `label_events.parquet`),
 not only the 121 classes of the dry run. The scraped data holds no GitHub label descriptions, so each decision rests on the label name and its counts;
 no per-class or per-label model score, prediction or accuracy was looked at. The full table, with counts, the decision, whether the label is NEW relative to the
-frozen ADR-0070 list and a reason, is `0073-vscode-label-decisions.md`. Summary: 215 EXCLUDE (195 already excluded by ADR-0070, 20 NEW), 9 BORDERLINE-EXCLUDE (all
-NEW), 14 BORDERLINE-KEEP, 465 KEEP.
+frozen ADR-0070 list and a reason, is `0073-vscode-label-decisions.md`. Summary: 216 EXCLUDE (195 already excluded by ADR-0070, 21 NEW), 7 BORDERLINE-EXCLUDE (all
+NEW), 15 BORDERLINE-KEEP, 465 KEEP (counts as amended by the GG decisions of 2026-10-29 below; as first generated: 215 / 9 / 14 / 465).
 
-`RETRAIN_META_EXCLUDE` is now the 29 NEW exclusions (EXCLUDE plus BORDERLINE-EXCLUDE that ADR-0070 does not already exclude); it supersedes the three-label set of the
-Decision section above and the "Observed ... not excluded" paragraph, which GG's D93 ruled on. A test parses the table file and checks the constant equals its NEW rows.
+`RETRAIN_META_EXCLUDE` is now the 28 NEW exclusions (29 as first generated; see the 2026-10-29 GG decisions below) (EXCLUDE plus BORDERLINE-EXCLUDE that ADR-0070 does not already exclude); it supersedes the three-label set of the
+Decision section above and the "Observed ... not excluded" paragraph, which GG's D93 ruled on. A test parses the table file and checks the constant equals its NEW rows. The table is regenerable from the repo: `python scripts/adr0073_label_table.py` (`--check` exits non-zero if the committed file differs); the hand-made decisions are data in `scripts/adr0073_label_decisions.json`.
 Labels with zero training examples that the rule does not exclude stay in the class list and evaluation as honest misses.
 
 BORDERLINE calls, for GG's review:
 
 - BORDERLINE-EXCLUDE: `modernization` (264 issues; an internal work stream with no single code area), `agent-host-mitigated` ("mitigated" status; ADR-0070 already excludes
   `mitigated`), `test-disabled` (status of a test), `service-outage` (incident state), `a11y-partner` (origin marker), `ack` (acknowledgement state), `on-unit-test`
-  (sibling of the excluded `on-testplan`), and two outside the literal rule, taken for consistency with ADR-0070: `performance` (spelling variant of the excluded
-  `perf`) and `papercut 🩸` (emoji variant of the excluded `papercut :drop_of_blood:`).
+  (sibling of the excluded `on-testplan`), and, as first proposed, two outside the literal rule: `performance` and `papercut 🩸`; both were decided by GG on 2026-10-29, see below.
 - BORDERLINE-KEEP: `UBB` (billing programme, issues are about the billing flow), `chat-request-failed`, `chat-infinite-response-loop`, `chat-rate-limiting`,
   `chat-lm-unavailable` (failure modes inside the chat subsystem), `chat-perf-regression`, `model-upgrade`, `smoke-test`, and `AI`, `canjd`, `hotspot`,
   `mock-feature`, `edge`, `chat-showcase` (meaning not determinable from the name; at most 5 issues each; exclusion needs a positive reason).
+
+### GG decisions 2026-10-29 (D94.4)
+
+- `papercut 🩸`: EXCLUDE (now a plain EXCLUDE row, a severity tag that fits the meta-label rule). It stays in `RETRAIN_META_EXCLUDE`.
+- `performance`: KEEP (recorded as BORDERLINE-KEEP: a routing category with an owning team, and a gold component in earlier evaluations). It is removed from
+  `RETRAIN_META_EXCLUDE`. `perf` itself stays excluded by ADR-0070, which is not changed; the two spellings are therefore handled differently on purpose, per GG.
+- Resulting counts: 216 EXCLUDE (21 NEW), 7 BORDERLINE-EXCLUDE, 15 BORDERLINE-KEEP, 465 KEEP; 28 NEW exclusions. The table was regenerated with `scripts/adr0073_label_table.py`.
+- Consequence: the currently served family_v2 bundle (sha f4082316..., trained at ce55978 with `performance` excluded) stays served. The change takes effect at the next
+  monthly retrain (G4). The 150-issue eval set (`eval/sets/quality_push_2026-10`) has no vscode issue with gold `performance`, so the re-record is unaffected.

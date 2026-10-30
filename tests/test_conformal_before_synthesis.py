@@ -99,12 +99,21 @@ def test_loader_hands_the_store_entry_to_each_assistant() -> None:
     assert src.index("_load_conformal_adjustments(models_dir)") < src.index("TriageAssistant(")
 
 
-@pytest.mark.parametrize("script", ["scripts/measure_grounding.py", "scripts/diag_ci_key.py"])
+@pytest.mark.parametrize("script", ["eval/run_eval.py", "scripts/diag_ci_key.py"])
 def test_cassette_replay_scripts_build_the_assistant_with_the_conformal_store(script: str) -> None:
     """A replay that omits the store sends the raw-interval prompt, so every recorded key misses
     (CassetteMissError in the grounding invariants after the 2026-10-11 re-record)."""
     src = (Path(__file__).resolve().parents[1] / script).read_text("utf-8")
     assert "conformal_adjustment=_load_conformal_adjustments(" in src
+
+
+def test_measure_grounding_builds_through_the_shared_config_aware_builder() -> None:
+    """measure_grounding no longer has its own assistant builder (it ignored RECORDING_CONFIG.json
+    and body_raw); it must go through run_eval._load_models, which carries the conformal store."""
+    src = (Path(__file__).resolve().parents[1] / "scripts/measure_grounding.py").read_text("utf-8")
+    assert "run_eval._load_models(" in src
+    assert "load_recording_config(" in src
+    assert "TriageAssistant(" not in src
 
 
 # --- the cassette-level check (eval/prose_interval_check.py) ---------------------------------

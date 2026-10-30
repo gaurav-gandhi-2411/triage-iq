@@ -1,0 +1,28 @@
+{
+ "baseline": "B2",
+ "baseline_config": {
+  "errs": 0,
+  "ids": 0,
+  "kind": "bm25",
+  "w": 1
+ },
+ "bm25": {
+  "b": 0.75,
+  "k1": 1.2
+ },
+ "config": {
+  "bm25": {
+   "errs": 1,
+   "ids": 0,
+   "kind": "bm25",
+   "w": 3
+  },
+  "k": 10,
+  "kind": "rrf"
+ },
+ "config_sha256": "6633d28970185e319aad2f4d3f36ee032f798512f9a679bcb2b8d785bac8e5ed",
+ "embedding_sha256": "3d76f92cf3a2019dacf1fefc8dccfde61085875cdf403c5becf714a17f03b8b3",
+ "script_sha256": "a437bb0cfe67e2519937849fc15eee9483762a06d1a53eecbc1f230408a7b08d",
+ "selected": "H_k10",
+ "validation_recall@5": 0.4031141868512111
+}

@@ -187,7 +187,7 @@ class ModelStore:
                     else:
                         clf = load_classifier(models_dir, slug)
                 with _timed(f"{slug}.detector(bge+faiss)"):
-                    det = _load_detector(models_dir, slug)
+                    det = _load_detector(models_dir, slug, v2=_k8s_index_v2_requested(slug))
                 with _timed(f"{slug}.predictor"):
                     pred = _load_predictor(models_dir, slug)
                 with _timed(f"{slug}.train_parquet"):
@@ -225,6 +225,8 @@ class ModelStore:
                 logger.info("Loaded %s — OK", repo)
             except FamilyV2ArtifactError:
                 raise  # fail closed: the operator asked for family_v2, never skip or fall back
+            except K8sIndexArtifactError:
+                raise  # fail closed: the operator asked for the v2 index, never skip or fall back
             except Exception as exc:
                 logger.error("Failed to load %s: %s — skipping", repo, exc)
 
@@ -253,6 +255,54 @@ def _family_v2_requested() -> bool:
         return v == "family_v2"
     # FamilyV2ArtifactError so load_all's per-repo "skip on error" does not swallow it
     raise FamilyV2ArtifactError(f"TRIAGE_VSCODE_CLASSIFIER={v!r}: expected unset or 'family_v2'")
+
+
+class K8sIndexArtifactError(RuntimeError):
+    """TRIAGE_K8S_INDEX was set to something unusable; load_all re-raises it (fail closed)."""
+
+
+_K8S_SLUG = "kubernetes_kubernetes"
+_K8S_INDEX_V2_DIRNAME = "similar_issue_index_kubernetes_kubernetes_bge_v2"
+
+
+def _k8s_index_v2_requested(slug: str) -> bool:
+    """TRIAGE_K8S_INDEX (D92.4): unset/empty = the served k8s index; "v2" = the candidate index
+    in data/models/similar_issue_index_kubernetes_kubernetes_bge_v2/ (index.faiss + meta.pkl,
+    sha256-checked against MANIFEST.sha256). Applies to kubernetes_kubernetes only; any other
+    value is a typo and raises rather than silently serving the default."""
+    v = os.environ.get("TRIAGE_K8S_INDEX", "")
+    if v not in ("", "v2"):
+        # K8sIndexArtifactError so load_all's per-repo "skip on error" does not swallow it
+        raise K8sIndexArtifactError(f"TRIAGE_K8S_INDEX={v!r}: expected unset or 'v2'")
+    return v == "v2" and slug == _K8S_SLUG
+
+
+def _verify_index_v2_manifest(models_dir: Path, dirname: str) -> None:
+    """Check index.faiss and meta.pkl of models_dir/dirname against MANIFEST.sha256 (exactly one
+    line each); a missing manifest, line or file, or a hash mismatch raises K8sIndexArtifactError.
+    Runs BEFORE meta.pkl is unpickled."""
+    import hashlib
+
+    manifest = models_dir / "MANIFEST.sha256"
+    try:
+        parts = [ln.split(None, 1) for ln in manifest.read_text(encoding="utf-8").splitlines()]
+    except OSError as e:
+        raise K8sIndexArtifactError(f"TRIAGE_K8S_INDEX=v2 but {manifest} is unreadable") from e
+    for name in ("index.faiss", "meta.pkl"):
+        suffix = f"/{dirname}/{name}"
+        expected = [p[0].lower() for p in parts if len(p) == 2 and p[1].strip().endswith(suffix)]
+        if len(expected) != 1:
+            raise K8sIndexArtifactError(
+                f"TRIAGE_K8S_INDEX=v2 but {manifest} has {len(expected)} entries for "
+                f"{dirname}/{name} (need exactly 1)"
+            )
+        path = models_dir / dirname / name
+        try:
+            actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError as e:
+            raise K8sIndexArtifactError(f"TRIAGE_K8S_INDEX=v2 but cannot read {path}") from e
+        if actual != expected[0]:
+            raise K8sIndexArtifactError(f"{dirname}/{name} sha256 {actual} != MANIFEST {expected[0]}")
 
 
 def _load_priority_model(models_dir: Path, slug: str):
@@ -316,8 +366,18 @@ def _load_resolution_evidence(models_dir: Path, slug: str):
     return ev
 
 
-def _load_detector(models_dir: Path, slug: str):
+def _load_detector(models_dir: Path, slug: str, v2: bool = False):
     from triage_iq.models.similar_issues import SimilarIssueRetriever
+    if v2:  # TRIAGE_K8S_INDEX=v2, k8s only: no fallback to the served index, ever
+        _verify_index_v2_manifest(models_dir, _K8S_INDEX_V2_DIRNAME)
+        try:
+            det = SimilarIssueRetriever.load(str(models_dir / _K8S_INDEX_V2_DIRNAME))
+        except Exception as e:
+            raise K8sIndexArtifactError(
+                f"TRIAGE_K8S_INDEX=v2 but {_K8S_INDEX_V2_DIRNAME} failed to load: {e}"
+            ) from e
+        logger.info("Loaded similar-issue index %s (TRIAGE_K8S_INDEX=v2)", _K8S_INDEX_V2_DIRNAME)
+        return det
     p = models_dir / f"similar_issue_index_{slug}_bge"
     if p.exists():
         return SimilarIssueRetriever.load(str(p))

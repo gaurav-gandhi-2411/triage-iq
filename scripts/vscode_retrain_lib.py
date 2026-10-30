@@ -43,7 +43,7 @@ RETRAIN_META_EXCLUDE = frozenset({
     "2026-themes", "a11y-partner", "ack", "agent-bakeoff", "agent-host-mitigated", "ai-generated",
     "ai-triaged", "approved", "copilot-triage-needed", "iteration-plan-draft", "modernization",
     "needs-classifier-review", "needs-verification", "new release", "on-unit-test",
-    "papercut 🩸", "performance", "pr-test-failure-triage", "recent-regression",
+    "papercut 🩸", "pr-test-failure-triage", "recent-regression",
     "release-cherry-pick", "service-outage", "stable-anomaly", "test-disabled", "triage-miss",
     "tree-sitter-autoindent-candidate", "untested", "ux-feedback-wanted", "windows-verification",
     "❗ untested",

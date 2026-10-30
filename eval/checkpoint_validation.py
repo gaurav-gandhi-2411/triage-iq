@@ -38,13 +38,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
 
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).parent))
 
 from cassette import CassetteMissError, CassettePlayer  # noqa: E402
+from recording_config import issue_to_row, load_recording_config  # noqa: E402,F401  (issue_to_row: re-exported)
 
 logger = logging.getLogger(__name__)
 
@@ -68,22 +68,6 @@ class ValidationResult:
     detail: str = ""
     # Plan recomputed by the current code (model_dump), only for entries whose synthesis hit.
     replayed_plan: dict[str, Any] | None = None
-
-
-def issue_to_row(issue: dict) -> pd.Series:
-    """The row the pipeline is called with -- identical to run_eval.compute_scores."""
-    return pd.Series(
-        {
-            "title": issue["title"],
-            "body_clean": issue["body"],
-            "number": issue["number"],
-            "created_at": (
-                pd.Timestamp(issue["created_at"])
-                if issue.get("created_at")
-                else pd.Timestamp("now", tz="UTC")
-            ),
-        }
-    )
 
 
 def build_replay_context(
@@ -120,9 +104,10 @@ def build_replay_context(
         from frozen_retriever import build_frozen_retrievers
 
         frozen = build_frozen_retrievers(eval_set_path)
+        config = load_recording_config(run_eval.ROOT, Path(cassette_path).parent)
         # A set may hold one repo only (record_cassettes._load_models skips the others too).
         assistants = {
-            repo: run_eval._load_models(repo, slug, cassette, frozen)["assistant"]
+            repo: run_eval._load_models(repo, slug, cassette, frozen, config)["assistant"]
             for repo, slug in run_eval.REPO_MAP.items()
             if repo in frozen
         }

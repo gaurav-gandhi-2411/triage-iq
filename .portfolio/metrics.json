@@ -1,16 +1,61 @@
 {
   "version": 1,
   "project": "triageiq",
-  "docs": "https://github.com/gaurav-gandhi-2411/gg-portfolio#autonomous-metric-refresh",
+  "docs": "https://github.com/gaurav-gandhi-2411/gg-portfolio#adding-a-future-project",
   "metrics": [
     {
-      "id": "triageiq:classifier-top3",
-      "label": "Component classifier top-3 accuracy",
-      "value": "82.5% (k8s) / 90.4% (vscode)",
-      "source_file": "reports/model_eval_audit.json",
-      "source_line": null,
-      "commit_sha": "62274339c045676e2fd6ba3a2dd086d1e6503487",
-      "measured_at": "2026-07-13"
+      "id": "triageiq:classifier-top3-k8s",
+      "label": "Component classifier top-3 accuracy (kubernetes)",
+      "value": "85.99%",
+      "source_file": "docs/EVALUATION.md",
+      "source_line": 9,
+      "commit_sha": "3bcd086d59e60181f350fcbe1990d68c84b31469",
+      "measured_at": "2026-10-17"
+    },
+    {
+      "id": "triageiq:classifier-top3-vscode",
+      "label": "Component classifier top-3 accuracy (vscode)",
+      "value": "85.82%",
+      "source_file": "docs/EVALUATION.md",
+      "source_line": 7,
+      "commit_sha": "3bcd086d59e60181f350fcbe1990d68c84b31469",
+      "measured_at": "2026-10-17"
+    },
+    {
+      "id": "triageiq:cqr-coverage-k8s",
+      "label": "Resolution-time CQR interval coverage (kubernetes)",
+      "value": "79.71%",
+      "source_file": "docs/EVALUATION.md",
+      "source_line": 30,
+      "commit_sha": "3bcd086d59e60181f350fcbe1990d68c84b31469",
+      "measured_at": "2026-10-17"
+    },
+    {
+      "id": "triageiq:cqr-coverage-vscode",
+      "label": "Resolution-time CQR interval coverage (vscode)",
+      "value": "82.7%",
+      "source_file": "docs/EVALUATION.md",
+      "source_line": 35,
+      "commit_sha": "3bcd086d59e60181f350fcbe1990d68c84b31469",
+      "measured_at": "2026-10-17"
+    },
+    {
+      "id": "triageiq:retrieval-recall5-k8s",
+      "label": "Similar-issue retrieval Recall@5, related task, clean eval subset (kubernetes)",
+      "value": "39.39%",
+      "source_file": "README.md",
+      "source_line": 40,
+      "commit_sha": "3bcd086d59e60181f350fcbe1990d68c84b31469",
+      "measured_at": "2026-10-17"
+    },
+    {
+      "id": "triageiq:retrieval-recall5-vscode",
+      "label": "Similar-issue retrieval Recall@5, duplicate task (vscode)",
+      "value": "53.50%",
+      "source_file": "README.md",
+      "source_line": 41,
+      "commit_sha": "3bcd086d59e60181f350fcbe1990d68c84b31469",
+      "measured_at": "2026-10-17"
     }
   ]
 }

@@ -64,7 +64,9 @@ from frozen_retriever import build_frozen_retrievers
 from triage_iq.model_config import TRIAGE_MODEL
 from triage_iq.evaluation.triage_eval import DIMENSION_MAX, JudgeScore, compute_judge_prompt_hash
 from triage_iq.api.loader import _load_conformal_adjustments
-from recording_config import build_assistant, issue_to_row, load_recording_config
+from recording_config import (
+    build_assistant, filter_issues, issue_to_row, load_recording_config, recording_repo_filter,
+)
 from triage_iq.models.triage import TruncatedCompletionError
 
 # TriageJudge (and therefore Ollama) is imported lazily, only inside _build_judge() -- a
@@ -220,6 +222,9 @@ def write_live_status(
             if rec.get("model") == model and rec.get("prompt_hash") == prompt_hash
             and rec.get("artifact_hash") == artifact_hash
         ]
+        if recording_repo_filter() is not None:
+            ids = {i["id"] for i in load_eval_set()}
+            entries = [rec for rec in entries if rec.get("issue_id") in ids]
     synthesized = sum(1 for rec in entries if rec.get("plan") is not None)
     judged = sum(1 for rec in entries if rec.get("judge_score") is not None and _judge_config_current(rec))
     dead = [
@@ -379,7 +384,17 @@ def load_eval_set() -> list[dict]:
             line = line.strip()
             if line:
                 issues.append(json.loads(line))
-    return issues
+    # TRIAGEIQ_RECORDING_REPOS: every later step (prompts, LLM calls, counts) sees only these issues.
+    return filter_issues(issues, recording_repo_filter())
+
+
+def _filter_done_to_issues(done: dict[str, dict], issues: list[dict]) -> dict[str, dict]:
+    """With a repo filter active, drop checkpoint entries of issues outside it so they are neither
+    validated (a prompt rebuild) nor counted. No filter: `done` is returned untouched."""
+    if recording_repo_filter() is None:
+        return done
+    ids = {i["id"] for i in issues}
+    return {k: v for k, v in done.items() if k in ids}
 
 
 def _resolve_and_verify_artifacts() -> dict[str, str]:
@@ -527,6 +542,7 @@ def run_validate_checkpoint(fix: bool) -> int:
     artifact_hash = artifact_fingerprint.combined_hash(artifact_hashes)
     model, prompt_hash = TRIAGE_MODEL, _compute_prompt_hash()
     checkpoint, current_done = load_checkpoint(model, prompt_hash, artifact_hash)
+    current_done = _filter_done_to_issues(current_done, load_eval_set())
     if not current_done:
         print("Checkpoint has no entries under the current model/prompt/artifact config.")
         return 0
@@ -592,6 +608,10 @@ def _load_common(mode: str) -> tuple[str, list[dict], CassettePlayer, str, str, 
     )
 
     checkpoint, current_done = load_checkpoint(current_model, current_prompt_hash, current_artifact_hash)
+    if recording_repo_filter() is not None:
+        logger.info("Repo filter active (%s): only %d issue(s) in scope; other repos are never "
+                    "prompted, called or counted.", sorted(recording_repo_filter()), len(issues))
+    current_done = _filter_done_to_issues(current_done, issues)
     current_done = _validated_current_done(
         mode, checkpoint, current_done, current_model, current_prompt_hash, current_artifact_hash,
     )
@@ -610,7 +630,9 @@ def _load_models(groq_key: str, cassette: CassettePlayer) -> dict[str, dict]:
     models: dict[str, dict] = {}
     config = load_recording_config(ROOT, _CASSETTE_DIR)
     for repo, slug in REPO_MAP.items():
-        if repo not in frozen_retrievers:
+        if repo not in frozen_retrievers or (
+            recording_repo_filter() is not None and repo not in recording_repo_filter()
+        ):
             # A separate recording set (TRIAGEIQ_RECORDING_SET_DIR) may hold one repo only; the committed
             # set has both, so its behaviour is unchanged.
             logger.info("No %s issues in %s; its models are not loaded", repo, EVAL_SET.name)
@@ -1215,6 +1237,7 @@ def run_judge(issues, cassette, current_model, current_prompt_hash, current_arti
         if v.get("model") == current_model and v.get("prompt_hash") == current_prompt_hash
         and v.get("artifact_hash") == current_artifact_hash
     }
+    current_config_done = _filter_done_to_issues(current_config_done, issues)
     final_judged = _fully_judged_count(current_config_done)
     print(f"\n=== JUDGE {'COMPLETE' if final_judged >= len(issues) else 'PARTIAL'} ===")
     print(f"Model:            {current_model}")

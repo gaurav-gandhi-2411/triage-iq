@@ -4,7 +4,10 @@ Design and success criterion: docs/Q5B_XENC_RERANK_PREREG_2026-10.md (committed 
 Subcommands: ``build-dataset`` (train groups with hard negatives mined from the frozen R8
 retriever + validation candidate lists -> PRIVATE Kaggle dataset) and ``push`` (PRIVATE GPU
 kernel, ONE attempt, a quota error is reported not retried) and ``validate`` (VALIDATION metrics
-of the downloaded scores vs the frozen R8 winner). No test query is touched here.
+of the downloaded scores vs the frozen R8 winner). The test stage (``test-build``,
+``test-push``, ``test``) is guarded: it needs ``--final-test`` and the committed
+``--frozen-sha256``, verifies every pinned artifact, and refuses once a test result file
+exists (the test is evaluated once).
 """
 
 from __future__ import annotations
@@ -32,6 +35,11 @@ NEG_TOP, NEG_POOL, N_NEG = 40, 30, 7  # prereg: top-40, minus own group, first 3
 REF_HITS_R5 = 524  # prereg: the frozen R8 winner's validation R@5 hits (524 / 1,156)
 R8_DIR = r8.OUT_DIR
 OUT_DIR = Path(r"D:\triageiq-data\models\microsoft__vscode\xenc_rerank")
+FROZEN_X = Path("reports/r9_xenc_rerank_frozen_2026-10.json")
+OUT_TEST = Path("reports/r9_xenc_rerank_test_2026-10.json")
+TEST_DS_SLUG, TEST_KERNEL = "triageiq-xenc-x4-test", "triageiq-xenc-score-test-vscode"
+TEST_KERNEL_DIR = Path("kaggle/kernels/xenc_rerank_test")
+X4_FILES = ("config.json", "model.safetensors", "tokenizer.json", "tokenizer_config.json")
 
 
 @dataclass
@@ -295,6 +303,137 @@ def cmd_validate(a: argparse.Namespace) -> None:
     print("selected", win, "gain", pd5, "success", rep["success"])
 
 
+def check_inputs(frozen: dict[str, Any], out: Path) -> None:
+    """Every pinned artifact (X4 weights, R8 freeze + embedding, harness code) must match."""
+    r8f = frozen["r8_freeze"]
+    checks = {  # lazy: stop at the first mismatch
+        **{f"X4/{n}": (lambda n=n: dd.file_sha(out / "X4_model" / n), h)
+           for n, h in frozen["x4_files_sha256"].items()},
+        "r8_freeze_file": (lambda: r8.sha_lf(r8.FROZEN_FT), r8f["file_sha256_lf"]),
+        "r8_config": (lambda: json.loads(r8.FROZEN_FT.read_text(encoding="utf-8"))["config_sha256"],
+                      r8f["config_sha256"]),
+        "r8_embedding": (lambda: dd.file_sha(R8_DIR / "F4_emb.npy"), r8f["embedding_sha256"]),
+        **{f"code/{n}": (lambda n=n: r8.sha_lf(Path(n)), h)
+           for n, h in frozen["code_sha256_lf"].items()},
+    }  # fmt: skip
+    for name, (get, want) in checks.items():
+        if get() != want:
+            raise r8.FrozenMismatchError(f"pinned artifact mismatch ({name}): refusing the test")
+
+
+def final_test_guard(a: argparse.Namespace) -> dict[str, Any]:
+    """Flags, committed hash, no earlier result, every pinned artifact: only then the test."""
+    if not (a.final_test and a.frozen_sha256):
+        raise qe.TestGuardError("test stage needs --final-test and the committed --frozen-sha256")
+    frozen = json.loads(FROZEN_X.read_text(encoding="utf-8"))
+    r8.check_frozen(frozen, a.frozen_sha256)
+    if Path(a.result).exists():
+        raise qe.TestGuardError(f"{a.result} exists: the test is evaluated once, never re-run")
+    check_inputs(frozen, Path(a.out))
+    return frozen
+
+
+@dataclass
+class SplitData:
+    """Test task + frozen R8 retriever output; the reference reproduction already passed."""
+
+    t: dd.Task
+    ref: dict
+    ref_ranks: np.ndarray
+    ret: list[Retrieved]
+    cand: pd.DataFrame
+
+
+def setup_split(frozen: dict[str, Any]) -> SplitData:
+    """Candidate lists from the frozen R8 retriever; abort unless it reproduces R8's test R@5."""
+    t = dd.Task("test")
+    t._emb = np.load(R8_DIR / "F4_emb.npy")[t.order].astype(np.float32)
+    r8cfg = json.loads(r8.FROZEN_FT.read_text(encoding="utf-8"))
+    sc_bm, dense = t.sparse_scorer(r8cfg["config"]["bm25"]), dd.Scorer(t.emb, t.emb)
+    ref_ranks, ref_pp = dd.rank_with(t.queries, sc_bm, dense)[frozen["rrf_k"]]
+    ref = dd.summarize(t.queries, ref_ranks, ref_pp)
+    want = frozen["reference_test"]
+    if ref["recall@5"]["k"] != want["recall@5_hits"] or len(t.queries) != want["n_queries"]:
+        raise ValueError(f"frozen R8 winner not reproduced on test: {ref['recall@5']['k']}")
+    ret = retrieve(t.queries, sc_bm, dense, frozen["n_rerank"])
+    if not (np.array([min((*r.target_ranks, qe.INF)) for r in ret]) == ref_ranks).all():
+        raise ValueError("candidate lists disagree with the R8 ranking path")
+    return SplitData(t, ref, ref_ranks, ret, candidate_frame(t, t.queries, ret))
+
+
+def cmd_test_build(a: argparse.Namespace) -> None:
+    """Guarded: test candidate lists (no labels) + frozen X4 weights -> PRIVATE Kaggle dataset."""
+    frozen = final_test_guard(a)
+    ts = setup_split(frozen)
+    if set(ts.cand.columns) != {"query", "cand", "ret_rank"}:
+        raise ValueError("candidate frame must carry no label column")
+    out = qk.STAGING / TEST_DS_SLUG
+    out.mkdir(parents=True, exist_ok=True)
+    ts.cand.to_parquet(out / "test_candidates.parquet", index=False)
+    shutil.copyfile(FROZEN_X, out / "freeze.json")
+    for n in X4_FILES:
+        shutil.copyfile(Path(a.out) / "X4_model" / n, out / n)
+    meta = {**dataset_meta(), "title": TEST_DS_SLUG, "id": f"{qk.OWNER}/{TEST_DS_SLUG}"}
+    (out / "dataset-metadata.json").write_text(json.dumps(meta, indent=2))
+    exe = qk.DEFAULT_KAGGLE
+    listing = qk.kaggle(exe, ["datasets", "list", "--mine", "--search", TEST_DS_SLUG, "--csv"])
+    verb = "version" if meta["id"] in listing.stdout else "create"
+    extra = ["-m", "test-stage"] if verb == "version" else []
+    qk.kaggle(exe, ["datasets", verb, "-p", str(out), *extra, "-t"])
+    print({"test_queries": len(ts.t.queries), "pairs": len(ts.cand)})
+
+
+def cmd_test_push(a: argparse.Namespace) -> None:
+    """Guarded: ONE push of the scoring-only PRIVATE kernel; a quota error is reported, not retried."""
+    frozen = final_test_guard(a)
+    src = TEST_KERNEL_DIR / "xenc_rerank_test.py"
+    if r8.sha_lf(src) != frozen["code_sha256_lf"][src.as_posix()]:
+        raise r8.FrozenMismatchError("test kernel code differs from the freeze")
+    stage = qk.STAGING / f"kernel-{TEST_KERNEL}"
+    if stage.exists():
+        shutil.rmtree(stage)
+    shutil.copytree(TEST_KERNEL_DIR, stage, ignore=shutil.ignore_patterns("__pycache__"))
+    meta = {**qk.kernel_metadata(qk.OWNER, TEST_KERNEL, [f"{qk.OWNER}/{r8.TEXTS_DS}",
+                                                         f"{qk.OWNER}/{TEST_DS_SLUG}"]),
+            "code_file": "xenc_rerank_test.py"}  # fmt: skip
+    if meta["is_private"] is not True:
+        raise RuntimeError("kernel must be private")
+    (stage / "kernel-metadata.json").write_text(json.dumps(meta, indent=2))
+    res = qk.kaggle(qk.DEFAULT_KAGGLE, ["kernels", "push", "-p", str(stage),
+                                        "--accelerator", "NvidiaTeslaT4"])  # fmt: skip
+    text = (res.stdout + res.stderr).strip()
+    print(text)
+    if "successfully pushed" not in text.lower():
+        raise RuntimeError(f"kernel push not confirmed: {text[-400:]}")
+
+
+def cmd_test(a: argparse.Namespace) -> None:
+    """The single test evaluation: frozen X4_rrf10 vs the frozen R8 winner on the same queries."""
+    frozen = final_test_guard(a)
+    info = json.loads((Path(a.scores) / "run_info.json").read_text(encoding="utf-8"))
+    if info["weights_sha256"] != frozen["x4_files_sha256"]:
+        raise r8.FrozenMismatchError("kernel scored with weights other than the frozen X4")
+    ts = setup_split(frozen)
+    sc = load_scores(Path(a.scores) / "X4_test_scores.parquet", ts.cand, ts.ret)
+    ranks, pp = final_ranks(ts.ret, sc, frozen["mode"])
+    r30, pp30 = final_ranks(ts.ret, sc, frozen["mode"], 30)
+    res = dd.summarize(ts.t.queries, ranks, pp)
+    paired_ = dd.paired(ranks, ts.ref_ranks)
+    lo, hi = paired_["recall@5"]["bootstrap95"]
+    rep = {"design": frozen["design"], "split": "test", "frozen": frozen,
+           "n_queries": len(ts.t.queries), "reference_R8_winner": ts.ref,
+           "reference_reproduced_R8_test": True, "selected": frozen["selected"],
+           "selected_result": res, "paired_selected_minus_R8_winner": paired_,
+           "selected_top30_rerank_only": dd.summarize(ts.t.queries, r30, pp30),
+           "ceiling_hits_R50": int(sum(min((*r.target_ranks, qe.INF)) <= frozen["n_rerank"]
+                                       for r in ts.ret)),
+           "kernel_run_info": info,
+           "criterion_paired_r5_ci_excludes_zero": bool(lo > 0 or hi < 0),
+           "target_80_met": bool(res["recall@5"]["rate"] >= 0.8)}  # fmt: skip
+    Path(a.result).write_text(json.dumps(rep, indent=1, sort_keys=True), encoding="utf-8")
+    print("test R@5", res["recall@5"], "paired", paired_["recall@5"])
+
+
 PARITY_N, LAT_QUERIES, LAT_BATCH, LAT_THREADS = 300, 40, 16, 4
 MIN_SPEARMAN = 0.999  # prereg parity bound: kernel (fp16 autocast) vs local CPU fp32 scores
 
@@ -379,6 +518,19 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--out", default=str(OUT_DIR))
     c.add_argument("--result", required=True, help="where to write the JSON (scratch)")
     c.set_defaults(fn=cmd_cpu_checks)
+    for name, fn in (
+        ("test-build", cmd_test_build),
+        ("test-push", cmd_test_push),
+        ("test", cmd_test),
+    ):
+        f = sub.add_parser(name)
+        f.add_argument("--final-test", action="store_true")
+        f.add_argument("--frozen-sha256", default="")
+        f.add_argument("--out", default=str(OUT_DIR))
+        f.add_argument("--result", default=str(OUT_TEST))
+        if name == "test":
+            f.add_argument("--scores", required=True, help="downloaded kernel output dir")
+        f.set_defaults(fn=fn)
     a = ap.parse_args(argv)
     a.fn(a)
     return 0

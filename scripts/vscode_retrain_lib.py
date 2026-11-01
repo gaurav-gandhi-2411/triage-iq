@@ -281,6 +281,25 @@ def evaluate_holdout(
     return out
 
 
+def conformal_holdout_report(
+    ho: pd.DataFrame, classes: list[str], p_ch: np.ndarray, conformal: dict[str, Any]
+) -> dict[str, Any]:
+    """Saved calibration-only conformal spec + qhat applied to the holdout (no re-selection or
+    re-calibration). REPORT-ONLY: the publish gate never reads this key (ADR-0072, ADR-0069)."""
+    other = classes.index(vl.OTHER)
+    y_p, y_s = vl.gold(ho, classes)
+    y, sm = ev.to_idx(y_p, classes), ev.set_mask(y_s, classes)
+    mask = qc.predict_mask(p_ch, conformal["qhat"], conformal["spec"], qc.uniforms(len(y), 1))
+    fam = y != other
+    return {
+        "exploratory": "ADR-0069: unconfirmed until the post-test confirmation set",
+        "alpha": conformal["alpha"], "spec": conformal["spec"], "qhat": float(conformal["qhat"]),
+        "n": len(y), "n_in_family": int(fam.sum()),
+        "all_labelled": qc.mask_report(mask, y, sm),
+        "in_family_only": qc.mask_report(mask[fam], y[fam], sm[fam]),
+    }  # fmt: skip
+
+
 class GateInputError(ValueError):
     """A gate input is missing, non-numeric or non-finite; the gate refuses."""
 

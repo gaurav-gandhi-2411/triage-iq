@@ -442,3 +442,40 @@ def test_cli_passes_manifest_key_through_to_evaluation(tmp_path: Path) -> None:
         RuntimeError, match="assemble output missing"
     ):  # past verify_champion, into reading stage outputs
         cli.stage_evaluate(a)
+
+
+# ------------------------------------------------------------------ holdout conformal (report-only)
+
+
+def _conf_holdout() -> dict:
+    ho = pd.DataFrame({
+        "primary": ["a", "b", "other", "a"],
+        "final": [frozenset({"a"}), frozenset({"b", "a"}), frozenset({"other"}), frozenset({"a"})],
+    })  # fmt: skip
+    p = [[0.7, 0.2, 0.1], [0.6, 0.3, 0.1], [0.2, 0.2, 0.6], [0.3, 0.3, 0.4]]
+    conf = {"spec": {"name": "lac"}, "qhat": 0.5, "alpha": 0.05}  # lac: class in set iff p >= 0.5
+    import numpy as np
+
+    return rl.conformal_holdout_report(ho, ["a", "b", "other"], np.array(p), conf)
+
+
+def test_conformal_holdout_report_known_values() -> None:
+    r = _conf_holdout()
+    assert r["exploratory"].startswith("ADR-0069") and r["n"] == 4 and r["n_in_family"] == 3
+    al, fam = r["all_labelled"], r["in_family_only"]
+    assert (al["coverage_primary"]["k"], al["coverage_any_valid"]["k"], al["coverage_primary"]["n"]) == (2, 3, 4)  # fmt: skip
+    assert (al["set_size_mean"], al["set_size_median"], al["empty_set_rate"]) == (0.75, 1.0, 0.25)
+    assert (fam["coverage_primary"]["k"], fam["coverage_any_valid"]["k"], fam["coverage_primary"]["n"]) == (1, 2, 3)  # fmt: skip
+    assert fam["set_size_mean"] == pytest.approx(2 / 3) and fam["empty_set_rate"] == pytest.approx(1 / 3)  # fmt: skip
+    assert len(al["coverage_primary"]["wilson95"]) == 2
+    json.dumps(r)  # must be serialisable into metrics.json
+
+
+def test_conformal_report_never_changes_the_gate_decision() -> None:
+    plain = rl.gate_decision(good(), 6000, 25)
+    with_conf = rl.gate_decision(good() | {"conformal_holdout": _conf_holdout()}, 6000, 25)
+    assert plain["decision"] == with_conf["decision"] == "accept"
+    assert plain == with_conf
+    bad = copy.deepcopy(good())
+    bad["paired_vs_champion"]["strict_top3"] = _ci(0.0, -0.01)
+    assert rl.gate_decision(bad | {"conformal_holdout": _conf_holdout()}, 6000, 25)["decision"] == "refuse"  # fmt: skip

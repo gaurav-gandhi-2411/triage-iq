@@ -167,3 +167,34 @@ def test_collect_signals_passes_the_requests_created_at_to_the_detector() -> Non
     undated = issue.drop("created_at")
     t._assistant(t.VSCODE, _Spy(), t._Predictor(t._fit_pca()))._collect_signals(undated)
     assert seen == [{}]  # no created_at on the request => no filter argument at all
+
+
+def test_unparseable_created_at_skips_the_filter_instead_of_emptying_neighbours() -> None:
+    import test_resolution_embeddings_serving as t
+
+    seen: list[dict] = []
+
+    class _Spy(t._PlainRetriever):
+        def retrieve(self, text, k=20, exclude_number=None, **kw):  # noqa: ANN001, ANN201
+            seen.append(kw)
+            return super().retrieve(text, k, exclude_number)
+
+    issue = t._issue()
+    issue["created_at"] = "not a date"
+    t._assistant(t.VSCODE, _Spy(), t._Predictor(t._fit_pca()))._collect_signals(issue)
+    assert seen == [{}]  # retrieval still ran, unfiltered
+
+
+def test_frozen_retriever_accepts_the_filter_arguments_from_collect_signals() -> None:
+    # Verifier finding: without these kwargs the eval path raised TypeError inside
+    # _collect_signals, which its except turned into silently empty neighbours.
+    import test_resolution_embeddings_serving as t
+
+    mod = t._load_frozen_module()
+    hits = [{"number": 7, "title": "x", "score": 0.9}]
+    fr = mod.FrozenRetriever({5: hits})
+    assert fr.retrieve("q", k=5, exclude_number=5, created_before=Q, strict_dates=True) == hits
+    got, emb = fr.retrieve_with_embedding(
+        "q", k=5, exclude_number=5, created_before=Q, strict_dates=True
+    )
+    assert got == hits and emb is None

@@ -273,3 +273,35 @@ def test_missing_selected_artifact_reads_missing(tmp_path: Path) -> None:
         tmp_path, config=rc.RecordingConfig(vscode_classifier="family_v2")
     )
     assert h[f"data/models/{cc.FAMILY_V2_FILENAME}"] == "MISSING"
+
+
+def _make_set(tmp_path: Path, name: str) -> Path:
+    set_dir = tmp_path / name
+    (set_dir / "cassettes").mkdir(parents=True)
+    (set_dir / "eval_set.jsonl").write_text("", encoding="utf-8")
+    return set_dir
+
+
+def test_config_kept_in_the_set_dir_is_found_from_its_cassette_dir(tmp_path: Path) -> None:
+    # A set keeps RECORDING_CONFIG.json next to eval_set.jsonl, not in cassettes/; replays
+    # (run_eval, qp5, checkpoint validation) pass only the cassette dir and have no env var.
+    set_dir = _make_set(tmp_path, "set")
+    _write(set_dir, GOOD)
+    got = rc.load_recording_config(tmp_path, set_dir / "cassettes")
+    assert got == rc.RecordingConfig("family_v2", "v2", True)
+
+
+def test_set_dir_and_cassette_dir_config_together_are_still_ambiguous(tmp_path: Path) -> None:
+    set_dir = _make_set(tmp_path, "set")
+    _write(set_dir, GOOD)
+    _write(set_dir / "cassettes", GOOD)
+    with pytest.raises(rc.RecordingConfigError, match="ambiguous"):
+        rc.load_recording_config(tmp_path, set_dir / "cassettes")
+
+
+def test_default_eval_dir_is_not_searched_as_a_set_dir(tmp_path: Path) -> None:
+    # eval/ holds the committed set eval_set.jsonl; a stray config there must not change that set.
+    (tmp_path / "eval" / "cassettes").mkdir(parents=True)
+    (tmp_path / "eval" / "eval_set.jsonl").write_text("", encoding="utf-8")
+    _write(tmp_path / "eval", GOOD)
+    assert rc.load_recording_config(tmp_path) == rc.RecordingConfig()

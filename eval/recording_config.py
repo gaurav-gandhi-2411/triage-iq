@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -59,19 +60,27 @@ def parse_config(raw: object, source: str = CONFIG_FILENAME) -> RecordingConfig:
 
 
 def config_search_dirs(root: Path, cassette_dir: Path | None = None) -> list[Path]:
-    """Directories searched for RECORDING_CONFIG.json: the recording set dir (TRIAGEIQ_RECORDING_SET_DIR)
-    and the cassette dir (default: <set dir>/cassettes, else eval/cassettes)."""
+    """Directories searched for RECORDING_CONFIG.json: the recording set dir (TRIAGEIQ_RECORDING_SET_DIR),
+    the cassette dir (default: <set dir>/cassettes, else eval/cassettes) and, when the cassette dir
+    sits inside a set (its parent holds eval_set.jsonl), that set dir. The last one lets a replay
+    with no env var (run_eval, qp5, checkpoint validation) find a set's own config."""
     set_dir = os.environ.get("TRIAGEIQ_RECORDING_SET_DIR")
     base = Path(set_dir) if set_dir else None
     cass = cassette_dir or (base / "cassettes" if base else root / "eval" / "cassettes")
-    return [d for d in (base, cass) if d is not None]
+    dirs: list[Path | None] = [base, cass]
+    # eval/ holds the 64-set's eval_set.jsonl but never a config: skip it so that set resolves
+    # exactly as before.
+    if cass.parent != root / "eval" and (cass.parent / "eval_set.jsonl").is_file():
+        dirs.append(cass.parent)
+    return [d for d in dirs if d is not None]
 
 
 def load_recording_config(root: Path, cassette_dir: Path | None = None) -> RecordingConfig:
     """The config for this run; defaults when no file exists, an error when two files exist
     (ambiguous) or the one found is invalid."""
     found = [d / CONFIG_FILENAME for d in config_search_dirs(root, cassette_dir)]
-    found = [p for p in dict.fromkeys(found) if p.is_file()]
+    # resolve(): one directory reached by two spellings must not read as two files.
+    found = [p for p in {p.resolve(): p for p in found}.values() if p.is_file()]
     if len(found) > 1:
         raise RecordingConfigError(
             f"ambiguous: {CONFIG_FILENAME} exists in both {found[0]} and {found[1]}"
@@ -83,6 +92,36 @@ def load_recording_config(root: Path, cassette_dir: Path | None = None) -> Recor
     except (OSError, ValueError) as exc:
         raise RecordingConfigError(f"{found[0]}: unreadable ({exc})") from exc
     return parse_config(raw, str(found[0]))
+
+
+REPOS_ENV = "TRIAGEIQ_RECORDING_REPOS"
+
+
+def recording_repo_filter(environ: Mapping[str, str] | None = None) -> frozenset[str] | None:
+    """The repos this run may record, from TRIAGEIQ_RECORDING_REPOS (comma-separated, e.g.
+    "kubernetes/kubernetes"). None = unset = no filter, every path unchanged. Set but naming no repo
+    (blank, separators only) raises: a filter that silently turned itself off would record every
+    repo. An env var rather than a CLI flag, like TRIAGEIQ_RECORDING_SET_DIR: the launcher, the
+    recorder and the checkpoint validator are separate processes that must all agree, and the child
+    inherits the launcher's environment, so no invocation can forget to pass it through."""
+    raw = (environ if environ is not None else os.environ).get(REPOS_ENV)
+    if raw is None:
+        return None
+    repos = frozenset(r.strip() for r in raw.split(",") if r.strip())
+    if not repos:
+        raise RecordingConfigError(f"{REPOS_ENV} is set but names no repo ({raw!r}); unset it for no filter")
+    return repos
+
+
+def filter_issues(issues: list[dict], repos: frozenset[str] | None) -> list[dict]:
+    """Keep only issues whose repo is in `repos` (None = all). Fails closed: a requested repo with
+    no issue in the set (a typo, a wrong set dir) raises instead of silently recording nothing."""
+    if repos is None:
+        return issues
+    missing = sorted(r for r in repos if not any(i["repo"] == r for i in issues))
+    if missing:
+        raise RecordingConfigError(f"{REPOS_ENV} names repos with no issue in the eval set: {missing}")
+    return [i for i in issues if i["repo"] in repos]
 
 
 def issue_to_row(issue: dict) -> pd.Series:

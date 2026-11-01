@@ -35,10 +35,10 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from triage_iq.evaluation import objective_metrics as om  # noqa: E402
 
+# The served v2 evidence file (MANIFEST.sha256), not a D:\ candidate: a default must be the artifact
+# prod opens, and must exist on any checkout that has data/models.
 DEFAULT_EVIDENCE = {
-    "kubernetes/kubernetes": Path(
-        r"D:\triageiq-data\models\candidates\resolution_evidence_kubernetes_kubernetes_v1.parquet"
-    )
+    "kubernetes/kubernetes": ROOT / "data" / "models" / "resolution_evidence_kubernetes_kubernetes.parquet"
 }
 # Metadata kept per replayed plan: enough for scoring, small enough to dump.
 _META_KEYS = ("llm_status", "resolution_point_days", "resolution_point_source")

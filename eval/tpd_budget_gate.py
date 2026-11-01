@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+import threading
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -131,10 +132,41 @@ def observe_tpd_429(text: str, now: datetime | None = None, path: Path | None = 
     return _ledger(path).observe_429(text, MODEL, now=now)
 
 
-def start_recording() -> None:
+def start_recording(ttl_s: int = 6 * 3600, path: Path | None = None) -> None:
     """Set the recording-active flag: other projects' gpt-oss-120b checks wait until stop_recording()."""
-    _ledger().start_recording(PROJECT, [MODEL])
+    _ledger(path).start_recording(PROJECT, [MODEL], ttl_s=ttl_s)
 
 
-def stop_recording() -> None:
-    _ledger().stop_recording(PROJECT)
+def stop_recording(path: Path | None = None) -> None:
+    _ledger(path).stop_recording(PROJECT)
+
+
+# A multi-day recording outlives any fixed TTL (2026-10-30: the 6 h flag lapsed while the 150-set
+# recording slept on the budget). The holder renews the flag well inside its TTL instead; a crash
+# still clears it within one TTL, and sooner via the pid check.
+HEARTBEAT_TTL_S = 2 * 3600
+HEARTBEAT_INTERVAL_S = 15 * 60
+
+
+def start_recording_heartbeat(
+    interval_s: float = HEARTBEAT_INTERVAL_S,
+    ttl_s: int = HEARTBEAT_TTL_S,
+    path: Path | None = None,
+) -> threading.Event:
+    """Set the flag now and renew it every `interval_s` from a daemon thread; set the returned
+    event to stop renewing. A failed renewal is printed and retried next interval, never raised:
+    the recording itself must not die because the ledger file was briefly locked."""
+    start_recording(ttl_s, path)
+    stop = threading.Event()
+
+    def _beat() -> None:
+        while not stop.wait(interval_s):
+            try:
+                start_recording(ttl_s, path)
+            except Exception as exc:  # noqa: BLE001 -- see docstring
+                print(
+                    f"recording-flag renewal failed (retrying in {interval_s}s): {exc}", flush=True
+                )
+
+    threading.Thread(target=_beat, name="recording-flag-heartbeat", daemon=True).start()
+    return stop

@@ -1,0 +1,143 @@
+{
+ "statement": "Metrics of the dry run run4_rule copied from its metrics.json / window_meta.json. The challenger bundle is byte-identical (sha256 recomputed at generation time) to the entry in data/models/MANIFEST.sha256, i.e. to the family_v2 classifier production serves. Not a re-evaluation: no model was re-scored by this script.",
+ "served_bundle": {
+  "file": "component_classifier_microsoft_vscode_family_v2_2026-10-22.joblib",
+  "sha256_manifest": "f40823167c15ee296eaa03e2eca54068c2cd62e72c36fa57ee28643734545573",
+  "sha256_recomputed": {
+   "challenger.joblib": "f40823167c15ee296eaa03e2eca54068c2cd62e72c36fa57ee28643734545573",
+   "staging/component_classifier_microsoft_vscode_family_v2_2026-10-22.joblib": "f40823167c15ee296eaa03e2eca54068c2cd62e72c36fa57ee28643734545573",
+   "repo data/models/component_classifier_microsoft_vscode_family_v2_2026-10-22.joblib": "f40823167c15ee296eaa03e2eca54068c2cd62e72c36fa57ee28643734545573"
+  },
+  "all_match_manifest": true
+ },
+ "run": "retrain_dryrun/run4_rule (D:\\triageiq-data, not committed)",
+ "code_sha": "ce559780bc1faed10aa816f0b8705c765a14bbaa",
+ "window": {
+  "as_of": "2026-10-22",
+  "holdout_start": "2026-07-24 00:00:00+00:00",
+  "holdout_end_exclusive": "2026-09-22 00:00:00+00:00",
+  "counts": {
+   "train": 30023,
+   "holdout": 1521,
+   "calibration": 1518
+  }
+ },
+ "n_holdout": 1521,
+ "n_in_family": 1191,
+ "challenger_served": {
+  "strict_top3": {
+   "point": 0.6042077580539119,
+   "ci95": [
+    0.5792077580539119,
+    0.62853385930309
+   ],
+   "n": 1521
+  },
+  "strict_top1": {
+   "point": 0.3767258382642998,
+   "ci95": [
+    0.3517422748191979,
+    0.4017094017094017
+   ],
+   "n": 1521
+  },
+  "in_family_top3": {
+   "point": 0.7716204869857263,
+   "ci95": [
+    0.746431570109152,
+    0.7959697732997482
+   ],
+   "n": 1191
+  }
+ },
+ "champion_previous_served": {
+  "strict_top3": {
+   "point": 0.11374095989480605,
+   "ci95": [
+    0.0992603550295858,
+    0.1301775147928994
+   ],
+   "n": 1521
+  },
+  "strict_top1": {
+   "point": 0.07297830374753451,
+   "ci95": [
+    0.0611439842209073,
+    0.08744247205785667
+   ],
+   "n": 1521
+  },
+  "in_family_top3": {
+   "point": 0.1452560873215785,
+   "ci95": [
+    0.12510495382031905,
+    0.16456759026028547
+   ],
+   "n": 1191
+  }
+ },
+ "naive_most_common_labels": {
+  "strict_top3": {
+   "point": 0.15055884286653518,
+   "ci95": [
+    0.13280736357659434,
+    0.16896778435239973
+   ],
+   "n": 1521
+  },
+  "strict_top1": {
+   "point": 0.09072978303747535,
+   "ci95": [
+    0.0762656147271532,
+    0.10453648915187377
+   ],
+   "n": 1521
+  },
+  "in_family_top3": {
+   "point": 0.19227539882451722,
+   "ci95": [
+    0.1704450041981528,
+    0.2141057934508816
+   ],
+   "n": 1191
+  }
+ },
+ "paired_vs_champion": {
+  "strict_top3": {
+   "point": 0.4904667981591059,
+   "ci95": [
+    0.46416831032215655,
+    0.5161078238001315
+   ],
+   "n": 1521
+  },
+  "in_family_top3": {
+   "point": 0.6263643996641478,
+   "ci95": [
+    0.5969773299748111,
+    0.6532535684298908
+   ],
+   "n": 1191
+  }
+ },
+ "paired_vs_naive": {
+  "strict_top3": {
+   "point": 0.4536489151873767,
+   "ci95": [
+    0.42733399079552925,
+    0.48126232741617353
+   ],
+   "n": 1521
+  },
+  "in_family_top3": {
+   "point": 0.579345088161209,
+   "ci95": [
+    0.5491183879093199,
+    0.6078925272879933
+   ],
+   "n": 1191
+  }
+ },
+ "champion_sha256": "5e286b1f75218373feceb43703d2a1a8a249d972393def659139eb308475313f",
+ "serving_parity_source": "docs/RUN_STATUS.md: 'Serving parity on it: 300/300 identical top-3 incl. order, max abs diff 0.0'"
+}

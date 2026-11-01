@@ -3,6 +3,181 @@
 Single source of truth. Re-read first after any restart. Times in IST unless marked UTC. Newest dated brief first; everything under
 "First run" is history.
 
+## Brief 2026-11-01 (24 h, A1), written ~12:45 IST
+
+**Late.** The brief due 2026-10-31 17:00-20:40 was not written: no wake-up ran after 2026-10-31 10:30, and the
+session was resumed at ~12:25 on 2026-11-01 (BELIEVED to have exited in between). This brief covers both days.
+
+**Outcome.** The vscode v2 index was built and scored offline but is NOT cut over: it fails the leakage check (T4c). The final
+configuration is therefore the current one, and the single 150-issue recording was restarted on it at 12:33 with all 25 recorded
+entries kept. The served-artifact PR split (T2) is blocked by the Rule 55a hook.
+
+**Production (VERIFIED 12:28).** `triageiq-api-00110-des` serves 100%, `/health?deps=1` ok with 2 repos. No change since the 2026-10-30
+brief. Rollback targets unchanged: `00108-mod`, `00106-sew`, `00104-zax`, `00102-vep`. Main CI: Health Monitor and post-deploy smoke green.
+
+**Recording (VERIFIED).**
+- 2026-10-31 00:23-00:30: launcher 25380 died during a budget wait (no recording call in flight). No reboot, no Windows error event,
+  12.7 GiB free, atexit did not run. Relaunched at 00:31 (launcher 28668).
+- 2026-10-31 ~00:45: paused on GG's instruction (stale served vscode index): `taskkill /F` on launcher 28668 while the status read
+  WAITING with no child, flag cleared with `recording stop`.
+- Swap impact: all 28 checkpoint entries (25 plans + 3 schema-failure retries) are k8s, so no entry's prompt depends on the vscode
+  index. But the checkpoint key uses one artifact hash over both repos (`eval/artifact_fingerprint.py`), so a vscode index swap
+  would invalidate all 25 plans: 156,811 ledger tokens to redo.
+- 2026-11-01 12:33: restarted on the unchanged configuration after the zero-token preflight (150/150 not degraded, prompt hash
+  `5f845ce8697e3e7f` unchanged), the leakage check (exit 0: 0 violations, 0 unknown dates) and `--validate-checkpoint`
+  (valid=25). Launcher 27152, artifact hash `7e3a29a42da74480`, ledger 0/160,000 at start, benchmark cap 20K in
+  `~/.groq_budget/config.json` (restore after the recording).
+
+**vscode v2 index (T4), offline only.**
+- Built from all 109,537 vscode issues, created 2023-01-01 to 2026-10-22 (the k8s recipe applies no filter). Vectors came from the private Kaggle
+  embedding run of 2026-10-28 (T4 GPU, 717 s). It passed a parity check against production CPU `build_index` on 300 issues: cosine
+  min 0.9999988, top-5 identical on 99/100 queries. Path `D:\triageiq-data\models\candidates\similar_issue_index_microsoft_vscode_bge_v2`,
+  `index.faiss` sha256 b5be4bb1…, 428 MB vs ~50 MB served.
+- Order caveat: these scores were computed on 2026-10-31, before the T4b criteria were written down; they were not pre-registered.
+- 2026 test split, 1,705 duplicate queries (served reproduction exact: 55/95):
+
+  | | answerable | R@5 over answerable | R@5 over all |
+  |---|---|---|---|
+  | served | 95 (5.6% [4.6, 6.8]) | 57.9% [47.8, 67.3] | 3.2% [2.5, 4.2] |
+  | v2 candidate | 1,634 (95.8% [94.8, 96.7]) | 28.3% [26.1, 30.5] | 27.1% [25.0, 29.3] |
+
+  Paired difference over all queries +23.9 pts [+21.7, +26.0] (bootstrap, seed 42). With only older originals counted: 3.5% vs 30.9%,
+  +27.4 [+25.1, +29.7]. On the 65 queries both can answer, v2 is worse: 26 hits vs 41.
+- **T4c FAILS:** on the 150-set's 75 vscode issues, 139 of 375 v2 neighbours are not older than their issue (137 after, 2 equal), in 56 of
+  75 issues. Production retrieval has no created-before filter. Per T4d: no cutover; memory and p50 latency (T4b) were not measured
+  because the cutover was already ruled out.
+- Draft rollout/rollback: `%TEMP%\claude\triage-iq\20261031\e_vsidx\ROLLOUT_ROLLBACK_DRAFT_vscode_index_v2.md`.
+
+**Launcher kill (T6), read-only.** Cause unknown (BELIEVED external termination). Reclaim's only python kill
+(`packaging/build_installer.ps1:642-644`) fires on a contention abort and matches only its own build venv; its build ran 22:15 to past
+00:30. No reclaim, review-iq or agentgauge scratch file was written 00:15-00:40. A sweep of every project for name-wide python kills
+found nothing else; that sweep cannot see process-tree kills. This session's context compaction ran at 00:25:46. The previous launcher
+survived an earlier compaction, so this is a coincidence on record, not a cause.
+
+**Blocked.**
+- T2 split: `git checkout <commit> -- <paths>` in the primary checkout is refused by the Rule 55a hook ("commit WIP first"). The
+  hook's dirty check counts GG's three untracked files, so it cannot pass there; this is a policy block, so it is not redone in
+  another form. The two docstring edits are parked in local commit `a65ed23` (not pushed, in neither PR). Unblock: GG moves the three
+  untracked files, or approves building the branches another way. #380 waits on T2.
+- Kaggle staging delete (1.1 GB), unchanged.
+
+**Disk.** C: 235 GB free, D: 1,357.8 GB free. New: v2 candidate index 428 MB on D:; scratch `20261031\e_vsidx` ~5 MB,
+`20261101\e_restart` small. Nothing deleted.
+
+## Brief 2026-10-30 (24 h, A1), written ~17:30 IST
+
+**Outcome.** D92.1/D92.4/D92.5 are serving. The single 150-issue recording (D95.1, plan A, #320's code) started at ~16:05 IST, after a
+zero-token preflight and a clean future-leakage check. R8 is finished: the fine-tuned retriever beats the #345 winner on test, but it is
+not served.
+
+**Production (VERIFIED ~17:00).** `triageiq-api-00110-des` serves 100%. It was deployed by CI from #368's merge 0e8445e, and Deploy
+succeeded.
+- Env: ENVIRONMENT=prod, TRIAGE_CLEAN_REQUEST_BODY=1, TRIAGE_VSCODE_CLASSIFIER=family_v2, TRIAGE_K8S_INDEX=v2,
+  TRIAGE_RESOLUTION_EVIDENCE=1. The deploy kept all four flags via `--update-env-vars`.
+- `/health?deps=1` ok, 2 repos.
+- Rollback: `00108-mod` (same flags, code before #368), `00106-sew` (no evidence), `00104-zax` (family_v2 only), `00102-vep` (all off).
+
+**Done since the 2026-10-29 brief.**
+- D92.1, D92.4 and D92.5 went live one at a time (candidate → smoke → comparison → promote → live check); details in the update below.
+- R8 (#351-#356): F4 + RRF k=10, test R@5 40.4% [38.0, 42.7] vs 33.0% for the #345 winner, paired +7.3 [+5.9, +8.9]. ADR-0066's 80% is not met.
+- ADR-0073 labels (#359): `papercut 🩸` excluded, `performance` kept; this takes effect at the next monthly retrain.
+- Release `vscode-retrain-data`:
+  - Columns are projected, with no person fields; checksums were re-checked after download.
+  - #326 was commented ready for GG.
+  - The projection script is #362, a draft (gate 4).
+- 150-set gate prep: #360/#361/#363/#364 (config-aware replay and provenance, `judge_mean_ci` path arguments, 15 expected artifact hashes, zero-token
+  preflight). ADR-0075 is #365, and its open questions were decided by GG (D95, #366). On the 64-set, scores and grounding are byte-identical.
+- D95.6: the primary checkout's two stale classifier pickles (vscode and k8s) were moved to `C:\Users\gaura\backup-triage-iq-models-20261030\`
+  (not deleted). They were replaced from GCS together with the five artifacts that were missing locally. All 16 MANIFEST entries match (VERIFIED,
+  sha256).
+- D95.2 leakage check (#367, VERIFIED on #320's code), every neighbour strictly before its issue:
+
+  | repo | neighbour type | count |
+  |---|---|---|
+  | k8s | similar | 375/375 |
+  | k8s | evidence neighbours | 165/165 |
+  | k8s | evidence items | 210/210 |
+  | vscode | similar | 357/357 |
+
+  There are 0 later, 0 equal, 0 unknown and 0 self-matches. The as-of filter dropped 27 evidence items.
+- D95.5 (#368): the judge sees "unknown - issue still open" and "not prioritised", never "None". The 64-set judge entries still replay.
+- #320: main merged in (b5dec06). `test` is green. The eval-gate jobs are red as expected (the k8s prompt changed); they clear after the
+  recording.
+
+**Recording (D95.1).**
+- Setup:
+  - Worktree `triage-iq-wt-readme` on `feat/k8s-resolution-constant-35d` @ b5dec06.
+  - `TRIAGEIQ_RECORDING_SET_DIR` = its `eval/sets/quality_push_2026-10`.
+  - Launcher `scripts/run_recording_unattended.py --mode synthesis`, child PID 26584, below-normal priority.
+- Preflight: 918,124 estimated prompt tokens, 0 degraded, the k8s point is 35.1 d on all 75 k8s issues, and validate-checkpoint passed.
+- At 17:00: 1/150 issues done, 6,039 tokens.
+- Benchmark cap (D95.3): before, no `~/.groq_budget/config.json` existed, so benchmark had the code default of 100,000. Now it is 20,000. Restore by
+  removing that file when the recording finishes.
+- The recording-active flag lasts 6 h and is not refreshed (an existing launcher gap); the benchmark cap is what limits competition.
+- Expected duration: about 6 days at ~155K/day (BELIEVED). Status file: `<set>/cassettes/RECORDING_STATUS.txt`.
+- Do not change prompt-affecting code on #320 or main (triage.py, resolution.py, prompts/, api/loader.py) until it finishes.
+
+**GG queue.** #357 (deploy.yml flags), #326 (retrain workflow; its data release exists), #362 (release projection script; gate 4 flagged its
+file names). Standing items: the publish_models.py overwrite hazard, the sklearn 1.6.1→1.7.2 pickle warning, and #184/#138/#94.
+
+**Next (no GG needed).** Monitor the recording. Then: judge pass (local Ollama), objective metrics, and the before/after report for GG, with no
+baseline write. Then #320 merges once its gate passes, and #321 is refreshed. While the recording runs: pre-register the vscode duplicate
+cross-encoder reranker (spec-quality-push §7 method 4), then run it on Kaggle when the quota allows.
+
+**Disk.**
+- C: 248 GB free.
+- Recording worktree: .venv 1.6 GB, data 0.4 GB.
+- Model backup: 7.5 MB.
+- R8 outputs on D: about 2.3 GB.
+- Scratch on C: e_release 0.5 GB and e_gate150 0.45 GB, both deletable. The e_gate150 delete was refused by the permission system earlier and
+  was not retried.
+- Nothing was deleted.
+
+**Wake-ups.** Cron 750c53cb, hourly at :17, session-only, expires ~2026-11-04. Re-create it before then.
+
+## Update 2026-10-29 ~20:30 IST (after GG's decisions D94)
+
+**D94 (GG, 2026-10-29):**
+1. Run the switch-ons in order.
+2. Retire the 64-issue set as the CI eval set: the 150 set becomes the CI set, the 64-set cassettes are kept as history, and only the 150 set
+   is re-recorded (~919K tokens). Move #320's gate onto the 150 set and write an ADR.
+3. Report the before/after; do not write a baseline.
+4. Exclude `papercut 🩸`; KEEP `performance`, recorded in ADR-0073.
+
+**Production (VERIFIED ~20:20).** All three switch-ons are live on `triageiq-api-00108-mod` at 100%. #338 merged as 36a8986, and its CI, Eval
+gate and Deploy were all success. Each switch-on went no-traffic candidate → smoke → comparison → promote → live check:
+
+| step | revision | smoke and comparison result |
+|---|---|---|
+| D92.1 family_v2 | `00104-zax`, tag d921 | Candidate top-1 `extensions` 0.9958009257 equals the offline family_v2 prediction on the deploy-smoke issue |
+| D92.4 k8s v2 | `00106-sew`, tag d924 | 3 frozen-set k8s rows: candidate neighbours are the frozen v2 neighbours (5/5, 4/5, 1/5), and every extra is newer than the query (serving has no created-before filter); old prod index 0/5 |
+| D92.5 evidence | `00108-mod`, tag d925 | No missing/undated warning; k8s triage returns `_evidence_neighbours` [119813, 122021]; the LLM answered on the candidate |
+
+- Env on the live revision: ENVIRONMENT=prod, TRIAGE_CLEAN_REQUEST_BODY=1, TRIAGE_VSCODE_CLASSIFIER=family_v2, TRIAGE_K8S_INDEX=v2,
+  TRIAGE_RESOLUTION_EVIDENCE=1.
+- Rollback: `gcloud run services update-traffic triageiq-api --to-revisions <rev>=100`, using `00106-sew` (no evidence), `00104-zax`
+  (family_v2 only) or `00102-vep` (all off).
+- The Groq daily quota was intermittently `rate_limited_tpd` during the checks. The LLM path answered on the d925 candidate.
+- Draft #357 (GG, workflow) writes the three flags into deploy.yml. Until then they persist on the service through `--update-env-vars`.
+
+**R8 vscode duplicate fine-tune (done).**
+- #351 prereg, #352 kernel, #353 driver, #354 frozen selection and test guard, #356 results.
+- Kaggle run: private, 1.37 T4 hours, no quota error.
+
+| split | #345 winner R@5 | F4 + RRF k=10 R@5 | paired gain |
+|---|---|---|---|
+| validation | 40.3% | 45.3% | +5.0 [+3.55, +6.57] |
+| test (one run, from main f5a94a2) | 33.0% (reproduced exactly) | 40.4% [38.0, 42.7] | +7.3 [+5.9, +8.9] |
+
+- The pre-registered criteria are met. ADR-0066's 80% target is NOT met.
+- Nothing is served from it. Results: `docs/Q5A_FINETUNE_RESULTS_2026-10.md`.
+
+**In progress.**
+- ADR-0073 label decisions: executor running.
+- Plan for moving the gate to the 150 set: read-only agent running.
+- Next: the `vscode-retrain-data` release, then tell GG #326 is ready. Then regenerate EXPECTED_ARTIFACT_HASHES and run the 150-set re-record
+  under the ledger.
+
 ## Brief 2026-10-29 (24 h, A1), written ~17:00 IST
 
 **Outcome.** D92 serving steps 1-2 are ready and verified up to the point that needs GG: the retrained vscode classifier is built under the written

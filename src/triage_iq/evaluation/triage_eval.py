@@ -75,6 +75,22 @@ DIMENSION_MAX = {
 MAX_TOTAL = sum(DIMENSION_MAX.values())  # 15
 
 
+# Wording shown to the judge when the gold row has no answer (D95.5). The key is present with
+# value None for open issues (no resolution time) and unprioritised ones; str(None) = "None" would
+# read as a label. Real values, including 0, render unchanged.
+_GOLD_ABSENT_TEXT = {
+    "component": "unknown",
+    "priority": "not prioritised",
+    "actual_resolution_days": "unknown - issue still open",
+}
+
+
+def _gold_text(gold: dict, key: str) -> object:
+    """gold[key] for the judge prompt; None or an absent key becomes the fixed wording above."""
+    value = gold.get(key)
+    return _GOLD_ABSENT_TEXT[key] if value is None else value
+
+
 def compute_judge_prompt_hash() -> str:
     """Fingerprint of the rubric text + scoring schema this judge sends, mirroring
     record_cassettes.py's _compute_prompt_hash for the synthesis side. A rubric wording
@@ -386,9 +402,9 @@ class TriageJudge:
         self, title: str, body: str, plan_json: str, gold: dict
     ) -> str:
         body_preview = body[:600].strip()
-        gold_component = gold.get("component", "unknown")
-        gold_priority = gold.get("priority", "unknown")
-        gold_days = gold.get("actual_resolution_days", "unknown")
+        gold_component = _gold_text(gold, "component")
+        gold_priority = _gold_text(gold, "priority")
+        gold_days = _gold_text(gold, "actual_resolution_days")
 
         return f"""\
 ISSUE:

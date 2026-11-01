@@ -130,5 +130,26 @@ def test_recording_flag_is_wired_into_both_recorder_entry_points() -> None:
     rec = (root / "eval" / "record_cassettes.py").read_text(encoding="utf-8")
     run = (root / "scripts" / "run_recording_unattended.py").read_text(encoding="utf-8")
     assert "tpd_budget_gate.start_recording()" in rec and "GROQ_BUDGET_RECORDING_PARENT" in rec
-    assert "tpd_budget_gate.start_recording()" in run
+    assert "tpd_budget_gate.start_recording_heartbeat()" in run
+    assert "atexit.register(heartbeat.set)" in run
     assert 'env["GROQ_BUDGET_RECORDING_PARENT"] = "1"' in run
+
+
+def test_heartbeat_renews_the_flag_past_its_ttl_and_stops_on_request(tmp_path: Path) -> None:
+    import time
+
+    p = tmp_path / "l.json"
+    led = g._ledger(p)
+    stop = g.start_recording_heartbeat(interval_s=0.05, ttl_s=1, path=p)
+    try:
+        first = led.active_recording(g.MODEL)
+        assert first is not None
+        time.sleep(1.5)  # longer than the 1 s TTL: only renewal keeps the flag alive
+        rec = led.active_recording(g.MODEL)
+        assert rec is not None and rec["expires_ts"] > first["expires_ts"]
+        assert rec["since_ts"] == first["since_ts"]  # renewal keeps the original start time
+    finally:
+        stop.set()
+    time.sleep(1.3)  # renewals stopped: the flag now lapses on its TTL
+    assert led.active_recording(g.MODEL) is None
+    g.stop_recording(p)

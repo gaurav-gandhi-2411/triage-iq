@@ -69,10 +69,10 @@ class _Predictor:
 
 
 class _Retriever:
-    def retrieve(self, text, k=5, exclude_number=None):
+    def retrieve(self, text, k=5, exclude_number=None, **_kw):
         return [{"number": 7, "score": 0.9, "text": "similar"}]
 
-    def retrieve_with_embedding(self, text, k=5, exclude_number=None):
+    def retrieve_with_embedding(self, text, k=5, exclude_number=None, **_kw):
         v = np.random.default_rng(int(exclude_number or 0)).normal(size=768).astype(np.float32)
         return self.retrieve(text, k, exclude_number), v / np.linalg.norm(v)
 

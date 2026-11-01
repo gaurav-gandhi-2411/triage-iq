@@ -1222,7 +1222,16 @@ class TriageAssistant:
             retr_kwargs: dict = {}
             q_created = issue.get("created_at")
             if q_created is not None and not pd.isna(q_created):
-                retr_kwargs["created_before"] = q_created
+                from triage_iq.models.similar_issues import to_utc_datetime64
+
+                # An unparseable created_at must not empty the neighbours via the except below:
+                # serving drops the filter for that request instead (fail open here, as for
+                # undated indexes; the strict eval/recording paths raise elsewhere).
+                try:
+                    to_utc_datetime64(q_created)
+                    retr_kwargs["created_before"] = q_created
+                except (ValueError, TypeError):
+                    logger.warning("created_at %r unparseable; created-before filter skipped", q_created)
             if self.repo in RESOLUTION_EMBEDDINGS_REPOS and hasattr(
                 self.detector, "retrieve_with_embedding"
             ):

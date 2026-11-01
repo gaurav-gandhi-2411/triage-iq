@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -91,6 +92,31 @@ def load_recording_config(root: Path, cassette_dir: Path | None = None) -> Recor
     except (OSError, ValueError) as exc:
         raise RecordingConfigError(f"{found[0]}: unreadable ({exc})") from exc
     return parse_config(raw, str(found[0]))
+
+
+REPOS_ENV = "TRIAGEIQ_RECORDING_REPOS"
+
+
+def recording_repo_filter(environ: Mapping[str, str] | None = None) -> frozenset[str] | None:
+    """The repos this run may record, from TRIAGEIQ_RECORDING_REPOS (comma-separated, e.g.
+    "kubernetes/kubernetes"). None = unset or blank = no filter, every path unchanged. An env var
+    rather than a CLI flag, like TRIAGEIQ_RECORDING_SET_DIR: the launcher, the recorder and the
+    checkpoint validator are separate processes that must all agree, and the child inherits the
+    launcher's environment, so no invocation can forget to pass it through."""
+    raw = (environ if environ is not None else os.environ).get(REPOS_ENV, "")
+    repos = frozenset(r.strip() for r in raw.split(",") if r.strip())
+    return repos or None
+
+
+def filter_issues(issues: list[dict], repos: frozenset[str] | None) -> list[dict]:
+    """Keep only issues whose repo is in `repos` (None = all). Fails closed: a requested repo with
+    no issue in the set (a typo, a wrong set dir) raises instead of silently recording nothing."""
+    if repos is None:
+        return issues
+    missing = sorted(r for r in repos if not any(i["repo"] == r for i in issues))
+    if missing:
+        raise RecordingConfigError(f"{REPOS_ENV} names repos with no issue in the eval set: {missing}")
+    return [i for i in issues if i["repo"] in repos]
 
 
 def issue_to_row(issue: dict) -> pd.Series:

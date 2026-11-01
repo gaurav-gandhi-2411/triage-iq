@@ -33,7 +33,7 @@ def to_utc_datetime64(value: object) -> np.datetime64:
 
     Naive inputs are taken as UTC. Raises ValueError on NaT/None/unparseable input.
     """
-    ts = pd.Timestamp(value)  # type: ignore[arg-type]
+    ts = pd.Timestamp(value)
     if ts is pd.NaT:
         raise ValueError(f"not a valid timestamp: {value!r}")
     ts = ts.tz_localize("UTC") if ts.tzinfo is None else ts.tz_convert("UTC")

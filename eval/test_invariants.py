@@ -443,7 +443,14 @@ def test_retrieval_top_k() -> None:
 
             frozen_nums = [s["number"] for s in frozen_top5[:5]]
             query_text = iss["title"] + ". " + iss["body"]
-            live_results = det.retrieve(query_text, k=5, exclude_number=num)
+            # Mirror the freeze: a dated index was frozen with the created-before filter; an
+            # undated index can only have been frozen without it (freeze_similar_issues raises).
+            filt = (
+                {"created_before": iss["created_at"], "strict_dates": True}
+                if det.created_at is not None
+                else {}
+            )
+            live_results = det.retrieve(query_text, k=5, exclude_number=num, **filt)
             live_nums = [s["number"] for s in live_results[:5]]
 
             assert live_nums[0] == frozen_nums[0], (

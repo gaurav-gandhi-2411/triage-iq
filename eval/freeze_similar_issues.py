@@ -74,7 +74,15 @@ def main(dry_run: bool = False) -> None:
         det = detectors[repo]
         text = issue["title"] + ". " + issue["body"]
         num = int(issue["number"])
-        similar = det.retrieve(text, k=K, exclude_number=num)
+        # Created-before filter, always and strict: a neighbour must be strictly older than the
+        # issue, and an undated index/neighbour raises instead of freezing a leaky prompt input.
+        similar = det.retrieve(
+            text,
+            k=K,
+            exclude_number=num,
+            created_before=issue["created_at"],
+            strict_dates=True,
+        )
         issue_out = dict(issue)
         issue_out["similar_issues"] = similar
         updated.append(issue_out)

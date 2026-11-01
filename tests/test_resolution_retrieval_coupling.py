@@ -81,11 +81,11 @@ class _CaptureRetriever:
     def __init__(self) -> None:
         self.texts: list[str] = []
 
-    def retrieve_with_embedding(self, text, k=20, exclude_number=None):  # noqa: ANN001, ANN201
+    def retrieve_with_embedding(self, text, k=20, exclude_number=None, **_kw):  # noqa: ANN001, ANN201
         self.texts.append(text)
         return [], None
 
-    def retrieve(self, text, k=20, exclude_number=None):  # noqa: ANN001, ANN201
+    def retrieve(self, text, k=20, exclude_number=None, **_kw):  # noqa: ANN001, ANN201
         self.texts.append(text)
         return []
 

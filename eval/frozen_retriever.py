@@ -28,6 +28,13 @@ class FrozenRetriever:
             -> list[dict]
     query_text is ignored — results are keyed by exclude_number (the issue
     being triaged). k is used for slicing if frozen list is longer than k.
+
+    created_before / strict_dates are accepted and IGNORED: the created-before filter is applied
+    where the neighbours are frozen (eval/freeze_similar_issues.py, strict, with over-fetch), so
+    the frozen list is already the filtered answer. A frozen list cannot be re-fetched or refilled
+    here, and the frozen neighbour dicts carry no dates (adding a key would change every frozen
+    line). Sets frozen before the filter are audited out of band by
+    scripts/check_prompt_neighbour_leakage.py.
     """
 
     def __init__(
@@ -43,6 +50,8 @@ class FrozenRetriever:
         query_text: str,
         k: int = 20,
         exclude_number: int | None = None,
+        created_before: object | None = None,
+        strict_dates: bool = False,
     ) -> list[dict]:
         return self._frozen.get(exclude_number, [])[:k]
 
@@ -51,10 +60,18 @@ class FrozenRetriever:
         query_text: str,
         k: int = 20,
         exclude_number: int | None = None,
+        created_before: object | None = None,
+        strict_dates: bool = False,
     ) -> tuple[list[dict], np.ndarray | None]:
         """retrieve() plus the frozen query embedding, or None if none was frozen for this issue
         (the pipeline then falls back to zero-filled emb_* with a warning)."""
-        hits = self.retrieve(query_text, k=k, exclude_number=exclude_number)
+        hits = self.retrieve(
+            query_text,
+            k=k,
+            exclude_number=exclude_number,
+            created_before=created_before,
+            strict_dates=strict_dates,
+        )
         emb = self._query_embeddings.get(exclude_number) if exclude_number is not None else None
         return hits, emb
 

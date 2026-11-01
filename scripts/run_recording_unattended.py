@@ -64,6 +64,7 @@ sys.path.insert(0, str(RECORD_SCRIPT.parent))
 import record_cassettes as rc  # noqa: E402
 import artifact_fingerprint  # noqa: E402
 import checkpoint_validation as cv  # noqa: E402
+import repo_fingerprint as rf  # noqa: E402
 from recording_config import load_recording_config  # noqa: E402
 import tpd_budget_gate  # noqa: E402
 # _parse_tpd_wait lives in record_cassettes.py, not duplicated here -- it sees the raw Groq
@@ -72,6 +73,8 @@ import tpd_budget_gate  # noqa: E402
 # wrapper's own (later, coarser) re-parse of captured stdout from ever drifting out of sync.
 
 TOTAL_ISSUES = sum(1 for _ in EVAL_SET_PATH.open(encoding="utf-8") if _.strip())
+# {issue_id: repo}: a checkpoint entry is current when keyed by the hash of ITS repo's artifacts.
+_REPO_BY_ISSUE = rf.repo_by_issue(EVAL_SET_PATH)
 
 CONNECTION_WAIT_S = 5 * 60
 RETRY_BUFFER_S = 60
@@ -114,25 +117,23 @@ def _load_groq_key() -> str:
     raise RuntimeError(f"GROQ_API_KEY not found in {MAIN_REPO_ENV}")
 
 
-def _current_model_and_hash() -> tuple[str, str, str]:
+def _current_model_and_hash() -> tuple[str, str, rf.RepoHashes]:
     """Reuse record_cassettes.py's own hashing logic (module-level import above) rather
     than re-deriving it, so this wrapper can never drift out of sync with what a real
     invocation would compute."""
     # Same call as record_cassettes.py (the checkpoint key): the set's config selects extra artifacts.
-    artifact_hashes = artifact_fingerprint.compute_artifact_hashes(
-        WORKTREE_ROOT, config=load_recording_config(WORKTREE_ROOT, _CASSETTE_DIR)
-    )
-    return rc.TRIAGE_MODEL, rc._compute_prompt_hash(), artifact_fingerprint.combined_hash(artifact_hashes)
+    config = load_recording_config(WORKTREE_ROOT, _CASSETTE_DIR)
+    artifact_hashes = artifact_fingerprint.compute_artifact_hashes(WORKTREE_ROOT, config=config)
+    return rc.TRIAGE_MODEL, rc._compute_prompt_hash(), rf.per_repo_hashes(artifact_hashes, config)
 
 
-def _checkpoint_entries(model: str, prompt_hash: str, artifact_hash: str) -> list[dict]:
+def _checkpoint_entries(model: str, prompt_hash: str, artifact_hash: rf.ArtifactHash) -> list[dict]:
     if not CHECKPOINT_PATH.exists():
         return []
     data = json.loads(CHECKPOINT_PATH.read_text(encoding="utf-8"))
     return [
         rec for rec in data.get("done", {}).values()
-        if rec.get("model") == model and rec.get("prompt_hash") == prompt_hash
-        and rec.get("artifact_hash") == artifact_hash
+        if rf.entry_is_current(rec, model, prompt_hash, artifact_hash, _REPO_BY_ISSUE)
     ]
 
 

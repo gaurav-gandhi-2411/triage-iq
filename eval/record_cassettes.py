@@ -58,6 +58,7 @@ import os
 
 import artifact_fingerprint
 import checkpoint_validation as cv
+import repo_fingerprint as rf
 import tpd_budget_gate
 from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
@@ -215,10 +216,10 @@ def write_live_status(
     entries: list[dict] = []
     if CHECKPOINT_PATH.exists():
         data = json.loads(CHECKPOINT_PATH.read_text(encoding="utf-8"))
+        repos = _repos_for(artifact_hash)
         entries = [
             rec for rec in data.get("done", {}).values()
-            if rec.get("model") == model and rec.get("prompt_hash") == prompt_hash
-            and rec.get("artifact_hash") == artifact_hash
+            if rf.entry_is_current(rec, model, prompt_hash, artifact_hash, repos)
         ]
     synthesized = sum(1 for rec in entries if rec.get("plan") is not None)
     judged = sum(1 for rec in entries if rec.get("judge_score") is not None and _judge_config_current(rec))
@@ -283,6 +284,11 @@ def _compute_prompt_hash() -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 
+def _repos_for(artifact_hash: rf.ArtifactHash) -> dict[str, str]:
+    """{issue_id: repo} when `artifact_hash` is per-repo; {} for a plain str (repo is irrelevant)."""
+    return {} if isinstance(artifact_hash, str) else rf.repo_by_issue(EVAL_SET)
+
+
 def _checkpoint_key(issue_id: str, model: str, prompt_hash: str, artifact_hash: str) -> str:
     return f"{issue_id}::{model}::{prompt_hash}::{artifact_hash}"
 
@@ -299,11 +305,16 @@ def _record_done(
     every prompt actually said without changing the model name or prompt/schema text at all --
     the two dimensions this key already covered -- so it was invisible to this exact
     resume-safety mechanism until now."""
+    # Per-repo (rf.RepoHashes): the entry is keyed by the hash of ITS repo's artifacts only, so a
+    # change to the other repo's artifacts never invalidates it. A plain str is used as-is.
+    entry_hash = rf.hash_for(artifact_hash, _repos_for(artifact_hash).get(issue_id))
+    if entry_hash is None:
+        raise ValueError(f"no artifact hash for issue {issue_id!r}: not in the eval set {EVAL_SET}")
     tagged = {
         **record, "issue_id": issue_id, "model": model,
-        "prompt_hash": prompt_hash, "artifact_hash": artifact_hash,
+        "prompt_hash": prompt_hash, "artifact_hash": entry_hash,
     }
-    checkpoint["done"][_checkpoint_key(issue_id, model, prompt_hash, artifact_hash)] = tagged
+    checkpoint["done"][_checkpoint_key(issue_id, model, prompt_hash, entry_hash)] = tagged
     return tagged
 
 
@@ -324,6 +335,7 @@ def load_checkpoint(
 
     current_done: dict[str, dict] = {}
     stale_by_config: dict[str, int] = {}
+    repos = _repos_for(current_artifact_hash)
     for key, rec in all_done.items():
         rec_model = rec.get("model")
         rec_hash = rec.get("prompt_hash")
@@ -339,11 +351,7 @@ def load_checkpoint(
                 key, current_model, current_artifact_hash,
             )
             sys.exit(1)
-        if (
-            rec_model == current_model
-            and rec_hash == current_prompt_hash
-            and rec_artifact_hash == current_artifact_hash
-        ):
+        if rf.entry_is_current(rec, current_model, current_prompt_hash, current_artifact_hash, repos):
             current_done[rec["issue_id"]] = rec
         else:
             config_id = f"{rec_model}@{rec_hash[:8]}@{rec_artifact_hash[:8]}"
@@ -482,8 +490,9 @@ def _apply_validation_to_checkpoint(
     """Mirror a reconciliation of current_done onto the raw checkpoint dict, so the later
     save_checkpoint() calls and run_judge's final count see the same truth (a stale entry left
     in checkpoint['done'] would otherwise still be counted as judged)."""
+    repos = _repos_for(artifact_hash)
     for issue_id in results:
-        key = _checkpoint_key(issue_id, model, prompt_hash, artifact_hash)
+        key = _checkpoint_key(issue_id, model, prompt_hash, rf.hash_for(artifact_hash, repos.get(issue_id)))
         if issue_id not in reconciled:
             checkpoint["done"].pop(key, None)
         elif key in checkpoint["done"] and reconciled[issue_id] is not checkpoint["done"][key]:
@@ -521,10 +530,14 @@ def _validated_current_done(
     return reconciled
 
 
+def _current_repo_hashes() -> rf.RepoHashes:
+    """Run the (unchanged, all-artifacts) startup gate, then return the per-repo checkpoint hashes."""
+    return rf.per_repo_hashes(_resolve_and_verify_artifacts(), load_recording_config(ROOT, _CASSETTE_DIR))
+
+
 def run_validate_checkpoint(fix: bool) -> int:
     """--validate-checkpoint [--fix]. Returns the process exit code."""
-    artifact_hashes = _resolve_and_verify_artifacts()
-    artifact_hash = artifact_fingerprint.combined_hash(artifact_hashes)
+    artifact_hash = _current_repo_hashes()
     model, prompt_hash = TRIAGE_MODEL, _compute_prompt_hash()
     checkpoint, current_done = load_checkpoint(model, prompt_hash, artifact_hash)
     if not current_done:
@@ -572,8 +585,7 @@ def _load_common(mode: str) -> tuple[str, list[dict], CassettePlayer, str, str, 
     # retrained between the synthesis pass and the judge pass is caught explicitly instead
     # of the judge pass silently scoring plans whose provenance no longer matches anything
     # "current".
-    current_artifact_hashes = _resolve_and_verify_artifacts()
-    current_artifact_hash = artifact_fingerprint.combined_hash(current_artifact_hashes)
+    current_artifact_hash = _current_repo_hashes()
 
     issues = load_eval_set()
     logger.info("Eval set: %d issues (%s)",
@@ -1212,8 +1224,7 @@ def run_judge(issues, cassette, current_model, current_prompt_hash, current_arti
     # before this loop ran) so the final count reflects what THIS run actually wrote.
     current_config_done = {
         v["issue_id"]: v for v in checkpoint["done"].values()
-        if v.get("model") == current_model and v.get("prompt_hash") == current_prompt_hash
-        and v.get("artifact_hash") == current_artifact_hash
+        if rf.entry_is_current(v, current_model, current_prompt_hash, current_artifact_hash, _repos_for(current_artifact_hash))
     }
     final_judged = _fully_judged_count(current_config_done)
     print(f"\n=== JUDGE {'COMPLETE' if final_judged >= len(issues) else 'PARTIAL'} ===")

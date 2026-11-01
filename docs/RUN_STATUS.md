@@ -3,6 +3,67 @@
 Single source of truth. Re-read first after any restart. Times in IST unless marked UTC. Newest dated brief first; everything under
 "First run" is history.
 
+## Brief 2026-11-01 (24 h, A1), written ~12:45 IST
+
+**Late.** The brief due 2026-10-31 17:00-20:40 was not written: no wake-up ran after 2026-10-31 10:30, and the
+session was resumed at ~12:25 on 2026-11-01 (BELIEVED to have exited in between). This brief covers both days.
+
+**Outcome.** The vscode v2 index was built and scored offline but is NOT cut over: it fails the leakage check (T4c). The final
+configuration is therefore the current one, and the single 150-issue recording was restarted on it at 12:33 with all 25 recorded
+entries kept. The served-artifact PR split (T2) is blocked by the Rule 55a hook.
+
+**Production (VERIFIED 12:28).** `triageiq-api-00110-des` serves 100%, `/health?deps=1` ok with 2 repos. No change since the 2026-10-30
+brief. Rollback targets unchanged: `00108-mod`, `00106-sew`, `00104-zax`, `00102-vep`. Main CI: Health Monitor and post-deploy smoke green.
+
+**Recording (VERIFIED).**
+- 2026-10-31 00:23-00:30: launcher 25380 died during a budget wait (no recording call in flight). No reboot, no Windows error event,
+  12.7 GiB free, atexit did not run. Relaunched at 00:31 (launcher 28668).
+- 2026-10-31 ~00:45: paused on GG's instruction (stale served vscode index): `taskkill /F` on launcher 28668 while the status read
+  WAITING with no child, flag cleared with `recording stop`.
+- Swap impact: all 28 checkpoint entries (25 plans + 3 schema-failure retries) are k8s, so no entry's prompt depends on the vscode
+  index. But the checkpoint key uses one artifact hash over both repos (`eval/artifact_fingerprint.py`), so a vscode index swap
+  would invalidate all 25 plans: 156,811 ledger tokens to redo.
+- 2026-11-01 12:33: restarted on the unchanged configuration after the zero-token preflight (150/150 not degraded, prompt hash
+  `5f845ce8697e3e7f` unchanged), the leakage check (exit 0: 0 violations, 0 unknown dates) and `--validate-checkpoint`
+  (valid=25). Launcher 27152, artifact hash `7e3a29a42da74480`, ledger 0/160,000 at start, benchmark cap 20K in
+  `~/.groq_budget/config.json` (restore after the recording).
+
+**vscode v2 index (T4), offline only.**
+- Built from all 109,537 vscode issues, created 2023-01-01 to 2026-10-22 (the k8s recipe applies no filter). Vectors came from the private Kaggle
+  embedding run of 2026-10-28 (T4 GPU, 717 s). It passed a parity check against production CPU `build_index` on 300 issues: cosine
+  min 0.9999988, top-5 identical on 99/100 queries. Path `D:\triageiq-data\models\candidates\similar_issue_index_microsoft_vscode_bge_v2`,
+  `index.faiss` sha256 b5be4bb1…, 428 MB vs ~50 MB served.
+- Order caveat: these scores were computed on 2026-10-31, before the T4b criteria were written down; they were not pre-registered.
+- 2026 test split, 1,705 duplicate queries (served reproduction exact: 55/95):
+
+  | | answerable | R@5 over answerable | R@5 over all |
+  |---|---|---|---|
+  | served | 95 (5.6% [4.6, 6.8]) | 57.9% [47.8, 67.3] | 3.2% [2.5, 4.2] |
+  | v2 candidate | 1,634 (95.8% [94.8, 96.7]) | 28.3% [26.1, 30.5] | 27.1% [25.0, 29.3] |
+
+  Paired difference over all queries +23.9 pts [+21.7, +26.0] (bootstrap, seed 42). With only older originals counted: 3.5% vs 30.9%,
+  +27.4 [+25.1, +29.7]. On the 65 queries both can answer, v2 is worse: 26 hits vs 41.
+- **T4c FAILS:** on the 150-set's 75 vscode issues, 139 of 375 v2 neighbours are not older than their issue (137 after, 2 equal), in 56 of
+  75 issues. Production retrieval has no created-before filter. Per T4d: no cutover; memory and p50 latency (T4b) were not measured
+  because the cutover was already ruled out.
+- Draft rollout/rollback: `%TEMP%\claude\triage-iq\20261031\e_vsidx\ROLLOUT_ROLLBACK_DRAFT_vscode_index_v2.md`.
+
+**Launcher kill (T6), read-only.** Cause unknown (BELIEVED external termination). Reclaim's only python kill
+(`packaging/build_installer.ps1:642-644`) fires on a contention abort and matches only its own build venv; its build ran 22:15 to past
+00:30. No reclaim, review-iq or agentgauge scratch file was written 00:15-00:40. A sweep of every project for name-wide python kills
+found nothing else; that sweep cannot see process-tree kills. This session's context compaction ran at 00:25:46. The previous launcher
+survived an earlier compaction, so this is a coincidence on record, not a cause.
+
+**Blocked.**
+- T2 split: `git checkout <commit> -- <paths>` in the primary checkout is refused by the Rule 55a hook ("commit WIP first"). The
+  hook's dirty check counts GG's three untracked files, so it cannot pass there; this is a policy block, so it is not redone in
+  another form. The two docstring edits are parked in local commit `a65ed23` (not pushed, in neither PR). Unblock: GG moves the three
+  untracked files, or approves building the branches another way. #380 waits on T2.
+- Kaggle staging delete (1.1 GB), unchanged.
+
+**Disk.** C: 235 GB free, D: 1,357.8 GB free. New: v2 candidate index 428 MB on D:; scratch `20261031\e_vsidx` ~5 MB,
+`20261101\e_restart` small. Nothing deleted.
+
 ## Brief 2026-10-30 (24 h, A1), written ~17:30 IST
 
 **Outcome.** D92.1/D92.4/D92.5 are serving. The single 150-issue recording (D95.1, plan A, #320's code) started at ~16:05 IST, after a

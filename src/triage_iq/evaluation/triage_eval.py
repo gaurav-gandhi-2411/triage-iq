@@ -162,7 +162,12 @@ def retrieval_only_baseline(issue: pd.Series, detector, k: int = 5) -> dict:
     body = str(issue.get("body_clean", ""))
     text = f"{title}. {body}"
     num = int(issue.get("number", -1))
-    hits = detector.retrieve(text, k=k, exclude_number=num if num > 0 else None)
+    created = issue.get("created_at")
+    # Evaluation path: created-before filter always on when the row has a date, fail closed.
+    filt = {} if created is None or pd.isna(created) else {
+        "created_before": created, "strict_dates": True,
+    }
+    hits = detector.retrieve(text, k=k, exclude_number=num if num > 0 else None, **filt)
     return {
         "similar_issues": hits,
         "triage_summary": f"Retrieval only: top-{k} similar issues retrieved",

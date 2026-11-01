@@ -228,3 +228,10 @@ def test_priority_model_uses_body_clean_without_body_raw(monkeypatch: pytest.Mon
     model = _FakePriority()
     _run(monkeypatch, _with_priority("low", "x"), model=model)
     assert model.seen == [(_issue()["title"], "kubelet never schedules")]
+
+@pytest.fixture(autouse=True)
+def _pre_g3_model_interval_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    """These tests pin the model-interval / D7 path that every repo without a served constant still
+    uses (and the pre-G3 k8s goldens). G3 gives k8s a fixed constant instead, covered by
+    tests/test_k8s_constant_serving.py, so the table is emptied here to keep what they pin."""
+    monkeypatch.setattr("triage_iq.models.triage.SERVED_CONSTANT_RESOLUTION", {})

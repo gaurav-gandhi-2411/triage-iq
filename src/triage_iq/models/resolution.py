@@ -121,6 +121,34 @@ NAIVE_INTERVAL_COVERAGE: dict[str, dict[str, float]] = {
 }
 
 
+# Owner decision G3 (docs/DECISION_LOG_2026-10.md D88): the served k8s point is the 2023-2025 closed-issue
+# median (35.0954 d) with its own CQR-calibrated interval, not the 2014-2016 training-window median
+# (3.04 d) and not the model Q10/Q90. Values are pinned here (code, no artifact) and reproduced by
+# scripts/k8s_constant_calibration.py -> reports/k8s_constant_35d_calibration.json (a test pins the
+# two together). The interval already contains its CQR adjustment, so cqr_conformal_adjustments_v2.json's
+# Q is NOT added again for these repos. Served whether or not the predictor ran: nothing here is a
+# model output.
+SERVED_CONSTANT_RESOLUTION: dict[str, tuple[float, float, float]] = {
+    # (point_days, lower_days, upper_days)
+    "kubernetes_kubernetes": (35.0954, 0.2755, 372.5905),
+}
+
+# Held-out coverage of the SERVED_CONSTANT_RESOLUTION interval (80% target) on the 749 closed k8s
+# validation issues (bootstrap 95% CI). Replaces the artifact's model-interval coverage fields in the
+# response. Closed-only coverage is biased upward (136 open validation issues are excluded); the
+# censored-aware bounds are in the report.
+CONSTANT_INTERVAL_COVERAGE: dict[str, dict[str, float]] = {
+    "kubernetes_kubernetes": {
+        "empirical_coverage": 0.9132,
+        "coverage_ci95_lower": 0.8919,
+        "coverage_ci95_upper": 0.9319,
+    },
+}
+
+# resolution_interval_basis value when SERVED_CONSTANT_RESOLUTION is served.
+INTERVAL_BASIS_CONSTANT_CQR = "constant_cqr"
+
+
 def naive_scaled_interval(
     naive_days: float, model_point_days: float, model_lo_days: float, model_hi_days: float
 ) -> tuple[float, float] | None:

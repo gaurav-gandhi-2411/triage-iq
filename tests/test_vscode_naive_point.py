@@ -404,3 +404,10 @@ def test_vscode_served_coverage_is_one_figure_across_api_eval_and_evidence() -> 
     assert round(c2["coverage_wilson95"][0], 3) == iv["coverage_heldout"] == api["empirical_coverage"]
     assert [round(x, 4) for x in c2["coverage_wilson95"][1:]] == iv["coverage_heldout_ci95"] == [
         api["coverage_ci95_lower"], api["coverage_ci95_upper"]]
+
+@pytest.fixture(autouse=True)
+def _pre_g3_model_interval_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    """These tests pin the model-interval / D7 path that every repo without a served constant still
+    uses (and the pre-G3 k8s goldens). G3 gives k8s a fixed constant instead, covered by
+    tests/test_k8s_constant_serving.py, so the table is emptied here to keep what they pin."""
+    monkeypatch.setattr("triage_iq.models.triage.SERVED_CONSTANT_RESOLUTION", {})

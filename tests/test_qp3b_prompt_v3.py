@@ -351,3 +351,10 @@ def test_api_exposes_v3_keys_only_when_present() -> None:
     )
     assert on["_priority_in_prompt"] is True and on["_priority_safety_net_fired"] is True
     assert on["_evidence_neighbours"] == [7]
+
+@pytest.fixture(autouse=True)
+def _pre_g3_model_interval_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    """These tests pin the model-interval / D7 path that every repo without a served constant still
+    uses (and the pre-G3 k8s goldens). G3 gives k8s a fixed constant instead, covered by
+    tests/test_k8s_constant_serving.py, so the table is emptied here to keep what they pin."""
+    monkeypatch.setattr("triage_iq.models.triage.SERVED_CONSTANT_RESOLUTION", {})

@@ -5,7 +5,7 @@
     "judge": "reports/eval_baseline.json + docs/architecture/adr/0019-local-judge-and-mean-based-gate.md",
     "reranker": "reports/phase2_robustness.json + docs/architecture/adr/0006-cross-encoder-reranker.md",
     "conformal": "reports/cqr_conformal_adjustments_v2.snapshot.json (byte-identical copy of data/models/cqr_conformal_adjustments_v2.json, the file served; sha256 pinned by data/models/MANIFEST.sha256) + scripts/analysis_served_k8s_metrics.py + reports/served_k8s_metrics.json + reports/vscode_naive_serving_eval.json (vscode served-interval coverage, 40/60 split) + docs/architecture/adr/0010",
-    "resolution_served": "scripts/build_resolution_served_block.py from reports/served_k8s_metrics.json + reports/vscode_naive_serving_eval.json + reports/d7_resolution_before_after.json + reports/k8s_gain_tail.json (scripts/analysis_k8s_gain_tail.py) + data/models/MANIFEST.sha256 + docs/architecture/adr/0064"
+    "resolution_served": "scripts/build_resolution_served_block.py from reports/served_k8s_metrics.json + reports/vscode_naive_serving_eval.json + reports/d7_resolution_before_after.json + reports/k8s_gain_tail.json (scripts/analysis_k8s_gain_tail.py) + reports/k8s_constant_35d_calibration.json (scripts/k8s_constant_calibration.py) + data/models/MANIFEST.sha256 + docs/architecture/adr/0064"
   },
   "leakage": {
     "feature_removed": "has_priority",
@@ -235,8 +235,8 @@
   "resolution_served": {
     "point_estimate": {
       "served": "train_median",
-      "decision": "owner decision D7, 2026-10-08 (ADR-0064)",
-      "definition": "median(resolution_hours of the training set) / 24, the same naive baseline the published comparison uses",
+      "decision": "owner decision D7, 2026-10-08 (ADR-0064); k8s constant changed by G3 (D88)",
+      "definition": "median(resolution_hours of the training set) / 24, the same naive baseline the published comparison uses (vscode: the training-window median; k8s: the 2023-2025 closed-issue median, 35.0954 d, pinned in models/resolution.py)",
       "why": "The learned point estimate has a worse median absolute error than the training-window median in both repos; it is not served. The learned parts that stay are the k8s bucket classifier and the conformal intervals."
     },
     "provenance": {
@@ -253,8 +253,24 @@
       "kubernetes/kubernetes": {
         "window": "ADR-0041 re-split temporal test, served path through _collect_signals",
         "n_test": 2992,
-        "served_point_days": 3.0365,
+        "served_point_days": 35.0954,
         "served": {
+          "window": "qp4 validation (2023-2025), closed eligible issues",
+          "n_closed": 749,
+          "mae_days": 69.8416,
+          "mae_ci95_days": [
+            64.6768,
+            74.8197
+          ],
+          "median_ae_days": 34.6334,
+          "median_ae_ci95_days": [
+            34.2975,
+            34.8909
+          ]
+        },
+        "previous_served": {
+          "point_days": 3.0365,
+          "window": "ADR-0041 re-split temporal test, n_test rows",
           "mae_days": 104.229,
           "median_ae_days": 3.5197
         },
@@ -296,8 +312,23 @@
           ]
         },
         "interval": {
-          "served": "model Q10/Q90 + CQR v2",
+          "served": "constant 2023-2025 closed-issue quantiles + CQR (G3, fixed interval)",
+          "previous_served": "model Q10/Q90 + CQR v2",
           "nominal_coverage": 0.8,
+          "lower_days": 0.2755,
+          "upper_days": 372.5905,
+          "coverage_validation_closed": 0.9132,
+          "coverage_validation_closed_ci95": [
+            0.8919,
+            0.9319
+          ],
+          "n_validation_closed": 749,
+          "coverage_validation_censored_aware_bounds": [
+            0.7729,
+            0.8452
+          ],
+          "mean_width_days": 372.3,
+          "method": "qp4 M0a CQR recipe: q10/q90 on first 60% of train closed (chronological), Q on last 40% in log1p space, alpha 0.2; test never read",
           "coverage_raw_full_test": 0.8326,
           "coverage_cqr_v2_heldout": 0.7971,
           "coverage_cqr_v2_heldout_ci95": [
@@ -305,7 +336,7 @@
             0.8138
           ],
           "n_heldout": 2095,
-          "split": "chronological 30/70 split by created_at of the ADR-0041 re-split temporal test (897 calibration / 2,095 held-out)"
+          "split": "chronological 30/70 split by created_at of the ADR-0041 re-split temporal test (897 calibration / 2,095 held-out); applies to the previous interval"
         },
         "unchanged_by_d7": {
           "interval_lo_hi_bit_identical": true,

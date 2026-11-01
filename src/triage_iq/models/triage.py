@@ -25,9 +25,11 @@ from triage_iq.models.component_decision import decide_component, repair_compone
 from triage_iq.models.grounding import compute_grounding_status
 from triage_iq.models.priority import PriorityModel, model_rationale
 from triage_iq.models.resolution import (
+    INTERVAL_BASIS_CONSTANT_CQR,
     INTERVAL_RECENTRED,
     POINT_ESTIMATE_TRUSTED,
     POINT_SOURCE_TRAIN_MEDIAN,
+    SERVED_CONSTANT_RESOLUTION,
     naive_median_days,
     naive_scaled_interval,
     repo_slug,
@@ -1126,6 +1128,9 @@ class TriageAssistant:
         basis is "naive_scaled" when the interval was re-centred on the naive median, else
         "model" (the interval is still the model's Q10/Q90).
 
+        Repos in SERVED_CONSTANT_RESOLUTION (k8s, owner decision G3) get a fixed point and a fixed,
+        already CQR-calibrated interval whether or not the predictor ran, basis "constant_cqr".
+
         Trusted repos (and unlisted ones) pass through unchanged, source "model". For an
         untrusted repo the naive median replaces the point and the model's relative Q10/Q90
         width is re-centred on it (naive_scaled_interval) so the prompt's point lies inside its
@@ -1133,6 +1138,9 @@ class TriageAssistant:
         kept. If the naive median cannot be computed the model output is served with a WARNING:
         a request must never fail here.
         """
+        constant = SERVED_CONSTANT_RESOLUTION.get(repo_slug(self.repo))
+        if constant is not None:
+            return (*constant, POINT_SOURCE_TRAIN_MEDIAN, INTERVAL_BASIS_CONSTANT_CQR, False)
         if POINT_ESTIMATE_TRUSTED.get(repo_slug(self.repo), True):
             return pred_days, lo_days, hi_days, "model", "model", False
         naive = self._naive_median_days()
@@ -1283,9 +1291,13 @@ class TriageAssistant:
             )
         )
         raw_lo_days, raw_hi_days = lo_days, hi_days  # the point-trust interval, before CQR
-        pred_days, lo_days, hi_days, conformal_applied, conformal_clamped = self._apply_conformal(
-            pred_days, lo_days, hi_days, model_ok=predictor_ok
-        )
+        if interval_basis == INTERVAL_BASIS_CONSTANT_CQR:
+            # The constant interval already carries its own CQR adjustment (G3): do not add v2's Q.
+            conformal_applied, conformal_clamped = True, False
+        else:
+            pred_days, lo_days, hi_days, conformal_applied, conformal_clamped = (
+                self._apply_conformal(pred_days, lo_days, hi_days, model_ok=predictor_ok)
+            )
         point_clamped = point_clamped or conformal_clamped
         t_predict = time.perf_counter() - t3
 

@@ -150,6 +150,8 @@ def launcher(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace
     monkeypatch.setattr(ru.tpd_budget_gate, "start_recording_heartbeat", lambda: MagicMock())
     monkeypatch.setattr(ru.atexit, "register", lambda *a, **k: None)
     monkeypatch.setattr(ru.time, "sleep", lambda s: pytest.fail("launcher slept (budget-wait loop)"))
+    # The launcher is Windows-only (BELOW_NORMAL_PRIORITY_CLASS); CI runs these tests on Linux.
+    monkeypatch.setattr(ru.subprocess, "BELOW_NORMAL_PRIORITY_CLASS", 0x4000, raising=False)
 
     def write(ids: list[str]) -> None:
         ckpt.write_text(json.dumps({"done": {

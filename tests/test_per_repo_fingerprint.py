@@ -5,6 +5,7 @@ when proven. Hermetic: every root is tmp_path; no LLM, no real artifacts."""
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -260,3 +261,66 @@ def test_launcher_counts_respect_both_the_repo_filter_and_the_per_repo_key(
     assert ids(_hashes(env.root)[1]) == {"k8s-1", "k8s-2", "k8s-5"}  # vscode change: k8s unaffected
     (env.root / K8S_INDEX).write_text("a different k8s index", encoding="utf-8")
     assert ids(_hashes(env.root)[1]) == set()  # k8s change: k8s entries stale
+
+
+# ---- migration safety guards ----------------------------------------------------------------------
+
+
+def _pending(env: SimpleNamespace, monkeypatch: pytest.MonkeyPatch) -> bytes:
+    old, _, stamps = _old_checkpoint(env.root)
+    env.ckpt.write_text(json.dumps(old), encoding="utf-8")
+    _wire_migration(env, monkeypatch, stamps, valid={i["id"] for i in ISSUES})
+    return env.ckpt.read_bytes()
+
+
+def test_fix_is_refused_while_a_recorder_is_alive(
+    env: SimpleNamespace, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    original = _pending(env, monkeypatch)
+    (env.tmp / "unattended_recorder.pid").write_text(str(os.getpid()), encoding="utf-8")  # this process: alive
+    assert rc.run_migrate_checkpoint(fix=True) == 1
+    assert "REFUSED" in capsys.readouterr().out
+    assert env.ckpt.read_bytes() == original and not list(env.tmp.glob("*.bak-*"))
+    assert rc.run_migrate_checkpoint(fix=False) == 2  # report-only is still allowed
+    (env.tmp / "unattended_recorder.pid").write_text("not-a-pid", encoding="utf-8")  # cannot verify: fail closed
+    assert rc.run_migrate_checkpoint(fix=True) == 1
+
+
+def test_fix_is_refused_when_the_checkpoint_changed_during_validation(
+    env: SimpleNamespace, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _pending(env, monkeypatch)
+    inner = cv.validate_from_disk
+
+    def validate_and_race(entries, check_judge):  # noqa: ANN001, ANN202
+        out = inner(entries, check_judge=check_judge)
+        data = json.loads(env.ckpt.read_text(encoding="utf-8"))
+        data["done"]["late"] = {"issue_id": "k8s-new", "model": MODEL, "prompt_hash": PH, "artifact_hash": "x"}
+        env.ckpt.write_text(json.dumps(data), encoding="utf-8")  # the recorder wrote an entry meanwhile
+        return out
+
+    monkeypatch.setattr(cv, "validate_from_disk", validate_and_race)
+    assert rc.run_migrate_checkpoint(fix=True) == 1
+    assert "changed since it was read" in capsys.readouterr().out
+    assert "late" in json.loads(env.ckpt.read_text(encoding="utf-8"))["done"]  # the recorder's write survives
+    assert not list(env.tmp.glob("*.bak-*"))
+
+
+def test_fix_writes_backup_of_the_original_then_the_file_atomically(
+    env: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original = _pending(env, monkeypatch)
+    assert rc.run_migrate_checkpoint(fix=True) == 0
+    (backup,) = env.tmp.glob("recording_checkpoint.json.bak-*")
+    assert backup.read_bytes() == original
+    assert env.ckpt.read_bytes() != original and not list(env.tmp.glob("*.tmp-migrate"))
+
+
+def test_migration_is_refused_when_a_repo_filter_is_set(
+    env: SimpleNamespace, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    original = _pending(env, monkeypatch)
+    monkeypatch.setenv("TRIAGEIQ_RECORDING_REPOS", K8S)
+    assert rc.run_migrate_checkpoint(fix=True) == 1 and rc.run_migrate_checkpoint(fix=False) == 1
+    assert "unset TRIAGEIQ_RECORDING_REPOS" in capsys.readouterr().out
+    assert env.ckpt.read_bytes() == original

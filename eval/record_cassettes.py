@@ -492,9 +492,15 @@ def parse_args() -> argparse.Namespace:
              "moving stale_synthesis entries out of 'done' and resetting stale_judge entries "
              "to judge-pending with the replayed plan.",
     )
+    parser.add_argument(
+        "--migrate-checkpoint", action="store_true",
+        help="Report-only: list entries recorded under the old combined artifact hash that can be "
+             "re-keyed to their own repo's hash (proven by the cassette's stamped provenance AND "
+             "valid under checkpoint validation). With --fix, back up and rewrite the checkpoint.",
+    )
     args = parser.parse_args()
-    if args.fix and not args.validate_checkpoint:
-        parser.error("--fix is only valid together with --validate-checkpoint")
+    if args.fix and not (args.validate_checkpoint or args.migrate_checkpoint):
+        parser.error("--fix is only valid together with --validate-checkpoint or --migrate-checkpoint")
     return args
 
 
@@ -582,6 +588,119 @@ def run_validate_checkpoint(fix: bool) -> int:
     print(f"Backup written: {backup}")
     print(f"Checkpoint rewritten: {len(stale)} stale entr{'y' if len(stale) == 1 else 'ies'} "
           "moved out of 'done' (stale_synthesis) or reset to judge-pending (stale_judge).")
+    return 0
+
+
+def _pid_alive(pid: int) -> bool:
+    """True iff process `pid` exists (Windows: OpenProcess + exit code; elsewhere: signal 0)."""
+    if sys.platform == "win32":
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+        if not handle:
+            return False
+        code = ctypes.c_ulong()
+        ok = kernel32.GetExitCodeProcess(handle, ctypes.byref(code))
+        kernel32.CloseHandle(handle)
+        return bool(ok) and code.value == 259  # STILL_ACTIVE
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _live_recorder_pid() -> str | None:
+    """The pid in the set's unattended_recorder.pid if that process is alive, or "unreadable" when
+    the file exists but cannot be verified (fail closed); None when no live recorder is recorded."""
+    pid_file = CHECKPOINT_PATH.parent / "unattended_recorder.pid"
+    if not pid_file.exists():
+        return None
+    try:
+        pid = int(pid_file.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return "unreadable"
+    return str(pid) if _pid_alive(pid) else None
+
+
+def _write_atomic(path: Path, data: bytes) -> None:
+    """Temp file in the same directory, then os.replace: readers see the old or the new file."""
+    tmp = path.with_name(path.name + ".tmp-migrate")
+    tmp.write_bytes(data)
+    os.replace(tmp, path)
+
+
+def run_migrate_checkpoint(fix: bool) -> int:
+    """--migrate-checkpoint [--fix]: re-key entries recorded under the old combined (both-repos)
+    artifact hash to their own repo's hash, but ONLY those proven by rf.plan_migration AND still
+    VALID under checkpoint validation. Everything else stays under its old key, i.e. stale and
+    re-recorded. Report-only without --fix; with --fix a timestamped backup is written first.
+
+    Refused while TRIAGEIQ_RECORDING_REPOS is set: the filter would hide the other repos' entries
+    from validation and mark them stale, and a whole-checkpoint rewrite must see every entry.
+    --fix is refused while a recorder is alive, and aborts if the checkpoint changed since it was read
+    (validation takes minutes; nothing a recorder wrote may be overwritten)."""
+    if recording_repo_filter() is not None:
+        print("REFUSED: unset TRIAGEIQ_RECORDING_REPOS to migrate; the migration rewrites the whole "
+              "checkpoint and must validate every repo's entries.")
+        return 1
+    if fix and (live := _live_recorder_pid()) is not None:
+        print(f"REFUSED: --fix while a recorder is running (unattended_recorder.pid: {live}). "
+              "Stop it (at a budget wait) and re-run.")
+        return 1
+    full_hashes = _resolve_and_verify_artifacts()
+    config = load_recording_config(ROOT, _CASSETTE_DIR)
+    current = rf.per_repo_hashes(full_hashes, config)
+    model, prompt_hash = TRIAGE_MODEL, _compute_prompt_hash()
+    repos = rf.repo_by_issue(EVAL_SET)
+    cassette = CassettePlayer(CASSETTE_PATH, strict=True, allow_record=False)
+    snapshot = CHECKPOINT_PATH.read_bytes() if CHECKPOINT_PATH.exists() else b'{"done": {}}'
+    checkpoint = json.loads(snapshot.decode("utf-8"))
+    candidates, rejected = rf.plan_migration(
+        checkpoint["done"], model=model, prompt_hash=prompt_hash, current=current,
+        legacy_combined=artifact_fingerprint.combined_hash(full_hashes), repos=repos,
+        current_provenance={
+            repo: artifact_fingerprint.compute_artifact_hashes(ROOT, repo=repo, config=config) for repo in current
+        },
+        provenance_of=cassette.get_provenance,
+    )
+    try:
+        results = cv.validate_from_disk(
+            {rec["issue_id"]: rec for rec in candidates.values()}, check_judge=True
+        ) if candidates else {}
+    except cv.CheckpointValidationUnavailable as exc:
+        print(f"CHECKPOINT VALIDATION UNAVAILABLE: {exc}")
+        return 1
+    print(f"{len(candidates)} provable by stamped provenance / unchanged combined hash; {cv.summarize(results)}")
+    ok = [k for k, rec in candidates.items() if results.get(rec["issue_id"]) is None
+          or results[rec["issue_id"]].status == cv.VALID]
+    for k, rec in candidates.items():
+        if k not in ok:
+            rejected[rec["issue_id"]] = f"checkpoint validation: {results[rec['issue_id']].status}"
+    print(f"Per-repo migration: {len(ok)} entr{'y' if len(ok) == 1 else 'ies'} provable and valid, "
+          f"{len(rejected)} stay stale under their old key.")
+    for issue_id, why in sorted(rejected.items()):
+        print(f"  stale  {issue_id}  ({why})")
+    if not fix:
+        print("Report only (no changes written). Re-run with --fix to re-key the provable entries.")
+        return 2 if ok else 0
+    if not ok:
+        return 0
+    if (live := _live_recorder_pid()) is not None:
+        print(f"REFUSED: a recorder is running (unattended_recorder.pid: {live}); nothing written.")
+        return 1
+    if CHECKPOINT_PATH.read_bytes() != snapshot:
+        print("REFUSED: the checkpoint changed since it was read; nothing written. Re-run.")
+        return 1
+    backup = CHECKPOINT_PATH.with_name(
+        f"recording_checkpoint.json.bak-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+    )
+    backup.write_bytes(snapshot)
+    rf.apply_migration(checkpoint["done"], ok, current, repos)
+    _write_atomic(CHECKPOINT_PATH, json.dumps(checkpoint, indent=2, ensure_ascii=False).encode("utf-8"))
+    print(f"Backup written: {backup}")
+    print(f"Checkpoint rewritten: {len(ok)} entries re-keyed per repo.")
     return 0
 
 
@@ -1311,6 +1430,8 @@ def main() -> None:
     args = parse_args()
     if args.validate_checkpoint:
         sys.exit(run_validate_checkpoint(args.fix))
+    if args.migrate_checkpoint:
+        sys.exit(run_migrate_checkpoint(args.fix))
     (
         groq_key, issues, cassette, current_model, current_prompt_hash,
         current_artifact_hash, checkpoint, current_done,

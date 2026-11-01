@@ -42,7 +42,9 @@ def eval_set(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 def test_filter_parsing_and_fail_closed() -> None:
     assert rcfg.recording_repo_filter({}) is None
-    assert rcfg.recording_repo_filter({rcfg.REPOS_ENV: " , "}) is None
+    for blank in ("", " , "):  # set but naming no repo must not silently record every repo
+        with pytest.raises(rcfg.RecordingConfigError):
+            rcfg.recording_repo_filter({rcfg.REPOS_ENV: blank})
     assert rcfg.recording_repo_filter({rcfg.REPOS_ENV: f"{K8S}, {VSC}"}) == {K8S, VSC}
     assert rcfg.filter_issues(ISSUES, None) is ISSUES
     with pytest.raises(rcfg.RecordingConfigError):  # a typo must not silently record nothing

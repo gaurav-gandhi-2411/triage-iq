@@ -99,13 +99,18 @@ REPOS_ENV = "TRIAGEIQ_RECORDING_REPOS"
 
 def recording_repo_filter(environ: Mapping[str, str] | None = None) -> frozenset[str] | None:
     """The repos this run may record, from TRIAGEIQ_RECORDING_REPOS (comma-separated, e.g.
-    "kubernetes/kubernetes"). None = unset or blank = no filter, every path unchanged. An env var
-    rather than a CLI flag, like TRIAGEIQ_RECORDING_SET_DIR: the launcher, the recorder and the
-    checkpoint validator are separate processes that must all agree, and the child inherits the
-    launcher's environment, so no invocation can forget to pass it through."""
-    raw = (environ if environ is not None else os.environ).get(REPOS_ENV, "")
+    "kubernetes/kubernetes"). None = unset = no filter, every path unchanged. Set but naming no repo
+    (blank, separators only) raises: a filter that silently turned itself off would record every
+    repo. An env var rather than a CLI flag, like TRIAGEIQ_RECORDING_SET_DIR: the launcher, the
+    recorder and the checkpoint validator are separate processes that must all agree, and the child
+    inherits the launcher's environment, so no invocation can forget to pass it through."""
+    raw = (environ if environ is not None else os.environ).get(REPOS_ENV)
+    if raw is None:
+        return None
     repos = frozenset(r.strip() for r in raw.split(",") if r.strip())
-    return repos or None
+    if not repos:
+        raise RecordingConfigError(f"{REPOS_ENV} is set but names no repo ({raw!r}); unset it for no filter")
+    return repos
 
 
 def filter_issues(issues: list[dict], repos: frozenset[str] | None) -> list[dict]:

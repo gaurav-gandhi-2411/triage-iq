@@ -44,7 +44,9 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).parent))
 
 from cassette import CassetteMissError, CassettePlayer  # noqa: E402
-from recording_config import issue_to_row, load_recording_config  # noqa: E402,F401  (issue_to_row: re-exported)
+from recording_config import (  # noqa: E402,F401  (issue_to_row: re-exported)
+    filter_issues, issue_to_row, load_recording_config, recording_repo_filter,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +102,9 @@ def build_replay_context(
     try:
         # strict=True, allow_record=False: a miss raises, nothing can ever be written.
         cassette = CassettePlayer(cassette_path, strict=True, allow_record=False)
-        issues = run_eval._load_eval_set(eval_set_path)
+        # TRIAGEIQ_RECORDING_REPOS: out-of-filter repos get no assistant, so none of their artifacts load.
+        repos = recording_repo_filter()
+        issues = filter_issues(run_eval._load_eval_set(eval_set_path), repos)
         from frozen_retriever import build_frozen_retrievers
 
         frozen = build_frozen_retrievers(eval_set_path)
@@ -109,7 +113,7 @@ def build_replay_context(
         assistants = {
             repo: run_eval._load_models(repo, slug, cassette, frozen, config)["assistant"]
             for repo, slug in run_eval.REPO_MAP.items()
-            if repo in frozen
+            if repo in frozen and (repos is None or repo in repos)
         }
         judge = None
         if need_judge:

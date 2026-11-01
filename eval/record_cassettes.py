@@ -58,6 +58,7 @@ import os
 
 import artifact_fingerprint
 import checkpoint_validation as cv
+import repo_fingerprint as rf
 import tpd_budget_gate
 from cassette import CassettePlayer
 from frozen_retriever import build_frozen_retrievers
@@ -217,10 +218,10 @@ def write_live_status(
     entries: list[dict] = []
     if CHECKPOINT_PATH.exists():
         data = json.loads(CHECKPOINT_PATH.read_text(encoding="utf-8"))
+        repos = _repos_for(artifact_hash)
         entries = [
             rec for rec in data.get("done", {}).values()
-            if rec.get("model") == model and rec.get("prompt_hash") == prompt_hash
-            and rec.get("artifact_hash") == artifact_hash
+            if rf.entry_is_current(rec, model, prompt_hash, artifact_hash, repos)
         ]
         if recording_repo_filter() is not None:
             ids = {i["id"] for i in load_eval_set()}
@@ -288,6 +289,11 @@ def _compute_prompt_hash() -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 
+def _repos_for(artifact_hash: rf.ArtifactHash) -> dict[str, str]:
+    """{issue_id: repo} when `artifact_hash` is per-repo; {} for a plain str (repo is irrelevant)."""
+    return {} if isinstance(artifact_hash, str) else rf.repo_by_issue(EVAL_SET)
+
+
 def _checkpoint_key(issue_id: str, model: str, prompt_hash: str, artifact_hash: str) -> str:
     return f"{issue_id}::{model}::{prompt_hash}::{artifact_hash}"
 
@@ -304,11 +310,16 @@ def _record_done(
     every prompt actually said without changing the model name or prompt/schema text at all --
     the two dimensions this key already covered -- so it was invisible to this exact
     resume-safety mechanism until now."""
+    # Per-repo (rf.RepoHashes): the entry is keyed by the hash of ITS repo's artifacts only, so a
+    # change to the other repo's artifacts never invalidates it. A plain str is used as-is.
+    entry_hash = rf.hash_for(artifact_hash, _repos_for(artifact_hash).get(issue_id))
+    if entry_hash is None:
+        raise ValueError(f"no artifact hash for issue {issue_id!r}: not in the eval set {EVAL_SET}")
     tagged = {
         **record, "issue_id": issue_id, "model": model,
-        "prompt_hash": prompt_hash, "artifact_hash": artifact_hash,
+        "prompt_hash": prompt_hash, "artifact_hash": entry_hash,
     }
-    checkpoint["done"][_checkpoint_key(issue_id, model, prompt_hash, artifact_hash)] = tagged
+    checkpoint["done"][_checkpoint_key(issue_id, model, prompt_hash, entry_hash)] = tagged
     return tagged
 
 
@@ -329,6 +340,7 @@ def load_checkpoint(
 
     current_done: dict[str, dict] = {}
     stale_by_config: dict[str, int] = {}
+    repos = _repos_for(current_artifact_hash)
     for key, rec in all_done.items():
         rec_model = rec.get("model")
         rec_hash = rec.get("prompt_hash")
@@ -344,11 +356,7 @@ def load_checkpoint(
                 key, current_model, current_artifact_hash,
             )
             sys.exit(1)
-        if (
-            rec_model == current_model
-            and rec_hash == current_prompt_hash
-            and rec_artifact_hash == current_artifact_hash
-        ):
+        if rf.entry_is_current(rec, current_model, current_prompt_hash, current_artifact_hash, repos):
             current_done[rec["issue_id"]] = rec
         else:
             config_id = f"{rec_model}@{rec_hash[:8]}@{rec_artifact_hash[:8]}"
@@ -484,9 +492,15 @@ def parse_args() -> argparse.Namespace:
              "moving stale_synthesis entries out of 'done' and resetting stale_judge entries "
              "to judge-pending with the replayed plan.",
     )
+    parser.add_argument(
+        "--migrate-checkpoint", action="store_true",
+        help="Report-only: list entries recorded under the old combined artifact hash that can be "
+             "re-keyed to their own repo's hash (proven by the cassette's stamped provenance AND "
+             "valid under checkpoint validation). With --fix, back up and rewrite the checkpoint.",
+    )
     args = parser.parse_args()
-    if args.fix and not args.validate_checkpoint:
-        parser.error("--fix is only valid together with --validate-checkpoint")
+    if args.fix and not (args.validate_checkpoint or args.migrate_checkpoint):
+        parser.error("--fix is only valid together with --validate-checkpoint or --migrate-checkpoint")
     return args
 
 
@@ -497,8 +511,9 @@ def _apply_validation_to_checkpoint(
     """Mirror a reconciliation of current_done onto the raw checkpoint dict, so the later
     save_checkpoint() calls and run_judge's final count see the same truth (a stale entry left
     in checkpoint['done'] would otherwise still be counted as judged)."""
+    repos = _repos_for(artifact_hash)
     for issue_id in results:
-        key = _checkpoint_key(issue_id, model, prompt_hash, artifact_hash)
+        key = _checkpoint_key(issue_id, model, prompt_hash, rf.hash_for(artifact_hash, repos.get(issue_id)))
         if issue_id not in reconciled:
             checkpoint["done"].pop(key, None)
         elif key in checkpoint["done"] and reconciled[issue_id] is not checkpoint["done"][key]:
@@ -536,10 +551,14 @@ def _validated_current_done(
     return reconciled
 
 
+def _current_repo_hashes() -> rf.RepoHashes:
+    """Run the (unchanged, all-artifacts) startup gate, then return the per-repo checkpoint hashes."""
+    return rf.per_repo_hashes(_resolve_and_verify_artifacts(), load_recording_config(ROOT, _CASSETTE_DIR))
+
+
 def run_validate_checkpoint(fix: bool) -> int:
     """--validate-checkpoint [--fix]. Returns the process exit code."""
-    artifact_hashes = _resolve_and_verify_artifacts()
-    artifact_hash = artifact_fingerprint.combined_hash(artifact_hashes)
+    artifact_hash = _current_repo_hashes()
     model, prompt_hash = TRIAGE_MODEL, _compute_prompt_hash()
     checkpoint, current_done = load_checkpoint(model, prompt_hash, artifact_hash)
     current_done = _filter_done_to_issues(current_done, load_eval_set())
@@ -572,6 +591,119 @@ def run_validate_checkpoint(fix: bool) -> int:
     return 0
 
 
+def _pid_alive(pid: int) -> bool:
+    """True iff process `pid` exists (Windows: OpenProcess + exit code; elsewhere: signal 0)."""
+    if sys.platform == "win32":
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+        if not handle:
+            return False
+        code = ctypes.c_ulong()
+        ok = kernel32.GetExitCodeProcess(handle, ctypes.byref(code))
+        kernel32.CloseHandle(handle)
+        return bool(ok) and code.value == 259  # STILL_ACTIVE
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _live_recorder_pid() -> str | None:
+    """The pid in the set's unattended_recorder.pid if that process is alive, or "unreadable" when
+    the file exists but cannot be verified (fail closed); None when no live recorder is recorded."""
+    pid_file = CHECKPOINT_PATH.parent / "unattended_recorder.pid"
+    if not pid_file.exists():
+        return None
+    try:
+        pid = int(pid_file.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return "unreadable"
+    return str(pid) if _pid_alive(pid) else None
+
+
+def _write_atomic(path: Path, data: bytes) -> None:
+    """Temp file in the same directory, then os.replace: readers see the old or the new file."""
+    tmp = path.with_name(path.name + ".tmp-migrate")
+    tmp.write_bytes(data)
+    os.replace(tmp, path)
+
+
+def run_migrate_checkpoint(fix: bool) -> int:
+    """--migrate-checkpoint [--fix]: re-key entries recorded under the old combined (both-repos)
+    artifact hash to their own repo's hash, but ONLY those proven by rf.plan_migration AND still
+    VALID under checkpoint validation. Everything else stays under its old key, i.e. stale and
+    re-recorded. Report-only without --fix; with --fix a timestamped backup is written first.
+
+    Refused while TRIAGEIQ_RECORDING_REPOS is set: the filter would hide the other repos' entries
+    from validation and mark them stale, and a whole-checkpoint rewrite must see every entry.
+    --fix is refused while a recorder is alive, and aborts if the checkpoint changed since it was read
+    (validation takes minutes; nothing a recorder wrote may be overwritten)."""
+    if recording_repo_filter() is not None:
+        print("REFUSED: unset TRIAGEIQ_RECORDING_REPOS to migrate; the migration rewrites the whole "
+              "checkpoint and must validate every repo's entries.")
+        return 1
+    if fix and (live := _live_recorder_pid()) is not None:
+        print(f"REFUSED: --fix while a recorder is running (unattended_recorder.pid: {live}). "
+              "Stop it (at a budget wait) and re-run.")
+        return 1
+    full_hashes = _resolve_and_verify_artifacts()
+    config = load_recording_config(ROOT, _CASSETTE_DIR)
+    current = rf.per_repo_hashes(full_hashes, config)
+    model, prompt_hash = TRIAGE_MODEL, _compute_prompt_hash()
+    repos = rf.repo_by_issue(EVAL_SET)
+    cassette = CassettePlayer(CASSETTE_PATH, strict=True, allow_record=False)
+    snapshot = CHECKPOINT_PATH.read_bytes() if CHECKPOINT_PATH.exists() else b'{"done": {}}'
+    checkpoint = json.loads(snapshot.decode("utf-8"))
+    candidates, rejected = rf.plan_migration(
+        checkpoint["done"], model=model, prompt_hash=prompt_hash, current=current,
+        legacy_combined=artifact_fingerprint.combined_hash(full_hashes), repos=repos,
+        current_provenance={
+            repo: artifact_fingerprint.compute_artifact_hashes(ROOT, repo=repo, config=config) for repo in current
+        },
+        provenance_of=cassette.get_provenance,
+    )
+    try:
+        results = cv.validate_from_disk(
+            {rec["issue_id"]: rec for rec in candidates.values()}, check_judge=True
+        ) if candidates else {}
+    except cv.CheckpointValidationUnavailable as exc:
+        print(f"CHECKPOINT VALIDATION UNAVAILABLE: {exc}")
+        return 1
+    print(f"{len(candidates)} provable by stamped provenance / unchanged combined hash; {cv.summarize(results)}")
+    ok = [k for k, rec in candidates.items() if results.get(rec["issue_id"]) is None
+          or results[rec["issue_id"]].status == cv.VALID]
+    for k, rec in candidates.items():
+        if k not in ok:
+            rejected[rec["issue_id"]] = f"checkpoint validation: {results[rec['issue_id']].status}"
+    print(f"Per-repo migration: {len(ok)} entr{'y' if len(ok) == 1 else 'ies'} provable and valid, "
+          f"{len(rejected)} stay stale under their old key.")
+    for issue_id, why in sorted(rejected.items()):
+        print(f"  stale  {issue_id}  ({why})")
+    if not fix:
+        print("Report only (no changes written). Re-run with --fix to re-key the provable entries.")
+        return 2 if ok else 0
+    if not ok:
+        return 0
+    if (live := _live_recorder_pid()) is not None:
+        print(f"REFUSED: a recorder is running (unattended_recorder.pid: {live}); nothing written.")
+        return 1
+    if CHECKPOINT_PATH.read_bytes() != snapshot:
+        print("REFUSED: the checkpoint changed since it was read; nothing written. Re-run.")
+        return 1
+    backup = CHECKPOINT_PATH.with_name(
+        f"recording_checkpoint.json.bak-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+    )
+    backup.write_bytes(snapshot)
+    rf.apply_migration(checkpoint["done"], ok, current, repos)
+    _write_atomic(CHECKPOINT_PATH, json.dumps(checkpoint, indent=2, ensure_ascii=False).encode("utf-8"))
+    print(f"Backup written: {backup}")
+    print(f"Checkpoint rewritten: {len(ok)} entries re-keyed per repo.")
+    return 0
+
+
 def _load_common(mode: str) -> tuple[str, list[dict], CassettePlayer, str, str, str, dict, dict[str, dict]]:
     """Shared setup for every mode: GROQ key (skipped for judge -- it makes no Groq calls),
     artifact verification, eval set, cassette, and the filtered checkpoint."""
@@ -588,8 +720,7 @@ def _load_common(mode: str) -> tuple[str, list[dict], CassettePlayer, str, str, 
     # retrained between the synthesis pass and the judge pass is caught explicitly instead
     # of the judge pass silently scoring plans whose provenance no longer matches anything
     # "current".
-    current_artifact_hashes = _resolve_and_verify_artifacts()
-    current_artifact_hash = artifact_fingerprint.combined_hash(current_artifact_hashes)
+    current_artifact_hash = _current_repo_hashes()
 
     issues = load_eval_set()
     logger.info("Eval set: %d issues (%s)",
@@ -1234,8 +1365,7 @@ def run_judge(issues, cassette, current_model, current_prompt_hash, current_arti
     # before this loop ran) so the final count reflects what THIS run actually wrote.
     current_config_done = {
         v["issue_id"]: v for v in checkpoint["done"].values()
-        if v.get("model") == current_model and v.get("prompt_hash") == current_prompt_hash
-        and v.get("artifact_hash") == current_artifact_hash
+        if rf.entry_is_current(v, current_model, current_prompt_hash, current_artifact_hash, _repos_for(current_artifact_hash))
     }
     current_config_done = _filter_done_to_issues(current_config_done, issues)
     final_judged = _fully_judged_count(current_config_done)
@@ -1300,6 +1430,8 @@ def main() -> None:
     args = parse_args()
     if args.validate_checkpoint:
         sys.exit(run_validate_checkpoint(args.fix))
+    if args.migrate_checkpoint:
+        sys.exit(run_migrate_checkpoint(args.fix))
     (
         groq_key, issues, cassette, current_model, current_prompt_hash,
         current_artifact_hash, checkpoint, current_done,

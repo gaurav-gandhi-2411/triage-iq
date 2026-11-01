@@ -477,9 +477,15 @@ def parse_args() -> argparse.Namespace:
              "moving stale_synthesis entries out of 'done' and resetting stale_judge entries "
              "to judge-pending with the replayed plan.",
     )
+    parser.add_argument(
+        "--migrate-checkpoint", action="store_true",
+        help="Report-only: list entries recorded under the old combined artifact hash that can be "
+             "re-keyed to their own repo's hash (proven by the cassette's stamped provenance AND "
+             "valid under checkpoint validation). With --fix, back up and rewrite the checkpoint.",
+    )
     args = parser.parse_args()
-    if args.fix and not args.validate_checkpoint:
-        parser.error("--fix is only valid together with --validate-checkpoint")
+    if args.fix and not (args.validate_checkpoint or args.migrate_checkpoint):
+        parser.error("--fix is only valid together with --validate-checkpoint or --migrate-checkpoint")
     return args
 
 
@@ -567,6 +573,63 @@ def run_validate_checkpoint(fix: bool) -> int:
     print(f"Checkpoint rewritten: {len(stale)} stale entr{'y' if len(stale) == 1 else 'ies'} "
           "moved out of 'done' (stale_synthesis) or reset to judge-pending (stale_judge).")
     return 0
+
+
+def run_migrate_checkpoint(fix: bool) -> int:
+    """--migrate-checkpoint [--fix]: re-key entries recorded under the old combined (both-repos)
+    artifact hash to their own repo's hash, but ONLY those proven by rf.plan_migration AND still
+    VALID under checkpoint validation. Everything else stays under its old key, i.e. stale and
+    re-recorded. Report-only without --fix; with --fix a timestamped backup is written first."""
+    full_hashes = _resolve_and_verify_artifacts()
+    config = load_recording_config(ROOT, _CASSETTE_DIR)
+    current = rf.per_repo_hashes(full_hashes, config)
+    model, prompt_hash = TRIAGE_MODEL, _compute_prompt_hash()
+    repos = rf.repo_by_issue(EVAL_SET)
+    cassette = CassettePlayer(CASSETTE_PATH, strict=True, allow_record=False)
+    checkpoint = load_checkpoint_raw()
+    candidates, rejected = rf.plan_migration(
+        checkpoint["done"], model=model, prompt_hash=prompt_hash, current=current,
+        legacy_combined=artifact_fingerprint.combined_hash(full_hashes), repos=repos,
+        current_provenance={
+            repo: artifact_fingerprint.compute_artifact_hashes(ROOT, repo=repo, config=config) for repo in current
+        },
+        provenance_of=cassette.get_provenance,
+    )
+    try:
+        results = cv.validate_from_disk(
+            {rec["issue_id"]: rec for rec in candidates.values()}, check_judge=True
+        ) if candidates else {}
+    except cv.CheckpointValidationUnavailable as exc:
+        print(f"CHECKPOINT VALIDATION UNAVAILABLE: {exc}")
+        return 1
+    print(f"{len(candidates)} provable by stamped provenance / unchanged combined hash; {cv.summarize(results)}")
+    ok = [k for k, rec in candidates.items() if results.get(rec["issue_id"]) is None
+          or results[rec["issue_id"]].status == cv.VALID]
+    for k, rec in candidates.items():
+        if k not in ok:
+            rejected[rec["issue_id"]] = f"checkpoint validation: {results[rec['issue_id']].status}"
+    print(f"Per-repo migration: {len(ok)} entr{'y' if len(ok) == 1 else 'ies'} provable and valid, "
+          f"{len(rejected)} stay stale under their old key.")
+    for issue_id, why in sorted(rejected.items()):
+        print(f"  stale  {issue_id}  ({why})")
+    if not fix:
+        print("Report only (no changes written). Re-run with --fix to re-key the provable entries.")
+        return 2 if ok else 0
+    if not ok:
+        return 0
+    backup = CHECKPOINT_PATH.with_name(
+        f"recording_checkpoint.json.bak-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+    )
+    backup.write_bytes(CHECKPOINT_PATH.read_bytes())
+    rf.apply_migration(checkpoint["done"], ok, current, repos)
+    save_checkpoint(checkpoint)
+    print(f"Backup written: {backup}")
+    print(f"Checkpoint rewritten: {len(ok)} entries re-keyed per repo.")
+    return 0
+
+
+def load_checkpoint_raw() -> dict:
+    return json.loads(CHECKPOINT_PATH.read_text(encoding="utf-8")) if CHECKPOINT_PATH.exists() else {"done": {}}
 
 
 def _load_common(mode: str) -> tuple[str, list[dict], CassettePlayer, str, str, str, dict, dict[str, dict]]:
@@ -1288,6 +1351,8 @@ def main() -> None:
     args = parse_args()
     if args.validate_checkpoint:
         sys.exit(run_validate_checkpoint(args.fix))
+    if args.migrate_checkpoint:
+        sys.exit(run_migrate_checkpoint(args.fix))
     (
         groq_key, issues, cassette, current_model, current_prompt_hash,
         current_artifact_hash, checkpoint, current_done,

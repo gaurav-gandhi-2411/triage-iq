@@ -1,0 +1,364 @@
+{
+ "prereg": "docs/QP_VSCODE_INDEX_V2_PREREG_2026-11.md",
+ "scripts_commit": "c5fad948a05969c62ad4eb32d1b07a35b56828d0",
+ "gates": {
+  "1_leakage": true,
+  "2_answerable_share_ci_lower_gt_0": true,
+  "3_r5_all_ci_lower_gt_0": true,
+  "4a_peak_rss_le_3.4_gib": true,
+  "4b_cloud_run_utilisation_lt_85pct": "PENDING (measured later on the tagged candidate revision)",
+  "5_vscode_retrieval_p50_le_300_ms": false
+ },
+ "all_measurable_gates_pass": false,
+ "criterion_1_leakage_3b": {
+  "exit_code": 0,
+  "n_violations": 0,
+  "n_unknown": 0,
+  "per_repo_per_type_counts": {
+   "kubernetes/kubernetes": {
+    "similar": {
+     "total": 375,
+     "before": 375,
+     "equal": 0,
+     "after": 0,
+     "unknown": 0,
+     "self_match": 0
+    },
+    "evidence_nbr": {
+     "total": 165,
+     "before": 165,
+     "equal": 0,
+     "after": 0,
+     "unknown": 0,
+     "self_match": 0
+    },
+    "evidence_item": {
+     "total": 210,
+     "before": 210,
+     "equal": 0,
+     "after": 0,
+     "unknown": 0,
+     "self_match": 0
+    }
+   },
+   "microsoft/vscode": {
+    "similar": {
+     "total": 375,
+     "before": 375,
+     "equal": 0,
+     "after": 0,
+     "unknown": 0,
+     "self_match": 0
+    }
+   }
+  },
+  "evidence_items_removed_by_as_of_filter": 27,
+  "date_source_counts": {
+   "microsoft/vscode": {
+    "parquet": 373
+   },
+   "kubernetes/kubernetes": {
+    "parquet": 348
+   }
+  },
+  "date_source_disagreements": {
+   "microsoft/vscode": [],
+   "kubernetes/kubernetes": []
+  },
+  "prompt_vs_signals_mismatches": [],
+  "refreeze": {
+   "n_vscode_rows": 75,
+   "n_other_rows_byte_identical": 75,
+   "n_vscode_rows_changed_neighbours": 75,
+   "n_vscode_rows_unchanged": 0
+  }
+ },
+ "scoring_3c": {
+  "prereg": "docs/QP_VSCODE_INDEX_V2_PREREG_2026-11.md",
+  "n_queries": 1705,
+  "filter": "retrieve(k=5, exclude_number=query, created_before=query created_at, strict_dates=True)",
+  "index_files": {
+   "served": {
+    "index.faiss": "5000aaaa8a325bc707b3604b1a62d4f3c7e57e1616fc82a88b8db7f51fa52897",
+    "meta.pkl": "47dd068f3a8e10dbc56fe5e2f42c0feef3b754b92e61802285d5ac9e88c36a77"
+   },
+   "v2": {
+    "index.faiss": "b5be4bb1ab922634856a6a3d3a275d88822f3ea6cfb3d5e2ac3c0584f9bb7d1d",
+    "meta.pkl": "ae52dcf587ccbab18bd95dd4258ff10d381678eadb5e0118543ad9824f7ae64e"
+   }
+  },
+  "served_dated_copy": {
+   "n_before": 13315,
+   "n_after": 13313,
+   "dropped_undated_issue_numbers": [
+    29238,
+    5123
+   ],
+   "date_sources": {
+    "parquet": 2662,
+    "raw": 10651
+   }
+  },
+  "n_vectors": {
+   "served": 13313,
+   "v2": 109537
+  },
+  "criterion_2_answerable_share": {
+   "served": {
+    "k": 95,
+    "n": 1705,
+    "rate": 0.05571847507331378,
+    "wilson95": [
+     0.04579582907121083,
+     0.06763867533224002
+    ]
+   },
+   "v2": {
+    "k": 1634,
+    "n": 1705,
+    "rate": 0.9583577712609971,
+    "wilson95": [
+     0.9477995905005798,
+     0.9668551089168502
+    ]
+   },
+   "paired_bootstrap_v2_minus_served": {
+    "point": 0.9026392961876833,
+    "ci95": [
+     0.8850439882697948,
+     0.9190615835777126
+    ],
+    "seed": 42,
+    "resamples": 10000,
+    "n": 1705
+   }
+  },
+  "criterion_3_r5_over_all_queries": {
+   "served": {
+    "k": 59,
+    "n": 1705,
+    "rate": 0.03460410557184751,
+    "wilson95": [
+     0.026921361611679056,
+     0.04437933706045065
+    ]
+   },
+   "v2": {
+    "k": 525,
+    "n": 1705,
+    "rate": 0.30791788856304986,
+    "wilson95": [
+     0.28645767784919857,
+     0.3302417283450327
+    ]
+   },
+   "paired_bootstrap_v2_minus_served": {
+    "point": 0.27331378299120235,
+    "ci95": [
+     0.25043988269794726,
+     0.29618768328445744
+    ],
+    "seed": 42,
+    "resamples": 10000,
+    "n": 1705
+   }
+  },
+  "reported_r5_over_answerable": {
+   "served": {
+    "k": 59,
+    "n": 95,
+    "rate": 0.6210526315789474,
+    "wilson95": [
+     0.5205920587802135,
+     0.7121034864153317
+    ]
+   },
+   "v2": {
+    "k": 525,
+    "n": 1634,
+    "rate": 0.321297429620563,
+    "wilson95": [
+     0.2990968170925857,
+     0.3443363451863551
+    ]
+   }
+  },
+  "reported_overlap_answerable_by_both": {
+   "n": 65,
+   "served": {
+    "k": 45,
+    "n": 65,
+    "rate": 0.6923076923076923,
+    "wilson95": [
+     0.5720212794770567,
+     0.7911312329572853
+    ]
+   },
+   "v2": {
+    "k": 30,
+    "n": 65,
+    "rate": 0.46153846153846156,
+    "wilson95": [
+     0.34590137149936684,
+     0.5814681260137647
+    ]
+   },
+   "paired_bootstrap_v2_minus_served": {
+    "point": -0.23076923076923073,
+    "ci95": [
+     -0.3384615384615384,
+     -0.1384615384615384
+    ],
+    "seed": 42,
+    "resamples": 10000,
+    "n": 65
+   }
+  },
+  "prior_2026_10_31_created_before": {
+   "source": "C:\\Users\\gaura\\AppData\\Local\\Temp\\claude\\triage-iq\\20261031\\e_vsidx\\scores.json",
+   "served_r5_all_k": 59,
+   "v2_r5_all_k": 526,
+   "now_served_r5_all_k": 59,
+   "now_v2_r5_all_k": 525
+  }
+ },
+ "serving_budget": {
+  "v2": {
+   "config": "v2",
+   "env_flags": {
+    "ENVIRONMENT": "prod",
+    "TRIAGE_CLEAN_REQUEST_BODY": "1",
+    "TRIAGE_VSCODE_CLASSIFIER": "family_v2",
+    "TRIAGE_K8S_INDEX": "v2",
+    "TRIAGE_RESOLUTION_EVIDENCE": "1",
+    "HF_HUB_OFFLINE": "1",
+    "CUDA_VISIBLE_DEVICES": "-1"
+   },
+   "torch_threads": 2,
+   "mem_before_load": {
+    "rss_gib": 0.4299163818359375,
+    "peak_rss_gib": 0.4299163818359375
+   },
+   "load_all_s": 3.799104999998235,
+   "repos_loaded": [
+    "microsoft/vscode",
+    "kubernetes/kubernetes"
+   ],
+   "vscode_detector_n_vectors": 109537,
+   "mem_after_load": {
+    "rss_gib": 1.2689247131347656,
+    "peak_rss_gib": 1.2689247131347656
+   },
+   "triage_calls": {
+    "n": 20,
+    "llm_status_counts": {
+     "degraded_provider_error": 20
+    }
+   },
+   "mem_after_20_triage": {
+    "rss_gib": 1.9802932739257812,
+    "peak_rss_gib": 1.9802932739257812
+   },
+   "latency_serving_detector": {
+    "n_timed": 100,
+    "p50_ms": 611.6118999998434,
+    "p95_ms": 774.0127400000347,
+    "mean_ms": 520.2595250000013,
+    "max_ms": 797.851700001047,
+    "dated_index": true
+   },
+   "mem_final": {
+    "rss_gib": 2.3241310119628906,
+    "peak_rss_gib": 3.378490447998047
+   },
+   "blocked_network_attempts": 0
+  },
+  "served": {
+   "config": "served",
+   "env_flags": {
+    "ENVIRONMENT": "prod",
+    "TRIAGE_CLEAN_REQUEST_BODY": "1",
+    "TRIAGE_VSCODE_CLASSIFIER": "family_v2",
+    "TRIAGE_K8S_INDEX": "v2",
+    "TRIAGE_RESOLUTION_EVIDENCE": "1",
+    "HF_HUB_OFFLINE": "1",
+    "CUDA_VISIBLE_DEVICES": "-1"
+   },
+   "torch_threads": 2,
+   "mem_before_load": {
+    "rss_gib": 0.4301643371582031,
+    "peak_rss_gib": 0.4301643371582031
+   },
+   "load_all_s": 3.1114062999986345,
+   "repos_loaded": [
+    "microsoft/vscode",
+    "kubernetes/kubernetes"
+   ],
+   "vscode_detector_n_vectors": 13315,
+   "mem_after_load": {
+    "rss_gib": 0.8771858215332031,
+    "peak_rss_gib": 0.8771858215332031
+   },
+   "triage_calls": {
+    "n": 20,
+    "llm_status_counts": {
+     "degraded_provider_error": 20
+    }
+   },
+   "mem_after_20_triage": {
+    "rss_gib": 1.593505859375,
+    "peak_rss_gib": 1.5982322692871094
+   },
+   "latency_serving_detector": {
+    "n_timed": 100,
+    "p50_ms": 585.3174499970919,
+    "p95_ms": 751.7466499950388,
+    "mean_ms": 495.27454400013085,
+    "max_ms": 782.9358000017237,
+    "dated_index": false
+   },
+   "latency_served_dated_copy": {
+    "n_timed": 100,
+    "p50_ms": 609.6238499958417,
+    "p95_ms": 758.7296000019705,
+    "mean_ms": 510.4121339997073,
+    "max_ms": 815.0239999959012,
+    "dated_index": true
+   },
+   "mem_final": {
+    "rss_gib": 1.9666213989257812,
+    "peak_rss_gib": 3.0092086791992188
+   },
+   "blocked_network_attempts": 0
+  },
+  "index_cold_load": {
+   "v2": {
+    "dir": "D:\\triageiq-data\\models\\candidates\\similar_issue_index_microsoft_vscode_bge_v2_dated",
+    "n_vectors": 109537,
+    "file_bytes": {
+     "index.faiss": 336497709,
+     "manifest.json": 841,
+     "meta.pkl": 112488186
+    },
+    "meta_pkl_load_s": 0.2569239000004018,
+    "faiss_read_s": 0.21451559999695746,
+    "retriever_load_incl_bge_model_s": 0.8606903000036255,
+    "rss_gib": 0.8621597290039062,
+    "peak_rss_gib": 0.8621597290039062
+   },
+   "served": {
+    "dir": "data\\models\\similar_issue_index_microsoft_vscode_bge",
+    "n_vectors": 13315,
+    "file_bytes": {
+     "index.faiss": 40903725,
+     "meta.pkl": 9499789
+    },
+    "meta_pkl_load_s": 0.03509289999783505,
+    "faiss_read_s": 0.020724000001791865,
+    "retriever_load_incl_bge_model_s": 0.457700200000545,
+    "rss_gib": 0.46797943115234375,
+    "peak_rss_gib": 0.46797943115234375
+   }
+  }
+ }
+}

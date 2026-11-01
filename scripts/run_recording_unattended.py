@@ -65,14 +65,25 @@ import record_cassettes as rc  # noqa: E402
 import artifact_fingerprint  # noqa: E402
 import checkpoint_validation as cv  # noqa: E402
 import repo_fingerprint as rf  # noqa: E402
-from recording_config import load_recording_config  # noqa: E402
+from recording_config import (  # noqa: E402
+    REPOS_ENV, filter_issues, load_recording_config, recording_repo_filter,
+)
 import tpd_budget_gate  # noqa: E402
 # _parse_tpd_wait lives in record_cassettes.py, not duplicated here -- it sees the raw Groq
 # error text first and needs the identical regex to report an accurate resume estimate in
 # RECORDING_STATUS.txt at the moment it hits the wall (ADR-0060); importing it keeps this
 # wrapper's own (later, coarser) re-parse of captured stdout from ever drifting out of sync.
 
-TOTAL_ISSUES = sum(1 for _ in EVAL_SET_PATH.open(encoding="utf-8") if _.strip())
+# TRIAGEIQ_RECORDING_REPOS (e.g. "kubernetes/kubernetes"): record only these repos. The launcher's
+# totals, progress, staleness and status then count only the filtered issues, and the child
+# record_cassettes.py inherits the same variable, so it never prompts or calls the LLM for the rest.
+# Unset: every number and path below is exactly as before.
+_REPOS = recording_repo_filter()
+_ISSUES = filter_issues(
+    [json.loads(_) for _ in EVAL_SET_PATH.open(encoding="utf-8") if _.strip()], _REPOS
+)
+_ISSUE_IDS = frozenset(i["id"] for i in _ISSUES) if _REPOS is not None else None
+TOTAL_ISSUES = len(_ISSUES)
 # {issue_id: repo}: a checkpoint entry is current when keyed by the hash of ITS repo's artifacts.
 _REPO_BY_ISSUE = rf.repo_by_issue(EVAL_SET_PATH)
 
@@ -134,6 +145,7 @@ def _checkpoint_entries(model: str, prompt_hash: str, artifact_hash: rf.Artifact
     return [
         rec for rec in data.get("done", {}).values()
         if rf.entry_is_current(rec, model, prompt_hash, artifact_hash, _REPO_BY_ISSUE)
+        and (_ISSUE_IDS is None or rec.get("issue_id") in _ISSUE_IDS)
     ]
 
 
@@ -175,6 +187,7 @@ def _write_status(mode: str, model: str, prompt_hash: str, artifact_hash: str, e
     lines = [
         f"Mode: {mode}  Updated: {_now()}",
         f"Model: {model}  Prompt hash: {prompt_hash}  Artifact hash: {artifact_hash}",
+        *([f"Repo filter: {', '.join(sorted(_REPOS))} ({TOTAL_ISSUES} issues in scope)"] if _REPOS else []),
         f"Synthesis-done: {p['synthesized']}/{TOTAL_ISSUES}   Judged: {p['judged']}/{TOTAL_ISSUES}"
         f"   Permanently dead: {len(p['dead'])} {p['dead']}",
         *extra,
@@ -231,6 +244,8 @@ def main() -> None:
     import os
 
     env = os.environ.copy()
+    if _REPOS:
+        env[REPOS_ENV] = ",".join(sorted(_REPOS))  # explicit, though os.environ.copy() already carries it
     if mode == "synthesis":
         groq_key = _load_groq_key()
         env["GROQ_API_KEY"] = groq_key
@@ -297,10 +312,12 @@ def main() -> None:
                 ])
         if terminal:
             _write_status(mode, model, prompt_hash, artifact_hash, [
-                "STOPPED (terminal): nothing left for a retry to accomplish in this mode.",
+                "STOPPED (terminal): nothing left for a retry to accomplish in this mode."
+                + (f" DONE (filtered: {', '.join(sorted(_REPOS))} {TOTAL_ISSUES}/{TOTAL_ISSUES})" if _REPOS else ""),
                 f"Iterations run: {iteration - 1}",
             ])
-            print(f"DONE ({mode}): all issues accounted for, see RECORDING_STATUS.txt")
+            scope = f" (filtered: {', '.join(sorted(_REPOS))} {TOTAL_ISSUES}/{TOTAL_ISSUES})" if _REPOS else ""
+            print(f"DONE ({mode}){scope}: all issues accounted for, see RECORDING_STATUS.txt")
             return
 
         _wait_for_vram(mode, model, prompt_hash, artifact_hash)

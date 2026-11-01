@@ -126,3 +126,28 @@ def test_launcher_counts_each_entry_under_its_own_repo_hash(env: SimpleNamespace
     p = ru._progress(MODEL, PH, after)
     assert p["synthesized"] == 3  # the k8s entries; the vscode ones are stale and will be re-recorded
     assert {r["issue_id"] for r in ru._checkpoint_entries(MODEL, PH, after)} == {"k8s-1", "k8s-2", "k8s-5"}
+
+
+def test_launcher_counts_respect_both_the_repo_filter_and_the_per_repo_key(
+    env: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Combined: with TRIAGEIQ_RECORDING_REPOS=k8s only k8s entries count; a vscode artifact change
+    must not move them; a k8s artifact change must; vscode entries never count under the filter."""
+    import run_recording_unattended as ru
+
+    _, before = _hashes(env.root)
+    checkpoint: dict = {"done": {}}
+    _record_all(checkpoint, before)
+    env.ckpt.write_text(json.dumps(checkpoint), encoding="utf-8")
+    monkeypatch.setattr(ru, "CHECKPOINT_PATH", env.ckpt)
+    monkeypatch.setattr(ru, "_REPO_BY_ISSUE", REPO_OF)
+    monkeypatch.setattr(ru, "_ISSUE_IDS", frozenset(i for i, r in REPO_OF.items() if r == K8S))
+
+    def ids(h: rf.RepoHashes) -> set[str]:
+        return {r["issue_id"] for r in ru._checkpoint_entries(MODEL, PH, h)}
+
+    assert ids(before) == {"k8s-1", "k8s-2", "k8s-5"}  # filter drops vscode although its key is current
+    (env.root / VSC_INDEX).write_text("a different vscode index", encoding="utf-8")
+    assert ids(_hashes(env.root)[1]) == {"k8s-1", "k8s-2", "k8s-5"}  # vscode change: k8s unaffected
+    (env.root / K8S_INDEX).write_text("a different k8s index", encoding="utf-8")
+    assert ids(_hashes(env.root)[1]) == set()  # k8s change: k8s entries stale

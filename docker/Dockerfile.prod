@@ -78,6 +78,10 @@ COPY data/models/component_classifier_*.pkl   data/models/
 COPY data/models/component_classifier_microsoft_vscode_family_v2_2026-10-22.joblib   data/models/
 COPY data/models/similar_issue_index_microsoft_vscode_bge   data/models/similar_issue_index_microsoft_vscode_bge
 COPY data/models/similar_issue_index_kubernetes_kubernetes_bge   data/models/similar_issue_index_kubernetes_kubernetes_bge
+# Candidate vscode indexes (vscode v2 latency prereg); each is used only when
+# TRIAGE_VSCODE_INDEX selects it on a revision.
+COPY data/models/similar_issue_index_microsoft_vscode_served_dated   data/models/similar_issue_index_microsoft_vscode_served_dated
+COPY data/models/similar_issue_index_microsoft_vscode_bge_v2_dated   data/models/similar_issue_index_microsoft_vscode_bge_v2_dated
 # Candidate k8s index over the 2026 corpus (D92.4) and its resolution evidence (D92.5); each is
 # used only when its flag is set on the revision.
 COPY data/models/similar_issue_index_kubernetes_kubernetes_bge_v2   data/models/similar_issue_index_kubernetes_kubernetes_bge_v2

@@ -80,6 +80,8 @@ jobs:
             "gs://triageiq-prod-260812-models/models/similar_issue_index_microsoft_vscode_bge" \
             "gs://triageiq-prod-260812-models/models/similar_issue_index_kubernetes_kubernetes_bge" \
             "gs://triageiq-prod-260812-models/models/similar_issue_index_kubernetes_kubernetes_bge_v2" \
+            "gs://triageiq-prod-260812-models/models/similar_issue_index_microsoft_vscode_served_dated" \
+            "gs://triageiq-prod-260812-models/models/similar_issue_index_microsoft_vscode_bge_v2_dated" \
             data/models/
           gsutil -m cp \
             "gs://triageiq-prod-260812-models/processed/microsoft_vscode_temporal_train.parquet" \

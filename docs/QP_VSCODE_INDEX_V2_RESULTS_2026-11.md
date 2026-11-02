@@ -17,7 +17,11 @@ cutover and the 75 vscode issues get recorded on the current configuration (item
 
 **Decision (orchestrator, 2026-11-01): no cutover.** The served vscode index stays, applied as pre-registered and not
 re-interpreted after the fact. Any re-measurement of criterion 5 on Cloud Run would be a new pre-registration, and that is
-GG's call. See "Reading criterion 5" below for what the number does and does not show.
+GG's call.
+
+**Update 2026-11-02:** GG's advisor approved that new pre-registration. Criterion 5 is superseded by
+`docs/QP_VSCODE_INDEX_V2_LATENCY_PREREG_2026-11.md`, because it also rejected the served index (585.3 ms) and so did not measure
+what v2 adds. The decision above stands until that measurement is made. See "Reading criterion 5" below for what the number does and does not show.
 
 | # | Criterion | Result | Label |
 |---|---|---|---|

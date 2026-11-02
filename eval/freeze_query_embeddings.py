@@ -64,7 +64,15 @@ def main(dry_run: bool = False) -> None:
         num = int(issue["number"])
         # Same text the eval pipeline builds in triage._collect_signals: "{title}. {body_clean}".
         text = f"{issue['title']}. {issue['body']}"
-        hits, emb = detectors[repo].retrieve_with_embedding(text, k=K, exclude_number=num)
+        # Same created-before filter as eval/freeze_similar_issues.py, or the cross-check below
+        # would compare against a differently-filtered list.
+        hits, emb = detectors[repo].retrieve_with_embedding(
+            text,
+            k=K,
+            exclude_number=num,
+            created_before=issue["created_at"],
+            strict_dates=True,
+        )
         frozen = [s["number"] for s in issue["similar_issues"]]
         if [h["number"] for h in hits] != frozen:
             raise SystemExit(

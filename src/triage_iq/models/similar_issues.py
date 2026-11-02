@@ -24,6 +24,22 @@ from sentence_transformers import SentenceTransformer
 logger = logging.getLogger(__name__)
 
 
+class MissingNeighbourDateError(ValueError):
+    """Strict created-before retrieval met a neighbour (or an index) with no created_at."""
+
+
+def to_utc_datetime64(value: object) -> np.datetime64:
+    """Normalise a datetime / pandas Timestamp / ISO string to a naive-UTC datetime64[ns].
+
+    Naive inputs are taken as UTC. Raises ValueError on NaT/None/unparseable input.
+    """
+    ts = pd.Timestamp(value)
+    if ts is pd.NaT:
+        raise ValueError(f"not a valid timestamp: {value!r}")
+    ts = ts.tz_localize("UTC") if ts.tzinfo is None else ts.tz_convert("UTC")
+    return np.datetime64(ts.tz_localize(None).to_datetime64(), "ns")
+
+
 class Tokenizer(Protocol):
     """Structural interface for the HF tokenizer _build_text() needs -- matches
     SentenceTransformer.tokenizer's encode()/decode() (transformers.PreTrainedTokenizerBase),
@@ -114,6 +130,10 @@ def _build_text(
 class SimilarIssueRetriever:
     """Sentence embedding + FAISS IndexFlatIP retrieval for related-issue retrieval."""
 
+    # Class-level defaults so instances built without __init__ (tests) still see "no dates".
+    created_at: np.ndarray | None = None
+    _warned_dateless: bool = False
+
     def __init__(self, repo: str, model_key: str = "bge") -> None:
         self.repo = repo
         self.model_key = model_key
@@ -128,6 +148,10 @@ class SimilarIssueRetriever:
         self.index: faiss.IndexFlatIP | None = None
         self.issue_numbers: np.ndarray | None = None
         self.texts: list[str] | None = None
+        # Optional per-issue creation time (naive-UTC datetime64[ns], NaT = unknown), aligned
+        # with issue_numbers. None for indexes built/saved before the created-before filter.
+        self.created_at: np.ndarray | None = None
+        self._warned_dateless = False
 
     # ------------------------------------------------------------------
     # Index construction
@@ -145,6 +169,9 @@ class SimilarIssueRetriever:
             max_tokens=self.model.max_seq_length,
         )
         self.issue_numbers = df["number"].values.astype(np.int64)
+        if "created_at" in df.columns:
+            ts = pd.to_datetime(df["created_at"], utc=True).dt.tz_localize(None)
+            self.created_at = ts.to_numpy().astype("datetime64[ns]")
 
         logger.info("[%s/%s] Encoding %d issues...", self.repo, self.model_key, len(self.texts))
         embs = self.model.encode(
@@ -234,13 +261,20 @@ class SimilarIssueRetriever:
         k: int = 20,
         exclude_number: int | None = None,
         apply_query_instruction: bool | None = None,
+        created_before: object | None = None,
+        strict_dates: bool = False,
     ) -> list[dict]:
-        """Return top-k most related issues (excluding query issue itself)."""
+        """Return top-k most related issues (excluding query issue itself).
+
+        created_before / strict_dates: see retrieve_with_embedding().
+        """
         hits, _ = self.retrieve_with_embedding(
             query_text,
             k=k,
             exclude_number=exclude_number,
             apply_query_instruction=apply_query_instruction,
+            created_before=created_before,
+            strict_dates=strict_dates,
         )
         return hits
 
@@ -250,6 +284,8 @@ class SimilarIssueRetriever:
         k: int = 20,
         exclude_number: int | None = None,
         apply_query_instruction: bool | None = None,
+        created_before: object | None = None,
+        strict_dates: bool = False,
     ) -> tuple[list[dict], np.ndarray]:
         """Same as retrieve(), also returning the query embedding it computed.
 
@@ -258,6 +294,17 @@ class SimilarIssueRetriever:
         (see _apply_query_instruction). Exposed so callers that need the vector (serving's
         resolution stage, ADR-0062) reuse it instead of encoding the same text a second time.
         retrieve() delegates here, so its behaviour and return type are unchanged.
+
+        created_before (datetime / Timestamp / ISO string; naive = UTC): keep only neighbours whose
+        created_at is STRICTLY earlier (an equal timestamp is excluded). None = no filter, and the
+        search is identical to the pre-filter code (k+1 candidates). When filtering, the candidate
+        pool is over-fetched -- first max(4*(k+1), 32), then doubled until k hits survive or the
+        whole index has been ranked -- so k results come back whenever k qualifying issues exist.
+        Worst case (almost nothing qualifies) is one exhaustive ranking of the flat index, which
+        costs about the same as the base search (IndexFlatIP scores every vector either way).
+        A neighbour with no date is kept when strict_dates=False (serving) and raises
+        MissingNeighbourDateError when strict_dates=True (recording/evaluation, fail closed). An
+        index with no dates at all: serving applies no filter (logged once); strict raises.
         """
         assert self.index is not None, "Call build_index first"
         assert self.issue_numbers is not None
@@ -267,19 +314,51 @@ class SimilarIssueRetriever:
             [query_text], normalize_embeddings=True, convert_to_numpy=True
         ).astype(np.float32)
 
-        # Retrieve k+1 to account for possible self-exclusion
-        scores, indices = self.index.search(emb, k + 1)
-        results = []
-        for score, idx in zip(scores[0], indices[0], strict=False):
-            if idx < 0:
-                continue
-            num = int(self.issue_numbers[idx])
-            if exclude_number is not None and num == exclude_number:
-                continue
-            results.append({"number": num, "score": float(score), "text": self.texts[idx]})
-            if len(results) >= k:
-                break
-        return results, emb[0]
+        cutoff: np.datetime64 | None = None
+        if created_before is not None:
+            cutoff = to_utc_datetime64(created_before)
+            if self.created_at is None:
+                if strict_dates:
+                    raise MissingNeighbourDateError(
+                        f"{self.repo}: created_before given but the index carries no created_at"
+                    )
+                if not self._warned_dateless:
+                    logger.warning(
+                        "%s: index has no created_at; created_before filter not applied", self.repo
+                    )
+                    self._warned_dateless = True
+                cutoff = None
+
+        # Retrieve k+1 to account for possible self-exclusion; over-fetch when filtering.
+        n_total = 0 if cutoff is None else int(self.index.ntotal)
+        n_fetch = k + 1 if cutoff is None else max(4 * (k + 1), 32)
+        while True:
+            if cutoff is not None:
+                n_fetch = min(n_fetch, n_total)
+            scores, indices = self.index.search(emb, n_fetch)
+            results = []
+            for score, idx in zip(scores[0], indices[0], strict=False):
+                if idx < 0:
+                    continue
+                num = int(self.issue_numbers[idx])
+                if exclude_number is not None and num == exclude_number:
+                    continue
+                if cutoff is not None:
+                    assert self.created_at is not None
+                    ts = self.created_at[idx]
+                    if np.isnat(ts):
+                        if strict_dates:
+                            raise MissingNeighbourDateError(
+                                f"{self.repo}: neighbour #{num} has no created_at"
+                            )
+                    elif not ts < cutoff:
+                        continue
+                results.append({"number": num, "score": float(score), "text": self.texts[idx]})
+                if len(results) >= k:
+                    break
+            if cutoff is None or len(results) >= k or n_fetch >= n_total:
+                return results, emb[0]
+            n_fetch *= 2
 
     def retrieve_batch(
         self,
@@ -315,15 +394,15 @@ class SimilarIssueRetriever:
         p = Path(out_dir)
         p.mkdir(parents=True, exist_ok=True)
         faiss.write_index(self.index, str(p / "index.faiss"))
-        joblib.dump(
-            {
-                "repo": self.repo,
-                "model_key": self.model_key,
-                "issue_numbers": self.issue_numbers,
-                "texts": self.texts,
-            },
-            str(p / "meta.pkl"),
-        )
+        meta: dict = {
+            "repo": self.repo,
+            "model_key": self.model_key,
+            "issue_numbers": self.issue_numbers,
+            "texts": self.texts,
+        }
+        if self.created_at is not None:  # key absent (not None) so undated metas stay byte-stable
+            meta["created_at"] = self.created_at
+        joblib.dump(meta, str(p / "meta.pkl"))
         logger.info("Saved index to %s", out_dir)
 
     @classmethod
@@ -346,4 +425,7 @@ class SimilarIssueRetriever:
         )
         obj.issue_numbers = meta["issue_numbers"]
         obj.texts = meta["texts"]
+        obj.created_at = meta.get("created_at")  # absent in metas saved before the filter
+        if obj.created_at is not None and len(obj.created_at) != len(obj.issue_numbers):
+            raise ValueError(f"{out_dir}: created_at length != issue_numbers length")
         return obj

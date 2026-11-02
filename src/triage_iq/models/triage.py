@@ -1213,15 +1213,36 @@ class TriageAssistant:
                 exclude = self.detector.match_indexed_issue(
                     str(issue.get("title", "")), str(issue.get("body_clean", ""))
                 )
+            # Created-before filter (serving, non-strict): only when the request carries a
+            # created_at. api/app.py defaults it to now, so for a new issue every indexed
+            # neighbour is older and this is a no-op; it bites on backfill/replay calls with a
+            # past created_at. Undated neighbours/indexes are kept (see SimilarIssueRetriever).
+            # Passed only when present so detectors without the kwarg (eval's frozen retriever
+            # accepts and ignores it) keep working for dateless callers.
+            retr_kwargs: dict = {}
+            q_created = issue.get("created_at")
+            if q_created is not None and not pd.isna(q_created):
+                from triage_iq.models.similar_issues import to_utc_datetime64
+
+                # An unparseable created_at must not empty the neighbours via the except below:
+                # serving drops the filter for that request instead (fail open here, as for
+                # undated indexes; the strict eval/recording paths raise elsewhere).
+                try:
+                    to_utc_datetime64(q_created)
+                    retr_kwargs["created_before"] = q_created
+                except (ValueError, TypeError):
+                    logger.warning("created_at %r unparseable; created-before filter skipped", q_created)
             if self.repo in RESOLUTION_EMBEDDINGS_REPOS and hasattr(
                 self.detector, "retrieve_with_embedding"
             ):
                 # Same single encode as retrieve(); the vector is reused by System 3 (ADR-0062).
                 similar_raw, query_emb = self.detector.retrieve_with_embedding(
-                    text, k=5, exclude_number=exclude
+                    text, k=5, exclude_number=exclude, **retr_kwargs
                 )
             else:
-                similar_raw = self.detector.retrieve(text, k=5, exclude_number=exclude)
+                similar_raw = self.detector.retrieve(
+                    text, k=5, exclude_number=exclude, **retr_kwargs
+                )
         except Exception as e:
             logger.warning("Retrieval failed: %s", e)
             similar_raw = []

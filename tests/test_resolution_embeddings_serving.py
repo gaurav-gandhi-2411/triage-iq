@@ -84,11 +84,11 @@ class _EmbRetriever:
         self.with_emb_calls = 0
         self.retrieve_calls = 0
 
-    def retrieve(self, text, k=20, exclude_number=None):
+    def retrieve(self, text, k=20, exclude_number=None, **_kw):
         self.retrieve_calls += 1
         return list(HITS)
 
-    def retrieve_with_embedding(self, text, k=20, exclude_number=None):
+    def retrieve_with_embedding(self, text, k=20, exclude_number=None, **_kw):
         self.with_emb_calls += 1
         return list(HITS), self.emb
 
@@ -99,7 +99,7 @@ class _PlainRetriever:
     def __init__(self) -> None:
         self.retrieve_calls = 0
 
-    def retrieve(self, text, k=20, exclude_number=None):
+    def retrieve(self, text, k=20, exclude_number=None, **_kw):
         self.retrieve_calls += 1
         return list(HITS)
 
@@ -273,7 +273,7 @@ def test_k8s_fallbacks_zero_fill_and_warn(
 
 def test_k8s_detector_without_embedding_api_falls_back(caplog, spy_engineer_features) -> None:
     class _OnlyRetrieve:
-        def retrieve(self, text, k=20, exclude_number=None):
+        def retrieve(self, text, k=20, exclude_number=None, **_kw):
             return list(HITS)
 
     predictor = _Predictor(_fit_pca())

@@ -3,6 +3,45 @@
 Single source of truth. Re-read first after any restart. Times in IST unless marked UTC. Newest dated brief first; everything under
 "First run" is history.
 
+## Brief 2026-11-02 (24 h, A1), written ~23:55 IST
+
+**Late.** Due ~12:45. The laptop rebooted at 20:46 IST (`LastBootUpTime`, VERIFIED); no wake-up ran between 10:30 and the
+session resume at ~23:15, and the reboot killed the recorder.
+
+**Outcome.** vscode index v2 is not cut over yet. Its laptop latency criterion failed but also rejected the served index, so GG's
+advisor approved a replacement Cloud Run test; it is pre-registered (#400, merged before any measurement) and its prerequisites
+are in flight. The k8s recording is at 50/75 and waits for free RAM to restart.
+
+**Production (VERIFIED 23:20).** `triageiq-api-00116-pib` serves 100% (from #357, merged by GG 10:37), `/health?deps=1` ok with
+2 repos, env has all five flags (ENVIRONMENT=prod, TRIAGE_CLEAN_REQUEST_BODY=1, TRIAGE_VSCODE_CLASSIFIER=family_v2,
+TRIAGE_K8S_INDEX=v2, TRIAGE_RESOLUTION_EVIDENCE=1). The deploy workflow now states the same five. Rollback targets: `00114-neg`,
+`00112-qin`, `00110-des`, `00108-mod`, `00106-sew`.
+
+**vscode v2, first prereg (VERIFIED, `docs/QP_VSCODE_INDEX_V2_RESULTS_2026-11.md`, #392-#394).** Criteria 1-3 and 4a pass;
+criterion 5 (laptop p50 <= 300 ms) failed at 611.6 ms, applied as written (no cutover). Served measured 585.3 ms on the same laptop,
+so the criterion did not separate the two. Known trade-off: on the 65 queries both indexes answer, v2 hits 30 vs served 45.
+
+**vscode v2, Cloud Run prereg (`docs/QP_VSCODE_INDEX_V2_LATENCY_PREREG_2026-11.md`, #400).** Two no-traffic candidates (served dated
+vs v2), the 75 set issues in fixed order; gates R (retrieval p50 v2 <= served + 100 ms), E (v2 end-to-end p50 <= 6 s), M (memory
+< 85%). Stage A uses 0 Groq tokens (GROQ_BASE_URL at a closed port); stage B about 220K tokens, booked in the ledger. Stated risk:
+gate E can fail on Groq time that both share. Prerequisites:
+- Both dated index dirs uploaded to `gs://triageiq-prod-260812-models/models/` with `--no-clobber` (VERIFIED: sizes, md5 and
+  crc32c match). Bucket 0.42 GB before, about 0.92 GB after, inside the 5 GB free tier.
+- #401 `TRIAGE_VSCODE_INDEX` loader flag (unset = unchanged), CI running.
+- #402 DRAFT for GG: deploy workflow, Dockerfile and MANIFEST entries ship the two dirs (image about +0.5 GB; Artifact Registry
+  storage grows with each retained image). Merge after #401.
+
+**Recording.** k8s-only, 50/75, last status 10:30 WAITING (budget). Killed by the reboot; stale flag cleared with `recording stop`.
+Ledger now 0/160,000. Restart deferred: free RAM 2.2 GiB (WSL holds about 10.9 GB, not this run's). The vscode recording starts
+only after the Cloud Run decision; the served-index re-freeze is ready on a copy
+(`D:\triageiq-data\models\candidates\similar_issue_index_microsoft_vscode_served_dated`, leakage exit 0, 357 -> 375 neighbours).
+
+**Housekeeping.** Backup branch `chore/wip-created-before-all` kept: its commit 25a070c is not on main by patch and differs from
+main in 3 files. Kaggle path `D:\triageiq-data\kaggle_staging\triageiq-xenc-x4-test` does not exist (searched D: and scratch);
+nothing deleted. The staging dir holds 13 other folders.
+
+**Disk.** C: about 223 GB free; D: +51 MB (served dated copy). Nothing deleted.
+
 ## Brief 2026-11-01 (24 h, A1), written ~12:45 IST
 
 **Late.** The brief due 2026-10-31 17:00-20:40 was not written: no wake-up ran after 2026-10-31 10:30, and the

@@ -187,7 +187,12 @@ class ModelStore:
                     else:
                         clf = load_classifier(models_dir, slug)
                 with _timed(f"{slug}.detector(bge+faiss)"):
-                    det = _load_detector(models_dir, slug, v2=_k8s_index_v2_requested(slug))
+                    det = _load_detector(
+                        models_dir,
+                        slug,
+                        v2=_k8s_index_v2_requested(slug),
+                        vscode_dirname=_vscode_index_dirname(slug),
+                    )
                 with _timed(f"{slug}.predictor"):
                     pred = _load_predictor(models_dir, slug)
                 with _timed(f"{slug}.train_parquet"):
@@ -227,6 +232,8 @@ class ModelStore:
                 raise  # fail closed: the operator asked for family_v2, never skip or fall back
             except K8sIndexArtifactError:
                 raise  # fail closed: the operator asked for the v2 index, never skip or fall back
+            except VscodeIndexArtifactError:
+                raise  # fail closed: the operator asked for a vscode index, never skip or fall back
             except Exception as exc:
                 logger.error("Failed to load %s: %s — skipping", repo, exc)
 
@@ -277,9 +284,40 @@ def _k8s_index_v2_requested(slug: str) -> bool:
     return v == "v2" and slug == _K8S_SLUG
 
 
-def _verify_index_v2_manifest(models_dir: Path, dirname: str) -> None:
+class VscodeIndexArtifactError(RuntimeError):
+    """TRIAGE_VSCODE_INDEX was set to something unusable; load_all re-raises it (fail closed)."""
+
+
+_VSCODE_SLUG = "microsoft_vscode"
+# value of TRIAGE_VSCODE_INDEX -> directory under data/models/ (unset/empty = the served index)
+_VSCODE_INDEX_DIRNAMES = {
+    "served_dated": "similar_issue_index_microsoft_vscode_served_dated",
+    "v2": "similar_issue_index_microsoft_vscode_bge_v2_dated",
+}
+
+
+def _vscode_index_dirname(slug: str) -> str | None:
+    """TRIAGE_VSCODE_INDEX: unset/empty = the served vscode index (None); "served_dated" or "v2" =
+    the candidate index directory in _VSCODE_INDEX_DIRNAMES (index.faiss + meta.pkl, sha256-checked
+    against MANIFEST.sha256). Applies to microsoft_vscode only; any other value is a typo and
+    raises rather than silently serving the default."""
+    v = os.environ.get("TRIAGE_VSCODE_INDEX", "")
+    if v and v not in _VSCODE_INDEX_DIRNAMES:
+        # VscodeIndexArtifactError so load_all's per-repo "skip on error" does not swallow it
+        raise VscodeIndexArtifactError(
+            f"TRIAGE_VSCODE_INDEX={v!r}: expected unset, 'served_dated' or 'v2'"
+        )
+    return _VSCODE_INDEX_DIRNAMES.get(v) if slug == _VSCODE_SLUG else None
+
+
+def _verify_index_v2_manifest(
+    models_dir: Path,
+    dirname: str,
+    flag: str = "TRIAGE_K8S_INDEX=v2",
+    error: type[RuntimeError] = K8sIndexArtifactError,
+) -> None:
     """Check index.faiss and meta.pkl of models_dir/dirname against MANIFEST.sha256 (exactly one
-    line each); a missing manifest, line or file, or a hash mismatch raises K8sIndexArtifactError.
+    line each); a missing manifest, line or file, or a hash mismatch raises `error`.
     Runs BEFORE meta.pkl is unpickled."""
     import hashlib
 
@@ -287,22 +325,22 @@ def _verify_index_v2_manifest(models_dir: Path, dirname: str) -> None:
     try:
         parts = [ln.split(None, 1) for ln in manifest.read_text(encoding="utf-8").splitlines()]
     except OSError as e:
-        raise K8sIndexArtifactError(f"TRIAGE_K8S_INDEX=v2 but {manifest} is unreadable") from e
+        raise error(f"{flag} but {manifest} is unreadable") from e
     for name in ("index.faiss", "meta.pkl"):
         suffix = f"/{dirname}/{name}"
         expected = [p[0].lower() for p in parts if len(p) == 2 and p[1].strip().endswith(suffix)]
         if len(expected) != 1:
-            raise K8sIndexArtifactError(
-                f"TRIAGE_K8S_INDEX=v2 but {manifest} has {len(expected)} entries for "
+            raise error(
+                f"{flag} but {manifest} has {len(expected)} entries for "
                 f"{dirname}/{name} (need exactly 1)"
             )
         path = models_dir / dirname / name
         try:
             actual = hashlib.sha256(path.read_bytes()).hexdigest()
         except OSError as e:
-            raise K8sIndexArtifactError(f"TRIAGE_K8S_INDEX=v2 but cannot read {path}") from e
+            raise error(f"{flag} but cannot read {path}") from e
         if actual != expected[0]:
-            raise K8sIndexArtifactError(f"{dirname}/{name} sha256 {actual} != MANIFEST {expected[0]}")
+            raise error(f"{dirname}/{name} sha256 {actual} != MANIFEST {expected[0]}")
 
 
 def _load_priority_model(models_dir: Path, slug: str):
@@ -366,7 +404,9 @@ def _load_resolution_evidence(models_dir: Path, slug: str):
     return ev
 
 
-def _load_detector(models_dir: Path, slug: str, v2: bool = False):
+def _load_detector(
+    models_dir: Path, slug: str, v2: bool = False, vscode_dirname: str | None = None
+):
     from triage_iq.models.similar_issues import SimilarIssueRetriever
     if v2:  # TRIAGE_K8S_INDEX=v2, k8s only: no fallback to the served index, ever
         _verify_index_v2_manifest(models_dir, _K8S_INDEX_V2_DIRNAME)
@@ -377,6 +417,15 @@ def _load_detector(models_dir: Path, slug: str, v2: bool = False):
                 f"TRIAGE_K8S_INDEX=v2 but {_K8S_INDEX_V2_DIRNAME} failed to load: {e}"
             ) from e
         logger.info("Loaded similar-issue index %s (TRIAGE_K8S_INDEX=v2)", _K8S_INDEX_V2_DIRNAME)
+        return det
+    if vscode_dirname:  # TRIAGE_VSCODE_INDEX set, vscode only: no fallback to the served index
+        flag = "TRIAGE_VSCODE_INDEX"
+        _verify_index_v2_manifest(models_dir, vscode_dirname, flag, VscodeIndexArtifactError)
+        try:
+            det = SimilarIssueRetriever.load(str(models_dir / vscode_dirname))
+        except Exception as e:
+            raise VscodeIndexArtifactError(f"{flag} but {vscode_dirname} failed to load: {e}") from e
+        logger.info("Loaded similar-issue index %s (%s)", vscode_dirname, flag)
         return det
     p = models_dir / f"similar_issue_index_{slug}_bge"
     if p.exists():

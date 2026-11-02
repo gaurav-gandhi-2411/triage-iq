@@ -332,7 +332,7 @@ jobs:
       issues: write
     steps:
       - name: Open or update the health-monitor alert issue
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           NEEDS_JSON: ${{ toJson(needs) }}
         with:

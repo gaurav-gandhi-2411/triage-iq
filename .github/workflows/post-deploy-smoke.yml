@@ -32,7 +32,7 @@ jobs:
     steps:
       - name: Is a quota-pass smoke test pending?
         id: pending
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const open = await github.rest.issues.listForRepo({
@@ -74,7 +74,7 @@ jobs:
 
       - name: Close, wait, or alert
         if: steps.pending.outputs.pending == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           RESULT: ${{ steps.smoke.outputs.result }}
           DETAIL: ${{ steps.smoke.outputs.detail }}

@@ -9,7 +9,7 @@
 
 # Core data
 python-dotenv>=1.0
-requests>=2.31
+requests>=2.34.2
 pandas>=2.0
 numpy>=1.24
 scipy>=1.15.3
